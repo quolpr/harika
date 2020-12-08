@@ -12,9 +12,8 @@ import TextareaAutosize from 'react-textarea-autosize';
 import './styles.css';
 import { useClickAway } from 'react-use';
 import { useDatabase } from '@nozbe/watermelondb/hooks';
-import { TableName } from 'apps/harika-web/src/model/schema';
 import { CurrentEditContext } from '../CurrentEditContent';
-import { Q } from '@nozbe/watermelondb';
+import { TableName } from 'apps/harika-web/src/model/schema';
 
 type InputProps = { noteBlock: NoteBlockModel };
 
@@ -51,46 +50,19 @@ export const NoteBlockComponent = ({
   }, [content, database, noteBlock]);
 
   const handleKeyPress = useCallback(
-    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    async (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
-        database.action(async () => {
-          const parentBlock = await noteBlock.parentBlock.fetch();
-          const children = await parentBlock?.childBlocks
-            .extend(Q.where('order', Q.gt(noteBlock.order)))
-            .fetch();
+        const newBlock = await noteBlock.injectNewRightBlock('');
 
-          children?.forEach((block) => {
-            block.update((modification) => {
-              modification.order = modification.order + 1;
-            });
-          });
-
-          const newBlock = await database.collections
-            .get<NoteBlockModel>(TableName.NOTE_BLOCKS)
-            .create((block) => {
-              block.note_id = noteBlock.note_id;
-              block.parent_block_id = noteBlock.parent_block_id;
-              block.content = '';
-              block.order = noteBlock.order + 1;
-            });
-
-          setEditState({ id: newBlock.id, type: TableName.NOTE_BLOCKS });
-        });
+        setEditState({ id: newBlock.id, type: TableName.NOTE_BLOCKS });
       }
     },
-    [
-      setEditState,
-      database,
-      noteBlock.note_id,
-      noteBlock.order,
-      noteBlock.parent_block_id,
-      noteBlock.parentBlock,
-    ]
+    [setEditState, noteBlock]
   );
 
   const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    async (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
       if (e.key === 'Backspace') {
         const { currentTarget } = e;
 
@@ -101,36 +73,56 @@ export const NoteBlockComponent = ({
         if (isOnStart) {
           e.preventDefault();
 
-          database.action(async () => {
-            const parentBlock = await noteBlock.parentBlock.fetch();
-            const children = (await parentBlock?.childBlocks.fetch())?.sort(
-              (a, b) => a.order - b.order
-            );
+          const mergedTo = await noteBlock.mergeToLeftAndDelete();
 
-            if (!children) return;
+          if (mergedTo) {
+            setEditState({ id: mergedTo.id, type: TableName.NOTE_BLOCKS });
+          }
+        }
+      } else if (e.key === 'Tab' && !e.shiftKey) {
+        e.preventDefault();
 
-            const index = children.findIndex((ch) => noteBlock.id === ch.id);
+        const [left] = await noteBlock.getLeftAndRightSibling();
 
-            const sibling = children[index - 1];
+        if (left) {
+          const leftChildren = NoteBlockModel.sort(
+            await left.childBlocks.fetch()
+          );
 
-            sibling.update((record) => {
-              record.content = record.content + noteBlock.content;
-            });
+          noteBlock.makeParentTo(
+            left.id,
+            leftChildren[leftChildren.length - 1]?.id
+          );
+        }
+      } else if (e.key === 'Tab' && e.shiftKey) {
+        e.preventDefault();
 
-            setEditState({ id: sibling.id, type: TableName.NOTE_BLOCKS });
+        const parent = (await noteBlock.parentBlock.fetch()) || undefined;
+        const parentToParent =
+          (await parent?.parentBlock?.fetch()) || undefined;
 
-            await noteBlock.markAsDeleted();
-          });
+        noteBlock.makeParentTo(parentToParent?.id, parent?.id);
+      } else if (e.key === 'ArrowDown') {
+        const [, right] = await noteBlock.getLeftAndRight();
+
+        if (right) {
+          setEditState({ id: right.id, type: TableName.NOTE_BLOCKS });
+        }
+      } else if (e.key === 'ArrowUp') {
+        const [left] = await noteBlock.getLeftAndRight();
+
+        if (left) {
+          setEditState({ id: left.id, type: TableName.NOTE_BLOCKS });
         }
       }
     },
-    [database, noteBlock, setEditState]
+    [noteBlock, setEditState]
   );
 
   return (
     <div className="note-block">
       <div className="note-block__body">
-        <div className="note-block__dot" />
+        <div className="note-block__dot" />({noteBlock.order})
         {isEditing ? (
           <TextareaAutosize
             ref={inputRef}
