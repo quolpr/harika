@@ -1,0 +1,28 @@
+.note {
+  @apply px-5;
+
+  &__header {
+    @apply text-2xl pt-10 pb-5;
+  }
+
+  &__body {
+    @apply pb-20;
+  }
+
+  &__bullet {
+  }
+
+  &__input {
+    width: 100%;
+
+    background-color: transparent;
+
+    border: none;
+    overflow: auto;
+    outline: none;
+
+    box-shadow: none;
+
+    resize: none; /*remove the resize handle on the bottom right*/
+  }
+}

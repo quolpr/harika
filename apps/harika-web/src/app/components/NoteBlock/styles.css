@@ -1,0 +1,48 @@
+.note-block {
+  @apply flex flex-col pb-1;
+
+  &:last-child {
+    @apply pb-0;
+  }
+
+  &__body {
+    @apply flex;
+  }
+
+  &__dot {
+    @apply flex items-start justify-end;
+
+    @apply w-8;
+
+    &::before {
+      @apply mt-2 bg-green-500 w-1.5 h-1.5 mr-3;
+
+      content: '';
+      border-radius: 100%;
+    }
+  }
+
+  &__child-blocks {
+    @apply box-border ml-4 pt-1 border-l border-green-500;
+  }
+
+  &__content {
+    width: 100%;
+    white-space: pre-wrap;
+    min-height: 1rem;
+  }
+
+  &__input {
+    width: 100%;
+
+    background-color: transparent;
+
+    border: none;
+    overflow: auto;
+    outline: none;
+
+    box-shadow: none;
+
+    resize: none; /*remove the resize handle on the bottom right*/
+  }
+}

@@ -1,0 +1,12 @@
+.header {
+  @apply border-b border-gray-200;
+  @apply flex items-center justify-between py-3;
+
+  &__brand {
+    @apply text-gray-900 text-4xl ml-10 font-bold;
+  }
+
+  &__brand-dot {
+    @apply inline text-pink-600;
+  }
+}

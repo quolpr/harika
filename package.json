@@ -27,13 +27,21 @@
   },
   "private": true,
   "dependencies": {
+    "@nozbe/watermelondb": "^0.20.0",
+    "@nozbe/with-observables": "^1.0.7",
     "document-register-element": "1.13.1",
+    "lokijs": "^1.5.11",
     "react": "17.0.1",
     "react-dom": "17.0.1",
+    "react-textarea-autosize": "^8.3.0",
+    "react-use": "^15.3.4",
     "tslib": "^2.0.0"
   },
   "devDependencies": {
     "@babel/core": "7.9.6",
+    "@babel/plugin-proposal-class-properties": "^7.12.1",
+    "@babel/plugin-proposal-decorators": "^7.12.1",
+    "@babel/plugin-transform-runtime": "^7.12.1",
     "@babel/preset-env": "7.9.6",
     "@babel/preset-react": "7.9.4",
     "@babel/preset-typescript": "7.9.0",
@@ -52,6 +60,7 @@
     "@types/react-dom": "16.9.9",
     "@typescript-eslint/eslint-plugin": "4.3.0",
     "@typescript-eslint/parser": "4.3.0",
+    "autoprefixer": "^9.8.6",
     "babel-jest": "26.2.2",
     "cypress": "^5.5.0",
     "dotenv": "6.2.0",
@@ -63,10 +72,15 @@
     "eslint-plugin-react": "7.21.5",
     "eslint-plugin-react-hooks": "4.2.0",
     "jest": "26.2.2",
+    "postcss": "^8.1.14",
+    "postcss-cli": "^8.3.0",
+    "postcss-nested": "^4.2.3",
     "prettier": "2.1.2",
+    "tailwindcss": "^2.0.1",
     "ts-jest": "26.4.0",
     "ts-node": "~7.0.0",
     "tslint": "~6.0.0",
-    "typescript": "~4.0.3"
+    "typescript": "~4.0.3",
+    "worker-loader": "^3.0.6"
   }
 }
