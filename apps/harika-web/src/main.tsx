@@ -4,14 +4,11 @@ import { Database } from '@nozbe/watermelondb';
 import LokiJSAdapter from '@nozbe/watermelondb/adapters/lokijs';
 import DatabaseProvider from '@nozbe/watermelondb/DatabaseProvider';
 import { useDatabase } from '@nozbe/watermelondb/hooks';
-
-import schema from './model/schema';
 import App from './app/app';
-import Note from './model/Note';
-import NoteBlock from './model/NoteBlock';
+import { noteSchema, Note, NoteBlock } from '@harika/harika-notes';
 
 const adapter = new LokiJSAdapter({
-  schema,
+  schema: noteSchema,
   // migrations, // optional migrations
   useWebWorker: false, // recommended for new projects. tends to improve performance and reduce glitches in most cases, but also has downsides - test with and without it
   useIncrementalIndexedDB: true, // recommended for new projects. improves performance (but incompatible with early Watermelon databases)

@@ -1,11 +1,10 @@
 import React from 'react';
-import NoteModel from '../../../model/Note';
-import NoteBlockModel from '../../../model/NoteBlock';
 import withObservables from '@nozbe/with-observables';
 import TextareaAutosize from 'react-textarea-autosize';
-
-import './styles.css';
 import { NoteBlock } from '../NoteBlock/NoteBlock';
+import { NoteBlock as NoteBlockModel } from '@harika/harika-notes';
+import { Note as NoteModel } from '@harika/harika-notes';
+import './styles.css';
 
 type InputProps = { note: NoteModel };
 

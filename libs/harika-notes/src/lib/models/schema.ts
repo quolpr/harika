@@ -1,6 +1,8 @@
+import Note from './Note';
+import NoteBlock from './NoteBlock';
 import { appSchema, tableSchema } from '@nozbe/watermelondb';
 
-export enum TableName {
+export enum HarikaNotesTableName {
   NOTES = 'notes',
   NOTE_BLOCKS = 'note_blocks',
 }
@@ -9,7 +11,7 @@ export default appSchema({
   version: 5,
   tables: [
     tableSchema({
-      name: TableName.NOTES,
+      name: HarikaNotesTableName.NOTES,
       columns: [
         { name: 'title', type: 'string', isIndexed: true },
         { name: 'created_at', type: 'number' },
@@ -17,7 +19,7 @@ export default appSchema({
       ],
     }),
     tableSchema({
-      name: TableName.NOTE_BLOCKS,
+      name: HarikaNotesTableName.NOTE_BLOCKS,
       columns: [
         {
           name: 'parent_block_id',

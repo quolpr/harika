@@ -6,14 +6,12 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import NoteBlockModel from '../../../model/NoteBlock';
 import TextareaAutosize from 'react-textarea-autosize';
-
 import './styles.css';
 import { useClickAway } from 'react-use';
 import { useDatabase } from '@nozbe/watermelondb/hooks';
 import { CurrentEditContext } from '../CurrentEditContent';
-import { TableName } from 'apps/harika-web/src/model/schema';
+import { NoteBlock as NoteBlockModel } from '@harika/harika-notes';
 
 type InputProps = { noteBlock: NoteBlockModel };
 
@@ -24,8 +22,7 @@ export const NoteBlockComponent = ({
   const database = useDatabase();
   const [editState, setEditState] = useContext(CurrentEditContext);
   const [content, setContent] = useState(noteBlock.content);
-  const isEditing =
-    editState?.id === noteBlock.id && editState.type === TableName.NOTE_BLOCKS;
+  const isEditing = editState?.id === noteBlock.id;
 
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -55,7 +52,9 @@ export const NoteBlockComponent = ({
         e.preventDefault();
         const newBlock = await noteBlock.injectNewRightBlock('');
 
-        setEditState({ id: newBlock.id, type: TableName.NOTE_BLOCKS });
+        setEditState({
+          id: newBlock.id,
+        });
       }
     },
     [setEditState, noteBlock]
@@ -76,43 +75,32 @@ export const NoteBlockComponent = ({
           const mergedTo = await noteBlock.mergeToLeftAndDelete();
 
           if (mergedTo) {
-            setEditState({ id: mergedTo.id, type: TableName.NOTE_BLOCKS });
+            setEditState({
+              id: mergedTo.id,
+            });
           }
         }
       } else if (e.key === 'Tab' && !e.shiftKey) {
         e.preventDefault();
 
-        const [left] = await noteBlock.getLeftAndRightSibling();
-
-        if (left) {
-          const leftChildren = NoteBlockModel.sort(
-            await left.childBlocks.fetch()
-          );
-
-          noteBlock.makeParentTo(
-            left.id,
-            leftChildren[leftChildren.length - 1]?.id
-          );
-        }
+        await noteBlock.tryMoveUp();
       } else if (e.key === 'Tab' && e.shiftKey) {
         e.preventDefault();
 
-        const parent = (await noteBlock.parentBlock.fetch()) || undefined;
-        const parentToParent =
-          (await parent?.parentBlock?.fetch()) || undefined;
-
-        noteBlock.makeParentTo(parentToParent?.id, parent?.id);
+        await noteBlock.tryMoveDown();
       } else if (e.key === 'ArrowDown') {
         const [, right] = await noteBlock.getLeftAndRight();
 
         if (right) {
-          setEditState({ id: right.id, type: TableName.NOTE_BLOCKS });
+          setEditState({
+            id: right.id,
+          });
         }
       } else if (e.key === 'ArrowUp') {
         const [left] = await noteBlock.getLeftAndRight();
 
         if (left) {
-          setEditState({ id: left.id, type: TableName.NOTE_BLOCKS });
+          setEditState({ id: left.id });
         }
       }
     },
@@ -137,7 +125,9 @@ export const NoteBlockComponent = ({
           <div
             className="note-block__content"
             onClick={() =>
-              setEditState({ type: TableName.NOTE_BLOCKS, id: noteBlock.id })
+              setEditState({
+                id: noteBlock.id,
+              })
             }
           >
             {content}

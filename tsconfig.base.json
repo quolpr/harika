@@ -16,7 +16,9 @@
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
-    "paths": {}
+    "paths": {
+      "@harika/harika-notes": ["libs/harika-notes/src/index.ts"]
+    }
   },
   "exclude": ["node_modules", "tmp"]
 }

@@ -29,6 +29,9 @@
     "harika-web-e2e": {
       "tags": [],
       "implicitDependencies": ["harika-web"]
+    },
+    "harika-notes": {
+      "tags": []
     }
   }
 }

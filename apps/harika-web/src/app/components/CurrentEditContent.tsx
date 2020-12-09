@@ -1,11 +1,10 @@
 import React from 'react';
-import { TableName } from '../../model/schema';
 
 export type ICurrentEditState =
   | undefined
   | {
       id: string;
-      type: TableName;
+      startPositionAt?: number;
     };
 
 export const CurrentEditContext = React.createContext<

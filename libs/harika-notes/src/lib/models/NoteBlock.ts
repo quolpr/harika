@@ -10,21 +10,20 @@ import {
 } from '@nozbe/watermelondb/decorators';
 import { Associations } from '@nozbe/watermelondb/Model';
 import Note from './Note';
-import { TableName } from './schema';
+import { HarikaNotesTableName } from './schema';
 
 export default class NoteBlock extends Model {
-  static table = TableName.NOTE_BLOCKS;
+  static table = HarikaNotesTableName.NOTE_BLOCKS;
 
   static associations: Associations = {
     notes: { type: 'belongs_to', key: 'note_id' },
     note_blocks: { type: 'has_many', foreignKey: 'parent_block_id' },
   };
 
-  @relation(TableName.NOTES, 'note_id') note!: Relation<Note>;
-  @relation(TableName.NOTE_BLOCKS, 'parent_block_id') parentBlock!: Relation<
-    NoteBlock
-  >;
-  @children(TableName.NOTE_BLOCKS) childBlocks!: Query<NoteBlock>;
+  @relation(HarikaNotesTableName.NOTES, 'note_id') note!: Relation<Note>;
+  @relation(HarikaNotesTableName.NOTE_BLOCKS, 'parent_block_id')
+  parentBlock!: Relation<NoteBlock>;
+  @children(HarikaNotesTableName.NOTE_BLOCKS) childBlocks!: Query<NoteBlock>;
 
   @field('note_id') note_id!: string;
   @field('parent_block_id') parent_block_id!: string | undefined;
@@ -109,13 +108,11 @@ export default class NoteBlock extends Model {
   );
 
   @action async mergeToLeftAndDelete() {
-    let [left] = await this.getLeftAndRightSibling();
-
     const hasChildren = (await this.childBlocks.fetchCount()) > 0;
 
-    if (!left && !hasChildren) {
-      left = (await this.getLeftAndRight())[0];
-    }
+    if (hasChildren) return;
+
+    const [left] = await this.getLeftAndRight();
 
     if (!left) return;
 
@@ -138,7 +135,7 @@ export default class NoteBlock extends Model {
     });
 
     return await this.collections
-      .get<NoteBlock>(TableName.NOTE_BLOCKS)
+      .get<NoteBlock>(HarikaNotesTableName.NOTE_BLOCKS)
       .create((block) => {
         block.note_id = this.note_id;
         block.parent_block_id = this.parent_block_id;
@@ -155,7 +152,7 @@ export default class NoteBlock extends Model {
 
     const afterBlock = afterBlockId
       ? await this.collections
-          .get<NoteBlock>(TableName.NOTE_BLOCKS)
+          .get<NoteBlock>(HarikaNotesTableName.NOTE_BLOCKS)
           .find(afterBlockId)
       : undefined;
 
@@ -169,11 +166,30 @@ export default class NoteBlock extends Model {
       });
     }
 
-    console.log({ afterBlock });
-
     this.update((forUpdate) => {
       forUpdate.parent_block_id = blockId;
       forUpdate.order = afterBlock ? afterBlock.order + 1 : 0;
     });
+  }
+
+  @action async tryMoveUp() {
+    const [left] = await this.getLeftAndRightSibling();
+
+    if (left) {
+      const leftChildren = NoteBlock.sort(await left.childBlocks.fetch());
+
+      await this.subAction(() =>
+        this.makeParentTo(left.id, leftChildren[leftChildren.length - 1]?.id)
+      );
+    }
+  }
+
+  @action async tryMoveDown() {
+    const parent = (await this.parentBlock.fetch()) || undefined;
+    const parentToParent = (await parent?.parentBlock?.fetch()) || undefined;
+
+    await this.subAction(() =>
+      this.makeParentTo(parentToParent?.id, parent?.id)
+    );
   }
 }
