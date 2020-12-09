@@ -33,4 +33,4 @@ const enhance = withObservables(['note'], ({ note }) => ({
   noteBlocks: note.childNoteBlocks.observe(),
 }));
 
-export const Note = enhance(NoteComponent) as React.FC<InputProps>;
+export const Note = React.memo(enhance(NoteComponent) as React.FC<InputProps>);

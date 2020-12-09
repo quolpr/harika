@@ -108,10 +108,6 @@ export default class NoteBlock extends Model {
   );
 
   @action async mergeToLeftAndDelete() {
-    const hasChildren = (await this.childBlocks.fetchCount()) > 0;
-
-    if (hasChildren) return;
-
     const [left] = await this.getLeftAndRight();
 
     if (!left) return;
@@ -120,15 +116,40 @@ export default class NoteBlock extends Model {
       record.content = record.content + this.content;
     });
 
+    const children = await this.childBlocks.fetch();
+
+    children.forEach((child) => {
+      child.update((toUpdate) => {
+        toUpdate.parent_block_id = left.id;
+      });
+    });
+
     await this.markAsDeleted();
 
     return left;
   }
 
   @action async injectNewRightBlock(content: string) {
-    const rightSiblings = await this.getAllRightSiblings();
+    const children = await this.childBlocks.fetch();
 
-    rightSiblings.forEach((block) => {
+    const { toMove, newEntityValues } = await (async () => {
+      if (children.length) {
+        return {
+          toMove: children,
+          newEntityValues: { order: 0, parent_block_id: this.id },
+        };
+      } else {
+        return {
+          toMove: await this.getAllRightSiblings(),
+          newEntityValues: {
+            order: this.order + 1,
+            parent_block_id: this.parent_block_id,
+          },
+        };
+      }
+    })();
+
+    toMove.forEach((block) => {
       block.update((modification) => {
         modification.order = modification.order + 1;
       });
@@ -138,9 +159,9 @@ export default class NoteBlock extends Model {
       .get<NoteBlock>(HarikaNotesTableName.NOTE_BLOCKS)
       .create((block) => {
         block.note_id = this.note_id;
-        block.parent_block_id = this.parent_block_id;
+        block.parent_block_id = newEntityValues.parent_block_id;
+        block.order = newEntityValues.order;
         block.content = content;
-        block.order = this.order + 1;
       });
   }
 

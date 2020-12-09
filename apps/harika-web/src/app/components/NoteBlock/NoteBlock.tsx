@@ -1,17 +1,12 @@
 import withObservables from '@nozbe/with-observables';
-import React, {
-  useCallback,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
-import TextareaAutosize from 'react-textarea-autosize';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import './styles.css';
 import { useClickAway } from 'react-use';
 import { useDatabase } from '@nozbe/watermelondb/hooks';
 import { CurrentEditContext } from '../CurrentEditContent';
 import { NoteBlock as NoteBlockModel } from '@harika/harika-notes';
+import ContentEditable, { ContentEditableEvent } from 'react-contenteditable';
+import { useContextSelector } from 'use-context-selector';
 
 type InputProps = { noteBlock: NoteBlockModel };
 
@@ -20,11 +15,22 @@ export const NoteBlockComponent = ({
   childBlocks,
 }: InputProps & { childBlocks: NoteBlockModel[] }) => {
   const database = useDatabase();
-  const [editState, setEditState] = useContext(CurrentEditContext);
   const [content, setContent] = useState(noteBlock.content);
-  const isEditing = editState?.id === noteBlock.id;
+  const setEditState = useContextSelector(
+    CurrentEditContext,
+    ([, setEditState]) => setEditState
+  );
+  const isEditing = useContextSelector(
+    CurrentEditContext,
+    ([editState]) => editState?.id === noteBlock.id
+  );
+  const startPositionAt = useContextSelector(
+    CurrentEditContext,
+    ([editState]) =>
+      editState?.id === noteBlock.id ? editState.startPositionAt : undefined
+  );
 
-  const inputRef = useRef<HTMLTextAreaElement | null>(null);
+  const inputRef = useRef<HTMLDivElement | null>(null);
 
   useClickAway(inputRef, () => {
     if (isEditing) {
@@ -37,6 +43,33 @@ export const NoteBlockComponent = ({
   }, [noteBlock.content]);
 
   useEffect(() => {
+    if (
+      isEditing &&
+      inputRef.current &&
+      document.activeElement !== inputRef.current
+    ) {
+      inputRef.current.focus();
+
+      const posAt = (() =>
+        startPositionAt ? startPositionAt : noteBlock.content.length)();
+
+      if (posAt === 0) return;
+
+      try {
+        const range = document.createRange();
+        const sel = window.getSelection();
+        if (!sel) return;
+        range.setStart(inputRef.current.childNodes[0], posAt);
+        range.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(range);
+      } catch (e) {
+        console.error('Failed to set start position!');
+      }
+    }
+  }, [isEditing, startPositionAt, noteBlock.content.length]);
+
+  useEffect(() => {
     if (noteBlock.content === content) return;
 
     database.action(async () => {
@@ -47,7 +80,7 @@ export const NoteBlockComponent = ({
   }, [content, database, noteBlock]);
 
   const handleKeyPress = useCallback(
-    async (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    async (e: React.KeyboardEvent<HTMLDivElement>) => {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         const newBlock = await noteBlock.injectNewRightBlock('');
@@ -61,13 +94,14 @@ export const NoteBlockComponent = ({
   );
 
   const handleKeyDown = useCallback(
-    async (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    async (e: React.KeyboardEvent<HTMLDivElement>) => {
       if (e.key === 'Backspace') {
-        const { currentTarget } = e;
-
-        const isOnStart =
-          currentTarget.selectionStart === currentTarget.selectionEnd &&
-          currentTarget.selectionStart === 0;
+        const _range = document.getSelection()?.getRangeAt(0);
+        if (!_range) return;
+        const range = _range.cloneRange();
+        range.selectNodeContents(e.currentTarget);
+        range.setEnd(_range.endContainer, _range.endOffset);
+        const isOnStart = range.toString().length === 0;
 
         if (isOnStart) {
           e.preventDefault();
@@ -77,6 +111,8 @@ export const NoteBlockComponent = ({
           if (mergedTo) {
             setEditState({
               id: mergedTo.id,
+              startPositionAt:
+                mergedTo.content.length - noteBlock.content.length,
             });
           }
         }
@@ -107,32 +143,28 @@ export const NoteBlockComponent = ({
     [noteBlock, setEditState]
   );
 
+  const handleChange = useCallback((e: ContentEditableEvent) => {
+    setContent(e.target.value);
+  }, []);
+
   return (
     <div className="note-block">
       <div className="note-block__body">
         <div className="note-block__dot" />({noteBlock.order})
-        {isEditing ? (
-          <TextareaAutosize
-            ref={inputRef}
-            className="note-block__input"
-            value={content}
-            autoFocus
-            onChange={(e) => setContent(e.target.value)}
-            onKeyPress={handleKeyPress}
-            onKeyDown={handleKeyDown}
-          />
-        ) : (
-          <div
-            className="note-block__content"
-            onClick={() =>
-              setEditState({
-                id: noteBlock.id,
-              })
-            }
-          >
-            {content}
-          </div>
-        )}
+        <ContentEditable
+          innerRef={inputRef}
+          className="note-block__content"
+          onClick={() =>
+            setEditState({
+              id: noteBlock.id,
+            })
+          }
+          contentEditable={true}
+          onKeyDown={handleKeyDown}
+          onKeyPress={handleKeyPress}
+          onChange={handleChange}
+          html={content}
+        />
       </div>
       {childBlocks.length !== 0 && (
         <div className="note-block__child-blocks">
@@ -152,4 +184,6 @@ const enhance = withObservables(['noteBlock'], ({ noteBlock }) => ({
   childBlocks: noteBlock.childBlocks,
 }));
 
-export const NoteBlock = enhance(NoteBlockComponent) as React.FC<InputProps>;
+export const NoteBlock = React.memo(
+  enhance(NoteBlockComponent) as React.FC<InputProps>
+);

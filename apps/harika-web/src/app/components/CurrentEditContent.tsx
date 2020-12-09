@@ -1,4 +1,4 @@
-import React from 'react';
+import { createContext } from 'use-context-selector';
 
 export type ICurrentEditState =
   | undefined
@@ -7,7 +7,7 @@ export type ICurrentEditState =
       startPositionAt?: number;
     };
 
-export const CurrentEditContext = React.createContext<
+export const CurrentEditContext = createContext<
   [
     editState: ICurrentEditState,
     setEditState: (state: ICurrentEditState) => void
