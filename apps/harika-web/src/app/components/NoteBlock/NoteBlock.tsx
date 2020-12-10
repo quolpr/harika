@@ -1,4 +1,3 @@
-import withObservables from '@nozbe/with-observables';
 import React, {
   useCallback,
   useEffect,
@@ -17,231 +16,227 @@ import sanitizeHtml from 'sanitize-html';
 import ReactMarkdown from 'react-markdown';
 import remarkBreaks from 'remark-breaks';
 import clsx from 'clsx';
-
-type InputProps = { noteBlock: NoteBlockModel };
+import { useTable } from '../../hooks/useTable';
 
 const plugins = [remarkBreaks];
 
-export const NoteBlockComponent = ({
-  noteBlock,
-  childBlocks,
-}: InputProps & { childBlocks: NoteBlockModel[] }) => {
-  const database = useDatabase();
-  const [content, setContent] = useState(noteBlock.content);
-  const setEditState = useContextSelector(
-    CurrentEditContext,
-    ([, setEditState]) => setEditState
-  );
-  const isEditing = useContextSelector(
-    CurrentEditContext,
-    ([editState]) => editState?.id === noteBlock.id
-  );
-  const startPositionAt = useContextSelector(
-    CurrentEditContext,
-    ([editState]) =>
-      editState?.id === noteBlock.id ? editState.startPositionAt : undefined
-  );
+export const NoteBlock = React.memo(
+  ({ noteBlock }: { noteBlock: NoteBlockModel }) => {
+    const database = useDatabase();
 
-  const inputRef = useRef<HTMLDivElement | null>(null);
+    noteBlock = useTable(noteBlock);
+    const childBlocks = useTable(noteBlock.childBlocks);
 
-  useClickAway(inputRef, () => {
-    if (isEditing) {
-      setEditState(undefined);
-    }
-  });
+    const [content, setContent] = useState(noteBlock.content);
+    const setEditState = useContextSelector(
+      CurrentEditContext,
+      ([, setEditState]) => setEditState
+    );
+    const isEditing = useContextSelector(
+      CurrentEditContext,
+      ([editState]) => editState?.id === noteBlock.id
+    );
+    const startPositionAt = useContextSelector(
+      CurrentEditContext,
+      ([editState]) =>
+        editState?.id === noteBlock.id ? editState.startPositionAt : undefined
+    );
 
-  useEffect(() => {
-    setContent(noteBlock.content);
-  }, [noteBlock.content]);
+    const inputRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => {
-    if (
-      isEditing &&
-      inputRef.current &&
-      document.activeElement !== inputRef.current
-    ) {
-      inputRef.current.focus();
-
-      const posAt = (() =>
-        startPositionAt ? startPositionAt : noteBlock.content.length)();
-
-      if (posAt === 0) return;
-
-      try {
-        const range = document.createRange();
-        const sel = window.getSelection();
-        if (!sel) return;
-        range.setStart(inputRef.current.childNodes[0], posAt);
-        range.collapse(true);
-        sel.removeAllRanges();
-        sel.addRange(range);
-      } catch (e) {
-        console.error('Failed to set start position!');
+    useClickAway(inputRef, () => {
+      if (isEditing) {
+        setEditState(undefined);
       }
-    }
-  }, [isEditing, startPositionAt, noteBlock.content.length]);
-
-  useEffect(() => {
-    if (noteBlock.content === content) return;
-
-    database.action(async () => {
-      await noteBlock.update((post) => {
-        post.content = content;
-      });
     });
-  }, [content, database, noteBlock]);
 
-  const handleKeyPress = useCallback(
-    async (e: React.KeyboardEvent<HTMLDivElement>) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        const newBlock = await noteBlock.injectNewRightBlock('');
+    useEffect(() => {
+      setContent(noteBlock.content);
+    }, [noteBlock.content]);
 
-        setEditState({
-          id: newBlock.id,
-        });
-      }
-    },
-    [setEditState, noteBlock]
-  );
+    useEffect(() => {
+      if (
+        isEditing &&
+        inputRef.current &&
+        document.activeElement !== inputRef.current
+      ) {
+        inputRef.current.focus();
 
-  const handleKeyDown = useCallback(
-    async (e: React.KeyboardEvent<HTMLDivElement>) => {
-      if (e.key === 'Backspace') {
-        const _range = document.getSelection()?.getRangeAt(0);
-        if (!_range) return;
-        const range = _range.cloneRange();
-        range.selectNodeContents(e.currentTarget);
-        range.setEnd(_range.endContainer, _range.endOffset);
-        const isOnStart = range.toString().length === 0;
+        const posAt = (() =>
+          startPositionAt ? startPositionAt : noteBlock.content.length)();
 
-        if (isOnStart) {
-          e.preventDefault();
+        if (posAt === 0) return;
 
-          const mergedTo = await noteBlock.mergeToLeftAndDelete();
-
-          if (mergedTo) {
-            setEditState({
-              id: mergedTo.id,
-              startPositionAt:
-                mergedTo.content.length - noteBlock.content.length,
-            });
-          }
+        try {
+          const range = document.createRange();
+          const sel = window.getSelection();
+          if (!sel) return;
+          range.setStart(inputRef.current.childNodes[0], posAt);
+          range.collapse(true);
+          sel.removeAllRanges();
+          sel.addRange(range);
+        } catch (e) {
+          console.error('Failed to set start position!');
         }
-      } else if (e.key === 'Tab' && !e.shiftKey) {
-        e.preventDefault();
+      }
+    }, [isEditing, startPositionAt, noteBlock.content.length]);
 
-        await noteBlock.tryMoveUp();
-      } else if (e.key === 'Tab' && e.shiftKey) {
-        e.preventDefault();
+    useEffect(() => {
+      if (noteBlock.content === content) return;
 
-        await noteBlock.tryMoveDown();
-      } else if (e.key === 'ArrowDown') {
-        e.preventDefault();
+      database.action(async () => {
+        await noteBlock.update((post) => {
+          post.content = content;
+        });
+      });
+    }, [content, database, noteBlock]);
 
-        const [, right] = await noteBlock.getLeftAndRight();
+    const handleKeyPress = useCallback(
+      async (e: React.KeyboardEvent<HTMLDivElement>) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          const newBlock = await noteBlock.injectNewRightBlock('');
 
-        if (right) {
           setEditState({
-            id: right.id,
+            id: newBlock.id,
           });
         }
-      } else if (e.key === 'ArrowUp') {
+      },
+      [setEditState, noteBlock]
+    );
+
+    const handleKeyDown = useCallback(
+      async (e: React.KeyboardEvent<HTMLDivElement>) => {
+        if (e.key === 'Backspace') {
+          const _range = document.getSelection()?.getRangeAt(0);
+          if (!_range) return;
+          const range = _range.cloneRange();
+          range.selectNodeContents(e.currentTarget);
+          range.setEnd(_range.endContainer, _range.endOffset);
+          const isOnStart = range.toString().length === 0;
+
+          if (isOnStart) {
+            e.preventDefault();
+
+            const mergedTo = await noteBlock.mergeToLeftAndDelete();
+
+            if (mergedTo) {
+              setEditState({
+                id: mergedTo.id,
+                startPositionAt:
+                  mergedTo.content.length - noteBlock.content.length,
+              });
+            }
+          }
+        } else if (e.key === 'Tab' && !e.shiftKey) {
+          e.preventDefault();
+
+          await noteBlock.tryMoveUp();
+        } else if (e.key === 'Tab' && e.shiftKey) {
+          e.preventDefault();
+
+          await noteBlock.tryMoveDown();
+        } else if (e.key === 'ArrowDown') {
+          e.preventDefault();
+
+          const [, right] = await noteBlock.getLeftAndRight();
+
+          if (right) {
+            setEditState({
+              id: right.id,
+            });
+          }
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+
+          const [left] = await noteBlock.getLeftAndRight();
+
+          if (left) {
+            setEditState({ id: left.id });
+          }
+        }
+      },
+      [noteBlock, setEditState]
+    );
+
+    const handleChange = useCallback((e: ContentEditableEvent) => {
+      setContent(e.target.value);
+    }, []);
+
+    const handleClick = useCallback(() => {
+      // const startAt = window.getSelection()?.getRangeAt(0)?.startOffset;
+      //
+      console.log(window.getSelection()?.getRangeAt(0)?.cloneRange());
+
+      setEditState({ id: noteBlock.id });
+    }, [noteBlock.id, setEditState]);
+
+    const handlePaste = useCallback(
+      (e: React.ClipboardEvent<HTMLDivElement>) => {
         e.preventDefault();
 
-        const [left] = await noteBlock.getLeftAndRight();
+        // get text representation of clipboard
+        const text = e.clipboardData.getData('text/plain');
 
-        if (left) {
-          setEditState({ id: left.id });
-        }
-      }
-    },
-    [noteBlock, setEditState]
-  );
+        // insert text manually
+        document.execCommand('insertHTML', false, text);
+      },
+      []
+    );
 
-  const handleChange = useCallback((e: ContentEditableEvent) => {
-    setContent(e.target.value);
-  }, []);
+    const renderers = useMemo(() => {
+      const root: React.FC<{ className?: string }> = ({
+        children,
+        className,
+      }) => {
+        return (
+          <div className={className} onClick={handleClick}>
+            {children}
+          </div>
+        );
+      };
 
-  const handleClick = useCallback(() => {
-    // const startAt = window.getSelection()?.getRangeAt(0)?.startOffset;
-    //
-    console.log(window.getSelection()?.getRangeAt(0)?.cloneRange());
+      return {
+        root,
+      };
+    }, [handleClick]);
 
-    setEditState({ id: noteBlock.id });
-  }, [noteBlock.id, setEditState]);
+    const handleBlur = useCallback(() => {
+      noteBlock.createNotesAndRefsIfNeeded();
+    }, [noteBlock]);
 
-  const handlePaste = useCallback((e: React.ClipboardEvent<HTMLDivElement>) => {
-    e.preventDefault();
-
-    // get text representation of clipboard
-    const text = e.clipboardData.getData('text/plain');
-
-    // insert text manually
-    document.execCommand('insertHTML', false, text);
-  }, []);
-
-  const renderers = useMemo(() => {
-    const root: React.FC<{ className?: string }> = ({
-      children,
-      className,
-    }) => {
-      return (
-        <div className={className} onClick={handleClick}>
-          {children}
+    return (
+      <div className="note-block">
+        <div className="note-block__body">
+          <div className="note-block__dot" />({noteBlock.order})
+          <ContentEditable
+            innerRef={inputRef}
+            className={clsx('note-block__content', { hidden: !isEditing })}
+            contentEditable={true}
+            onKeyDown={handleKeyDown}
+            onKeyPress={handleKeyPress}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            html={sanitizeHtml(content)}
+            onPaste={handlePaste}
+          />
+          <ReactMarkdown
+            plugins={plugins}
+            renderers={renderers}
+            source={content}
+            className={clsx('note-block__content', { hidden: isEditing })}
+          />
         </div>
-      );
-    };
-
-    return {
-      root,
-    };
-  }, [handleClick]);
-
-  const handleBlur = useCallback(() => {
-    noteBlock.createNotesAndRefsIfNeeded();
-  }, [noteBlock]);
-
-  return (
-    <div className="note-block">
-      <div className="note-block__body">
-        <div className="note-block__dot" />({noteBlock.order})
-        <ContentEditable
-          innerRef={inputRef}
-          className={clsx('note-block__content', { hidden: !isEditing })}
-          contentEditable={true}
-          onKeyDown={handleKeyDown}
-          onKeyPress={handleKeyPress}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          html={sanitizeHtml(content)}
-          onPaste={handlePaste}
-        />
-        <ReactMarkdown
-          plugins={plugins}
-          renderers={renderers}
-          source={content}
-          className={clsx('note-block__content', { hidden: isEditing })}
-        />
+        {childBlocks.length !== 0 && (
+          <div className="note-block__child-blocks">
+            {childBlocks
+              .sort((a, b) => a.order - b.order)
+              .map((childNoteBlock) => (
+                <NoteBlock key={childNoteBlock.id} noteBlock={childNoteBlock} />
+              ))}
+          </div>
+        )}
       </div>
-      {childBlocks.length !== 0 && (
-        <div className="note-block__child-blocks">
-          {childBlocks
-            .sort((a, b) => a.order - b.order)
-            .map((childNoteBlock) => (
-              <NoteBlock key={childNoteBlock.id} noteBlock={childNoteBlock} />
-            ))}
-        </div>
-      )}
-    </div>
-  );
-};
-
-const enhance = withObservables(['noteBlock'], ({ noteBlock }) => ({
-  noteBlock,
-  childBlocks: noteBlock.childBlocks,
-}));
-
-export const NoteBlock = React.memo(
-  enhance(NoteBlockComponent) as React.FC<InputProps>
+    );
+  }
 );

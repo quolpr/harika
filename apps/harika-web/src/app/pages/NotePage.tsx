@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import { Note } from '../components/Note/Note';
 import 'react-calendar/dist/Calendar.css';
@@ -10,42 +10,37 @@ import {
   HarikaNotesTableName,
 } from '@harika/harika-notes';
 import { isArray } from 'util';
-import { useObservable, useObservableState } from 'observable-hooks';
 import { Note as NoteModel } from '@harika/harika-notes';
 import { Q } from '@nozbe/watermelondb';
+import { useTableCustomSwitch } from '../hooks/useTable';
 
 export const NotePage = () => {
   const database = useDatabase();
   const history = useHistory();
   const { id } = useParams<{ id: string }>();
 
-  const input$ = useObservable(
-    () =>
+  const note = useTableCustomSwitch(
+    (val) =>
       database.collections
         .get<NoteModel>(HarikaNotesTableName.NOTES)
-        .query(Q.where('id', id))
+        .query(Q.where('id', val[0]))
         .observe(),
     [id]
-  );
-  const note = useObservableState(input$, null)?.[0];
+  )?.[0];
 
-  console.log(note?.title, id);
-
-  return (
+  return note ? (
     <>
-      {note && (
-        <Calendar
-          onChange={async (date) => {
-            if (isArray(date)) return;
+      <Calendar
+        onChange={async (date) => {
+          if (isArray(date)) return;
 
-            const note = await getOrCreateDailyNote(database, dayjs(date));
+          const note = await getOrCreateDailyNote(database, dayjs(date));
 
-            history.replace(`/notes/${note.id}`);
-          }}
-          value={dayjs(note.title, 'D MMM YYYY').toDate()}
-        />
-      )}
-      <Note noteId={id} />
+          history.replace(`/notes/${note.id}`);
+        }}
+        value={dayjs(note.title, 'D MMM YYYY').toDate()}
+      />
+      <Note note={note} />
     </>
-  );
+  ) : null;
 };

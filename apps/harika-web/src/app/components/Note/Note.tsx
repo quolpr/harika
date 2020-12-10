@@ -1,66 +1,43 @@
-import React from 'react';
-import withObservables from '@nozbe/with-observables';
+import React, { ChangeEvent, useCallback } from 'react';
 import TextareaAutosize from 'react-textarea-autosize';
 import { NoteBlock } from '../NoteBlock/NoteBlock';
-import {
-  HarikaNotesTableName,
-  NoteBlock as NoteBlockModel,
-} from '@harika/harika-notes';
+import { NoteBlock as NoteBlockModel } from '@harika/harika-notes';
 import { Note as NoteModel } from '@harika/harika-notes';
 import './styles.css';
-import { Database } from '@nozbe/watermelondb';
-import { withDatabase } from '@nozbe/watermelondb/DatabaseProvider';
+import { useDatabase } from '@nozbe/watermelondb/hooks';
+import { useTable } from '../../hooks/useTable';
 
-type InputProps = { noteId: string };
+export const Note: React.FC<{ note: NoteModel }> = React.memo(({ note }) => {
+  const database = useDatabase();
 
-const NoteBlocksComponent: React.FC<{
-  noteBlocks: NoteBlockModel[];
-}> = ({ noteBlocks }) => {
-  return (
-    <>
-      {NoteBlockModel.sort(noteBlocks).map((noteBlock) => (
-        <NoteBlock key={noteBlock.id} noteBlock={noteBlock} />
-      ))}
-    </>
+  note = useTable(note);
+  const noteBlocks = useTable(note.childNoteBlocks);
+
+  const handleChange = useCallback(
+    (e: ChangeEvent<HTMLTextAreaElement>) => {
+      database.action(async () => {
+        await note.update((toUpdate) => {
+          toUpdate.title = e.target.value;
+        });
+      });
+    },
+    [database, note]
   );
-};
-
-const NoteBlocks = withObservables(['note'], ({ note }) => ({
-  noteBlocks: note.childNoteBlocks,
-}))(NoteBlocksComponent);
-
-export const NoteComponent: React.FC<InputProps & { note: NoteModel }> = ({
-  note,
-  noteId,
-}) => {
-  console.log(noteId);
 
   return (
     <div className="note">
       <h2 className="note__header">
-        <TextareaAutosize className="note__input" value={note.title} />
+        <TextareaAutosize
+          className="note__input"
+          value={note.title}
+          onChange={handleChange}
+        />
       </h2>
       <div className="note__body">
-        <NoteBlocks note={note} />
+        {NoteBlockModel.sort(noteBlocks || []).map((noteBlock) => (
+          <NoteBlock key={noteBlock.id} noteBlock={noteBlock} />
+        ))}
       </div>
     </div>
   );
-};
-
-export const Note = withDatabase<InputProps & { database: Database }>(
-  withObservables(
-    ['noteId'],
-    ({ database, noteId }: { database: Database; noteId: string }) => {
-      const note = database.collections
-        .get<NoteModel>(HarikaNotesTableName.NOTES)
-        .findAndObserve(noteId);
-
-      // TODO: check if I can get childNoteBlocks here too
-      //
-
-      return {
-        note,
-      };
-    }
-  )(NoteComponent as any)
-);
+});
