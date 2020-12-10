@@ -27,7 +27,11 @@ export const NoteBlock = React.memo(
     noteBlock = useTable(noteBlock);
     const childBlocks = useTable(noteBlock.childBlocks);
 
-    const [content, setContent] = useState(noteBlock.content);
+    const [noteBlockContent, setNoteBlockContent] = useState({
+      content: noteBlock.content,
+      id: noteBlock.id,
+    });
+
     const setEditState = useContextSelector(
       CurrentEditContext,
       ([, setEditState]) => setEditState
@@ -78,14 +82,15 @@ export const NoteBlock = React.memo(
     }, [isEditing, startPositionAt, noteBlock.content.length]);
 
     useEffect(() => {
-      if (noteBlock.content === content) return;
+      if (noteBlock.id !== noteBlockContent.id) return;
+      if (noteBlock.content === noteBlockContent.content) return;
 
       database.action(async () => {
         await noteBlock.update((post) => {
-          post.content = content;
+          post.content = noteBlockContent.content;
         });
       });
-    }, [content, database, noteBlock]);
+    }, [database, noteBlock, noteBlockContent.content, noteBlockContent.id]);
 
     const handleKeyPress = useCallback(
       async (e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -155,9 +160,12 @@ export const NoteBlock = React.memo(
       [noteBlock, setEditState]
     );
 
-    const handleChange = useCallback((e: ContentEditableEvent) => {
-      setContent(e.target.value);
-    }, []);
+    const handleChange = useCallback(
+      (e: ContentEditableEvent) => {
+        setNoteBlockContent({ content: e.target.value, id: noteBlock.id });
+      },
+      [noteBlock.id]
+    );
 
     const handleClick = useCallback(() => {
       // const startAt = window.getSelection()?.getRangeAt(0)?.startOffset;
@@ -213,13 +221,13 @@ export const NoteBlock = React.memo(
             onKeyPress={handleKeyPress}
             onChange={handleChange}
             onBlur={handleBlur}
-            html={sanitizeHtml(content)}
+            html={sanitizeHtml(noteBlockContent.content)}
             onPaste={handlePaste}
           />
           <ReactMarkdown
             plugins={plugins}
             renderers={renderers}
-            source={content}
+            children={noteBlockContent.content}
             className={clsx('note-block__content', { hidden: isEditing })}
           />
         </div>

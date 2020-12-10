@@ -29,31 +29,35 @@ export const Header = () => {
     setIsOpened(!isOpened);
   }, [isOpened]);
 
+  const handleCalendarChange = useCallback(
+    async (date: Date | Date[]) => {
+      if (isArray(date)) return;
+
+      const note = await getOrCreateDailyNote(database, dayjs(date));
+
+      history.replace(`/notes/${note.id}`);
+    },
+    [database, history]
+  );
+
   return (
     <div className="header">
       <div className="header__brand">
         Harika<div className="header__brand-dot">.</div>
       </div>
 
-      <div className="header__calendar-wrapper">
+      <div ref={calendarRef} className="header__calendar-wrapper">
         <button onClick={handleOnCalendarClick}>
           <CalendarIcon className="header__calendar-icon" size={30} />
         </button>
 
         {/** Calendar doesn't have inputRef in typing :(*/}
         <Calendar
-          onChange={async (date) => {
-            if (isArray(date)) return;
-
-            const note = await getOrCreateDailyNote(database, dayjs(date));
-
-            history.replace(`/notes/${note.id}`);
-          }}
+          onChange={handleCalendarChange}
           value={currentNote?.dailyNoteDate}
           className={clsx('header__calendar', {
             'header__calendar--opened': isOpened,
           })}
-          {...({ inputRef: calendarRef } as any)}
         />
       </div>
     </div>

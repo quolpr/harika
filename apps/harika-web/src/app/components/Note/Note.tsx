@@ -1,4 +1,4 @@
-import React, { ChangeEvent, useCallback } from 'react';
+import React, { ChangeEvent, useCallback, useRef } from 'react';
 import TextareaAutosize from 'react-textarea-autosize';
 import { NoteBlock } from '../NoteBlock/NoteBlock';
 import { NoteBlock as NoteBlockModel } from '@harika/harika-notes';
@@ -15,32 +15,39 @@ export const Note: React.FC<{ note: NoteModel }> = React.memo(({ note }) => {
   note = useTable(note);
   const noteBlocks = useTable(note.childNoteBlocks);
 
-  const [title, setTitle] = useState(note.title);
+  const [editState, setEditState] = useState({
+    title: note.title,
+    id: note.id,
+  });
 
   useEffect(() => {
-    setTitle(note.title);
-  }, [note.title]);
+    setEditState({ title: note.title, id: note.id });
+  }, [note.id, note.title]);
 
   useEffect(() => {
-    if (note.title === title) return;
+    if (editState.id !== note.id) return;
+    if (editState.title === note.title) return;
 
     database.action(async () => {
       await note.update((toUpdate) => {
-        toUpdate.title = title;
+        toUpdate.title = editState.title;
       });
     });
-  }, [note, database, title]);
+  }, [database, editState.id, editState.title, note]);
 
-  const handleChange = useCallback((e: ChangeEvent<HTMLTextAreaElement>) => {
-    setTitle(e.target.value);
-  }, []);
+  const handleChange = useCallback(
+    (e: ChangeEvent<HTMLTextAreaElement>) => {
+      setEditState({ id: note.id, title: e.target.value });
+    },
+    [note.id]
+  );
 
   return (
     <div className="note">
       <h2 className="note__header">
         <TextareaAutosize
           className="note__input"
-          value={title}
+          value={editState.title}
           onChange={handleChange}
         />
       </h2>
