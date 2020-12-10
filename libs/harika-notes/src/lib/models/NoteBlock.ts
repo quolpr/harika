@@ -213,10 +213,12 @@ export class NoteBlock extends Model {
 
   @action async tryMoveDown() {
     const parent = (await this.parentBlock.fetch()) || undefined;
-    const parentToParent = (await parent?.parentBlock?.fetch()) || undefined;
+    const parentOfParent = (await parent?.parentBlock?.fetch()) || undefined;
+
+    if (parentOfParent === undefined && parent === undefined) return;
 
     await this.subAction(() =>
-      this.makeParentTo(parentToParent?.id, parent?.id)
+      this.makeParentTo(parentOfParent?.id, parent?.id)
     );
   }
 
