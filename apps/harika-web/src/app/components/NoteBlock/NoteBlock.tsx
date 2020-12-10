@@ -1,23 +1,13 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import './styles.css';
 import { useClickAway } from 'react-use';
 import { useDatabase } from '@nozbe/watermelondb/hooks';
 import { CurrentEditContext } from '../../contexts/CurrentEditContent';
 import { NoteBlock as NoteBlockModel } from '@harika/harika-notes';
 import { useContextSelector } from 'use-context-selector';
-import ReactMarkdown from 'react-markdown';
-import remarkBreaks from 'remark-breaks';
 import clsx from 'clsx';
 import { useTable } from '../../hooks/useTable';
 import TextareaAutosize from 'react-textarea-autosize';
-
-const plugins = [remarkBreaks];
 
 export const NoteBlock = React.memo(
   ({ noteBlock }: { noteBlock: NoteBlockModel }) => {
@@ -158,29 +148,8 @@ export const NoteBlock = React.memo(
     );
 
     const handleClick = useCallback(() => {
-      // const startAt = window.getSelection()?.getRangeAt(0)?.startOffset;
-      //
-      console.log(window.getSelection()?.getRangeAt(0)?.cloneRange());
-
       setEditState({ id: noteBlock.id });
     }, [noteBlock.id, setEditState]);
-
-    const renderers = useMemo(() => {
-      const root: React.FC<{ className?: string }> = ({
-        children,
-        className,
-      }) => {
-        return (
-          <div className={className} onClick={handleClick}>
-            {children}
-          </div>
-        );
-      };
-
-      return {
-        root,
-      };
-    }, [handleClick]);
 
     return (
       <div className="note-block">
@@ -195,12 +164,13 @@ export const NoteBlock = React.memo(
             onChange={handleChange}
             value={noteBlockContent.content}
           />
-          <ReactMarkdown
-            plugins={plugins}
-            renderers={renderers}
-            children={noteBlockContent.content}
+          <div
             className={clsx('note-block__content', { hidden: isEditing })}
-          />
+            onClick={handleClick}
+          >
+            {noteBlockContent.content}
+            {noteBlockContent.content.slice(-1) === '\n' && '\n'}
+          </div>
         </div>
         {childBlocks.length !== 0 && (
           <div className="note-block__child-blocks">
