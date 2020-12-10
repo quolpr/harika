@@ -205,10 +205,6 @@ export const NoteBlock = React.memo(
       };
     }, [handleClick]);
 
-    const handleBlur = useCallback(() => {
-      noteBlock.createNotesAndRefsIfNeeded();
-    }, [noteBlock]);
-
     return (
       <div className="note-block">
         <div className="note-block__body">
@@ -220,7 +216,6 @@ export const NoteBlock = React.memo(
             onKeyDown={handleKeyDown}
             onKeyPress={handleKeyPress}
             onChange={handleChange}
-            onBlur={handleBlur}
             html={sanitizeHtml(noteBlockContent.content)}
             onPaste={handlePaste}
           />

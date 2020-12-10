@@ -6,7 +6,7 @@ import { Note } from './models/Note';
 import { NoteBlock } from './models/NoteBlock';
 import { Database, Q } from '@nozbe/watermelondb';
 import { Dayjs } from 'dayjs';
-import { HarikaNotesTableName } from '..';
+import { HarikaNotesTableName } from './models/schema';
 
 export const getOrCreateDailyNote = async (database: Database, date: Dayjs) => {
   const title = date.format('D MMM YYYY');

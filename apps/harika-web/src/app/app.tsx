@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import './app.css';
 import { Header } from './components/Header/Header';
 import {
@@ -12,6 +12,36 @@ import {
   CurrentNoteIdContext,
   ICurrentNoteIdState,
 } from './contexts/CurrentNoteIdContext';
+import { usePrevious } from 'react-use';
+import { useContext } from 'use-context-selector';
+import { HarikaNotesTableName } from '@harika/harika-notes';
+import { NoteBlock as NoteBlockModel } from '@harika/harika-notes';
+import { useDatabase } from '@nozbe/watermelondb/hooks';
+
+const HandleNoteBlockBlur: React.FC = () => {
+  const database = useDatabase();
+  const [editState] = useContext(CurrentEditContext);
+
+  const prevId = usePrevious(editState?.id);
+
+  useEffect(() => {
+    (async () => {
+      if (!prevId) return;
+
+      if (editState?.id !== prevId) {
+        const noteBlock = await database.collections
+          .get<NoteBlockModel>(HarikaNotesTableName.NOTE_BLOCKS)
+          .find(prevId);
+
+        await noteBlock.createNotesAndRefsIfNeeded();
+
+        console.log('notes and refs are created!');
+      }
+    })();
+  });
+
+  return null;
+};
 
 export function App() {
   const stateActions = useState<ICurrentEditState>();
@@ -21,6 +51,8 @@ export function App() {
     <BrowserRouter>
       <CurrentNoteIdContext.Provider value={currentNoteIdActions}>
         <CurrentEditContext.Provider value={stateActions}>
+          <HandleNoteBlockBlur />
+
           <Header />
           <section className="main">
             <Switch>
