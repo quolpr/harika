@@ -10,13 +10,12 @@ import { useClickAway } from 'react-use';
 import { useDatabase } from '@nozbe/watermelondb/hooks';
 import { CurrentEditContext } from '../../contexts/CurrentEditContent';
 import { NoteBlock as NoteBlockModel } from '@harika/harika-notes';
-import ContentEditable, { ContentEditableEvent } from 'react-contenteditable';
 import { useContextSelector } from 'use-context-selector';
-import sanitizeHtml from 'sanitize-html';
 import ReactMarkdown from 'react-markdown';
 import remarkBreaks from 'remark-breaks';
 import clsx from 'clsx';
 import { useTable } from '../../hooks/useTable';
+import TextareaAutosize from 'react-textarea-autosize';
 
 const plugins = [remarkBreaks];
 
@@ -32,6 +31,10 @@ export const NoteBlock = React.memo(
       id: noteBlock.id,
     });
 
+    useEffect(() => {
+      setNoteBlockContent({ content: noteBlock.content, id: noteBlock.id });
+    }, [noteBlock.id, noteBlock.content]);
+
     const setEditState = useContextSelector(
       CurrentEditContext,
       ([, setEditState]) => setEditState
@@ -46,7 +49,7 @@ export const NoteBlock = React.memo(
         editState?.id === noteBlock.id ? editState.startPositionAt : undefined
     );
 
-    const inputRef = useRef<HTMLDivElement | null>(null);
+    const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
     useClickAway(inputRef, () => {
       if (isEditing) {
@@ -65,19 +68,8 @@ export const NoteBlock = React.memo(
         const posAt = (() =>
           startPositionAt ? startPositionAt : noteBlock.content.length)();
 
-        if (posAt === 0) return;
-
-        try {
-          const range = document.createRange();
-          const sel = window.getSelection();
-          if (!sel) return;
-          range.setStart(inputRef.current.childNodes[0], posAt);
-          range.collapse(true);
-          sel.removeAllRanges();
-          sel.addRange(range);
-        } catch (e) {
-          console.error('Failed to set start position!');
-        }
+        inputRef.current.selectionStart = posAt;
+        inputRef.current.selectionEnd = posAt;
       }
     }, [isEditing, startPositionAt, noteBlock.content.length]);
 
@@ -93,7 +85,7 @@ export const NoteBlock = React.memo(
     }, [database, noteBlock, noteBlockContent.content, noteBlockContent.id]);
 
     const handleKeyPress = useCallback(
-      async (e: React.KeyboardEvent<HTMLDivElement>) => {
+      async (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         if (e.key === 'Enter' && !e.shiftKey) {
           e.preventDefault();
           const newBlock = await noteBlock.injectNewRightBlock('');
@@ -107,14 +99,12 @@ export const NoteBlock = React.memo(
     );
 
     const handleKeyDown = useCallback(
-      async (e: React.KeyboardEvent<HTMLDivElement>) => {
+      async (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         if (e.key === 'Backspace') {
-          const _range = document.getSelection()?.getRangeAt(0);
-          if (!_range) return;
-          const range = _range.cloneRange();
-          range.selectNodeContents(e.currentTarget);
-          range.setEnd(_range.endContainer, _range.endOffset);
-          const isOnStart = range.toString().length === 0;
+          const start = e.currentTarget.selectionStart;
+          const end = e.currentTarget.selectionEnd;
+
+          const isOnStart = start === end && start === 0;
 
           if (isOnStart) {
             e.preventDefault();
@@ -161,7 +151,7 @@ export const NoteBlock = React.memo(
     );
 
     const handleChange = useCallback(
-      (e: ContentEditableEvent) => {
+      (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         setNoteBlockContent({ content: e.target.value, id: noteBlock.id });
       },
       [noteBlock.id]
@@ -174,19 +164,6 @@ export const NoteBlock = React.memo(
 
       setEditState({ id: noteBlock.id });
     }, [noteBlock.id, setEditState]);
-
-    const handlePaste = useCallback(
-      (e: React.ClipboardEvent<HTMLDivElement>) => {
-        e.preventDefault();
-
-        // get text representation of clipboard
-        const text = e.clipboardData.getData('text/plain');
-
-        // insert text manually
-        document.execCommand('insertHTML', false, text);
-      },
-      []
-    );
 
     const renderers = useMemo(() => {
       const root: React.FC<{ className?: string }> = ({
@@ -209,15 +186,14 @@ export const NoteBlock = React.memo(
       <div className="note-block">
         <div className="note-block__body">
           <div className="note-block__dot" />({noteBlock.order})
-          <ContentEditable
-            innerRef={inputRef}
+          <TextareaAutosize
+            ref={inputRef}
+            autoFocus
             className={clsx('note-block__content', { hidden: !isEditing })}
-            contentEditable={true}
             onKeyDown={handleKeyDown}
             onKeyPress={handleKeyPress}
             onChange={handleChange}
-            html={sanitizeHtml(noteBlockContent.content)}
-            onPaste={handlePaste}
+            value={noteBlockContent.content}
           />
           <ReactMarkdown
             plugins={plugins}
