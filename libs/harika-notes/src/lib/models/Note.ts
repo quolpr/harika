@@ -18,6 +18,7 @@ export class Note extends Model {
   };
 
   @field('title') title!: string;
+  @date('daily_note_date') dailyNoteDate!: Date | undefined;
   @readonly @date('created_at') createdAt!: Date;
   @readonly @date('updated_at') updatedAt!: Date;
 

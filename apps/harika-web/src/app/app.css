@@ -13,4 +13,5 @@
 
 .react-calendar {
   margin: 0 auto;
+  @apply mt-8;
 }

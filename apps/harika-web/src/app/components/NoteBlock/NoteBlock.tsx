@@ -51,10 +51,6 @@ export const NoteBlock = React.memo(
     });
 
     useEffect(() => {
-      setContent(noteBlock.content);
-    }, [noteBlock.content]);
-
-    useEffect(() => {
       if (
         isEditing &&
         inputRef.current &&

@@ -200,8 +200,6 @@ export class NoteBlock extends Model {
   @action async tryMoveUp() {
     const [left] = await this.getLeftAndRightSibling();
 
-    console.log(left);
-
     if (left) {
       const leftChildren = NoteBlock.sort(await left.childBlocks.fetch());
 

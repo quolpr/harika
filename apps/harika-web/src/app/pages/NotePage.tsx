@@ -14,7 +14,7 @@ import { Note as NoteModel } from '@harika/harika-notes';
 import { Q } from '@nozbe/watermelondb';
 import { useTableCustomSwitch } from '../hooks/useTable';
 
-export const NotePage = () => {
+export const NotePage = React.memo(() => {
   const database = useDatabase();
   const history = useHistory();
   const { id } = useParams<{ id: string }>();
@@ -30,17 +30,19 @@ export const NotePage = () => {
 
   return note ? (
     <>
-      <Calendar
-        onChange={async (date) => {
-          if (isArray(date)) return;
+      {note.dailyNoteDate ? (
+        <Calendar
+          onChange={async (date) => {
+            if (isArray(date)) return;
 
-          const note = await getOrCreateDailyNote(database, dayjs(date));
+            const note = await getOrCreateDailyNote(database, dayjs(date));
 
-          history.replace(`/notes/${note.id}`);
-        }}
-        value={dayjs(note.title, 'D MMM YYYY').toDate()}
-      />
+            history.replace(`/notes/${note.id}`);
+          }}
+          value={note.dailyNoteDate}
+        />
+      ) : null}
       <Note note={note} />
     </>
   ) : null;
-};
+});

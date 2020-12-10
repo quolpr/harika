@@ -10,6 +10,7 @@ import { HarikaNotesTableName } from '..';
 
 export const getOrCreateDailyNote = async (database: Database, date: Dayjs) => {
   const title = date.format('D MMM YYYY');
+  const startOfDate = date.startOf('day');
 
   const noteCollection = database.collections.get<Note>(
     HarikaNotesTableName.NOTES
@@ -18,7 +19,10 @@ export const getOrCreateDailyNote = async (database: Database, date: Dayjs) => {
     HarikaNotesTableName.NOTE_BLOCKS
   );
 
-  const notes = await noteCollection.query(Q.where('title', title)).fetch();
+  const notes = await noteCollection
+    .query(Q.where('daily_note_date', startOfDate.unix() * 1000))
+    .fetch();
+
   if (notes.length > 0) {
     if (notes.length > 1) {
       console.error(`Daily notes for ${title} is more then one!!`);
@@ -29,6 +33,7 @@ export const getOrCreateDailyNote = async (database: Database, date: Dayjs) => {
     return database.action<Note>(async () => {
       const newNote = await noteCollection.create((toCreate) => {
         toCreate.title = title;
+        toCreate.dailyNoteDate = startOfDate.toDate();
       });
 
       await noteBlockCollection.create((toCreate) => {

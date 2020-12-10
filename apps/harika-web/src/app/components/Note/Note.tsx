@@ -6,6 +6,8 @@ import { Note as NoteModel } from '@harika/harika-notes';
 import './styles.css';
 import { useDatabase } from '@nozbe/watermelondb/hooks';
 import { useTable } from '../../hooks/useTable';
+import { useEffect } from 'react';
+import { useState } from 'react';
 
 export const Note: React.FC<{ note: NoteModel }> = React.memo(({ note }) => {
   const database = useDatabase();
@@ -13,23 +15,32 @@ export const Note: React.FC<{ note: NoteModel }> = React.memo(({ note }) => {
   note = useTable(note);
   const noteBlocks = useTable(note.childNoteBlocks);
 
-  const handleChange = useCallback(
-    (e: ChangeEvent<HTMLTextAreaElement>) => {
-      database.action(async () => {
-        await note.update((toUpdate) => {
-          toUpdate.title = e.target.value;
-        });
+  const [title, setTitle] = useState(note.title);
+
+  useEffect(() => {
+    setTitle(note.title);
+  }, [note.title]);
+
+  useEffect(() => {
+    if (note.title === title) return;
+
+    database.action(async () => {
+      await note.update((toUpdate) => {
+        toUpdate.title = title;
       });
-    },
-    [database, note]
-  );
+    });
+  }, [note, database, title]);
+
+  const handleChange = useCallback((e: ChangeEvent<HTMLTextAreaElement>) => {
+    setTitle(e.target.value);
+  }, []);
 
   return (
     <div className="note">
       <h2 className="note__header">
         <TextareaAutosize
           className="note__input"
-          value={note.title}
+          value={title}
           onChange={handleChange}
         />
       </h2>

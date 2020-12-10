@@ -6,12 +6,13 @@ export enum HarikaNotesTableName {
 }
 
 export default appSchema({
-  version: 9,
+  version: 12,
   tables: [
     tableSchema({
       name: HarikaNotesTableName.NOTES,
       columns: [
         { name: 'title', type: 'string', isIndexed: true },
+        { name: 'daily_note_date', type: 'number', isIndexed: true },
         { name: 'created_at', type: 'number' },
         { name: 'updated_at', type: 'number' },
       ],
