@@ -4,7 +4,7 @@ import { Database } from '@nozbe/watermelondb';
 import LokiJSAdapter from '@nozbe/watermelondb/adapters/lokijs';
 import DatabaseProvider from '@nozbe/watermelondb/DatabaseProvider';
 import { useDatabase } from '@nozbe/watermelondb/hooks';
-import App from './app/app';
+import { App } from './app/app';
 import { noteSchema, Note, NoteBlock } from '@harika/harika-notes';
 
 const adapter = new LokiJSAdapter({

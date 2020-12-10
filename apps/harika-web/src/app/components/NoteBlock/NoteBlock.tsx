@@ -1,5 +1,11 @@
 import withObservables from '@nozbe/with-observables';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import './styles.css';
 import { useClickAway } from 'react-use';
 import { useDatabase } from '@nozbe/watermelondb/hooks';
@@ -7,8 +13,14 @@ import { CurrentEditContext } from '../CurrentEditContent';
 import { NoteBlock as NoteBlockModel } from '@harika/harika-notes';
 import ContentEditable, { ContentEditableEvent } from 'react-contenteditable';
 import { useContextSelector } from 'use-context-selector';
+import sanitizeHtml from 'sanitize-html';
+import ReactMarkdown from 'react-markdown';
+import remarkBreaks from 'remark-breaks';
+import clsx from 'clsx';
 
 type InputProps = { noteBlock: NoteBlockModel };
+
+const plugins = [remarkBreaks];
 
 export const NoteBlockComponent = ({
   noteBlock,
@@ -125,6 +137,8 @@ export const NoteBlockComponent = ({
 
         await noteBlock.tryMoveDown();
       } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+
         const [, right] = await noteBlock.getLeftAndRight();
 
         if (right) {
@@ -133,6 +147,8 @@ export const NoteBlockComponent = ({
           });
         }
       } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+
         const [left] = await noteBlock.getLeftAndRight();
 
         if (left) {
@@ -147,23 +163,65 @@ export const NoteBlockComponent = ({
     setContent(e.target.value);
   }, []);
 
+  const handleClick = useCallback(() => {
+    // const startAt = window.getSelection()?.getRangeAt(0)?.startOffset;
+    //
+    console.log(window.getSelection()?.getRangeAt(0)?.cloneRange());
+
+    setEditState({ id: noteBlock.id });
+  }, [noteBlock.id, setEditState]);
+
+  const handlePaste = useCallback((e: React.ClipboardEvent<HTMLDivElement>) => {
+    e.preventDefault();
+
+    // get text representation of clipboard
+    const text = e.clipboardData.getData('text/plain');
+
+    // insert text manually
+    document.execCommand('insertHTML', false, text);
+  }, []);
+
+  const renderers = useMemo(() => {
+    const root: React.FC<{ className?: string }> = ({
+      children,
+      className,
+    }) => {
+      return (
+        <div className={className} onClick={handleClick}>
+          {children}
+        </div>
+      );
+    };
+
+    return {
+      root,
+    };
+  }, [handleClick]);
+
+  const handleBlur = useCallback(() => {
+    noteBlock.createNotesAndRefsIfNeeded();
+  }, [noteBlock]);
+
   return (
     <div className="note-block">
       <div className="note-block__body">
         <div className="note-block__dot" />({noteBlock.order})
         <ContentEditable
           innerRef={inputRef}
-          className="note-block__content"
-          onClick={() =>
-            setEditState({
-              id: noteBlock.id,
-            })
-          }
+          className={clsx('note-block__content', { hidden: !isEditing })}
           contentEditable={true}
           onKeyDown={handleKeyDown}
           onKeyPress={handleKeyPress}
           onChange={handleChange}
-          html={content}
+          onBlur={handleBlur}
+          html={sanitizeHtml(content)}
+          onPaste={handlePaste}
+        />
+        <ReactMarkdown
+          plugins={plugins}
+          renderers={renderers}
+          source={content}
+          className={clsx('note-block__content', { hidden: isEditing })}
         />
       </div>
       {childBlocks.length !== 0 && (

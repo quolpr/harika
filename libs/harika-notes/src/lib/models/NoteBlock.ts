@@ -9,10 +9,10 @@ import {
   relation,
 } from '@nozbe/watermelondb/decorators';
 import { Associations } from '@nozbe/watermelondb/Model';
-import Note from './Note';
+import { Note } from './Note';
 import { HarikaNotesTableName } from './schema';
 
-export default class NoteBlock extends Model {
+export class NoteBlock extends Model {
   static table = HarikaNotesTableName.NOTE_BLOCKS;
 
   static associations: Associations = {
@@ -57,6 +57,12 @@ export default class NoteBlock extends Model {
   }
 
   async getAllSiblings() {
+    if (!this.parent_block_id) {
+      return NoteBlock.sort(
+        (await (await this.note.fetch())?.childNoteBlocks.fetch()) || []
+      );
+    }
+
     const parentBlock = await this.parentBlock.fetch();
 
     return NoteBlock.sort((await parentBlock?.childBlocks.fetch()) || []);
@@ -169,8 +175,6 @@ export default class NoteBlock extends Model {
     blockId: string | undefined,
     afterBlockId: string | undefined
   ) {
-    if (!blockId) return;
-
     const afterBlock = afterBlockId
       ? await this.collections
           .get<NoteBlock>(HarikaNotesTableName.NOTE_BLOCKS)
@@ -196,6 +200,8 @@ export default class NoteBlock extends Model {
   @action async tryMoveUp() {
     const [left] = await this.getLeftAndRightSibling();
 
+    console.log(left);
+
     if (left) {
       const leftChildren = NoteBlock.sort(await left.childBlocks.fetch());
 
@@ -211,6 +217,31 @@ export default class NoteBlock extends Model {
 
     await this.subAction(() =>
       this.makeParentTo(parentToParent?.id, parent?.id)
+    );
+  }
+
+  @action async createNotesAndRefsIfNeeded() {
+    const blocks = this.collections.get<Note>(HarikaNotesTableName.NOTES);
+
+    const names = [...this.content.matchAll(/\[\[(.+?)\]\]/g)].map(
+      ([, name]) => name
+    );
+
+    const existingNotes = Object.fromEntries(
+      (await blocks.query(Q.where('name', Q.oneOf(names))).fetch()).map((n) => [
+        n.title,
+        n,
+      ])
+    );
+
+    return Promise.all(
+      names.map(async (name) => {
+        if (!existingNotes[name]) {
+          blocks.create((rec) => {
+            rec.title = name;
+          });
+        }
+      })
     );
   }
 }

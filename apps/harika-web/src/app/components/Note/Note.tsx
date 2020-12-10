@@ -2,35 +2,65 @@ import React from 'react';
 import withObservables from '@nozbe/with-observables';
 import TextareaAutosize from 'react-textarea-autosize';
 import { NoteBlock } from '../NoteBlock/NoteBlock';
-import { NoteBlock as NoteBlockModel } from '@harika/harika-notes';
+import {
+  HarikaNotesTableName,
+  NoteBlock as NoteBlockModel,
+} from '@harika/harika-notes';
 import { Note as NoteModel } from '@harika/harika-notes';
 import './styles.css';
+import { Database } from '@nozbe/watermelondb';
+import { withDatabase } from '@nozbe/watermelondb/DatabaseProvider';
 
-type InputProps = { note: NoteModel };
+type InputProps = { noteId: string };
 
-export const NoteComponent = ({
+const NoteBlocksComponent: React.FC<{
+  noteBlocks: NoteBlockModel[];
+}> = ({ noteBlocks }) => {
+  return (
+    <>
+      {NoteBlockModel.sort(noteBlocks).map((noteBlock) => (
+        <NoteBlock key={noteBlock.id} noteBlock={noteBlock} />
+      ))}
+    </>
+  );
+};
+
+const NoteBlocks = withObservables(['note'], ({ note }) => ({
+  noteBlocks: note.childNoteBlocks,
+}))(NoteBlocksComponent);
+
+export const NoteComponent: React.FC<InputProps & { note: NoteModel }> = ({
   note,
-  noteBlocks,
-}: InputProps & { noteBlocks: NoteBlockModel[] }) => {
+  noteId,
+}) => {
+  console.log(noteId);
+
   return (
     <div className="note">
       <h2 className="note__header">
-        <TextareaAutosize className="note__input" defaultValue={note.title} />
+        <TextareaAutosize className="note__input" value={note.title} />
       </h2>
       <div className="note__body">
-        {noteBlocks
-          .sort((a, b) => a.order - b.order)
-          .map((noteBlock) => (
-            <NoteBlock key={noteBlock.id} noteBlock={noteBlock} />
-          ))}
+        <NoteBlocks note={note} />
       </div>
     </div>
   );
 };
 
-const enhance = withObservables(['note'], ({ note }) => ({
-  note: note.observe(),
-  noteBlocks: note.childNoteBlocks.observe(),
-}));
+export const Note = withDatabase<InputProps & { database: Database }>(
+  withObservables(
+    ['noteId'],
+    ({ database, noteId }: { database: Database; noteId: string }) => {
+      const note = database.collections
+        .get<NoteModel>(HarikaNotesTableName.NOTES)
+        .findAndObserve(noteId);
 
-export const Note = React.memo(enhance(NoteComponent) as React.FC<InputProps>);
+      // TODO: check if I can get childNoteBlocks here too
+      //
+
+      return {
+        note,
+      };
+    }
+  )(NoteComponent as any)
+);

@@ -8,9 +8,9 @@ import {
   readonly,
 } from '@nozbe/watermelondb/decorators';
 import { HarikaNotesTableName } from './schema';
-import NoteBlock from './NoteBlock';
+import { NoteBlock } from './NoteBlock';
 
-export default class Note extends Model {
+export class Note extends Model {
   static table = HarikaNotesTableName.NOTES;
 
   static associations: Associations = {

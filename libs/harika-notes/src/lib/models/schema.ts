@@ -1,5 +1,3 @@
-import Note from './Note';
-import NoteBlock from './NoteBlock';
 import { appSchema, tableSchema } from '@nozbe/watermelondb';
 
 export enum HarikaNotesTableName {
@@ -8,7 +6,7 @@ export enum HarikaNotesTableName {
 }
 
 export default appSchema({
-  version: 5,
+  version: 9,
   tables: [
     tableSchema({
       name: HarikaNotesTableName.NOTES,
