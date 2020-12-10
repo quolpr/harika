@@ -24,7 +24,12 @@ module.exports = (config, context) => {
     },
     node: {
      fs: "empty"
+    },
+    devServer: {
+      ...config.devServer,
+      hot: true
     }
+
   };
 };
 

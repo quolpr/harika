@@ -9,4 +9,24 @@
   &__brand-dot {
     @apply inline text-pink-600;
   }
+
+  &__calendar-wrapper {
+    @apply mr-8 relative;
+  }
+
+  &__calendar-icon {
+  }
+
+  &__calendar {
+    display: none;
+
+    @apply top-2 right-0 -mr-2;
+
+    position: absolute;
+    min-width: 350px;
+
+    &--opened {
+      display: block;
+    }
+  }
 }

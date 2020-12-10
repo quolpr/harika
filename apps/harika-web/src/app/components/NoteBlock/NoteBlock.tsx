@@ -8,7 +8,7 @@ import React, {
 import './styles.css';
 import { useClickAway } from 'react-use';
 import { useDatabase } from '@nozbe/watermelondb/hooks';
-import { CurrentEditContext } from '../CurrentEditContent';
+import { CurrentEditContext } from '../../contexts/CurrentEditContent';
 import { NoteBlock as NoteBlockModel } from '@harika/harika-notes';
 import ContentEditable, { ContentEditableEvent } from 'react-contenteditable';
 import { useContextSelector } from 'use-context-selector';
