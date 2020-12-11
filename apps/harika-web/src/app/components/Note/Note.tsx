@@ -44,11 +44,7 @@ export const Note: React.FC<{ note: NoteModel }> = React.memo(({ note }) => {
     if (editState.id !== note.id) return;
     if (editState.title === note.title) return;
 
-    database.action(async () => {
-      await note.update((toUpdate) => {
-        toUpdate.title = editState.title;
-      });
-    });
+    note.updateTitle(editState.title);
   }, [database, editState.id, editState.title, note]);
 
   const handleChange = useCallback(

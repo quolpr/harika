@@ -284,4 +284,13 @@ export class NoteBlock extends Model {
       })
     );
   }
+
+  @action async updateNoteRefName(oldName: string, newName: string) {
+    this.update((toUpdate) => {
+      toUpdate.content = Object.assign('', this.content).replace(
+        new RegExp(`\\[\\[${oldName}\\]\\]/`, 'g'),
+        `[[${newName}]]`
+      );
+    });
+  }
 }

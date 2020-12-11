@@ -1,6 +1,7 @@
 import { Model, Q, Query } from '@nozbe/watermelondb';
 import { Associations } from '@nozbe/watermelondb/Model';
 import {
+  action,
   children,
   date,
   field,
@@ -42,4 +43,20 @@ export class Note extends Model {
   backlinkedBlocks = this.collections
     .get<NoteBlock>(HarikaNotesTableName.NOTE_BLOCKS)
     .query(Q.on(HarikaNotesTableName.NOTE_REFS, 'note_id', this.id));
+
+  @action async updateTitle(newTitle: string) {
+    const blocks = await this.backlinkedBlocks.fetch();
+
+    const oldName = this.title;
+
+    await this.update((toUpdate) => {
+      toUpdate.title = newTitle;
+    });
+
+    await Promise.all(
+      blocks.map((b) =>
+        this.subAction(() => b.updateNoteRefName(oldName, newTitle))
+      )
+    );
+  }
 }
