@@ -13,12 +13,21 @@ import clsx from 'clsx';
 import TextareaAutosize from 'react-textarea-autosize';
 import { NoteBlockDocument } from '../../models/noteBlocks';
 import { useIsFocused } from '../../hooks/useIsFocused';
-import { useRxQuery } from 'rxdb-hooks';
+import { useRxDB } from 'rxdb-hooks';
+import { HarikaDatabase } from '../../initDb';
+import { useObservableEagerState } from 'observable-hooks';
+import equal from 'fast-deep-equal';
+import { distinctUntilChanged } from 'rxjs/operators';
 
-export const NoteBlock = ({ noteBlock }: { noteBlock: NoteBlockDocument }) => {
-  const { result: childBlocks } = useRxQuery<NoteBlockDocument>(
-    useMemo(() => noteBlock.getChildBlocks(), [noteBlock])
-  );
+const NoteBlockComponent = ({
+  noteBlock,
+}: {
+  noteBlock: NoteBlockDocument;
+}) => {
+  // const { result: childBlocks } = useRxQuery<NoteBlockDocument>(
+  //   useMemo(() => noteBlock.getChildBlocks(), [noteBlock])
+  // );
+  const childBlocks = [];
   const [isFocused, attrs] = useIsFocused();
 
   const [noteBlockContent, setNoteBlockContent] = useState({
@@ -179,10 +188,22 @@ export const NoteBlock = ({ noteBlock }: { noteBlock: NoteBlockDocument }) => {
       {childBlocks.length !== 0 && (
         <div className="note-block__child-blocks">
           {childBlocks.map((childNoteBlock) => (
-            <NoteBlock key={childNoteBlock._id} noteBlock={childNoteBlock} />
+            <NoteBlock key={childNoteBlock._id} id={childNoteBlock._id} />
           ))}
         </div>
       )}
     </div>
   );
 };
+
+export const NoteBlock = React.memo(({ id }: { id: string }) => {
+  const db = useRxDB<HarikaDatabase>();
+
+  const noteBlock = useObservableEagerState(
+    useMemo(() => db.noteblocks.findOne(id).$, [db.noteblocks, id])
+  );
+
+  console.log('heyy!');
+
+  return noteBlock ? <NoteBlockComponent noteBlock={noteBlock} /> : null;
+});

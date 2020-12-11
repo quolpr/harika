@@ -10,10 +10,9 @@ import {
 } from './models/noteBlocks';
 import { HarikaDatabaseDocuments } from './HarikaDatabaseDocuments';
 
-addRxPlugin(indexedDb);
+addRxPlugin(require('pouchdb-adapter-memory'));
 addRxPlugin(RxDBLeaderElectionPlugin);
 addRxPlugin(RxDBReplicationPlugin);
-addRxPlugin(RxDBNoValidatePlugin);
 
 export type DbCollections = {
   [HarikaDatabaseDocuments.NOTES]: NoteCollection;
@@ -26,7 +25,7 @@ export const initDb = async () => {
   console.log('DatabaseService: creating database..');
   const db: HarikaDatabase = await createRxDatabase<DbCollections>({
     name: 'harika_notes',
-    adapter: 'indexeddb',
+    adapter: 'memory',
   });
 
   console.log('DatabaseService: created database');

@@ -25,7 +25,7 @@ export const schema: RxJsonSchema<NoteBlockDocType> = {
     },
     parentBlockId: {
       ref: HarikaDatabaseDocuments.NOTE_BLOCKS,
-      type: 'string',
+      type: ['string', 'null'],
     },
     noteId: {
       ref: HarikaDatabaseDocuments.NOTES,
@@ -39,7 +39,7 @@ export const schema: RxJsonSchema<NoteBlockDocType> = {
     },
   },
   required: ['noteId', 'content', 'order'],
-  indexes: ['_id', 'parentBlockId', 'noteId', 'order'],
+  indexes: ['_id', 'noteId', 'order'],
 };
 
 type DocMethods = {
@@ -66,6 +66,8 @@ type DocMethods = {
   traverseLast(): Promise<NoteBlockDocument | undefined>;
   reverseRight(): Promise<NoteBlockDocument | undefined>;
 };
+
+let order = 1000;
 
 export const docMethods: DocMethods = {
   getNote(this: NoteBlockDocument) {
@@ -153,34 +155,38 @@ export const docMethods: DocMethods = {
   },
   async injectNewRightBlock(this: NoteBlockDocument, newContent) {
     const database = this.collection.database;
-    const children = await this.getChildBlocks().exec();
+    // const children = await this.getChildBlocks().exec();
 
-    const { toMove, newEntityValues } = await (async () => {
-      if (children.length) {
-        return {
-          toMove: children,
-          newEntityValues: { order: 0, parentBlockId: this._id },
-        };
-      } else {
-        return {
-          toMove: await this.getAllRightSiblings(),
-          newEntityValues: {
-            order: this.order + 1,
-            parentBlockId: this.parentBlockId,
-          },
-        };
-      }
-    })();
+    // const { toMove, newEntityValues } = await (async () => {
+    //   if (children.length) {
+    //     return {
+    //       toMove: children,
+    //       newEntityValues: { order: 0, parentBlockId: this._id },
+    //     };
+    //   } else {
+    //     return {
+    //       toMove: await this.getAllRightSiblings(),
+    //       newEntityValues: {
+    //         order: this.order + 1,
+    //         parentBlockId: this.parentBlockId,
+    //       },
+    //     };
+    //   }
+    // })();
 
-    toMove.forEach((block) => {
-      block.atomicPatch({ order: block.order + 1 });
-    });
+    // console.log('update start');
+    // await Promise.all(
+    //   toMove.map((block) => {
+    //     return block.update({ $inc: { order: 1 } });
+    //   })
+    // );
+    // console.log('update finish');
 
     // TODO: fix `as unknown`
     return createBlockNote((database as unknown) as HarikaDatabase, {
       noteId: this.noteId,
-      parentBlockId: newEntityValues.parentBlockId,
-      order: newEntityValues.order,
+      parentBlockId: null,
+      order: order++,
       content: newContent,
     });
   },

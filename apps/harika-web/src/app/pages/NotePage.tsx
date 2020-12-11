@@ -16,5 +16,5 @@ export const NotePage = React.memo(() => {
 
   const note = useCurrentNote();
 
-  return note ? <Note note={note} /> : null;
+  return note ? <Note id={note._id} /> : null;
 });

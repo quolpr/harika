@@ -3,16 +3,17 @@ import TextareaAutosize from 'react-textarea-autosize';
 import { NoteBlock } from '../NoteBlock/NoteBlock';
 import { NoteBlock as NoteBlockModel } from '@harika/harika-notes';
 import './styles.css';
-import { useDatabase } from '@nozbe/watermelondb/hooks';
 import { useTable } from '../../hooks/useTable';
 import { useEffect } from 'react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { NoteDocument } from '../../models/note';
 import { useIsFocused } from '../../hooks/useIsFocused';
-import { useRxData, useRxQuery } from 'rxdb-hooks';
-import { HarikaDatabaseDocuments } from '../../HarikaDatabaseDocuments';
+import { useRxDB, useRxDocument, useRxQuery } from 'rxdb-hooks';
 import { NoteBlockDocument } from '../../models/noteBlocks';
+import { HarikaDatabaseDocuments } from '../../HarikaDatabaseDocuments';
+import { HarikaDatabase } from '../../initDb';
+import { useObservableEagerState } from 'observable-hooks';
 
 const Backlink = ({ noteBlock }: { noteBlock: NoteBlockModel }) => {
   noteBlock = useTable(noteBlock);
@@ -28,12 +29,15 @@ const Backlink = ({ noteBlock }: { noteBlock: NoteBlockModel }) => {
   ) : null;
 };
 
-export const Note: React.FC<{ note: NoteDocument }> = ({ note }) => {
+const NoteComponent: React.FC<{ note: NoteDocument }> = ({ note }) => {
   const backlinkedBlocks: Array<any> = [];
 
-  const { result: noteBlocks } = useRxQuery<NoteBlockDocument>(
-    useMemo(() => note.getChildNoteBlocks(), [note])
-  );
+  const noteBlocks =
+    useObservableEagerState(
+      useMemo(() => note.getChildNoteBlocks().$, [note])
+    ) || [];
+
+  console.log('heYNotete!');
 
   const [isFocused, attrs] = useIsFocused();
 
@@ -74,7 +78,7 @@ export const Note: React.FC<{ note: NoteDocument }> = ({ note }) => {
       </h2>
       <div className="note__body">
         {noteBlocks.map((noteBlock) => (
-          <NoteBlock key={noteBlock._id} noteBlock={noteBlock} />
+          <NoteBlock key={noteBlock._id} id={noteBlock._id} />
         ))}
       </div>
 
@@ -86,3 +90,13 @@ export const Note: React.FC<{ note: NoteDocument }> = ({ note }) => {
     </div>
   );
 };
+
+export const Note = React.memo(({ id }: { id: string }) => {
+  const db = useRxDB<HarikaDatabase>();
+
+  const note = useObservableEagerState(
+    useMemo(() => db.notes.findOne(id).$, [db.notes, id])
+  );
+
+  return note ? <NoteComponent note={note} /> : null;
+});
