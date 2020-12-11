@@ -1,19 +1,19 @@
 import React, { useCallback, useRef, useState } from 'react';
 import { Link, useHistory } from 'react-router-dom';
 import { Calendar as CalendarIcon } from 'heroicons-react';
-
 import './styles.css';
 import { isArray } from 'util';
-import { getOrCreateDailyNote } from '@harika/harika-notes';
 import dayjs from 'dayjs';
-import { useDatabase } from '@nozbe/watermelondb/hooks';
 import { useCurrentNote } from '../../hooks/useCurrentNote';
 import Calendar from 'react-calendar';
 import clsx from 'clsx';
 import { useClickAway } from 'react-use';
+import { useRxDB } from 'rxdb-hooks';
+import { HarikaDatabase } from '../../initDb';
+import { getOrCreateDailyNote } from '../../models/note';
 
 export const Header = () => {
-  const database = useDatabase();
+  const db = useRxDB<HarikaDatabase>();
   const history = useHistory();
 
   const currentNote = useCurrentNote();
@@ -33,11 +33,11 @@ export const Header = () => {
     async (date: Date | Date[]) => {
       if (isArray(date)) return;
 
-      const note = await getOrCreateDailyNote(database, dayjs(date));
+      const note = await getOrCreateDailyNote(db, dayjs(date));
 
-      history.replace(`/notes/${note.id}`);
+      history.replace(`/notes/${note._id}`);
     },
-    [database, history]
+    [db, history]
   );
 
   return (
@@ -56,7 +56,9 @@ export const Header = () => {
         {/** Calendar doesn't have inputRef in typing :(*/}
         <Calendar
           onChange={handleCalendarChange}
-          value={currentNote?.dailyNoteDate}
+          value={
+            currentNote ? new Date(currentNote.dailyNoteDate * 1000) : undefined
+          }
           className={clsx('header__calendar', {
             'header__calendar--opened': isOpened,
           })}

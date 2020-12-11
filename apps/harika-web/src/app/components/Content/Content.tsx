@@ -1,19 +1,17 @@
 import React from 'react';
-import { HarikaNotesTableName } from '@harika/harika-notes';
-import { useDatabase } from '@nozbe/watermelondb/hooks';
-import { useTable, useTableCustomSwitch } from '../../hooks/useTable';
-import { Note as NoteModel } from '@harika/harika-notes';
 import { Link } from 'react-router-dom';
 import { useCurrentNote } from '../../hooks/useCurrentNote';
 import clsx from 'clsx';
+import { useRxData } from 'rxdb-hooks';
+import { HarikaDatabaseDocuments } from '../../HarikaDatabaseDocuments';
+import { NoteDocType, NoteDocument } from '../../models/note';
 
-const TitleLink = ({ note }: { note: NoteModel }) => {
+const TitleLink = ({ note }: { note: NoteDocument }) => {
   const currentNote = useCurrentNote();
 
-  note = useTable(note);
   return (
     <Link
-      to={`/notes/${note.id}`}
+      to={`/notes/${note._id}`}
       className={clsx({ 'font-bold': currentNote === note })}
     >
       {note.title}
@@ -22,22 +20,16 @@ const TitleLink = ({ note }: { note: NoteModel }) => {
 };
 
 export const Content = () => {
-  const database = useDatabase();
-
-  const notes = useTableCustomSwitch(
-    () =>
-      database.collections
-        .get<NoteModel>(HarikaNotesTableName.NOTES)
-        .query()
-        .observe(),
-    []
+  const { result: notes } = useRxData<NoteDocType>(
+    HarikaDatabaseDocuments.NOTES,
+    (collection) => collection.find()
   );
 
   return (
     <div>
-      <ul className="list-disc fixed left-0 mt-10 ml-10 pl-8 pr-4 py-3 bg-green-300 rounded">
-        {(notes || []).map((note) => (
-          <li key={note.id}>
+      <ul className="list-disc fixed left-0 mt-10 ml-10 pl-8 pr-4 py-3 bg-green-300 rounded max-w-xs break-all">
+        {notes.map((note) => (
+          <li key={note._id}>
             <TitleLink note={note} />
           </li>
         ))}

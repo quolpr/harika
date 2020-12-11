@@ -45,3 +45,5 @@ export const getOrCreateDailyNote = async (database: Database, date: Dayjs) => {
     });
   }
 };
+
+// TODO: createNote()

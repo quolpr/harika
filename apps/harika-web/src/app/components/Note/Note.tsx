@@ -1,14 +1,18 @@
-import React, { ChangeEvent, useCallback, useRef } from 'react';
+import React, { ChangeEvent, useCallback, useMemo, useRef } from 'react';
 import TextareaAutosize from 'react-textarea-autosize';
 import { NoteBlock } from '../NoteBlock/NoteBlock';
 import { NoteBlock as NoteBlockModel } from '@harika/harika-notes';
-import { Note as NoteModel } from '@harika/harika-notes';
 import './styles.css';
 import { useDatabase } from '@nozbe/watermelondb/hooks';
 import { useTable } from '../../hooks/useTable';
 import { useEffect } from 'react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { NoteDocument } from '../../models/note';
+import { useIsFocused } from '../../hooks/useIsFocused';
+import { useRxData, useRxQuery } from 'rxdb-hooks';
+import { HarikaDatabaseDocuments } from '../../HarikaDatabaseDocuments';
+import { NoteBlockDocument } from '../../models/noteBlocks';
 
 const Backlink = ({ noteBlock }: { noteBlock: NoteBlockModel }) => {
   noteBlock = useTable(noteBlock);
@@ -24,34 +28,38 @@ const Backlink = ({ noteBlock }: { noteBlock: NoteBlockModel }) => {
   ) : null;
 };
 
-export const Note: React.FC<{ note: NoteModel }> = React.memo(({ note }) => {
-  const database = useDatabase();
+export const Note: React.FC<{ note: NoteDocument }> = ({ note }) => {
+  const backlinkedBlocks: Array<any> = [];
 
-  note = useTable(note);
-  const noteBlocks = useTable(note.childNoteBlocks);
-  const backlinkedBlocks = useTable(note.backlinkedBlocks);
+  const { result: noteBlocks } = useRxQuery<NoteBlockDocument>(
+    useMemo(() => note.childNoteBlocks(), [note])
+  );
+
+  const [isFocused, attrs] = useIsFocused();
 
   const [editState, setEditState] = useState({
     title: note.title,
-    id: note.id,
+    id: note._id,
   });
 
   useEffect(() => {
-    setEditState({ title: note.title, id: note.id });
-  }, [note.id, note.title]);
+    if (!isFocused) {
+      setEditState({ title: note.title, id: note._id });
+    }
+  }, [note._id, note.title, isFocused]);
 
   useEffect(() => {
-    if (editState.id !== note.id) return;
+    if (editState.id !== note._id) return;
     if (editState.title === note.title) return;
 
     note.updateTitle(editState.title);
-  }, [database, editState.id, editState.title, note]);
+  }, [editState.id, editState.title, note]);
 
   const handleChange = useCallback(
     (e: ChangeEvent<HTMLTextAreaElement>) => {
-      setEditState({ id: note.id, title: e.target.value });
+      setEditState({ id: note._id, title: e.target.value });
     },
-    [note.id]
+    [note._id]
   );
 
   return (
@@ -61,11 +69,12 @@ export const Note: React.FC<{ note: NoteModel }> = React.memo(({ note }) => {
           className="note__input"
           value={editState.title}
           onChange={handleChange}
+          {...attrs}
         />
       </h2>
       <div className="note__body">
-        {NoteBlockModel.sort(noteBlocks || []).map((noteBlock) => (
-          <NoteBlock key={noteBlock.id} noteBlock={noteBlock} />
+        {noteBlocks.map((noteBlock) => (
+          <NoteBlock key={noteBlock._id} noteBlock={noteBlock} />
         ))}
       </div>
 
@@ -76,4 +85,4 @@ export const Note: React.FC<{ note: NoteModel }> = React.memo(({ note }) => {
       ))}
     </div>
   );
-});
+};

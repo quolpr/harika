@@ -18,6 +18,8 @@ import { HarikaNotesTableName } from '@harika/harika-notes';
 import { NoteBlock as NoteBlockModel } from '@harika/harika-notes';
 import { useDatabase } from '@nozbe/watermelondb/hooks';
 import { Content } from './components/Content/Content';
+import { HarikaDatabase, initDb } from './initDb';
+import { Provider } from 'rxdb-hooks';
 
 const HandleNoteBlockBlur: React.FC = () => {
   const database = useDatabase();
@@ -48,26 +50,36 @@ export function App() {
   const stateActions = useState<ICurrentEditState>();
   const currentNoteIdActions = useState<ICurrentNoteIdState>();
 
+  const [db, setDb] = useState<HarikaDatabase | undefined>();
+
+  useEffect(() => {
+    const callback = async () => {
+      const _db = await initDb();
+      setDb(_db);
+    };
+    callback();
+  }, []);
+
   return (
     <BrowserRouter>
-      <CurrentNoteIdContext.Provider value={currentNoteIdActions}>
-        <CurrentEditContext.Provider value={stateActions}>
-          <HandleNoteBlockBlur />
-
-          <Header />
-          <Content />
-          <section className="main">
-            <Switch>
-              <Route exact path="/">
-                <MainPageRedirect />
-              </Route>
-              <Route path="/notes/:id">
-                <NotePage />
-              </Route>
-            </Switch>
-          </section>
-        </CurrentEditContext.Provider>
-      </CurrentNoteIdContext.Provider>
+      <Provider db={db}>
+        <CurrentNoteIdContext.Provider value={currentNoteIdActions}>
+          <CurrentEditContext.Provider value={stateActions}>
+            <Header />
+            <Content />
+            <section className="main">
+              <Switch>
+                <Route exact path="/">
+                  <MainPageRedirect />
+                </Route>
+                <Route path="/notes/:id">
+                  <NotePage />
+                </Route>
+              </Switch>
+            </section>
+          </CurrentEditContext.Provider>
+        </CurrentNoteIdContext.Provider>
+      </Provider>
     </BrowserRouter>
   );
 }
