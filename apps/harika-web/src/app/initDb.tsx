@@ -9,10 +9,24 @@ import {
   NoteBlockCollection,
 } from './models/noteBlocks';
 import { HarikaDatabaseDocuments } from './HarikaDatabaseDocuments';
+import pouchdbDebug from 'pouchdb-debug';
+import { PouchDB } from 'rxdb';
 
+// (async() => {
+//   console.time('timer1');
+// await db.collections.noteblocks.pouch.find({
+//   selector: {parentBlockId: 'c2gtteuve6:1607708583190'},
+//   fields: ['_id', 'content'],
+// })
+//   console.timeEnd('timer1');
+// })()
+
+PouchDB.plugin(pouchdbDebug);
+
+PouchDB.debug.enable('*');
+
+addRxPlugin(RxDBNoValidatePlugin);
 addRxPlugin(require('pouchdb-adapter-memory'));
-addRxPlugin(RxDBLeaderElectionPlugin);
-addRxPlugin(RxDBReplicationPlugin);
 
 export type DbCollections = {
   [HarikaDatabaseDocuments.NOTES]: NoteCollection;
@@ -26,7 +40,10 @@ export const initDb = async () => {
   const db: HarikaDatabase = await createRxDatabase<DbCollections>({
     name: 'harika_notes',
     adapter: 'memory',
+    eventReduce: false,
   });
+
+  window.db = db;
 
   console.log('DatabaseService: created database');
 
@@ -43,6 +60,7 @@ export const initDb = async () => {
     [HarikaDatabaseDocuments.NOTES]: dbNotesCollection,
     [HarikaDatabaseDocuments.NOTE_BLOCKS]: dbNoteBlocksCollection,
   });
+  console.log(db.collections.noteblocks.pouch);
 
   return db;
 };

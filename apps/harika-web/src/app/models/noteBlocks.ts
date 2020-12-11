@@ -25,7 +25,7 @@ export const schema: RxJsonSchema<NoteBlockDocType> = {
     },
     parentBlockId: {
       ref: HarikaDatabaseDocuments.NOTE_BLOCKS,
-      type: ['string', 'null'],
+      type: 'string',
     },
     noteId: {
       ref: HarikaDatabaseDocuments.NOTES,
@@ -39,7 +39,7 @@ export const schema: RxJsonSchema<NoteBlockDocType> = {
     },
   },
   required: ['noteId', 'content', 'order'],
-  indexes: ['_id', 'noteId', 'order'],
+  indexes: ['_id', 'noteId', 'order', 'parentBlockId'],
 };
 
 type DocMethods = {
@@ -65,6 +65,7 @@ type DocMethods = {
   ): Promise<void>;
   traverseLast(): Promise<NoteBlockDocument | undefined>;
   reverseRight(): Promise<NoteBlockDocument | undefined>;
+  _cachedQuery?: RxQuery<NoteBlockDocType, NoteBlockDocument[]>;
 };
 
 let order = 1000;
@@ -85,13 +86,16 @@ export const docMethods: DocMethods = {
     return noteBlocks.findOne({ selector: { _id: this.parentBlockId } });
   },
   getChildBlocks(this: NoteBlockDocument) {
-    const noteBlocks = this.collection.database[
+    if (this._cachedQuery) return this._cachedQuery;
+    const noteBlocks = (window.db ? window.db : this.collection.database)[
       HarikaDatabaseDocuments.NOTE_BLOCKS
     ] as NoteBlockCollection;
 
-    return noteBlocks
+    this._cachedQuery = noteBlocks
       .find({ selector: { parentBlockId: this._id } })
       .sort('order');
+
+    return this._cachedQuery;
   },
   async getAllSiblings(this: NoteBlockDocument) {
     // TODO: make in RxJS way
@@ -252,17 +256,24 @@ export const docMethods: DocMethods = {
   },
 
   async getLeftAndRight(this: NoteBlockDocument) {
-    let [left, right] = await this.getLeftAndRightSibling();
+    console.time('timer1');
 
+    let [left, right] = await this.getLeftAndRightSibling();
+    console.timeEnd('timer1');
+
+    console.time('timer2');
     if (left) {
       left = (await left.traverseLast()) || undefined;
     }
+    console.timeEnd('timer2');
 
     if (!left) {
       left = (await this.getParentBlock().exec()) || undefined;
     }
 
+    console.time('timer3');
     const children = await this.getChildBlocks().exec();
+    console.timeEnd('timer3');
 
     if (children[0]) {
       right = children[0];

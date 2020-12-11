@@ -13,7 +13,7 @@ import clsx from 'clsx';
 import TextareaAutosize from 'react-textarea-autosize';
 import { NoteBlockDocument } from '../../models/noteBlocks';
 import { useIsFocused } from '../../hooks/useIsFocused';
-import { useRxDB } from 'rxdb-hooks';
+import { useRxDB, useRxQuery } from 'rxdb-hooks';
 import { HarikaDatabase } from '../../initDb';
 import { useObservableEagerState } from 'observable-hooks';
 import equal from 'fast-deep-equal';
@@ -24,10 +24,9 @@ const NoteBlockComponent = ({
 }: {
   noteBlock: NoteBlockDocument;
 }) => {
-  // const { result: childBlocks } = useRxQuery<NoteBlockDocument>(
-  //   useMemo(() => noteBlock.getChildBlocks(), [noteBlock])
-  // );
-  const childBlocks = [];
+  const { result: childBlocks } = useRxQuery<NoteBlockDocument>(
+    useMemo(() => noteBlock.getChildBlocks(), [noteBlock])
+  );
   const [isFocused, attrs] = useIsFocused();
 
   const [noteBlockContent, setNoteBlockContent] = useState({
@@ -100,8 +99,13 @@ const NoteBlockComponent = ({
     [setEditState, noteBlock]
   );
 
+  const isKeyHandling = useRef<boolean>(false);
+
   const handleKeyDown = useCallback(
     async (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if (isKeyHandling.current) return;
+
+      isKeyHandling.current = true;
       if (e.key === 'Backspace') {
         const start = e.currentTarget.selectionStart;
         const end = e.currentTarget.selectionEnd;
@@ -131,8 +135,11 @@ const NoteBlockComponent = ({
         await noteBlock.tryMoveDown();
       } else if (e.key === 'ArrowDown') {
         e.preventDefault();
+        console.log(noteBlock._id, 'down!');
 
         const [, right] = await noteBlock.getLeftAndRight();
+
+        console.log('got right');
 
         if (right) {
           setEditState({
@@ -148,6 +155,7 @@ const NoteBlockComponent = ({
           setEditState({ id: left._id });
         }
       }
+      isKeyHandling.current = false;
     },
     [noteBlock, setEditState]
   );
@@ -166,7 +174,7 @@ const NoteBlockComponent = ({
   return (
     <div className="note-block">
       <div className="note-block__body">
-        <div className="note-block__dot" />({noteBlock.order})
+        <div className="note-block__dot" />({noteBlock.order}, {noteBlock._id})
         <TextareaAutosize
           ref={inputRef}
           autoFocus
