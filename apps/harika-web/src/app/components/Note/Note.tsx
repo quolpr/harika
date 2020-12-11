@@ -32,7 +32,7 @@ export const Note: React.FC<{ note: NoteDocument }> = ({ note }) => {
   const backlinkedBlocks: Array<any> = [];
 
   const { result: noteBlocks } = useRxQuery<NoteBlockDocument>(
-    useMemo(() => note.childNoteBlocks(), [note])
+    useMemo(() => note.getChildNoteBlocks(), [note])
   );
 
   const [isFocused, attrs] = useIsFocused();

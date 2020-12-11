@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import './styles.css';
 import { useClickAway } from 'react-use';
 import { CurrentEditContext } from '../../contexts/CurrentEditContent';
@@ -7,10 +13,12 @@ import clsx from 'clsx';
 import TextareaAutosize from 'react-textarea-autosize';
 import { NoteBlockDocument } from '../../models/noteBlocks';
 import { useIsFocused } from '../../hooks/useIsFocused';
+import { useRxQuery } from 'rxdb-hooks';
 
 export const NoteBlock = ({ noteBlock }: { noteBlock: NoteBlockDocument }) => {
-  const childBlocks = [];
-
+  const { result: childBlocks } = useRxQuery<NoteBlockDocument>(
+    useMemo(() => noteBlock.getChildBlocks(), [noteBlock])
+  );
   const [isFocused, attrs] = useIsFocused();
 
   const [noteBlockContent, setNoteBlockContent] = useState({
@@ -171,7 +179,7 @@ export const NoteBlock = ({ noteBlock }: { noteBlock: NoteBlockDocument }) => {
       {childBlocks.length !== 0 && (
         <div className="note-block__child-blocks">
           {childBlocks.map((childNoteBlock) => (
-            <NoteBlock key={childNoteBlock.id} noteBlock={childNoteBlock} />
+            <NoteBlock key={childNoteBlock._id} noteBlock={childNoteBlock} />
           ))}
         </div>
       )}

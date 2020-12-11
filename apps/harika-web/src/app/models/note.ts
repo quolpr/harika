@@ -35,11 +35,12 @@ export const schema: RxJsonSchema<NoteDocType> = {
     },
   },
   required: ['title', 'dailyNoteDate'],
+  indexes: ['_id', 'title', 'dailyNoteDate'],
 };
 
 type DocMethods = {
   updateTitle(title: string): Promise<void>;
-  childNoteBlocks(): RxQuery<NoteBlockDocType, NoteBlockDocument[]>;
+  getChildNoteBlocks(): RxQuery<NoteBlockDocType, NoteBlockDocument[]>;
 };
 
 export const docMethods: DocMethods = {
@@ -49,14 +50,16 @@ export const docMethods: DocMethods = {
     });
   },
 
-  childNoteBlocks(this: NoteDocument) {
+  getChildNoteBlocks(this: NoteDocument) {
     const noteBlocks = this.collection.database[
       HarikaDatabaseDocuments.NOTE_BLOCKS
     ] as NoteBlockCollection;
 
-    return noteBlocks.find({
-      selector: { noteId: this._id },
-    });
+    return noteBlocks
+      .find({
+        selector: { noteId: this._id, parentBlockId: null },
+      })
+      .sort('order');
   },
 };
 
@@ -69,7 +72,7 @@ export const createNote = async (
 ) => {
   const newNote = await database.notes.insert(fields);
 
-  await createBlockNote(database, {
+  return await createBlockNote(database, {
     parentBlockId: null,
     noteId: newNote._id,
     content: '',

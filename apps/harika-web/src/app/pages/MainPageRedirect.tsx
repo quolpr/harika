@@ -10,6 +10,8 @@ export const MainPageRedirect = () => {
   const history = useHistory();
 
   useEffect(() => {
+    if (!db) return;
+
     const toExecute = async () => {
       const note = await getOrCreateDailyNote(db, dayjs());
 
