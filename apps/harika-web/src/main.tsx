@@ -1,11 +1,10 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import ReactDOM from 'react-dom';
 import { Database } from '@nozbe/watermelondb';
 import LokiJSAdapter from '@nozbe/watermelondb/adapters/lokijs';
 import DatabaseProvider from '@nozbe/watermelondb/DatabaseProvider';
-import { useDatabase } from '@nozbe/watermelondb/hooks';
 import { App } from './app/app';
-import { noteSchema, Note, NoteBlock } from '@harika/harika-notes';
+import { noteSchema, Note, NoteBlock, NoteRef } from '@harika/harika-notes';
 
 const adapter = new LokiJSAdapter({
   schema: noteSchema,
@@ -28,70 +27,13 @@ const adapter = new LokiJSAdapter({
 // Then, make a Watermelon database from it!
 const database = new Database({
   adapter,
-  modelClasses: [Note, NoteBlock],
+  modelClasses: [Note, NoteBlock, NoteRef],
   actionsEnabled: true,
 });
 
-const Test: React.FC = ({ children }) => {
-  const database = useDatabase();
-
-  useEffect(() => {
-    database.action(async () => {
-      const notesCollection = database.collections.get<Note>('notes');
-      const blocksCollection = database.collections.get<NoteBlock>(
-        'note_blocks'
-      );
-
-      const noteM = await notesCollection.create((note: Note) => {
-        note.title = 'hey';
-      });
-
-      const block = await blocksCollection.create((blockM: NoteBlock) => {
-        blockM.content = 'heyy!';
-        blockM.note_id = noteM.id;
-        blockM.order = 0;
-      });
-
-      await blocksCollection.create((blockM: NoteBlock) => {
-        blockM.content = 'heyy2!';
-        blockM.note_id = noteM.id;
-        blockM.parent_block_id = block.id;
-        blockM.order = 0;
-      });
-
-      const indentedBlock = await blocksCollection.create(
-        (blockM: NoteBlock) => {
-          blockM.content = 'heyy2!';
-          blockM.note_id = noteM.id;
-          blockM.parent_block_id = block.id;
-          blockM.order = 1;
-        }
-      );
-
-      await blocksCollection.create((blockM: NoteBlock) => {
-        blockM.content = 'heyy3!';
-        blockM.note_id = noteM.id;
-        blockM.parent_block_id = indentedBlock.id;
-        blockM.order = 0;
-      });
-
-      await blocksCollection.create((blockM: NoteBlock) => {
-        blockM.content = 'heyy2!';
-        blockM.note_id = noteM.id;
-        blockM.parent_block_id = block.id;
-        blockM.order = 2;
-      });
-    });
-  }, [database]);
-
-  return <>{children}</>;
-};
-
 ReactDOM.render(
   <DatabaseProvider database={database}>
-    <Test>
-      <App />
-    </Test>
+    <App />
   </DatabaseProvider>,
   document.getElementById('root')
 );

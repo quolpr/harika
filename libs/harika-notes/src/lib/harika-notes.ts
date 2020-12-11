@@ -1,5 +1,6 @@
 export { Note } from './models/Note';
 export { NoteBlock } from './models/NoteBlock';
+export { NoteRef } from './models/NoteRef';
 export { default as noteSchema, HarikaNotesTableName } from './models/schema';
 
 import { Note } from './models/Note';
@@ -37,7 +38,7 @@ export const getOrCreateDailyNote = async (database: Database, date: Dayjs) => {
       });
 
       await noteBlockCollection.create((toCreate) => {
-        toCreate.note_id = newNote.id;
+        toCreate.noteId = newNote.id;
       });
 
       return newNote;

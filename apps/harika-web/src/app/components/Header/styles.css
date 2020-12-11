@@ -15,6 +15,7 @@
   }
 
   &__calendar-icon {
+    @apply text-green-500;
   }
 
   &__calendar {

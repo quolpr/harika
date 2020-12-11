@@ -10,23 +10,32 @@ import {
 } from '@nozbe/watermelondb/decorators';
 import { Associations } from '@nozbe/watermelondb/Model';
 import { Note } from './Note';
+import { NoteRef } from './NoteRef';
 import { HarikaNotesTableName } from './schema';
 
 export class NoteBlock extends Model {
   static table = HarikaNotesTableName.NOTE_BLOCKS;
 
   static associations: Associations = {
-    notes: { type: 'belongs_to', key: 'note_id' },
-    note_blocks: { type: 'has_many', foreignKey: 'parent_block_id' },
+    [HarikaNotesTableName.NOTES]: { type: 'belongs_to', key: 'note_id' },
+    [HarikaNotesTableName.NOTE_BLOCKS]: {
+      type: 'has_many',
+      foreignKey: 'parent_block_id',
+    },
+    [HarikaNotesTableName.NOTE_REFS]: {
+      type: 'has_many',
+      foreignKey: 'note_block_id',
+    },
   };
 
   @relation(HarikaNotesTableName.NOTES, 'note_id') note!: Relation<Note>;
   @relation(HarikaNotesTableName.NOTE_BLOCKS, 'parent_block_id')
   parentBlock!: Relation<NoteBlock>;
   @children(HarikaNotesTableName.NOTE_BLOCKS) childBlocks!: Query<NoteBlock>;
+  @children(HarikaNotesTableName.NOTE_REFS) refs!: Query<NoteRef>;
 
-  @field('note_id') note_id!: string;
-  @field('parent_block_id') parent_block_id!: string | undefined;
+  @field('note_id') noteId!: string;
+  @field('parent_block_id') parentBlockId!: string | undefined;
   @field('content') content!: string;
   @field('order') order!: number;
   @readonly @date('created_at') createdAt!: Date;
@@ -57,7 +66,7 @@ export class NoteBlock extends Model {
   }
 
   async getAllSiblings() {
-    if (!this.parent_block_id) {
+    if (!this.parentBlockId) {
       return NoteBlock.sort(
         (await (await this.note.fetch())?.childNoteBlocks.fetch()) || []
       );
@@ -126,7 +135,7 @@ export class NoteBlock extends Model {
 
     children.forEach((child) => {
       child.update((toUpdate) => {
-        toUpdate.parent_block_id = left.id;
+        toUpdate.parentBlockId = left.id;
       });
     });
 
@@ -142,14 +151,14 @@ export class NoteBlock extends Model {
       if (children.length) {
         return {
           toMove: children,
-          newEntityValues: { order: 0, parent_block_id: this.id },
+          newEntityValues: { order: 0, parentBlockId: this.id },
         };
       } else {
         return {
           toMove: await this.getAllRightSiblings(),
           newEntityValues: {
             order: this.order + 1,
-            parent_block_id: this.parent_block_id,
+            parentBlockId: this.parentBlockId,
           },
         };
       }
@@ -164,8 +173,8 @@ export class NoteBlock extends Model {
     return await this.collections
       .get<NoteBlock>(HarikaNotesTableName.NOTE_BLOCKS)
       .create((block) => {
-        block.note_id = this.note_id;
-        block.parent_block_id = newEntityValues.parent_block_id;
+        block.noteId = this.noteId;
+        block.parentBlockId = newEntityValues.parentBlockId;
         block.order = newEntityValues.order;
         block.content = content;
       });
@@ -192,7 +201,7 @@ export class NoteBlock extends Model {
     }
 
     this.update((forUpdate) => {
-      forUpdate.parent_block_id = blockId;
+      forUpdate.parentBlockId = blockId;
       forUpdate.order = afterBlock ? afterBlock.order + 1 : 0;
     });
   }
@@ -221,25 +230,56 @@ export class NoteBlock extends Model {
   }
 
   @action async createNotesAndRefsIfNeeded() {
-    const blocks = this.collections.get<Note>(HarikaNotesTableName.NOTES);
+    const notes = this.collections.get<Note>(HarikaNotesTableName.NOTES);
+    const refs = this.collections.get<NoteRef>(HarikaNotesTableName.NOTE_REFS);
 
     const names = [...this.content.matchAll(/\[\[(.+?)\]\]/g)].map(
       ([, name]) => name
     );
 
-    const existingNotes = Object.fromEntries(
-      (await blocks.query(Q.where('name', Q.oneOf(names))).fetch()).map((n) => [
+    const existingNotesIndexed = Object.fromEntries(
+      (await notes.query(Q.where('title', Q.oneOf(names))).fetch()).map((n) => [
         n.title,
         n,
       ])
     );
 
-    return Promise.all(
+    const allNotes = await Promise.all(
       names.map(async (name) => {
-        if (!existingNotes[name]) {
-          blocks.create((rec) => {
+        if (!existingNotesIndexed[name]) {
+          return notes.create((rec) => {
             rec.title = name;
           });
+        } else {
+          return existingNotesIndexed[name];
+        }
+      })
+    );
+
+    const allNotesIndexed = Object.fromEntries(allNotes.map((n) => [n.id, n]));
+
+    const existingRefs = await this.refs.fetch();
+    const existingRefsIndexed = Object.fromEntries(
+      existingRefs.map((ref) => [ref.noteId, ref])
+    );
+
+    // create new refs
+    await Promise.all(
+      allNotes.map(async (note) => {
+        if (!existingRefsIndexed[note.id]) {
+          await refs.create((toCreate) => {
+            console.log(note.id, this.id);
+            toCreate.noteId = note.id;
+            toCreate.noteBlockId = this.id;
+          });
+        }
+      })
+    );
+
+    await Promise.all(
+      Object.values(existingRefsIndexed).map(async (ref) => {
+        if (!allNotesIndexed[ref.noteId]) {
+          return await ref.destroyPermanently();
         }
       })
     );

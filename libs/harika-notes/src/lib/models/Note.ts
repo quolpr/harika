@@ -9,12 +9,20 @@ import {
 } from '@nozbe/watermelondb/decorators';
 import { HarikaNotesTableName } from './schema';
 import { NoteBlock } from './NoteBlock';
+import { NoteRef } from './NoteRef';
 
 export class Note extends Model {
   static table = HarikaNotesTableName.NOTES;
 
   static associations: Associations = {
-    note_blocks: { type: 'has_many', foreignKey: 'note_id' },
+    [HarikaNotesTableName.NOTE_BLOCKS]: {
+      type: 'has_many',
+      foreignKey: 'note_id',
+    },
+    [HarikaNotesTableName.NOTE_REFS]: {
+      type: 'has_many',
+      foreignKey: 'note_id',
+    },
   };
 
   @field('title') title!: string;
@@ -23,9 +31,15 @@ export class Note extends Model {
   @readonly @date('updated_at') updatedAt!: Date;
 
   @children(HarikaNotesTableName.NOTE_BLOCKS) noteBlocks!: Query<NoteBlock>;
+  @children(HarikaNotesTableName.NOTE_REFS) refs!: Query<NoteRef>;
 
   @lazy
   childNoteBlocks = this.noteBlocks.extend(
     Q.where('parent_block_id', Q.eq(null))
   );
+
+  @lazy
+  backlinkedBlocks = this.collections
+    .get<NoteBlock>(HarikaNotesTableName.NOTE_BLOCKS)
+    .query(Q.on(HarikaNotesTableName.NOTE_REFS, 'note_id', this.id));
 }

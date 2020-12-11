@@ -1,5 +1,5 @@
 import React, { useCallback, useRef, useState } from 'react';
-import { useHistory } from 'react-router-dom';
+import { Link, useHistory } from 'react-router-dom';
 import { Calendar as CalendarIcon } from 'heroicons-react';
 
 import './styles.css';
@@ -43,7 +43,9 @@ export const Header = () => {
   return (
     <div className="header">
       <div className="header__brand">
-        Harika<div className="header__brand-dot">.</div>
+        <Link to="/">
+          Harika<div className="header__brand-dot">.</div>
+        </Link>
       </div>
 
       <div ref={calendarRef} className="header__calendar-wrapper">

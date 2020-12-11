@@ -8,12 +8,28 @@ import { useDatabase } from '@nozbe/watermelondb/hooks';
 import { useTable } from '../../hooks/useTable';
 import { useEffect } from 'react';
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
+
+const Backlink = ({ noteBlock }: { noteBlock: NoteBlockModel }) => {
+  noteBlock = useTable(noteBlock);
+  const note = useTable(noteBlock.note);
+
+  return noteBlock && note ? (
+    <div className="mt-5">
+      <div>
+        Note: <Link to={`/notes/${note.id}`}>{note?.title}</Link>
+      </div>
+      <div>Block content: {noteBlock.content}</div>
+    </div>
+  ) : null;
+};
 
 export const Note: React.FC<{ note: NoteModel }> = React.memo(({ note }) => {
   const database = useDatabase();
 
   note = useTable(note);
   const noteBlocks = useTable(note.childNoteBlocks);
+  const backlinkedBlocks = useTable(note.backlinkedBlocks);
 
   const [editState, setEditState] = useState({
     title: note.title,
@@ -56,6 +72,12 @@ export const Note: React.FC<{ note: NoteModel }> = React.memo(({ note }) => {
           <NoteBlock key={noteBlock.id} noteBlock={noteBlock} />
         ))}
       </div>
+
+      <hr />
+
+      {(backlinkedBlocks || []).map((noteBlock) => (
+        <Backlink key={noteBlock.id} noteBlock={noteBlock} />
+      ))}
     </div>
   );
 });

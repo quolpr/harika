@@ -17,6 +17,7 @@ import { useContext } from 'use-context-selector';
 import { HarikaNotesTableName } from '@harika/harika-notes';
 import { NoteBlock as NoteBlockModel } from '@harika/harika-notes';
 import { useDatabase } from '@nozbe/watermelondb/hooks';
+import { Content } from './components/Content/Content';
 
 const HandleNoteBlockBlur: React.FC = () => {
   const database = useDatabase();
@@ -54,6 +55,7 @@ export function App() {
           <HandleNoteBlockBlur />
 
           <Header />
+          <Content />
           <section className="main">
             <Switch>
               <Route exact path="/">
