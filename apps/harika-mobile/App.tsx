@@ -9,7 +9,6 @@ import {
   StatusBar,
   TouchableOpacity,
 } from 'react-native';
-
 import {
   Colors,
   DebugInstructions,
@@ -17,10 +16,32 @@ import {
 } from 'react-native/Libraries/NewAppScreen';
 // @ts-ignore
 import openURLInBrowser from 'react-native/Libraries/Core/Devtools/openURLInBrowser';
+import { Database } from '@nozbe/watermelondb';
+import SQLiteAdapter from '@nozbe/watermelondb/adapters/sqlite';
+import { noteSchema, Note, NoteBlock, NoteRef } from '@harika/harika-notes';
+import DatabaseProvider from '@nozbe/watermelondb/DatabaseProvider';
+
+// import Post from './model/Post' // ⬅️ You'll import your Models here
+
+// First, create the adapter to the underlying database:
+const adapter = new SQLiteAdapter({
+  schema: noteSchema,
+  // dbName: 'myapp', // optional database name or file system path
+  // migrations, // optional migrations
+  synchronous: true, // synchronous mode only works on iOS. improves performance and reduces glitches in most cases, but also has some downsides - test with and without it
+  // experimentalUseJSI: true, // experimental JSI mode, use only if you're brave
+} as any);
+
+// Then, make a Watermelon database from it!
+const database = new Database({
+  adapter,
+  modelClasses: [Note, NoteBlock, NoteRef],
+  actionsEnabled: true,
+});
 
 const App = () => {
   return (
-    <>
+    <DatabaseProvider database={database}>
       <StatusBar barStyle="dark-content" />
       <SafeAreaView>
         <ScrollView
@@ -35,7 +56,7 @@ const App = () => {
           </View>
           <View style={styles.body}>
             <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Step One</Text>
+              <Text style={styles.sectionTitle}>Step Ones</Text>
               <Text style={styles.sectionDescription}>
                 Edit{' '}
                 <Text style={styles.highlight}>apps/harika-mobile/App.tsx</Text>{' '}
@@ -71,7 +92,7 @@ const App = () => {
           </View>
         </ScrollView>
       </SafeAreaView>
-    </>
+    </DatabaseProvider>
   );
 };
 

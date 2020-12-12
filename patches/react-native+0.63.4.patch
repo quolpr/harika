@@ -1,0 +1,20 @@
+diff --git a/node_modules/react-native/scripts/.packager.env b/node_modules/react-native/scripts/.packager.env
+new file mode 100644
+index 0000000..361f5fb
+--- /dev/null
++++ b/node_modules/react-native/scripts/.packager.env
+@@ -0,0 +1 @@
++export RCT_METRO_PORT=8081
+diff --git a/node_modules/react-native/scripts/react_native_pods.rb b/node_modules/react-native/scripts/react_native_pods.rb
+index 9ae06db..bb1ccc8 100644
+--- a/node_modules/react-native/scripts/react_native_pods.rb
++++ b/node_modules/react-native/scripts/react_native_pods.rb
+@@ -37,7 +37,7 @@ def use_react_native! (options={})
+   end
+ 
+   pod 'React-cxxreact', :path => "#{prefix}/ReactCommon/cxxreact"
+-  pod 'React-jsi', :path => "#{prefix}/ReactCommon/jsi"
++  pod 'React-jsi', :path => "#{prefix}/ReactCommon/jsi", :modular_headers => true
+   pod 'React-jsiexecutor', :path => "#{prefix}/ReactCommon/jsiexecutor"
+   pod 'React-jsinspector', :path => "#{prefix}/ReactCommon/jsinspector"
+   pod 'React-callinvoker', :path => "#{prefix}/ReactCommon/callinvoker"

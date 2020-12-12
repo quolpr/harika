@@ -2,6 +2,8 @@ require_relative '../node_modules/@react-native-community/cli-platform-ios/nativ
 require_relative '../node_modules/react-native/scripts/react_native_pods'
 require_relative '../node_modules/@nrwl/react-native/nx_post_install'
 
+pod 'WatermelonDB', :path => '../../../node_modules/@nozbe/watermelondb'
+
 platform :ios, '11.0'
 
 target 'HarikaMobile' do

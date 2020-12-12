@@ -6,6 +6,8 @@
     "react-native": "*",
     "react": "*",
     "@testing-library/react-native": "*",
-    "@testing-library/jest-native": "*"
+    "@testing-library/jest-native": "*",
+    "@nozbe/watermelondb": "*",
+    "dayjs": "*"
   }
 }
