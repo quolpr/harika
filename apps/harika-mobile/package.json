@@ -8,6 +8,8 @@
     "@testing-library/react-native": "*",
     "@testing-library/jest-native": "*",
     "@nozbe/watermelondb": "*",
-    "dayjs": "*"
+    "dayjs": "*",
+    "react-native-gesture-handler": "*",
+    "@react-navigation/native": "*"
   }
 }

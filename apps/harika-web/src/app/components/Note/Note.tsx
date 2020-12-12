@@ -1,14 +1,14 @@
-import React, { ChangeEvent, useCallback, useRef } from 'react';
+import React, { ChangeEvent, useCallback } from 'react';
 import TextareaAutosize from 'react-textarea-autosize';
 import { NoteBlock } from '../NoteBlock/NoteBlock';
 import { NoteBlock as NoteBlockModel } from '@harika/harika-notes';
 import { Note as NoteModel } from '@harika/harika-notes';
 import './styles.css';
 import { useDatabase } from '@nozbe/watermelondb/hooks';
-import { useTable } from '../../hooks/useTable';
 import { useEffect } from 'react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTable } from '@harika/harika-core';
 
 const Backlink = ({ noteBlock }: { noteBlock: NoteBlockModel }) => {
   noteBlock = useTable(noteBlock);

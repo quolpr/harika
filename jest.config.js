@@ -3,5 +3,6 @@ module.exports = {
     '<rootDir>/apps/harika-web',
     '<rootDir>/libs/harika-notes',
     '<rootDir>/apps/harika-mobile',
+    '<rootDir>/libs/harika-core',
   ],
 };

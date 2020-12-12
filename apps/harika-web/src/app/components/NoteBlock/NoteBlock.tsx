@@ -2,12 +2,11 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import './styles.css';
 import { useClickAway } from 'react-use';
 import { useDatabase } from '@nozbe/watermelondb/hooks';
-import { CurrentEditContext } from '../../contexts/CurrentEditContent';
 import { NoteBlock as NoteBlockModel } from '@harika/harika-notes';
 import { useContextSelector } from 'use-context-selector';
 import clsx from 'clsx';
-import { useTable } from '../../hooks/useTable';
 import TextareaAutosize from 'react-textarea-autosize';
+import { CurrentEditContext, useTable } from '@harika/harika-core';
 
 export const NoteBlock = React.memo(
   ({ noteBlock }: { noteBlock: NoteBlockModel }) => {

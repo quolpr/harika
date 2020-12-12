@@ -1,16 +1,15 @@
 import React, { useCallback, useRef, useState } from 'react';
 import { Link, useHistory } from 'react-router-dom';
 import { Calendar as CalendarIcon } from 'heroicons-react';
-
 import './styles.css';
 import { isArray } from 'util';
 import { getOrCreateDailyNote } from '@harika/harika-notes';
 import dayjs from 'dayjs';
 import { useDatabase } from '@nozbe/watermelondb/hooks';
-import { useCurrentNote } from '../../hooks/useCurrentNote';
 import Calendar from 'react-calendar';
 import clsx from 'clsx';
 import { useClickAway } from 'react-use';
+import { useCurrentNote } from '@harika/harika-core';
 
 export const Header = () => {
   const database = useDatabase();

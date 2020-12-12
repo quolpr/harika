@@ -1,23 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import './app.css';
 import { Header } from './components/Header/Header';
-import {
-  CurrentEditContext,
-  ICurrentEditState,
-} from './contexts/CurrentEditContent';
 import { BrowserRouter, Route, Switch } from 'react-router-dom';
 import { MainPageRedirect } from './pages/MainPageRedirect';
 import { NotePage } from './pages/NotePage';
-import {
-  CurrentNoteIdContext,
-  ICurrentNoteIdState,
-} from './contexts/CurrentNoteIdContext';
 import { usePrevious } from 'react-use';
 import { useContext } from 'use-context-selector';
 import { HarikaNotesTableName } from '@harika/harika-notes';
 import { NoteBlock as NoteBlockModel } from '@harika/harika-notes';
 import { useDatabase } from '@nozbe/watermelondb/hooks';
 import { Content } from './components/Content/Content';
+import {
+  CurrentEditContext,
+  CurrentNoteIdContext,
+  ICurrentEditState,
+  ICurrentNoteIdState,
+} from '@harika/harika-core';
 
 const HandleNoteBlockBlur: React.FC = () => {
   const database = useDatabase();

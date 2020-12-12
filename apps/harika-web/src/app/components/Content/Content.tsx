@@ -1,16 +1,20 @@
 import React from 'react';
 import { HarikaNotesTableName } from '@harika/harika-notes';
 import { useDatabase } from '@nozbe/watermelondb/hooks';
-import { useTable, useTableCustomSwitch } from '../../hooks/useTable';
 import { Note as NoteModel } from '@harika/harika-notes';
 import { Link } from 'react-router-dom';
-import { useCurrentNote } from '../../hooks/useCurrentNote';
 import clsx from 'clsx';
+import {
+  useCurrentNote,
+  useTable,
+  useTableCustomSwitch,
+} from '@harika/harika-core';
 
 const TitleLink = ({ note }: { note: NoteModel }) => {
   const currentNote = useCurrentNote();
 
   note = useTable(note);
+
   return (
     <Link
       to={`/notes/${note.id}`}
