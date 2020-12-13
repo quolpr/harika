@@ -10,6 +10,13 @@
     "@nozbe/watermelondb": "*",
     "dayjs": "*",
     "react-native-gesture-handler": "*",
-    "@react-navigation/native": "*"
+    "@react-navigation/native": "*",
+    "@react-navigation/stack": "*",
+    "react-native-tailwindcss": "*",
+    "react-use": "*",
+    "use-context-selector": "*",
+    "rxjs": "*",
+    "observable-hooks": "*",
+    "react-native-vector-icons": "*"
   }
 }

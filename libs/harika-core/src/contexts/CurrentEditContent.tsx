@@ -1,15 +1,15 @@
 import { createContext } from 'use-context-selector';
 
-export type ICurrentEditState =
+export type ICurrentFocusedBlockState =
   | undefined
   | {
       id: string;
       startPositionAt?: number;
     };
 
-export const CurrentEditContext = createContext<
+export const CurrentFocusedBlockContext = createContext<
   [
-    editState: ICurrentEditState,
-    setEditState: (state: ICurrentEditState) => void
+    editState: ICurrentFocusedBlockState,
+    setEditState: (state: ICurrentFocusedBlockState) => void
   ]
 >([undefined, () => null]);

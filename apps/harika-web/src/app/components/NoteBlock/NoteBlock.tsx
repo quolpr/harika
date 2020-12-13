@@ -1,16 +1,27 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import './styles.css';
-import { useClickAway } from 'react-use';
+import { useClickAway, usePrevious, useUpdate } from 'react-use';
 import { useDatabase } from '@nozbe/watermelondb/hooks';
 import { NoteBlock as NoteBlockModel } from '@harika/harika-notes';
 import { useContextSelector } from 'use-context-selector';
 import clsx from 'clsx';
 import TextareaAutosize from 'react-textarea-autosize';
-import { CurrentEditContext, useTable } from '@harika/harika-core';
+import {
+  CurrentFocusedBlockContext,
+  useTable,
+  useTrackOrder,
+} from '@harika/harika-core';
 
 export const NoteBlock = React.memo(
-  ({ noteBlock }: { noteBlock: NoteBlockModel }) => {
+  ({
+    noteBlock,
+    onOrderChange,
+  }: {
+    noteBlock: NoteBlockModel;
+    onOrderChange: () => void;
+  }) => {
     const database = useDatabase();
+    const update = useUpdate();
 
     noteBlock = useTable(noteBlock);
     const childBlocks = useTable(noteBlock.childBlocks);
@@ -25,15 +36,15 @@ export const NoteBlock = React.memo(
     }, [noteBlock.id, noteBlock.content]);
 
     const setEditState = useContextSelector(
-      CurrentEditContext,
+      CurrentFocusedBlockContext,
       ([, setEditState]) => setEditState
     );
     const isEditing = useContextSelector(
-      CurrentEditContext,
+      CurrentFocusedBlockContext,
       ([editState]) => editState?.id === noteBlock.id
     );
     const startPositionAt = useContextSelector(
-      CurrentEditContext,
+      CurrentFocusedBlockContext,
       ([editState]) =>
         editState?.id === noteBlock.id ? editState.startPositionAt : undefined
     );
@@ -116,6 +127,14 @@ export const NoteBlock = React.memo(
           e.preventDefault();
 
           await noteBlock.tryMoveDown();
+        } else if (e.key === 'ArrowUp' && e.shiftKey) {
+          e.preventDefault();
+
+          await noteBlock.tryMoveLeft();
+        } else if (e.key === 'ArrowDown' && e.shiftKey) {
+          e.preventDefault();
+
+          await noteBlock.tryMoveRight();
         } else if (e.key === 'ArrowDown') {
           e.preventDefault();
 
@@ -150,6 +169,8 @@ export const NoteBlock = React.memo(
       setEditState({ id: noteBlock.id });
     }, [noteBlock.id, setEditState]);
 
+    useTrackOrder(noteBlock, onOrderChange);
+
     return (
       <div className="note-block">
         <div className="note-block__body">
@@ -176,7 +197,11 @@ export const NoteBlock = React.memo(
             {childBlocks
               .sort((a, b) => a.order - b.order)
               .map((childNoteBlock) => (
-                <NoteBlock key={childNoteBlock.id} noteBlock={childNoteBlock} />
+                <NoteBlock
+                  key={childNoteBlock.id}
+                  noteBlock={childNoteBlock}
+                  onOrderChange={update}
+                />
               ))}
           </div>
         )}

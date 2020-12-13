@@ -11,15 +11,15 @@ import { NoteBlock as NoteBlockModel } from '@harika/harika-notes';
 import { useDatabase } from '@nozbe/watermelondb/hooks';
 import { Content } from './components/Content/Content';
 import {
-  CurrentEditContext,
+  CurrentFocusedBlockContext,
   CurrentNoteIdContext,
-  ICurrentEditState,
+  ICurrentFocusedBlockState,
   ICurrentNoteIdState,
 } from '@harika/harika-core';
 
 const HandleNoteBlockBlur: React.FC = () => {
   const database = useDatabase();
-  const [editState] = useContext(CurrentEditContext);
+  const [editState] = useContext(CurrentFocusedBlockContext);
 
   const prevId = usePrevious(editState?.id);
 
@@ -43,13 +43,13 @@ const HandleNoteBlockBlur: React.FC = () => {
 };
 
 export function App() {
-  const stateActions = useState<ICurrentEditState>();
+  const stateActions = useState<ICurrentFocusedBlockState>();
   const currentNoteIdActions = useState<ICurrentNoteIdState>();
 
   return (
     <BrowserRouter>
       <CurrentNoteIdContext.Provider value={currentNoteIdActions}>
-        <CurrentEditContext.Provider value={stateActions}>
+        <CurrentFocusedBlockContext.Provider value={stateActions}>
           <HandleNoteBlockBlur />
 
           <Header />
@@ -64,7 +64,7 @@ export function App() {
               </Route>
             </Switch>
           </section>
-        </CurrentEditContext.Provider>
+        </CurrentFocusedBlockContext.Provider>
       </CurrentNoteIdContext.Provider>
     </BrowserRouter>
   );

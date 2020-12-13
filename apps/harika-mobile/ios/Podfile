@@ -3,6 +3,8 @@ require_relative '../node_modules/react-native/scripts/react_native_pods'
 require_relative '../node_modules/@nrwl/react-native/nx_post_install'
 
 pod 'WatermelonDB', :path => '../../../node_modules/@nozbe/watermelondb'
+pod 'react-native-safe-area-context', :path => '../../../node_modules/react-native-safe-area-context'
+pod 'RNVectorIcons', :path => '../../../node_modules/react-native-vector-icons'
 
 platform :ios, '11.0'
 

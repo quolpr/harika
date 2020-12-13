@@ -9,6 +9,7 @@ import { useEffect } from 'react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTable } from '@harika/harika-core';
+import { useUpdate } from 'react-use';
 
 const Backlink = ({ noteBlock }: { noteBlock: NoteBlockModel }) => {
   noteBlock = useTable(noteBlock);
@@ -26,6 +27,7 @@ const Backlink = ({ noteBlock }: { noteBlock: NoteBlockModel }) => {
 
 export const Note: React.FC<{ note: NoteModel }> = React.memo(({ note }) => {
   const database = useDatabase();
+  const update = useUpdate();
 
   note = useTable(note);
   const noteBlocks = useTable(note.childNoteBlocks);
@@ -65,7 +67,11 @@ export const Note: React.FC<{ note: NoteModel }> = React.memo(({ note }) => {
       </h2>
       <div className="note__body">
         {NoteBlockModel.sort(noteBlocks || []).map((noteBlock) => (
-          <NoteBlock key={noteBlock.id} noteBlock={noteBlock} />
+          <NoteBlock
+            key={noteBlock.id}
+            noteBlock={noteBlock}
+            onOrderChange={update}
+          />
         ))}
       </div>
 

@@ -1,14 +1,14 @@
 import { HarikaNotesTableName } from '@harika/harika-notes';
 import { useDatabase } from '@nozbe/watermelondb/hooks';
 import { useEffect } from 'react';
-import { CurrentEditContext } from '../contexts/CurrentEditContent';
+import { CurrentFocusedBlockContext } from '../contexts/CurrentEditContent';
 import { usePrevious } from 'react-use';
 import { useContext } from 'use-context-selector';
 import { NoteBlock as NoteBlockModel } from '@harika/harika-notes';
 
 export const HandleNoteBlockBlur: React.FC = () => {
   const database = useDatabase();
-  const [editState] = useContext(CurrentEditContext);
+  const [editState] = useContext(CurrentFocusedBlockContext);
 
   const prevId = usePrevious(editState?.id);
 

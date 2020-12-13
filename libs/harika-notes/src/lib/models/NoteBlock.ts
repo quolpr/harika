@@ -164,13 +164,15 @@ export class NoteBlock extends Model {
       }
     })();
 
-    toMove.forEach((block) => {
-      block.update((modification) => {
-        modification.order = modification.order + 1;
-      });
-    });
+    await this.batch(
+      toMove.map((block) => {
+        return block.prepareUpdate((modification) => {
+          modification.order = modification.order + 1;
+        });
+      })
+    );
 
-    return await this.collections
+    const result = await this.collections
       .get<NoteBlock>(HarikaNotesTableName.NOTE_BLOCKS)
       .create((block) => {
         block.noteId = this.noteId;
@@ -178,6 +180,8 @@ export class NoteBlock extends Model {
         block.order = newEntityValues.order;
         block.content = content;
       });
+
+    return result;
   }
 
   @action async makeParentTo(
@@ -205,6 +209,45 @@ export class NoteBlock extends Model {
       forUpdate.order = afterBlock ? afterBlock.order + 1 : 0;
     });
   }
+
+  @action async tryMoveLeft() {
+    const [left] = await this.getLeftAndRight();
+
+    if (!left) return;
+
+    if (left.id === this.parentBlockId) {
+      const currentLeftOrder = left.order;
+      const rightSiblings = await left.getAllRightSiblings();
+
+      [left, ...rightSiblings].forEach((block) => {
+        block.update((modification) => {
+          modification.order = modification.order + 1;
+        });
+      });
+
+      this.update((forUpdate) => {
+        forUpdate.parentBlockId = left.parentBlockId;
+        forUpdate.order = currentLeftOrder;
+      });
+    } else if (left.parentBlockId !== this.parentBlockId) {
+      this.update((forUpdate) => {
+        forUpdate.parentBlockId = left.parentBlockId;
+        forUpdate.order = left.order + 1;
+      });
+    } else {
+      const currentOrder = this.order;
+
+      this.update((forUpdate) => {
+        forUpdate.order = left.order;
+      });
+
+      left.update((forUpdate) => {
+        forUpdate.order = currentOrder;
+      });
+    }
+  }
+
+  @action async tryMoveRight() {}
 
   @action async tryMoveUp() {
     const [left] = await this.getLeftAndRightSibling();
