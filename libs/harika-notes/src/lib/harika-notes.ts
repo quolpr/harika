@@ -2,6 +2,7 @@ export { Note } from './models/Note';
 export { NoteBlock } from './models/NoteBlock';
 export { NoteRef } from './models/NoteRef';
 export { default as noteSchema, HarikaNotesTableName } from './models/schema';
+export { default as noteBlocksReducer } from './store/noteBlocks/reducer';
 
 import { Note } from './models/Note';
 import { NoteBlock } from './models/NoteBlock';
