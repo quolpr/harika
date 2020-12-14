@@ -5,17 +5,19 @@ export type NoteBlockEntity = {
   noteId: string;
   parentBlockId: string | undefined;
   content: string;
-  order: number;
   createdAt: Date;
   updatedAt: Date;
+  childBlockIds: string[];
 };
 
-const increment = createAction<number, 'increment'>('increment');
-const decrement = createAction<number, 'decrement'>('decrement');
+const mergeToLeftAndDelete = createAction<number>(
+  'noteBlocks/mergeToLeftAndDelete'
+);
 
 export type NoteBlocksState = {
-  byId: { [id: string]: NoteBlockEntity };
+  ids: string[];
   currentNoteId: string;
+  byId: { [id: string]: NoteBlockEntity };
 };
 
 export default createReducer<{ [id: string]: NoteBlockEntity }>({}, (builder) =>
