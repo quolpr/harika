@@ -22,16 +22,18 @@ import {
   findParent,
   model,
   Model,
+  modelAction,
+  ModelPropsCreationData,
   prop,
-  prop_mapObject,
   Ref,
   tProp_dateTimestamp,
   types,
 } from 'mobx-keystone';
 import { action } from '@nozbe/watermelondb/decorators';
 import { computed } from 'mobx';
+import { v4 as uuidv4 } from 'uuid';
 
-const noteBlockRef = customRef<NoteBlock>('harika/NoteBlockRef', {
+const noteBlockRef = customRef<NoteBlockMobxModel>('harika/NoteBlockRef', {
   // this works, but we will use getRefId() from the Todo class instead
   // getId(maybeTodo) {
   //   return maybeTodo instanceof Todo ? maybeTodo.id : undefined
@@ -45,7 +47,7 @@ const noteBlockRef = customRef<NoteBlock>('harika/NoteBlockRef', {
 
     if (!parent) return undefined;
 
-    return parent.list.get(ref.id);
+    return parent.rootChildRefs[ref.id];
   },
   onResolvedValueChange(ref, newTodo, oldTodo) {
     if (oldTodo && !newTodo) {
@@ -57,83 +59,276 @@ const noteBlockRef = customRef<NoteBlock>('harika/NoteBlockRef', {
 });
 
 @model('harika/NoteBlock')
-export class NoteBlock extends Model({
+export class NoteBlockMobxModel extends Model({
   id: prop<string>(),
-  childBlocks: prop<Ref<NoteBlock>[]>(() => []),
-  parentBlock: prop<Ref<NoteBlock> | undefined>(),
+  childBlockRefs: prop<Ref<NoteBlockMobxModel>[]>(() => []),
+  parentBlockRef: prop<Ref<NoteBlockMobxModel> | undefined>(),
   content: prop<string>(),
   updatedAt: tProp_dateTimestamp(types.dateTimestamp),
   createdAt: tProp_dateTimestamp(types.dateTimestamp),
+  isDeleted: prop<boolean>(false),
 }) {
   @computed
-  get allSiblings() {
-    if (!this.parentBlock) {
-      return (
-        findParent<NoteBlocksStore>(
-          this,
-          (n) => n instanceof NoteBlocksStore
-        )?.rootList.map(({ current }) => current) || []
-      );
+  get parentChildRefs() {
+    if (!this.parentBlockRef) {
+      return this.rootChildRefs;
     }
 
-    return this.parentBlock.current.childBlocks.map(({ current }) => current);
+    return this.parentBlockRef.current.childBlockRefs;
+  }
+
+  @computed
+  get noteBlocksStore() {
+    return findParent<NoteBlocksStore>(
+      this,
+      (n) => n instanceof NoteBlocksStore
+    );
+  }
+
+  @computed
+  get rootChildRefs() {
+    if (!this.noteBlocksStore) {
+      console.error("Can't find notes block store");
+
+      return [];
+    }
+    return this.noteBlocksStore.rootList;
+  }
+
+  @computed
+  get orderPosition() {
+    const siblings = this.allSiblings;
+
+    return siblings.findIndex((ch) => this.id === ch.id);
+  }
+
+  @computed
+  get allSiblings() {
+    return this.parentChildRefs.map(({ current }) => current);
   }
 
   @computed
   get leftAndRightSibling(): [
-    left: NoteBlock | undefined,
-    right: NoteBlock | undefined
+    left: NoteBlockMobxModel | undefined,
+    right: NoteBlockMobxModel | undefined
   ] {
     const siblings = this.allSiblings;
-
-    const index = siblings.findIndex((ch) => this.id === ch.id);
+    const index = this.orderPosition;
 
     return [siblings[index - 1], siblings[index + 1]];
   }
 
   @computed
-  get lastTraversed(): NoteBlock {
-    if (this.childBlocks.length === 0) return this;
+  get deepLastRightChild(): NoteBlockMobxModel {
+    if (this.childBlockRefs.length === 0) return this;
 
-    return this.childBlocks[this.childBlocks.length - 1].current.lastTraversed;
+    return this.childBlockRefs[this.childBlockRefs.length - 1].current
+      .deepLastRightChild;
   }
 
   @computed
-  get rightReversed(): NoteBlock | undefined {
-    if (!this.parentBlock) return;
+  get nearestRightToParent(): NoteBlockMobxModel | undefined {
+    if (!this.parentBlockRef) return;
 
-    const [, right] = this.parentBlock.current.leftAndRightSibling;
+    const [, right] = this.parentBlockRef.current.leftAndRightSibling;
 
     if (right) return right;
 
-    return this.parentBlock.current.rightReversed;
+    return this.parentBlockRef.current.nearestRightToParent;
+  }
+
+  @computed
+  get leftAndRight(): [
+    left: NoteBlockMobxModel | undefined,
+    right: NoteBlockMobxModel | undefined
+  ] {
+    let [left, right] = this.leftAndRightSibling;
+
+    if (left) {
+      left = left.deepLastRightChild;
+    }
+
+    if (!left) {
+      left = this.parentBlockRef?.current;
+    }
+
+    const children = this.childBlockRefs.map(({ current }) => current);
+
+    if (children[0]) {
+      right = children[0];
+    }
+
+    if (!right) {
+      right = this.nearestRightToParent;
+    }
+
+    return [left, right];
+  }
+
+  @computed
+  get allRightSiblings() {
+    const siblings = this.allSiblings;
+    const index = this.orderPosition;
+
+    // TODO: check that works correctly
+    return siblings.slice(index + 1);
+  }
+
+  @modelAction
+  mergeToLeftAndDelete() {
+    const [left] = this.leftAndRight;
+
+    if (!left) return;
+
+    left.content = left.content + this.content;
+    left.childBlockRefs.push(...this.childBlockRefs);
+
+    const children = this.childBlockRefs.map(({ current }) => current);
+
+    children.forEach((ch) => {
+      ch.parentBlockRef = noteBlockRef(left);
+    });
+
+    this.isDeleted = true;
+
+    return left;
+  }
+
+  @modelAction
+  injectNewRightBlock(content: string) {
+    if (!this.noteBlocksStore) {
+      console.error('Note block store is not set!');
+
+      return;
+    }
+
+    const { injectTo, parentRef, list } = (() => {
+      if (this.childBlockRefs.length) {
+        return {
+          injectTo: 0,
+          parentRef: noteBlockRef(this),
+          list: this.childBlockRefs,
+        };
+      } else {
+        return {
+          injectTo: this.orderPosition + 1,
+          parentRef: this.parentBlockRef,
+          list: this.parentChildRefs,
+        };
+      }
+    })();
+
+    const newNoteBlock = this.noteBlocksStore.create({
+      childBlockRefs: [],
+      parentBlockRef: parentRef,
+      content: content,
+    });
+
+    list.splice(injectTo, 0, noteBlockRef(newNoteBlock));
+
+    return newNoteBlock;
+  }
+
+  @modelAction
+  makeParentTo(
+    block: NoteBlockMobxModel | undefined,
+    afterBlock: NoteBlockMobxModel | undefined
+  ) {
+    const refs = (() => {
+      if (block) {
+        return block.childBlockRefs;
+      } else {
+        return this.rootChildRefs;
+      }
+    })();
+
+    const position = (() => {
+      if (afterBlock) {
+        return afterBlock.orderPosition + 1;
+      } else {
+        return 0;
+      }
+    })();
+
+    this.parentChildRefs.splice(
+      this.parentChildRefs.findIndex(({ current }) => current === this),
+      1
+    );
+
+    this.parentBlockRef = block ? noteBlockRef(block) : undefined;
+
+    refs.splice(position, 0, noteBlockRef(this));
+  }
+
+  @modelAction
+  tryMoveLeft() {}
+
+  @modelAction
+  tryMoveRight() {}
+
+  @modelAction
+  tryMoveUp() {
+    const [left] = this.leftAndRightSibling;
+
+    if (left) {
+      this.makeParentTo(
+        left,
+        left.childBlockRefs[left.childBlockRefs.length - 1].current
+      );
+    }
+  }
+
+  @modelAction
+  tryMoveDown() {
+    const parentRef = this.parentBlockRef;
+    const parentOfParentRef = parentRef?.current?.parentBlockRef;
+
+    if (parentOfParentRef === undefined && parentRef === undefined) return;
+
+    this.makeParentTo(parentOfParentRef?.current, parentRef?.current);
   }
 }
 
 @model('harika/NoteBlocksStore')
 export class NoteBlocksStore extends Model({
-  list: prop_mapObject(() => new Map<string, NoteBlock>()),
-  rootList: prop<Ref<NoteBlock>[]>(() => []),
-}) {}
+  rootChildRefs: prop<Record<string, NoteBlockMobxModel>>(() => ({})),
+  rootList: prop<Ref<NoteBlockMobxModel>[]>(() => []),
+}) {
+  // TODO: how to extract props??
+  @action
+  create(
+    attrs: Omit<
+      ModelPropsCreationData<NoteBlockMobxModel>,
+      'id' | 'updatedAt' | 'createdAt'
+    >
+  ) {
+    const newNoteBlock = new NoteBlockMobxModel({
+      // TODO: random id generator
+      id: uuidv4(),
+      updatedAt: new Date(),
+      createdAt: new Date(),
+      ...attrs,
+    });
+
+    this.rootChildRefs[newNoteBlock.id] = newNoteBlock;
+
+    return newNoteBlock;
+  }
+}
 
 const rootStore = new NoteBlocksStore({
-  list: new Map([
-    [
-      '123',
-      new NoteBlock({
-        id: '123',
-        childBlocks: [],
-        parentBlock: undefined,
-        content: 'heyy',
-        updatedAt: new Date(),
-        createdAt: new Date(),
-      }),
-    ],
-  ]),
+  rootChildRefs: {
+    '123': new NoteBlockMobxModel({
+      id: '123',
+      childBlockRefs: [],
+      parentBlockRef: undefined,
+      content: 'heyy',
+      updatedAt: new Date(),
+      createdAt: new Date(),
+    }),
+  },
   rootList: [noteBlockRef('123')],
 });
-
-console.log('rootStore', rootStore.rootList[0].current.content);
 
 const HandleNoteBlockBlur: React.FC = () => {
   const database = useDatabase();
