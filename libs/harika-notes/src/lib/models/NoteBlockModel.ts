@@ -13,6 +13,7 @@ import {
 import { computed } from 'mobx';
 import { NoteModel } from './NoteModel';
 
+// TODO maybe root ref? What is the best way to manage??
 export const noteBlockRef = customRef<NoteBlockModel>('harika/NoteBlockRef', {
   // this works, but we will use getRefId() from the Todo class instead
   // getId(maybeTodo) {

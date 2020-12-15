@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import './app.css';
 import { Header } from './components/Header/Header';
 import { BrowserRouter, Route, Switch } from 'react-router-dom';
@@ -14,7 +14,7 @@ import {
   ICurrentNoteState,
 } from '@harika/harika-core';
 import * as remotedev from 'remotedev';
-import { connectReduxDevTools } from 'mobx-keystone';
+import { connectReduxDevTools, onPatches } from 'mobx-keystone';
 
 // const HandleNoteBlockBlur: React.FC = () => {
 //   const database = useDatabase();
@@ -52,6 +52,15 @@ connectReduxDevTools(remotedev, connection, harikaStore);
 export function App() {
   const stateActions = useState<ICurrentFocusedBlockState>();
   const currentNoteIdActions = useState<ICurrentNoteState>();
+
+  useEffect(() => {
+    // also it is possible to get a list of changes in the form of patches,
+    // even with inverse patches to undo the changes
+    const disposer = onPatches(harikaStore, (patches, _inversePatches) => {
+      console.log(patches);
+    });
+    return disposer;
+  });
 
   return (
     <BrowserRouter>

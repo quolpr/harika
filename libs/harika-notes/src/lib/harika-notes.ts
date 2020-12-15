@@ -1,6 +1,6 @@
-export { NoteDbModel as NoteDb } from './dbModels/NoteDbModel';
-export { NoteBlockDb as NoteBlock } from './dbModels/NoteBlockDbModel';
-export { NoteRef } from './dbModels/NoteRefDbModel';
+export { NoteDbModel } from './dbModels/NoteDbModel';
+export { NoteBlockDbModel } from './dbModels/NoteBlockDbModel';
+export { NoteRefDbModel } from './dbModels/NoteRefDbModel';
 export { NoteModel } from './models/NoteModel';
 export { NoteBlockModel, noteBlockRef } from './models/NoteBlockModel';
 export { default as noteSchema, HarikaNotesTableName } from './dbModels/schema';

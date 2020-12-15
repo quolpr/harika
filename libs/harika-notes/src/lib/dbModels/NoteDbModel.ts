@@ -8,8 +8,8 @@ import {
   readonly,
 } from '@nozbe/watermelondb/decorators';
 import { HarikaNotesTableName } from './schema';
-import { NoteBlockDb } from './NoteBlockDbModel';
-import { NoteRef } from './NoteRefDbModel';
+import { NoteBlockDbModel } from './NoteBlockDbModel';
+import { NoteRefDbModel } from './NoteRefDbModel';
 
 export class NoteDbModel extends Model {
   static table = HarikaNotesTableName.NOTES;
@@ -30,8 +30,10 @@ export class NoteDbModel extends Model {
   @readonly @date('created_at') createdAt!: Date;
   @readonly @date('updated_at') updatedAt!: Date;
 
-  @children(HarikaNotesTableName.NOTE_BLOCKS) noteBlocks!: Query<NoteBlockDb>;
-  @children(HarikaNotesTableName.NOTE_REFS) refs!: Query<NoteRef>;
+  @children(HarikaNotesTableName.NOTE_BLOCKS) noteBlocks!: Query<
+    NoteBlockDbModel
+  >;
+  @children(HarikaNotesTableName.NOTE_REFS) refs!: Query<NoteRefDbModel>;
 
   @lazy
   childNoteBlocks = this.noteBlocks.extend(
@@ -40,6 +42,6 @@ export class NoteDbModel extends Model {
 
   @lazy
   backlinkedBlocks = this.collections
-    .get<NoteBlockDb>(HarikaNotesTableName.NOTE_BLOCKS)
+    .get<NoteBlockDbModel>(HarikaNotesTableName.NOTE_BLOCKS)
     .query(Q.on(HarikaNotesTableName.NOTE_REFS, 'note_id', this.id));
 }

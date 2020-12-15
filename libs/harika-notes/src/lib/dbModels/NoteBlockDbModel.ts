@@ -8,10 +8,10 @@ import {
 } from '@nozbe/watermelondb/decorators';
 import { Associations } from '@nozbe/watermelondb/Model';
 import { NoteDbModel } from './NoteDbModel';
-import { NoteRef } from './NoteRefDbModel';
+import { NoteRefDbModel } from './NoteRefDbModel';
 import { HarikaNotesTableName } from './schema';
 
-export class NoteBlockDb extends Model {
+export class NoteBlockDbModel extends Model {
   static table = HarikaNotesTableName.NOTE_BLOCKS;
 
   static associations: Associations = {
@@ -28,9 +28,11 @@ export class NoteBlockDb extends Model {
 
   @relation(HarikaNotesTableName.NOTES, 'note_id') note!: Relation<NoteDbModel>;
   @relation(HarikaNotesTableName.NOTE_BLOCKS, 'parent_block_id')
-  parentBlock!: Relation<NoteBlockDb>;
-  @children(HarikaNotesTableName.NOTE_BLOCKS) childBlocks!: Query<NoteBlockDb>;
-  @children(HarikaNotesTableName.NOTE_REFS) refs!: Query<NoteRef>;
+  parentBlock!: Relation<NoteBlockDbModel>;
+  @children(HarikaNotesTableName.NOTE_BLOCKS) childBlocks!: Query<
+    NoteBlockDbModel
+  >;
+  @children(HarikaNotesTableName.NOTE_REFS) refs!: Query<NoteRefDbModel>;
 
   @field('note_id') noteId!: string;
   @field('parent_block_id') parentBlockId!: string | undefined;

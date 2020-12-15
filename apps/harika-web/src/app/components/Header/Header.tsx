@@ -38,8 +38,6 @@ export const Header = observer(() => {
     [store, history]
   );
 
-  console.log(currentNote, currentNote?.dailyNoteDate);
-
   return (
     <div className="header">
       <div className="header__brand">

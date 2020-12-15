@@ -3,7 +3,12 @@ import ReactDOM from 'react-dom';
 import { Database } from '@nozbe/watermelondb';
 import LokiJSAdapter from '@nozbe/watermelondb/adapters/lokijs';
 import { App } from './app/app';
-import { noteSchema, NoteBlock, NoteRef, NoteDb } from '@harika/harika-notes';
+import {
+  noteSchema,
+  NoteBlockDbModel,
+  NoteRefDbModel,
+  NoteDbModel,
+} from '@harika/harika-notes';
 
 const adapter = new LokiJSAdapter({
   schema: noteSchema,
@@ -26,7 +31,7 @@ const adapter = new LokiJSAdapter({
 // Then, make a Watermelon database from it!
 export const database = new Database({
   adapter,
-  modelClasses: [NoteDb, NoteBlock, NoteRef],
+  modelClasses: [NoteDbModel, NoteBlockDbModel, NoteRefDbModel],
   actionsEnabled: true,
 });
 
