@@ -14,9 +14,15 @@ export const NotePage = React.memo(() => {
   const [, setCurrentNote] = useContext(CurrentNoteContext);
 
   useEffect(() => {
-    setCurrentNote(store.notesMap[id]);
+    const callback = async () => {
+      const note = await store.findNote(id);
+      setCurrentNote(note);
+    };
+
+    callback();
+
     return () => setCurrentNote(undefined);
-  }, [setCurrentNote, store.notesMap, id]);
+  }, [setCurrentNote, store, id]);
 
   const note = useCurrentNote();
 

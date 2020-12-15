@@ -1,6 +1,6 @@
 import { useContext } from 'react';
-import { HarikaStoreContext } from '../contexts/HarikaStoreContext';
+import { HarikaNotesContext } from '../contexts/HarikaStoreContext';
 
 export const useHarikaStore = () => {
-  return useContext(HarikaStoreContext);
+  return useContext(HarikaNotesContext);
 };

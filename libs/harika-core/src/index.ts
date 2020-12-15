@@ -5,7 +5,7 @@ export {
   ICurrentFocusedBlockState,
   CurrentFocusedBlockContext,
 } from './contexts/CurrentEditContent';
-export { HarikaStoreContext } from './contexts/HarikaStoreContext';
+export { HarikaNotesContext as HarikaStoreContext } from './contexts/HarikaStoreContext';
 export {
   ICurrentNoteState,
   CurrentNoteContext,

@@ -1,101 +1,107 @@
-export { NoteDbModel } from './dbModels/NoteDbModel';
-export { NoteBlockDbModel } from './dbModels/NoteBlockDbModel';
-export { NoteRefDbModel } from './dbModels/NoteRefDbModel';
-export { NoteModel } from './models/NoteModel';
-export { NoteBlockModel, noteBlockRef } from './models/NoteBlockModel';
-export { default as noteSchema, HarikaNotesTableName } from './dbModels/schema';
+export { NoteDbModel } from './PersistentDb/models/NoteDbModel';
+export { NoteBlockDbModel } from './PersistentDb/models/NoteBlockDbModel';
+export { NoteRefDbModel } from './PersistentDb/models/NoteRefDbModel';
+export { NoteMemModel } from './MemoryDb/models/NoteMemModel';
+export {
+  NoteBlockMemModel,
+  noteBlockRef,
+} from './MemoryDb/models/NoteBlockMemModel';
+export { HarikaNotesTableName } from './PersistentDb/schema';
+export { MemoryDb } from './MemoryDb/MemoryDb';
 
+import { connectReduxDevTools } from 'mobx-keystone';
+import { Database } from '@nozbe/watermelondb';
+import { PersistentDb } from './PersistentDb/PersistentDb';
+import { MemoryDb } from './MemoryDb/MemoryDb';
+import * as remotedev from 'remotedev';
+import schema from './PersistentDb/schema';
+import LokiJSAdapter from '@nozbe/watermelondb/adapters/lokijs';
+import { NoteRefDbModel } from './PersistentDb/models/NoteRefDbModel';
+import { NoteBlockDbModel } from './PersistentDb/models/NoteBlockDbModel';
+import { NoteDbModel } from './PersistentDb/models/NoteDbModel';
+import { convertDbToMemNote } from './convertDbToModel';
 import { Dayjs } from 'dayjs';
-import {
-  model,
-  Model,
-  modelAction,
-  ModelInstanceCreationData,
-  prop,
-} from 'mobx-keystone';
-import { v4 as uuidv4 } from 'uuid';
-import { Optional } from 'utility-types';
-import { NoteModel } from './models/NoteModel';
-import { noteBlockRef } from './models/NoteBlockModel';
 
-@model('harika/HarikaStore')
-export class HarikaStore extends Model({
-  notesMap: prop<Record<string, NoteModel>>(() => ({})),
-}) {
-  @modelAction
-  createNote(
-    attrs: Optional<
-      ModelInstanceCreationData<NoteModel>,
-      'updatedAt' | 'createdAt' | 'dailyNoteDate'
-    >
-  ) {
-    const note = new NoteModel({
-      $modelId: uuidv4(),
-      updatedAt: new Date(),
-      createdAt: new Date(),
-      dailyNoteDate: new Date(),
-      ...attrs,
+export class HarikaNotes {
+  watermelondb: Database;
+  persistentDb: PersistentDb;
+  private memDb: MemoryDb;
+
+  constructor() {
+    const adapter = new LokiJSAdapter({
+      schema: schema,
+      // migrations, // optional migrations
+      useWebWorker: false, // recommended for new projects. tends to improve performance and reduce glitches in most cases, but also has downsides - test with and without it
+      useIncrementalIndexedDB: true, // recommended for new projects. improves performance (but incompatible with early Watermelon databases)
+      // dbName: 'myapp', // optional db name
+      // It's recommended you implement this method:
+      // onIndexedDBVersionChange: () => {
+      //   // database was deleted in another browser tab (user logged out), so we must make sure we delete
+      //   // it in this tab as well
+      //   if (checkIfUserIsLoggedIn()) {
+      //     window.location.reload()
+      //   }
+      // },
+      // Optional:
+      // onQuotaExceededError: (error) => { /* do something when user runs out of disk space */ },
+    } as any);
+
+    // Then, make a Watermelon database from it!
+    this.watermelondb = new Database({
+      adapter,
+      modelClasses: [NoteDbModel, NoteBlockDbModel, NoteRefDbModel],
+      actionsEnabled: true,
     });
+    this.persistentDb = new PersistentDb(this.watermelondb);
 
-    this.notesMap[note.$modelId] = note;
-
-    const block = note.createBlock({ content: '' });
-
-    note.childBlockRefs = [noteBlockRef(block)];
-
-    return note;
+    this.memDb = new MemoryDb({});
+    const connection = remotedev.connectViaExtension({
+      name: 'Harika store',
+    });
+    connectReduxDevTools(remotedev, connection, this.memDb);
   }
 
-  @modelAction
-  getOrCreateDailyNote(date: Dayjs) {
-    const title = date.format('D MMM YYYY');
-    const startOfDate = date.startOf('day');
+  getMemDb() {
+    return this.memDb;
+  }
 
-    const dailyNote = Object.values(this.notesMap).find(
-      (n) => n.dailyNoteDate === startOfDate.toDate()
-    );
+  getPersistentDb() {
+    return this.persistentDb;
+  }
 
-    if (dailyNote) {
-      return dailyNote;
-    } else {
-      return this.createNote({ title, dailyNoteDate: startOfDate.toDate() });
+  async getOrCreateDailyNote(date: Dayjs) {
+    const dailyNoteMem = this.memDb.getDailyNote(date);
+
+    if (dailyNoteMem) return dailyNoteMem;
+
+    const persistedNote = await this.persistentDb.getDailyNote(date);
+
+    if (persistedNote) {
+      const memNote = await convertDbToMemNote(persistedNote);
+
+      this.memDb.addNewNote(memNote.note);
+
+      return memNote.note;
     }
+
+    return this.memDb.createDailyNote(date);
+  }
+
+  async findNote(id: string) {
+    if (this.memDb.notesMap[id]) {
+      return this.memDb.notesMap[id];
+    }
+
+    const persistedNote = await this.persistentDb.getNoteById(id);
+
+    if (persistedNote) {
+      const memNote = await convertDbToMemNote(persistedNote);
+
+      this.memDb.addNewNote(memNote.note);
+
+      return memNote.note;
+    }
+
+    return;
   }
 }
-
-// export const getOrCreateDailyNote = async (database: Database, date: Dayjs) => {
-//   const title = date.format('D MMM YYYY');
-//   const startOfDate = date.startOf('day');
-//
-//   const noteCollection = database.collections.get<NoteDbModel>(
-//     HarikaNotesTableName.NOTES
-//   );
-//   const noteBlockCollection = database.collections.get<NoteBlock>(
-//     HarikaNotesTableName.NOTE_BLOCKS
-//   );
-//
-//   const notes = await noteCollection
-//     .query(Q.where('daily_note_date', startOfDate.unix() * 1000))
-//     .fetch();
-//
-//   if (notes.length > 0) {
-//     if (notes.length > 1) {
-//       console.error(`Daily notes for ${title} is more then one!!`);
-//     }
-//
-//     return notes[0];
-//   } else {
-//     return database.action<NoteDbModel>(async () => {
-//       const newNote = await noteCollection.create((toCreate) => {
-//         toCreate.title = title;
-//         toCreate.dailyNoteDate = startOfDate.toDate();
-//       });
-//
-//       await noteBlockCollection.create((toCreate) => {
-//         toCreate.noteId = newNote.id;
-//       });
-//
-//       return newNote;
-//     });
-//   }
-// };

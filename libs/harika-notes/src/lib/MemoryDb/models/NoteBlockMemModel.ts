@@ -11,37 +11,40 @@ import {
   types,
 } from 'mobx-keystone';
 import { computed } from 'mobx';
-import { NoteModel } from './NoteModel';
+import { NoteMemModel } from './NoteMemModel';
 
 // TODO maybe root ref? What is the best way to manage??
-export const noteBlockRef = customRef<NoteBlockModel>('harika/NoteBlockRef', {
-  // this works, but we will use getRefId() from the Todo class instead
-  // getId(maybeTodo) {
-  //   return maybeTodo instanceof Todo ? maybeTodo.id : undefined
-  // },
+export const noteBlockRef = customRef<NoteBlockMemModel>(
+  'harika/NoteBlockRef',
+  {
+    // this works, but we will use getRefId() from the Todo class instead
+    // getId(maybeTodo) {
+    //   return maybeTodo instanceof Todo ? maybeTodo.id : undefined
+    // },
 
-  resolve(ref) {
-    const parent = findParent<NoteModel>(ref, (n) => {
-      return n instanceof NoteModel;
-    });
+    resolve(ref) {
+      const parent = findParent<NoteMemModel>(ref, (n) => {
+        return n instanceof NoteMemModel;
+      });
 
-    if (!parent) return undefined;
+      if (!parent) return undefined;
 
-    return parent.blocksMap[ref.id];
-  },
-  onResolvedValueChange(ref, newTodo, oldTodo) {
-    if (oldTodo && !newTodo) {
-      // if the todo value we were referencing disappeared then remove the reference
-      // from its parent
-      detach(ref);
-    }
-  },
-});
+      return parent.blocksMap[ref.id];
+    },
+    onResolvedValueChange(ref, newTodo, oldTodo) {
+      if (oldTodo && !newTodo) {
+        // if the todo value we were referencing disappeared then remove the reference
+        // from its parent
+        detach(ref);
+      }
+    },
+  }
+);
 
-@model('harika/NoteBlockMobxModel')
-export class NoteBlockModel extends Model({
-  childBlockRefs: prop<Ref<NoteBlockModel>[]>(() => []),
-  parentBlockRef: prop<Ref<NoteBlockModel> | undefined>(),
+@model('harika/NoteBlockMemModel')
+export class NoteBlockMemModel extends Model({
+  childBlockRefs: prop<Ref<NoteBlockMemModel>[]>(() => []),
+  parentBlockRef: prop<Ref<NoteBlockMemModel> | undefined>(),
   content: prop<string>(),
   updatedAt: tProp_dateTimestamp(types.dateTimestamp),
   createdAt: tProp_dateTimestamp(types.dateTimestamp),
@@ -58,7 +61,7 @@ export class NoteBlockModel extends Model({
 
   @computed
   get note() {
-    return findParent<NoteModel>(this, (n) => n instanceof NoteModel);
+    return findParent<NoteMemModel>(this, (n) => n instanceof NoteMemModel);
   }
 
   @computed
@@ -85,8 +88,8 @@ export class NoteBlockModel extends Model({
 
   @computed
   get leftAndRightSibling(): [
-    left: NoteBlockModel | undefined,
-    right: NoteBlockModel | undefined
+    left: NoteBlockMemModel | undefined,
+    right: NoteBlockMemModel | undefined
   ] {
     const siblings = this.allSiblings;
     const index = this.orderPosition;
@@ -95,7 +98,7 @@ export class NoteBlockModel extends Model({
   }
 
   @computed
-  get deepLastRightChild(): NoteBlockModel {
+  get deepLastRightChild(): NoteBlockMemModel {
     if (this.childBlockRefs.length === 0) return this;
 
     return this.childBlockRefs[this.childBlockRefs.length - 1].current
@@ -103,7 +106,7 @@ export class NoteBlockModel extends Model({
   }
 
   @computed
-  get nearestRightToParent(): NoteBlockModel | undefined {
+  get nearestRightToParent(): NoteBlockMemModel | undefined {
     if (!this.parentBlockRef) return;
 
     const [, right] = this.parentBlockRef.current.leftAndRightSibling;
@@ -115,8 +118,8 @@ export class NoteBlockModel extends Model({
 
   @computed
   get leftAndRight(): [
-    left: NoteBlockModel | undefined,
-    right: NoteBlockModel | undefined
+    left: NoteBlockMemModel | undefined,
+    right: NoteBlockMemModel | undefined
   ] {
     let [left, right] = this.leftAndRightSibling;
 
@@ -214,8 +217,8 @@ export class NoteBlockModel extends Model({
 
   @modelAction
   makeParentTo(
-    block: NoteBlockModel | undefined,
-    afterBlock: NoteBlockModel | undefined
+    block: NoteBlockMemModel | undefined,
+    afterBlock: NoteBlockMemModel | undefined
   ) {
     const refs = (() => {
       if (block) {

@@ -4,7 +4,7 @@ import { Header } from './components/Header/Header';
 import { BrowserRouter, Route, Switch } from 'react-router-dom';
 import { MainPageRedirect } from './pages/MainPageRedirect';
 import { NotePage } from './pages/NotePage';
-import { HarikaStore } from '@harika/harika-notes';
+import { HarikaNotes } from '@harika/harika-notes';
 import { Content } from './components/Content/Content';
 import {
   CurrentFocusedBlockContext,
@@ -14,7 +14,7 @@ import {
   ICurrentNoteState,
 } from '@harika/harika-core';
 import * as remotedev from 'remotedev';
-import { connectReduxDevTools, onPatches } from 'mobx-keystone';
+import { onPatches } from 'mobx-keystone';
 
 // const HandleNoteBlockBlur: React.FC = () => {
 //   const database = useDatabase();
@@ -41,13 +41,7 @@ import { connectReduxDevTools, onPatches } from 'mobx-keystone';
 //   return null;
 // };
 
-const harikaStore = new HarikaStore({});
-
-const connection = remotedev.connectViaExtension({
-  name: 'Harika store',
-});
-
-connectReduxDevTools(remotedev, connection, harikaStore);
+const harikaNotes = new HarikaNotes();
 
 export function App() {
   const stateActions = useState<ICurrentFocusedBlockState>();
@@ -56,15 +50,18 @@ export function App() {
   useEffect(() => {
     // also it is possible to get a list of changes in the form of patches,
     // even with inverse patches to undo the changes
-    const disposer = onPatches(harikaStore, (patches, _inversePatches) => {
-      console.log(patches);
-    });
+    const disposer = onPatches(
+      harikaNotes.getMemDb(),
+      (patches, _inversePatches) => {
+        console.log(patches);
+      }
+    );
     return disposer;
   });
 
   return (
     <BrowserRouter>
-      <HarikaStoreContext.Provider value={harikaStore}>
+      <HarikaStoreContext.Provider value={harikaNotes}>
         <CurrentNoteContext.Provider value={currentNoteIdActions}>
           <CurrentFocusedBlockContext.Provider value={stateActions}>
             {/**<HandleNoteBlockBlur />*/}

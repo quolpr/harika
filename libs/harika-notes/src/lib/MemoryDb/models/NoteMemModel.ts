@@ -10,25 +10,25 @@ import {
 } from 'mobx-keystone';
 import { Optional } from 'utility-types';
 import { v4 as uuidv4 } from 'uuid';
-import { NoteBlockModel } from './NoteBlockModel';
+import { NoteBlockMemModel } from './NoteBlockMemModel';
 
-@model('harika/NoteMobxModel')
-export class NoteModel extends Model({
+@model('harika/NoteMemModel')
+export class NoteMemModel extends Model({
   title: prop<string>(''),
   dailyNoteDate: tProp_dateTimestamp(types.dateTimestamp),
   updatedAt: tProp_dateTimestamp(types.dateTimestamp),
   createdAt: tProp_dateTimestamp(types.dateTimestamp),
-  blocksMap: prop<Record<string, NoteBlockModel>>(() => ({})),
-  childBlockRefs: prop<Ref<NoteBlockModel>[]>(() => []),
+  blocksMap: prop<Record<string, NoteBlockMemModel>>(() => ({})),
+  childBlockRefs: prop<Ref<NoteBlockMemModel>[]>(() => []),
 }) {
   @modelAction
   createBlock(
     attrs: Optional<
-      ModelInstanceCreationData<NoteBlockModel>,
+      ModelInstanceCreationData<NoteBlockMemModel>,
       'updatedAt' | 'createdAt'
     >
   ) {
-    const newNoteBlock = new NoteBlockModel({
+    const newNoteBlock = new NoteBlockMemModel({
       $modelId: uuidv4(),
       updatedAt: new Date(),
       createdAt: new Date(),

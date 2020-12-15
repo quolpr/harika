@@ -31,7 +31,7 @@ export const Header = observer(() => {
     async (date: Date | Date[]) => {
       if (isArray(date)) return;
 
-      const note = store.getOrCreateDailyNote(dayjs(date));
+      const note = await store.getOrCreateDailyNote(dayjs(date));
 
       history.replace(`/notes/${note.$modelId}`);
     },

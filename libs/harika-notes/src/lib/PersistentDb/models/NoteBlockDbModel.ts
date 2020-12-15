@@ -9,7 +9,7 @@ import {
 import { Associations } from '@nozbe/watermelondb/Model';
 import { NoteDbModel } from './NoteDbModel';
 import { NoteRefDbModel } from './NoteRefDbModel';
-import { HarikaNotesTableName } from './schema';
+import { HarikaNotesTableName } from '../schema';
 
 export class NoteBlockDbModel extends Model {
   static table = HarikaNotesTableName.NOTE_BLOCKS;

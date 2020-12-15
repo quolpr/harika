@@ -1,4 +1,4 @@
-import { HarikaStore } from '@harika/harika-notes';
 import { createContext } from 'react';
+import { HarikaNotes } from '@harika/harika-notes';
 
-export const HarikaStoreContext = createContext<HarikaStore>({} as HarikaStore);
+export const HarikaNotesContext = createContext<HarikaNotes>({} as HarikaNotes);

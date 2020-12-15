@@ -6,7 +6,7 @@ import {
   readonly,
   relation,
 } from '@nozbe/watermelondb/decorators';
-import { HarikaNotesTableName } from './schema';
+import { HarikaNotesTableName } from '../schema';
 import { NoteBlockDbModel } from './NoteBlockDbModel';
 import { NoteDbModel } from './NoteDbModel';
 
