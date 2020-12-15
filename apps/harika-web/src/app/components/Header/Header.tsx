@@ -3,16 +3,15 @@ import { Link, useHistory } from 'react-router-dom';
 import { Calendar as CalendarIcon } from 'heroicons-react';
 import './styles.css';
 import { isArray } from 'util';
-import { getOrCreateDailyNote } from '@harika/harika-notes';
 import dayjs from 'dayjs';
-import { useDatabase } from '@nozbe/watermelondb/hooks';
 import Calendar from 'react-calendar';
 import clsx from 'clsx';
 import { useClickAway } from 'react-use';
-import { useCurrentNote } from '@harika/harika-core';
+import { useCurrentNote, useHarikaStore } from '@harika/harika-core';
+import { observer } from 'mobx-react-lite';
 
-export const Header = () => {
-  const database = useDatabase();
+export const Header = observer(() => {
+  const store = useHarikaStore();
   const history = useHistory();
 
   const currentNote = useCurrentNote();
@@ -32,12 +31,14 @@ export const Header = () => {
     async (date: Date | Date[]) => {
       if (isArray(date)) return;
 
-      const note = await getOrCreateDailyNote(database, dayjs(date));
+      const note = store.getOrCreateDailyNote(dayjs(date));
 
-      history.replace(`/notes/${note.id}`);
+      history.replace(`/notes/${note.$modelId}`);
     },
-    [database, history]
+    [store, history]
   );
+
+  console.log(currentNote, currentNote?.dailyNoteDate);
 
   return (
     <div className="header">
@@ -63,4 +64,4 @@ export const Header = () => {
       </div>
     </div>
   );
-};
+});

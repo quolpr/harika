@@ -7,8 +7,8 @@ import {
   relation,
 } from '@nozbe/watermelondb/decorators';
 import { HarikaNotesTableName } from './schema';
-import { NoteBlock } from './NoteBlock';
-import { Note } from './Note';
+import { NoteBlockDb } from './NoteBlockDbModel';
+import { NoteDbModel } from './NoteDbModel';
 
 export class NoteRef extends Model {
   static table = HarikaNotesTableName.NOTE_REFS;
@@ -21,9 +21,9 @@ export class NoteRef extends Model {
     },
   };
 
-  @relation(HarikaNotesTableName.NOTES, 'note_id') note!: Relation<Note>;
+  @relation(HarikaNotesTableName.NOTES, 'note_id') note!: Relation<NoteDbModel>;
   @relation(HarikaNotesTableName.NOTE_BLOCKS, 'note_block_id')
-  noteBlock!: Relation<NoteBlock>;
+  noteBlock!: Relation<NoteBlockDb>;
 
   @readonly @date('created_at') createdAt!: Date;
   @readonly @date('updated_at') updatedAt!: Date;

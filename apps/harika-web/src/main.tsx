@@ -2,9 +2,8 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { Database } from '@nozbe/watermelondb';
 import LokiJSAdapter from '@nozbe/watermelondb/adapters/lokijs';
-import DatabaseProvider from '@nozbe/watermelondb/DatabaseProvider';
 import { App } from './app/app';
-import { noteSchema, Note, NoteBlock, NoteRef } from '@harika/harika-notes';
+import { noteSchema, NoteBlock, NoteRef, NoteDb } from '@harika/harika-notes';
 
 const adapter = new LokiJSAdapter({
   schema: noteSchema,
@@ -25,15 +24,10 @@ const adapter = new LokiJSAdapter({
 } as any);
 
 // Then, make a Watermelon database from it!
-const database = new Database({
+export const database = new Database({
   adapter,
-  modelClasses: [Note, NoteBlock, NoteRef],
+  modelClasses: [NoteDb, NoteBlock, NoteRef],
   actionsEnabled: true,
 });
 
-ReactDOM.render(
-  <DatabaseProvider database={database}>
-    <App />
-  </DatabaseProvider>,
-  document.getElementById('root')
-);
+ReactDOM.render(<App />, document.getElementById('root'));

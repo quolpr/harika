@@ -1,10 +1,11 @@
+import { NoteModel } from '@harika/harika-notes';
 import { createContext } from 'react';
 
-export type ICurrentNoteIdState = undefined | string;
+export type ICurrentNoteState = undefined | NoteModel;
 
-export const CurrentNoteIdContext = createContext<
+export const CurrentNoteContext = createContext<
   [
-    editState: ICurrentNoteIdState,
-    setEditState: (state: ICurrentNoteIdState) => void
+    editState: ICurrentNoteState,
+    setEditState: (state: ICurrentNoteState) => void
   ]
 >([undefined, () => null]);

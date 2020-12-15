@@ -1,39 +1,26 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import './styles.css';
-import { useClickAway, usePrevious, useUpdate } from 'react-use';
-import { useDatabase } from '@nozbe/watermelondb/hooks';
-import { NoteBlock as NoteBlockModel } from '@harika/harika-notes';
+import { useClickAway } from 'react-use';
 import { useContextSelector } from 'use-context-selector';
 import clsx from 'clsx';
 import TextareaAutosize from 'react-textarea-autosize';
-import {
-  CurrentFocusedBlockContext,
-  useTable,
-  useTrackOrder,
-} from '@harika/harika-core';
+import { CurrentFocusedBlockContext } from '@harika/harika-core';
+import { observer } from 'mobx-react-lite';
+import { NoteBlockModel } from '@harika/harika-notes';
 
-export const NoteBlock = React.memo(
-  ({
-    noteBlock,
-    onOrderChange,
-  }: {
-    noteBlock: NoteBlockModel;
-    onOrderChange: () => void;
-  }) => {
-    const database = useDatabase();
-    const update = useUpdate();
-
-    noteBlock = useTable(noteBlock);
-    const childBlocks = useTable(noteBlock.childBlocks);
-
+export const NoteBlock = observer(
+  ({ noteBlock }: { noteBlock: NoteBlockModel }) => {
     const [noteBlockContent, setNoteBlockContent] = useState({
       content: noteBlock.content,
-      id: noteBlock.id,
+      id: noteBlock.$modelId,
     });
 
     useEffect(() => {
-      setNoteBlockContent({ content: noteBlock.content, id: noteBlock.id });
-    }, [noteBlock.id, noteBlock.content]);
+      setNoteBlockContent({
+        content: noteBlock.content,
+        id: noteBlock.$modelId,
+      });
+    }, [noteBlock.$modelId, noteBlock.content]);
 
     const setEditState = useContextSelector(
       CurrentFocusedBlockContext,
@@ -41,12 +28,14 @@ export const NoteBlock = React.memo(
     );
     const isEditing = useContextSelector(
       CurrentFocusedBlockContext,
-      ([editState]) => editState?.id === noteBlock.id
+      ([editState]) => editState?.noteBlock === noteBlock
     );
     const startPositionAt = useContextSelector(
       CurrentFocusedBlockContext,
       ([editState]) =>
-        editState?.id === noteBlock.id ? editState.startPositionAt : undefined
+        editState?.noteBlock === noteBlock
+          ? editState.startPositionAt
+          : undefined
     );
 
     const inputRef = useRef<HTMLTextAreaElement | null>(null);
@@ -74,24 +63,22 @@ export const NoteBlock = React.memo(
     }, [isEditing, startPositionAt, noteBlock.content.length]);
 
     useEffect(() => {
-      if (noteBlock.id !== noteBlockContent.id) return;
+      if (noteBlock.$modelId !== noteBlockContent.id) return;
       if (noteBlock.content === noteBlockContent.content) return;
 
-      database.action(async () => {
-        await noteBlock.update((post) => {
-          post.content = noteBlockContent.content;
-        });
-      });
-    }, [database, noteBlock, noteBlockContent.content, noteBlockContent.id]);
+      noteBlock.updateContent(noteBlockContent.content);
+    }, [noteBlock, noteBlockContent.content, noteBlockContent.id]);
 
     const handleKeyPress = useCallback(
       async (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         if (e.key === 'Enter' && !e.shiftKey) {
           e.preventDefault();
-          const newBlock = await noteBlock.injectNewRightBlock('');
+          const newBlock = noteBlock.injectNewRightBlock('');
+
+          if (!newBlock) return;
 
           setEditState({
-            id: newBlock.id,
+            noteBlock: newBlock,
           });
         }
       },
@@ -109,11 +96,11 @@ export const NoteBlock = React.memo(
           if (isOnStart) {
             e.preventDefault();
 
-            const mergedTo = await noteBlock.mergeToLeftAndDelete();
+            const mergedTo = noteBlock.mergeToLeftAndDelete();
 
             if (mergedTo) {
               setEditState({
-                id: mergedTo.id,
+                noteBlock: mergedTo,
                 startPositionAt:
                   mergedTo.content.length - noteBlock.content.length,
               });
@@ -122,36 +109,36 @@ export const NoteBlock = React.memo(
         } else if (e.key === 'Tab' && !e.shiftKey) {
           e.preventDefault();
 
-          await noteBlock.tryMoveUp();
+          noteBlock.tryMoveUp();
         } else if (e.key === 'Tab' && e.shiftKey) {
           e.preventDefault();
 
-          await noteBlock.tryMoveDown();
+          noteBlock.tryMoveDown();
         } else if (e.key === 'ArrowUp' && e.shiftKey) {
           e.preventDefault();
 
-          await noteBlock.tryMoveLeft();
+          noteBlock.tryMoveLeft();
         } else if (e.key === 'ArrowDown' && e.shiftKey) {
           e.preventDefault();
 
-          await noteBlock.tryMoveRight();
+          noteBlock.tryMoveRight();
         } else if (e.key === 'ArrowDown') {
           e.preventDefault();
 
-          const [, right] = await noteBlock.getLeftAndRight();
+          const [, right] = noteBlock.leftAndRight;
 
           if (right) {
             setEditState({
-              id: right.id,
+              noteBlock: right,
             });
           }
         } else if (e.key === 'ArrowUp') {
           e.preventDefault();
 
-          const [left] = await noteBlock.getLeftAndRight();
+          const [left] = noteBlock.leftAndRight;
 
           if (left) {
-            setEditState({ id: left.id });
+            setEditState({ noteBlock: left });
           }
         }
       },
@@ -160,21 +147,22 @@ export const NoteBlock = React.memo(
 
     const handleChange = useCallback(
       (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-        setNoteBlockContent({ content: e.target.value, id: noteBlock.id });
+        setNoteBlockContent({
+          content: e.target.value,
+          id: noteBlock.$modelId,
+        });
       },
-      [noteBlock.id]
+      [noteBlock.$modelId]
     );
 
     const handleClick = useCallback(() => {
-      setEditState({ id: noteBlock.id });
-    }, [noteBlock.id, setEditState]);
-
-    useTrackOrder(noteBlock, onOrderChange);
+      setEditState({ noteBlock: noteBlock });
+    }, [noteBlock, setEditState]);
 
     return (
       <div className="note-block">
         <div className="note-block__body">
-          <div className="note-block__dot" />({noteBlock.order})
+          <div className="note-block__dot" />
           <TextareaAutosize
             ref={inputRef}
             autoFocus
@@ -192,17 +180,14 @@ export const NoteBlock = React.memo(
             {noteBlockContent.content.slice(-1) === '\n' && '\n'}
           </div>
         </div>
-        {childBlocks.length !== 0 && (
+        {noteBlock.childBlockRefs.length !== 0 && (
           <div className="note-block__child-blocks">
-            {childBlocks
-              .sort((a, b) => a.order - b.order)
-              .map((childNoteBlock) => (
-                <NoteBlock
-                  key={childNoteBlock.id}
-                  noteBlock={childNoteBlock}
-                  onOrderChange={update}
-                />
-              ))}
+            {noteBlock.childBlockRefs.map(({ current: childNoteBlock }) => (
+              <NoteBlock
+                key={childNoteBlock.$modelId}
+                noteBlock={childNoteBlock}
+              />
+            ))}
           </div>
         )}
       </div>

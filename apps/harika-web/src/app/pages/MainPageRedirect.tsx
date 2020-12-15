@@ -1,22 +1,21 @@
 import { useEffect } from 'react';
-import { getOrCreateDailyNote } from '@harika/harika-notes';
-import { useDatabase } from '@nozbe/watermelondb/hooks';
-import { useHistory } from 'react-router-dom';
 import dayjs from 'dayjs';
+import { useHarikaStore } from '@harika/harika-core';
+import { useHistory } from 'react-router-dom';
 
 export const MainPageRedirect = () => {
-  const database = useDatabase();
+  const store = useHarikaStore();
   const history = useHistory();
 
   useEffect(() => {
     const toExecute = async () => {
-      const note = await getOrCreateDailyNote(database, dayjs());
+      const note = store.getOrCreateDailyNote(dayjs());
 
-      history.replace(`/notes/${note.id}`);
+      history.replace(`/notes/${note.$modelId}`);
     };
 
     toExecute();
-  }, [database, history]);
+  }, [history, store]);
 
   return null;
 };
