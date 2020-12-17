@@ -12,6 +12,7 @@ import {
 } from 'mobx-keystone';
 import { computed } from 'mobx';
 import { NoteMemModel } from './NoteMemModel';
+import { Store } from '../MemoryDb';
 
 // TODO maybe root ref? What is the best way to manage??
 export const noteBlockRef = customRef<NoteBlockMemModel>(
@@ -23,8 +24,8 @@ export const noteBlockRef = customRef<NoteBlockMemModel>(
     // },
 
     resolve(ref) {
-      const parent = findParent<NoteMemModel>(ref, (n) => {
-        return n instanceof NoteMemModel;
+      const parent = findParent<Store>(ref, (n) => {
+        return n instanceof Store;
       });
 
       if (!parent) return undefined;
@@ -45,10 +46,12 @@ export const noteBlockRef = customRef<NoteBlockMemModel>(
 export class NoteBlockMemModel extends Model({
   childBlockRefs: prop<Ref<NoteBlockMemModel>[]>(() => []),
   parentBlockRef: prop<Ref<NoteBlockMemModel> | undefined>(),
+  noteRef: prop<Ref<NoteMemModel>>(),
   content: prop<string>(),
   updatedAt: tProp_dateTimestamp(types.dateTimestamp),
   createdAt: tProp_dateTimestamp(types.dateTimestamp),
   isDeleted: prop<boolean>(false),
+  isPersisted: prop<boolean>(false),
 }) {
   @computed
   get parentChildRefs() {
@@ -60,18 +63,18 @@ export class NoteBlockMemModel extends Model({
   }
 
   @computed
-  get note() {
-    return findParent<NoteMemModel>(this, (n) => n instanceof NoteMemModel);
+  get store() {
+    return findParent<Store>(this, (n) => n instanceof Store);
   }
 
   @computed
   get rootChildRefs() {
-    if (!this.note) {
+    if (!this.noteRef) {
       console.error("Can't find note store");
 
       return [];
     }
-    return this.note.childBlockRefs;
+    return this.noteRef.current.childBlockRefs;
   }
 
   @computed
@@ -180,7 +183,7 @@ export class NoteBlockMemModel extends Model({
 
   @modelAction
   injectNewRightBlock(content: string) {
-    if (!this.note) {
+    if (!this.noteRef.current) {
       console.error("Can't find note store");
 
       return;
@@ -204,7 +207,7 @@ export class NoteBlockMemModel extends Model({
       }
     })();
 
-    const newNoteBlock = this.note.createBlock({
+    const newNoteBlock = this.noteRef.current.createBlock({
       childBlockRefs: [],
       parentBlockRef: parentRef,
       content: content,

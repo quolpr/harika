@@ -7,12 +7,17 @@ export {
   noteBlockRef,
 } from './MemoryDb/models/NoteBlockMemModel';
 export { HarikaNotesTableName } from './PersistentDb/schema';
-export { MemoryDb } from './MemoryDb/MemoryDb';
+export { Store as MemoryDb } from './MemoryDb/MemoryDb';
 
-import { connectReduxDevTools } from 'mobx-keystone';
+import {
+  connectReduxDevTools,
+  ModelPropsData,
+  onPatches,
+  Patch,
+} from 'mobx-keystone';
 import { Database } from '@nozbe/watermelondb';
 import { PersistentDb } from './PersistentDb/PersistentDb';
-import { MemoryDb } from './MemoryDb/MemoryDb';
+import { Store } from './MemoryDb/MemoryDb';
 import * as remotedev from 'remotedev';
 import schema from './PersistentDb/schema';
 import LokiJSAdapter from '@nozbe/watermelondb/adapters/lokijs';
@@ -21,11 +26,12 @@ import { NoteBlockDbModel } from './PersistentDb/models/NoteBlockDbModel';
 import { NoteDbModel } from './PersistentDb/models/NoteDbModel';
 import { convertDbToMemNote } from './convertDbToModel';
 import { Dayjs } from 'dayjs';
+import { NoteBlockMemModel } from '..';
 
 export class HarikaNotes {
   watermelondb: Database;
   persistentDb: PersistentDb;
-  private memDb: MemoryDb;
+  private memDb: Store;
 
   constructor() {
     const adapter = new LokiJSAdapter({
@@ -54,11 +60,13 @@ export class HarikaNotes {
     });
     this.persistentDb = new PersistentDb(this.watermelondb);
 
-    this.memDb = new MemoryDb({});
+    this.memDb = new Store({});
     const connection = remotedev.connectViaExtension({
       name: 'Harika store',
     });
     connectReduxDevTools(remotedev, connection, this.memDb);
+
+    onPatches(this.memDb, this.handlePatch);
   }
 
   getMemDb() {
@@ -79,7 +87,7 @@ export class HarikaNotes {
     if (persistedNote) {
       const memNote = await convertDbToMemNote(persistedNote);
 
-      this.memDb.addNewNote(memNote.note);
+      this.memDb.addNewNote(memNote.note, memNote.noteBlocks);
 
       return memNote.note;
     }
@@ -97,11 +105,56 @@ export class HarikaNotes {
     if (persistedNote) {
       const memNote = await convertDbToMemNote(persistedNote);
 
-      this.memDb.addNewNote(memNote.note);
+      this.memDb.addNewNote(memNote.note, memNote.noteBlocks);
 
       return memNote.note;
     }
 
     return;
   }
+
+  private handlePatch = (patches: Patch[]) => {
+    patches.forEach(async (patch) => {
+      if (patch.op === 'add') {
+        if (patch.path.length === 2 && patch.path[0] === 'blocksMap') {
+          const value: ModelPropsData<NoteBlockMemModel> & {
+            $modelId: string;
+          } = patch.value;
+
+          if (value.isPersisted) return;
+
+          this.watermelondb.action(() => {
+            return this.persistentDb.noteBlocksCollection.create((creator) => {
+              creator._raw.id = value.$modelId;
+              creator.noteId = value.noteRef.id;
+              creator.parentBlockId = value.parentBlockRef?.id;
+              creator.content = value.content;
+              creator.createdAt = new Date(value.createdAt);
+              creator.updatedAt = new Date(value.updatedAt);
+            });
+          });
+        }
+      }
+
+      if (patch.op === 'replace') {
+        if (patch.path.length === 3 && patch.path[0] === 'blocksMap') {
+          const noteBlock = await this.persistentDb.noteBlocksCollection.find(
+            patch.path[1] as string
+          );
+
+          this.watermelondb.action(async () => {
+            return noteBlock.update((toUpdate) => {
+              if (patch.path[2] === 'parentBlockRef') {
+                toUpdate.parentBlockId = patch.value.id;
+              }
+
+              if (patch.path[2] === 'content') {
+                toUpdate.content = patch.value;
+              }
+            });
+          });
+        }
+      }
+    });
+  };
 }

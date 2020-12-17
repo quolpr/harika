@@ -38,6 +38,6 @@ export class NoteBlockDbModel extends Model {
   @field('parent_block_id') parentBlockId!: string | undefined;
   @field('content') content!: string;
   @field('order') order!: number;
-  @readonly @date('created_at') createdAt!: Date;
-  @readonly @date('updated_at') updatedAt!: Date;
+  @date('created_at') createdAt!: Date;
+  @date('updated_at') updatedAt!: Date;
 }

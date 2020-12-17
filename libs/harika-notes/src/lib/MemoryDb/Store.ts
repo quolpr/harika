@@ -8,12 +8,13 @@ import {
 } from 'mobx-keystone';
 import { Optional } from 'utility-types';
 import { v4 as uuidv4 } from 'uuid';
-import { noteBlockRef } from './models/NoteBlockMemModel';
+import { NoteBlockMemModel, noteBlockRef } from './models/NoteBlockMemModel';
 import { NoteMemModel } from './models/NoteMemModel';
 
 @model('harika/HarikaStore')
-export class MemoryDb extends Model({
+export class Store extends Model({
   notesMap: prop<Record<string, NoteMemModel>>(() => ({})),
+  blocksMap: prop<Record<string, NoteBlockMemModel>>(() => ({})),
 }) {
   @modelAction
   createNote(
@@ -56,7 +57,11 @@ export class MemoryDb extends Model({
   }
 
   @modelAction
-  addNewNote(note: NoteMemModel) {
+  addNewNote(note: NoteMemModel, blocks: NoteBlockMemModel[]) {
     this.notesMap[note.$modelId] = note;
+
+    blocks.forEach((block) => {
+      this.blocksMap[block.$modelId] = block;
+    });
   }
 }
