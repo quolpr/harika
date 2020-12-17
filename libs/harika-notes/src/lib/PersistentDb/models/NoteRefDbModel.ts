@@ -7,10 +7,10 @@ import {
   relation,
 } from '@nozbe/watermelondb/decorators';
 import { HarikaNotesTableName } from '../schema';
-import { NoteBlockDbModel } from './NoteBlockDbModel';
-import { NoteDbModel } from './NoteDbModel';
+import { NoteBlockRow } from './NoteBlockDbModel';
+import { NoteRow } from './NoteDbModel';
 
-export class NoteRefDbModel extends Model {
+export class NoteRefRow extends Model {
   static table = HarikaNotesTableName.NOTE_REFS;
 
   static associations: Associations = {
@@ -21,9 +21,9 @@ export class NoteRefDbModel extends Model {
     },
   };
 
-  @relation(HarikaNotesTableName.NOTES, 'note_id') note!: Relation<NoteDbModel>;
+  @relation(HarikaNotesTableName.NOTES, 'note_id') note!: Relation<NoteRow>;
   @relation(HarikaNotesTableName.NOTE_BLOCKS, 'note_block_id')
-  noteBlock!: Relation<NoteBlockDbModel>;
+  noteBlock!: Relation<NoteBlockRow>;
 
   @readonly @date('created_at') createdAt!: Date;
   @readonly @date('updated_at') updatedAt!: Date;

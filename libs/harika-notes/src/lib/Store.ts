@@ -8,22 +8,22 @@ import {
 } from 'mobx-keystone';
 import { Optional } from 'utility-types';
 import { v4 as uuidv4 } from 'uuid';
-import { NoteBlockMemModel, noteBlockRef } from './models/NoteBlockMemModel';
-import { NoteMemModel } from './models/NoteMemModel';
+import { NoteBlockModel, noteBlockRef } from './models/NoteBlockMemModel';
+import { NoteModel } from './models/NoteMemModel';
 
 @model('harika/HarikaStore')
 export class Store extends Model({
-  notesMap: prop<Record<string, NoteMemModel>>(() => ({})),
-  blocksMap: prop<Record<string, NoteBlockMemModel>>(() => ({})),
+  notesMap: prop<Record<string, NoteModel>>(() => ({})),
+  blocksMap: prop<Record<string, NoteBlockModel>>(() => ({})),
 }) {
   @modelAction
   createNote(
     attrs: Optional<
-      ModelInstanceCreationData<NoteMemModel>,
+      ModelInstanceCreationData<NoteModel>,
       'updatedAt' | 'createdAt' | 'dailyNoteDate'
     >
   ) {
-    const note = new NoteMemModel({
+    const note = new NoteModel({
       $modelId: uuidv4(),
       updatedAt: new Date(),
       createdAt: new Date(),
@@ -57,7 +57,7 @@ export class Store extends Model({
   }
 
   @modelAction
-  addNewNote(note: NoteMemModel, blocks: NoteBlockMemModel[]) {
+  addNewNote(note: NoteModel, blocks: NoteBlockModel[]) {
     this.notesMap[note.$modelId] = note;
 
     blocks.forEach((block) => {

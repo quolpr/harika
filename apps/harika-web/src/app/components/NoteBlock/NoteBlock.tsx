@@ -6,10 +6,10 @@ import clsx from 'clsx';
 import TextareaAutosize from 'react-textarea-autosize';
 import { CurrentFocusedBlockContext } from '@harika/harika-core';
 import { observer } from 'mobx-react-lite';
-import { NoteBlockMemModel } from '@harika/harika-notes';
+import { NoteBlockModel } from '@harika/harika-notes';
 
 export const NoteBlock = observer(
-  ({ noteBlock }: { noteBlock: NoteBlockMemModel }) => {
+  ({ noteBlock }: { noteBlock: NoteBlockModel }) => {
     const [noteBlockContent, setNoteBlockContent] = useState({
       content: noteBlock.content,
       id: noteBlock.$modelId,

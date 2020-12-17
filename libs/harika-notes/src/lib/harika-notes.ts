@@ -1,27 +1,28 @@
-export { NoteDbModel } from './PersistentDb/models/NoteDbModel';
-export { NoteBlockDbModel } from './PersistentDb/models/NoteBlockDbModel';
-export { NoteRefDbModel } from './PersistentDb/models/NoteRefDbModel';
-export { NoteMemModel } from './models/NoteMemModel';
-export { NoteBlockMemModel, noteBlockRef } from './models/NoteBlockMemModel';
+export { NoteRow } from './PersistentDb/models/NoteDbModel';
+export { NoteBlockRow } from './PersistentDb/models/NoteBlockDbModel';
+export { NoteRefRow } from './PersistentDb/models/NoteRefDbModel';
+export { NoteModel } from './models/NoteMemModel';
+export { NoteBlockModel, noteBlockRef } from './models/NoteBlockMemModel';
 export { HarikaNotesTableName } from './PersistentDb/schema';
-export { Store as MemoryDb } from './Store';
+export { Store } from './Store';
+export { default as schema } from './PersistentDb/schema';
 
 import { connectReduxDevTools, onPatches } from 'mobx-keystone';
 import { Database, DatabaseAdapter } from '@nozbe/watermelondb';
 import { Queries } from './PersistentDb/Queries';
 import { Store } from './Store';
 import * as remotedev from 'remotedev';
-import { NoteRefDbModel } from './PersistentDb/models/NoteRefDbModel';
-import { NoteBlockDbModel } from './PersistentDb/models/NoteBlockDbModel';
-import { NoteDbModel } from './PersistentDb/models/NoteDbModel';
-import { convertDbToMemNote } from './PersistentDb/convertDbToModel';
+import { NoteRefRow } from './PersistentDb/models/NoteRefDbModel';
+import { NoteBlockRow } from './PersistentDb/models/NoteBlockDbModel';
+import { NoteRow } from './PersistentDb/models/NoteDbModel';
+import { convertNoteRowToModel } from './PersistentDb/convertDbToModel';
 import { Dayjs } from 'dayjs';
 import { ChangesHandler } from './ChangesHandler';
 
 const setupDatabase = (adapter: DatabaseAdapter) => {
   return new Database({
     adapter,
-    modelClasses: [NoteDbModel, NoteBlockDbModel, NoteRefDbModel],
+    modelClasses: [NoteRow, NoteBlockRow, NoteRefRow],
     actionsEnabled: true,
   });
 };
@@ -53,10 +54,10 @@ export class HarikaNotes {
   }
 
   async getOrCreateDailyNote(date: Dayjs) {
-    const row = await this.queries.getDailyNote(date);
+    const noteRow = await this.queries.getDailyNoteRow(date);
 
-    if (row) {
-      return this.convertNoteRowToModel(row);
+    if (noteRow) {
+      return this.convertNoteRowToModel(noteRow);
     }
 
     return this.store.createDailyNote(date);
@@ -65,16 +66,16 @@ export class HarikaNotes {
   async findNote(id: string) {
     if (this.store.notesMap[id]) return this.store.notesMap[id];
 
-    return this.convertNoteRowToModel(await this.queries.getNoteById(id));
+    return this.convertNoteRowToModel(await this.queries.getNoteRowById(id));
   }
 
-  private async convertNoteRowToModel(row: NoteDbModel) {
+  private async convertNoteRowToModel(row: NoteRow) {
     if (this.store.notesMap[row.id]) return this.store.notesMap[row.id];
 
-    const memNote = await convertDbToMemNote(row);
+    const data = await convertNoteRowToModel(row);
 
-    this.store.addNewNote(memNote.note, memNote.noteBlocks);
+    this.store.addNewNote(data.note, data.noteBlocks);
 
-    return memNote.note;
+    return data.note;
   }
 }

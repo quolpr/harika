@@ -5,7 +5,7 @@ import './styles.css';
 import { useEffect } from 'react';
 import { useState } from 'react';
 import { observer } from 'mobx-react-lite';
-import { NoteMemModel } from '@harika/harika-notes';
+import { NoteModel } from '@harika/harika-notes';
 
 // const Backlink = ({ noteBlock }: { noteBlock: NoteBlockModel }) => {
 //   noteBlock = useTable(noteBlock);
@@ -21,7 +21,7 @@ import { NoteMemModel } from '@harika/harika-notes';
 //   ) : null;
 // };
 
-export const Note: React.FC<{ note: NoteMemModel }> = observer(({ note }) => {
+export const Note: React.FC<{ note: NoteModel }> = observer(({ note }) => {
   const [editState, setEditState] = useState({
     title: note.title,
     id: note.$modelId,

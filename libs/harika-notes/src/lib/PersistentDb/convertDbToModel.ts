@@ -1,15 +1,15 @@
-import { NoteBlockMemModel, noteBlockRef } from '../models/NoteBlockMemModel';
-import { NoteMemModel, noteRef } from '../models/NoteMemModel';
-import { NoteBlockDbModel } from './models/NoteBlockDbModel';
-import { NoteDbModel } from './models/NoteDbModel';
+import { NoteBlockModel, noteBlockRef } from '../models/NoteBlockMemModel';
+import { NoteModel, noteRef } from '../models/NoteMemModel';
+import { NoteBlockRow } from './models/NoteBlockDbModel';
+import { NoteRow } from './models/NoteDbModel';
 
-export const convertDbToMemNoteBlock = async (
-  dbModel: NoteBlockDbModel,
+export const convertNoteBlockRowToModel = async (
+  dbModel: NoteBlockRow,
   noteId: string
 ) => {
   const children = await dbModel.childBlocks.fetch();
 
-  return new NoteBlockMemModel({
+  return new NoteBlockModel({
     $modelId: dbModel.id,
     content: dbModel.content,
     updatedAt: dbModel.updatedAt,
@@ -23,14 +23,14 @@ export const convertDbToMemNoteBlock = async (
   });
 };
 
-export const convertDbToMemNote = async (dbModel: NoteDbModel) => {
+export const convertNoteRowToModel = async (dbModel: NoteRow) => {
   const noteBlockModels = await Promise.all(
     (await dbModel.noteBlocks.fetch()).map((m) =>
-      convertDbToMemNoteBlock(m, dbModel.id)
+      convertNoteBlockRowToModel(m, dbModel.id)
     )
   );
 
-  const noteModel = new NoteMemModel({
+  const noteModel = new NoteModel({
     $modelId: dbModel.id,
     title: dbModel.title,
     dailyNoteDate: dbModel.dailyNoteDate || new Date(),

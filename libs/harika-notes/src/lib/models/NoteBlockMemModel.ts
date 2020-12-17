@@ -11,42 +11,39 @@ import {
   types,
 } from 'mobx-keystone';
 import { computed } from 'mobx';
-import { NoteMemModel } from './NoteMemModel';
+import { NoteModel } from './NoteMemModel';
 import { Store } from '../Store';
 
 // TODO maybe root ref? What is the best way to manage??
-export const noteBlockRef = customRef<NoteBlockMemModel>(
-  'harika/NoteBlockRef',
-  {
-    // this works, but we will use getRefId() from the Todo class instead
-    // getId(maybeTodo) {
-    //   return maybeTodo instanceof Todo ? maybeTodo.id : undefined
-    // },
+export const noteBlockRef = customRef<NoteBlockModel>('harika/NoteBlockRef', {
+  // this works, but we will use getRefId() from the Todo class instead
+  // getId(maybeTodo) {
+  //   return maybeTodo instanceof Todo ? maybeTodo.id : undefined
+  // },
 
-    resolve(ref) {
-      const parent = findParent<Store>(ref, (n) => {
-        return n instanceof Store;
-      });
+  resolve(ref) {
+    const parent = findParent<Store>(ref, (n) => {
+      return n instanceof Store;
+    });
 
-      if (!parent) return undefined;
+    if (!parent) return undefined;
 
-      return parent.blocksMap[ref.id];
-    },
-    onResolvedValueChange(ref, newTodo, oldTodo) {
-      if (oldTodo && !newTodo) {
-        // if the todo value we were referencing disappeared then remove the reference
-        // from its parent
-        detach(ref);
-      }
-    },
-  }
-);
+    return parent.blocksMap[ref.id];
+  },
+  onResolvedValueChange(ref, newTodo, oldTodo) {
+    if (oldTodo && !newTodo) {
+      // if the todo value we were referencing disappeared then remove the reference
+      // from its parent
+      detach(ref);
+    }
+  },
+});
 
-@model('harika/NoteBlockMemModel')
-export class NoteBlockMemModel extends Model({
-  childBlockRefs: prop<Ref<NoteBlockMemModel>[]>(() => []),
-  parentBlockRef: prop<Ref<NoteBlockMemModel> | undefined>(),
-  noteRef: prop<Ref<NoteMemModel>>(),
+@model('harika/NoteBlockModel')
+export class NoteBlockModel extends Model({
+  childBlockRefs: prop<Ref<NoteBlockModel>[]>(() => []),
+  parentBlockRef: prop<Ref<NoteBlockModel> | undefined>(),
+  noteRef: prop<Ref<NoteModel>>(),
   content: prop<string>(),
   updatedAt: tProp_dateTimestamp(types.dateTimestamp),
   createdAt: tProp_dateTimestamp(types.dateTimestamp),
@@ -91,8 +88,8 @@ export class NoteBlockMemModel extends Model({
 
   @computed
   get leftAndRightSibling(): [
-    left: NoteBlockMemModel | undefined,
-    right: NoteBlockMemModel | undefined
+    left: NoteBlockModel | undefined,
+    right: NoteBlockModel | undefined
   ] {
     const siblings = this.allSiblings;
     const index = this.orderPosition;
@@ -101,7 +98,7 @@ export class NoteBlockMemModel extends Model({
   }
 
   @computed
-  get deepLastRightChild(): NoteBlockMemModel {
+  get deepLastRightChild(): NoteBlockModel {
     if (this.childBlockRefs.length === 0) return this;
 
     return this.childBlockRefs[this.childBlockRefs.length - 1].current
@@ -109,7 +106,7 @@ export class NoteBlockMemModel extends Model({
   }
 
   @computed
-  get nearestRightToParent(): NoteBlockMemModel | undefined {
+  get nearestRightToParent(): NoteBlockModel | undefined {
     if (!this.parentBlockRef) return;
 
     const [, right] = this.parentBlockRef.current.leftAndRightSibling;
@@ -121,8 +118,8 @@ export class NoteBlockMemModel extends Model({
 
   @computed
   get leftAndRight(): [
-    left: NoteBlockMemModel | undefined,
-    right: NoteBlockMemModel | undefined
+    left: NoteBlockModel | undefined,
+    right: NoteBlockModel | undefined
   ] {
     let [left, right] = this.leftAndRightSibling;
 
@@ -220,8 +217,8 @@ export class NoteBlockMemModel extends Model({
 
   @modelAction
   makeParentTo(
-    block: NoteBlockMemModel | undefined,
-    afterBlock: NoteBlockMemModel | undefined
+    block: NoteBlockModel | undefined,
+    afterBlock: NoteBlockModel | undefined
   ) {
     const refs = (() => {
       if (block) {

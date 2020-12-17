@@ -15,9 +15,9 @@ import {
 import { Optional } from 'utility-types';
 import { v4 as uuidv4 } from 'uuid';
 import { Store } from '../Store';
-import { NoteBlockMemModel } from './NoteBlockMemModel';
+import { NoteBlockModel } from './NoteBlockMemModel';
 
-export const noteRef = customRef<NoteMemModel>('harika/NoteRef', {
+export const noteRef = customRef<NoteModel>('harika/NoteRef', {
   // this works, but we will use getRefId() from the Todo class instead
   // getId(maybeTodo) {
   //   return maybeTodo instanceof Todo ? maybeTodo.id : undefined
@@ -41,13 +41,13 @@ export const noteRef = customRef<NoteMemModel>('harika/NoteRef', {
   },
 });
 
-@model('harika/NoteMemModel')
-export class NoteMemModel extends Model({
+@model('harika/NoteModel')
+export class NoteModel extends Model({
   title: prop<string>(''),
   dailyNoteDate: tProp_dateTimestamp(types.dateTimestamp),
   updatedAt: tProp_dateTimestamp(types.dateTimestamp),
   createdAt: tProp_dateTimestamp(types.dateTimestamp),
-  childBlockRefs: prop<Ref<NoteBlockMemModel>[]>(() => []),
+  childBlockRefs: prop<Ref<NoteBlockModel>[]>(() => []),
   isPersisted: prop<boolean>(false),
 }) {
   @computed
@@ -58,11 +58,11 @@ export class NoteMemModel extends Model({
   @modelAction
   createBlock(
     attrs: Optional<
-      ModelInstanceCreationData<NoteBlockMemModel>,
+      ModelInstanceCreationData<NoteBlockModel>,
       'updatedAt' | 'createdAt' | 'noteRef'
     >
   ) {
-    const newNoteBlock = new NoteBlockMemModel({
+    const newNoteBlock = new NoteBlockModel({
       $modelId: uuidv4(),
       updatedAt: new Date(),
       createdAt: new Date(),

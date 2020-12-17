@@ -1,20 +1,20 @@
 import { Collection, Database } from '@nozbe/watermelondb';
 import { ModelPropsData, Patch } from 'mobx-keystone';
-import { NoteBlockMemModel } from './models/NoteBlockMemModel';
-import { NoteBlockDbModel } from './PersistentDb/models/NoteBlockDbModel';
-import { NoteDbModel } from './PersistentDb/models/NoteDbModel';
+import { NoteBlockModel } from './models/NoteBlockMemModel';
+import { NoteBlockRow } from './PersistentDb/models/NoteBlockDbModel';
+import { NoteRow } from './PersistentDb/models/NoteDbModel';
 import { Queries } from './PersistentDb/Queries';
 import { HarikaNotesTableName } from './PersistentDb/schema';
 
 export class ChangesHandler {
-  notesCollection: Collection<NoteDbModel>;
-  noteBlocksCollection: Collection<NoteBlockDbModel>;
+  notesCollection: Collection<NoteRow>;
+  noteBlocksCollection: Collection<NoteBlockRow>;
   constructor(private database: Database, private queries: Queries) {
-    this.notesCollection = this.database.collections.get<NoteDbModel>(
+    this.notesCollection = this.database.collections.get<NoteRow>(
       HarikaNotesTableName.NOTES
     );
 
-    this.noteBlocksCollection = this.database.collections.get<NoteBlockDbModel>(
+    this.noteBlocksCollection = this.database.collections.get<NoteBlockRow>(
       HarikaNotesTableName.NOTE_BLOCKS
     );
   }
@@ -23,7 +23,7 @@ export class ChangesHandler {
     patches.forEach(async (patch) => {
       if (patch.op === 'add') {
         if (patch.path.length === 2 && patch.path[0] === 'blocksMap') {
-          const value: ModelPropsData<NoteBlockMemModel> & {
+          const value: ModelPropsData<NoteBlockModel> & {
             $modelId: string;
           } = patch.value;
 

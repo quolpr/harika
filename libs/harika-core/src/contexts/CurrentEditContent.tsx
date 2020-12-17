@@ -1,10 +1,10 @@
-import { NoteBlockMemModel } from '@harika/harika-notes';
+import { NoteBlockModel } from '@harika/harika-notes';
 import { createContext } from 'use-context-selector';
 
 export type ICurrentFocusedBlockState =
   | undefined
   | {
-      noteBlock: NoteBlockMemModel;
+      noteBlock: NoteBlockModel;
       startPositionAt?: number;
     };
 

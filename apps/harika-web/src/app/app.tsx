@@ -4,7 +4,7 @@ import { Header } from './components/Header/Header';
 import { BrowserRouter, Route, Switch } from 'react-router-dom';
 import { MainPageRedirect } from './pages/MainPageRedirect';
 import { NotePage } from './pages/NotePage';
-import { HarikaNotes } from '@harika/harika-notes';
+import { HarikaNotes, schema } from '@harika/harika-notes';
 import { Content } from './components/Content/Content';
 import {
   CurrentFocusedBlockContext,
@@ -13,7 +13,6 @@ import {
   ICurrentFocusedBlockState,
   ICurrentNoteState,
 } from '@harika/harika-core';
-import schema from 'libs/harika-notes/src/lib/PersistentDb/schema';
 import LokiJSAdapter from '@nozbe/watermelondb/adapters/lokijs';
 
 // const HandleNoteBlockBlur: React.FC = () => {
