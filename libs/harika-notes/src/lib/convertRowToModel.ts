@@ -7,8 +7,6 @@ export const convertNoteBlockRowToModel = async (
   dbModel: NoteBlockRow,
   noteId: string
 ) => {
-  const children = await dbModel.childBlocks.fetch();
-
   return new NoteBlockModel({
     $modelId: dbModel.id,
     content: dbModel.content,
@@ -18,7 +16,7 @@ export const convertNoteBlockRowToModel = async (
       ? noteBlockRef(dbModel.parentBlockId)
       : undefined,
     isPersisted: true,
-    childBlockRefs: children.map((m) => noteBlockRef(m.id)),
+    childBlockRefs: (dbModel.childBlockIds || []).map((id) => noteBlockRef(id)),
     noteRef: noteRef(noteId),
   });
 };
@@ -37,9 +35,7 @@ export const convertNoteRowToModel = async (dbModel: NoteRow) => {
     updatedAt: dbModel.updatedAt,
     createdAt: dbModel.createdAt,
     isPersisted: true,
-    childBlockRefs: noteBlockModels
-      .filter((m) => m.parentBlockRef === undefined)
-      .map((m) => noteBlockRef(m)),
+    childBlockRefs: (dbModel.childBlockIds || []).map((id) => noteBlockRef(id)),
   });
 
   return { note: noteModel, noteBlocks: noteBlockModels };

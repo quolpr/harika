@@ -45,7 +45,7 @@ export class HarikaNotes {
 
     onPatches(
       this.store,
-      new ChangesHandler(database, this.queries).handlePatch
+      new ChangesHandler(database, this.queries, this.store).handlePatch
     );
   }
 

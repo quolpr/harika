@@ -3,6 +3,7 @@ import {
   children,
   date,
   field,
+  json,
   relation,
 } from '@nozbe/watermelondb/decorators';
 import { Associations } from '@nozbe/watermelondb/Model';
@@ -35,6 +36,7 @@ export class NoteBlockRow extends Model {
   @field('parent_block_id') parentBlockId!: string | undefined;
   @field('content') content!: string;
   @field('order') order!: number;
+  @json('child_block_ids', (data) => data) childBlockIds!: string[];
   @date('created_at') createdAt!: Date;
   @date('updated_at') updatedAt!: Date;
 }
