@@ -14,7 +14,7 @@ import {
 } from 'mobx-keystone';
 import { Optional } from 'utility-types';
 import { v4 as uuidv4 } from 'uuid';
-import { Store } from '../MemoryDb';
+import { Store } from '../Store';
 import { NoteBlockMemModel } from './NoteBlockMemModel';
 
 export const noteRef = customRef<NoteMemModel>('harika/NoteRef', {

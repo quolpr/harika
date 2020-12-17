@@ -12,7 +12,7 @@ import {
 } from 'mobx-keystone';
 import { computed } from 'mobx';
 import { NoteMemModel } from './NoteMemModel';
-import { Store } from '../MemoryDb';
+import { Store } from '../Store';
 
 // TODO maybe root ref? What is the best way to manage??
 export const noteBlockRef = customRef<NoteBlockMemModel>(

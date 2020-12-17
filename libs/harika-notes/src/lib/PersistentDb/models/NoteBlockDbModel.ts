@@ -3,7 +3,6 @@ import {
   children,
   date,
   field,
-  readonly,
   relation,
 } from '@nozbe/watermelondb/decorators';
 import { Associations } from '@nozbe/watermelondb/Model';

@@ -4,7 +4,7 @@ import { NoteBlockDbModel } from './models/NoteBlockDbModel';
 import { NoteDbModel } from './models/NoteDbModel';
 import { HarikaNotesTableName } from './schema';
 
-export class PersistentDb {
+export class Queries {
   private database: Database;
   notesCollection: Collection<NoteDbModel>;
   noteBlocksCollection: Collection<NoteBlockDbModel>;

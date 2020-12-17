@@ -1,160 +1,80 @@
 export { NoteDbModel } from './PersistentDb/models/NoteDbModel';
 export { NoteBlockDbModel } from './PersistentDb/models/NoteBlockDbModel';
 export { NoteRefDbModel } from './PersistentDb/models/NoteRefDbModel';
-export { NoteMemModel } from './MemoryDb/models/NoteMemModel';
-export {
-  NoteBlockMemModel,
-  noteBlockRef,
-} from './MemoryDb/models/NoteBlockMemModel';
+export { NoteMemModel } from './models/NoteMemModel';
+export { NoteBlockMemModel, noteBlockRef } from './models/NoteBlockMemModel';
 export { HarikaNotesTableName } from './PersistentDb/schema';
-export { Store as MemoryDb } from './MemoryDb/MemoryDb';
+export { Store as MemoryDb } from './Store';
 
-import {
-  connectReduxDevTools,
-  ModelPropsData,
-  onPatches,
-  Patch,
-} from 'mobx-keystone';
-import { Database } from '@nozbe/watermelondb';
-import { PersistentDb } from './PersistentDb/PersistentDb';
-import { Store } from './MemoryDb/MemoryDb';
+import { connectReduxDevTools, onPatches } from 'mobx-keystone';
+import { Database, DatabaseAdapter } from '@nozbe/watermelondb';
+import { Queries } from './PersistentDb/Queries';
+import { Store } from './Store';
 import * as remotedev from 'remotedev';
-import schema from './PersistentDb/schema';
-import LokiJSAdapter from '@nozbe/watermelondb/adapters/lokijs';
 import { NoteRefDbModel } from './PersistentDb/models/NoteRefDbModel';
 import { NoteBlockDbModel } from './PersistentDb/models/NoteBlockDbModel';
 import { NoteDbModel } from './PersistentDb/models/NoteDbModel';
-import { convertDbToMemNote } from './convertDbToModel';
+import { convertDbToMemNote } from './PersistentDb/convertDbToModel';
 import { Dayjs } from 'dayjs';
-import { NoteBlockMemModel } from '..';
+import { ChangesHandler } from './ChangesHandler';
+
+const setupDatabase = (adapter: DatabaseAdapter) => {
+  return new Database({
+    adapter,
+    modelClasses: [NoteDbModel, NoteBlockDbModel, NoteRefDbModel],
+    actionsEnabled: true,
+  });
+};
+
+const setupStore = () => {
+  const store = new Store({});
+
+  const connection = remotedev.connectViaExtension({
+    name: 'Harika store',
+  });
+
+  connectReduxDevTools(remotedev, connection, store);
+  return store;
+};
 
 export class HarikaNotes {
-  watermelondb: Database;
-  persistentDb: PersistentDb;
-  private memDb: Store;
+  queries: Queries;
+  store: Store;
 
-  constructor() {
-    const adapter = new LokiJSAdapter({
-      schema: schema,
-      // migrations, // optional migrations
-      useWebWorker: false, // recommended for new projects. tends to improve performance and reduce glitches in most cases, but also has downsides - test with and without it
-      useIncrementalIndexedDB: true, // recommended for new projects. improves performance (but incompatible with early Watermelon databases)
-      // dbName: 'myapp', // optional db name
-      // It's recommended you implement this method:
-      // onIndexedDBVersionChange: () => {
-      //   // database was deleted in another browser tab (user logged out), so we must make sure we delete
-      //   // it in this tab as well
-      //   if (checkIfUserIsLoggedIn()) {
-      //     window.location.reload()
-      //   }
-      // },
-      // Optional:
-      // onQuotaExceededError: (error) => { /* do something when user runs out of disk space */ },
-    } as any);
+  constructor(adapter: DatabaseAdapter) {
+    const database = setupDatabase(adapter);
+    this.queries = new Queries(database);
+    this.store = setupStore();
 
-    // Then, make a Watermelon database from it!
-    this.watermelondb = new Database({
-      adapter,
-      modelClasses: [NoteDbModel, NoteBlockDbModel, NoteRefDbModel],
-      actionsEnabled: true,
-    });
-    this.persistentDb = new PersistentDb(this.watermelondb);
-
-    this.memDb = new Store({});
-    const connection = remotedev.connectViaExtension({
-      name: 'Harika store',
-    });
-    connectReduxDevTools(remotedev, connection, this.memDb);
-
-    onPatches(this.memDb, this.handlePatch);
-  }
-
-  getMemDb() {
-    return this.memDb;
-  }
-
-  getPersistentDb() {
-    return this.persistentDb;
+    onPatches(
+      this.store,
+      new ChangesHandler(database, this.queries).handlePatch
+    );
   }
 
   async getOrCreateDailyNote(date: Dayjs) {
-    const dailyNoteMem = this.memDb.getDailyNote(date);
+    const row = await this.queries.getDailyNote(date);
 
-    if (dailyNoteMem) return dailyNoteMem;
-
-    const persistedNote = await this.persistentDb.getDailyNote(date);
-
-    if (persistedNote) {
-      const memNote = await convertDbToMemNote(persistedNote);
-
-      this.memDb.addNewNote(memNote.note, memNote.noteBlocks);
-
-      return memNote.note;
+    if (row) {
+      return this.convertNoteRowToModel(row);
     }
 
-    return this.memDb.createDailyNote(date);
+    return this.store.createDailyNote(date);
   }
 
   async findNote(id: string) {
-    if (this.memDb.notesMap[id]) {
-      return this.memDb.notesMap[id];
-    }
+    if (this.store.notesMap[id]) return this.store.notesMap[id];
 
-    const persistedNote = await this.persistentDb.getNoteById(id);
-
-    if (persistedNote) {
-      const memNote = await convertDbToMemNote(persistedNote);
-
-      this.memDb.addNewNote(memNote.note, memNote.noteBlocks);
-
-      return memNote.note;
-    }
-
-    return;
+    return this.convertNoteRowToModel(await this.queries.getNoteById(id));
   }
 
-  private handlePatch = (patches: Patch[]) => {
-    patches.forEach(async (patch) => {
-      if (patch.op === 'add') {
-        if (patch.path.length === 2 && patch.path[0] === 'blocksMap') {
-          const value: ModelPropsData<NoteBlockMemModel> & {
-            $modelId: string;
-          } = patch.value;
+  private async convertNoteRowToModel(row: NoteDbModel) {
+    if (this.store.notesMap[row.id]) return this.store.notesMap[row.id];
 
-          if (value.isPersisted) return;
+    const memNote = await convertDbToMemNote(row);
 
-          this.watermelondb.action(() => {
-            return this.persistentDb.noteBlocksCollection.create((creator) => {
-              creator._raw.id = value.$modelId;
-              creator.noteId = value.noteRef.id;
-              creator.parentBlockId = value.parentBlockRef?.id;
-              creator.content = value.content;
-              creator.createdAt = new Date(value.createdAt);
-              creator.updatedAt = new Date(value.updatedAt);
-            });
-          });
-        }
-      }
+    this.store.addNewNote(memNote.note, memNote.noteBlocks);
 
-      if (patch.op === 'replace') {
-        if (patch.path.length === 3 && patch.path[0] === 'blocksMap') {
-          const noteBlock = await this.persistentDb.noteBlocksCollection.find(
-            patch.path[1] as string
-          );
-
-          this.watermelondb.action(async () => {
-            return noteBlock.update((toUpdate) => {
-              if (patch.path[2] === 'parentBlockRef') {
-                toUpdate.parentBlockId = patch.value.id;
-              }
-
-              if (patch.path[2] === 'content') {
-                toUpdate.content = patch.value;
-              }
-            });
-          });
-        }
-      }
-    });
-  };
+    return memNote.note;
+  }
 }

@@ -1,10 +1,7 @@
-import {
-  NoteBlockMemModel,
-  noteBlockRef,
-} from './MemoryDb/models/NoteBlockMemModel';
-import { NoteMemModel, noteRef } from './MemoryDb/models/NoteMemModel';
-import { NoteBlockDbModel } from './PersistentDb/models/NoteBlockDbModel';
-import { NoteDbModel } from './PersistentDb/models/NoteDbModel';
+import { NoteBlockMemModel, noteBlockRef } from '../models/NoteBlockMemModel';
+import { NoteMemModel, noteRef } from '../models/NoteMemModel';
+import { NoteBlockDbModel } from './models/NoteBlockDbModel';
+import { NoteDbModel } from './models/NoteDbModel';
 
 export const convertDbToMemNoteBlock = async (
   dbModel: NoteBlockDbModel,

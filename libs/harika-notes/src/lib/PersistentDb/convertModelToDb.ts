@@ -1,3 +1,3 @@
-import { NoteBlockMemModel } from './MemoryDb/models/NoteBlockMemModel';
+import { NoteBlockMemModel } from '../models/NoteBlockMemModel';
 
 export const convertMemToDbNoteBlock = (noteBlock: NoteBlockMemModel) => {};
