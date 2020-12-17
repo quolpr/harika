@@ -11,7 +11,7 @@ import {
   types,
 } from 'mobx-keystone';
 import { computed } from 'mobx';
-import { NoteModel } from './NoteMemModel';
+import { NoteModel } from './NoteModel';
 import { Store } from '../Store';
 
 // TODO maybe root ref? What is the best way to manage??

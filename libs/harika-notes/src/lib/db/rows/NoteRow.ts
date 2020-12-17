@@ -8,8 +8,8 @@ import {
   readonly,
 } from '@nozbe/watermelondb/decorators';
 import { HarikaNotesTableName } from '../schema';
-import { NoteBlockRow } from './NoteBlockDbModel';
-import { NoteRefRow } from './NoteRefDbModel';
+import { NoteBlockRow } from './NoteBlockRow';
+import { NoteRefRow } from './NoteRefRow';
 
 export class NoteRow extends Model {
   static table = HarikaNotesTableName.NOTES;

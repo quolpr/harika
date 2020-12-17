@@ -7,8 +7,8 @@ import {
   relation,
 } from '@nozbe/watermelondb/decorators';
 import { HarikaNotesTableName } from '../schema';
-import { NoteBlockRow } from './NoteBlockDbModel';
-import { NoteRow } from './NoteDbModel';
+import { NoteBlockRow } from './NoteBlockRow';
+import { NoteRow } from './NoteRow';
 
 export class NoteRefRow extends Model {
   static table = HarikaNotesTableName.NOTE_REFS;

@@ -6,8 +6,8 @@ import {
   relation,
 } from '@nozbe/watermelondb/decorators';
 import { Associations } from '@nozbe/watermelondb/Model';
-import { NoteRow } from './NoteDbModel';
-import { NoteRefRow } from './NoteRefDbModel';
+import { NoteRow } from './NoteRow';
+import { NoteRefRow } from './NoteRefRow';
 import { HarikaNotesTableName } from '../schema';
 
 export class NoteBlockRow extends Model {

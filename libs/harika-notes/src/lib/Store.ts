@@ -8,8 +8,8 @@ import {
 } from 'mobx-keystone';
 import { Optional } from 'utility-types';
 import { v4 as uuidv4 } from 'uuid';
-import { NoteBlockModel, noteBlockRef } from './models/NoteBlockMemModel';
-import { NoteModel } from './models/NoteMemModel';
+import { NoteBlockModel, noteBlockRef } from './models/NoteBlockModel';
+import { NoteModel } from './models/NoteModel';
 
 @model('harika/HarikaStore')
 export class Store extends Model({
@@ -38,14 +38,6 @@ export class Store extends Model({
     note.childBlockRefs = [noteBlockRef(block)];
 
     return note;
-  }
-
-  getDailyNote(date: Dayjs) {
-    const startOfDate = date.startOf('day');
-
-    return Object.values(this.notesMap).find(
-      (n) => n.dailyNoteDate === startOfDate.toDate()
-    );
   }
 
   @modelAction

@@ -1,10 +1,10 @@
 import { Collection, Database } from '@nozbe/watermelondb';
 import { ModelPropsData, Patch } from 'mobx-keystone';
-import { NoteBlockModel } from './models/NoteBlockMemModel';
-import { NoteBlockRow } from './PersistentDb/models/NoteBlockDbModel';
-import { NoteRow } from './PersistentDb/models/NoteDbModel';
-import { Queries } from './PersistentDb/Queries';
-import { HarikaNotesTableName } from './PersistentDb/schema';
+import { NoteBlockModel } from './models/NoteBlockModel';
+import { NoteBlockRow } from './db/rows/NoteBlockRow';
+import { NoteRow } from './db/rows/NoteRow';
+import { Queries } from './db/Queries';
+import { HarikaNotesTableName } from './db/schema';
 
 export class ChangesHandler {
   notesCollection: Collection<NoteRow>;

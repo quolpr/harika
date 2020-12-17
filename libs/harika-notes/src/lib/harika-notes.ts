@@ -1,21 +1,17 @@
-export { NoteRow } from './PersistentDb/models/NoteDbModel';
-export { NoteBlockRow } from './PersistentDb/models/NoteBlockDbModel';
-export { NoteRefRow } from './PersistentDb/models/NoteRefDbModel';
-export { NoteModel } from './models/NoteMemModel';
-export { NoteBlockModel, noteBlockRef } from './models/NoteBlockMemModel';
-export { HarikaNotesTableName } from './PersistentDb/schema';
+export { NoteModel } from './models/NoteModel';
+export { NoteBlockModel, noteBlockRef } from './models/NoteBlockModel';
 export { Store } from './Store';
-export { default as schema } from './PersistentDb/schema';
+export { default as schema } from './db/schema';
 
 import { connectReduxDevTools, onPatches } from 'mobx-keystone';
 import { Database, DatabaseAdapter } from '@nozbe/watermelondb';
-import { Queries } from './PersistentDb/Queries';
+import { Queries } from './db/Queries';
 import { Store } from './Store';
 import * as remotedev from 'remotedev';
-import { NoteRefRow } from './PersistentDb/models/NoteRefDbModel';
-import { NoteBlockRow } from './PersistentDb/models/NoteBlockDbModel';
-import { NoteRow } from './PersistentDb/models/NoteDbModel';
-import { convertNoteRowToModel } from './PersistentDb/convertDbToModel';
+import { NoteRefRow } from './db/rows/NoteRefRow';
+import { NoteBlockRow } from './db/rows/NoteBlockRow';
+import { NoteRow } from './db/rows/NoteRow';
+import { convertNoteRowToModel } from './convertRowToModel';
 import { Dayjs } from 'dayjs';
 import { ChangesHandler } from './ChangesHandler';
 

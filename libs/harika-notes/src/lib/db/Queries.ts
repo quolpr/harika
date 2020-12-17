@@ -1,7 +1,7 @@
 import { Collection, Database, Q } from '@nozbe/watermelondb';
 import { Dayjs } from 'dayjs';
-import { NoteBlockRow } from './models/NoteBlockDbModel';
-import { NoteRow } from './models/NoteDbModel';
+import { NoteBlockRow } from './rows/NoteBlockRow';
+import { NoteRow } from './rows/NoteRow';
 import { HarikaNotesTableName } from './schema';
 
 export class Queries {

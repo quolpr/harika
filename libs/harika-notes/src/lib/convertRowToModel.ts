@@ -1,7 +1,7 @@
-import { NoteBlockModel, noteBlockRef } from '../models/NoteBlockMemModel';
-import { NoteModel, noteRef } from '../models/NoteMemModel';
-import { NoteBlockRow } from './models/NoteBlockDbModel';
-import { NoteRow } from './models/NoteDbModel';
+import { NoteBlockModel, noteBlockRef } from './models/NoteBlockModel';
+import { NoteModel, noteRef } from './models/NoteModel';
+import { NoteBlockRow } from './db/rows/NoteBlockRow';
+import { NoteRow } from './db/rows/NoteRow';
 
 export const convertNoteBlockRowToModel = async (
   dbModel: NoteBlockRow,

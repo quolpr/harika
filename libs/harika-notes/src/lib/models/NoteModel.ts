@@ -15,7 +15,7 @@ import {
 import { Optional } from 'utility-types';
 import { v4 as uuidv4 } from 'uuid';
 import { Store } from '../Store';
-import { NoteBlockModel } from './NoteBlockMemModel';
+import { NoteBlockModel } from './NoteBlockModel';
 
 export const noteRef = customRef<NoteModel>('harika/NoteRef', {
   // this works, but we will use getRefId() from the Todo class instead
