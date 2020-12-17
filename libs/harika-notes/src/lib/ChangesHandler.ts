@@ -5,6 +5,7 @@ import { NoteBlockRow } from './db/rows/NoteBlockRow';
 import { NoteRow } from './db/rows/NoteRow';
 import { Queries } from './db/Queries';
 import { HarikaNotesTableName } from './db/schema';
+import { NoteModel } from './models/NoteModel';
 
 export class ChangesHandler {
   notesCollection: Collection<NoteRow>;
@@ -35,6 +36,24 @@ export class ChangesHandler {
               creator.noteId = value.noteRef.id;
               creator.parentBlockId = value.parentBlockRef?.id;
               creator.content = value.content;
+              creator.createdAt = new Date(value.createdAt);
+              creator.updatedAt = new Date(value.updatedAt);
+            });
+          });
+        }
+
+        if (patch.path.length === 2 && patch.path[0] === 'notesMap') {
+          const value: ModelPropsData<NoteModel> & {
+            $modelId: string;
+          } = patch.value;
+
+          if (value.isPersisted) return;
+
+          this.database.action(() => {
+            return this.queries.notesCollection.create((creator) => {
+              creator._raw.id = value.$modelId;
+              creator.dailyNoteDate = new Date(value.dailyNoteDate);
+              creator.title = value.title;
               creator.createdAt = new Date(value.createdAt);
               creator.updatedAt = new Date(value.updatedAt);
             });

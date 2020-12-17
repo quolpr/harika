@@ -27,8 +27,8 @@ export class NoteRow extends Model {
 
   @field('title') title!: string;
   @date('daily_note_date') dailyNoteDate!: Date | undefined;
-  @readonly @date('created_at') createdAt!: Date;
-  @readonly @date('updated_at') updatedAt!: Date;
+  @date('created_at') createdAt!: Date;
+  @date('updated_at') updatedAt!: Date;
 
   @children(HarikaNotesTableName.NOTE_BLOCKS) noteBlocks!: Query<NoteBlockRow>;
   @children(HarikaNotesTableName.NOTE_REFS) refs!: Query<NoteRefRow>;
