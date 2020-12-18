@@ -7,6 +7,19 @@ import TextareaAutosize from 'react-textarea-autosize';
 import { CurrentFocusedBlockContext } from '@harika/harika-core';
 import { observer } from 'mobx-react-lite';
 import { NoteBlockModel } from '@harika/harika-notes';
+import { Ref } from 'mobx-keystone';
+
+const NoteBlockChildren = observer(
+  ({ childBlockRefs }: { childBlockRefs: Ref<NoteBlockModel>[] }) => {
+    return childBlockRefs.length !== 0 ? (
+      <div className="note-block__child-blocks">
+        {childBlockRefs.map(({ current: childNoteBlock }) => (
+          <NoteBlock key={childNoteBlock.$modelId} noteBlock={childNoteBlock} />
+        ))}
+      </div>
+    ) : null;
+  }
+);
 
 export const NoteBlock = observer(
   ({ noteBlock }: { noteBlock: NoteBlockModel }) => {
@@ -180,16 +193,7 @@ export const NoteBlock = observer(
             {noteBlockContent.content.slice(-1) === '\n' && '\n'}
           </div>
         </div>
-        {noteBlock.childBlockRefs.length !== 0 && (
-          <div className="note-block__child-blocks">
-            {noteBlock.childBlockRefs.map(({ current: childNoteBlock }) => (
-              <NoteBlock
-                key={childNoteBlock.$modelId}
-                noteBlock={childNoteBlock}
-              />
-            ))}
-          </div>
-        )}
+        <NoteBlockChildren childBlockRefs={noteBlock.childBlockRefs} />
       </div>
     );
   }

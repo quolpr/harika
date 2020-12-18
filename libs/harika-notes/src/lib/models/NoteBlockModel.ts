@@ -154,13 +154,18 @@ export class NoteBlockModel extends Model({
   }
 
   @modelAction
+  removeSelfFromParentChild() {
+    return this.parentChildRefs.splice(this.orderPosition, 1);
+  }
+
+  @modelAction
   mergeToLeftAndDelete() {
     const [left] = this.leftAndRight;
 
     if (!left) return;
 
     if (this.parentChildRefs) {
-      this.parentChildRefs.splice(this.orderPosition, 1);
+      this.removeSelfFromParentChild();
     }
 
     left.content = left.content + this.content;
@@ -247,7 +252,33 @@ export class NoteBlockModel extends Model({
   }
 
   @modelAction
-  tryMoveLeft() {}
+  tryMoveLeft() {
+    const [left] = this.leftAndRight;
+
+    if (!left) return;
+
+    if (left === this.parentBlockRef?.current) {
+      // If left block is parent
+
+      this.removeSelfFromParentChild();
+      this.parentBlockRef = left.parentBlockRef
+        ? noteBlockRef(left.parentBlockRef.current)
+        : undefined;
+      left.parentChildRefs.splice(left.orderPosition, 0, noteBlockRef(this));
+    } else if (left.parentBlockRef?.current !== this.parentBlockRef?.current) {
+      // If left is child of child of child...
+
+      this.removeSelfFromParentChild();
+      this.parentBlockRef = noteBlockRef(left);
+      left.childBlockRefs.push(noteBlockRef(this));
+    } else {
+      // If the same level
+      const currentOrderPosition = this.orderPosition;
+
+      const [removedRef] = this.removeSelfFromParentChild();
+      this.parentChildRefs.splice(currentOrderPosition - 1, 0, removedRef);
+    }
+  }
 
   @modelAction
   tryMoveRight() {}

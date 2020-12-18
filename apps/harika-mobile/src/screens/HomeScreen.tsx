@@ -6,6 +6,7 @@ import { Animated, SafeAreaView } from 'react-native';
 import { useKeyboardHeight } from '../hooks/useKeyboardHeight';
 import { useHarikaStore } from '@harika/harika-core';
 import { NoteModel } from '@harika/harika-notes';
+import { t } from 'react-native-tailwindcss';
 
 export const HomeScreen = () => {
   const store = useHarikaStore();
@@ -27,8 +28,8 @@ export const HomeScreen = () => {
     note && (
       <>
         <SafeAreaView>
-          <Animated.ScrollView>
-            <Animated.View style={{ paddingBottom }}>
+          <Animated.ScrollView keyboardShouldPersistTaps="handled">
+            <Animated.View style={{ paddingBottom, ...t.p4 }}>
               <Note note={note} />
             </Animated.View>
           </Animated.ScrollView>

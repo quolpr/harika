@@ -5,7 +5,8 @@ import './styles.css';
 import { useEffect } from 'react';
 import { useState } from 'react';
 import { observer } from 'mobx-react-lite';
-import { NoteModel } from '@harika/harika-notes';
+import { NoteBlockModel, NoteModel } from '@harika/harika-notes';
+import { Ref } from 'mobx-keystone';
 
 // const Backlink = ({ noteBlock }: { noteBlock: NoteBlockModel }) => {
 //   noteBlock = useTable(noteBlock);
@@ -20,6 +21,18 @@ import { NoteModel } from '@harika/harika-notes';
 //     </div>
 //   ) : null;
 // };
+
+const NoteBlocks = observer(
+  ({ childBlockRefs }: { childBlockRefs: Ref<NoteBlockModel>[] }) => {
+    return (
+      <div className="note__body">
+        {childBlockRefs.map(({ current: noteBlock }) => (
+          <NoteBlock key={noteBlock.$modelId} noteBlock={noteBlock} />
+        ))}
+      </div>
+    );
+  }
+);
 
 export const Note: React.FC<{ note: NoteModel }> = observer(({ note }) => {
   const [editState, setEditState] = useState({
@@ -54,12 +67,8 @@ export const Note: React.FC<{ note: NoteModel }> = observer(({ note }) => {
           onChange={handleChange}
         />
       </h2>
-      <div className="note__body">
-        {note.childBlockRefs.map(({ current: noteBlock }) => (
-          <NoteBlock key={noteBlock.$modelId} noteBlock={noteBlock} />
-        ))}
-      </div>
 
+      <NoteBlocks childBlockRefs={note.childBlockRefs} />
       <hr />
     </div>
   );

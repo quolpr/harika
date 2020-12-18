@@ -35,7 +35,7 @@ export class Store extends Model({
 
     const block = note.createBlock({ content: '' });
 
-    note.childBlockRefs = [noteBlockRef(block)];
+    note.childBlockRefs.push(noteBlockRef(block));
 
     return note;
   }

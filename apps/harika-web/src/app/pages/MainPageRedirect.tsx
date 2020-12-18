@@ -9,7 +9,7 @@ export const MainPageRedirect = () => {
 
   useEffect(() => {
     const toExecute = async () => {
-      const note = await store.getOrCreateDailyNote(dayjs());
+      const note = await store.getOrCreateDailyNote(dayjs().add(2, 'year'));
 
       history.replace(`/notes/${note.$modelId}`);
     };
