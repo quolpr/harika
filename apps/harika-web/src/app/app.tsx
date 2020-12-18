@@ -62,12 +62,12 @@ const harikaNotes = new HarikaNotes(adapter);
 
 export function App() {
   const stateActions = useState<ICurrentFocusedBlockState>();
-  const currentNoteIdActions = useState<ICurrentNoteState>();
+  const currentNoteActions = useState<ICurrentNoteState>();
 
   return (
     <BrowserRouter>
       <HarikaStoreContext.Provider value={harikaNotes}>
-        <CurrentNoteContext.Provider value={currentNoteIdActions}>
+        <CurrentNoteContext.Provider value={currentNoteActions}>
           <CurrentFocusedBlockContext.Provider value={stateActions}>
             {/**<HandleNoteBlockBlur />*/}
 

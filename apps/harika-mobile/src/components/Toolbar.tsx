@@ -1,17 +1,9 @@
 import {
-  useCurrentNote,
   CurrentFocusedBlockContext,
   useFocusedBlock,
 } from '@harika/harika-core';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Keyboard,
-  KeyboardEvent,
-  Animated,
-} from 'react-native';
+import React, { useCallback } from 'react';
+import { StyleSheet, Keyboard, Animated } from 'react-native';
 import { t } from 'react-native-tailwindcss';
 import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -32,7 +24,7 @@ const styles = StyleSheet.create({
 });
 
 export const Toolbar = () => {
-  const currentBlock = useFocusedBlock();
+  const currentBlock = useFocusedBlock()?.noteBlock;
   const paddingBottom = useKeyboardHeight(40);
 
   const setEditState = useContextSelector(
@@ -43,39 +35,41 @@ export const Toolbar = () => {
   const handleNewBlockPress = useCallback(async () => {
     if (!currentBlock) return;
 
-    const newBlock = await currentBlock.injectNewRightBlock('');
+    const newBlock = currentBlock.injectNewRightBlock('');
+
+    if (!newBlock) return;
 
     setEditState({
-      id: newBlock.id,
+      noteBlock: newBlock,
     });
   }, [currentBlock, setEditState]);
 
   const handleMoveUpPress = useCallback(async () => {
     if (!currentBlock) return;
 
-    await currentBlock.tryMoveUp();
+    currentBlock.tryMoveUp();
   }, [currentBlock]);
 
   const handleMoveDownPress = useCallback(async () => {
     if (!currentBlock) return;
 
-    await currentBlock.tryMoveDown();
+    currentBlock.tryMoveDown();
   }, [currentBlock]);
 
   const handleMoveLeft = useCallback(async () => {
     if (!currentBlock) return;
 
-    await currentBlock.tryMoveLeft();
+    currentBlock.tryMoveLeft();
   }, [currentBlock]);
 
   const handleMoveRight = useCallback(async () => {
     if (!currentBlock) return;
 
-    const [, right] = await currentBlock.getLeftAndRight();
+    const [, right] = currentBlock.leftAndRight;
 
     if (right) {
       setEditState({
-        id: right.id,
+        noteBlock: right,
       });
     }
   }, [currentBlock, setEditState]);

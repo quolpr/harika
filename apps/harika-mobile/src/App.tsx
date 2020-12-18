@@ -1,52 +1,29 @@
+import 'react-native-get-random-values';
 import React, { useState } from 'react';
-import {
-  SafeAreaView,
-  StyleSheet,
-  ScrollView,
-  Image,
-  View,
-  Text,
-  StatusBar,
-  TouchableOpacity,
-} from 'react-native';
-import {
-  Colors,
-  DebugInstructions,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
 // @ts-ignore
-import openURLInBrowser from 'react-native/Libraries/Core/Devtools/openURLInBrowser';
-import { Database } from '@nozbe/watermelondb';
 import SQLiteAdapter from '@nozbe/watermelondb/adapters/sqlite';
-import { noteSchema, Note, NoteBlock, NoteRef } from '@harika/harika-notes';
-import DatabaseProvider from '@nozbe/watermelondb/DatabaseProvider';
+import { HarikaNotes, schema } from '@harika/harika-notes';
 import 'react-native-gesture-handler';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { HomeScreen } from './screens/HomeScreen';
 import {
   CurrentFocusedBlockContext,
-  CurrentNoteIdContext,
+  CurrentNoteContext,
+  HarikaStoreContext,
   ICurrentFocusedBlockState,
-  ICurrentNoteIdState,
+  ICurrentNoteState,
 } from '@harika/harika-core';
 import 'react-native-console-time-polyfill';
 
 // First, create the adapter to the underlying database:
 const adapter = new SQLiteAdapter({
-  schema: noteSchema,
+  schema: schema,
   // dbName: 'myapp', // optional database name or file system path
   // migrations, // optional migrations
   synchronous: true, // synchronous mode only works on iOS. improves performance and reduces glitches in most cases, but also has some downsides - test with and without it
   // experimentalUseJSI: true, // experimental JSI mode, use only if you're brave
 } as any);
-
-// Then, make a Watermelon database from it!
-const database = new Database({
-  adapter,
-  modelClasses: [Note, NoteBlock, NoteRef],
-  actionsEnabled: true,
-});
 
 // <StatusBar barStyle="dark-content" />
 // <SafeAreaView>
@@ -100,16 +77,18 @@ const database = new Database({
 //     </View>
 //   </ScrollView>
 // </SafeAreaView>
-//
+
+const harikaNotes = new HarikaNotes(adapter);
+
 const Stack = createStackNavigator();
 
 const App: React.FC = () => {
   const stateActions = useState<ICurrentFocusedBlockState>();
-  const currentNoteIdActions = useState<ICurrentNoteIdState>();
+  const currentNoteActions = useState<ICurrentNoteState>();
 
   return (
-    <DatabaseProvider database={database}>
-      <CurrentNoteIdContext.Provider value={currentNoteIdActions}>
+    <HarikaStoreContext.Provider value={harikaNotes}>
+      <CurrentNoteContext.Provider value={currentNoteActions}>
         <CurrentFocusedBlockContext.Provider value={stateActions}>
           <NavigationContainer>
             <Stack.Navigator>
@@ -121,8 +100,8 @@ const App: React.FC = () => {
             </Stack.Navigator>
           </NavigationContainer>
         </CurrentFocusedBlockContext.Provider>
-      </CurrentNoteIdContext.Provider>
-    </DatabaseProvider>
+      </CurrentNoteContext.Provider>
+    </HarikaStoreContext.Provider>
   );
 };
 

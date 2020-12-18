@@ -1,37 +1,27 @@
 import React, { useEffect, useState } from 'react';
-import { useDatabase } from '@nozbe/watermelondb/hooks';
-import { getOrCreateDailyNote } from '@harika/harika-notes';
-import { Note as NoteModel } from '@harika/harika-notes';
 import dayjs from 'dayjs';
 import { Note } from '../components/Note/Note';
 import { Toolbar } from '../components/Toolbar';
-import {
-  Animated,
-  KeyboardAvoidingView,
-  Platform,
-  SafeAreaView,
-  ScrollView,
-  View,
-  Text,
-} from 'react-native';
+import { Animated, SafeAreaView } from 'react-native';
 import { useKeyboardHeight } from '../hooks/useKeyboardHeight';
-import { t } from 'react-native-tailwindcss';
+import { useHarikaStore } from '@harika/harika-core';
+import { NoteModel } from '@harika/harika-notes';
 
 export const HomeScreen = () => {
-  const database = useDatabase();
+  const store = useHarikaStore();
   const [note, setNote] = useState<NoteModel | null>(null);
 
   const paddingBottom = useKeyboardHeight(0, 120);
 
   useEffect(() => {
     const toExecute = async () => {
-      const note = await getOrCreateDailyNote(database, dayjs());
+      const note = await store.getOrCreateDailyNote(dayjs());
 
       setNote(note);
     };
 
     toExecute();
-  }, [database]);
+  }, [store]);
 
   return (
     note && (

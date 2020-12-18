@@ -1,47 +1,40 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { View } from 'react-native';
-import { Note as NoteModel } from '@harika/harika-notes';
 import { t } from 'react-native-tailwindcss';
 import { TextInput } from 'react-native';
-import { useDatabase } from '@nozbe/watermelondb/hooks';
-import { useTable } from '@harika/harika-core';
 import { NoteBlock } from '../NoteBlock';
-import { NoteBlock as NoteBlockModel } from '@harika/harika-notes';
-import useUpdate from 'react-use/lib/useUpdate';
+import { NoteModel } from '@harika/harika-notes';
+import { observer } from 'mobx-react-lite';
 
-export const Note: React.FC<{ note: NoteModel }> = React.memo(({ note }) => {
-  const database = useDatabase();
-  const update = useUpdate();
-
-  note = useTable(note);
-  const noteBlocks = NoteBlockModel.sort(useTable(note.childNoteBlocks) || []);
-
+export const Note: React.FC<{ note: NoteModel }> = observer(({ note }) => {
   const [isEditing, setIsEditing] = useState(false);
 
   const [editState, setEditState] = useState({
     title: note.title,
-    id: note.id,
+    id: note.$modelId,
   });
 
   useEffect(() => {
     if (!isEditing) {
-      setEditState({ title: note.title, id: note.id });
+      setEditState({ title: note.title, id: note.$modelId });
     }
-  }, [isEditing, note.id, note.title]);
+  }, [isEditing, note.$modelId, note.title]);
 
   useEffect(() => {
-    if (editState.id !== note.id) return;
+    if (editState.id !== note.$modelId) return;
     if (editState.title === note.title) return;
 
     note.updateTitle(editState.title);
-  }, [database, editState.id, editState.title, note]);
+  }, [editState.id, editState.title, note]);
 
   const handleChange = useCallback(
     (text: string) => {
-      setEditState({ id: note.id, title: text });
+      setEditState({ id: note.$modelId, title: text });
     },
-    [note.id]
+    [note.$modelId]
   );
+
+  console.log(note.childBlockRefs);
 
   return (
     <View>
@@ -54,12 +47,11 @@ export const Note: React.FC<{ note: NoteModel }> = React.memo(({ note }) => {
         />
       </View>
       <View style={t.mT2}>
-        {noteBlocks.map((noteBlock, i) => (
+        {note.childBlockRefs.map(({ current: noteBlock }, i) => (
           <NoteBlock
-            onOrderChange={update}
-            key={noteBlock.id}
+            key={noteBlock.$modelId}
             noteBlock={noteBlock}
-            isLast={noteBlocks.length - 1 === i}
+            isLast={note.childBlockRefs.length - 1 === i}
           />
         ))}
       </View>
