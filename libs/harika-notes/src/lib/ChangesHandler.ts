@@ -30,7 +30,7 @@ export class ChangesHandler {
 
     this.subject = new Subject<Patch>();
 
-    // this.subject.pipe(concatMap((patch) => this.applyPatch(patch))).subscribe();
+    this.subject.pipe(concatMap((patch) => this.applyPatch(patch))).subscribe();
   }
 
   handlePatch = (patches: Patch[]) => {

@@ -15,6 +15,7 @@
     "observable-hooks": "*",
     "react": "*",
     "react-native": "*",
+    "react-native-calendars": "^1.1128.0",
     "react-native-console-time-polyfill": "*",
     "react-native-gesture-handler": "*",
     "react-native-get-random-values": "^1.5.0",
@@ -26,5 +27,8 @@
     "use-context-selector": "*",
     "utility-types": "*",
     "uuid": "*"
+  },
+  "devDependencies": {
+    "@types/react-native-calendars": "^1.505.0"
   }
 }

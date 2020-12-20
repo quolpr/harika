@@ -76,12 +76,12 @@ export const Toolbar = () => {
 
   return (
     <Animated.View style={[styles.toolbar, { paddingBottom }]}>
-      <MaterialCommunityIcons.Button
-        name="plus"
+      <MaterialIcon.Button
+        name="keyboard-hide"
         size={30}
         backgroundColor="transparent"
-        onPress={handleNewBlockPress}
-      ></MaterialCommunityIcons.Button>
+        onPress={Keyboard.dismiss}
+      ></MaterialIcon.Button>
       <MaterialCommunityIcons.Button
         name="arrow-collapse-up"
         size={30}
@@ -106,12 +106,12 @@ export const Toolbar = () => {
         backgroundColor="transparent"
         onPress={handleMoveUpPress}
       ></MaterialCommunityIcons.Button>
-      <MaterialIcon.Button
-        name="keyboard-hide"
+      <MaterialCommunityIcons.Button
+        name="plus"
         size={30}
         backgroundColor="transparent"
-        onPress={Keyboard.dismiss}
-      ></MaterialIcon.Button>
+        onPress={handleNewBlockPress}
+      ></MaterialCommunityIcons.Button>
     </Animated.View>
   );
 };

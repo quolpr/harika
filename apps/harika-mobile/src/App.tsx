@@ -1,5 +1,5 @@
 import 'react-native-get-random-values';
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 // @ts-ignore
 import SQLiteAdapter from '@nozbe/watermelondb/adapters/sqlite';
 import { HarikaNotes, schema } from '@harika/harika-notes';
@@ -15,6 +15,9 @@ import {
   ICurrentNoteState,
 } from '@harika/harika-core';
 import 'react-native-console-time-polyfill';
+import { Text, View } from 'react-native';
+import { t } from 'react-native-tailwindcss';
+import { Calendar, CalendarList, Agenda } from 'react-native-calendars';
 
 // First, create the adapter to the underlying database:
 const adapter = new SQLiteAdapter({
@@ -86,6 +89,23 @@ const App: React.FC = () => {
   const stateActions = useState<ICurrentFocusedBlockState>();
   const currentNoteActions = useState<ICurrentNoteState>();
 
+  const [isCalendarOpened, setIsCalendarOpened] = useState(false);
+
+  const renderRightHeader = useCallback(() => {
+    return (
+      <View>
+        <Text
+          style={t.mR4}
+          onPress={() => {
+            setIsCalendarOpened(!isCalendarOpened);
+          }}
+        >
+          Calendar
+        </Text>
+      </View>
+    );
+  }, [isCalendarOpened]);
+
   return (
     <HarikaStoreContext.Provider value={harikaNotes}>
       <CurrentNoteContext.Provider value={currentNoteActions}>
@@ -94,9 +114,19 @@ const App: React.FC = () => {
             <Stack.Navigator>
               <Stack.Screen
                 name="Home"
-                component={HomeScreen}
-                options={{ title: 'Daily Note' }}
-              />
+                options={{
+                  title: 'Daily Note',
+                  headerRight: renderRightHeader,
+                }}
+              >
+                {(props) => (
+                  <HomeScreen
+                    {...props}
+                    isCalendarOpened={isCalendarOpened}
+                    setIsCalendarOpened={setIsCalendarOpened}
+                  />
+                )}
+              </Stack.Screen>
             </Stack.Navigator>
           </NavigationContainer>
         </CurrentFocusedBlockContext.Provider>

@@ -60,7 +60,7 @@ export const Note: React.FC<{ note: NoteModel }> = observer(({ note }) => {
           value={editState.title}
           onFocus={() => setIsEditing(true)}
           onBlur={() => setIsEditing(false)}
-          style={[t.text2xl]}
+          style={[t.text2xl, t.fontBold]}
         />
       </View>
       <View style={t.mT5}>

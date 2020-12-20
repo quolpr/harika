@@ -30,9 +30,10 @@ const styles = StyleSheet.create({
   },
   input: {
     ...t.hFull,
-    ...t.flex1,
     ...t.pT0,
     ...t.textBase,
+    ...t.flex,
+    ...t.flexWrap,
   },
   childBlocks: {
     ...t.borderL,
@@ -44,10 +45,13 @@ const styles = StyleSheet.create({
     ...t.hFull,
     ...t.wFull,
     ...t.textBase,
-    ...t.h5,
+    ...t.hAuto,
+    ...t.flex,
+    ...t.flexWrap,
   },
   content: {
     ...t.mL2,
+    ...t.flexRow,
   },
 });
 
@@ -139,6 +143,8 @@ export const NoteBlock = observer(
       (e: LayoutChangeEvent) => {
         const pading = e.nativeEvent.layout.x;
 
+        console.log(pading);
+
         setInputWidth(Dimensions.get('window').width - pading);
 
         console.log(Dimensions.get('window').width - pading);
@@ -146,24 +152,30 @@ export const NoteBlock = observer(
       [screenWidth]
     );
 
+    const handeContentRef = useCallback((el: View) => {
+      if (!el) return;
+      el.measure((width, height, px, py, fx, fy) => {
+        setInputWidth(Dimensions.get('window').width - fx - 40);
+      });
+    }, []);
+
     return (
       <View style={[styles.main, isLast && t.pB0, isFirst && t.pT0]}>
         <TouchableWithoutFeedback onPress={handlePress}>
           <View style={styles.body}>
             <View style={styles.dot} />
-            <View style={styles.content} onLayout={handleLayout}>
+            <View style={styles.content} ref={handeContentRef}>
               {isEditing ? (
                 <TextInput
                   multiline={true}
-                  style={[styles.input, { width: inputWidth - 100 }]}
+                  style={[styles.input, { width: inputWidth - 50 }]}
                   value={noteBlockContent.content}
                   onChangeText={handleChange}
                   ref={handeRef}
-                  maxLength={100}
                 />
               ) : (
-                <Text style={styles.text}>
-                  {noteBlockContent.content.replace(/\\n/g, '\n')}
+                <Text style={[styles.text, { width: inputWidth - 50 }]}>
+                  {noteBlockContent.content}
                 </Text>
               )}
             </View>
