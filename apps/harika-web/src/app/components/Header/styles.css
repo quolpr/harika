@@ -1,5 +1,5 @@
 .header {
-  @apply border-b border-green-300 bg-green-200;
+  @apply border-b border-gray-200;
   @apply flex items-center justify-between py-3;
 
   &__brand {
@@ -15,7 +15,7 @@
   }
 
   &__calendar-icon {
-    @apply text-green-500;
+    @apply text-pink-400;
   }
 
   &__calendar {

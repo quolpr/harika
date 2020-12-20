@@ -65,14 +65,8 @@ export const Toolbar = () => {
   const handleMoveRight = useCallback(async () => {
     if (!currentBlock) return;
 
-    const [, right] = currentBlock.leftAndRight;
-
-    if (right) {
-      setEditState({
-        noteBlock: right,
-      });
-    }
-  }, [currentBlock, setEditState]);
+    currentBlock.tryMoveRight();
+  }, [currentBlock]);
 
   return (
     <Animated.View style={[styles.toolbar, { paddingBottom }]}>

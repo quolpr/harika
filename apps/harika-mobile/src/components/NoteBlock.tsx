@@ -29,7 +29,6 @@ const styles = StyleSheet.create({
     marginLeft: -3,
   },
   input: {
-    ...t.hFull,
     ...t.pT0,
     ...t.textBase,
     ...t.flex,

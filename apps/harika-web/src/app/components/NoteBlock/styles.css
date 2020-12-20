@@ -15,7 +15,7 @@
     @apply w-8;
 
     &::before {
-      @apply mt-2 bg-green-500 w-1.5 h-1.5 mr-3;
+      @apply mt-2 bg-pink-400 w-1.5 h-1.5 mr-3;
 
       content: '';
       border-radius: 100%;
@@ -23,14 +23,17 @@
   }
 
   &__child-blocks {
-    @apply box-border ml-4 pt-1 border-l border-green-500;
+    @apply box-border ml-4 pt-1 border-l border-pink-400;
   }
 
   &__content {
+    @apply ring-pink-300 focus:outline-none focus:ring-2 rounded-sm;
+
     width: 100%;
     white-space: pre-wrap;
     min-height: 1rem;
     background: transparent;
+    resize: none;
   }
 
   &__input {

@@ -154,6 +154,35 @@ export class NoteBlockModel extends Model({
   }
 
   @modelAction
+  changeParent(
+    newParent: undefined | NoteBlockModel,
+    pos: number | 'start' | 'end'
+  ) {
+    this.removeSelfFromParentChild();
+
+    const childBlockRefs = (() => {
+      if (newParent) {
+        return newParent.childBlockRefs;
+      } else {
+        return this.noteRef.current.childBlockRefs;
+      }
+    })();
+
+    const newPos = (() => {
+      if (pos === 'start') {
+        return 0;
+      } else if (pos === 'end') {
+        return childBlockRefs.length;
+      } else {
+        return pos;
+      }
+    })();
+
+    this.parentBlockRef = newParent ? noteBlockRef(newParent) : undefined;
+    childBlockRefs.splice(newPos, 0, noteBlockRef(this));
+  }
+
+  @modelAction
   removeSelfFromParentChild() {
     return this.parentChildRefs.splice(this.orderPosition, 1);
   }
@@ -164,9 +193,7 @@ export class NoteBlockModel extends Model({
 
     if (!left) return;
 
-    if (this.parentChildRefs) {
-      this.removeSelfFromParentChild();
-    }
+    this.removeSelfFromParentChild();
 
     left.content = left.content + this.content;
 
@@ -179,6 +206,7 @@ export class NoteBlockModel extends Model({
     });
 
     this.isDeleted = true;
+    this.parentBlockRef = undefined;
 
     return left;
   }
@@ -221,37 +249,6 @@ export class NoteBlockModel extends Model({
   }
 
   @modelAction
-  makeParentTo(
-    block: NoteBlockModel | undefined,
-    afterBlock: NoteBlockModel | undefined
-  ) {
-    const refs = (() => {
-      if (block) {
-        return block.childBlockRefs;
-      } else {
-        return this.rootChildRefs;
-      }
-    })();
-
-    const position = (() => {
-      if (afterBlock) {
-        return afterBlock.orderPosition + 1;
-      } else {
-        return 0;
-      }
-    })();
-
-    this.parentChildRefs.splice(
-      this.parentChildRefs.findIndex(({ current }) => current === this),
-      1
-    );
-
-    this.parentBlockRef = block ? noteBlockRef(block) : undefined;
-
-    refs.splice(position, 0, noteBlockRef(this));
-  }
-
-  @modelAction
   tryMoveLeft() {
     const [left] = this.leftAndRight;
 
@@ -260,17 +257,11 @@ export class NoteBlockModel extends Model({
     if (left === this.parentBlockRef?.current) {
       // If left block is parent
 
-      this.removeSelfFromParentChild();
-      this.parentBlockRef = left.parentBlockRef
-        ? noteBlockRef(left.parentBlockRef.current)
-        : undefined;
-      left.parentChildRefs.splice(left.orderPosition, 0, noteBlockRef(this));
+      this.changeParent(left.parentBlockRef?.current, left.orderPosition);
     } else if (left.parentBlockRef?.current !== this.parentBlockRef?.current) {
       // If left is child of child of child...
 
-      this.removeSelfFromParentChild();
-      this.parentBlockRef = noteBlockRef(left);
-      left.childBlockRefs.push(noteBlockRef(this));
+      this.changeParent(left.parentBlockRef?.current, left.orderPosition + 1);
     } else {
       // If the same level
       const currentOrderPosition = this.orderPosition;
@@ -281,17 +272,24 @@ export class NoteBlockModel extends Model({
   }
 
   @modelAction
-  tryMoveRight() {}
+  tryMoveRight() {
+    const [, right] = this.leftAndRight;
+
+    if (!right) return;
+
+    if (right.childBlockRefs.length) {
+      this.changeParent(right, 'start');
+    } else {
+      this.changeParent(right.parentBlockRef?.current, right.orderPosition);
+    }
+  }
 
   @modelAction
   tryMoveUp() {
     const [left] = this.leftAndRightSibling;
 
     if (left) {
-      this.makeParentTo(
-        left,
-        left.childBlockRefs[left.childBlockRefs.length - 1]?.current
-      );
+      this.changeParent(left, 'end');
     }
   }
 
@@ -300,9 +298,16 @@ export class NoteBlockModel extends Model({
     const parentRef = this.parentBlockRef;
     const parentOfParentRef = parentRef?.current?.parentBlockRef;
 
-    if (parentOfParentRef === undefined && parentRef === undefined) return;
+    if (
+      (parentOfParentRef === undefined && parentRef === undefined) ||
+      !parentRef
+    )
+      return;
 
-    this.makeParentTo(parentOfParentRef?.current, parentRef?.current);
+    this.changeParent(
+      parentOfParentRef?.current,
+      parentRef.current.orderPosition + 1
+    );
   }
 
   @modelAction updateContent(content: string) {
