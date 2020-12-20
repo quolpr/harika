@@ -53,25 +53,10 @@ export class NoteBlockModel extends Model({
   @computed
   get parentChildRefs() {
     if (!this.parentBlockRef) {
-      return this.rootChildRefs;
+      return this.noteRef.current.childBlockRefs;
     }
 
     return this.parentBlockRef.current.childBlockRefs;
-  }
-
-  @computed
-  get store() {
-    return findParent<Store>(this, (n) => n instanceof Store);
-  }
-
-  @computed
-  get rootChildRefs() {
-    if (!this.noteRef) {
-      console.error("Can't find note store");
-
-      return [];
-    }
-    return this.noteRef.current.childBlockRefs;
   }
 
   @computed
@@ -154,15 +139,16 @@ export class NoteBlockModel extends Model({
   }
 
   @modelAction
-  changeParent(
-    newParent: undefined | NoteBlockModel,
-    pos: number | 'start' | 'end'
-  ) {
-    this.removeSelfFromParentChild();
+  move(parent: undefined | NoteBlockModel, pos: number | 'start' | 'end') {
+    const [removedChild] = this.removeSelfFromParentChild();
+
+    if (parent !== this.parentBlockRef?.current) {
+      this.parentBlockRef = parent ? noteBlockRef(parent) : undefined;
+    }
 
     const childBlockRefs = (() => {
-      if (newParent) {
-        return newParent.childBlockRefs;
+      if (parent) {
+        return parent.childBlockRefs;
       } else {
         return this.noteRef.current.childBlockRefs;
       }
@@ -178,8 +164,7 @@ export class NoteBlockModel extends Model({
       }
     })();
 
-    this.parentBlockRef = newParent ? noteBlockRef(newParent) : undefined;
-    childBlockRefs.splice(newPos, 0, noteBlockRef(this));
+    childBlockRefs.splice(newPos, 0, removedChild);
   }
 
   @modelAction
@@ -213,12 +198,6 @@ export class NoteBlockModel extends Model({
 
   @modelAction
   injectNewRightBlock(content: string) {
-    if (!this.noteRef.current) {
-      console.error("Can't find note store");
-
-      return;
-    }
-
     const { injectTo, parentRef, list } = (() => {
       if (this.childBlockRefs.length) {
         return {
@@ -257,17 +236,15 @@ export class NoteBlockModel extends Model({
     if (left === this.parentBlockRef?.current) {
       // If left block is parent
 
-      this.changeParent(left.parentBlockRef?.current, left.orderPosition);
+      this.move(left.parentBlockRef?.current, left.orderPosition);
     } else if (left.parentBlockRef?.current !== this.parentBlockRef?.current) {
       // If left is child of child of child...
 
-      this.changeParent(left.parentBlockRef?.current, left.orderPosition + 1);
+      this.move(left.parentBlockRef?.current, left.orderPosition + 1);
     } else {
-      // If the same level
-      const currentOrderPosition = this.orderPosition;
+      // if same level
 
-      const [removedRef] = this.removeSelfFromParentChild();
-      this.parentChildRefs.splice(currentOrderPosition - 1, 0, removedRef);
+      this.move(this.parentBlockRef?.current, this.orderPosition - 1);
     }
   }
 
@@ -278,9 +255,9 @@ export class NoteBlockModel extends Model({
     if (!right) return;
 
     if (right.childBlockRefs.length) {
-      this.changeParent(right, 'start');
+      this.move(right, 'start');
     } else {
-      this.changeParent(right.parentBlockRef?.current, right.orderPosition);
+      this.move(right.parentBlockRef?.current, right.orderPosition);
     }
   }
 
@@ -289,7 +266,7 @@ export class NoteBlockModel extends Model({
     const [left] = this.leftAndRightSibling;
 
     if (left) {
-      this.changeParent(left, 'end');
+      this.move(left, 'end');
     }
   }
 
@@ -304,10 +281,7 @@ export class NoteBlockModel extends Model({
     )
       return;
 
-    this.changeParent(
-      parentOfParentRef?.current,
-      parentRef.current.orderPosition + 1
-    );
+    this.move(parentOfParentRef?.current, parentRef.current.orderPosition + 1);
   }
 
   @modelAction updateContent(content: string) {

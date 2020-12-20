@@ -1,6 +1,7 @@
 .header {
-  @apply border-b border-gray-200;
   @apply flex items-center justify-between py-3;
+
+  background-color: #fff;
 
   &__brand {
     @apply text-gray-900 text-4xl ml-10 font-bold;
@@ -15,7 +16,7 @@
   }
 
   &__calendar-icon {
-    @apply text-pink-400;
+    @apply text-pink-500;
   }
 
   &__calendar {
