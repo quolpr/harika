@@ -50,4 +50,21 @@ export class Queries {
   async getNoteRowsByNames(names: string[]) {
     return this.notesCollection.query(Q.where('title', Q.oneOf(names))).fetch();
   }
+
+  async getNoteBlockRowsByIds(noteBlockIds: string[]) {
+    return this.noteBlocksCollection
+      .query(Q.where('id', Q.oneOf(noteBlockIds)))
+      .fetch();
+  }
+
+  async getNoteRowsOfNoteBlockIds(noteBlockIds: string[]) {
+    return this.notesCollection
+      .query(
+        Q.on(
+          HarikaNotesTableName.NOTE_BLOCKS,
+          Q.where('id', Q.oneOf(noteBlockIds))
+        )
+      )
+      .fetch();
+  }
 }

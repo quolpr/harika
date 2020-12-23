@@ -13,7 +13,6 @@ import {
 import { computed } from 'mobx';
 import { NoteModel, noteRef } from './NoteModel';
 import { Store } from '../Store';
-import { NoteLinkModel } from './NoteLinkModel';
 
 // TODO maybe root ref? What is the best way to manage??
 export const noteBlockRef = customRef<NoteBlockModel>('harika/NoteBlockRef', {
@@ -50,7 +49,7 @@ export class NoteBlockModel extends Model({
   createdAt: tProp_dateTimestamp(types.dateTimestamp),
   isDeleted: prop<boolean>(false),
   isPersisted: prop<boolean>(false),
-  linkedNotes: prop<Ref<NoteModel>[]>(() => []),
+  linkedNoteRefs: prop<Ref<NoteModel>[]>(() => []),
 }) {
   @computed
   get parentChildRefs() {
@@ -293,20 +292,20 @@ export class NoteBlockModel extends Model({
 
   @modelAction
   createLink(note: NoteModel) {
-    note.linkedNoteBlocks.push(noteBlockRef(this));
-    this.linkedNotes.push(noteRef(note));
+    note.linkedNoteBlockRefs.push(noteBlockRef(this));
+    this.linkedNoteRefs.push(noteRef(note));
   }
 
   @modelAction
   unlink(note: NoteModel) {
-    const linkedNoteRef = this.linkedNotes.find((m) => m.current === note)!;
-    const linkedNoteBlocksOfNote = linkedNoteRef.current.linkedNoteBlocks;
+    const linkedNoteRef = this.linkedNoteRefs.find((m) => m.current === note)!;
+    const linkedNoteBlocksOfNote = linkedNoteRef.current.linkedNoteBlockRefs;
 
     linkedNoteBlocksOfNote.splice(
       linkedNoteBlocksOfNote.findIndex((ref) => ref.current === this),
       1
     );
 
-    this.linkedNotes.splice(this.linkedNotes.indexOf(linkedNoteRef), 1);
+    this.linkedNoteRefs.splice(this.linkedNoteRefs.indexOf(linkedNoteRef), 1);
   }
 }

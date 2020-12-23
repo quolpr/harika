@@ -45,15 +45,40 @@ export class Store extends Model({
     const title = date.format('D MMM YYYY');
     const startOfDate = date.startOf('day');
 
-    return this.createNote({ title, dailyNoteDate: startOfDate.toDate() });
+    return this.createNote({
+      title,
+      dailyNoteDate: startOfDate.toDate(),
+      areLinksLoaded: true,
+      areChildrenLoaded: true,
+    });
   }
 
   @modelAction
   addNewNote(note: NoteModel, blocks: NoteBlockModel[]) {
-    this.notesMap[note.$modelId] = note;
+    if (!this.notesMap[note.$modelId]) {
+      this.notesMap[note.$modelId] = note;
+    } else {
+      const noteInStore = this.notesMap[note.$modelId];
+
+      if (!noteInStore.areLinksLoaded) {
+        noteInStore.linkedNoteBlockRefs = note.linkedNoteBlockRefs.map((ref) =>
+          noteBlockRef(ref.id)
+        );
+        noteInStore.areLinksLoaded = note.areLinksLoaded;
+      }
+
+      if (!noteInStore.areChildrenLoaded) {
+        noteInStore.childBlockRefs = note.childBlockRefs.map((ref) =>
+          noteBlockRef(ref.id)
+        );
+        noteInStore.areChildrenLoaded = note.areChildrenLoaded;
+      }
+    }
 
     blocks.forEach((block) => {
-      this.blocksMap[block.$modelId] = block;
+      if (!this.blocksMap[block.$modelId]) {
+        this.blocksMap[block.$modelId] = block;
+      }
     });
   }
 }

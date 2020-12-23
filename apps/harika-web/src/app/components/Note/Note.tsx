@@ -79,7 +79,7 @@ export const Note: React.FC<{ note: NoteModel }> = observer(({ note }) => {
 
       <hr />
 
-      <Backlinks linkedBlockRefs={note.linkedNoteBlocks} />
+      <Backlinks linkedBlockRefs={note.linkedNoteBlockRefs} />
     </div>
   );
 });

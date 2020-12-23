@@ -156,5 +156,41 @@ export class ChangesHandler {
         });
       }
     }
+
+    if (
+      patch.path.length >= 3 &&
+      patch.path[0] === 'blocksMap' &&
+      patch.path[2] === 'linkedNoteRefs'
+    ) {
+      const noteBlock = await this.queries.noteBlocksCollection.find(
+        patch.path[1] as string
+      );
+
+      await this.database.action(() =>
+        noteBlock.update((toUpdate) => {
+          toUpdate.linkedNoteIds = this.store.blocksMap[
+            patch.path[1]
+          ].linkedNoteRefs.map((ref) => ref.current.$modelId);
+        })
+      );
+    }
+
+    if (
+      patch.path.length >= 3 &&
+      patch.path[0] === 'notesMap' &&
+      patch.path[2] === 'linkedNoteBlockRefs'
+    ) {
+      const note = await this.queries.notesCollection.find(
+        patch.path[1] as string
+      );
+
+      await this.database.action(() =>
+        note.update((toUpdate) => {
+          toUpdate.linkedNoteBlockIds = this.store.notesMap[
+            patch.path[1]
+          ].linkedNoteBlockRefs.map((ref) => ref.current.$modelId);
+        })
+      );
+    }
   };
 }

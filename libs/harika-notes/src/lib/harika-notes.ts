@@ -54,18 +54,27 @@ export class HarikaNotes {
     const noteRow = await this.queries.getDailyNoteRow(date);
 
     if (noteRow) {
-      return this.convertNoteRowToModel(noteRow);
+      return this.findNote(noteRow.id);
     }
 
     return this.store.createDailyNote(date);
   }
 
-  async findNote(id: string, preloadChildren = true) {
-    if (this.store.notesMap[id]) return this.store.notesMap[id];
+  async findNote(id: string, preloadChildren = true, preloadLinks = true) {
+    if (this.store.notesMap[id]) {
+      const noteInStore = this.store.notesMap[id];
+
+      if (
+        !(preloadChildren && !noteInStore.areChildrenLoaded) &&
+        !(preloadLinks && !noteInStore.areLinksLoaded)
+      )
+        return noteInStore;
+    }
 
     return this.convertNoteRowToModel(
       await this.queries.getNoteRowById(id),
-      preloadChildren
+      preloadChildren,
+      preloadLinks
     );
   }
 
@@ -87,7 +96,7 @@ export class HarikaNotes {
         } else {
           const existing = existingNotesIndexed[name];
 
-          return this.convertNoteRowToModel(existing, false);
+          return this.findNote(existing.id, false);
         }
       })
     );
@@ -97,7 +106,10 @@ export class HarikaNotes {
     );
 
     const existingLinkedNotesIndexed = Object.fromEntries(
-      noteBlock.linkedNotes.map((note) => [note.current.$modelId, note.current])
+      noteBlock.linkedNoteRefs.map((note) => [
+        note.current.$modelId,
+        note.current,
+      ])
     );
 
     allNotes.forEach((note) => {
@@ -113,12 +125,28 @@ export class HarikaNotes {
     });
   }
 
-  private async convertNoteRowToModel(row: NoteRow, preloadChildren = true) {
-    if (this.store.notesMap[row.id]) return this.store.notesMap[row.id];
+  // TODO: move it with findNote to separate class
+  private async convertNoteRowToModel(
+    row: NoteRow,
+    preloadChildren = true,
+    preloadLinks = true
+  ) {
+    console.log('converting');
 
-    const data = await convertNoteRowToModel(row, preloadChildren);
+    const data = await convertNoteRowToModel(
+      this.queries,
+      row,
+      preloadChildren,
+      preloadLinks
+    );
 
     this.store.addNewNote(data.note, data.noteBlocks);
+
+    if (data.linkedNotes) {
+      data.linkedNotes.forEach((linkedData) => {
+        this.store.addNewNote(linkedData.note, linkedData.noteBlocks);
+      });
+    }
 
     return data.note;
   }

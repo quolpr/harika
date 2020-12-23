@@ -50,7 +50,8 @@ export class NoteModel extends Model({
   childBlockRefs: prop<Ref<NoteBlockModel>[]>(() => []),
   areChildrenLoaded: prop<boolean>(false),
   isPersisted: prop<boolean>(false),
-  linkedNoteBlocks: prop<Ref<NoteBlockModel>[]>(() => []),
+  linkedNoteBlockRefs: prop<Ref<NoteBlockModel>[]>(() => []),
+  areLinksLoaded: prop<boolean>(false),
 }) {
   @computed
   get store() {
@@ -79,7 +80,7 @@ export class NoteModel extends Model({
 
   @modelAction
   updateTitle(newTitle: string) {
-    this.linkedNoteBlocks.forEach((noteBlock) => {
+    this.linkedNoteBlockRefs.forEach((noteBlock) => {
       noteBlock.current.content = noteBlock.current.content
         .split(`[[${this.title}]]`)
         .join(`[[${newTitle}]]`);

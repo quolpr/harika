@@ -6,7 +6,6 @@ import {
   field,
   json,
   lazy,
-  readonly,
 } from '@nozbe/watermelondb/decorators';
 import { HarikaNotesTableName } from '../schema';
 import { NoteBlockRow } from './NoteBlockRow';
@@ -28,6 +27,7 @@ export class NoteRow extends Model {
 
   @field('title') title!: string;
   @json('child_block_ids', (data) => data) childBlockIds!: string[];
+  @json('linked_note_block_ids', (data) => data) linkedNoteBlockIds!: string[];
   @date('daily_note_date') dailyNoteDate!: Date | undefined;
   @date('created_at') createdAt!: Date;
   @date('updated_at') updatedAt!: Date;
