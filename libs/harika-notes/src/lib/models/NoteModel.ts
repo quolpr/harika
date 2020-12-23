@@ -15,7 +15,7 @@ import {
 import { Optional } from 'utility-types';
 import { v4 as uuidv4 } from 'uuid';
 import { Store } from '../Store';
-import { NoteBlockModel } from './NoteBlockModel';
+import { NoteBlockModel, noteBlockRef } from './NoteBlockModel';
 
 export const noteRef = customRef<NoteModel>('harika/NoteRef', {
   // this works, but we will use getRefId() from the Todo class instead
@@ -48,7 +48,9 @@ export class NoteModel extends Model({
   updatedAt: tProp_dateTimestamp(types.dateTimestamp),
   createdAt: tProp_dateTimestamp(types.dateTimestamp),
   childBlockRefs: prop<Ref<NoteBlockModel>[]>(() => []),
+  areChildrenLoaded: prop<boolean>(false),
   isPersisted: prop<boolean>(false),
+  linkedNoteBlocks: prop<Ref<NoteBlockModel>[]>(() => []),
 }) {
   @computed
   get store() {
@@ -77,6 +79,12 @@ export class NoteModel extends Model({
 
   @modelAction
   updateTitle(newTitle: string) {
+    this.linkedNoteBlocks.forEach((noteBlock) => {
+      noteBlock.current.content = noteBlock.current.content
+        .split(`[[${this.title}]]`)
+        .join(`[[${newTitle}]]`);
+    });
+
     this.title = newTitle;
   }
 }

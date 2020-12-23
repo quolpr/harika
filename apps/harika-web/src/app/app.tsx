@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import './app.css';
 import { Header } from './components/Header/Header';
 import { BrowserRouter, Route, Switch } from 'react-router-dom';
@@ -12,33 +12,32 @@ import {
   HarikaStoreContext,
   ICurrentFocusedBlockState,
   ICurrentNoteState,
+  useFocusedBlock,
+  useHarikaStore,
 } from '@harika/harika-core';
 import LokiJSAdapter from '@nozbe/watermelondb/adapters/lokijs';
+import { usePrevious } from 'react-use';
 
-// const HandleNoteBlockBlur: React.FC = () => {
-//   const database = useDatabase();
-//   const [editState] = useContext(CurrentFocusedBlockContext);
-//
-//   const prevId = usePrevious(editState?.id);
-//
-//   useEffect(() => {
-//     (async () => {
-//       if (!prevId) return;
-//
-//       if (editState?.id !== prevId) {
-//         const noteBlock = await database.collections
-//           .get<NoteBlockModel>(HarikaNotesTableName.NOTE_BLOCKS)
-//           .find(prevId);
-//
-//         await noteBlock.createNotesAndRefsIfNeeded();
-//
-//         console.log('notes and refs are created!');
-//       }
-//     })();
-//   });
-//
-//   return null;
-// };
+const HandleNoteBlockBlur: React.FC = () => {
+  const store = useHarikaStore();
+  const focusedBlockState = useFocusedBlock();
+
+  const prevNoteBlock = usePrevious(focusedBlockState?.noteBlock);
+
+  useEffect(() => {
+    (async () => {
+      if (!prevNoteBlock) return;
+
+      if (prevNoteBlock !== focusedBlockState?.noteBlock) {
+        store.updateNoteBlockLinks(prevNoteBlock);
+
+        console.log('notes and refs are created!');
+      }
+    })();
+  });
+
+  return null;
+};
 
 const adapter = new LokiJSAdapter({
   schema: schema,
@@ -69,7 +68,7 @@ export function App() {
       <HarikaStoreContext.Provider value={harikaNotes}>
         <CurrentNoteContext.Provider value={currentNoteActions}>
           <CurrentFocusedBlockContext.Provider value={stateActions}>
-            {/**<HandleNoteBlockBlur />*/}
+            <HandleNoteBlockBlur />
 
             <Header />
             <Content />

@@ -7,20 +7,27 @@ import { useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { NoteBlockModel, NoteModel } from '@harika/harika-notes';
 import { Ref } from 'mobx-keystone';
+import { Link } from 'react-router-dom';
 
-// const Backlink = ({ noteBlock }: { noteBlock: NoteBlockModel }) => {
-//   noteBlock = useTable(noteBlock);
-//   const note = useTable(noteBlock.note);
-//
-//   return noteBlock && note ? (
-//     <div className="mt-5">
-//       <div>
-//         Note: <Link to={`/notes/${note.id}`}>{note?.title}</Link>
-//       </div>
-//       <div>Block content: {noteBlock.content}</div>
-//     </div>
-//   ) : null;
-// };
+const Backlinks = observer(
+  ({ linkedBlockRefs }: { linkedBlockRefs: Ref<NoteBlockModel>[] }) => {
+    return (
+      <>
+        {linkedBlockRefs.map(({ current: noteBlock, $modelId }) => (
+          <div className="mt-5" key={$modelId}>
+            <div>
+              Note:{' '}
+              <Link to={`/notes/${noteBlock.noteRef.current.$modelId}`}>
+                {noteBlock.noteRef.current.title}
+              </Link>
+            </div>
+            <div>Block content: {noteBlock.content}</div>
+          </div>
+        ))}
+      </>
+    );
+  }
+);
 
 const NoteBlocks = observer(
   ({ childBlockRefs }: { childBlockRefs: Ref<NoteBlockModel>[] }) => {
@@ -69,7 +76,10 @@ export const Note: React.FC<{ note: NoteModel }> = observer(({ note }) => {
       </h2>
 
       <NoteBlocks childBlockRefs={note.childBlockRefs} />
+
       <hr />
+
+      <Backlinks linkedBlockRefs={note.linkedNoteBlocks} />
     </div>
   );
 });

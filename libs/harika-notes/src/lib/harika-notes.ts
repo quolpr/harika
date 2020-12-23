@@ -14,6 +14,7 @@ import { NoteRow } from './db/rows/NoteRow';
 import { convertNoteRowToModel } from './convertRowToModel';
 import { Dayjs } from 'dayjs';
 import { ChangesHandler } from './ChangesHandler';
+import { NoteBlockModel } from './models/NoteBlockModel';
 
 const setupDatabase = (adapter: DatabaseAdapter) => {
   return new Database({
@@ -59,16 +60,63 @@ export class HarikaNotes {
     return this.store.createDailyNote(date);
   }
 
-  async findNote(id: string) {
+  async findNote(id: string, preloadChildren = true) {
     if (this.store.notesMap[id]) return this.store.notesMap[id];
 
-    return this.convertNoteRowToModel(await this.queries.getNoteRowById(id));
+    return this.convertNoteRowToModel(
+      await this.queries.getNoteRowById(id),
+      preloadChildren
+    );
   }
 
-  private async convertNoteRowToModel(row: NoteRow) {
+  async updateNoteBlockLinks(noteBlock: NoteBlockModel) {
+    const names = [...noteBlock.content.matchAll(/\[\[(.+?)\]\]/g)].map(
+      ([, name]) => name
+    );
+
+    const existingNotesIndexed = Object.fromEntries(
+      (await this.queries.getNoteRowsByNames(names)).map((n) => [n.title, n])
+    );
+
+    const allNotes = await Promise.all(
+      names.map(async (name) => {
+        if (!existingNotesIndexed[name]) {
+          const newNote = this.store.createNote({ title: name });
+
+          return newNote;
+        } else {
+          const existing = existingNotesIndexed[name];
+
+          return this.convertNoteRowToModel(existing, false);
+        }
+      })
+    );
+
+    const allNotesIndexed = Object.fromEntries(
+      allNotes.map((n) => [n.$modelId, n])
+    );
+
+    const existingLinkedNotesIndexed = Object.fromEntries(
+      noteBlock.linkedNotes.map((note) => [note.current.$modelId, note.current])
+    );
+
+    allNotes.forEach((note) => {
+      if (!existingLinkedNotesIndexed[note.$modelId]) {
+        noteBlock.createLink(note);
+      }
+    });
+
+    Object.values(existingLinkedNotesIndexed).map((note) => {
+      if (!allNotesIndexed[note.$modelId]) {
+        noteBlock.unlink(note);
+      }
+    });
+  }
+
+  private async convertNoteRowToModel(row: NoteRow, preloadChildren = true) {
     if (this.store.notesMap[row.id]) return this.store.notesMap[row.id];
 
-    const data = await convertNoteRowToModel(row);
+    const data = await convertNoteRowToModel(row, preloadChildren);
 
     this.store.addNewNote(data.note, data.noteBlocks);
 

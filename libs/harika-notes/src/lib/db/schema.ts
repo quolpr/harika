@@ -7,7 +7,7 @@ export enum HarikaNotesTableName {
 }
 
 export default appSchema({
-  version: 6,
+  version: 7,
   tables: [
     tableSchema({
       name: HarikaNotesTableName.NOTES,

@@ -139,6 +139,22 @@ export class ChangesHandler {
           });
         });
       }
+
+      if (
+        patch.path.length === 3 &&
+        patch.path[0] === 'notesMap' &&
+        patch.path[2] === 'title'
+      ) {
+        const note = await this.queries.notesCollection.find(
+          patch.path[1] as string
+        );
+
+        await this.database.action(async () => {
+          return note.update((toUpdate) => {
+            toUpdate.title = patch.value;
+          });
+        });
+      }
     }
   };
 }

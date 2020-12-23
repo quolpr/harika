@@ -46,4 +46,8 @@ export class Queries {
 
     return noteCollection.find(id);
   }
+
+  async getNoteRowsByNames(names: string[]) {
+    return this.notesCollection.query(Q.where('title', Q.oneOf(names))).fetch();
+  }
 }

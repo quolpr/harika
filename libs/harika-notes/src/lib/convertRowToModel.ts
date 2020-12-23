@@ -21,12 +21,17 @@ export const convertNoteBlockRowToModel = async (
   });
 };
 
-export const convertNoteRowToModel = async (dbModel: NoteRow) => {
-  const noteBlockModels = await Promise.all(
-    (await dbModel.noteBlocks.fetch()).map((m) =>
-      convertNoteBlockRowToModel(m, dbModel.id)
-    )
-  );
+export const convertNoteRowToModel = async (
+  dbModel: NoteRow,
+  loadChildren = true
+) => {
+  const noteBlockModels = loadChildren
+    ? await Promise.all(
+        (await dbModel.noteBlocks.fetch()).map((m) =>
+          convertNoteBlockRowToModel(m, dbModel.id)
+        )
+      )
+    : [];
 
   const noteModel = new NoteModel({
     $modelId: dbModel.id,
@@ -35,7 +40,10 @@ export const convertNoteRowToModel = async (dbModel: NoteRow) => {
     updatedAt: dbModel.updatedAt,
     createdAt: dbModel.createdAt,
     isPersisted: true,
-    childBlockRefs: (dbModel.childBlockIds || []).map((id) => noteBlockRef(id)),
+    childBlockRefs: loadChildren
+      ? (dbModel.childBlockIds || []).map((id) => noteBlockRef(id))
+      : [],
+    areChildrenLoaded: loadChildren,
   });
 
   return { note: noteModel, noteBlocks: noteBlockModels };
