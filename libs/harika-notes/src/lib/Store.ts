@@ -54,7 +54,7 @@ export class Store extends Model({
   }
 
   @modelAction
-  createNoteFromAttrs(
+  createOrUpdateNoteFromAttrs(
     note: ModelInstanceCreationData<NoteModel> & { $modelId: string },
     blocks: (ModelInstanceCreationData<NoteBlockModel> & { $modelId: string })[]
   ) {

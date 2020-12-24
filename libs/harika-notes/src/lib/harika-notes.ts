@@ -144,11 +144,17 @@ export class HarikaNotes {
       preloadLinks
     );
 
-    const model = this.store.createNoteFromAttrs(data.note, data.noteBlocks);
+    const model = this.store.createOrUpdateNoteFromAttrs(
+      data.note,
+      data.noteBlocks
+    );
 
     if (data.linkedNotes) {
       data.linkedNotes.forEach((linkedData) => {
-        this.store.createNoteFromAttrs(linkedData.note, linkedData.noteBlocks);
+        this.store.createOrUpdateNoteFromAttrs(
+          linkedData.note,
+          linkedData.noteBlocks
+        );
       });
     }
 
