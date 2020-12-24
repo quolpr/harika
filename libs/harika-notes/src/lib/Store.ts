@@ -54,31 +54,40 @@ export class Store extends Model({
   }
 
   @modelAction
-  addNewNote(note: NoteModel, blocks: NoteBlockModel[]) {
+  createNoteFromAttrs(
+    note: ModelInstanceCreationData<NoteModel> & { $modelId: string },
+    blocks: (ModelInstanceCreationData<NoteBlockModel> & { $modelId: string })[]
+  ) {
     if (!this.notesMap[note.$modelId]) {
-      this.notesMap[note.$modelId] = note;
+      this.notesMap[note.$modelId] = new NoteModel(note);
     } else {
       const noteInStore = this.notesMap[note.$modelId];
 
-      if (!noteInStore.areLinksLoaded) {
-        noteInStore.linkedNoteBlockRefs = note.linkedNoteBlockRefs.map((ref) =>
-          noteBlockRef(ref.id)
-        );
-        noteInStore.areLinksLoaded = note.areLinksLoaded;
+      if (
+        !noteInStore.areLinksLoaded &&
+        note.areLinksLoaded &&
+        note.linkedNoteBlockRefs
+      ) {
+        noteInStore.linkedNoteBlockRefs = note.linkedNoteBlockRefs;
+        noteInStore.areLinksLoaded = true;
       }
 
-      if (!noteInStore.areChildrenLoaded) {
-        noteInStore.childBlockRefs = note.childBlockRefs.map((ref) =>
-          noteBlockRef(ref.id)
-        );
-        noteInStore.areChildrenLoaded = note.areChildrenLoaded;
+      if (
+        !noteInStore.areChildrenLoaded &&
+        note.areChildrenLoaded &&
+        note.childBlockRefs
+      ) {
+        noteInStore.childBlockRefs = note.childBlockRefs;
+        noteInStore.areChildrenLoaded = true;
       }
     }
 
     blocks.forEach((block) => {
       if (!this.blocksMap[block.$modelId]) {
-        this.blocksMap[block.$modelId] = block;
+        this.blocksMap[block.$modelId] = new NoteBlockModel(block);
       }
     });
+
+    return this.notesMap[note.$modelId];
   }
 }

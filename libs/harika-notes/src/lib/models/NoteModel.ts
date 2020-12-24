@@ -88,4 +88,18 @@ export class NoteModel extends Model({
 
     this.title = newTitle;
   }
+
+  @modelAction
+  setLoadedLinkedBlockIds(ids: string[]) {
+    this.linkedNoteBlockRefs = ids.map((id) => noteBlockRef(id));
+
+    this.areLinksLoaded = true;
+  }
+
+  @modelAction
+  setLoadedChildrenNoteIds(ids: string[]) {
+    this.childBlockRefs = ids.map((id) => noteBlockRef(id));
+
+    this.areChildrenLoaded = true;
+  }
 }

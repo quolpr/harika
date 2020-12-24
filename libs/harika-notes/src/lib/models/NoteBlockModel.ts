@@ -2,6 +2,7 @@ import {
   customRef,
   detach,
   findParent,
+  getRoot,
   model,
   Model,
   modelAction,

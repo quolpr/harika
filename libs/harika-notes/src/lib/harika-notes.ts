@@ -3,7 +3,11 @@ export { NoteBlockModel, noteBlockRef } from './models/NoteBlockModel';
 export { Store } from './Store';
 export { default as schema } from './db/schema';
 
-import { connectReduxDevTools, onPatches } from 'mobx-keystone';
+import {
+  connectReduxDevTools,
+  onPatches,
+  registerRootStore,
+} from 'mobx-keystone';
 import { Database, DatabaseAdapter } from '@nozbe/watermelondb';
 import { Queries } from './db/Queries';
 import { Store } from './Store';
@@ -11,7 +15,7 @@ import * as remotedev from 'remotedev';
 import { NoteRefRow } from './db/rows/NoteRefRow';
 import { NoteBlockRow } from './db/rows/NoteBlockRow';
 import { NoteRow } from './db/rows/NoteRow';
-import { convertNoteRowToModel } from './convertRowToModel';
+import { convertNoteRowToModelAttrs } from './convertRowToModel';
 import { Dayjs } from 'dayjs';
 import { ChangesHandler } from './ChangesHandler';
 import { NoteBlockModel } from './models/NoteBlockModel';
@@ -48,6 +52,8 @@ export class HarikaNotes {
       this.store,
       new ChangesHandler(database, this.queries, this.store).handlePatch
     );
+
+    registerRootStore(this.store);
   }
 
   async getOrCreateDailyNote(date: Dayjs) {
@@ -131,23 +137,21 @@ export class HarikaNotes {
     preloadChildren = true,
     preloadLinks = true
   ) {
-    console.log('converting');
-
-    const data = await convertNoteRowToModel(
+    const data = await convertNoteRowToModelAttrs(
       this.queries,
       row,
       preloadChildren,
       preloadLinks
     );
 
-    this.store.addNewNote(data.note, data.noteBlocks);
+    const model = this.store.createNoteFromAttrs(data.note, data.noteBlocks);
 
     if (data.linkedNotes) {
       data.linkedNotes.forEach((linkedData) => {
-        this.store.addNewNote(linkedData.note, linkedData.noteBlocks);
+        this.store.createNoteFromAttrs(linkedData.note, linkedData.noteBlocks);
       });
     }
 
-    return data.note;
+    return model;
   }
 }

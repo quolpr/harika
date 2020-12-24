@@ -3,12 +3,13 @@ import { NoteModel, noteRef } from './models/NoteModel';
 import { NoteBlockRow } from './db/rows/NoteBlockRow';
 import { NoteRow } from './db/rows/NoteRow';
 import { Queries } from './db/Queries';
+import { ModelInstanceCreationData } from 'mobx-keystone';
 
-export const convertNoteBlockRowToModel = async (
+export const convertNoteBlockRowToModelAttrs = async (
   dbModel: NoteBlockRow,
   noteId: string
 ) => {
-  return new NoteBlockModel({
+  return {
     $modelId: dbModel.id,
     content: dbModel.content,
     updatedAt: dbModel.updatedAt,
@@ -20,36 +21,18 @@ export const convertNoteBlockRowToModel = async (
     childBlockRefs: (dbModel.childBlockIds || []).map((id) => noteBlockRef(id)),
     noteRef: noteRef(noteId),
     linkedNoteRefs: (dbModel.linkedNoteIds || []).map((id) => noteRef(id)),
-  });
+  };
 };
 
 interface IConvertResult {
-  note: NoteModel;
-  noteBlocks: NoteBlockModel[];
+  note: ModelInstanceCreationData<NoteModel> & { $modelId: string };
+  noteBlocks: (ModelInstanceCreationData<NoteBlockModel> & {
+    $modelId: string;
+  })[];
   linkedNotes: IConvertResult[];
 }
 
-// TODO: extract from convertNoteRowToModel
-export const loadLinkedNotesOfNote = async (
-  queries: Queries,
-  dbModel: NoteRow,
-  preloadChildren = true,
-  preloadLinks = false
-) => {
-  return preloadLinks
-    ? await Promise.all(
-        (
-          await queries.getNoteRowsOfNoteBlockIds(
-            dbModel.linkedNoteBlockIds || []
-          )
-        ).map((row) =>
-          convertNoteRowToModel(queries, row, preloadChildren, preloadLinks)
-        )
-      )
-    : [];
-};
-
-export const convertNoteRowToModel = async (
+export const convertNoteRowToModelAttrs = async (
   queries: Queries,
   dbModel: NoteRow,
   preloadChildren = true,
@@ -58,7 +41,7 @@ export const convertNoteRowToModel = async (
   const noteBlockModels = preloadChildren
     ? await Promise.all(
         (await dbModel.noteBlocks.fetch()).map((m) =>
-          convertNoteBlockRowToModel(m, dbModel.id)
+          convertNoteBlockRowToModelAttrs(m, dbModel.id)
         )
       )
     : [];
@@ -69,7 +52,7 @@ export const convertNoteRowToModel = async (
           await queries.getNoteRowsOfNoteBlockIds(
             dbModel.linkedNoteBlockIds || []
           )
-        ).map((row) => convertNoteRowToModel(queries, row, true, false))
+        ).map((row) => convertNoteRowToModelAttrs(queries, row, true, false))
       )
     : [];
 
@@ -79,7 +62,7 @@ export const convertNoteRowToModel = async (
       )
     : [];
 
-  const noteModel = new NoteModel({
+  const noteModel = {
     $modelId: dbModel.id,
     title: dbModel.title,
     dailyNoteDate: dbModel.dailyNoteDate || new Date(),
@@ -92,7 +75,7 @@ export const convertNoteRowToModel = async (
     areChildrenLoaded: preloadChildren,
     linkedNoteBlockRefs: linkedNoteBlockRefs,
     areLinksLoaded: preloadLinks,
-  });
+  };
 
   return { note: noteModel, noteBlocks: noteBlockModels, linkedNotes };
 };
