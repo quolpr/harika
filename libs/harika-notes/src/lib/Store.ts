@@ -1,4 +1,5 @@
 import { Dayjs } from 'dayjs';
+import { computed } from 'mobx';
 import {
   model,
   prop,
@@ -16,6 +17,11 @@ export class Store extends Model({
   notesMap: prop<Record<string, NoteModel>>(() => ({})),
   blocksMap: prop<Record<string, NoteBlockModel>>(() => ({})),
 }) {
+  @computed({ keepAlive: true })
+  get allNotes() {
+    return Object.values(this.notesMap);
+  }
+
   @modelAction
   createNote(
     attrs: Optional<
@@ -55,39 +61,45 @@ export class Store extends Model({
 
   @modelAction
   createOrUpdateNoteFromAttrs(
-    note: ModelInstanceCreationData<NoteModel> & { $modelId: string },
-    blocks: (ModelInstanceCreationData<NoteBlockModel> & { $modelId: string })[]
+    list: Array<{
+      note: ModelInstanceCreationData<NoteModel> & { $modelId: string };
+      blocks: (ModelInstanceCreationData<NoteBlockModel> & {
+        $modelId: string;
+      })[];
+    }>
   ) {
-    if (!this.notesMap[note.$modelId]) {
-      this.notesMap[note.$modelId] = new NoteModel(note);
-    } else {
-      const noteInStore = this.notesMap[note.$modelId];
+    return list.map(({ note, blocks }) => {
+      if (!this.notesMap[note.$modelId]) {
+        this.notesMap[note.$modelId] = new NoteModel(note);
+      } else {
+        const noteInStore = this.notesMap[note.$modelId];
 
-      if (
-        !noteInStore.areLinksLoaded &&
-        note.areLinksLoaded &&
-        note.linkedNoteBlockRefs
-      ) {
-        noteInStore.linkedNoteBlockRefs = note.linkedNoteBlockRefs;
-        noteInStore.areLinksLoaded = true;
+        if (
+          !noteInStore.areLinksLoaded &&
+          note.areLinksLoaded &&
+          note.linkedNoteBlockRefs
+        ) {
+          noteInStore.linkedNoteBlockRefs = note.linkedNoteBlockRefs;
+          noteInStore.areLinksLoaded = true;
+        }
+
+        if (
+          !noteInStore.areChildrenLoaded &&
+          note.areChildrenLoaded &&
+          note.childBlockRefs
+        ) {
+          noteInStore.childBlockRefs = note.childBlockRefs;
+          noteInStore.areChildrenLoaded = true;
+        }
       }
 
-      if (
-        !noteInStore.areChildrenLoaded &&
-        note.areChildrenLoaded &&
-        note.childBlockRefs
-      ) {
-        noteInStore.childBlockRefs = note.childBlockRefs;
-        noteInStore.areChildrenLoaded = true;
-      }
-    }
+      blocks.forEach((block) => {
+        if (!this.blocksMap[block.$modelId]) {
+          this.blocksMap[block.$modelId] = new NoteBlockModel(block);
+        }
+      });
 
-    blocks.forEach((block) => {
-      if (!this.blocksMap[block.$modelId]) {
-        this.blocksMap[block.$modelId] = new NoteBlockModel(block);
-      }
+      return this.notesMap[note.$modelId];
     });
-
-    return this.notesMap[note.$modelId];
   }
 }

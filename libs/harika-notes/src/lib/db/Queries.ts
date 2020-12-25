@@ -67,4 +67,8 @@ export class Queries {
       )
       .fetch();
   }
+
+  async getAllNotes() {
+    return this.notesCollection.query().fetch();
+  }
 }

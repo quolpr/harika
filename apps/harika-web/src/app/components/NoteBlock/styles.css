@@ -34,6 +34,7 @@
     min-height: 1rem;
     background: transparent;
     resize: none;
+    min-height: 20px;
   }
 
   &__input {

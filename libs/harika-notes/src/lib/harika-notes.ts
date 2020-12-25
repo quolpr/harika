@@ -43,6 +43,8 @@ export class HarikaNotes {
   queries: Queries;
   store: Store;
 
+  private areAllNotesLoaded = false;
+
   constructor(adapter: DatabaseAdapter) {
     const database = setupDatabase(adapter);
     this.queries = new Queries(database);
@@ -54,6 +56,24 @@ export class HarikaNotes {
     );
 
     registerRootStore(this.store);
+  }
+
+  async preloadAllNotes() {
+    if (this.areAllNotesLoaded) return;
+
+    // TODO: optimize
+    const allNotes = await this.queries.getAllNotes();
+    await Promise.all(
+      allNotes.map((note) => {
+        this.findNote(note.id, false, false);
+      })
+    );
+    console.log(allNotes);
+    this.areAllNotesLoaded = true;
+  }
+
+  getAllNotes() {
+    return this.store.allNotes;
   }
 
   async getOrCreateDailyNote(date: Dayjs) {
@@ -144,20 +164,14 @@ export class HarikaNotes {
       preloadLinks
     );
 
-    const model = this.store.createOrUpdateNoteFromAttrs(
-      data.note,
-      data.noteBlocks
-    );
+    const model = this.store.createOrUpdateNoteFromAttrs([
+      { note: data.note, blocks: data.noteBlocks },
+      ...data.linkedNotes.map(({ note, noteBlocks }) => ({
+        note,
+        blocks: noteBlocks,
+      })),
+    ]);
 
-    if (data.linkedNotes) {
-      data.linkedNotes.forEach((linkedData) => {
-        this.store.createOrUpdateNoteFromAttrs(
-          linkedData.note,
-          linkedData.noteBlocks
-        );
-      });
-    }
-
-    return model;
+    return model[0];
   }
 }

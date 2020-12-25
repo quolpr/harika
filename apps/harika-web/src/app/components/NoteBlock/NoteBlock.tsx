@@ -1,13 +1,155 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import './styles.css';
 import { useClickAway } from 'react-use';
 import { useContextSelector } from 'use-context-selector';
 import clsx from 'clsx';
 import TextareaAutosize from 'react-textarea-autosize';
 import { CurrentFocusedBlockContext } from '@harika/harika-core';
-import { observer } from 'mobx-react-lite';
+import { Observer, observer } from 'mobx-react-lite';
 import { NoteBlockModel } from '@harika/harika-notes';
 import { Ref } from 'mobx-keystone';
+import ReactMarkdown from 'react-markdown';
+import breaks from 'remark-breaks';
+import {
+  Settings,
+  Processor,
+  ParserConstructor,
+  ParserFunction,
+} from 'unified/types';
+import { Node } from 'unist';
+import visit from 'unist-util-visit';
+import { Link } from 'react-router-dom';
+
+const reBlankLine = /^[ \t]*(\n|$)/;
+
+export function blankLines(this: Processor<Settings>) {
+  const parser = this.Parser;
+
+  if (!isRemarkParser(parser)) {
+    throw new Error('Missing parser to attach `blankLines` to');
+  }
+
+  parser.prototype.blockTokenizers.blankLine = blankLine;
+  // NOTE react-markdown@4.3.1 we use depends on remark-parse@5.0.0  while we use remark-parse@8.0.3
+  if (parser.prototype.blockMethods.indexOf('blankLine') === -1) {
+    parser.prototype.blockMethods.unshift('blankLine');
+  }
+
+  function blankLine(
+    this: Tokenizer,
+    eat: (consumed: string) => (node: Node) => void,
+    value: string,
+    silent: boolean
+  ): true | void {
+    let index = 0;
+    const length = value.length;
+    let eatenLines = 0;
+    while (index < length) {
+      const match = reBlankLine.exec(value.slice(index));
+
+      if (match == null) {
+        break;
+      }
+      if (silent) {
+        return true;
+      }
+      // debugger;
+      const line = match[0];
+      index += line.length;
+
+      const add = eat(line);
+      // NOTE if we are at start we add break for each line
+      // otherwise we ignore first line as it's newline of previous block
+      if (this.atStart === true || eatenLines > 0) {
+        add({ type: 'break' });
+      }
+      eatenLines++;
+    }
+  }
+}
+
+const splice = [].splice;
+
+function attacher(this: Processor<Settings>) {
+  const parser = this.Parser;
+
+  const inlineMethods = parser.prototype.inlineMethods;
+
+  if (inlineMethods.indexOf('reference') !== -1) {
+    inlineMethods.splice(inlineMethods.indexOf('reference'), 1);
+  }
+
+  return transformer;
+
+  function transformer(tree, file) {
+    visit(tree, 'text', visitor);
+
+    function visitor(node, index, parent) {
+      const result = [];
+      let start = 0;
+
+      const noteLinkRegex = /\[\[.+?\]\]/g;
+      let match = noteLinkRegex.exec(node.value);
+
+      while (match) {
+        const position = match.index;
+        if (start !== position) {
+          result.push({
+            type: 'text',
+            value: node.value.slice(start, position),
+          });
+        }
+
+        result.push({
+          type: 'noteLink',
+          value: match[0],
+          data: {
+            noteName: match[0].substring(2, match[0].length - 2),
+          },
+        });
+
+        start = position + match[0].length;
+        match = noteLinkRegex.exec(node.value);
+      }
+
+      if (result.length > 0) {
+        if (start < node.value.length) {
+          result.push({ type: 'text', value: node.value.slice(start) });
+        }
+
+        console.log({ result });
+
+        splice.apply(parent.children, [index, 1].concat(result));
+        // parent.children.splice(index, 1, result);
+
+        return index + result.length;
+      }
+
+      // return index;
+    }
+  }
+}
+
+function isRemarkParser(parser: ParserConstructor | ParserFunction) {
+  return (
+    parser != null &&
+    parser.prototype != null &&
+    parser.prototype.blockTokenizers != null
+  );
+}
+
+type Tokenizer = {
+  atStart: boolean;
+  inBlock: boolean;
+  inLink: boolean;
+  inList: boolean;
+};
 
 const NoteBlockChildren = observer(
   ({ childBlockRefs }: { childBlockRefs: Ref<NoteBlockModel>[] }) => {
@@ -18,6 +160,51 @@ const NoteBlockChildren = observer(
         ))}
       </div>
     ) : null;
+  }
+);
+
+const plugins = [blankLines, attacher];
+
+const MarkdownRenderer = observer(
+  ({ noteBlock, content }: { noteBlock: NoteBlockModel; content: string }) => {
+    const refs = noteBlock.linkedNoteRefs;
+
+    const renderers = useMemo(
+      () => ({
+        ...ReactMarkdown.renderers,
+        noteLink: (node) => {
+          return (
+            <Observer>
+              {() => {
+                const ref = refs.find(
+                  (ref) => ref.current.title === node.data.noteName
+                );
+
+                return (
+                  <Link
+                    to={`/notes/${ref?.id}`}
+                    className="text-pink-500 hover:underline"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {node.value}
+                  </Link>
+                );
+              }}
+            </Observer>
+          );
+        },
+      }),
+      [refs]
+    );
+
+    return (
+      <ReactMarkdown
+        plugins={plugins}
+        className="whitespace-pre-wrap"
+        children={content}
+        renderers={renderers}
+      />
+    );
   }
 );
 
@@ -185,13 +372,14 @@ export const NoteBlock = observer(
             onChange={handleChange}
             value={noteBlockContent.content}
           />
-          <div
-            className={clsx('note-block__content', { hidden: isEditing })}
-            onClick={handleClick}
-          >
-            {noteBlockContent.content}
-            {noteBlockContent.content.slice(-1) === '\n' && '\n'}
-          </div>
+          {!isEditing && (
+            <div onClick={handleClick} className={clsx('note-block__content')}>
+              <MarkdownRenderer
+                noteBlock={noteBlock}
+                content={noteBlockContent.content}
+              />
+            </div>
+          )}
         </div>
         <NoteBlockChildren childBlockRefs={noteBlock.childBlockRefs} />
       </div>
