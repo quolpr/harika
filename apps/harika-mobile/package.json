@@ -26,7 +26,8 @@
     "rxjs": "*",
     "use-context-selector": "*",
     "utility-types": "*",
-    "uuid": "*"
+    "uuid": "*",
+    "lodash.isequal": "*"
   },
   "devDependencies": {
     "@types/react-native-calendars": "^1.505.0"

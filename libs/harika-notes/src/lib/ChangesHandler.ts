@@ -9,16 +9,19 @@ import { NoteModel } from './models/NoteModel';
 import { Store } from './Store';
 import { Subject } from 'rxjs';
 import { concatMap } from 'rxjs/operators';
+import { Syncher } from './sync';
+import isEqual from 'lodash.isequal';
 
 export class ChangesHandler {
   notesCollection: Collection<NoteRow>;
   noteBlocksCollection: Collection<NoteBlockRow>;
-  subject: Subject<Patch>;
+  patchesSubject: Subject<Patch>;
 
   constructor(
     private database: Database,
     private queries: Queries,
-    private store: Store
+    private store: Store,
+    private syncher: Syncher
   ) {
     this.notesCollection = this.database.collections.get<NoteRow>(
       HarikaNotesTableName.NOTES
@@ -28,14 +31,16 @@ export class ChangesHandler {
       HarikaNotesTableName.NOTE_BLOCKS
     );
 
-    this.subject = new Subject<Patch>();
+    this.patchesSubject = new Subject<Patch>();
 
-    this.subject.pipe(concatMap((patch) => this.applyPatch(patch))).subscribe();
+    this.patchesSubject
+      .pipe(concatMap((patch) => this.applyPatch(patch)))
+      .subscribe();
   }
 
   handlePatch = (patches: Patch[]) => {
     patches.forEach((patch) => {
-      this.subject.next(patch);
+      this.patchesSubject.next(patch);
     });
   };
 
@@ -54,12 +59,13 @@ export class ChangesHandler {
       const ids = this.store.notesMap[path[1]].childBlockRefs.map(
         ({ current }) => current.$modelId
       );
-
-      await this.database.action(() => {
-        return note.update((toUpdate) => {
-          toUpdate.childBlockIds = ids;
+      if (!isEqual(ids, note.childBlockIds)) {
+        await this.database.action(() => {
+          return note.update((toUpdate) => {
+            toUpdate.childBlockIds = ids;
+          });
         });
-      });
+      }
     }
 
     if (
@@ -75,11 +81,14 @@ export class ChangesHandler {
         ({ current }) => current.$modelId
       );
 
-      await this.database.action(() => {
-        return noteBlock.update((toUpdate) => {
-          toUpdate.childBlockIds = ids;
+      if (!isEqual(ids, noteBlock.childBlockIds)) {
+        await this.database.action(() => {
+          return noteBlock.update((toUpdate) => {
+            console.log('update block ');
+            toUpdate.childBlockIds = ids;
+          });
         });
-      });
+      }
     }
 
     if (patch.op === 'add') {
@@ -92,12 +101,12 @@ export class ChangesHandler {
 
         await this.database.action(() => {
           return this.queries.noteBlocksCollection.create((creator) => {
+            console.log('create block ');
             creator._raw.id = value.$modelId;
             creator.noteId = value.noteRef.id;
             creator.parentBlockId = value.parentBlockRef?.id;
             creator.content = value.content;
             creator.createdAt = new Date(value.createdAt);
-            creator.updatedAt = new Date(value.updatedAt);
           });
         });
       }
@@ -115,7 +124,6 @@ export class ChangesHandler {
             creator.dailyNoteDate = new Date(value.dailyNoteDate);
             creator.title = value.title;
             creator.createdAt = new Date(value.createdAt);
-            creator.updatedAt = new Date(value.updatedAt);
           });
         });
       }
@@ -128,15 +136,23 @@ export class ChangesHandler {
         );
 
         await this.database.action(async () => {
-          return noteBlock.update((toUpdate) => {
-            if (patch.path[2] === 'parentBlockRef') {
+          if (
+            patch.path[2] === 'parentBlockRef' &&
+            noteBlock.parentBlockId !== patch.value?.id
+          ) {
+            await noteBlock.update((toUpdate) => {
               toUpdate.parentBlockId = patch.value?.id;
-            }
+            });
+          }
 
-            if (patch.path[2] === 'content') {
+          if (
+            patch.path[2] === 'content' &&
+            noteBlock.content !== patch.value
+          ) {
+            await noteBlock.update((toUpdate) => {
               toUpdate.content = patch.value;
-            }
-          });
+            });
+          }
         });
       }
 
@@ -153,6 +169,21 @@ export class ChangesHandler {
           return note.update((toUpdate) => {
             toUpdate.title = patch.value;
           });
+        });
+      }
+
+      if (
+        patch.path.length === 3 &&
+        patch.path[0] === 'notesMap' &&
+        patch.path[2] === 'isDeleted' &&
+        patch.value === true
+      ) {
+        const note = await this.queries.notesCollection.find(
+          patch.path[1] as string
+        );
+
+        await this.database.action(async () => {
+          return note.destroyPermanently();
         });
       }
     }
@@ -192,5 +223,7 @@ export class ChangesHandler {
         })
       );
     }
+
+    // Don't need to await
   };
 }

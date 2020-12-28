@@ -3,11 +3,11 @@ import { appSchema, tableSchema } from '@nozbe/watermelondb';
 export enum HarikaNotesTableName {
   NOTES = 'notes',
   NOTE_BLOCKS = 'note_blocks',
-  NOTE_REFS = 'note_refs',
+  // NOTE_REFS = 'note_refs',
 }
 
 export default appSchema({
-  version: 9,
+  version: 27,
   tables: [
     tableSchema({
       name: HarikaNotesTableName.NOTES,
@@ -25,15 +25,15 @@ export default appSchema({
         { name: 'updated_at', type: 'number' },
       ],
     }),
-    tableSchema({
-      name: HarikaNotesTableName.NOTE_REFS,
-      columns: [
-        { name: 'note_id', type: 'string', isIndexed: true },
-        { name: 'note_block_id', type: 'string', isIndexed: true },
-        { name: 'created_at', type: 'number' },
-        { name: 'updated_at', type: 'number' },
-      ],
-    }),
+    // tableSchema({
+    //   name: HarikaNotesTableName.NOTE_REFS,
+    //   columns: [
+    //     { name: 'note_id', type: 'string', isIndexed: true },
+    //     { name: 'note_block_id', type: 'string', isIndexed: true },
+    //     { name: 'created_at', type: 'number' },
+    //     { name: 'updated_at', type: 'number' },
+    //   ],
+    // }),
     tableSchema({
       name: HarikaNotesTableName.NOTE_BLOCKS,
       columns: [

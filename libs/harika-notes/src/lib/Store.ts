@@ -26,12 +26,11 @@ export class Store extends Model({
   createNote(
     attrs: Optional<
       ModelInstanceCreationData<NoteModel>,
-      'updatedAt' | 'createdAt' | 'dailyNoteDate'
+      'createdAt' | 'dailyNoteDate'
     >
   ) {
     const note = new NoteModel({
       $modelId: uuidv4(),
-      updatedAt: new Date(),
       createdAt: new Date(),
       dailyNoteDate: new Date(),
       ...attrs,
@@ -60,46 +59,32 @@ export class Store extends Model({
   }
 
   @modelAction
-  createOrUpdateNoteFromAttrs(
-    list: Array<{
-      note: ModelInstanceCreationData<NoteModel> & { $modelId: string };
-      blocks: (ModelInstanceCreationData<NoteBlockModel> & {
-        $modelId: string;
-      })[];
-    }>
+  createOrUpdateNoteAndBlocksFromAttrs(
+    noteAttrs: (ModelInstanceCreationData<NoteModel> & { $modelId: string })[],
+    blocksAttrs: (ModelInstanceCreationData<NoteBlockModel> & {
+      $modelId: string;
+    })[]
   ) {
-    return list.map(({ note, blocks }) => {
-      if (!this.notesMap[note.$modelId]) {
-        this.notesMap[note.$modelId] = new NoteModel(note);
+    const notes = noteAttrs.map((note) => {
+      if (this.notesMap[note.$modelId]) {
+        this.notesMap[note.$modelId].updateAttrs(note);
       } else {
-        const noteInStore = this.notesMap[note.$modelId];
-
-        if (
-          !noteInStore.areLinksLoaded &&
-          note.areLinksLoaded &&
-          note.linkedNoteBlockRefs
-        ) {
-          noteInStore.linkedNoteBlockRefs = note.linkedNoteBlockRefs;
-          noteInStore.areLinksLoaded = true;
-        }
-
-        if (
-          !noteInStore.areChildrenLoaded &&
-          note.areChildrenLoaded &&
-          note.childBlockRefs
-        ) {
-          noteInStore.childBlockRefs = note.childBlockRefs;
-          noteInStore.areChildrenLoaded = true;
-        }
+        this.notesMap[note.$modelId] = new NoteModel(note);
       }
-
-      blocks.forEach((block) => {
-        if (!this.blocksMap[block.$modelId]) {
-          this.blocksMap[block.$modelId] = new NoteBlockModel(block);
-        }
-      });
 
       return this.notesMap[note.$modelId];
     });
+
+    const blocks = blocksAttrs.forEach((block) => {
+      if (this.blocksMap[block.$modelId]) {
+        this.blocksMap[block.$modelId].updateAttrs(block);
+      } else {
+        this.blocksMap[block.$modelId] = new NoteBlockModel(block);
+      }
+
+      return this.blocksMap[block.$modelId];
+    });
+
+    return { notes, blocks };
   }
 }

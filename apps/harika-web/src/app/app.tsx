@@ -59,6 +59,23 @@ const adapter = new LokiJSAdapter({
 
 const harikaNotes = new HarikaNotes(adapter);
 
+const Syncher: React.FC = ({ children }) => {
+  const store = useHarikaStore();
+  const [wasSynched, setWasSynched] = useState(false);
+
+  useEffect(() => {
+    const callback = async () => {
+      await store.sync();
+
+      setWasSynched(true);
+    };
+
+    callback();
+  }, [store]);
+
+  return <>{wasSynched && children}</>;
+};
+
 export function App() {
   const stateActions = useState<ICurrentFocusedBlockState>();
   const currentNoteActions = useState<ICurrentNoteState>();
@@ -68,20 +85,22 @@ export function App() {
       <HarikaStoreContext.Provider value={harikaNotes}>
         <CurrentNoteContext.Provider value={currentNoteActions}>
           <CurrentFocusedBlockContext.Provider value={stateActions}>
-            <HandleNoteBlockBlur />
+            <Syncher>
+              <HandleNoteBlockBlur />
 
-            <Header />
-            <Content />
-            <section className="main">
-              <Switch>
-                <Route exact path="/">
-                  <MainPageRedirect />
-                </Route>
-                <Route path="/notes/:id">
-                  <NotePage />
-                </Route>
-              </Switch>
-            </section>
+              <Header />
+              <Content />
+              <section className="main">
+                <Switch>
+                  <Route exact path="/">
+                    <MainPageRedirect />
+                  </Route>
+                  <Route path="/notes/:id">
+                    <NotePage />
+                  </Route>
+                </Switch>
+              </section>
+            </Syncher>
           </CurrentFocusedBlockContext.Provider>
         </CurrentNoteContext.Provider>
       </HarikaStoreContext.Provider>

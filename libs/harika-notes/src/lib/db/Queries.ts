@@ -47,6 +47,14 @@ export class Queries {
     return noteCollection.find(id);
   }
 
+  async getNoteBlockRowById(id: string) {
+    const noteBlockCollection = this.database.collections.get<NoteBlockRow>(
+      HarikaNotesTableName.NOTE_BLOCKS
+    );
+
+    return noteBlockCollection.find(id);
+  }
+
   async getNoteRowsByNames(names: string[]) {
     return this.notesCollection.query(Q.where('title', Q.oneOf(names))).fetch();
   }

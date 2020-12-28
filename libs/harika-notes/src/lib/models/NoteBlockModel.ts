@@ -6,6 +6,7 @@ import {
   model,
   Model,
   modelAction,
+  ModelInstanceCreationData,
   prop,
   Ref,
   tProp_dateTimestamp,
@@ -14,6 +15,7 @@ import {
 import { computed } from 'mobx';
 import { NoteModel, noteRef } from './NoteModel';
 import { Store } from '../Store';
+import isEqual from 'lodash.isequal';
 
 // TODO maybe root ref? What is the best way to manage??
 export const noteBlockRef = customRef<NoteBlockModel>('harika/NoteBlockRef', {
@@ -46,7 +48,6 @@ export class NoteBlockModel extends Model({
   parentBlockRef: prop<Ref<NoteBlockModel> | undefined>(),
   noteRef: prop<Ref<NoteModel>>(),
   content: prop<string>(),
-  updatedAt: tProp_dateTimestamp(types.dateTimestamp),
   createdAt: tProp_dateTimestamp(types.dateTimestamp),
   isDeleted: prop<boolean>(false),
   isPersisted: prop<boolean>(false),
@@ -308,5 +309,44 @@ export class NoteBlockModel extends Model({
     );
 
     this.linkedNoteRefs.splice(this.linkedNoteRefs.indexOf(linkedNoteRef), 1);
+  }
+
+  @modelAction
+  updateAttrs(data: ModelInstanceCreationData<NoteBlockModel>) {
+    if (
+      data.content !== undefined &&
+      data.content !== null &&
+      data.content !== this.$.content
+    ) {
+      this.content = data.content;
+    }
+
+    if (data.noteRef && data.noteRef.id !== this.$.noteRef.id) {
+      this.noteRef = data.noteRef;
+    }
+
+    if (data.createdAt && data.createdAt !== this.createdAt) {
+      this.createdAt = data.createdAt;
+    }
+
+    if (
+      data.childBlockRefs &&
+      !isEqual(
+        data.childBlockRefs?.map((ref) => ref.id).sort(),
+        this.childBlockRefs.map(({ id }) => id).sort()
+      )
+    ) {
+      this.childBlockRefs = data.childBlockRefs;
+    }
+
+    if (
+      data.linkedNoteRefs &&
+      !isEqual(
+        data.linkedNoteRefs?.map((ref) => ref.id).sort(),
+        this.linkedNoteRefs.map(({ id }) => id).sort()
+      )
+    ) {
+      this.linkedNoteRefs = data.linkedNoteRefs;
+    }
   }
 }

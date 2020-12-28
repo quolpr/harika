@@ -12,18 +12,18 @@ import { Database, DatabaseAdapter } from '@nozbe/watermelondb';
 import { Queries } from './db/Queries';
 import { Store } from './Store';
 import * as remotedev from 'remotedev';
-import { NoteRefRow } from './db/rows/NoteRefRow';
 import { NoteBlockRow } from './db/rows/NoteBlockRow';
 import { NoteRow } from './db/rows/NoteRow';
 import { convertNoteRowToModelAttrs } from './convertRowToModel';
 import { Dayjs } from 'dayjs';
 import { ChangesHandler } from './ChangesHandler';
 import { NoteBlockModel } from './models/NoteBlockModel';
+import { sync, Syncher } from './sync';
 
 const setupDatabase = (adapter: DatabaseAdapter) => {
   return new Database({
     adapter,
-    modelClasses: [NoteRow, NoteBlockRow, NoteRefRow],
+    modelClasses: [NoteRow, NoteBlockRow],
     actionsEnabled: true,
   });
 };
@@ -44,18 +44,26 @@ export class HarikaNotes {
   store: Store;
 
   private areAllNotesLoaded = false;
+  private syncer: Syncher;
 
   constructor(adapter: DatabaseAdapter) {
     const database = setupDatabase(adapter);
     this.queries = new Queries(database);
     this.store = setupStore();
 
+    this.syncer = new Syncher(database, this.store, this.queries, this);
+
     onPatches(
       this.store,
-      new ChangesHandler(database, this.queries, this.store).handlePatch
+      new ChangesHandler(database, this.queries, this.store, this.syncer)
+        .handlePatch
     );
 
     registerRootStore(this.store);
+  }
+
+  async sync() {
+    return this.syncer.sync();
   }
 
   async preloadAllNotes() {
@@ -68,7 +76,6 @@ export class HarikaNotes {
         this.findNote(note.id, false, false);
       })
     );
-    console.log(allNotes);
     this.areAllNotesLoaded = true;
   }
 
@@ -97,11 +104,7 @@ export class HarikaNotes {
         return noteInStore;
     }
 
-    return this.convertNoteRowToModel(
-      await this.queries.getNoteRowById(id),
-      preloadChildren,
-      preloadLinks
-    );
+    return this.syncNoteAndReturn(id, preloadChildren, preloadLinks);
   }
 
   async updateNoteBlockLinks(noteBlock: NoteBlockModel) {
@@ -152,11 +155,12 @@ export class HarikaNotes {
   }
 
   // TODO: move it with findNote to separate class
-  private async convertNoteRowToModel(
-    row: NoteRow,
+  async syncNoteAndReturn(
+    id: string,
     preloadChildren = true,
     preloadLinks = true
   ) {
+    const row = await this.queries.getNoteRowById(id);
     const data = await convertNoteRowToModelAttrs(
       this.queries,
       row,
@@ -164,14 +168,14 @@ export class HarikaNotes {
       preloadLinks
     );
 
-    const model = this.store.createOrUpdateNoteFromAttrs([
-      { note: data.note, blocks: data.noteBlocks },
-      ...data.linkedNotes.map(({ note, noteBlocks }) => ({
-        note,
-        blocks: noteBlocks,
-      })),
-    ]);
+    this.store.createOrUpdateNoteAndBlocksFromAttrs(
+      [data.note, ...data.linkedNotes.map(({ note }) => note)],
+      [
+        ...data.noteBlocks,
+        ...data.linkedNotes.flatMap(({ noteBlocks }) => noteBlocks),
+      ]
+    );
 
-    return model[0];
+    return this.store.notesMap[row.id];
   }
 }

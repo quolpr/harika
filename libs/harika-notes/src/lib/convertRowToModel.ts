@@ -12,7 +12,6 @@ export const convertNoteBlockRowToModelAttrs = async (
   return {
     $modelId: dbModel.id,
     content: dbModel.content,
-    updatedAt: dbModel.updatedAt,
     createdAt: dbModel.createdAt,
     parentBlockRef: dbModel.parentBlockId
       ? noteBlockRef(dbModel.parentBlockId)
@@ -66,7 +65,6 @@ export const convertNoteRowToModelAttrs = async (
     $modelId: dbModel.id,
     title: dbModel.title,
     dailyNoteDate: dbModel.dailyNoteDate || new Date(),
-    updatedAt: dbModel.updatedAt,
     createdAt: dbModel.createdAt,
     isPersisted: true,
     childBlockRefs: preloadChildren

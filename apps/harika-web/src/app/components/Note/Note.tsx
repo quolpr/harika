@@ -7,7 +7,8 @@ import { useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { NoteBlockModel, NoteModel } from '@harika/harika-notes';
 import { Ref } from 'mobx-keystone';
-import { Link } from 'react-router-dom';
+import { Link, useHistory } from 'react-router-dom';
+import { Trash as TrashIcon } from 'heroicons-react';
 
 const Backlinks = observer(
   ({ linkedBlockRefs }: { linkedBlockRefs: Ref<NoteBlockModel>[] }) => {
@@ -46,6 +47,7 @@ export const Note: React.FC<{ note: NoteModel }> = observer(({ note }) => {
     title: note.title,
     id: note.$modelId,
   });
+  const history = useHistory();
 
   useEffect(() => {
     setEditState({ title: note.title, id: note.$modelId });
@@ -65,6 +67,12 @@ export const Note: React.FC<{ note: NoteModel }> = observer(({ note }) => {
     [note.$modelId]
   );
 
+  const handleDestroy = useCallback(() => {
+    note.destroy();
+
+    history.replace(`/`);
+  }, [note, history]);
+
   return (
     <div className="note">
       <h2 className="note__header">
@@ -73,6 +81,8 @@ export const Note: React.FC<{ note: NoteModel }> = observer(({ note }) => {
           value={editState.title}
           onChange={handleChange}
         />
+
+        <TrashIcon onClick={handleDestroy} />
       </h2>
 
       <NoteBlocks childBlockRefs={note.childBlockRefs} />
