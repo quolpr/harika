@@ -13,11 +13,13 @@ import {
   HarikaStoreContext,
   ICurrentFocusedBlockState,
   ICurrentNoteState,
+  useHarikaStore,
 } from '@harika/harika-core';
 import 'react-native-console-time-polyfill';
 import { Text, View } from 'react-native';
 import { t } from 'react-native-tailwindcss';
 import { Calendar, CalendarList, Agenda } from 'react-native-calendars';
+import { useEffect } from 'react';
 
 // First, create the adapter to the underlying database:
 const adapter = new SQLiteAdapter({
@@ -85,6 +87,23 @@ const harikaNotes = new HarikaNotes(adapter);
 
 const Stack = createStackNavigator();
 
+const Syncher: React.FC = ({ children }) => {
+  const store = useHarikaStore();
+  const [wasSynched, setWasSynched] = useState(false);
+
+  useEffect(() => {
+    const callback = async () => {
+      await store.sync();
+
+      setWasSynched(true);
+    };
+
+    callback();
+  }, [store]);
+
+  return <>{wasSynched && children}</>;
+};
+
 const App: React.FC = () => {
   const stateActions = useState<ICurrentFocusedBlockState>();
   const currentNoteActions = useState<ICurrentNoteState>();
@@ -110,25 +129,27 @@ const App: React.FC = () => {
     <HarikaStoreContext.Provider value={harikaNotes}>
       <CurrentNoteContext.Provider value={currentNoteActions}>
         <CurrentFocusedBlockContext.Provider value={stateActions}>
-          <NavigationContainer>
-            <Stack.Navigator>
-              <Stack.Screen
-                name="Home"
-                options={{
-                  title: 'Daily Note',
-                  headerRight: renderRightHeader,
-                }}
-              >
-                {(props) => (
-                  <HomeScreen
-                    {...props}
-                    isCalendarOpened={isCalendarOpened}
-                    setIsCalendarOpened={setIsCalendarOpened}
-                  />
-                )}
-              </Stack.Screen>
-            </Stack.Navigator>
-          </NavigationContainer>
+          <Syncher>
+            <NavigationContainer>
+              <Stack.Navigator>
+                <Stack.Screen
+                  name="Home"
+                  options={{
+                    title: 'Daily Note',
+                    headerRight: renderRightHeader,
+                  }}
+                >
+                  {(props) => (
+                    <HomeScreen
+                      {...props}
+                      isCalendarOpened={isCalendarOpened}
+                      setIsCalendarOpened={setIsCalendarOpened}
+                    />
+                  )}
+                </Stack.Screen>
+              </Stack.Navigator>
+            </NavigationContainer>
+          </Syncher>
         </CurrentFocusedBlockContext.Provider>
       </CurrentNoteContext.Provider>
     </HarikaStoreContext.Provider>

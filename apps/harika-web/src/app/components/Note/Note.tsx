@@ -31,10 +31,10 @@ const Backlinks = observer(
 );
 
 const NoteBlocks = observer(
-  ({ childBlockRefs }: { childBlockRefs: Ref<NoteBlockModel>[] }) => {
+  ({ childBlocks }: { childBlocks: NoteBlockModel[] }) => {
     return (
       <div className="note__body">
-        {childBlockRefs.map(({ current: noteBlock }) => (
+        {childBlocks.map((noteBlock) => (
           <NoteBlock key={noteBlock.$modelId} noteBlock={noteBlock} />
         ))}
       </div>
@@ -85,7 +85,7 @@ export const Note: React.FC<{ note: NoteModel }> = observer(({ note }) => {
         <TrashIcon onClick={handleDestroy} />
       </h2>
 
-      <NoteBlocks childBlockRefs={note.childBlockRefs} />
+      <NoteBlocks childBlocks={note.children} />
 
       <hr />
 

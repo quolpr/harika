@@ -63,7 +63,8 @@ export class HarikaNotes {
   }
 
   async sync() {
-    return this.syncer.sync();
+    // return this.syncer.sync();
+    return true;
   }
 
   async preloadAllNotes() {

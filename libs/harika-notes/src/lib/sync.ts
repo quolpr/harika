@@ -54,7 +54,7 @@ export class Syncher {
       database: this.database,
       pullChanges: async ({ lastPulledAt }) => {
         const response = await fetch(
-          `http://localhost:5000/api/sync/pull?lastPulledVersion=${
+          `http://192.168.1.127:5000/api/sync/pull?lastPulledVersion=${
             lastPulledAt || 0
           }`
         );
@@ -75,7 +75,7 @@ export class Syncher {
         wasPushPresent = true;
 
         const response = await fetch(
-          `http://localhost:5000/api/sync/push?lastPulledVersion=${
+          `http://192.168.1.127:5000/api/sync/push?lastPulledVersion=${
             lastPulledAt || 0
           }`,
           {
@@ -139,12 +139,19 @@ export class Syncher {
       ...notesChanges.updated.map(({ id }) => id),
     ];
 
+    console.log({ noteBlockIdsToSelect, noteIdsToSelect });
+
     await Promise.all(
       noteBlockIdsToSelect.map(async (noteBlockId) => {
         const noteBlock = await this.queries.getNoteBlockRowById(noteBlockId);
 
         if (this.store.notesMap[noteBlock.noteId]) {
-          noteIdsToSelect.splice(noteIdsToSelect.indexOf(noteBlock.noteId), 1);
+          if (noteIdsToSelect.indexOf(noteBlock.id) !== -1) {
+            noteIdsToSelect.splice(
+              noteIdsToSelect.indexOf(noteBlock.noteId),
+              1
+            );
+          }
 
           await this.harikaNotes.syncNoteAndReturn(noteBlock.noteId);
         }
@@ -153,6 +160,7 @@ export class Syncher {
 
     await Promise.all(
       noteIdsToSelect.map(async (noteId) => {
+        console.log('syncing', noteId);
         await this.harikaNotes.syncNoteAndReturn(noteId, true, true);
       })
     );

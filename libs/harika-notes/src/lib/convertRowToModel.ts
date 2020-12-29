@@ -20,6 +20,7 @@ export const convertNoteBlockRowToModelAttrs = async (
     childBlockRefs: (dbModel.childBlockIds || []).map((id) => noteBlockRef(id)),
     noteRef: noteRef(noteId),
     linkedNoteRefs: (dbModel.linkedNoteIds || []).map((id) => noteRef(id)),
+    orderPosition: dbModel.orderPosition,
   };
 };
 

@@ -35,8 +35,8 @@ export class NoteBlockRow extends Model {
   @field('note_id') noteId!: string;
   @field('parent_block_id') parentBlockId!: string | undefined;
   @field('content') content!: string;
-  @field('order') order!: number;
-  @json('child_block_ids', (data) => data) childBlockIds!: string[];
+  // TODO: rename to orderPosition
+  @field('orderPosition') orderPosition!: number;
   @json('linked_note_ids', (data) => data) linkedNoteIds!: string[];
   @date('created_at') createdAt!: Date;
   @readonly @date('updated_at') updatedAt!: Date;

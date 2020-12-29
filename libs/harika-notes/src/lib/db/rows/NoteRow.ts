@@ -26,7 +26,6 @@ export class NoteRow extends Model {
   };
 
   @field('title') title!: string;
-  @json('child_block_ids', (data) => data) childBlockIds!: string[];
   @json('linked_note_block_ids', (data) => data) linkedNoteBlockIds!: string[];
   @date('daily_note_date') dailyNoteDate!: Date | undefined;
   @date('created_at') createdAt!: Date;

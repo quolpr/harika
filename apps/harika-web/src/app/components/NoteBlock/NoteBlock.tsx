@@ -152,10 +152,10 @@ type Tokenizer = {
 };
 
 const NoteBlockChildren = observer(
-  ({ childBlockRefs }: { childBlockRefs: Ref<NoteBlockModel>[] }) => {
-    return childBlockRefs.length !== 0 ? (
+  ({ childBlocks }: { childBlocks: NoteBlockModel[] }) => {
+    return childBlocks.length !== 0 ? (
       <div className="note-block__child-blocks">
-        {childBlockRefs.map(({ current: childNoteBlock }) => (
+        {childBlocks.map((childNoteBlock) => (
           <NoteBlock key={childNoteBlock.$modelId} noteBlock={childNoteBlock} />
         ))}
       </div>
@@ -362,7 +362,7 @@ export const NoteBlock = observer(
     return (
       <div className="note-block">
         <div className="note-block__body">
-          <div className="note-block__dot" />
+          <div className="note-block__dot" />({noteBlock.orderPosition})
           <TextareaAutosize
             ref={inputRef}
             autoFocus
@@ -381,7 +381,7 @@ export const NoteBlock = observer(
             </div>
           )}
         </div>
-        <NoteBlockChildren childBlockRefs={noteBlock.childBlockRefs} />
+        <NoteBlockChildren childBlocks={noteBlock.children} />
       </div>
     );
   }

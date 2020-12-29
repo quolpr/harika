@@ -8,7 +8,7 @@ import { HarikaNotesTableName } from './db/schema';
 import { NoteModel } from './models/NoteModel';
 import { Store } from './Store';
 import { Subject } from 'rxjs';
-import { concatMap } from 'rxjs/operators';
+import { buffer, concatMap, debounceTime, throttleTime } from 'rxjs/operators';
 import { Syncher } from './sync';
 import isEqual from 'lodash.isequal';
 
@@ -34,7 +34,10 @@ export class ChangesHandler {
     this.patchesSubject = new Subject<Patch>();
 
     this.patchesSubject
-      .pipe(concatMap((patch) => this.applyPatch(patch)))
+      .pipe(
+        buffer(this.patchesSubject.pipe(debounceTime(1000))),
+        concatMap((patches) => this.applyPatches(patches))
+      )
       .subscribe();
   }
 
@@ -44,186 +47,153 @@ export class ChangesHandler {
     });
   };
 
-  private applyPatch = async (patch: Patch) => {
-    const path = patch.path;
+  private applyPatches = async (patches: Patch[]) => {
+    await this.database.action(async () => {
+      for (let i = 0; i < patches.length; i++) {
+        const patch = patches[i];
 
-    if (
-      path.length === 4 &&
-      path[0] === 'notesMap' &&
-      path[2] === 'childBlockRefs'
-    ) {
-      const note = await this.queries.notesCollection.find(
-        patch.path[1] as string
-      );
+        if (patch.op === 'add') {
+          if (patch.path.length === 2 && patch.path[0] === 'blocksMap') {
+            const value: ModelPropsData<NoteBlockModel> & {
+              $modelId: string;
+            } = patch.value;
 
-      const ids = this.store.notesMap[path[1]].childBlockRefs.map(
-        ({ current }) => current.$modelId
-      );
-      if (!isEqual(ids, note.childBlockIds)) {
-        await this.database.action(() => {
-          return note.update((toUpdate) => {
-            toUpdate.childBlockIds = ids;
-          });
-        });
-      }
-    }
+            if (!value.isPersisted) {
+              await this.queries.noteBlocksCollection.create((creator) => {
+                creator._raw.id = value.$modelId;
+                creator.noteId = value.noteRef.id;
+                creator.parentBlockId = value.parentBlockRef?.id;
+                creator.content = value.content;
+                creator.createdAt = new Date(value.createdAt);
+                creator.orderPosition = value.orderPosition;
+              });
+            }
+          }
 
-    if (
-      path.length === 4 &&
-      path[0] === 'blocksMap' &&
-      path[2] === 'childBlockRefs'
-    ) {
-      const noteBlock = await this.queries.noteBlocksCollection.find(
-        patch.path[1] as string
-      );
+          if (patch.path.length === 2 && patch.path[0] === 'notesMap') {
+            const value: ModelPropsData<NoteModel> & {
+              $modelId: string;
+            } = patch.value;
 
-      const ids = this.store.blocksMap[path[1]].childBlockRefs.map(
-        ({ current }) => current.$modelId
-      );
+            if (!value.isPersisted) {
+              await this.queries.notesCollection.create((creator) => {
+                creator._raw.id = value.$modelId;
+                creator.dailyNoteDate = new Date(value.dailyNoteDate);
+                creator.title = value.title;
+                creator.createdAt = new Date(value.createdAt);
+              });
+            }
+          }
+        }
 
-      if (!isEqual(ids, noteBlock.childBlockIds)) {
-        await this.database.action(() => {
-          return noteBlock.update((toUpdate) => {
-            console.log('update block ');
-            toUpdate.childBlockIds = ids;
-          });
-        });
-      }
-    }
+        if (patch.op === 'replace') {
+          if (patch.path.length === 3 && patch.path[0] === 'blocksMap') {
+            const noteBlock = await this.queries.noteBlocksCollection.find(
+              patch.path[1] as string
+            );
 
-    if (patch.op === 'add') {
-      if (patch.path.length === 2 && patch.path[0] === 'blocksMap') {
-        const value: ModelPropsData<NoteBlockModel> & {
-          $modelId: string;
-        } = patch.value;
+            if (
+              patch.path[2] === 'parentBlockRef' &&
+              noteBlock.parentBlockId !== patch.value?.id
+            ) {
+              await noteBlock.update((toUpdate) => {
+                toUpdate.parentBlockId = patch.value?.id;
+              });
+            }
 
-        if (value.isPersisted) return;
+            if (
+              patch.path[2] === 'content' &&
+              noteBlock.content !== patch.value
+            ) {
+              await noteBlock.update((toUpdate) => {
+                toUpdate.content = patch.value;
+              });
+            }
 
-        await this.database.action(() => {
-          return this.queries.noteBlocksCollection.create((creator) => {
-            console.log('create block ');
-            creator._raw.id = value.$modelId;
-            creator.noteId = value.noteRef.id;
-            creator.parentBlockId = value.parentBlockRef?.id;
-            creator.content = value.content;
-            creator.createdAt = new Date(value.createdAt);
-          });
-        });
-      }
-
-      if (patch.path.length === 2 && patch.path[0] === 'notesMap') {
-        const value: ModelPropsData<NoteModel> & {
-          $modelId: string;
-        } = patch.value;
-
-        if (value.isPersisted) return;
-
-        await this.database.action(() => {
-          return this.queries.notesCollection.create((creator) => {
-            creator._raw.id = value.$modelId;
-            creator.dailyNoteDate = new Date(value.dailyNoteDate);
-            creator.title = value.title;
-            creator.createdAt = new Date(value.createdAt);
-          });
-        });
-      }
-    }
-
-    if (patch.op === 'replace') {
-      if (patch.path.length === 3 && patch.path[0] === 'blocksMap') {
-        const noteBlock = await this.queries.noteBlocksCollection.find(
-          patch.path[1] as string
-        );
-
-        await this.database.action(async () => {
-          if (
-            patch.path[2] === 'parentBlockRef' &&
-            noteBlock.parentBlockId !== patch.value?.id
-          ) {
-            await noteBlock.update((toUpdate) => {
-              toUpdate.parentBlockId = patch.value?.id;
-            });
+            if (
+              patch.path[2] === 'orderPosition' &&
+              noteBlock.orderPosition !== patch.value
+            ) {
+              await noteBlock.update((toUpdate) => {
+                toUpdate.orderPosition = patch.value;
+              });
+            }
           }
 
           if (
-            patch.path[2] === 'content' &&
-            noteBlock.content !== patch.value
+            patch.path.length === 3 &&
+            patch.path[0] === 'notesMap' &&
+            patch.path[2] === 'title'
           ) {
-            await noteBlock.update((toUpdate) => {
-              toUpdate.content = patch.value;
+            const note = await this.queries.notesCollection.find(
+              patch.path[1] as string
+            );
+
+            if (patch.value !== note.title) {
+              console.log('updating note!');
+              await note.update((toUpdate) => {
+                toUpdate.title = patch.value;
+              });
+            }
+          }
+
+          if (
+            patch.path.length === 3 &&
+            patch.path[0] === 'notesMap' &&
+            patch.path[2] === 'isDeleted' &&
+            patch.value === true
+          ) {
+            const note = await this.queries.notesCollection.find(
+              patch.path[1] as string
+            );
+
+            await note.destroyPermanently();
+          }
+        }
+
+        if (
+          patch.path.length >= 3 &&
+          patch.path[0] === 'blocksMap' &&
+          patch.path[2] === 'linkedNoteRefs'
+        ) {
+          const noteBlock = await this.queries.noteBlocksCollection.find(
+            patch.path[1] as string
+          );
+
+          const ids = this.store.blocksMap[patch.path[1]].linkedNoteRefs.map(
+            (ref) => ref.current.$modelId
+          );
+
+          if (!isEqual(ids, noteBlock.linkedNoteIds)) {
+            noteBlock.update((toUpdate) => {
+              toUpdate.linkedNoteIds = ids;
             });
           }
-        });
-      }
+        }
 
-      if (
-        patch.path.length === 3 &&
-        patch.path[0] === 'notesMap' &&
-        patch.path[2] === 'title'
-      ) {
-        const note = await this.queries.notesCollection.find(
-          patch.path[1] as string
-        );
+        if (
+          patch.path.length >= 3 &&
+          patch.path[0] === 'notesMap' &&
+          patch.path[2] === 'linkedNoteBlockRefs'
+        ) {
+          const note = await this.queries.notesCollection.find(
+            patch.path[1] as string
+          );
 
-        await this.database.action(async () => {
-          return note.update((toUpdate) => {
-            toUpdate.title = patch.value;
-          });
-        });
-      }
-
-      if (
-        patch.path.length === 3 &&
-        patch.path[0] === 'notesMap' &&
-        patch.path[2] === 'isDeleted' &&
-        patch.value === true
-      ) {
-        const note = await this.queries.notesCollection.find(
-          patch.path[1] as string
-        );
-
-        await this.database.action(async () => {
-          return note.destroyPermanently();
-        });
-      }
-    }
-
-    if (
-      patch.path.length >= 3 &&
-      patch.path[0] === 'blocksMap' &&
-      patch.path[2] === 'linkedNoteRefs'
-    ) {
-      const noteBlock = await this.queries.noteBlocksCollection.find(
-        patch.path[1] as string
-      );
-
-      await this.database.action(() =>
-        noteBlock.update((toUpdate) => {
-          toUpdate.linkedNoteIds = this.store.blocksMap[
-            patch.path[1]
-          ].linkedNoteRefs.map((ref) => ref.current.$modelId);
-        })
-      );
-    }
-
-    if (
-      patch.path.length >= 3 &&
-      patch.path[0] === 'notesMap' &&
-      patch.path[2] === 'linkedNoteBlockRefs'
-    ) {
-      const note = await this.queries.notesCollection.find(
-        patch.path[1] as string
-      );
-
-      await this.database.action(() =>
-        note.update((toUpdate) => {
-          toUpdate.linkedNoteBlockIds = this.store.notesMap[
+          const ids = this.store.notesMap[
             patch.path[1]
           ].linkedNoteBlockRefs.map((ref) => ref.current.$modelId);
-        })
-      );
-    }
 
+          if (!isEqual(ids, note.linkedNoteBlockIds)) {
+            note.update((toUpdate) => {
+              toUpdate.linkedNoteBlockIds = ids;
+            });
+          }
+        }
+      }
+    });
+
+    // this.syncher.sync();
     // Don't need to await
   };
 }

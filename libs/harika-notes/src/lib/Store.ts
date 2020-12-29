@@ -9,7 +9,7 @@ import {
 } from 'mobx-keystone';
 import { Optional } from 'utility-types';
 import { v4 as uuidv4 } from 'uuid';
-import { NoteBlockModel, noteBlockRef } from './models/NoteBlockModel';
+import { NoteBlockModel } from './models/NoteBlockModel';
 import { NoteModel } from './models/NoteModel';
 
 @model('harika/HarikaStore')
@@ -38,9 +38,7 @@ export class Store extends Model({
 
     this.notesMap[note.$modelId] = note;
 
-    const block = note.createBlock({ content: '' });
-
-    note.childBlockRefs.push(noteBlockRef(block));
+    note.createBlock({ content: '', orderPosition: 0 });
 
     return note;
   }

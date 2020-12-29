@@ -47,7 +47,6 @@ export class NoteModel extends Model({
   title: prop<string>(''),
   dailyNoteDate: tProp_dateTimestamp(types.dateTimestamp),
   createdAt: tProp_dateTimestamp(types.dateTimestamp),
-  childBlockRefs: prop<Ref<NoteBlockModel>[]>(() => []),
   areChildrenLoaded: prop<boolean>(false),
   isPersisted: prop<boolean>(false),
   linkedNoteBlockRefs: prop<Ref<NoteBlockModel>[]>(() => []),
@@ -57,6 +56,24 @@ export class NoteModel extends Model({
   @computed
   get store() {
     return findParent<Store>(this, (n) => n instanceof Store) as Store;
+  }
+
+  @computed
+  get children() {
+    return Object.values(this.store.blocksMap)
+      .filter(
+        (block) =>
+          block.noteRef.id === this.$modelId &&
+          block.parentBlockRef === undefined
+      )
+      .sort((a, b) => a.orderPosition - b.orderPosition);
+  }
+
+  @computed
+  get allChildren() {
+    return Object.values(this.store.blocksMap).filter(
+      (block) => block.noteRef.id === this.$modelId
+    );
   }
 
   @modelAction
@@ -90,20 +107,6 @@ export class NoteModel extends Model({
   }
 
   @modelAction
-  setLoadedLinkedBlockIds(ids: string[]) {
-    this.linkedNoteBlockRefs = ids.map((id) => noteBlockRef(id));
-
-    this.areLinksLoaded = true;
-  }
-
-  @modelAction
-  setLoadedChildrenNoteIds(ids: string[]) {
-    this.childBlockRefs = ids.map((id) => noteBlockRef(id));
-
-    this.areChildrenLoaded = true;
-  }
-
-  @modelAction
   destroy() {
     this.isDeleted = true;
   }
@@ -127,17 +130,6 @@ export class NoteModel extends Model({
 
     if (!this.areChildrenLoaded && attrs.areChildrenLoaded) {
       this.areChildrenLoaded = true;
-    }
-
-    if (
-      attrs.areChildrenLoaded &&
-      attrs.childBlockRefs &&
-      !isEqual(
-        attrs.childBlockRefs?.map((ref) => ref.id).sort(),
-        this.childBlockRefs.map(({ id }) => id).sort()
-      )
-    ) {
-      this.childBlockRefs = attrs.childBlockRefs;
     }
 
     if (attrs.title && attrs.title !== this.title) {

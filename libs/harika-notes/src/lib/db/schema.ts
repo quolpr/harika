@@ -7,13 +7,12 @@ export enum HarikaNotesTableName {
 }
 
 export default appSchema({
-  version: 27,
+  version: 32,
   tables: [
     tableSchema({
       name: HarikaNotesTableName.NOTES,
       columns: [
         { name: 'title', type: 'string', isIndexed: true },
-        { name: 'child_block_ids', type: 'string' },
         { name: 'linked_note_block_ids', type: 'string' },
         {
           name: 'daily_note_date',
@@ -43,11 +42,10 @@ export default appSchema({
           isOptional: true,
           isIndexed: true,
         },
-        { name: 'child_block_ids', type: 'string' },
         { name: 'linked_note_ids', type: 'string' },
         { name: 'note_id', type: 'string', isIndexed: true },
         { name: 'content', type: 'string' },
-        { name: 'order', type: 'number' },
+        { name: 'orderPosition', type: 'number' },
         { name: 'created_at', type: 'number' },
         { name: 'updated_at', type: 'number' },
       ],
