@@ -1,4 +1,4 @@
-import { NoteModel } from '@harika/harika-notes';
+import { NoteModel } from '@harika/harika-core';
 import { createContext } from 'react';
 
 export type ICurrentNoteState = undefined | NoteModel;

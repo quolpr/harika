@@ -1,4 +1,4 @@
-import { NoteBlockModel } from '@harika/harika-notes';
+import { NoteBlockModel } from '@harika/harika-core';
 import { createContext } from 'use-context-selector';
 
 export type ICurrentFocusedBlockState =

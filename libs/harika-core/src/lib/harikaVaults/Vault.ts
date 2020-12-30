@@ -1,5 +1,6 @@
 import {
   connectReduxDevTools,
+  model,
   Model,
   modelAction,
   ModelInstanceCreationData,
@@ -38,6 +39,7 @@ export function createVault(id: string, buildAdapter: IAdapterBuilder) {
     actionsEnabled: true,
   });
 
+  @model('harika/Vault')
   class Vault extends Model({
     notesMap: prop<Record<string, NoteModel>>(() => ({})),
     blocksMap: prop<Record<string, NoteBlockModel>>(() => ({})),

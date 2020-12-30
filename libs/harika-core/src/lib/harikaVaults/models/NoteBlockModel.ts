@@ -14,7 +14,7 @@ import {
 import { computed } from 'mobx';
 import { NoteModel, noteRef } from './NoteModel';
 import isEqual from 'lodash.isequal';
-import { Vault } from '../HarikaVault';
+import { Vault } from '../Vault';
 
 // TODO maybe root ref? What is the best way to manage??
 export const noteBlockRef = customRef<NoteBlockModel>('harika/NoteBlockRef', {

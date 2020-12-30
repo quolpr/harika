@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { CurrentFocusedBlockContext } from '../contexts/CurrentEditContent';
+import { CurrentFocusedBlockContext } from '../contexts/CurrentFocusedBlockContext';
 import { usePrevious } from 'react-use';
 import { useContext } from 'use-context-selector';
 
@@ -13,7 +13,7 @@ export const HandleNoteBlockBlur: React.FC = () => {
       if (!prevNoteBlock) return;
 
       if (editState?.noteBlock !== prevNoteBlock) {
-        prevNoteBlock.createNotesAndRefsIfNeeded();
+        // prevNoteBlock.createNotesAndRefsIfNeeded();
 
         console.log('notes and refs are created!');
       }

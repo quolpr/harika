@@ -16,7 +16,7 @@ import { Optional } from 'utility-types';
 import { v4 as uuidv4 } from 'uuid';
 import { NoteBlockModel } from './NoteBlockModel';
 import isEqual from 'lodash.isequal';
-import { Vault } from '../HarikaVault';
+import { Vault } from '../Vault';
 
 export const noteRef = customRef<NoteModel>('harika/NoteRef', {
   // this works, but we will use getRefId() from the Todo class instead
