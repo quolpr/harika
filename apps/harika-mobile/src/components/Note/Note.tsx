@@ -3,20 +3,19 @@ import { View } from 'react-native';
 import { t } from 'react-native-tailwindcss';
 import { TextInput } from 'react-native';
 import { NoteBlock } from '../NoteBlock';
-import { NoteBlockModel, NoteModel } from '@harika/harika-notes';
+import { NoteBlockModel, NoteModel } from '@harika/harika-core';
 import { observer } from 'mobx-react-lite';
-import { Ref } from 'mobx-keystone';
 
 const NoteChildren = observer(
-  ({ childBlockRefs }: { childBlockRefs: Ref<NoteBlockModel>[] }) => {
+  ({ childBlocks }: { childBlocks: NoteBlockModel[] }) => {
     return (
       <>
-        {childBlockRefs.map(({ current: noteBlock }, i) => (
+        {childBlocks.map((noteBlock, i) => (
           <NoteBlock
             key={noteBlock.$modelId}
             noteBlock={noteBlock}
-            isLast={childBlockRefs.length - 1 === i}
-            isFirst={childBlockRefs.length === 0}
+            isLast={childBlocks.length - 1 === i}
+            isFirst={i === 0}
           />
         ))}
       </>
@@ -64,7 +63,7 @@ export const Note: React.FC<{ note: NoteModel }> = observer(({ note }) => {
         />
       </View>
       <View style={t.mT5}>
-        <NoteChildren childBlockRefs={note.childBlockRefs} />
+        <NoteChildren childBlocks={note.children} />
       </View>
     </View>
   );

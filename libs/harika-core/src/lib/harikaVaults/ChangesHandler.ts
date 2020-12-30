@@ -92,6 +92,8 @@ export class ChangesHandler {
               patch.path[1] as string
             );
 
+            const noteBlockModel = this.vault.blocksMap[patch.path[1]];
+
             if (
               patch.path[2] === 'parentBlockRef' &&
               noteBlock.parentBlockId !== patch.value?.id

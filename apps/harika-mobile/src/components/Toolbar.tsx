@@ -1,7 +1,7 @@
 import {
   CurrentFocusedBlockContext,
   useFocusedBlock,
-} from '@harika/harika-core';
+} from '@harika/harika-utils';
 import React, { useCallback } from 'react';
 import { StyleSheet, Keyboard, Animated } from 'react-native';
 import { t } from 'react-native-tailwindcss';

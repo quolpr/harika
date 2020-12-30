@@ -1,5 +1,5 @@
-import { CurrentFocusedBlockContext } from '@harika/harika-core';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { CurrentFocusedBlockContext } from '@harika/harika-utils';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useContextSelector } from 'use-context-selector';
 import { t } from 'react-native-tailwindcss';
 import {
@@ -11,9 +11,8 @@ import {
   Dimensions,
   LayoutChangeEvent,
 } from 'react-native';
-import { NoteBlockModel } from '@harika/harika-notes';
+import { NoteBlockModel } from '@harika/harika-core';
 import { observer } from 'mobx-react-lite';
-import { Ref } from 'mobx-keystone';
 
 const styles = StyleSheet.create({
   main: { ...t.flex, ...t.pT3, ...t.pL2 },
@@ -55,14 +54,14 @@ const styles = StyleSheet.create({
 });
 
 const NoteBlockChildren = observer(
-  ({ childBlockRefs }: { childBlockRefs: Ref<NoteBlockModel>[] }) => {
-    return childBlockRefs.length !== 0 ? (
+  ({ childBlocks }: { childBlocks: NoteBlockModel[] }) => {
+    return childBlocks.length !== 0 ? (
       <View style={styles.childBlocks}>
-        {childBlockRefs.map(({ current: childNoteBlock }, i) => (
+        {childBlocks.map((childBlock, i) => (
           <NoteBlock
-            key={childNoteBlock.$modelId}
-            noteBlock={childNoteBlock}
-            isLast={childBlockRefs.length - 1 === i}
+            key={childBlock.$modelId}
+            noteBlock={childBlock}
+            isLast={childBlocks.length - 1 === i}
             isFirst={i === 0}
           />
         ))}
@@ -180,7 +179,7 @@ export const NoteBlock = observer(
             </View>
           </View>
         </TouchableWithoutFeedback>
-        <NoteBlockChildren childBlockRefs={noteBlock.childBlockRefs} />
+        <NoteBlockChildren childBlocks={noteBlock.children} />
       </View>
     );
   }

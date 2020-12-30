@@ -2,18 +2,12 @@ import React, { useEffect, useRef, useState } from 'react';
 import dayjs from 'dayjs';
 import { Note } from '../components/Note/Note';
 import { Toolbar } from '../components/Toolbar';
-import {
-  Animated,
-  SafeAreaView,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-  View,
-} from 'react-native';
+import { Animated, SafeAreaView, TouchableOpacity } from 'react-native';
 import { useKeyboardHeight } from '../hooks/useKeyboardHeight';
-import { useHarikaStore } from '@harika/harika-core';
-import { NoteModel } from '@harika/harika-notes';
+import { NoteModel } from '@harika/harika-core';
 import { t } from 'react-native-tailwindcss';
 import { CalendarList } from 'react-native-calendars';
+import { useCurrentVault } from '@harika/harika-utils';
 
 export const HomeScreen = React.memo(
   ({
@@ -24,20 +18,20 @@ export const HomeScreen = React.memo(
     setIsCalendarOpened: (flag: boolean) => void;
   }) => {
     const animatedHeight = useRef(new Animated.Value(-330)).current;
-    const store = useHarikaStore();
+    const vault = useCurrentVault();
     const [note, setNote] = useState<NoteModel | null>(null);
 
     const paddingBottom = useKeyboardHeight(0, 120);
 
     useEffect(() => {
       const toExecute = async () => {
-        const note = await store.getOrCreateDailyNote(dayjs());
+        const note = await vault.getOrCreateDailyNote(dayjs());
 
         setNote(note);
       };
 
       toExecute();
-    }, [store]);
+    }, [vault]);
 
     if (note) {
       console.log(dayjs(note.dailyNoteDate).format('YYYY-MM-DD'));
@@ -102,7 +96,7 @@ export const HomeScreen = React.memo(
                 },
               }}
               onDayPress={async (date) => {
-                const note = await store.getOrCreateDailyNote(
+                const note = await vault.getOrCreateDailyNote(
                   dayjs.unix(date.timestamp / 1000)
                 );
 

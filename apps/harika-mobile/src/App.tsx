@@ -2,7 +2,6 @@ import 'react-native-get-random-values';
 import React, { useCallback, useState } from 'react';
 // @ts-ignore
 import SQLiteAdapter from '@nozbe/watermelondb/adapters/sqlite';
-import { HarikaNotes, schema } from '@harika/harika-notes';
 import 'react-native-gesture-handler';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
@@ -10,25 +9,31 @@ import { HomeScreen } from './screens/HomeScreen';
 import {
   CurrentFocusedBlockContext,
   CurrentNoteContext,
-  HarikaStoreContext,
+  CurrentVaultContext,
   ICurrentFocusedBlockState,
   ICurrentNoteState,
-  useHarikaStore,
-} from '@harika/harika-core';
+  useCurrentVault,
+} from '@harika/harika-utils';
 import 'react-native-console-time-polyfill';
 import { Text, View } from 'react-native';
 import { t } from 'react-native-tailwindcss';
-import { Calendar, CalendarList, Agenda } from 'react-native-calendars';
 import { useEffect } from 'react';
+import { HarikaVaults } from '@harika/harika-core';
 
 // First, create the adapter to the underlying database:
-const adapter = new SQLiteAdapter({
-  schema: schema,
-  // dbName: 'myapp', // optional database name or file system path
-  // migrations, // optional migrations
-  synchronous: true, // synchronous mode only works on iOS. improves performance and reduces glitches in most cases, but also has some downsides - test with and without it
-  // experimentalUseJSI: true, // experimental JSI mode, use only if you're brave
-} as any);
+
+const vaults = new HarikaVaults(
+  ({ schema, dbName }) =>
+    new SQLiteAdapter({
+      schema,
+      dbName, // optional database name or file system path
+      // migrations, // optional migrations
+      synchronous: true, // synchronous mode only works on iOS. improves performance and reduces glitches in most cases, but also has some downsides - test with and without it
+      // experimentalUseJSI: true, // experimental JSI mode, use only if you're brave
+    } as any)
+);
+
+const vault = vaults.getVault('123');
 
 // <StatusBar barStyle="dark-content" />
 // <SafeAreaView>
@@ -83,23 +88,21 @@ const adapter = new SQLiteAdapter({
 //   </ScrollView>
 // </SafeAreaView>
 
-const harikaNotes = new HarikaNotes(adapter);
-
 const Stack = createStackNavigator();
 
 const Syncher: React.FC = ({ children }) => {
-  const store = useHarikaStore();
+  const vault = useCurrentVault();
   const [wasSynched, setWasSynched] = useState(false);
 
   useEffect(() => {
     const callback = async () => {
-      await store.sync();
+      await vault.sync();
 
       setWasSynched(true);
     };
 
     callback();
-  }, [store]);
+  }, [vault]);
 
   return <>{wasSynched && children}</>;
 };
@@ -126,7 +129,7 @@ const App: React.FC = () => {
   }, [isCalendarOpened]);
 
   return (
-    <HarikaStoreContext.Provider value={harikaNotes}>
+    <CurrentVaultContext.Provider value={vault}>
       <CurrentNoteContext.Provider value={currentNoteActions}>
         <CurrentFocusedBlockContext.Provider value={stateActions}>
           <Syncher>
@@ -152,7 +155,7 @@ const App: React.FC = () => {
           </Syncher>
         </CurrentFocusedBlockContext.Provider>
       </CurrentNoteContext.Provider>
-    </HarikaStoreContext.Provider>
+    </CurrentVaultContext.Provider>
   );
 };
 
