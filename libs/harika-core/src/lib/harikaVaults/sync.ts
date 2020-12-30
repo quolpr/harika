@@ -1,24 +1,39 @@
 import { Database } from '@nozbe/watermelondb';
 import { synchronize } from '@nozbe/watermelondb/sync';
-import { Subject, Observable, merge, interval } from 'rxjs';
+import { Subject, Observable, merge } from 'rxjs';
 import { auditTime, concatMap, find, share } from 'rxjs/operators';
 import { Queries } from './db/Queries';
 import { Vault } from './Vault';
 import { v4 as uuidv4 } from 'uuid';
+import { Channel, Socket } from 'phoenix';
+
+const socket = new Socket('ws://192.168.1.127:5000/socket');
 
 export class Syncher {
   private syncSubject: Subject<void | { id: string }>;
   private syncPipe: Observable<void | number | { id: string }>;
+  private channel: Channel;
 
   constructor(
     private database: Database,
     private vault: Vault,
     private queries: Queries
   ) {
-    this.syncSubject = new Subject();
+    socket.connect();
+    this.channel = socket.channel(`vault:${vault.$modelId}`);
+    this.channel.join();
 
-    this.syncPipe = merge(this.syncSubject, interval(5000))
-      .pipe(auditTime(1000))
+    const vaultUpdated = new Observable<void>((observer) => {
+      const ref = this.channel.on('vault_updated', () => {
+        observer.next();
+      });
+
+      return () => this.channel.off('vault_updated', ref);
+    });
+
+    this.syncSubject = new Subject();
+    this.syncPipe = merge(this.syncSubject, vaultUpdated)
+      .pipe(auditTime(200))
       .pipe(
         concatMap(async (data) => {
           await this.performSync();
@@ -29,6 +44,16 @@ export class Syncher {
 
     this.syncPipe.subscribe();
   }
+
+  // private pushMessage = (event: string, payload: object) => {
+  //   return new Observable((observer) => {
+  //     this.channel
+  //       .push(event, payload)
+  //       .receive('ok', (msg) => observer.next(msg))
+  //       .receive('error', (reasons) => observer.error(reasons))
+  //       .receive('timeout', () => observer.error('timeout'));
+  //   });
+  // };
 
   async sync() {
     const id = uuidv4();
@@ -41,6 +66,16 @@ export class Syncher {
     await promise;
   }
 
+  private pushMessage = (event: string, payload: object) => {
+    return new Promise<any>((resolve, reject) => {
+      this.channel
+        .push(event, payload)
+        .receive('ok', (msg) => resolve(msg))
+        .receive('error', (reasons) => reject(reasons))
+        .receive('timeout', () => reject('timeout'));
+    });
+  };
+
   private async performSync() {
     let latestVersionOfSession = 0;
     let changesOfSession: any = {};
@@ -51,16 +86,9 @@ export class Syncher {
     await synchronize({
       database: this.database,
       pullChanges: async ({ lastPulledAt }) => {
-        const response = await fetch(
-          `http://192.168.1.127:5000/api/sync/pull?lastPulledVersion=${
-            lastPulledAt || 0
-          }`
-        );
-        if (!response.ok) {
-          throw new Error(await response.text());
-        }
-
-        const { changes, latestVersion } = await response.json();
+        const { changes, latestVersion } = await this.pushMessage('pull', {
+          last_pulled_version: lastPulledAt || 0,
+        });
 
         console.log({ pull: changes });
 
@@ -72,28 +100,14 @@ export class Syncher {
       pushChanges: async ({ changes, lastPulledAt }) => {
         wasPushPresent = true;
 
-        const response = await fetch(
-          `http://192.168.1.127:5000/api/sync/push?lastPulledVersion=${
-            lastPulledAt || 0
-          }`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(changes),
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(await response.text());
-        }
-
+        console.log({ push: changes });
         const {
           changes: changesFromPush,
           latestVersion,
-        } = await response.json();
-        console.log({ push: changes });
+        } = await this.pushMessage('push', {
+          last_pulled_version: lastPulledAt || 0,
+          changes,
+        });
 
         latestVersionOfSession = latestVersion;
         changesOfSession = changesFromPush;
@@ -136,8 +150,6 @@ export class Syncher {
       ...notesChanges.created.map(({ id }) => id),
       ...notesChanges.updated.map(({ id }) => id),
     ];
-
-    console.log({ noteBlockIdsToSelect, noteIdsToSelect });
 
     await Promise.all(
       noteBlockIdsToSelect.map(async (noteBlockId) => {

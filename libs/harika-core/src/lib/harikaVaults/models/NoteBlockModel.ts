@@ -323,6 +323,14 @@ export class NoteBlockModel extends Model({
       this.createdAt = data.createdAt;
     }
 
+    if (data.orderPosition !== this.orderPosition) {
+      this.orderPosition = data.orderPosition;
+    }
+
+    if (data.parentBlockRef?.id !== this.parentBlockRef?.id) {
+      this.parentBlockRef = data.parentBlockRef;
+    }
+
     if (
       data.linkedNoteRefs &&
       !isEqual(

@@ -8,7 +8,7 @@ export enum HarikaNotesTableName {
 }
 
 export const schema = appSchema({
-  version: 32,
+  version: 34,
   tables: [
     tableSchema({
       name: HarikaNotesTableName.NOTES,
@@ -46,7 +46,7 @@ export const schema = appSchema({
         { name: 'linked_note_ids', type: 'string' },
         { name: 'note_id', type: 'string', isIndexed: true },
         { name: 'content', type: 'string' },
-        { name: 'orderPosition', type: 'number' },
+        { name: 'order_position', type: 'number' },
         { name: 'created_at', type: 'number' },
         { name: 'updated_at', type: 'number' },
       ],

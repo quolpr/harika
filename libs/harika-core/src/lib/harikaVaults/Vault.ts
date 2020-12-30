@@ -1,4 +1,5 @@
 import {
+  actionTrackingMiddleware,
   connectReduxDevTools,
   model,
   Model,
@@ -105,8 +106,7 @@ export function createVault(id: string, buildAdapter: IAdapterBuilder) {
     }
 
     async sync() {
-      // return this.syncer.sync();
-      return true;
+      return this.syncer.sync();
     }
 
     async preloadAllNotes() {

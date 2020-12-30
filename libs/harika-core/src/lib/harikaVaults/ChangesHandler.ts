@@ -35,7 +35,7 @@ export class ChangesHandler {
 
     this.patchesSubject
       .pipe(
-        buffer(this.patchesSubject.pipe(debounceTime(1000))),
+        buffer(this.patchesSubject.pipe(debounceTime(200))),
         concatMap((patches) => this.applyPatches(patches))
       )
       .subscribe();
@@ -193,7 +193,7 @@ export class ChangesHandler {
       }
     });
 
-    // this.syncher.sync();
+    this.syncher.sync();
     // Don't need to await
   };
 }
