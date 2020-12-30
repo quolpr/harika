@@ -17,7 +17,6 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@harika/harika-notes": ["libs/harika-notes/src/index.ts"],
       "@harika/harika-core": ["libs/harika-core/src/index.ts"]
     }
   },

@@ -13,8 +13,8 @@ import {
 } from 'mobx-keystone';
 import { computed } from 'mobx';
 import { NoteModel, noteRef } from './NoteModel';
-import { Store } from '../Store';
 import isEqual from 'lodash.isequal';
+import { Vault } from '../HarikaVault';
 
 // TODO maybe root ref? What is the best way to manage??
 export const noteBlockRef = customRef<NoteBlockModel>('harika/NoteBlockRef', {
@@ -24,8 +24,8 @@ export const noteBlockRef = customRef<NoteBlockModel>('harika/NoteBlockRef', {
   // },
 
   resolve(ref) {
-    const parent = findParent<Store>(ref, (n) => {
-      return n instanceof Store;
+    const parent = findParent<Vault>(ref, (n) => {
+      return n instanceof Object;
     });
 
     if (!parent) return undefined;
@@ -292,6 +292,19 @@ export class NoteBlockModel extends Model({
   createLink(note: NoteModel) {
     note.linkedNoteBlockRefs.push(noteBlockRef(this));
     this.linkedNoteRefs.push(noteRef(note));
+  }
+
+  @modelAction
+  unlink(note: NoteModel) {
+    const linkedNoteRef = this.linkedNoteRefs.find((m) => m.current === note)!;
+    const linkedNoteBlocksOfNote = linkedNoteRef.current.linkedNoteBlockRefs;
+
+    linkedNoteBlocksOfNote.splice(
+      linkedNoteBlocksOfNote.findIndex((ref) => ref.current === this),
+      1
+    );
+
+    this.linkedNoteRefs.splice(this.linkedNoteRefs.indexOf(linkedNoteRef), 1);
   }
 
   @modelAction

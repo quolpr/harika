@@ -6,11 +6,11 @@ import { NoteRow } from './db/rows/NoteRow';
 import { Queries } from './db/Queries';
 import { HarikaNotesTableName } from './db/schema';
 import { NoteModel } from './models/NoteModel';
-import { Store } from './Store';
 import { Subject } from 'rxjs';
 import { buffer, concatMap, debounceTime, throttleTime } from 'rxjs/operators';
 import { Syncher } from './sync';
 import isEqual from 'lodash.isequal';
+import { Vault } from './Vault';
 
 export class ChangesHandler {
   notesCollection: Collection<NoteRow>;
@@ -20,7 +20,7 @@ export class ChangesHandler {
   constructor(
     private database: Database,
     private queries: Queries,
-    private store: Store,
+    private vault: Vault,
     private syncher: Syncher
   ) {
     this.notesCollection = this.database.collections.get<NoteRow>(
@@ -160,7 +160,7 @@ export class ChangesHandler {
             patch.path[1] as string
           );
 
-          const ids = this.store.blocksMap[patch.path[1]].linkedNoteRefs.map(
+          const ids = this.vault.blocksMap[patch.path[1]].linkedNoteRefs.map(
             (ref) => ref.current.$modelId
           );
 
@@ -180,7 +180,7 @@ export class ChangesHandler {
             patch.path[1] as string
           );
 
-          const ids = this.store.notesMap[
+          const ids = this.vault.notesMap[
             patch.path[1]
           ].linkedNoteBlockRefs.map((ref) => ref.current.$modelId);
 

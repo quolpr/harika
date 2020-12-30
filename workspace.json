@@ -100,27 +100,6 @@
         }
       }
     },
-    "harika-notes": {
-      "root": "libs/harika-notes",
-      "sourceRoot": "libs/harika-notes/src",
-      "projectType": "library",
-      "schematics": {},
-      "architect": {
-        "lint": {
-          "builder": "@nrwl/linter:eslint",
-          "options": {
-            "lintFilePatterns": ["libs/harika-notes/**/*.ts"]
-          }
-        },
-        "test": {
-          "builder": "@nrwl/jest:jest",
-          "options": {
-            "jestConfig": "libs/harika-notes/jest.config.js",
-            "passWithNoTests": true
-          }
-        }
-      }
-    },
     "harika-mobile": {
       "root": "apps/harika-mobile",
       "sourceRoot": "apps/harika-mobile/src",

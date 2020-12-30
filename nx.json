@@ -30,9 +30,6 @@
       "tags": [],
       "implicitDependencies": ["harika-web"]
     },
-    "harika-notes": {
-      "tags": []
-    },
     "harika-mobile": {
       "tags": []
     },

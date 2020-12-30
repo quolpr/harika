@@ -3,10 +3,11 @@ import { appSchema, tableSchema } from '@nozbe/watermelondb';
 export enum HarikaNotesTableName {
   NOTES = 'notes',
   NOTE_BLOCKS = 'note_blocks',
+  VAULT = 'vaults',
   // NOTE_REFS = 'note_refs',
 }
 
-export default appSchema({
+export const schema = appSchema({
   version: 32,
   tables: [
     tableSchema({

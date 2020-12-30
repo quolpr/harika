@@ -3,8 +3,7 @@ import { synchronize } from '@nozbe/watermelondb/sync';
 import { Subject, Observable, merge, interval } from 'rxjs';
 import { auditTime, concatMap, find, share } from 'rxjs/operators';
 import { Queries } from './db/Queries';
-import { HarikaNotes } from './harika-notes';
-import { Store } from './Store';
+import { Vault } from './Vault';
 import { v4 as uuidv4 } from 'uuid';
 
 export class Syncher {
@@ -13,9 +12,8 @@ export class Syncher {
 
   constructor(
     private database: Database,
-    private store: Store,
-    private queries: Queries,
-    private harikaNotes: HarikaNotes
+    private vault: Vault,
+    private queries: Queries
   ) {
     this.syncSubject = new Subject();
 
@@ -145,7 +143,7 @@ export class Syncher {
       noteBlockIdsToSelect.map(async (noteBlockId) => {
         const noteBlock = await this.queries.getNoteBlockRowById(noteBlockId);
 
-        if (this.store.notesMap[noteBlock.noteId]) {
+        if (this.vault.notesMap[noteBlock.noteId]) {
           if (noteIdsToSelect.indexOf(noteBlock.id) !== -1) {
             noteIdsToSelect.splice(
               noteIdsToSelect.indexOf(noteBlock.noteId),
@@ -153,7 +151,7 @@ export class Syncher {
             );
           }
 
-          await this.harikaNotes.syncNoteAndReturn(noteBlock.noteId);
+          await this.vault.preloadNote(noteBlock.noteId);
         }
       })
     );
@@ -161,7 +159,7 @@ export class Syncher {
     await Promise.all(
       noteIdsToSelect.map(async (noteId) => {
         console.log('syncing', noteId);
-        await this.harikaNotes.syncNoteAndReturn(noteId, true, true);
+        await this.vault.preloadNote(noteId, true, true);
       })
     );
   }

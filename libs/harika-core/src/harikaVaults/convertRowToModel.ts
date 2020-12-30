@@ -17,7 +17,6 @@ export const convertNoteBlockRowToModelAttrs = async (
       ? noteBlockRef(dbModel.parentBlockId)
       : undefined,
     isPersisted: true,
-    childBlockRefs: (dbModel.childBlockIds || []).map((id) => noteBlockRef(id)),
     noteRef: noteRef(noteId),
     linkedNoteRefs: (dbModel.linkedNoteIds || []).map((id) => noteRef(id)),
     orderPosition: dbModel.orderPosition,
@@ -68,9 +67,6 @@ export const convertNoteRowToModelAttrs = async (
     dailyNoteDate: dbModel.dailyNoteDate || new Date(),
     createdAt: dbModel.createdAt,
     isPersisted: true,
-    childBlockRefs: preloadChildren
-      ? (dbModel.childBlockIds || []).map((id) => noteBlockRef(id))
-      : [],
     areChildrenLoaded: preloadChildren,
     linkedNoteBlockRefs: linkedNoteBlockRefs,
     areLinksLoaded: preloadLinks,

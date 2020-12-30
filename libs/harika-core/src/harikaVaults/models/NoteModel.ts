@@ -14,9 +14,9 @@ import {
 } from 'mobx-keystone';
 import { Optional } from 'utility-types';
 import { v4 as uuidv4 } from 'uuid';
-import { Store } from '../Store';
-import { NoteBlockModel, noteBlockRef } from './NoteBlockModel';
+import { NoteBlockModel } from './NoteBlockModel';
 import isEqual from 'lodash.isequal';
+import { Vault } from '../HarikaVault';
 
 export const noteRef = customRef<NoteModel>('harika/NoteRef', {
   // this works, but we will use getRefId() from the Todo class instead
@@ -25,8 +25,9 @@ export const noteRef = customRef<NoteModel>('harika/NoteRef', {
   // },
 
   resolve(ref) {
-    const parent = findParent<Store>(ref, (n) => {
-      return n instanceof Store;
+    const parent = findParent<Vault>(ref, (n) => {
+      console.log(n);
+      return n instanceof Object;
     });
 
     if (!parent) return undefined;
@@ -55,7 +56,7 @@ export class NoteModel extends Model({
 }) {
   @computed
   get store() {
-    return findParent<Store>(this, (n) => n instanceof Store) as Store;
+    return findParent<Vault>(this, (n) => n instanceof Object) as Vault;
   }
 
   @computed

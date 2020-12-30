@@ -1,6 +1,6 @@
 export { useCurrentNote } from './hooks/useCurrentNote';
 export { useFocusedBlock } from './hooks/useFocusedBlock';
-export { useHarikaStore } from './hooks/useHarikaStore';
+export { useHarikaCurrentVault as useHarikaStore } from './hooks/useHarikaStore';
 export {
   ICurrentFocusedBlockState,
   CurrentFocusedBlockContext,
@@ -10,3 +10,5 @@ export {
   ICurrentNoteState,
   CurrentNoteContext,
 } from './contexts/CurrentNoteIdContext';
+
+export * from './harika-vaults';
