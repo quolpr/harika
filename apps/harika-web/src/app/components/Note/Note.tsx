@@ -5,7 +5,7 @@ import './styles.css';
 import { useEffect } from 'react';
 import { useState } from 'react';
 import { observer } from 'mobx-react-lite';
-import { NoteBlockModel, NoteModel } from '@harika/harika-notes';
+import { NoteBlockModel, NoteModel } from '@harika/harika-core';
 import { Ref } from 'mobx-keystone';
 import { Link, useHistory } from 'react-router-dom';
 import { Trash as TrashIcon } from 'heroicons-react';

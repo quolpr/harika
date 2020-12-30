@@ -1,7 +1,7 @@
 import {
   customRef,
   detach,
-  findParent,
+  getRoot,
   model,
   Model,
   modelAction,
@@ -24,13 +24,11 @@ export const noteBlockRef = customRef<NoteBlockModel>('harika/NoteBlockRef', {
   // },
 
   resolve(ref) {
-    const parent = findParent<Vault>(ref, (n) => {
-      return n instanceof Object;
-    });
+    const vault = getRoot<Vault>(ref);
 
-    if (!parent) return undefined;
+    if (!vault || vault.$modelType !== 'harika/Vault') return undefined;
 
-    return parent.blocksMap[ref.id];
+    return vault.blocksMap[ref.id];
   },
   onResolvedValueChange(ref, newTodo, oldTodo) {
     if (oldTodo && !newTodo) {

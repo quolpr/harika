@@ -10,12 +10,10 @@ import { useClickAway } from 'react-use';
 import { useContextSelector } from 'use-context-selector';
 import clsx from 'clsx';
 import TextareaAutosize from 'react-textarea-autosize';
-import { CurrentFocusedBlockContext } from '@harika/harika-core';
+import { CurrentFocusedBlockContext } from '@harika/harika-utils';
 import { Observer, observer } from 'mobx-react-lite';
-import { NoteBlockModel } from '@harika/harika-notes';
-import { Ref } from 'mobx-keystone';
+import { NoteBlockModel } from '@harika/harika-core';
 import ReactMarkdown from 'react-markdown';
-import breaks from 'remark-breaks';
 import {
   Settings,
   Processor,

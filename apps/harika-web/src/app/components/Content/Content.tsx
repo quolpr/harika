@@ -1,9 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { HarikaNotesTableName, NoteModel } from '@harika/harika-notes';
-import { useDatabase } from '@nozbe/watermelondb/hooks';
+import React, { useEffect } from 'react';
+import { NoteModel } from '@harika/harika-core';
 import { Link } from 'react-router-dom';
 import clsx from 'clsx';
-import { useCurrentNote, useHarikaStore } from '@harika/harika-core';
+import { useCurrentNote, useCurrentVault } from '@harika/harika-utils';
 import { observer } from 'mobx-react-lite';
 
 const TitleLink = observer(({ note }: { note: NoteModel }) => {
@@ -24,11 +23,11 @@ const TitleLink = observer(({ note }: { note: NoteModel }) => {
 });
 
 export const Content = observer(() => {
-  const store = useHarikaStore();
+  const vault = useCurrentVault();
 
   useEffect(() => {
     const callback = async () => {
-      await store.preloadAllNotes();
+      await vault.preloadAllNotes();
     };
 
     callback();
@@ -37,7 +36,7 @@ export const Content = observer(() => {
   return (
     <div>
       <ul className="list-disc fixed left-0 mt-10 ml-10 pl-8 pr-4 py-3 bg-green-300 rounded">
-        {store.getAllNotes().map((note) => (
+        {vault.allNotes.map((note) => (
           <li key={note.$modelId}>
             <TitleLink note={note} />
           </li>

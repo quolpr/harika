@@ -3,6 +3,7 @@ import {
   customRef,
   detach,
   findParent,
+  getRoot,
   model,
   Model,
   modelAction,
@@ -25,14 +26,11 @@ export const noteRef = customRef<NoteModel>('harika/NoteRef', {
   // },
 
   resolve(ref) {
-    const parent = findParent<Vault>(ref, (n) => {
-      console.log(n);
-      return n instanceof Object;
-    });
+    const vault = getRoot<Vault>(ref);
 
-    if (!parent) return undefined;
+    if (!vault || vault.$modelType !== 'harika/Vault') return undefined;
 
-    return parent.notesMap[ref.id];
+    return vault.notesMap[ref.id];
   },
   onResolvedValueChange(ref, newTodo, oldTodo) {
     if (oldTodo && !newTodo) {
@@ -55,13 +53,13 @@ export class NoteModel extends Model({
   isDeleted: prop<boolean>(false),
 }) {
   @computed
-  get store() {
-    return findParent<Vault>(this, (n) => n instanceof Object) as Vault;
+  get vault() {
+    return getRoot<Vault>(this);
   }
 
   @computed
   get children() {
-    return Object.values(this.store.blocksMap)
+    return Object.values(this.vault.blocksMap)
       .filter(
         (block) =>
           block.noteRef.id === this.$modelId &&
@@ -72,7 +70,7 @@ export class NoteModel extends Model({
 
   @computed
   get allChildren() {
-    return Object.values(this.store.blocksMap).filter(
+    return Object.values(this.vault.blocksMap).filter(
       (block) => block.noteRef.id === this.$modelId
     );
   }
@@ -91,7 +89,7 @@ export class NoteModel extends Model({
       ...attrs,
     });
 
-    this.store.blocksMap[newNoteBlock.$modelId] = newNoteBlock;
+    this.vault.blocksMap[newNoteBlock.$modelId] = newNoteBlock;
 
     return newNoteBlock;
   }

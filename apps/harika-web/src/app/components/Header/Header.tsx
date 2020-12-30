@@ -7,11 +7,11 @@ import dayjs from 'dayjs';
 import Calendar from 'react-calendar';
 import clsx from 'clsx';
 import { useClickAway } from 'react-use';
-import { useCurrentNote, useHarikaStore } from '@harika/harika-core';
+import { useCurrentNote, useCurrentVault } from '@harika/harika-utils';
 import { observer } from 'mobx-react-lite';
 
 export const Header = observer(() => {
-  const store = useHarikaStore();
+  const vault = useCurrentVault();
   const history = useHistory();
 
   const currentNote = useCurrentNote();
@@ -31,11 +31,11 @@ export const Header = observer(() => {
     async (date: Date | Date[]) => {
       if (isArray(date)) return;
 
-      const note = await store.getOrCreateDailyNote(dayjs(date));
+      const note = await vault.getOrCreateDailyNote(dayjs(date));
 
       history.replace(`/notes/${note.$modelId}`);
     },
-    [store, history]
+    [vault, history]
   );
 
   return (

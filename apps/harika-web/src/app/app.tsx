@@ -4,22 +4,22 @@ import { Header } from './components/Header/Header';
 import { BrowserRouter, Route, Switch } from 'react-router-dom';
 import { MainPageRedirect } from './pages/MainPageRedirect';
 import { NotePage } from './pages/NotePage';
-import { HarikaNotes, schema } from '@harika/harika-notes';
+import { HarikaVaults } from '@harika/harika-core';
 import { Content } from './components/Content/Content';
 import {
   CurrentFocusedBlockContext,
   CurrentNoteContext,
-  HarikaStoreContext,
+  CurrentVaultContext,
   ICurrentFocusedBlockState,
   ICurrentNoteState,
   useFocusedBlock,
-  useHarikaStore,
-} from '@harika/harika-core';
+  useCurrentVault,
+} from '@harika/harika-utils';
 import LokiJSAdapter from '@nozbe/watermelondb/adapters/lokijs';
 import { usePrevious } from 'react-use';
 
 const HandleNoteBlockBlur: React.FC = () => {
-  const store = useHarikaStore();
+  const vault = useCurrentVault();
   const focusedBlockState = useFocusedBlock();
 
   const prevNoteBlock = usePrevious(focusedBlockState?.noteBlock);
@@ -29,7 +29,7 @@ const HandleNoteBlockBlur: React.FC = () => {
       if (!prevNoteBlock) return;
 
       if (prevNoteBlock !== focusedBlockState?.noteBlock) {
-        store.updateNoteBlockLinks(prevNoteBlock);
+        vault.updateNoteBlockLinks(prevNoteBlock);
 
         console.log('notes and refs are created!');
       }
@@ -39,39 +39,42 @@ const HandleNoteBlockBlur: React.FC = () => {
   return null;
 };
 
-const adapter = new LokiJSAdapter({
-  schema: schema,
-  // migrations, // optional migrations
-  useWebWorker: false, // recommended for new projects. tends to improve performance and reduce glitches in most cases, but also has downsides - test with and without it
-  useIncrementalIndexedDB: true, // recommended for new projects. improves performance (but incompatible with early Watermelon databases)
-  // dbName: 'myapp', // optional db name
-  // It's recommended you implement this method:
-  // onIndexedDBVersionChange: () => {
-  //   // database was deleted in another browser tab (user logged out), so we must make sure we delete
-  //   // it in this tab as well
-  //   if (checkIfUserIsLoggedIn()) {
-  //     window.location.reload()
-  //   }
-  // },
-  // Optional:
-  // onQuotaExceededError: (error) => { /* do something when user runs out of disk space */ },
-} as any);
+const vaults = new HarikaVaults(
+  ({ schema, dbName }) =>
+    new LokiJSAdapter({
+      schema,
+      dbName, // optional db name
+      // migrations, // optional migrations
+      useWebWorker: false, // recommended for new projects. tends to improve performance and reduce glitches in most cases, but also has downsides - test with and without it
+      useIncrementalIndexedDB: true, // recommended for new projects. improves performance (but incompatible with early Watermelon databases)
+      // It's recommended you implement this method:
+      // onIndexedDBVersionChange: () => {
+      //   // database was deleted in another browser tab (user logged out), so we must make sure we delete
+      //   // it in this tab as well
+      //   if (checkIfUserIsLoggedIn()) {
+      //     window.location.reload()
+      //   }
+      // },
+      // Optional:
+      // onQuotaExceededError: (error) => { /* do something when user runs out of disk space */ },
+    } as any)
+);
 
-const harikaNotes = new HarikaNotes(adapter);
+const vault = vaults.getVault('123');
 
 const Syncher: React.FC = ({ children }) => {
-  const store = useHarikaStore();
+  const vault = useCurrentVault();
   const [wasSynched, setWasSynched] = useState(false);
 
   useEffect(() => {
     const callback = async () => {
-      await store.sync();
+      await vault.sync();
 
       setWasSynched(true);
     };
 
     callback();
-  }, [store]);
+  }, [vault]);
 
   return <>{wasSynched && children}</>;
 };
@@ -82,7 +85,7 @@ export function App() {
 
   return (
     <BrowserRouter>
-      <HarikaStoreContext.Provider value={harikaNotes}>
+      <CurrentVaultContext.Provider value={vault}>
         <CurrentNoteContext.Provider value={currentNoteActions}>
           <CurrentFocusedBlockContext.Provider value={stateActions}>
             <Syncher>
@@ -103,7 +106,7 @@ export function App() {
             </Syncher>
           </CurrentFocusedBlockContext.Provider>
         </CurrentNoteContext.Provider>
-      </HarikaStoreContext.Provider>
+      </CurrentVaultContext.Provider>
     </BrowserRouter>
   );
 }

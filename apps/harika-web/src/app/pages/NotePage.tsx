@@ -5,24 +5,24 @@ import 'react-calendar/dist/Calendar.css';
 import {
   CurrentNoteContext,
   useCurrentNote,
-  useHarikaStore,
-} from '@harika/harika-core';
+  useCurrentVault,
+} from '@harika/harika-utils';
 
 export const NotePage = React.memo(() => {
-  const store = useHarikaStore();
+  const vault = useCurrentVault();
   const { id } = useParams<{ id: string }>();
   const [, setCurrentNote] = useContext(CurrentNoteContext);
 
   useEffect(() => {
     const callback = async () => {
-      const note = await store.findNote(id);
+      const note = await vault.findNote(id);
       setCurrentNote(note);
     };
 
     callback();
 
     return () => setCurrentNote(undefined);
-  }, [setCurrentNote, store, id]);
+  }, [setCurrentNote, vault, id]);
 
   const note = useCurrentNote();
 
