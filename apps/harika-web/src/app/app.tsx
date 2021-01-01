@@ -92,7 +92,6 @@ export function App() {
               <HandleNoteBlockBlur />
 
               <Header />
-              <Content />
               <section className="main">
                 <Switch>
                   <Route exact path="/">

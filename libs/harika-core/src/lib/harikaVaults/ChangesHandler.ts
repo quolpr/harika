@@ -35,7 +35,7 @@ export class ChangesHandler {
 
     this.patchesSubject
       .pipe(
-        buffer(this.patchesSubject.pipe(debounceTime(200))),
+        buffer(this.patchesSubject.pipe(debounceTime(50))),
         concatMap((patches) => this.applyPatches(patches))
       )
       .subscribe();

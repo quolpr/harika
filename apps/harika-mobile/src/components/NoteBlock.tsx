@@ -98,14 +98,14 @@ export const NoteBlock = observer(
       ([editState]) => editState?.noteBlock?.$modelId === noteBlock.$modelId
     );
 
-    // useEffect(() => {
-    //   if (!isEditing) {
-    //     setNoteBlockContent({
-    //       content: noteBlock.content,
-    //       id: noteBlock.$modelId,
-    //     });
-    //   }
-    // }, [isEditing, noteBlock.$modelId, noteBlock.content]);
+    useEffect(() => {
+      if (!isEditing) {
+        setNoteBlockContent({
+          content: noteBlock.content,
+          id: noteBlock.$modelId,
+        });
+      }
+    }, [isEditing, noteBlock.$modelId, noteBlock.content]);
 
     useEffect(() => {
       if (noteBlock.$modelId !== noteBlockContent.id) return;

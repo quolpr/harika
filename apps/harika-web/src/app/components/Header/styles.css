@@ -1,14 +1,12 @@
 .header {
-  @apply flex items-center justify-between py-3;
-
-  background-color: #fff;
+  @apply flex items-center justify-between py-3 bg-gray-800;
 
   &__brand {
-    @apply text-gray-900 text-4xl ml-10 font-bold;
+    @apply text-gray-100 text-4xl ml-10 font-bold;
   }
 
   &__brand-dot {
-    @apply inline text-pink-600;
+    @apply inline text-pink-600 ml-0.5;
   }
 
   &__calendar-wrapper {
@@ -16,7 +14,7 @@
   }
 
   &__calendar-icon {
-    @apply text-pink-500;
+    @apply text-pink-600;
   }
 
   &__calendar {

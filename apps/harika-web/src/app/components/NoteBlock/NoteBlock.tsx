@@ -360,7 +360,7 @@ export const NoteBlock = observer(
     return (
       <div className="note-block">
         <div className="note-block__body">
-          <div className="note-block__dot" />({noteBlock.orderPosition})
+          <div className="note-block__dot" />
           <TextareaAutosize
             ref={inputRef}
             autoFocus

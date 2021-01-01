@@ -12,10 +12,13 @@
   &__dot {
     @apply flex items-start justify-end;
 
-    @apply w-8;
+    @apply w-9;
 
     &::before {
-      @apply mt-2 bg-pink-400 w-1.5 h-1.5 mr-3;
+      @apply mt-2 bg-pink-600 mr-3;
+
+      width: 5px;
+      height: 5px;
 
       content: '';
       border-radius: 100%;
@@ -23,11 +26,13 @@
   }
 
   &__child-blocks {
-    @apply box-border ml-4 pt-1 border-l border-pink-400;
+    @apply box-border ml-4 pt-1 border-l border-pink-600;
+
+    margin-left: calc(1rem + 2px);
   }
 
   &__content {
-    @apply ring-pink-300 focus:outline-none focus:ring-2 rounded-sm;
+    @apply ring-pink-500 focus:outline-none focus:ring-2 rounded-sm;
 
     width: 100%;
     white-space: pre-wrap;

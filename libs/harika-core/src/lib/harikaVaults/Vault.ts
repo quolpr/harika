@@ -24,6 +24,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { NoteRow } from './db/rows/NoteRow';
 import { NoteBlockRow } from './db/rows/NoteBlockRow';
 import { schema } from './db/schema';
+import { syncMiddleware } from './models/syncable';
 
 export { NoteModel } from './models/NoteModel';
 export { NoteBlockModel, noteBlockRef } from './models/NoteBlockModel';
@@ -53,7 +54,7 @@ export function createVault(id: string, buildAdapter: IAdapterBuilder) {
     onInit() {
       this.syncer = new Syncher(database, this, this.queries);
 
-      onPatches(
+      syncMiddleware(
         this,
         new ChangesHandler(database, this.queries, this, this.syncer)
           .handlePatch

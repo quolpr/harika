@@ -37,6 +37,7 @@ export const convertNoteRowToModelAttrs = async (
   preloadChildren = true,
   preloadLinks = true
 ): Promise<IConvertResult> => {
+  console.time('timer');
   const noteBlockAttrs = preloadChildren
     ? await Promise.all(
         (await dbModel.noteBlocks.fetch()).map((m) =>
@@ -90,6 +91,7 @@ export const convertNoteRowToModelAttrs = async (
       );
     })
   );
+  console.timeEnd('timer');
 
   return { note: noteModel, noteBlocks: noteBlockAttrs, linkedNotes };
 };

@@ -15,6 +15,7 @@ import { computed } from 'mobx';
 import { NoteModel, noteRef } from './NoteModel';
 import isEqual from 'lodash.isequal';
 import { Vault } from '../Vault';
+import { syncable } from './syncable';
 
 // TODO maybe root ref? What is the best way to manage??
 export const noteBlockRef = customRef<NoteBlockModel>('harika/NoteBlockRef', {
@@ -132,6 +133,7 @@ export class NoteBlockModel extends Model({
   }
 
   @modelAction
+  @syncable
   move(parent: undefined | NoteBlockModel, pos: number | 'start' | 'end') {
     if (parent !== this.parentBlockRef?.current) {
       this.parentBlockRef = parent ? noteBlockRef(parent) : undefined;
@@ -170,6 +172,7 @@ export class NoteBlockModel extends Model({
   }
 
   @modelAction
+  @syncable
   mergeToLeftAndDelete() {
     const [left] = this.leftAndRight;
 
@@ -188,6 +191,7 @@ export class NoteBlockModel extends Model({
   }
 
   @modelAction
+  @syncable
   injectNewRightBlock(content: string) {
     const { injectTo, parentRef, list } = (() => {
       if (this.children.length) {
@@ -225,6 +229,7 @@ export class NoteBlockModel extends Model({
   }
 
   @modelAction
+  @syncable
   tryMoveLeft() {
     const [left] = this.leftAndRight;
 
@@ -246,6 +251,7 @@ export class NoteBlockModel extends Model({
   }
 
   @modelAction
+  @syncable
   tryMoveRight() {
     const [, right] = this.leftAndRight;
 
@@ -259,6 +265,7 @@ export class NoteBlockModel extends Model({
   }
 
   @modelAction
+  @syncable
   tryMoveUp() {
     const [left] = this.leftAndRightSibling;
 
@@ -268,6 +275,7 @@ export class NoteBlockModel extends Model({
   }
 
   @modelAction
+  @syncable
   tryMoveDown() {
     const parentRef = this.parentBlockRef;
     const parentOfParentRef = parentRef?.current?.parentBlockRef;
@@ -282,17 +290,20 @@ export class NoteBlockModel extends Model({
   }
 
   @modelAction
+  @syncable
   updateContent(content: string) {
     this.content = content;
   }
 
   @modelAction
+  @syncable
   createLink(note: NoteModel) {
     note.linkedNoteBlockRefs.push(noteBlockRef(this));
     this.linkedNoteRefs.push(noteRef(note));
   }
 
   @modelAction
+  @syncable
   unlink(note: NoteModel) {
     const linkedNoteRef = this.linkedNoteRefs.find((m) => m.current === note)!;
     const linkedNoteBlocksOfNote = linkedNoteRef.current.linkedNoteBlockRefs;
