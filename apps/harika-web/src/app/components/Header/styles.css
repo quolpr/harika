@@ -1,8 +1,8 @@
 .header {
-  @apply flex items-center justify-between py-3 bg-gray-800;
+  @apply flex items-center justify-between py-4 bg-gray-900 mb-3;
 
   &__brand {
-    @apply text-gray-100 text-4xl ml-10 font-bold;
+    @apply text-gray-100 text-3xl ml-10 font-bold;
   }
 
   &__brand-dot {

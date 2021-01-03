@@ -9,20 +9,23 @@ import { NoteBlockModel, NoteModel } from '@harika/harika-core';
 import { Ref } from 'mobx-keystone';
 import { Link, useHistory } from 'react-router-dom';
 import { Trash as TrashIcon } from 'heroicons-react';
+import { NoteLinkModel } from 'libs/harika-core/src/lib/harikaVaults/models/NoteLinkModel';
 
 const Backlinks = observer(
-  ({ linkedBlockRefs }: { linkedBlockRefs: Ref<NoteBlockModel>[] }) => {
+  ({ noteBlockLinks }: { noteBlockLinks: NoteLinkModel[] }) => {
     return (
       <>
-        {linkedBlockRefs.map(({ current: noteBlock, $modelId }) => (
+        {noteBlockLinks.map(({ $modelId, noteBlockRef }) => (
           <div className="mt-5" key={$modelId}>
             <div>
               Note:{' '}
-              <Link to={`/notes/${noteBlock.noteRef.current.$modelId}`}>
-                {noteBlock.noteRef.current.title}
+              <Link
+                to={`/notes/${noteBlockRef.current.noteRef.current.$modelId}`}
+              >
+                {noteBlockRef.current.noteRef.current.title}
               </Link>
             </div>
-            <div>Block content: {noteBlock.content}</div>
+            <div>Block content: {noteBlockRef.current.content}</div>
           </div>
         ))}
       </>
@@ -87,7 +90,7 @@ export const Note: React.FC<{ note: NoteModel }> = observer(({ note }) => {
 
       <hr />
 
-      <Backlinks linkedBlockRefs={note.linkedNoteBlockRefs} />
+      <Backlinks noteBlockLinks={note.noteBlockLinks} />
     </div>
   );
 });

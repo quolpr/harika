@@ -122,8 +122,6 @@ function attacher(this: Processor<Settings>) {
           result.push({ type: 'text', value: node.value.slice(start) });
         }
 
-        console.log({ result });
-
         splice.apply(parent.children, [index, 1].concat(result));
         // parent.children.splice(index, 1, result);
 
@@ -166,7 +164,7 @@ const plugins = [blankLines, attacher];
 
 const MarkdownRenderer = observer(
   ({ noteBlock, content }: { noteBlock: NoteBlockModel; content: string }) => {
-    const refs = noteBlock.linkedNoteRefs;
+    const links = noteBlock.noteLinks;
 
     const renderers = useMemo(
       () => ({
@@ -175,13 +173,13 @@ const MarkdownRenderer = observer(
           return (
             <Observer>
               {() => {
-                const ref = refs.find(
-                  (ref) => ref.current.title === node.data.noteName
+                const link = links.find(
+                  (link) => link.noteRef.current.title === node.data.noteName
                 );
 
                 return (
                   <Link
-                    to={`/notes/${ref?.id}`}
+                    to={`/notes/${link?.noteRef.id}`}
                     className="text-blue-500 hover:underline"
                     onClick={(e) => e.stopPropagation()}
                   >
@@ -193,7 +191,7 @@ const MarkdownRenderer = observer(
           );
         },
       }),
-      [refs]
+      [links]
     );
 
     return (
@@ -209,8 +207,6 @@ const MarkdownRenderer = observer(
 
 export const NoteBlock = observer(
   ({ noteBlock }: { noteBlock: NoteBlockModel }) => {
-    const [isExpanded, setIsExpanded] = useState(true);
-
     const [noteBlockContent, setNoteBlockContent] = useState({
       content: noteBlock.content,
       id: noteBlock.$modelId,
@@ -366,17 +362,17 @@ export const NoteBlock = observer(
           {noteBlock.children.length > 0 && (
             <div
               className={clsx('note-block__expand-arrow', {
-                'note-block__expand-arrow--expanded': isExpanded,
+                'note-block__expand-arrow--expanded': noteBlock.isExpanded,
               })}
               onClick={() => {
-                setIsExpanded(!isExpanded);
+                noteBlock.toggleExpand();
               }}
             />
           )}
 
           <div
             className={clsx('note-block__dot', {
-              'note-block__dot--expanded': isExpanded,
+              'note-block__dot--expanded': noteBlock.isExpanded,
             })}
           />
           <TextareaAutosize
@@ -397,7 +393,9 @@ export const NoteBlock = observer(
             </div>
           )}
         </div>
-        {isExpanded && <NoteBlockChildren childBlocks={noteBlock.children} />}
+        {noteBlock.isExpanded && (
+          <NoteBlockChildren childBlocks={noteBlock.children} />
+        )}
       </div>
     );
   }

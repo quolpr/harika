@@ -11,6 +11,7 @@ import { buffer, concatMap, debounceTime, throttleTime } from 'rxjs/operators';
 import { Syncher } from './sync';
 import isEqual from 'lodash.isequal';
 import { Vault } from './Vault';
+import { NoteLinkModel } from './models/NoteLinkModel';
 
 export class ChangesHandler {
   notesCollection: Collection<NoteRow>;
@@ -58,31 +59,45 @@ export class ChangesHandler {
               $modelId: string;
             } = patch.value;
 
-            if (!value.isPersisted) {
-              await this.queries.noteBlocksCollection.create((creator) => {
+            await this.queries.noteBlocksCollection.create((creator) => {
+              creator._raw.id = value.$modelId;
+              creator.noteId = value.noteRef.id;
+              creator.parentBlockId = value.parentBlockRef?.id;
+              creator.content = value.content;
+              creator.createdAt = new Date(value.createdAt);
+              creator.orderPosition = value.orderPosition;
+            });
+          }
+
+          if (patch.path.length === 2 && patch.path[0] === 'noteLinks') {
+            console.log('creating note link!');
+
+            const value: ModelPropsData<NoteLinkModel> & {
+              $modelId: string;
+            } = patch.value;
+
+            console.log(
+              await this.queries.noteLinksCollection.create((creator) => {
                 creator._raw.id = value.$modelId;
                 creator.noteId = value.noteRef.id;
-                creator.parentBlockId = value.parentBlockRef?.id;
-                creator.content = value.content;
-                creator.createdAt = new Date(value.createdAt);
-                creator.orderPosition = value.orderPosition;
-              });
-            }
+                creator.noteBlockId = value.noteBlockRef.id;
+              })
+            );
           }
 
           if (patch.path.length === 2 && patch.path[0] === 'notesMap') {
+            console.log('creating note !');
+
             const value: ModelPropsData<NoteModel> & {
               $modelId: string;
             } = patch.value;
 
-            if (!value.isPersisted) {
-              await this.queries.notesCollection.create((creator) => {
-                creator._raw.id = value.$modelId;
-                creator.dailyNoteDate = new Date(value.dailyNoteDate);
-                creator.title = value.title;
-                creator.createdAt = new Date(value.createdAt);
-              });
-            }
+            await this.queries.notesCollection.create((creator) => {
+              creator._raw.id = value.$modelId;
+              creator.dailyNoteDate = new Date(value.dailyNoteDate);
+              creator.title = value.title;
+              creator.createdAt = new Date(value.createdAt);
+            });
           }
         }
 
@@ -150,46 +165,6 @@ export class ChangesHandler {
             );
 
             await note.destroyPermanently();
-          }
-        }
-
-        if (
-          patch.path.length >= 3 &&
-          patch.path[0] === 'blocksMap' &&
-          patch.path[2] === 'linkedNoteRefs'
-        ) {
-          const noteBlock = await this.queries.noteBlocksCollection.find(
-            patch.path[1] as string
-          );
-
-          const ids = this.vault.blocksMap[patch.path[1]].linkedNoteRefs.map(
-            (ref) => ref.current.$modelId
-          );
-
-          if (!isEqual(ids, noteBlock.linkedNoteIds)) {
-            noteBlock.update((toUpdate) => {
-              toUpdate.linkedNoteIds = ids;
-            });
-          }
-        }
-
-        if (
-          patch.path.length >= 3 &&
-          patch.path[0] === 'notesMap' &&
-          patch.path[2] === 'linkedNoteBlockRefs'
-        ) {
-          const note = await this.queries.notesCollection.find(
-            patch.path[1] as string
-          );
-
-          const ids = this.vault.notesMap[
-            patch.path[1]
-          ].linkedNoteBlockRefs.map((ref) => ref.current.$modelId);
-
-          if (!isEqual(ids, note.linkedNoteBlockIds)) {
-            note.update((toUpdate) => {
-              toUpdate.linkedNoteBlockIds = ids;
-            });
           }
         }
       }

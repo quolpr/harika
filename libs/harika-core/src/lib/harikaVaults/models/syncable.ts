@@ -6,14 +6,6 @@ import {
   SimpleActionContext,
 } from 'mobx-keystone';
 
-export function syncable(
-  target: any,
-  propertyKey: string,
-  descriptor: PropertyDescriptor
-) {
-  console.log(target, propertyKey, descriptor);
-}
-
 export function syncMiddleware(
   subtreeRoot: object,
   applyPatches: (patches: Patch[]) => void
@@ -42,14 +34,14 @@ export function syncMiddleware(
 
   const middlewareDisposer = actionTrackingMiddleware(subtreeRoot, {
     onStart(ctx) {
-      if (ctx.rootContext.actionName === 'createOrUpdateNoteAndBlocksFromAttrs')
+      if (ctx.rootContext.actionName === 'createOrUpdateEntitiesFromAttrs')
         return;
       if (!getPatchRecorderData(ctx)) {
         initPatchRecorder(ctx);
       }
     },
     onResume(ctx) {
-      if (ctx.rootContext.actionName === 'createOrUpdateNoteAndBlocksFromAttrs')
+      if (ctx.rootContext.actionName === 'createOrUpdateEntitiesFromAttrs')
         return;
       const patchRecorderData = getPatchRecorderData(ctx);
       patchRecorderData.recorderStack++;
@@ -57,7 +49,7 @@ export function syncMiddleware(
         patchRecorderData.recorderStack > 0;
     },
     onSuspend(ctx) {
-      if (ctx.rootContext.actionName === 'createOrUpdateNoteAndBlocksFromAttrs')
+      if (ctx.rootContext.actionName === 'createOrUpdateEntitiesFromAttrs')
         return;
       const patchRecorderData = getPatchRecorderData(ctx);
       patchRecorderData.recorderStack--;
@@ -65,7 +57,7 @@ export function syncMiddleware(
         patchRecorderData.recorderStack > 0;
     },
     onFinish(ctx) {
-      if (ctx.rootContext.actionName === 'createOrUpdateNoteAndBlocksFromAttrs')
+      if (ctx.rootContext.actionName === 'createOrUpdateEntitiesFromAttrs')
         return;
       const patchRecorderData = getPatchRecorderData(ctx);
       if (patchRecorderData && patchRecorderData.undoRootContext === ctx) {

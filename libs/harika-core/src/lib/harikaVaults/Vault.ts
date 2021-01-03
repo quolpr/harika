@@ -15,9 +15,9 @@ import * as remotedev from 'remotedev';
 import { convertNoteRowToModelAttrs } from './convertRowToModel';
 import { Dayjs } from 'dayjs';
 import { ChangesHandler } from './ChangesHandler';
-import { NoteBlockModel } from './models/NoteBlockModel';
+import { NoteBlockModel, noteBlockRef } from './models/NoteBlockModel';
 import { Syncher } from './sync';
-import { NoteModel } from './models/NoteModel';
+import { NoteModel, noteRef } from './models/NoteModel';
 import { computed } from 'mobx';
 import { Optional } from 'utility-types';
 import { v4 as uuidv4 } from 'uuid';
@@ -25,6 +25,8 @@ import { NoteRow } from './db/rows/NoteRow';
 import { NoteBlockRow } from './db/rows/NoteBlockRow';
 import { schema } from './db/schema';
 import { syncMiddleware } from './models/syncable';
+import { NoteLinkRow } from './db/rows/NoteLinkRow';
+import { NoteLinkModel } from './models/NoteLinkModel';
 
 export { NoteModel } from './models/NoteModel';
 export { NoteBlockModel, noteBlockRef } from './models/NoteBlockModel';
@@ -37,7 +39,7 @@ export interface IAdapterBuilder {
 export function createVault(id: string, buildAdapter: IAdapterBuilder) {
   const database = new Database({
     adapter: buildAdapter({ dbName: `vault-${id}`, schema: schema }),
-    modelClasses: [NoteRow, NoteBlockRow],
+    modelClasses: [NoteRow, NoteBlockRow, NoteLinkRow],
     actionsEnabled: true,
   });
 
@@ -45,6 +47,8 @@ export function createVault(id: string, buildAdapter: IAdapterBuilder) {
   class Vault extends Model({
     notesMap: prop<Record<string, NoteModel>>(() => ({})),
     blocksMap: prop<Record<string, NoteBlockModel>>(() => ({})),
+    // TODO: could be optimize with Record
+    noteLinks: prop<NoteLinkModel[]>(() => []),
   }) {
     private database = database;
     private queries = new Queries(this.database);
@@ -64,6 +68,35 @@ export function createVault(id: string, buildAdapter: IAdapterBuilder) {
     @computed({ keepAlive: true })
     get allNotes() {
       return Object.values(this.notesMap);
+    }
+
+    @modelAction
+    createLink(note: NoteModel, noteBlock: NoteBlockModel) {
+      const link = new NoteLinkModel({
+        $modelId: uuidv4(),
+        noteRef: noteRef(note),
+        noteBlockRef: noteBlockRef(noteBlock),
+        createdAt: new Date(),
+      });
+
+      this.noteLinks.push(link);
+
+      return link;
+    }
+
+    @modelAction
+    unlink(note: NoteModel, noteBlock: NoteBlockModel) {
+      const link = this.noteLinks.find(
+        (link) =>
+          link.noteBlockRef.id === noteBlock.$modelId &&
+          link.noteRef.id === note.$modelId
+      );
+
+      if (!link) return;
+
+      link.markAsDeleted();
+
+      this.noteLinks.splice(this.noteLinks.indexOf(link), 1);
     }
 
     @modelAction
@@ -107,7 +140,7 @@ export function createVault(id: string, buildAdapter: IAdapterBuilder) {
     }
 
     async sync() {
-      return this.syncer.sync();
+      return true;
     }
 
     async preloadAllNotes() {
@@ -165,21 +198,21 @@ export function createVault(id: string, buildAdapter: IAdapterBuilder) {
       );
 
       const existingLinkedNotesIndexed = Object.fromEntries(
-        noteBlock.linkedNoteRefs.map((note) => [
-          note.current.$modelId,
-          note.current,
+        noteBlock.noteLinks.map((link) => [
+          link.noteRef.id,
+          link.noteRef.current,
         ])
       );
 
       allNotes.forEach((note) => {
         if (!existingLinkedNotesIndexed[note.$modelId]) {
-          noteBlock.createLink(note);
+          this.createLink(note, noteBlock);
         }
       });
 
       Object.values(existingLinkedNotesIndexed).forEach((note) => {
         if (!allNotesIndexed[note.$modelId]) {
-          noteBlock.unlink(note);
+          this.unlink(note, noteBlock);
         }
       });
     }
@@ -193,11 +226,15 @@ export function createVault(id: string, buildAdapter: IAdapterBuilder) {
         preloadLinks
       );
 
-      this.createOrUpdateNoteAndBlocksFromAttrs(
+      this.createOrUpdateEntitiesFromAttrs(
         [data.note, ...data.linkedNotes.map(({ note }) => note)],
         [
           ...data.noteBlocks,
           ...data.linkedNotes.flatMap(({ noteBlocks }) => noteBlocks),
+        ],
+        [
+          ...data.noteLinks,
+          ...data.linkedNotes.flatMap(({ noteLinks }) => noteLinks),
         ]
       );
 
@@ -205,11 +242,14 @@ export function createVault(id: string, buildAdapter: IAdapterBuilder) {
     }
 
     @modelAction
-    private createOrUpdateNoteAndBlocksFromAttrs(
+    private createOrUpdateEntitiesFromAttrs(
       noteAttrs: (ModelInstanceCreationData<NoteModel> & {
         $modelId: string;
       })[],
       blocksAttrs: (ModelInstanceCreationData<NoteBlockModel> & {
+        $modelId: string;
+      })[],
+      noteLinksAttrs: (ModelInstanceCreationData<NoteLinkModel> & {
         $modelId: string;
       })[]
     ) {
@@ -223,7 +263,7 @@ export function createVault(id: string, buildAdapter: IAdapterBuilder) {
         return this.notesMap[note.$modelId];
       });
 
-      const blocks = blocksAttrs.forEach((block) => {
+      const blocks = blocksAttrs.map((block) => {
         if (this.blocksMap[block.$modelId]) {
           this.blocksMap[block.$modelId].updateAttrs(block);
         } else {
@@ -233,7 +273,21 @@ export function createVault(id: string, buildAdapter: IAdapterBuilder) {
         return this.blocksMap[block.$modelId];
       });
 
-      return { notes, blocks };
+      const noteLinks = noteLinksAttrs.map((link) => {
+        let linkInStore = this.noteLinks.find(
+          ({ $modelId }) => $modelId === link.$modelId
+        );
+
+        if (!linkInStore) {
+          linkInStore = new NoteLinkModel(link);
+
+          this.noteLinks.push(linkInStore);
+        }
+
+        return linkInStore;
+      });
+
+      return { notes, blocks, noteLinks };
     }
   }
 

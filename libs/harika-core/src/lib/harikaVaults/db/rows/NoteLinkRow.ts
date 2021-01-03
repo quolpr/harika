@@ -10,8 +10,8 @@ import { HarikaNotesTableName } from '../schema';
 import { NoteBlockRow } from './NoteBlockRow';
 import { NoteRow } from './NoteRow';
 
-export class NoteRefRow extends Model {
-  static table = HarikaNotesTableName.NOTE_REFS;
+export class NoteLinkRow extends Model {
+  static table = HarikaNotesTableName.NOTE_LINKS;
 
   static associations: Associations = {
     [HarikaNotesTableName.NOTES]: { type: 'belongs_to', key: 'note_id' },

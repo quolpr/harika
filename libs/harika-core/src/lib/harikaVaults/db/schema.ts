@@ -4,11 +4,11 @@ export enum HarikaNotesTableName {
   NOTES = 'notes',
   NOTE_BLOCKS = 'note_blocks',
   VAULT = 'vaults',
-  // NOTE_REFS = 'note_refs',
+  NOTE_LINKS = 'note_links',
 }
 
 export const schema = appSchema({
-  version: 34,
+  version: 38,
   tables: [
     tableSchema({
       name: HarikaNotesTableName.NOTES,
@@ -25,15 +25,15 @@ export const schema = appSchema({
         { name: 'updated_at', type: 'number' },
       ],
     }),
-    // tableSchema({
-    //   name: HarikaNotesTableName.NOTE_REFS,
-    //   columns: [
-    //     { name: 'note_id', type: 'string', isIndexed: true },
-    //     { name: 'note_block_id', type: 'string', isIndexed: true },
-    //     { name: 'created_at', type: 'number' },
-    //     { name: 'updated_at', type: 'number' },
-    //   ],
-    // }),
+    tableSchema({
+      name: HarikaNotesTableName.NOTE_LINKS,
+      columns: [
+        { name: 'note_id', type: 'string', isIndexed: true },
+        { name: 'note_block_id', type: 'string', isIndexed: true },
+        { name: 'created_at', type: 'number' },
+        { name: 'updated_at', type: 'number' },
+      ],
+    }),
     tableSchema({
       name: HarikaNotesTableName.NOTE_BLOCKS,
       columns: [

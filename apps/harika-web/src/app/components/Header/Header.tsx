@@ -48,7 +48,7 @@ export const Header = observer(() => {
 
       <div ref={calendarRef} className="header__calendar-wrapper">
         <button onClick={handleOnCalendarClick}>
-          <CalendarIcon className="header__calendar-icon" size={30} />
+          <CalendarIcon className="header__calendar-icon" size={26} />
         </button>
 
         {/** Calendar doesn't have inputRef in typing :(*/}

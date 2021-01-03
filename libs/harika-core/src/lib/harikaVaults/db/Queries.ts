@@ -1,6 +1,7 @@
 import { Collection, Database, Q } from '@nozbe/watermelondb';
 import { Dayjs } from 'dayjs';
 import { NoteBlockRow } from './rows/NoteBlockRow';
+import { NoteLinkRow } from './rows/NoteLinkRow';
 import { NoteRow } from './rows/NoteRow';
 import { HarikaNotesTableName } from './schema';
 
@@ -8,6 +9,7 @@ export class Queries {
   private database: Database;
   notesCollection: Collection<NoteRow>;
   noteBlocksCollection: Collection<NoteBlockRow>;
+  noteLinksCollection: Collection<NoteLinkRow>;
 
   constructor(database: Database) {
     this.database = database;
@@ -18,6 +20,10 @@ export class Queries {
 
     this.noteBlocksCollection = this.database.collections.get<NoteBlockRow>(
       HarikaNotesTableName.NOTE_BLOCKS
+    );
+
+    this.noteLinksCollection = this.database.collections.get<NoteLinkRow>(
+      HarikaNotesTableName.NOTE_LINKS
     );
   }
 
@@ -66,6 +72,7 @@ export class Queries {
   }
 
   async getNoteRowsOfNoteBlockIds(noteBlockIds: string[]) {
+    // TODO: check that no duplication
     return this.notesCollection
       .query(
         Q.on(
@@ -78,5 +85,11 @@ export class Queries {
 
   async getAllNotes() {
     return this.notesCollection.query().fetch();
+  }
+
+  async getLinksByBlockIds(ids: string[]) {
+    return this.noteLinksCollection
+      .query(Q.where('note_block_id', Q.oneOf(ids)))
+      .fetch();
   }
 }

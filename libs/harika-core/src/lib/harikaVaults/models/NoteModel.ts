@@ -2,21 +2,18 @@ import { computed } from 'mobx';
 import {
   customRef,
   detach,
-  findParent,
   getRoot,
   model,
   Model,
   modelAction,
   ModelInstanceCreationData,
   prop,
-  Ref,
   tProp_dateTimestamp,
   types,
 } from 'mobx-keystone';
 import { Optional } from 'utility-types';
 import { v4 as uuidv4 } from 'uuid';
 import { NoteBlockModel } from './NoteBlockModel';
-import isEqual from 'lodash.isequal';
 import { Vault } from '../Vault';
 
 export const noteRef = customRef<NoteModel>('harika/NoteRef', {
@@ -47,14 +44,19 @@ export class NoteModel extends Model({
   dailyNoteDate: tProp_dateTimestamp(types.dateTimestamp),
   createdAt: tProp_dateTimestamp(types.dateTimestamp),
   areChildrenLoaded: prop<boolean>(false),
-  isPersisted: prop<boolean>(false),
-  linkedNoteBlockRefs: prop<Ref<NoteBlockModel>[]>(() => []),
   areLinksLoaded: prop<boolean>(false),
   isDeleted: prop<boolean>(false),
 }) {
   @computed
   get vault() {
     return getRoot<Vault>(this);
+  }
+
+  @computed
+  get noteBlockLinks() {
+    return this.vault.noteLinks.filter(
+      (link) => link.noteRef.id === this.$modelId
+    );
   }
 
   @computed
@@ -96,8 +98,8 @@ export class NoteModel extends Model({
 
   @modelAction
   updateTitle(newTitle: string) {
-    this.linkedNoteBlockRefs.forEach((noteBlock) => {
-      noteBlock.current.content = noteBlock.current.content
+    this.noteBlockLinks.forEach((link) => {
+      link.noteBlockRef.current.content = link.noteBlockRef.current.content
         .split(`[[${this.title}]]`)
         .join(`[[${newTitle}]]`);
     });
@@ -114,17 +116,6 @@ export class NoteModel extends Model({
   updateAttrs(attrs: ModelInstanceCreationData<NoteModel>) {
     if (!this.areLinksLoaded && attrs.areLinksLoaded) {
       this.areLinksLoaded = true;
-    }
-
-    if (
-      attrs.areLinksLoaded &&
-      attrs.linkedNoteBlockRefs &&
-      !isEqual(
-        attrs.linkedNoteBlockRefs?.map((ref) => ref.id).sort(),
-        this.linkedNoteBlockRefs.map(({ id }) => id).sort()
-      )
-    ) {
-      this.linkedNoteBlockRefs = attrs.linkedNoteBlockRefs;
     }
 
     if (!this.areChildrenLoaded && attrs.areChildrenLoaded) {

@@ -4,6 +4,8 @@ import { NoteBlockRow } from './db/rows/NoteBlockRow';
 import { NoteRow } from './db/rows/NoteRow';
 import { Queries } from './db/Queries';
 import { ModelInstanceCreationData } from 'mobx-keystone';
+import { NoteLinkModel } from './models/NoteLinkModel';
+import { NoteLinkRow } from './db/rows/NoteLinkRow';
 
 export const convertNoteBlockRowToModelAttrs = async (
   dbModel: NoteBlockRow,
@@ -16,9 +18,7 @@ export const convertNoteBlockRowToModelAttrs = async (
     parentBlockRef: dbModel.parentBlockId
       ? noteBlockRef(dbModel.parentBlockId)
       : undefined,
-    isPersisted: true,
     noteRef: noteRef(noteId),
-    linkedNoteRefs: (dbModel.linkedNoteIds || []).map((id) => noteRef(id)),
     orderPosition: dbModel.orderPosition,
   };
 };
@@ -28,8 +28,24 @@ interface IConvertResult {
   noteBlocks: (ModelInstanceCreationData<NoteBlockModel> & {
     $modelId: string;
   })[];
+  noteLinks: (ModelInstanceCreationData<NoteLinkModel> & {
+    $modelId: string;
+  })[];
   linkedNotes: IConvertResult[];
 }
+
+const mapLink = (
+  row: NoteLinkRow
+): ModelInstanceCreationData<NoteLinkModel> & {
+  $modelId: string;
+} => {
+  return {
+    $modelId: row.id,
+    noteRef: noteRef(row.noteId),
+    noteBlockRef: noteBlockRef(row.noteBlockId),
+    createdAt: row.createdAt,
+  };
+};
 
 export const convertNoteRowToModelAttrs = async (
   queries: Queries,
@@ -37,7 +53,11 @@ export const convertNoteRowToModelAttrs = async (
   preloadChildren = true,
   preloadLinks = true
 ): Promise<IConvertResult> => {
-  console.time('timer');
+  const links: (ModelInstanceCreationData<NoteLinkModel> & {
+    $modelId: string;
+    loatNoteOfBlock: boolean; // Actually it doesn't belong to model. Should be refactored
+  })[] = [];
+
   const noteBlockAttrs = preloadChildren
     ? await Promise.all(
         (await dbModel.noteBlocks.fetch()).map((m) =>
@@ -46,52 +66,56 @@ export const convertNoteRowToModelAttrs = async (
       )
     : [];
 
-  const linkedNotes = preloadLinks
-    ? await Promise.all(
-        (
-          await queries.getNoteRowsOfNoteBlockIds(
-            dbModel.linkedNoteBlockIds || []
-          )
-        ).map((row) => convertNoteRowToModelAttrs(queries, row, true, false))
-      )
-    : [];
+  links.push(
+    ...(preloadLinks
+      ? (await dbModel.links.fetch()).map((row) => ({
+          ...mapLink(row),
+          loatNoteOfBlock: true,
+        }))
+      : [])
+  );
 
-  const linkedNoteBlockRefs = preloadLinks
-    ? (dbModel.linkedNoteBlockIds || []).map((noteBlockId) =>
-        noteBlockRef(noteBlockId)
+  links.push(
+    ...(
+      await queries.getLinksByBlockIds(
+        noteBlockAttrs.map(({ $modelId }) => $modelId)
       )
-    : [];
+    ).map((row) => ({ ...mapLink(row), loatNoteOfBlock: false }))
+  );
+
+  const linkedNotes = await Promise.all(
+    links.map(async (link) =>
+      link.loatNoteOfBlock
+        ? convertNoteRowToModelAttrs(
+            queries,
+            (await (
+              await queries.getNoteBlockRowById(link.noteBlockRef.id)
+            ).note.fetch())!,
+            true,
+            false
+          )
+        : convertNoteRowToModelAttrs(
+            queries,
+            await queries.getNoteRowById(link.noteRef.id),
+            false,
+            false
+          )
+    )
+  );
 
   const noteModel = {
     $modelId: dbModel.id,
     title: dbModel.title,
     dailyNoteDate: dbModel.dailyNoteDate || new Date(),
     createdAt: dbModel.createdAt,
-    isPersisted: true,
     areChildrenLoaded: preloadChildren,
-    linkedNoteBlockRefs: linkedNoteBlockRefs,
     areLinksLoaded: preloadLinks,
   };
 
-  await Promise.all(
-    noteBlockAttrs.map(async (attr) => {
-      await Promise.all(
-        attr.linkedNoteRefs.map(async (ref) => {
-          if (!linkedNotes.find(({ note }) => note.$modelId === ref.id)) {
-            linkedNotes.push(
-              await convertNoteRowToModelAttrs(
-                queries,
-                await queries.getNoteRowById(ref.id),
-                false,
-                false
-              )
-            );
-          }
-        })
-      );
-    })
-  );
-  console.timeEnd('timer');
-
-  return { note: noteModel, noteBlocks: noteBlockAttrs, linkedNotes };
+  return {
+    note: noteModel,
+    noteBlocks: noteBlockAttrs,
+    linkedNotes,
+    noteLinks: links,
+  };
 };
