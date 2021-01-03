@@ -6,7 +6,7 @@
   }
 
   &__body {
-    @apply pb-20;
+    @apply pb-8;
   }
 
   &__bullet {
@@ -26,5 +26,12 @@
     box-shadow: none;
 
     resize: none; /*remove the resize handle on the bottom right*/
+  }
+
+  &__linked-references {
+    @apply text-2xl;
+
+    display: flex;
+    align-items: center;
   }
 }

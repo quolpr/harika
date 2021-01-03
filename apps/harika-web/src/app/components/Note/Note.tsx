@@ -6,28 +6,39 @@ import { useEffect } from 'react';
 import { useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { NoteBlockModel, NoteModel } from '@harika/harika-core';
-import { Ref } from 'mobx-keystone';
 import { Link, useHistory } from 'react-router-dom';
-import { Trash as TrashIcon } from 'heroicons-react';
+import { Link as LinkIcon } from 'heroicons-react';
 import { NoteLinkModel } from 'libs/harika-core/src/lib/harikaVaults/models/NoteLinkModel';
+import groupBy from 'lodash.groupby';
 
 const Backlinks = observer(
   ({ noteBlockLinks }: { noteBlockLinks: NoteLinkModel[] }) => {
     return (
       <>
-        {noteBlockLinks.map(({ $modelId, noteBlockRef }) => (
-          <div className="mt-5" key={$modelId}>
-            <div>
-              Note:{' '}
-              <Link
-                to={`/notes/${noteBlockRef.current.noteRef.current.$modelId}`}
-              >
-                {noteBlockRef.current.noteRef.current.title}
-              </Link>
+        {Object.entries(
+          groupBy(
+            noteBlockLinks,
+            ({ noteBlockRef }: NoteLinkModel): string =>
+              noteBlockRef.current.noteRef.id
+          )
+        ).map(([, links]) => {
+          const note = links[0].noteBlockRef.current.noteRef.current;
+
+          console.log('heu');
+
+          return (
+            <div className="mt-5" key={note.$modelId}>
+              <div>
+                Note: <Link to={`/notes/${note.$modelId}`}>{note.title}</Link>
+              </div>
+              {links.map((currentLink) => {
+                const noteBlock = currentLink.noteBlockRef.current;
+
+                return <NoteBlock noteBlock={noteBlock} />;
+              })}
             </div>
-            <div>Block content: {noteBlockRef.current.content}</div>
-          </div>
-        ))}
+          );
+        })}
       </>
     );
   }
@@ -88,7 +99,10 @@ export const Note: React.FC<{ note: NoteModel }> = observer(({ note }) => {
 
       <NoteBlocks childBlocks={note.children} />
 
-      <hr />
+      <div className="note__linked-references">
+        <LinkIcon className="mr-2" size={16} />
+        {note.noteBlockLinks.length} Linked References
+      </div>
 
       <Backlinks noteBlockLinks={note.noteBlockLinks} />
     </div>

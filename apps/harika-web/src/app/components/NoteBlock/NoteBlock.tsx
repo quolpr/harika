@@ -24,6 +24,7 @@ import { Node } from 'unist';
 import visit from 'unist-util-visit';
 import { Link } from 'react-router-dom';
 import { ChevronDown as ChevronDownIcon } from 'heroicons-react';
+import { Arrow } from '../Arrow/Arrow';
 
 const reBlankLine = /^[ \t]*(\n|$)/;
 
@@ -180,7 +181,7 @@ const MarkdownRenderer = observer(
                 return (
                   <Link
                     to={`/notes/${link?.noteRef.id}`}
-                    className="text-blue-500 hover:underline"
+                    className="text-pink-500 hover:underline"
                     onClick={(e) => e.stopPropagation()}
                   >
                     {node.value}
@@ -365,6 +366,14 @@ export const NoteBlock = observer(
                 'note-block__expand-arrow--expanded': noteBlock.isExpanded,
               })}
               onClick={() => {
+                noteBlock.toggleExpand();
+              }}
+            />
+          )}
+          {noteBlock.children.length !== 0 && (
+            <Arrow
+              isExpanded={noteBlock.isExpanded}
+              onToggle={() => {
                 noteBlock.toggleExpand();
               }}
             />
