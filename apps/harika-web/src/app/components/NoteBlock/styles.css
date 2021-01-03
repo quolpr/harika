@@ -1,45 +1,106 @@
 .note-block {
-  @apply flex flex-col pb-1;
+  @apply flex flex-col pb-1 text-base;
 
   &:last-child {
     @apply pb-0;
   }
 
   &__body {
-    @apply flex;
+    @apply flex relative;
   }
 
   &__dot {
-    @apply flex items-start justify-end;
-
-    @apply w-9;
+    @apply flex items-start justify-end w-9;
 
     &::before {
-      @apply mt-2 bg-pink-600 mr-3;
+      @apply bg-gray-700 mr-3 border-2 border-gray-500;
+      flex: none;
 
-      width: 5px;
-      height: 5px;
+      margin-top: 10px;
+
+      width: 9px;
+      height: 9px;
 
       content: '';
       border-radius: 100%;
+
+      transform: translateX(2px) translateY(-1px);
+
+      transition: all 0.07s linear;
+    }
+
+    &--expanded {
+      &::before {
+        @apply border-0;
+
+        margin-top: 10px;
+
+        width: 5px;
+        height: 5px;
+
+        transform: translateX(0) translateY(0);
+      }
+    }
+  }
+
+  &__expand-arrow {
+    @apply absolute cursor-pointer duration-300;
+
+    transform: translateY(-1.5px) translateX(-1px);
+
+    &:before {
+      @apply border-gray-500;
+
+      display: inline-block;
+      content: '';
+
+      border-style: solid;
+      border-width: 0 1px 1px 0;
+
+      padding: 2px;
+      margin-top: 5px;
+      margin-left: 2px;
+
+      transition: border-color 0.3s ease-out, transform 0.2s ease-out;
+
+      transform: rotate(-45deg);
+    }
+
+    &:hover:before {
+      @apply border-pink-600;
+    }
+
+    &--expanded {
+      transform: translateX(0) translateY(-4px);
+
+      &:before {
+        transform: rotate(45deg);
+      }
     }
   }
 
   &__child-blocks {
-    @apply box-border ml-4 pt-1 border-l border-pink-600;
+    @apply relative box-border ml-4 pl-3 pt-1;
 
-    margin-left: calc(1rem + 2px);
+    &::before {
+      @apply absolute bg-gray-800;
+
+      content: '';
+      width: 1px;
+      left: 2.5px;
+      top: 5px;
+      height: calc(100% - 5px);
+    }
   }
 
   &__content {
-    @apply ring-pink-500 focus:outline-none focus:ring-2 rounded-sm;
+    @apply focus:outline-none focus:ring-2 rounded-sm text-warmGray-300;
 
     width: 100%;
     white-space: pre-wrap;
-    min-height: 1rem;
     background: transparent;
     resize: none;
-    min-height: 20px;
+    min-height: 24px;
   }
 
   &__input {

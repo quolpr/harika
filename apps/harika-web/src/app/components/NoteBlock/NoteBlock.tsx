@@ -23,6 +23,7 @@ import {
 import { Node } from 'unist';
 import visit from 'unist-util-visit';
 import { Link } from 'react-router-dom';
+import { ChevronDown as ChevronDownIcon } from 'heroicons-react';
 
 const reBlankLine = /^[ \t]*(\n|$)/;
 
@@ -181,7 +182,7 @@ const MarkdownRenderer = observer(
                 return (
                   <Link
                     to={`/notes/${ref?.id}`}
-                    className="text-pink-500 hover:underline"
+                    className="text-blue-500 hover:underline"
                     onClick={(e) => e.stopPropagation()}
                   >
                     {node.value}
@@ -208,6 +209,8 @@ const MarkdownRenderer = observer(
 
 export const NoteBlock = observer(
   ({ noteBlock }: { noteBlock: NoteBlockModel }) => {
+    const [isExpanded, setIsExpanded] = useState(true);
+
     const [noteBlockContent, setNoteBlockContent] = useState({
       content: noteBlock.content,
       id: noteBlock.$modelId,
@@ -360,7 +363,22 @@ export const NoteBlock = observer(
     return (
       <div className="note-block">
         <div className="note-block__body">
-          <div className="note-block__dot" />
+          {noteBlock.children.length > 0 && (
+            <div
+              className={clsx('note-block__expand-arrow', {
+                'note-block__expand-arrow--expanded': isExpanded,
+              })}
+              onClick={() => {
+                setIsExpanded(!isExpanded);
+              }}
+            />
+          )}
+
+          <div
+            className={clsx('note-block__dot', {
+              'note-block__dot--expanded': isExpanded,
+            })}
+          />
           <TextareaAutosize
             ref={inputRef}
             autoFocus
@@ -379,7 +397,7 @@ export const NoteBlock = observer(
             </div>
           )}
         </div>
-        <NoteBlockChildren childBlocks={noteBlock.children} />
+        {isExpanded && <NoteBlockChildren childBlocks={noteBlock.children} />}
       </div>
     );
   }

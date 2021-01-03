@@ -81,8 +81,6 @@ export const Note: React.FC<{ note: NoteModel }> = observer(({ note }) => {
           value={editState.title}
           onChange={handleChange}
         />
-
-        <TrashIcon onClick={handleDestroy} />
       </h2>
 
       <NoteBlocks childBlocks={note.children} />

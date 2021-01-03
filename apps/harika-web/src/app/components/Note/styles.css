@@ -2,7 +2,7 @@
   @apply px-5;
 
   &__header {
-    @apply text-2xl pt-10 pb-5 font-bold;
+    @apply text-gray-100 text-5xl pt-10 pb-5 font-bold;
   }
 
   &__body {
