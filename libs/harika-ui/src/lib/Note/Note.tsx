@@ -5,10 +5,9 @@ import './styles.css';
 import { useEffect } from 'react';
 import { useState } from 'react';
 import { observer } from 'mobx-react-lite';
-import { NoteBlockModel, NoteModel } from '@harika/harika-core';
+import { NoteBlockModel, NoteModel, NoteLinkModel } from '@harika/harika-core';
 import { Link, useHistory } from 'react-router-dom';
 import { Link as LinkIcon } from 'heroicons-react';
-import { NoteLinkModel } from 'libs/harika-core/src/lib/harikaVaults/models/NoteLinkModel';
 import groupBy from 'lodash.groupby';
 import {
   CurrentFocusedBlockContext,

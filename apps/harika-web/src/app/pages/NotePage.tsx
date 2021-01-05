@@ -1,12 +1,12 @@
 import React, { useContext, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Note } from '../components/Note/Note';
 import 'react-calendar/dist/Calendar.css';
 import {
   CurrentNoteContext,
   useCurrentNote,
   useCurrentVault,
 } from '@harika/harika-utils';
+import { Note } from '@harika/harika-ui';
 
 export const NotePage = React.memo(() => {
   const vault = useCurrentVault();

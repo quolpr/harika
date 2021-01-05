@@ -23,7 +23,6 @@ import {
 import { Node } from 'unist';
 import visit from 'unist-util-visit';
 import { Link } from 'react-router-dom';
-import { ChevronDown as ChevronDownIcon } from 'heroicons-react';
 import { Arrow } from '../Arrow/Arrow';
 
 const reBlankLine = /^[ \t]*(\n|$)/;

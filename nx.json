@@ -45,6 +45,9 @@
     "harika-mobile-ionic-e2e": {
       "tags": [],
       "implicitDependencies": ["harika-mobile-ionic"]
+    },
+    "harika-ui": {
+      "tags": []
     }
   }
 }

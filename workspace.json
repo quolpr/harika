@@ -232,7 +232,7 @@
             ],
             "styles": ["apps/harika-mobile-ionic/src/styles.css"],
             "scripts": [],
-            "webpackConfig": "@nrwl/react/plugins/webpack"
+            "webpackConfig": "apps/harika-mobile-ionic/webpack.config.js"
           },
           "configurations": {
             "production": {
@@ -390,6 +390,27 @@
           "builder": "@nrwl/linter:eslint",
           "options": {
             "lintFilePatterns": ["apps/harika-mobile-ionic-e2e/**/*.{js,ts}"]
+          }
+        }
+      }
+    },
+    "harika-ui": {
+      "root": "libs/harika-ui",
+      "sourceRoot": "libs/harika-ui/src",
+      "projectType": "library",
+      "schematics": {},
+      "architect": {
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["libs/harika-ui/**/*.{ts,tsx,js,jsx}"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "options": {
+            "jestConfig": "libs/harika-ui/jest.config.js",
+            "passWithNoTests": true
           }
         }
       }

@@ -29,6 +29,7 @@ import { NoteLinkRow } from './db/rows/NoteLinkRow';
 import { NoteLinkModel } from './models/NoteLinkModel';
 
 export { NoteModel } from './models/NoteModel';
+export { NoteLinkModel } from './models/NoteLinkModel';
 export { NoteBlockModel, noteBlockRef } from './models/NoteBlockModel';
 
 export interface IAdapterBuilder {

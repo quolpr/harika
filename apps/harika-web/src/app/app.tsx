@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import './app.css';
-import { Header } from './components/Header/Header';
 import { BrowserRouter, Route, Switch } from 'react-router-dom';
 import { MainPageRedirect } from './pages/MainPageRedirect';
 import { NotePage } from './pages/NotePage';
 import { HarikaVaults } from '@harika/harika-core';
-import { Content } from './components/Content/Content';
+import { Header } from '@harika/harika-ui';
 import {
   CurrentFocusedBlockContext,
   CurrentNoteContext,
@@ -91,6 +90,7 @@ export function App() {
             <HandleNoteBlockBlur />
 
             <Header />
+
             <section className="main">
               <Switch>
                 <Route exact path="/">
