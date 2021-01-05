@@ -6,7 +6,7 @@ import {
   useCurrentNote,
   useCurrentVault,
 } from '@harika/harika-utils';
-import { Note } from '@harika/harika-ui';
+import { Note } from '../components/Note/Note';
 
 export const NotePage = React.memo(() => {
   const vault = useCurrentVault();

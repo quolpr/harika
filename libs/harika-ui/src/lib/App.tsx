@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import './app.css';
+import './App.css';
 import { BrowserRouter, Route, Switch } from 'react-router-dom';
 import { MainPageRedirect } from './pages/MainPageRedirect';
 import { NotePage } from './pages/NotePage';
 import { HarikaVaults } from '@harika/harika-core';
-import { Header } from '@harika/harika-ui';
 import {
   CurrentFocusedBlockContext,
   CurrentNoteContext,
@@ -16,6 +15,7 @@ import {
 } from '@harika/harika-utils';
 import LokiJSAdapter from '@nozbe/watermelondb/adapters/lokijs';
 import { usePrevious } from 'react-use';
+import { Header } from './components/Header/Header';
 
 const HandleNoteBlockBlur: React.FC = () => {
   const vault = useCurrentVault();

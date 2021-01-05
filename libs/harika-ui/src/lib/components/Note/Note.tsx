@@ -27,8 +27,6 @@ const Backlinks = observer(
         ).map(([, links]) => {
           const note = links[0].noteBlockRef.current.noteRef.current;
 
-          console.log('heu');
-
           return (
             <div className="mt-5" key={note.$modelId}>
               <div>
