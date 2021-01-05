@@ -1,0 +1,6 @@
+{
+  "name": "harika-mobile-ionic",
+  "devDependencies": {
+    "@capacitor/cli": "^2.4.5"
+  }
+}

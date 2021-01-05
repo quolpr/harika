@@ -1,0 +1,7 @@
+{
+  "name": "harika-mobile-ionic",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "react"
+}

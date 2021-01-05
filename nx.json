@@ -38,6 +38,13 @@
     },
     "harika-utils": {
       "tags": []
+    },
+    "harika-mobile-ionic": {
+      "tags": []
+    },
+    "harika-mobile-ionic-e2e": {
+      "tags": [],
+      "implicitDependencies": ["harika-mobile-ionic"]
     }
   }
 }

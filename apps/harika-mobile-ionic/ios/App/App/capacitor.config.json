@@ -1,0 +1,13 @@
+{
+  "appId": "io.ionic.starter",
+  "appName": "harika-mobile-ionic",
+  "bundledWebRuntime": false,
+  "npmClient": "npm",
+  "webDir": "../../dist/apps/harika-mobile-ionic",
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 0
+    }
+  },
+  "cordova": {}
+}
