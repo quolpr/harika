@@ -5,11 +5,17 @@ import { TextInput } from 'react-native';
 import { NoteBlock } from '../NoteBlock';
 import { NoteBlockModel, NoteModel } from '@harika/harika-core';
 import { observer } from 'mobx-react-lite';
+import {
+  CurrentFocusedBlockContext,
+  ICurrentFocusedBlockState,
+} from '@harika/harika-utils';
 
 const NoteChildren = observer(
   ({ childBlocks }: { childBlocks: NoteBlockModel[] }) => {
+    const stateActions = useState<ICurrentFocusedBlockState>();
+
     return (
-      <>
+      <CurrentFocusedBlockContext.Provider value={stateActions}>
         {childBlocks.map((noteBlock, i) => (
           <NoteBlock
             key={noteBlock.$modelId}
@@ -18,7 +24,7 @@ const NoteChildren = observer(
             isFirst={i === 0}
           />
         ))}
-      </>
+      </CurrentFocusedBlockContext.Provider>
     );
   }
 );

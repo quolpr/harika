@@ -87,23 +87,21 @@ export function App() {
     <BrowserRouter>
       <CurrentVaultContext.Provider value={vault}>
         <CurrentNoteContext.Provider value={currentNoteActions}>
-          <CurrentFocusedBlockContext.Provider value={stateActions}>
-            <Syncher>
-              <HandleNoteBlockBlur />
+          <Syncher>
+            <HandleNoteBlockBlur />
 
-              <Header />
-              <section className="main">
-                <Switch>
-                  <Route exact path="/">
-                    <MainPageRedirect />
-                  </Route>
-                  <Route path="/notes/:id">
-                    <NotePage />
-                  </Route>
-                </Switch>
-              </section>
-            </Syncher>
-          </CurrentFocusedBlockContext.Provider>
+            <Header />
+            <section className="main">
+              <Switch>
+                <Route exact path="/">
+                  <MainPageRedirect />
+                </Route>
+                <Route path="/notes/:id">
+                  <NotePage />
+                </Route>
+              </Switch>
+            </section>
+          </Syncher>
         </CurrentNoteContext.Provider>
       </CurrentVaultContext.Provider>
     </BrowserRouter>

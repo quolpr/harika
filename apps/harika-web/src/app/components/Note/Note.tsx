@@ -10,6 +10,10 @@ import { Link, useHistory } from 'react-router-dom';
 import { Link as LinkIcon } from 'heroicons-react';
 import { NoteLinkModel } from 'libs/harika-core/src/lib/harikaVaults/models/NoteLinkModel';
 import groupBy from 'lodash.groupby';
+import {
+  CurrentFocusedBlockContext,
+  ICurrentFocusedBlockState,
+} from '@harika/harika-utils';
 
 const Backlinks = observer(
   ({ noteBlockLinks }: { noteBlockLinks: NoteLinkModel[] }) => {
@@ -57,6 +61,8 @@ const NoteBlocks = observer(
 );
 
 export const Note: React.FC<{ note: NoteModel }> = observer(({ note }) => {
+  const stateActions = useState<ICurrentFocusedBlockState>();
+
   const [editState, setEditState] = useState({
     title: note.title,
     id: note.$modelId,
@@ -97,7 +103,9 @@ export const Note: React.FC<{ note: NoteModel }> = observer(({ note }) => {
         />
       </h2>
 
-      <NoteBlocks childBlocks={note.children} />
+      <CurrentFocusedBlockContext.Provider value={stateActions}>
+        <NoteBlocks childBlocks={note.children} />
+      </CurrentFocusedBlockContext.Provider>
 
       <div className="note__linked-references">
         <LinkIcon className="mr-2" size={16} />

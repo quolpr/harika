@@ -13,7 +13,7 @@
     @apply flex items-start justify-end w-9;
 
     &::before {
-      @apply bg-gray-700 mr-3 border-2 border-gray-500;
+      @apply bg-gray-500 mr-3 border-2 border-gray-300;
       flex: none;
 
       margin-top: 10px;
