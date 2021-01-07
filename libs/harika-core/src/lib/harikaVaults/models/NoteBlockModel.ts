@@ -12,8 +12,7 @@ import {
   types,
 } from 'mobx-keystone';
 import { computed } from 'mobx';
-import { NoteModel, noteRef } from './NoteModel';
-import isEqual from 'lodash.isequal';
+import { NoteModel } from './NoteModel';
 import { Vault } from '../Vault';
 
 // TODO maybe root ref? What is the best way to manage??
@@ -49,6 +48,19 @@ export class NoteBlockModel extends Model({
   isDeleted: prop<boolean>(false),
   isExpanded: prop<boolean>(true),
 }) {
+  @computed
+  get path() {
+    let current: NoteBlockModel | undefined = this.parentBlockRef?.current;
+    const path: NoteBlockModel[] = [];
+
+    while (current) {
+      path.unshift(current);
+      current = current.parentBlockRef?.current;
+    }
+
+    return path;
+  }
+
   @computed
   get vault() {
     return getRoot<Vault>(this);

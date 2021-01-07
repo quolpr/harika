@@ -74,5 +74,29 @@
     &:first-child {
       @apply mt-0;
     }
+
+    .note-block__child-blocks::before {
+      @apply bg-gray-700;
+    }
+  }
+
+  &__noteblock-path {
+    @apply mb-2;
+
+    display: flex;
+  }
+
+  &__noteblock-path-step {
+    &:after {
+      @apply mx-1.5;
+
+      content: '->';
+    }
+
+    &--last {
+      &:after {
+        content: '';
+      }
+    }
   }
 }

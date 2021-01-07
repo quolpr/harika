@@ -16,50 +16,64 @@ import {
 import clsx from 'clsx';
 import { Arrow } from '../Arrow/Arrow';
 
-const BacklinkedNote = ({
-  note,
-  links,
-}: {
-  note: NoteModel;
-  links: NoteLinkModel[];
-}) => {
-  const [isExpanded, setIsExpanded] = useState(true);
+const BacklinkedNote = observer(
+  ({ note, links }: { note: NoteModel; links: NoteLinkModel[] }) => {
+    const [isExpanded, setIsExpanded] = useState(true);
 
-  return (
-    <div className="backlinked-note">
-      <div
-        className={clsx('backlinked-note__title', {
-          'backlinked-note__title--expanded': isExpanded,
-        })}
-      >
-        <Arrow
-          className="backlinked-note__arrow"
-          isExpanded={isExpanded}
-          onToggle={() => {
-            setIsExpanded(!isExpanded);
-          }}
-        />
-        <Link to={`/notes/${note.$modelId}`}>{note.title}</Link>
+    return (
+      <div className="backlinked-note">
+        <div
+          className={clsx('backlinked-note__title', {
+            'backlinked-note__title--expanded': isExpanded,
+          })}
+        >
+          <Arrow
+            className="backlinked-note__arrow"
+            isExpanded={isExpanded}
+            onToggle={() => {
+              setIsExpanded(!isExpanded);
+            }}
+          />
+          <Link to={`/notes/${note.$modelId}`}>{note.title}</Link>
+        </div>
+
+        <div
+          className={clsx('backlinked-note__noteblocks', {
+            'backlinked-note__noteblocks--expanded': isExpanded,
+          })}
+        >
+          {links.map((currentLink) => {
+            const noteBlock = currentLink.noteBlockRef.current;
+            const path = noteBlock.path;
+
+            return (
+              <div className="backlinked-note__noteblock-root">
+                {path.length > 0 && (
+                  <div className="backlinked-note__noteblock-path">
+                    {path.map((n, i) => (
+                      <div
+                        className={clsx(
+                          'backlinked-note__noteblock-path-step',
+                          {
+                            'backlinked-note__noteblock-path-step--last':
+                              i === path.length - 1,
+                          }
+                        )}
+                      >
+                        {n.content}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <NoteBlock noteBlock={noteBlock} />
+              </div>
+            );
+          })}
+        </div>
       </div>
-
-      <div
-        className={clsx('backlinked-note__noteblocks', {
-          'backlinked-note__noteblocks--expanded': isExpanded,
-        })}
-      >
-        {links.map((currentLink) => {
-          const noteBlock = currentLink.noteBlockRef.current;
-
-          return (
-            <div className="backlinked-note__noteblock-root">
-              <NoteBlock noteBlock={noteBlock} />
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-};
+    );
+  }
+);
 
 const Backlinks = observer(
   ({ noteBlockLinks }: { noteBlockLinks: NoteLinkModel[] }) => {
