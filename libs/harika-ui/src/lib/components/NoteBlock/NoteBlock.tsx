@@ -28,6 +28,7 @@ import visit from 'unist-util-visit';
 import { Link } from 'react-router-dom';
 import { Arrow } from '../Arrow/Arrow';
 import { BlocksViewModel } from 'libs/harika-core/src/lib/harikaVaults/models/BlocksViewModel';
+import { computed } from 'mobx';
 
 const reBlankLine = /^[ \t]*(\n|$)/;
 
@@ -228,6 +229,11 @@ export const NoteBlock = observer(
     view: BlocksViewModel;
   }) => {
     const vault = useCurrentVault();
+    const isExpanded = computed(() =>
+      view.isExpanded(noteBlock.$modelId)
+    ).get();
+
+    console.log('render!');
 
     const [noteBlockContent, setNoteBlockContent] = useState({
       content: noteBlock.content,
@@ -235,6 +241,12 @@ export const NoteBlock = observer(
     });
 
     useEffect(() => {
+      if (
+        noteBlock.content === noteBlockContent.content &&
+        noteBlock.$modelId === noteBlockContent.id
+      )
+        return;
+
       setNoteBlockContent({
         content: noteBlock.content,
         id: noteBlock.$modelId,
@@ -366,12 +378,14 @@ export const NoteBlock = observer(
 
     const handleChange = useCallback(
       (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        if (e.target.value === noteBlockContent.content) return;
+
         setNoteBlockContent({
           content: e.target.value,
           id: noteBlock.$modelId,
         });
       },
-      [noteBlock.$modelId]
+      [noteBlock.$modelId, noteBlockContent.content]
     );
 
     const handleClick = useCallback(() => {
@@ -385,10 +399,10 @@ export const NoteBlock = observer(
     return (
       <div className="note-block">
         <div className="note-block__body">
-          {noteBlock.children.length !== 0 && (
+          {noteBlock.hasChildren && (
             <Arrow
               className="note-block__arrow"
-              isExpanded={view.isExpanded(noteBlock.$modelId)}
+              isExpanded={isExpanded}
               onToggle={() => {
                 view.toggleExpand(noteBlock.$modelId);
               }}
@@ -397,7 +411,7 @@ export const NoteBlock = observer(
 
           <div
             className={clsx('note-block__dot', {
-              'note-block__dot--expanded': view.isExpanded(noteBlock.$modelId),
+              'note-block__dot--expanded': isExpanded,
             })}
           />
           <TextareaAutosize
@@ -412,6 +426,7 @@ export const NoteBlock = observer(
           />
           {!isEditing && (
             <div onClick={handleClick} className={clsx('note-block__content')}>
+              {noteBlock.orderPosition}
               <MarkdownRenderer
                 noteBlock={noteBlock}
                 content={noteBlockContent.content}
@@ -419,7 +434,7 @@ export const NoteBlock = observer(
             </div>
           )}
         </div>
-        {view.isExpanded(noteBlock.$modelId) && (
+        {isExpanded && (
           <NoteBlockChildren childBlocks={noteBlock.children} view={view} />
         )}
       </div>

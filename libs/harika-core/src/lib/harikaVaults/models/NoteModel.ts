@@ -1,4 +1,4 @@
-import { computed } from 'mobx';
+import { comparer, computed } from 'mobx';
 import {
   customRef,
   detach,
@@ -52,14 +52,14 @@ export class NoteModel extends Model({
     return getRoot<Vault>(this);
   }
 
-  @computed
+  @computed({ equals: comparer.shallow })
   get noteBlockLinks() {
     return this.vault.noteLinks.filter(
       (link) => link.noteRef.id === this.$modelId
     );
   }
 
-  @computed
+  @computed({ equals: comparer.shallow })
   get children() {
     return Object.values(this.vault.blocksMap)
       .filter(
@@ -70,7 +70,7 @@ export class NoteModel extends Model({
       .sort((a, b) => a.orderPosition - b.orderPosition);
   }
 
-  @computed
+  @computed({ equals: comparer.shallow })
   get allChildren() {
     return Object.values(this.vault.blocksMap).filter(
       (block) => block.noteRef.id === this.$modelId

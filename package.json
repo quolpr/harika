@@ -35,6 +35,7 @@
     "@react-navigation/native": "^5.8.10",
     "@react-navigation/stack": "^5.12.8",
     "@reduxjs/toolkit": "^1.5.0",
+    "@welldone-software/why-did-you-render": "^6.0.5",
     "clsx": "^1.1.1",
     "dayjs": "^1.9.7",
     "document-register-element": "1.13.1",

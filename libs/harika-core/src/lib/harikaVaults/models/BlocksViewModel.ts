@@ -4,7 +4,6 @@ import { model, Model, modelAction, prop } from 'mobx-keystone';
 export class BlocksViewModel extends Model({
   expandedIds: prop<Record<string, boolean>>(() => ({})),
 }) {
-  @modelAction
   isExpanded(noteBlockId: string) {
     if (this.expandedIds[noteBlockId] !== undefined)
       return this.expandedIds[noteBlockId];

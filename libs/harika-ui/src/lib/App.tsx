@@ -1,3 +1,4 @@
+import './wdyr';
 import React, { useCallback, useEffect, useState } from 'react';
 import './App.css';
 import { BrowserRouter, Route, Switch } from 'react-router-dom';

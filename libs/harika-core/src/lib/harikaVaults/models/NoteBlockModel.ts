@@ -11,7 +11,7 @@ import {
   tProp_dateTimestamp,
   types,
 } from 'mobx-keystone';
-import { computed } from 'mobx';
+import { comparer, computed } from 'mobx';
 import { NoteModel } from './NoteModel';
 import { Vault } from '../Vault';
 import { BlocksViewModel } from './BlocksViewModel';
@@ -49,6 +49,11 @@ export class NoteBlockModel extends Model({
   isDeleted: prop<boolean>(false),
 }) {
   @computed
+  get hasChildren() {
+    return this.children.length !== 0;
+  }
+
+  @computed({ equals: comparer.shallow })
   get path() {
     let current: NoteBlockModel | undefined = this.parentBlockRef?.current;
     const path: NoteBlockModel[] = [];
@@ -66,21 +71,21 @@ export class NoteBlockModel extends Model({
     return getRoot<Vault>(this);
   }
 
-  @computed
+  @computed({ equals: comparer.shallow })
   get noteLinks() {
     return this.vault.noteLinks.filter(
       (link) => link.noteBlockRef.id === this.$modelId
     );
   }
 
-  @computed
+  @computed({ equals: comparer.shallow })
   get children() {
     return this.noteRef.current.allChildren
       .filter((block) => block.parentBlockRef?.id === this.$modelId)
       .sort((a, b) => a.orderPosition - b.orderPosition);
   }
 
-  @computed
+  @computed({ equals: comparer.shallow })
   get siblings() {
     if (!this.parentBlockRef) {
       return this.noteRef.current.children;
@@ -89,7 +94,7 @@ export class NoteBlockModel extends Model({
     return this.parentBlockRef.current.children;
   }
 
-  @computed
+  @computed({ equals: comparer.shallow })
   get leftAndRightSibling(): [
     left: NoteBlockModel | undefined,
     right: NoteBlockModel | undefined
@@ -118,7 +123,7 @@ export class NoteBlockModel extends Model({
     return this.parentBlockRef.current.nearestRightToParent;
   }
 
-  @computed
+  @computed({ equals: comparer.shallow })
   get leftAndRight(): [
     left: NoteBlockModel | undefined,
     right: NoteBlockModel | undefined
@@ -146,7 +151,7 @@ export class NoteBlockModel extends Model({
     return [left, right];
   }
 
-  @computed
+  @computed({ equals: comparer.shallow })
   get allRightSiblings() {
     const siblings = this.siblings;
     const index = this.orderPosition;
