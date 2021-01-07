@@ -16,6 +16,17 @@
   }
 
   &__links {
+    display: flex;
+    flex-direction: column;
+
     @apply mt-5 ml-5;
+  }
+
+  &__link {
+    @apply mb-3;
+
+    &:last-child {
+      @apply mb-0;
+    }
   }
 }

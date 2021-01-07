@@ -1,0 +1,31 @@
+.search-input {
+  position: relative;
+
+  &__input {
+    @apply border border-gray-800 bg-gray-900 text-gray-300 px-2 py-1;
+    @apply focus:outline-none focus:border-gray-700;
+
+    /** TODO: border radius from tailwind */
+    border-radius: 5px;
+  }
+
+  &__result {
+    display: none;
+    background-color: #fff;
+
+    position: absolute;
+
+    width: 100%;
+
+    @apply top-3 px-2.5 py-2 bg-gray-800 bg-opacity-90;
+
+    /** TODO: border radius from tailwind */
+    border-radius: 2px;
+
+    backdrop-filter: blur(5px);
+
+    &--opened {
+      display: block;
+    }
+  }
+}

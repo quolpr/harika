@@ -125,6 +125,8 @@ export function createVault(id: string, buildAdapter: IAdapterBuilder) {
         $modelId: uuidv4(),
         createdAt: new Date(),
         dailyNoteDate: new Date(),
+        areLinksLoaded: true,
+        areChildrenLoaded: true,
         ...attrs,
       });
 
@@ -149,8 +151,6 @@ export function createVault(id: string, buildAdapter: IAdapterBuilder) {
       return this.createNote({
         title,
         dailyNoteDate: startOfDate.toDate(),
-        areLinksLoaded: true,
-        areChildrenLoaded: true,
       });
     }
 

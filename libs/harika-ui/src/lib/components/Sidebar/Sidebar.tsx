@@ -15,6 +15,10 @@ export const Sidebar = ({
       className={clsx('sidebar', { 'sidebar--is-opened': isOpened }, className)}
     >
       <div className="sidebar__links">
+        <Link className="sidebar__link" to="/">
+          Daily note
+        </Link>
+
         <Link className="sidebar__link" to="/notes">
           All Notes
         </Link>

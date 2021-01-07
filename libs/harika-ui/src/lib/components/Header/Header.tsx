@@ -9,6 +9,7 @@ import clsx from 'clsx';
 import { useClickAway } from 'react-use';
 import { useCurrentNote, useCurrentVault } from '@harika/harika-utils';
 import { observer } from 'mobx-react-lite';
+import { SearchInput } from '../SearchInput/SearchInput';
 
 export const Header = observer(
   ({
@@ -75,6 +76,8 @@ export const Header = observer(
             <line x1="3" y1="18" x2="21" y2="18"></line>
           </svg>
         </div>
+
+        <SearchInput className="header__search-input" />
 
         <div ref={calendarRef} className="header__calendar-wrapper">
           <button onClick={handleOnCalendarClick}>

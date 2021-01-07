@@ -17,6 +17,7 @@ import {
 import clsx from 'clsx';
 import { Arrow } from '../Arrow/Arrow';
 import { BlocksViewModel } from 'libs/harika-core/src/lib/harikaVaults/models/BlocksViewModel';
+import { IFocusBlockState } from '../SearchInput/SearchInput';
 
 const BacklinkedNote = observer(
   ({ note, links }: { note: NoteModel; links: NoteLinkModel[] }) => {
@@ -50,7 +51,10 @@ const BacklinkedNote = observer(
             const path = noteBlock.path;
 
             return (
-              <div className="backlinked-note__noteblock-root">
+              <div
+                key={currentLink.$modelId}
+                className="backlinked-note__noteblock-root"
+              >
                 {path.length > 0 && (
                   <div className="backlinked-note__noteblock-path">
                     {path.map((n, i) => (
@@ -128,13 +132,16 @@ const NoteBlocks = observer(
 
 export const Note: React.FC<{ note: NoteModel }> = observer(({ note }) => {
   const vault = useCurrentVault();
-  const stateActions = useState<ICurrentFocusedBlockState>();
+  const history = useHistory<IFocusBlockState>();
+  const focusOnBlockId = (history.location.state || {}).focusOnBlockId;
+  const stateActions = useState<ICurrentFocusedBlockState>(
+    focusOnBlockId ? { noteBlock: vault.blocksMap[focusOnBlockId] } : undefined
+  );
 
   const [editState, setEditState] = useState({
     title: note.title,
     id: note.$modelId,
   });
-  const history = useHistory();
 
   useEffect(() => {
     setEditState({ title: note.title, id: note.$modelId });
