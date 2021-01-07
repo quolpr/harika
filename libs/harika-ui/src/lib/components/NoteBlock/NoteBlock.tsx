@@ -10,7 +10,10 @@ import { useClickAway } from 'react-use';
 import { useContextSelector } from 'use-context-selector';
 import clsx from 'clsx';
 import TextareaAutosize from 'react-textarea-autosize';
-import { CurrentFocusedBlockContext } from '@harika/harika-utils';
+import {
+  CurrentFocusedBlockContext,
+  useCurrentVault,
+} from '@harika/harika-utils';
 import { Observer, observer } from 'mobx-react-lite';
 import { NoteBlockModel } from '@harika/harika-core';
 import ReactMarkdown from 'react-markdown';
@@ -207,6 +210,8 @@ const MarkdownRenderer = observer(
 
 export const NoteBlock = observer(
   ({ noteBlock }: { noteBlock: NoteBlockModel }) => {
+    const vault = useCurrentVault();
+
     const [noteBlockContent, setNoteBlockContent] = useState({
       content: noteBlock.content,
       id: noteBlock.$modelId,
@@ -264,7 +269,7 @@ export const NoteBlock = observer(
       if (noteBlock.content === noteBlockContent.content) return;
 
       noteBlock.updateContent(noteBlockContent.content);
-    }, [noteBlock, noteBlockContent.content, noteBlockContent.id]);
+    }, [vault, noteBlock, noteBlockContent.content, noteBlockContent.id]);
 
     const handleKeyPress = useCallback(
       async (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -356,21 +361,16 @@ export const NoteBlock = observer(
       setEditState({ noteBlock: noteBlock });
     }, [noteBlock, setEditState]);
 
+    const handleBlur = useCallback(() => {
+      vault.updateNoteBlockLinks(noteBlock);
+    }, [noteBlock, vault]);
+
     return (
       <div className="note-block">
         <div className="note-block__body">
-          {noteBlock.children.length > 0 && (
-            <div
-              className={clsx('note-block__expand-arrow', {
-                'note-block__expand-arrow--expanded': noteBlock.isExpanded,
-              })}
-              onClick={() => {
-                noteBlock.toggleExpand();
-              }}
-            />
-          )}
           {noteBlock.children.length !== 0 && (
             <Arrow
+              className="note-block__arrow"
               isExpanded={noteBlock.isExpanded}
               onToggle={() => {
                 noteBlock.toggleExpand();
@@ -391,6 +391,7 @@ export const NoteBlock = observer(
             onKeyPress={handleKeyPress}
             onChange={handleChange}
             value={noteBlockContent.content}
+            onBlur={handleBlur}
           />
           {!isEditing && (
             <div onClick={handleClick} className={clsx('note-block__content')}>

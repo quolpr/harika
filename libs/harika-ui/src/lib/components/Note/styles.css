@@ -29,9 +29,50 @@
   }
 
   &__linked-references {
-    @apply text-2xl;
+    @apply text-xl text-gray-400 mb-6;
 
     display: flex;
     align-items: center;
+  }
+}
+
+.backlinked-note {
+  @apply mt-5;
+
+  position: relative;
+
+  &__title {
+    display: flex;
+
+    &--expanded {
+    }
+  }
+
+  &__arrow {
+    transform: translateY(-0.23rem);
+
+    @apply mr-2.5;
+
+    &.arrow--expanded {
+      transform: translateY(-0.3rem);
+    }
+  }
+
+  &__noteblocks {
+    display: none;
+
+    @apply ml-4 mt-3;
+
+    &--expanded {
+      display: block;
+    }
+  }
+
+  &__noteblock-root {
+    @apply bg-gray-800 mt-3 px-4 py-2;
+
+    &:first-child {
+      @apply mt-0;
+    }
   }
 }

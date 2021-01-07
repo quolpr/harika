@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import './App.css';
 import { BrowserRouter, Route, Switch } from 'react-router-dom';
 import { MainPageRedirect } from './pages/MainPageRedirect';
 import { NotePage } from './pages/NotePage';
+import { NotesPage } from './pages/NotesPage/NotesPage';
 import { HarikaVaults } from '@harika/harika-core';
 import {
   CurrentFocusedBlockContext,
@@ -16,27 +17,8 @@ import {
 import LokiJSAdapter from '@nozbe/watermelondb/adapters/lokijs';
 import { usePrevious } from 'react-use';
 import { Header } from './components/Header/Header';
-
-const HandleNoteBlockBlur: React.FC = () => {
-  const vault = useCurrentVault();
-  const focusedBlockState = useFocusedBlock();
-
-  const prevNoteBlock = usePrevious(focusedBlockState?.noteBlock);
-
-  useEffect(() => {
-    (async () => {
-      if (!prevNoteBlock) return;
-
-      if (prevNoteBlock !== focusedBlockState?.noteBlock) {
-        vault.updateNoteBlockLinks(prevNoteBlock);
-
-        console.log('notes and refs are created!');
-      }
-    })();
-  });
-
-  return null;
-};
+import { Sidebar } from './components/Sidebar/Sidebar';
+import clsx from 'clsx';
 
 const vaults = new HarikaVaults(
   ({ schema, dbName }) =>
@@ -82,25 +64,55 @@ export function App() {
   const stateActions = useState<ICurrentFocusedBlockState>();
   const currentNoteActions = useState<ICurrentNoteState>();
 
+  const [isSidebarOpened, setIsSidebarOpened] = useState(false);
+
+  const handleTogglerClick = useCallback(() => {
+    setIsSidebarOpened(!isSidebarOpened);
+  }, [isSidebarOpened]);
+
   return (
     <BrowserRouter>
       <CurrentVaultContext.Provider value={vault}>
         <CurrentNoteContext.Provider value={currentNoteActions}>
           <Syncher>
-            <HandleNoteBlockBlur />
+            <div className={clsx('app')}>
+              <Sidebar
+                className={clsx('app__sidebar', {
+                  'app__sidebar--closed': !isSidebarOpened,
+                })}
+                isOpened={isSidebarOpened}
+              />
 
-            <Header />
+              <div className="app__container">
+                <div className="app__header-wrapper">
+                  <Header
+                    className="app__header"
+                    onTogglerClick={handleTogglerClick}
+                    isTogglerToggled={isSidebarOpened}
+                  />
+                </div>
 
-            <section className="main">
-              <Switch>
-                <Route exact path="/">
-                  <MainPageRedirect />
-                </Route>
-                <Route path="/notes/:id">
-                  <NotePage />
-                </Route>
-              </Switch>
-            </section>
+                <div className="app__main-wrapper">
+                  <section
+                    className={clsx('app__main', {
+                      'app__main--sidebar-opened': isSidebarOpened,
+                    })}
+                  >
+                    <Switch>
+                      <Route exact path="/">
+                        <MainPageRedirect />
+                      </Route>
+                      <Route path="/notes/:id">
+                        <NotePage />
+                      </Route>
+                      <Route path="/notes">
+                        <NotesPage />
+                      </Route>
+                    </Switch>
+                  </section>
+                </div>
+              </div>
+            </div>
           </Syncher>
         </CurrentNoteContext.Provider>
       </CurrentVaultContext.Provider>

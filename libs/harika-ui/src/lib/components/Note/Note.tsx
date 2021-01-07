@@ -13,6 +13,53 @@ import {
   CurrentFocusedBlockContext,
   ICurrentFocusedBlockState,
 } from '@harika/harika-utils';
+import clsx from 'clsx';
+import { Arrow } from '../Arrow/Arrow';
+
+const BacklinkedNote = ({
+  note,
+  links,
+}: {
+  note: NoteModel;
+  links: NoteLinkModel[];
+}) => {
+  const [isExpanded, setIsExpanded] = useState(true);
+
+  return (
+    <div className="backlinked-note">
+      <div
+        className={clsx('backlinked-note__title', {
+          'backlinked-note__title--expanded': isExpanded,
+        })}
+      >
+        <Arrow
+          className="backlinked-note__arrow"
+          isExpanded={isExpanded}
+          onToggle={() => {
+            setIsExpanded(!isExpanded);
+          }}
+        />
+        <Link to={`/notes/${note.$modelId}`}>{note.title}</Link>
+      </div>
+
+      <div
+        className={clsx('backlinked-note__noteblocks', {
+          'backlinked-note__noteblocks--expanded': isExpanded,
+        })}
+      >
+        {links.map((currentLink) => {
+          const noteBlock = currentLink.noteBlockRef.current;
+
+          return (
+            <div className="backlinked-note__noteblock-root">
+              <NoteBlock noteBlock={noteBlock} />
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
 
 const Backlinks = observer(
   ({ noteBlockLinks }: { noteBlockLinks: NoteLinkModel[] }) => {
@@ -28,16 +75,7 @@ const Backlinks = observer(
           const note = links[0].noteBlockRef.current.noteRef.current;
 
           return (
-            <div className="mt-5" key={note.$modelId}>
-              <div>
-                Note: <Link to={`/notes/${note.$modelId}`}>{note.title}</Link>
-              </div>
-              {links.map((currentLink) => {
-                const noteBlock = currentLink.noteBlockRef.current;
-
-                return <NoteBlock noteBlock={noteBlock} />;
-              })}
-            </div>
+            <BacklinkedNote key={note.$modelId} note={note} links={links} />
           );
         })}
       </>

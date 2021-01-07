@@ -8,7 +8,7 @@ export enum HarikaNotesTableName {
 }
 
 export const schema = appSchema({
-  version: 38,
+  version: 39,
   tables: [
     tableSchema({
       name: HarikaNotesTableName.NOTES,

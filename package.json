@@ -66,6 +66,7 @@
     "react-native-tailwindcss": "^1.1.11",
     "react-router-dom": "^5.2.0",
     "react-textarea-autosize": "^8.3.0",
+    "react-time-ago": "^6.2.2",
     "react-use": "^15.3.4",
     "remark-breaks": "^2.0.1",
     "remotedev": "^0.2.9",

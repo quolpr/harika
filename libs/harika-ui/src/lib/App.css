@@ -5,10 +5,6 @@ body,
   @apply bg-gray-900 text-gray-300;
 }
 
-.main {
-  @apply max-w-screen-sm mx-auto;
-}
-
 .note-list {
   @apply flex flex-col;
   @apply grid grid-cols-1 divide-y divide-yellow-500;
@@ -17,4 +13,44 @@ body,
 .react-calendar {
   margin: 0 auto;
   @apply mt-8;
+}
+
+.app {
+  display: flex;
+  height: 100vh;
+
+  &__sidebar {
+    @apply transition-all transform-gpu;
+    width: 300px;
+  }
+
+  &__sidebar--closed {
+    width: 0;
+  }
+
+  &__header-wrapper {
+    position: relative;
+    width: 100%;
+  }
+
+  &__header {
+    @apply transition-all;
+    position: absolute;
+    height: 60px;
+    right: 0;
+    left: 0;
+  }
+
+  &__container {
+    width: 100%;
+  }
+
+  &__main-wrapper {
+    height: calc(100vh);
+    overflow: scroll;
+  }
+
+  &__main {
+    @apply transition-all max-w-screen-sm mx-auto px-10 py-10;
+  }
 }

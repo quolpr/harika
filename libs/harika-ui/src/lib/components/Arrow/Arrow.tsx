@@ -5,13 +5,15 @@ import './styles.css';
 export const Arrow = ({
   isExpanded,
   onToggle,
+  className,
 }: {
   isExpanded: boolean;
   onToggle: () => void;
+  className?: string;
 }) => {
   return (
     <div
-      className={clsx('arrow', {
+      className={clsx(className, 'arrow', {
         'arrow--expanded': isExpanded,
       })}
       onClick={() => {

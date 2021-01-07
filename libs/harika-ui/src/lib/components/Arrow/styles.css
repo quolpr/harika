@@ -1,7 +1,5 @@
 .arrow {
-  @apply absolute cursor-pointer duration-300;
-
-  transform: translateY(-1.5px) translateX(-1px);
+  @apply cursor-pointer duration-300;
 
   &:before {
     @apply border-gray-500;

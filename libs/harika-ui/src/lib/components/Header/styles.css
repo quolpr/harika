@@ -1,5 +1,7 @@
 .header {
-  @apply flex items-center justify-between py-4 bg-gray-900 mb-3;
+  @apply flex items-center justify-between bg-gray-900 bg-opacity-90;
+
+  backdrop-filter: blur(5px);
 
   &__brand {
     @apply text-gray-100 text-3xl ml-10 font-bold;
@@ -25,8 +27,20 @@
     position: absolute;
     min-width: 350px;
 
+    z-index: 100;
+
     &--opened {
       display: block;
+    }
+  }
+
+  &__sidebar-toggler {
+    @apply ml-8 hover:text-pink-600 transition-all;
+
+    cursor: pointer;
+
+    &--toggled {
+      @apply text-pink-600;
     }
   }
 }

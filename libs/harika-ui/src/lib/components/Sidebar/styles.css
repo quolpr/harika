@@ -1,0 +1,21 @@
+.sidebar {
+  @apply bg-gray-800;
+
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  &__brand {
+    @apply text-gray-100 text-3xl ml-6 mb-3 font-bold;
+
+    margin-top: auto;
+  }
+
+  &__brand-dot {
+    @apply inline text-pink-600 ml-0.5;
+  }
+
+  &__links {
+    @apply mt-5 ml-5;
+  }
+}

@@ -1,0 +1,5 @@
+.notes-table {
+  @apply mt-10;
+
+  width: 100%;
+}
