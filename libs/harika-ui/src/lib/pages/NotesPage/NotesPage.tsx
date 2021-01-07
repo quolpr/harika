@@ -13,13 +13,14 @@ TimeAgo.addDefaultLocale(en);
 
 const NoteRow = observer(({ note }: { note: NoteModel }) => {
   return (
-    <tr key={note.$modelId}>
-      <td>
+    <tr>
+      <td className="pl-1">
         <Link to={`/notes/${note.$modelId}`}>{note.title}</Link>
       </td>
-      <td>
+      <td className="notes-table__time">
         <ReactTimeAgo date={note.createdAt} locale="en-US" />
       </td>
+      <td />
     </tr>
   );
 });
@@ -39,16 +40,16 @@ export const NotesPage = observer(() => {
     <table className="notes-table">
       <thead>
         <tr>
-          <th className="w-1/2">Title</th>
-          <th className="w-1/4">Created At</th>
-          <th className="w-1/4">Updated At</th>
+          <th className="w-1/2 pb-2 text-left">Title</th>
+          <th className="w-1/4 pb-2">Created At</th>
+          <th className="w-1/4 pb-2">Updated At</th>
         </tr>
       </thead>
       <tbody>
         {vault.allNotes
           .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
           .map((note) => (
-            <NoteRow note={note} />
+            <NoteRow note={note} key={note.$modelId} />
           ))}
       </tbody>
     </table>
