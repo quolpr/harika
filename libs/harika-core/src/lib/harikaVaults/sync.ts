@@ -7,7 +7,7 @@ import { Vault } from './Vault';
 import { v4 as uuidv4 } from 'uuid';
 import { Channel, Socket } from 'phoenix';
 
-const socket = new Socket('ws://192.168.1.127:5000/socket');
+const socket = new Socket('ws://localhost:5000/socket');
 
 export class Syncher {
   private syncSubject: Subject<void | { id: string }>;

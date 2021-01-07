@@ -14,6 +14,7 @@ import {
 import { computed } from 'mobx';
 import { NoteModel } from './NoteModel';
 import { Vault } from '../Vault';
+import { BlocksViewModel } from './BlocksViewModel';
 
 // TODO maybe root ref? What is the best way to manage??
 export const noteBlockRef = customRef<NoteBlockModel>('harika/NoteBlockRef', {
@@ -46,7 +47,6 @@ export class NoteBlockModel extends Model({
   orderPosition: prop<number>(),
   createdAt: tProp_dateTimestamp(types.dateTimestamp),
   isDeleted: prop<boolean>(false),
-  isExpanded: prop<boolean>(true),
 }) {
   @computed
   get path() {
@@ -193,11 +193,6 @@ export class NoteBlockModel extends Model({
   }
 
   @modelAction
-  toggleExpand() {
-    this.isExpanded = !this.isExpanded;
-  }
-
-  @modelAction
   mergeToLeftAndDelete() {
     const [left] = this.leftAndRight;
 
@@ -216,9 +211,9 @@ export class NoteBlockModel extends Model({
   }
 
   @modelAction
-  injectNewRightBlock(content: string) {
+  injectNewRightBlock(content: string, view: BlocksViewModel) {
     const { injectTo, parentRef, list } = (() => {
-      if (this.children.length && this.isExpanded) {
+      if (this.children.length && view.isExpanded(this.$modelId)) {
         return {
           injectTo: 0,
           parentRef: noteBlockRef(this),

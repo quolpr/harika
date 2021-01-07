@@ -27,6 +27,7 @@ import { Node } from 'unist';
 import visit from 'unist-util-visit';
 import { Link } from 'react-router-dom';
 import { Arrow } from '../Arrow/Arrow';
+import { BlocksViewModel } from 'libs/harika-core/src/lib/harikaVaults/models/BlocksViewModel';
 
 const reBlankLine = /^[ \t]*(\n|$)/;
 
@@ -152,11 +153,21 @@ type Tokenizer = {
 };
 
 const NoteBlockChildren = observer(
-  ({ childBlocks }: { childBlocks: NoteBlockModel[] }) => {
+  ({
+    childBlocks,
+    view,
+  }: {
+    childBlocks: NoteBlockModel[];
+    view: BlocksViewModel;
+  }) => {
     return childBlocks.length !== 0 ? (
       <div className="note-block__child-blocks">
         {childBlocks.map((childNoteBlock) => (
-          <NoteBlock key={childNoteBlock.$modelId} noteBlock={childNoteBlock} />
+          <NoteBlock
+            key={childNoteBlock.$modelId}
+            noteBlock={childNoteBlock}
+            view={view}
+          />
         ))}
       </div>
     ) : null;
@@ -209,7 +220,13 @@ const MarkdownRenderer = observer(
 );
 
 export const NoteBlock = observer(
-  ({ noteBlock }: { noteBlock: NoteBlockModel }) => {
+  ({
+    noteBlock,
+    view,
+  }: {
+    noteBlock: NoteBlockModel;
+    view: BlocksViewModel;
+  }) => {
     const vault = useCurrentVault();
 
     const [noteBlockContent, setNoteBlockContent] = useState({
@@ -275,7 +292,7 @@ export const NoteBlock = observer(
       async (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         if (e.key === 'Enter' && !e.shiftKey) {
           e.preventDefault();
-          const newBlock = noteBlock.injectNewRightBlock('');
+          const newBlock = noteBlock.injectNewRightBlock('', view);
 
           if (!newBlock) return;
 
@@ -284,7 +301,7 @@ export const NoteBlock = observer(
           });
         }
       },
-      [setEditState, noteBlock]
+      [setEditState, noteBlock, view]
     );
 
     const handleKeyDown = useCallback(
@@ -371,16 +388,16 @@ export const NoteBlock = observer(
           {noteBlock.children.length !== 0 && (
             <Arrow
               className="note-block__arrow"
-              isExpanded={noteBlock.isExpanded}
+              isExpanded={view.isExpanded(noteBlock.$modelId)}
               onToggle={() => {
-                noteBlock.toggleExpand();
+                view.toggleExpand(noteBlock.$modelId);
               }}
             />
           )}
 
           <div
             className={clsx('note-block__dot', {
-              'note-block__dot--expanded': noteBlock.isExpanded,
+              'note-block__dot--expanded': view.isExpanded(noteBlock.$modelId),
             })}
           />
           <TextareaAutosize
@@ -402,8 +419,8 @@ export const NoteBlock = observer(
             </div>
           )}
         </div>
-        {noteBlock.isExpanded && (
-          <NoteBlockChildren childBlocks={noteBlock.children} />
+        {view.isExpanded(noteBlock.$modelId) && (
+          <NoteBlockChildren childBlocks={noteBlock.children} view={view} />
         )}
       </div>
     );

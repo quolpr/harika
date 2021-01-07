@@ -64,7 +64,7 @@ export function App() {
   const stateActions = useState<ICurrentFocusedBlockState>();
   const currentNoteActions = useState<ICurrentNoteState>();
 
-  const [isSidebarOpened, setIsSidebarOpened] = useState(false);
+  const [isSidebarOpened, setIsSidebarOpened] = useState(true);
 
   const handleTogglerClick = useCallback(() => {
     setIsSidebarOpened(!isSidebarOpened);

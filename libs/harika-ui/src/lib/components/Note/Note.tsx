@@ -12,12 +12,15 @@ import groupBy from 'lodash.groupby';
 import {
   CurrentFocusedBlockContext,
   ICurrentFocusedBlockState,
+  useCurrentVault,
 } from '@harika/harika-utils';
 import clsx from 'clsx';
 import { Arrow } from '../Arrow/Arrow';
+import { BlocksViewModel } from 'libs/harika-core/src/lib/harikaVaults/models/BlocksViewModel';
 
 const BacklinkedNote = observer(
   ({ note, links }: { note: NoteModel; links: NoteLinkModel[] }) => {
+    const vault = useCurrentVault();
     const [isExpanded, setIsExpanded] = useState(true);
 
     return (
@@ -59,13 +62,17 @@ const BacklinkedNote = observer(
                               i === path.length - 1,
                           }
                         )}
+                        key={n.$modelId}
                       >
                         {n.content}
                       </div>
                     ))}
                   </div>
                 )}
-                <NoteBlock noteBlock={noteBlock} />
+                <NoteBlock
+                  noteBlock={noteBlock}
+                  view={vault.getOrCreateViewByModel(currentLink)}
+                />
               </div>
             );
           })}
@@ -98,11 +105,21 @@ const Backlinks = observer(
 );
 
 const NoteBlocks = observer(
-  ({ childBlocks }: { childBlocks: NoteBlockModel[] }) => {
+  ({
+    childBlocks,
+    view,
+  }: {
+    childBlocks: NoteBlockModel[];
+    view: BlocksViewModel;
+  }) => {
     return (
       <div className="note__body">
         {childBlocks.map((noteBlock) => (
-          <NoteBlock key={noteBlock.$modelId} noteBlock={noteBlock} />
+          <NoteBlock
+            key={noteBlock.$modelId}
+            noteBlock={noteBlock}
+            view={view}
+          />
         ))}
       </div>
     );
@@ -110,6 +127,7 @@ const NoteBlocks = observer(
 );
 
 export const Note: React.FC<{ note: NoteModel }> = observer(({ note }) => {
+  const vault = useCurrentVault();
   const stateActions = useState<ICurrentFocusedBlockState>();
 
   const [editState, setEditState] = useState({
@@ -153,7 +171,10 @@ export const Note: React.FC<{ note: NoteModel }> = observer(({ note }) => {
       </h2>
 
       <CurrentFocusedBlockContext.Provider value={stateActions}>
-        <NoteBlocks childBlocks={note.children} />
+        <NoteBlocks
+          view={vault.getOrCreateViewByModel(note)}
+          childBlocks={note.children}
+        />
       </CurrentFocusedBlockContext.Provider>
 
       <div className="note__linked-references">

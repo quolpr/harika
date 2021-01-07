@@ -3,13 +3,7 @@
 
   backdrop-filter: blur(5px);
 
-  &__brand {
-    @apply text-gray-100 text-3xl ml-10 font-bold;
-  }
-
-  &__brand-dot {
-    @apply inline text-pink-600 ml-0.5;
-  }
+  z-idex: 100;
 
   &__calendar-wrapper {
     @apply mr-8 relative;

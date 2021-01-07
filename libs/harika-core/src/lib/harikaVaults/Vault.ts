@@ -8,6 +8,7 @@ import {
   onPatches,
   prop,
   registerRootStore,
+  _Model,
 } from 'mobx-keystone';
 import { Database, DatabaseAdapter } from '@nozbe/watermelondb';
 import { Queries } from './db/Queries';
@@ -27,6 +28,7 @@ import { schema } from './db/schema';
 import { syncMiddleware } from './models/syncable';
 import { NoteLinkRow } from './db/rows/NoteLinkRow';
 import { NoteLinkModel } from './models/NoteLinkModel';
+import { BlocksViewModel } from './models/BlocksViewModel';
 
 export { NoteModel } from './models/NoteModel';
 export { NoteLinkModel } from './models/NoteLinkModel';
@@ -48,6 +50,7 @@ export function createVault(id: string, buildAdapter: IAdapterBuilder) {
   class Vault extends Model({
     notesMap: prop<Record<string, NoteModel>>(() => ({})),
     blocksMap: prop<Record<string, NoteBlockModel>>(() => ({})),
+    blocksViewsMap: prop<Record<string, BlocksViewModel>>(() => ({})),
     // TODO: could be optimize with Record
     noteLinks: prop<NoteLinkModel[]>(() => []),
   }) {
@@ -69,6 +72,17 @@ export function createVault(id: string, buildAdapter: IAdapterBuilder) {
     @computed({ keepAlive: true })
     get allNotes() {
       return Object.values(this.notesMap);
+    }
+
+    @modelAction
+    getOrCreateViewByModel(model: { $modelId: string; $modelType: string }) {
+      const key = `${model.$modelType}-${model.$modelId}`;
+
+      if (this.blocksViewsMap[key]) return this.blocksViewsMap[key];
+
+      this.blocksViewsMap[key] = new BlocksViewModel({});
+
+      return this.blocksViewsMap[key];
     }
 
     @modelAction
@@ -141,7 +155,7 @@ export function createVault(id: string, buildAdapter: IAdapterBuilder) {
     }
 
     async sync() {
-      return true;
+      return this.syncer.sync();
     }
 
     async preloadAllNotes() {
