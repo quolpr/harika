@@ -92,4 +92,10 @@ export class Queries {
       .query(Q.where('note_block_id', Q.oneOf(ids)))
       .fetch();
   }
+
+  async searchNotes(title: string) {
+    return this.notesCollection
+      .query(Q.where('title', Q.like(`%${title}%`)))
+      .fetch();
+  }
 }

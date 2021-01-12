@@ -1,15 +1,15 @@
 import React, { useCallback, useRef, useState } from 'react';
-import { Link, useHistory } from 'react-router-dom';
+import { useHistory } from 'react-router-dom';
 import { Calendar as CalendarIcon } from 'heroicons-react';
 import './styles.css';
 import { isArray } from 'util';
 import dayjs from 'dayjs';
 import Calendar from 'react-calendar';
 import clsx from 'clsx';
-import { useClickAway } from 'react-use';
+import { useClickAway, useKey } from 'react-use';
 import { useCurrentNote, useCurrentVault } from '@harika/harika-utils';
 import { observer } from 'mobx-react-lite';
-import { SearchInput } from '../SearchInput/SearchInput';
+import { SearchModal } from '../SearchModal/SearchModal';
 
 export const Header = observer(
   ({
@@ -24,18 +24,30 @@ export const Header = observer(
     const vault = useCurrentVault();
     const history = useHistory();
 
+    const [isModalOpened, setIsModalOpened] = useState(false);
+
     const currentNote = useCurrentNote();
 
-    const [isOpened, setIsOpened] = useState(false);
+    const [isCalendarOpened, setIsCalendarOpened] = useState(false);
 
     const calendarRef = useRef(null);
+
+    useKey(
+      'k',
+      (e) => {
+        if (e.metaKey) setIsModalOpened(!isModalOpened);
+      },
+      undefined,
+      [isModalOpened]
+    );
+
     useClickAway(calendarRef, () => {
-      setIsOpened(false);
+      setIsCalendarOpened(false);
     });
 
     const handleOnCalendarClick = useCallback(() => {
-      setIsOpened(!isOpened);
-    }, [isOpened]);
+      setIsCalendarOpened(!isCalendarOpened);
+    }, [isCalendarOpened]);
 
     const handleCalendarChange = useCallback(
       async (date: Date | Date[]) => {
@@ -77,21 +89,43 @@ export const Header = observer(
           </svg>
         </div>
 
-        <SearchInput className="header__search-input" />
+        <button
+          onClick={() => {
+            setIsModalOpened(!isModalOpened);
+          }}
+          className="header__command-palette"
+        >
+          Command Palette
+          <span className="command">
+            <kbd className="font-sans">
+              <abbr title="Command" className="no-underline">
+                ⌘
+              </abbr>
+            </kbd>
+            <kbd className="font-sans">K</kbd>
+          </span>
+        </button>
 
-        <div ref={calendarRef} className="header__calendar-wrapper">
-          <button onClick={handleOnCalendarClick}>
-            <CalendarIcon className="header__calendar-icon" size={26} />
-          </button>
-
-          {/** Calendar doesn't have inputRef in typing :(*/}
-          <Calendar
-            onChange={handleCalendarChange}
-            value={currentNote?.dailyNoteDate}
-            className={clsx('header__calendar', {
-              'header__calendar--opened': isOpened,
-            })}
+        <div className="header__right">
+          <SearchModal
+            isOpened={isModalOpened}
+            onClose={() => setIsModalOpened(false)}
           />
+
+          <div ref={calendarRef} className="header__calendar-wrapper">
+            <button onClick={handleOnCalendarClick}>
+              <CalendarIcon className="header__calendar-icon" size={26} />
+            </button>
+
+            {/** Calendar doesn't have inputRef in typing :(*/}
+            <Calendar
+              onChange={handleCalendarChange}
+              value={currentNote?.dailyNoteDate}
+              className={clsx('header__calendar', {
+                'header__calendar--opened': isCalendarOpened,
+              })}
+            />
+          </div>
         </div>
       </div>
     );

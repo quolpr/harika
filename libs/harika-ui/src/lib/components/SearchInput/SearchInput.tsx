@@ -16,7 +16,11 @@ export const SearchInput = ({ className }: { className?: string }) => {
   const [isInputFocused, setIsInputFocused] = useState(false);
 
   return (
-    <div className={clsx(className, 'search-input')}>
+    <div
+      className={clsx(className, 'search-input', {
+        'search-input--focused': isInputFocused,
+      })}
+    >
       <input
         className="search-input__input"
         onChange={(e) => setValue(e.target.value)}

@@ -1,0 +1,69 @@
+.search-modal {
+  &__header {
+    @apply px-6;
+  }
+
+  &__form {
+    @apply h-16 border-b border-gray-800;
+    display: flex;
+
+    align-items: center;
+  }
+
+  &__search-icon {
+    display: block-inline;
+
+    @apply text-gray-600;
+  }
+
+  &__search-input {
+    @apply border-gray-800 bg-gray-900 text-gray-300 px-2 py-1 rounded w-40;
+    @apply focus:outline-none focus:border-gray-700;
+    @apply ml-2;
+
+    width: 100%;
+    height: 100%;
+  }
+
+  &__search-item {
+    @apply px-5 py-3 mb-3;
+    display: block;
+
+    @apply bg-gray-800 rounded-xl shadow;
+
+    &--focused {
+      @apply bg-pink-800;
+    }
+  }
+
+  &__search-result-container {
+    @apply mb-8 mt-6;
+    flex: auto;
+    overflow: auto;
+  }
+
+  &__search-result {
+    @apply mx-8;
+  }
+}
+
+.ReactModal__Overlay {
+  @apply bg-gray-600 bg-opacity-30;
+
+  position: fixed;
+  inset: 0px;
+  z-index: 110;
+}
+
+.ReactModal__Content {
+  display: flex;
+  flex-direction: column;
+
+  position: absolute;
+  inset: 12vh;
+  overflow: auto;
+  border-radius: 4px;
+  outline: none;
+
+  @apply bg-gray-900 max-w-screen-sm mx-auto rounded-2xl shadow;
+}

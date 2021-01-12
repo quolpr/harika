@@ -304,6 +304,13 @@ export function createVault(id: string, buildAdapter: IAdapterBuilder) {
 
       return { notes, blocks, noteLinks };
     }
+
+    async searchNotes(title: string) {
+      return (await this.queries.searchNotes(title)).map((row) => ({
+        id: row.id,
+        title: row.title,
+      }));
+    }
   }
 
   const vault = new Vault({ $modelId: id });

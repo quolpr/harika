@@ -11,6 +11,7 @@
 
   &__calendar-icon {
     @apply text-pink-600;
+    margin-top: 2px;
   }
 
   &__calendar {
@@ -36,5 +37,18 @@
     &--toggled {
       @apply text-pink-600;
     }
+  }
+
+  &__right {
+    display: flex;
+  }
+
+  &__search-input {
+    @apply mr-8;
+  }
+
+  &__command-palette {
+    @apply text-gray-500 mr-10;
+    @apply focus:outline-none;
   }
 }

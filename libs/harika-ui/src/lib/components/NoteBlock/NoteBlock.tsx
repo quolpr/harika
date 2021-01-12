@@ -426,7 +426,6 @@ export const NoteBlock = observer(
           />
           {!isEditing && (
             <div onClick={handleClick} className={clsx('note-block__content')}>
-              {noteBlock.orderPosition}
               <MarkdownRenderer
                 noteBlock={noteBlock}
                 content={noteBlockContent.content}

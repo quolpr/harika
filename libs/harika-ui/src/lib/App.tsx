@@ -20,6 +20,8 @@ import { usePrevious } from 'react-use';
 import { Header } from './components/Header/Header';
 import { Sidebar } from './components/Sidebar/Sidebar';
 import clsx from 'clsx';
+import { SearchModal } from './components/SearchModal/SearchModal';
+import Modal from 'react-modal';
 
 const vaults = new HarikaVaults(
   ({ schema, dbName }) =>
@@ -60,6 +62,8 @@ const Syncher: React.FC = ({ children }) => {
 
   return <>{wasSynched && children}</>;
 };
+
+Modal.setAppElement('body');
 
 export function App() {
   const stateActions = useState<ICurrentFocusedBlockState>();
