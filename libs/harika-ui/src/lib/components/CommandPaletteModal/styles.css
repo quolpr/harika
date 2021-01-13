@@ -1,4 +1,4 @@
-.search-modal {
+.command-palette-modal {
   &__header {
     @apply px-6;
   }
@@ -27,9 +27,11 @@
 
   &__search-item {
     @apply px-5 py-3 mb-3;
+    @apply bg-gray-800 rounded-xl shadow;
     display: block;
 
-    @apply bg-gray-800 rounded-xl shadow;
+    width: 100%;
+    text-align: left;
 
     &--focused {
       @apply bg-pink-800;

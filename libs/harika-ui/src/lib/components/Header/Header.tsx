@@ -9,7 +9,7 @@ import clsx from 'clsx';
 import { useClickAway, useKey } from 'react-use';
 import { useCurrentNote, useCurrentVault } from '@harika/harika-utils';
 import { observer } from 'mobx-react-lite';
-import { SearchModal } from '../SearchModal/SearchModal';
+import { CommandPaletteModal } from '../CommandPaletteModal/CommandPaleteModal';
 
 export const Header = observer(
   ({
@@ -107,11 +107,12 @@ export const Header = observer(
         </button>
 
         <div className="header__right">
-          <SearchModal
-            isOpened={isModalOpened}
-            onClose={() => setIsModalOpened(false)}
-          />
-
+          {isModalOpened && (
+            <CommandPaletteModal
+              isOpened={isModalOpened}
+              onClose={() => setIsModalOpened(false)}
+            />
+          )}
           <div ref={calendarRef} className="header__calendar-wrapper">
             <button onClick={handleOnCalendarClick}>
               <CalendarIcon className="header__calendar-icon" size={26} />
