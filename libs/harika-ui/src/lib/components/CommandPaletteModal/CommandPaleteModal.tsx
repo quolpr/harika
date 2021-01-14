@@ -1,7 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Modal from 'react-modal';
 import './styles.css';
-import { Search as SearchIcon } from 'heroicons-react';
+import {
+  ChevronRight as ChevronRightIcon,
+  Reply as ReplyIcon,
+} from 'heroicons-react';
 import { useCurrentVault } from '@harika/harika-utils';
 import Highlighter from 'react-highlight-words';
 import { Link, useHistory } from 'react-router-dom';
@@ -9,9 +12,12 @@ import { cn } from '../../utils';
 import { useKey } from 'react-use';
 import { v4 as uuidv4 } from 'uuid';
 
-const searchModalClass = cn('command-palette-modal');
+// Command executes on each user type and as result gives list of actions
+// Commands are start with `!`. If no `!` present - then search happen between all start view actions names
 
-type ICommand =
+const commandPaletteModalClass = cn('command-palette-modal');
+
+type IAction =
   | {
       id: string;
       name: string;
@@ -29,15 +35,20 @@ type ICommand =
       name: string;
       type: 'createNote';
       noteName: string;
+    }
+  | {
+      id: string;
+      name: string;
+      type: 'dummy';
     };
 
 type IView = {
   highlight?: string;
-  commands: ICommand[];
+  actions: IAction[];
 };
 
 const startView: IView = {
-  commands: [
+  actions: [
     { id: uuidv4(), name: 'Daily note', type: 'goToPage', href: '/' },
     {
       id: uuidv4(),
@@ -63,12 +74,15 @@ export const CommandPaletteModal = ({
 }) => {
   const history = useHistory();
   const vault = useCurrentVault();
-  const [inputValue, setInputValue] = useState('');
+  const [inputCommandValue, setInputCommandValue] = useState('');
 
   const [view, setView] = useState(startView);
-  const [focusedCommandId, setFocusedCommandId] = useState<undefined | string>(
-    startView.commands[0].id
+  const [focusedActionId, setActionCommandId] = useState<undefined | string>(
+    startView.actions[0].id
   );
+  const focusedIndex = view.actions.findIndex((n) => n.id === focusedActionId);
+
+  const prevMosePosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
   const searchItemRefs = useRef<Record<string, HTMLElement>>({});
 
@@ -76,11 +90,14 @@ export const CommandPaletteModal = ({
     // TODO: rxJS
     const cb = async () => {
       const newView = await (async (): Promise<IView> => {
-        if (inputValue.startsWith('!new')) {
-          const newNoteName = inputValue.trim().replace(/^!new/, '').trim();
+        if (inputCommandValue.startsWith('!new')) {
+          const newNoteName = inputCommandValue
+            .trim()
+            .replace(/^!new/, '')
+            .trim();
 
           return {
-            commands: [
+            actions: [
               {
                 id: uuidv4(),
                 name: `Create note "${newNoteName}"`,
@@ -89,8 +106,8 @@ export const CommandPaletteModal = ({
               },
             ],
           };
-        } else if (inputValue.startsWith('!find')) {
-          const toFind = inputValue
+        } else if (inputCommandValue.startsWith('!find')) {
+          const toFind = inputCommandValue
             .trim()
             .replace(/^!find/, '')
             .trim();
@@ -99,7 +116,7 @@ export const CommandPaletteModal = ({
 
           return {
             highlight: toFind,
-            commands: notes.map(({ id, title }) => ({
+            actions: notes.map(({ id, title }) => ({
               id,
               name: title,
               type: 'goToPage',
@@ -107,13 +124,15 @@ export const CommandPaletteModal = ({
             })),
           };
         } else {
-          const actualInputValue = inputValue.trim();
+          const actualInputValue = inputCommandValue.trim();
 
           return actualInputValue.length !== 0
             ? {
-                commands: startView.commands.filter(
+                actions: startView.actions.filter(
                   ({ name }) =>
-                    name.toLowerCase().indexOf(inputValue.toLowerCase()) !== -1
+                    name
+                      .toLowerCase()
+                      .indexOf(inputCommandValue.toLowerCase()) !== -1
                 ),
                 highlight: actualInputValue,
               }
@@ -123,26 +142,26 @@ export const CommandPaletteModal = ({
 
       setView(newView);
 
-      if (newView.commands[0]) {
-        setFocusedCommandId(newView.commands[0].id);
+      if (newView.actions[0]) {
+        setActionCommandId(newView.actions[0].id);
       } else {
-        setFocusedCommandId(undefined);
+        setActionCommandId(undefined);
       }
     };
 
     cb();
-  }, [inputValue, vault]);
+  }, [inputCommandValue, vault]);
 
-  const performCommand = useCallback(
-    (command: ICommand) => {
-      switch (command.type) {
+  const performAction = useCallback(
+    (action: IAction) => {
+      switch (action.type) {
         case 'goToPage':
-          history.push(command.href);
+          history.push(action.href);
 
           onClose();
           break;
         case 'createNote': {
-          const note = vault.createNote({ title: command.noteName });
+          const note = vault.createNote({ title: action.noteName });
 
           history.push(`/notes/${note.$modelId}`, {
             focusOnBlockId: note.children[0].$modelId,
@@ -152,7 +171,7 @@ export const CommandPaletteModal = ({
           break;
         }
         case 'typeCommand':
-          setInputValue(command.commandToType);
+          setInputCommandValue(action.commandToType);
           break;
       }
     },
@@ -160,57 +179,74 @@ export const CommandPaletteModal = ({
   );
 
   useKey(
-    'ArrowDown',
+    (e) => e.key === 'ArrowDown' || (e.ctrlKey && e.key === 'j'),
     () => {
-      const i = view.commands.findIndex((n) => n.id === focusedCommandId);
-
-      if (i === -1 || i === view.commands.length - 1) {
-        setFocusedCommandId(view.commands[0]?.id);
+      if (focusedIndex === -1 || focusedIndex === view.actions.length - 1) {
+        setActionCommandId(view.actions[0]?.id);
       } else {
-        setFocusedCommandId(view.commands[i + 1].id);
+        setActionCommandId(view.actions[focusedIndex + 1].id);
       }
     },
     undefined,
-    [view.commands, focusedCommandId]
+    [focusedIndex, view.actions]
   );
 
   useKey(
-    'ArrowUp',
+    (e) => e.key === 'ArrowUp' || (e.ctrlKey && e.key === 'k'),
     () => {
-      const i = view.commands.findIndex((n) => n.id === focusedCommandId);
+      if (focusedIndex === -1) return;
 
-      if (i === -1) return;
-
-      if (i === 0) {
-        setFocusedCommandId(view.commands[view.commands.length - 1]?.id);
+      if (focusedIndex === 0) {
+        setActionCommandId(view.actions[view.actions.length - 1]?.id);
       } else {
-        setFocusedCommandId(view.commands[i - 1].id);
+        setActionCommandId(view.actions[focusedIndex - 1].id);
       }
     },
     undefined,
-    [view.commands, focusedCommandId]
+    [view.actions, focusedIndex]
+  );
+
+  useKey(
+    (e) =>
+      ['1', '2', '3', '4', '5', '6', '7', '8', '9'].includes(e.key) &&
+      (e.ctrlKey || e.metaKey),
+    (e) => {
+      e.preventDefault();
+
+      const switchTo = parseInt(e.key, 10) - 1;
+
+      if (switchTo < view.actions.length) {
+        const action = view.actions[switchTo];
+
+        if (action) performAction(action);
+      }
+    },
+    undefined,
+    [view.actions, performAction]
   );
 
   useKey(
     'Enter',
-    () => {
-      if (focusedCommandId) {
-        const command = view.commands.find(({ id }) => id === focusedCommandId);
+    (e) => {
+      e.preventDefault();
 
-        if (command) performCommand(command);
+      if (focusedActionId) {
+        const action = view.actions[focusedIndex];
+
+        if (action) performAction(action);
       }
     },
     undefined,
-    [focusedCommandId, onClose]
+    [view.actions, focusedIndex, performAction]
   );
 
   useEffect(() => {
-    if (focusedCommandId && searchItemRefs.current[focusedCommandId]) {
-      searchItemRefs.current[focusedCommandId].scrollIntoView({
+    if (focusedActionId && searchItemRefs.current[focusedActionId]) {
+      searchItemRefs.current[focusedActionId].scrollIntoView({
         block: 'nearest',
       });
     }
-  }, [focusedCommandId]);
+  }, [focusedActionId]);
 
   return (
     <Modal
@@ -221,16 +257,18 @@ export const CommandPaletteModal = ({
       shouldCloseOnOverlayClick={true}
       onRequestClose={onClose}
     >
-      <header className={searchModalClass('header')}>
+      <header className={commandPaletteModalClass('header')}>
         <form
           action=""
           role="search"
-          className={searchModalClass('form')}
+          className={commandPaletteModalClass('form')}
           onSubmit={(e) => e.preventDefault()}
         >
-          <SearchIcon className={searchModalClass('search-icon')} />
+          <ChevronRightIcon
+            className={commandPaletteModalClass('command-icon')}
+          />
           <input
-            className={searchModalClass('search-input')}
+            className={commandPaletteModalClass('command-input')}
             type="search"
             aria-autocomplete="list"
             ref={(el) => {
@@ -238,8 +276,8 @@ export const CommandPaletteModal = ({
                 el.focus();
               }
             }}
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
+            value={inputCommandValue}
+            onChange={(e) => setInputCommandValue(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'ArrowUp' || e.key === 'ArrowDown')
                 e.preventDefault();
@@ -247,43 +285,76 @@ export const CommandPaletteModal = ({
           />
         </form>
       </header>
-      <div className={searchModalClass('search-result-container')}>
-        <div className={searchModalClass('search-result')}>
-          {view.commands.map((command) => {
+      <div className={commandPaletteModalClass('actions-list-container')}>
+        <div className={commandPaletteModalClass('actions-list')}>
+          {view.actions.map((action, i) => {
             const props = {
-              key: command.id,
-              className: searchModalClass('search-item', {
-                focused: command.id === focusedCommandId,
+              key: action.id,
+              className: commandPaletteModalClass('action', {
+                focused: action.id === focusedActionId,
               }),
 
               onClick: (e: React.MouseEvent<HTMLElement>) => {
                 e.preventDefault();
-                performCommand(command);
+                performAction(action);
               },
-              onMouseEnter: () => {
-                setFocusedCommandId(command.id);
+              onMouseMove: (e: React.MouseEvent<HTMLElement>) => {
+                if (
+                  prevMosePosRef.current.x === e.screenX &&
+                  prevMosePosRef.current.y === e.screenY
+                )
+                  return;
+
+                prevMosePosRef.current = { x: e.screenX, y: e.screenY };
+
+                setActionCommandId(action.id);
               },
               ref: (el: HTMLElement | null) => {
                 if (el) {
-                  searchItemRefs.current[command.id] = el;
+                  searchItemRefs.current[action.id] = el;
                 } else {
-                  delete searchItemRefs.current[command.id];
+                  delete searchItemRefs.current[action.id];
                 }
               },
 
-              children: view.highlight ? (
-                <Highlighter
-                  searchWords={[view.highlight]}
-                  autoEscape={true}
-                  textToHighlight={command.name}
-                />
-              ) : (
-                command.name
+              children: (
+                <>
+                  {view.highlight ? (
+                    <Highlighter
+                      searchWords={[view.highlight]}
+                      autoEscape={true}
+                      textToHighlight={action.name}
+                    />
+                  ) : (
+                    action.name
+                  )}
+                  {action.type !== 'dummy' && (
+                    <>
+                      {i < 9 && i !== focusedIndex && (
+                        <div className={commandPaletteModalClass('key')}>
+                          ⌘{i + 1}
+                        </div>
+                      )}
+                      {i === focusedIndex && (
+                        <div
+                          className={commandPaletteModalClass('key', {
+                            enter: true,
+                            focused: action.id === focusedActionId,
+                          })}
+                        >
+                          <ReplyIcon size={20} />
+                        </div>
+                      )}
+                    </>
+                  )}
+                </>
               ),
             };
 
-            return command.type === 'goToPage' ? (
-              <Link to={command.href} {...props} />
+            return action.type === 'goToPage' ? (
+              <Link to={action.href} {...props} />
+            ) : action.type === 'dummy' ? (
+              <div {...props} />
             ) : (
               <button {...props} />
             );
