@@ -11,6 +11,7 @@ import { Link, useHistory } from 'react-router-dom';
 import { cn } from '../../utils';
 import { useKey } from 'react-use';
 import { v4 as uuidv4 } from 'uuid';
+import { IFocusBlockState } from '../Note/Note';
 
 // Command executes on each user type and as result gives list of actions
 // Commands are start with `!`. If no `!` present - then search happen between all start view actions names
@@ -171,7 +172,7 @@ export const CommandPaletteModal = ({
 
           history.push(`/notes/${result.data.$modelId}`, {
             focusOnBlockId: result.data.children[0].$modelId,
-          });
+          } as IFocusBlockState);
 
           onClose();
           break;

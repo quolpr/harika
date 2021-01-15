@@ -34,6 +34,7 @@ import { ICreationResult } from './types';
 
 export { NoteModel } from './models/NoteModel';
 export { NoteLinkModel } from './models/NoteLinkModel';
+export { BlocksViewModel } from './models/BlocksViewModel';
 export { NoteBlockModel, noteBlockRef } from './models/NoteBlockModel';
 
 export interface IAdapterBuilder {

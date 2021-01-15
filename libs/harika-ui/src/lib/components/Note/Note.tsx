@@ -1,11 +1,16 @@
-import React, { ChangeEvent, useCallback } from 'react';
+import React, { ChangeEvent, useCallback, useMemo } from 'react';
 import TextareaAutosize from 'react-textarea-autosize';
 import { NoteBlock } from '../NoteBlock/NoteBlock';
 import './styles.css';
 import { useEffect } from 'react';
 import { useState } from 'react';
 import { observer } from 'mobx-react-lite';
-import { NoteBlockModel, NoteModel, NoteLinkModel } from '@harika/harika-core';
+import {
+  NoteBlockModel,
+  NoteModel,
+  NoteLinkModel,
+  BlocksViewModel,
+} from '@harika/harika-core';
 import { Link, useHistory } from 'react-router-dom';
 import { Link as LinkIcon } from 'heroicons-react';
 import groupBy from 'lodash.groupby';
@@ -16,8 +21,10 @@ import {
 } from '@harika/harika-utils';
 import clsx from 'clsx';
 import { Arrow } from '../Arrow/Arrow';
-import { BlocksViewModel } from 'libs/harika-core/src/lib/harikaVaults/models/BlocksViewModel';
-import { IFocusBlockState } from '../SearchInput/SearchInput';
+
+export interface IFocusBlockState {
+  focusOnBlockId: string;
+}
 
 const BacklinkedNote = observer(
   ({ note, links }: { note: NoteModel; links: NoteLinkModel[] }) => {
@@ -138,16 +145,24 @@ export const Note: React.FC<{ note: NoteModel }> = observer(({ note }) => {
     focusOnBlockId ? { noteBlock: vault.blocksMap[focusOnBlockId] } : undefined
   );
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const memoziedStateActions = useMemo(() => stateActions, [...stateActions]);
+
   const [editState, setEditState] = useState({
     title: note.title,
     id: note.$modelId,
   });
 
   useEffect(() => {
+    if (note.title === editState.title && note.$modelId === editState.id)
+      return;
+
     setEditState({ title: note.title, id: note.$modelId });
-  }, [note.$modelId, note.title]);
+  }, [editState.id, editState.title, note.$modelId, note.title]);
 
   useEffect(() => {
+    if (note.title === editState.title && note.$modelId === editState.id)
+      return;
     if (editState.id !== note.$modelId) return;
     if (editState.title === note.title) return;
 
@@ -177,7 +192,7 @@ export const Note: React.FC<{ note: NoteModel }> = observer(({ note }) => {
         />
       </h2>
 
-      <CurrentFocusedBlockContext.Provider value={stateActions}>
+      <CurrentFocusedBlockContext.Provider value={memoziedStateActions}>
         <NoteBlocks
           view={vault.getOrCreateViewByModel(note)}
           childBlocks={note.children}

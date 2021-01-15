@@ -30,7 +30,7 @@ const NoteRow = observer(({ note }: { note: NoteTuple }) => {
   );
 });
 
-export const NotesPage = observer(() => {
+export const NotesPage = () => {
   const vault = useCurrentVault();
 
   const [noteTuples, setNoteTuples] = useState<
@@ -47,7 +47,7 @@ export const NotesPage = observer(() => {
     };
 
     callback();
-  });
+  }, [vault]);
 
   return (
     <table className="notes-table">
@@ -67,4 +67,4 @@ export const NotesPage = observer(() => {
       </tbody>
     </table>
   );
-});
+};
