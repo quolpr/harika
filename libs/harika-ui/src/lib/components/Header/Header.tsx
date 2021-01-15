@@ -53,9 +53,11 @@ export const Header = observer(
       async (date: Date | Date[]) => {
         if (isArray(date)) return;
 
-        const note = await vault.getOrCreateDailyNote(dayjs(date));
+        const result = await vault.getOrCreateDailyNote(dayjs(date));
 
-        history.replace(`/notes/${note.$modelId}`);
+        if (result.status === 'ok') {
+          history.replace(`/notes/${result.data.$modelId}`);
+        }
       },
       [vault, history]
     );

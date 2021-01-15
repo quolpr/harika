@@ -69,7 +69,7 @@
   }
 
   &__noteblock-root {
-    @apply bg-gray-800 mt-3 px-4 py-2;
+    @apply bg-gray-800 mt-3 px-4 py-2 rounded-md shadow-sm;
 
     &:first-child {
       @apply mt-0;

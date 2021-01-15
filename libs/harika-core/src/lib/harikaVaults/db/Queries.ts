@@ -65,6 +65,13 @@ export class Queries {
     return this.notesCollection.query(Q.where('title', Q.oneOf(names))).fetch();
   }
 
+  async getIsNoteExists(title: string) {
+    return (
+      (await this.notesCollection.query(Q.where('title', title)).fetch())
+        .length !== 0
+    );
+  }
+
   async getNoteBlockRowsByIds(noteBlockIds: string[]) {
     return this.noteBlocksCollection
       .query(Q.where('id', Q.oneOf(noteBlockIds)))

@@ -1,8 +1,7 @@
 import { useCurrentVault } from '@harika/harika-utils';
 import { observer } from 'mobx-react-lite';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import './styles.css';
-import { NoteModel } from '@harika/harika-core';
 import { Link } from 'react-router-dom';
 import ReactTimeAgo from 'react-time-ago';
 
@@ -11,11 +10,17 @@ import en from 'javascript-time-ago/locale/en';
 
 TimeAgo.addDefaultLocale(en);
 
-const NoteRow = observer(({ note }: { note: NoteModel }) => {
+type NoteTuple = {
+  id: string;
+  title: string;
+  createdAt: Date;
+};
+
+const NoteRow = observer(({ note }: { note: NoteTuple }) => {
   return (
     <tr>
       <td className="pl-1">
-        <Link to={`/notes/${note.$modelId}`}>{note.title}</Link>
+        <Link to={`/notes/${note.id}`}>{note.title}</Link>
       </td>
       <td className="notes-table__time">
         <ReactTimeAgo date={note.createdAt} locale="en-US" />
@@ -28,9 +33,17 @@ const NoteRow = observer(({ note }: { note: NoteModel }) => {
 export const NotesPage = observer(() => {
   const vault = useCurrentVault();
 
+  const [noteTuples, setNoteTuples] = useState<
+    {
+      id: string;
+      title: string;
+      createdAt: Date;
+    }[]
+  >([]);
+
   useEffect(() => {
     const callback = async () => {
-      await vault.preloadAllNotes();
+      setNoteTuples(await vault.getAllNotesTuples());
     };
 
     callback();
@@ -46,10 +59,10 @@ export const NotesPage = observer(() => {
         </tr>
       </thead>
       <tbody>
-        {vault.allNotes
+        {noteTuples
           .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
           .map((note) => (
-            <NoteRow note={note} key={note.$modelId} />
+            <NoteRow note={note} key={note.id} />
           ))}
       </tbody>
     </table>

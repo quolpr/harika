@@ -9,9 +9,11 @@ export const MainPageRedirect = () => {
 
   useEffect(() => {
     const toExecute = async () => {
-      const note = await vault.getOrCreateDailyNote(dayjs());
+      const result = await vault.getOrCreateDailyNote(dayjs());
 
-      history.replace(`/notes/${note.$modelId}`);
+      if (result.status === 'ok') {
+        history.replace(`/notes/${result.data.$modelId}`);
+      }
     };
 
     toExecute();

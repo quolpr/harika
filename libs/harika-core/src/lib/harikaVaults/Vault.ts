@@ -1,14 +1,14 @@
 import {
-  actionTrackingMiddleware,
   connectReduxDevTools,
   model,
   Model,
   modelAction,
+  modelFlow,
   ModelInstanceCreationData,
-  onPatches,
   prop,
   registerRootStore,
-  _Model,
+  _async,
+  _await,
 } from 'mobx-keystone';
 import { Database, DatabaseAdapter } from '@nozbe/watermelondb';
 import { Queries } from './db/Queries';
@@ -29,6 +29,8 @@ import { syncMiddleware } from './models/syncable';
 import { NoteLinkRow } from './db/rows/NoteLinkRow';
 import { NoteLinkModel } from './models/NoteLinkModel';
 import { BlocksViewModel } from './models/BlocksViewModel';
+import { Required } from 'utility-types';
+import { ICreationResult } from './types';
 
 export { NoteModel } from './models/NoteModel';
 export { NoteLinkModel } from './models/NoteLinkModel';
@@ -38,6 +40,10 @@ export interface IAdapterBuilder {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (opts: { dbName: string; schema: any }): DatabaseAdapter;
 }
+
+// ROW = DB projection of the model
+// Model = DDD model
+// Tuple = plain object data, used for fast data getting
 
 export function createVault(id: string, buildAdapter: IAdapterBuilder) {
   const database = new Database({
@@ -57,7 +63,6 @@ export function createVault(id: string, buildAdapter: IAdapterBuilder) {
     private database = database;
     private queries = new Queries(this.database);
     private syncer!: Syncher;
-    private areAllNotesLoaded = false;
 
     onInit() {
       this.syncer = new Syncher(database, this, this.queries);
@@ -67,11 +72,6 @@ export function createVault(id: string, buildAdapter: IAdapterBuilder) {
         new ChangesHandler(database, this.queries, this, this.syncer)
           .handlePatch
       );
-    }
-
-    @computed({ keepAlive: true })
-    get allNotes() {
-      return Object.values(this.notesMap);
     }
 
     @modelAction
@@ -114,13 +114,31 @@ export function createVault(id: string, buildAdapter: IAdapterBuilder) {
       this.noteLinks.splice(this.noteLinks.indexOf(link), 1);
     }
 
-    @modelAction
-    createNote(
-      attrs: Optional<
-        ModelInstanceCreationData<NoteModel>,
-        'createdAt' | 'dailyNoteDate'
+    @modelFlow
+    createNote = _async(function* (
+      this: Vault,
+      attrs: Required<
+        Optional<
+          ModelInstanceCreationData<NoteModel>,
+          'createdAt' | 'dailyNoteDate'
+        >,
+        'title'
       >
     ) {
+      if (attrs.title.trim().length === 0) {
+        return {
+          status: 'error',
+          errors: { title: ["Can't be empty"] },
+        } as ICreationResult<NoteModel>;
+      }
+
+      if (yield* _await(this.queries.getIsNoteExists(attrs.title))) {
+        return {
+          status: 'error',
+          errors: { title: ['Already exists'] },
+        } as ICreationResult<NoteModel>;
+      }
+
       const note = new NoteModel({
         $modelId: uuidv4(),
         createdAt: new Date(),
@@ -134,42 +152,34 @@ export function createVault(id: string, buildAdapter: IAdapterBuilder) {
 
       note.createBlock({ content: '', orderPosition: 0 });
 
-      return note;
-    }
+      return { status: 'ok', data: note } as ICreationResult<NoteModel>;
+    });
 
-    @modelAction
-    async getOrCreateDailyNote(date: Dayjs) {
-      const noteRow = await this.queries.getDailyNoteRow(date);
+    @modelFlow
+    getOrCreateDailyNote = _async(function* (this: Vault, date: Dayjs) {
+      const noteRow = yield* _await(this.queries.getDailyNoteRow(date));
 
       if (noteRow) {
-        return this.findNote(noteRow.id);
+        return {
+          status: 'ok',
+          data: yield* _await(this.findNote(noteRow.id)),
+        } as ICreationResult<NoteModel>;
       }
 
       const title = date.format('D MMM YYYY');
       const startOfDate = date.startOf('day');
 
-      return this.createNote({
-        title,
-        dailyNoteDate: startOfDate.toDate(),
-      });
-    }
+      return yield* _await(
+        this.createNote({
+          title,
+          dailyNoteDate: startOfDate.toDate(),
+        })
+      );
+    });
 
     async sync() {
       return true;
       // return this.syncer.sync();
-    }
-
-    async preloadAllNotes() {
-      if (this.areAllNotesLoaded) return;
-
-      // TODO: optimize
-      const allNotes = await this.queries.getAllNotes();
-      await Promise.all(
-        allNotes.map(async (note) => {
-          await this.findNote(note.id, false, false);
-        })
-      );
-      this.areAllNotesLoaded = true;
     }
 
     async findNote(id: string, preloadChildren = true, preloadLinks = true) {
@@ -195,19 +205,23 @@ export function createVault(id: string, buildAdapter: IAdapterBuilder) {
         (await this.queries.getNoteRowsByNames(names)).map((n) => [n.title, n])
       );
 
-      const allNotes = await Promise.all(
-        names.map(async (name) => {
-          if (!existingNotesIndexed[name]) {
-            const newNote = this.createNote({ title: name });
+      const allNotes = (
+        await Promise.all(
+          names.map(async (name) => {
+            if (!existingNotesIndexed[name]) {
+              const newNote = await this.createNote({ title: name });
 
-            return newNote;
-          } else {
-            const existing = existingNotesIndexed[name];
+              if (newNote.status === 'ok') {
+                return newNote.data;
+              }
+            } else {
+              const existing = existingNotesIndexed[name];
 
-            return this.findNote(existing.id, false);
-          }
-        })
-      );
+              return this.findNote(existing.id, false);
+            }
+          })
+        )
+      ).flatMap((n) => (n ? [n] : []));
 
       const allNotesIndexed = Object.fromEntries(
         allNotes.map((n) => [n.$modelId, n])
@@ -306,10 +320,18 @@ export function createVault(id: string, buildAdapter: IAdapterBuilder) {
       return { notes, blocks, noteLinks };
     }
 
-    async searchNotes(title: string) {
+    async searchNotesTuples(title: string) {
       return (await this.queries.searchNotes(title)).map((row) => ({
         id: row.id,
         title: row.title,
+      }));
+    }
+
+    async getAllNotesTuples() {
+      return (await this.queries.getAllNotes()).map((row) => ({
+        id: row.id,
+        title: row.title,
+        createdAt: row.createdAt,
       }));
     }
   }

@@ -112,7 +112,7 @@ export const CommandPaletteModal = ({
             .replace(/^!find/, '')
             .trim();
 
-          const notes = await vault.searchNotes(toFind);
+          const notes = await vault.searchNotesTuples(toFind);
 
           return {
             highlight: toFind,
@@ -153,7 +153,7 @@ export const CommandPaletteModal = ({
   }, [inputCommandValue, vault]);
 
   const performAction = useCallback(
-    (action: IAction) => {
+    async (action: IAction) => {
       switch (action.type) {
         case 'goToPage':
           history.push(action.href);
@@ -161,10 +161,16 @@ export const CommandPaletteModal = ({
           onClose();
           break;
         case 'createNote': {
-          const note = vault.createNote({ title: action.noteName });
+          const result = await vault.createNote({ title: action.noteName });
 
-          history.push(`/notes/${note.$modelId}`, {
-            focusOnBlockId: note.children[0].$modelId,
+          if (result.status === 'error') {
+            alert(JSON.stringify(result.errors));
+
+            return;
+          }
+
+          history.push(`/notes/${result.data.$modelId}`, {
+            focusOnBlockId: result.data.children[0].$modelId,
           });
 
           onClose();

@@ -40,7 +40,7 @@ export const noteRef = customRef<NoteModel>('harika/NoteRef', {
 
 @model('harika/NoteModel')
 export class NoteModel extends Model({
-  title: prop<string>(''),
+  title: prop<string>(),
   dailyNoteDate: tProp_dateTimestamp(types.dateTimestamp),
   createdAt: tProp_dateTimestamp(types.dateTimestamp),
   areChildrenLoaded: prop<boolean>(false),
