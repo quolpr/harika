@@ -209,10 +209,12 @@ export function createVault(id: string, buildAdapter: IAdapterBuilder) {
         await Promise.all(
           names.map(async (name) => {
             if (!existingNotesIndexed[name]) {
-              const newNote = await this.createNote({ title: name });
+              const result = await this.createNote({ title: name });
 
-              if (newNote.status === 'ok') {
-                return newNote.data;
+              if (result.status === 'ok') {
+                return result.data;
+              } else {
+                alert(JSON.stringify(result.errors));
               }
             } else {
               const existing = existingNotesIndexed[name];

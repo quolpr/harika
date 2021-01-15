@@ -65,7 +65,8 @@ export class NoteModel extends Model({
       .filter(
         (block) =>
           block.noteRef.id === this.$modelId &&
-          block.parentBlockRef === undefined
+          block.parentBlockRef === undefined &&
+          !block.isDeleted
       )
       .sort((a, b) => a.orderPosition - b.orderPosition);
   }
@@ -73,7 +74,7 @@ export class NoteModel extends Model({
   @computed({ equals: comparer.shallow })
   get allChildren() {
     return Object.values(this.vault.blocksMap).filter(
-      (block) => block.noteRef.id === this.$modelId
+      (block) => block.noteRef.id === this.$modelId && !block.isDeleted
     );
   }
 

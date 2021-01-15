@@ -7,9 +7,8 @@ import { Queries } from './db/Queries';
 import { HarikaNotesTableName } from './db/schema';
 import { NoteModel } from './models/NoteModel';
 import { Subject } from 'rxjs';
-import { buffer, concatMap, debounceTime, throttleTime } from 'rxjs/operators';
+import { buffer, concatMap, debounceTime } from 'rxjs/operators';
 import { Syncher } from './sync';
-import isEqual from 'lodash.isequal';
 import { Vault } from './Vault';
 import { NoteLinkModel } from './models/NoteLinkModel';
 
@@ -160,11 +159,26 @@ export class ChangesHandler {
             patch.path[2] === 'isDeleted' &&
             patch.value === true
           ) {
+            console.log('deleting note');
             const note = await this.queries.notesCollection.find(
               patch.path[1] as string
             );
 
             await note.destroyPermanently();
+          }
+
+          if (
+            patch.path.length === 3 &&
+            patch.path[0] === 'blocksMap' &&
+            patch.path[2] === 'isDeleted' &&
+            patch.value === true
+          ) {
+            console.log('deleting block');
+            const noteBlock = await this.queries.noteBlocksCollection.find(
+              patch.path[1] as string
+            );
+
+            await noteBlock.destroyPermanently();
           }
         }
       }
