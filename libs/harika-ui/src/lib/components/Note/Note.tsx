@@ -21,6 +21,7 @@ import {
 } from '@harika/harika-utils';
 import clsx from 'clsx';
 import { Arrow } from '../Arrow/Arrow';
+import { paths } from '../../paths';
 
 export interface IFocusBlockState {
   focusOnBlockId: string;
@@ -45,7 +46,14 @@ const BacklinkedNote = observer(
               setIsExpanded(!isExpanded);
             }}
           />
-          <Link to={`/notes/${note.$modelId}`}>{note.title}</Link>
+          <Link
+            to={paths.vaultNotePath({
+              vaultId: vault.$modelId,
+              noteId: note.$modelId,
+            })}
+          >
+            {note.title}
+          </Link>
         </div>
 
         <div

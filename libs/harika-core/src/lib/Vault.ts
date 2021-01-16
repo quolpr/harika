@@ -1,41 +1,37 @@
 import {
-  connectReduxDevTools,
   model,
   Model,
   modelAction,
   modelFlow,
   ModelInstanceCreationData,
   prop,
-  registerRootStore,
   _async,
   _await,
 } from 'mobx-keystone';
 import { Database, DatabaseAdapter } from '@nozbe/watermelondb';
-import { Queries } from './db/Queries';
-import * as remotedev from 'remotedev';
-import { convertNoteRowToModelAttrs } from './convertRowToModel';
+import { Queries } from './Vault/db/Queries';
+import { convertNoteRowToModelAttrs } from './Vault/convertRowToModel';
 import { Dayjs } from 'dayjs';
-import { ChangesHandler } from './ChangesHandler';
-import { NoteBlockModel, noteBlockRef } from './models/NoteBlockModel';
-import { Syncher } from './sync';
-import { NoteModel, noteRef } from './models/NoteModel';
-import { computed } from 'mobx';
+import { ChangesHandler } from './Vault/ChangesHandler';
+import { NoteBlockModel, noteBlockRef } from './Vault/models/NoteBlockModel';
+import { Syncher } from './Vault/sync';
+import { NoteModel, noteRef } from './Vault/models/NoteModel';
 import { Optional } from 'utility-types';
 import { v4 as uuidv4 } from 'uuid';
-import { NoteRow } from './db/rows/NoteRow';
-import { NoteBlockRow } from './db/rows/NoteBlockRow';
-import { schema } from './db/schema';
-import { syncMiddleware } from './models/syncable';
-import { NoteLinkRow } from './db/rows/NoteLinkRow';
-import { NoteLinkModel } from './models/NoteLinkModel';
-import { BlocksViewModel } from './models/BlocksViewModel';
+import { NoteRow } from './Vault/db/rows/NoteRow';
+import { NoteBlockRow } from './Vault/db/rows/NoteBlockRow';
+import { schema } from './Vault/db/schema';
+import { syncMiddleware } from './Vault/models/syncable';
+import { NoteLinkRow } from './Vault/db/rows/NoteLinkRow';
+import { NoteLinkModel } from './Vault/models/NoteLinkModel';
+import { BlocksViewModel } from './Vault/models/BlocksViewModel';
 import { Required } from 'utility-types';
-import { ICreationResult } from './types';
+import { ICreationResult } from './Vault/types';
 
-export { NoteModel } from './models/NoteModel';
-export { NoteLinkModel } from './models/NoteLinkModel';
-export { BlocksViewModel } from './models/BlocksViewModel';
-export { NoteBlockModel, noteBlockRef } from './models/NoteBlockModel';
+export { NoteModel } from './Vault/models/NoteModel';
+export { NoteLinkModel } from './Vault/models/NoteLinkModel';
+export { BlocksViewModel } from './Vault/models/BlocksViewModel';
+export { NoteBlockModel, noteBlockRef } from './Vault/models/NoteBlockModel';
 
 export interface IAdapterBuilder {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -46,15 +42,28 @@ export interface IAdapterBuilder {
 // Model = DDD model
 // Tuple = plain object data, used for fast data getting
 
-export function createVault(id: string, buildAdapter: IAdapterBuilder) {
+const modelType = 'harika/Vault';
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const isVault = (model: any): model is Vault =>
+  '$modelType' in model && model.$modelType === modelType;
+
+export function initializeVault(
+  id: string,
+  name: string,
+  buildAdapter: IAdapterBuilder
+) {
   const database = new Database({
     adapter: buildAdapter({ dbName: `vault-${id}`, schema: schema }),
     modelClasses: [NoteRow, NoteBlockRow, NoteLinkRow],
     actionsEnabled: true,
   });
 
-  @model('harika/Vault')
+  console.log(database);
+
+  @model(modelType)
   class Vault extends Model({
+    name: prop<string>(),
     notesMap: prop<Record<string, NoteModel>>(() => ({})),
     blocksMap: prop<Record<string, NoteBlockModel>>(() => ({})),
     blocksViewsMap: prop<Record<string, BlocksViewModel>>(() => ({})),
@@ -339,17 +348,7 @@ export function createVault(id: string, buildAdapter: IAdapterBuilder) {
     }
   }
 
-  const vault = new Vault({ $modelId: id });
-
-  const connection = remotedev.connectViaExtension({
-    name: 'Harika vault',
-  });
-
-  connectReduxDevTools(remotedev, connection, vault);
-
-  registerRootStore(vault);
-
-  return vault;
+  return new Vault({ $modelId: id, name });
 }
 
-export type Vault = ReturnType<typeof createVault>;
+export type Vault = ReturnType<typeof initializeVault>;

@@ -1,12 +1,12 @@
-import { HarikaVaults } from '@harika/harika-core';
+import { HarikaVaults, Vault } from '@harika/harika-core';
 import {
   CurrentNoteContext,
   CurrentVaultContext,
   ICurrentNoteState,
   useCurrentVault,
 } from '@harika/harika-utils';
-import LokiJSAdapter from '@nozbe/watermelondb/adapters/lokijs';
 import React, { useCallback, useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { cn } from '../../utils';
 import { Header } from '../Header/Header';
 import { Sidebar } from '../Sidebar/Sidebar';
@@ -14,27 +14,6 @@ import { Sidebar } from '../Sidebar/Sidebar';
 import './styles.css';
 
 const layoutClass = cn('vault-layout');
-
-const vaults = new HarikaVaults(
-  ({ schema, dbName }) =>
-    new LokiJSAdapter({
-      schema,
-      dbName, // optional db name
-      // migrations, // optional migrations
-      useWebWorker: false, // recommended for new projects. tends to improve performance and reduce glitches in most cases, but also has downsides - test with and without it
-      useIncrementalIndexedDB: true, // recommended for new projects. improves performance (but incompatible with early Watermelon databases)
-      // It's recommended you implement this method:
-      // onIndexedDBVersionChange: () => {
-      //   // database was deleted in another browser tab (user logged out), so we must make sure we delete
-      //   // it in this tab as well
-      //   if (checkIfUserIsLoggedIn()) {
-      //     window.location.reload()
-      //   }
-      // },
-      // Optional:
-      // onQuotaExceededError: (error) => { /* do something when user runs out of disk space */ },
-    } as any)
-);
 
 const Syncher: React.FC = ({ children }) => {
   const vault = useCurrentVault();
@@ -53,11 +32,12 @@ const Syncher: React.FC = ({ children }) => {
   return <>{wasSynched && children}</>;
 };
 
-export const VaultLayout: React.FC<{ vaultId: string }> = ({
-  children,
-  vaultId,
-}) => {
-  const vault = vaults.getVault(vaultId);
+export const VaultLayout: React.FC<{
+  vaults: HarikaVaults;
+}> = ({ children, vaults }) => {
+  const { vaultId } = useParams<{ vaultId: string }>();
+
+  const [vault, setVault] = useState<Vault | undefined>();
 
   const currentNoteActions = useState<ICurrentNoteState>();
   const [isSidebarOpened, setIsSidebarOpened] = useState(true);
@@ -65,6 +45,14 @@ export const VaultLayout: React.FC<{ vaultId: string }> = ({
   const handleTogglerClick = useCallback(() => {
     setIsSidebarOpened(!isSidebarOpened);
   }, [isSidebarOpened]);
+
+  useEffect(() => {
+    const cb = async () => setVault(await vaults.getVault(vaultId));
+
+    cb();
+  }, [vaults, vaultId]);
+
+  if (!vault) return null;
 
   return (
     <CurrentVaultContext.Provider value={vault}>

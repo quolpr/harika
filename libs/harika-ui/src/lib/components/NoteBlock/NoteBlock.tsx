@@ -15,7 +15,7 @@ import {
   useCurrentVault,
 } from '@harika/harika-utils';
 import { Observer, observer } from 'mobx-react-lite';
-import { NoteBlockModel } from '@harika/harika-core';
+import { BlocksViewModel, NoteBlockModel } from '@harika/harika-core';
 import ReactMarkdown from 'react-markdown';
 import {
   Settings,
@@ -27,8 +27,8 @@ import { Node } from 'unist';
 import visit from 'unist-util-visit';
 import { Link } from 'react-router-dom';
 import { Arrow } from '../Arrow/Arrow';
-import { BlocksViewModel } from 'libs/harika-core/src/lib/harikaVaults/models/BlocksViewModel';
 import { computed } from 'mobx';
+import { paths } from '../../paths';
 
 const reBlankLine = /^[ \t]*(\n|$)/;
 
@@ -179,6 +179,7 @@ const plugins = [blankLines, attacher];
 
 const MarkdownRenderer = observer(
   ({ noteBlock, content }: { noteBlock: NoteBlockModel; content: string }) => {
+    const vault = useCurrentVault();
     const links = noteBlock.noteLinks;
 
     const renderers = useMemo(
@@ -192,9 +193,14 @@ const MarkdownRenderer = observer(
                   (link) => link.noteRef.current.title === node.data.noteName
                 );
 
+                if (!link) return node.value;
+
                 return (
                   <Link
-                    to={`/notes/${link?.noteRef.id}`}
+                    to={paths.vaultNotePath({
+                      vaultId: vault.$modelId,
+                      noteId: link?.noteRef.id,
+                    })}
                     className="text-pink-500 hover:underline"
                     onClick={(e) => e.stopPropagation()}
                   >
@@ -206,7 +212,7 @@ const MarkdownRenderer = observer(
           );
         },
       }),
-      [links]
+      [links, vault.$modelId]
     );
 
     return (
@@ -232,8 +238,6 @@ export const NoteBlock = observer(
     const isExpanded = computed(() =>
       view.isExpanded(noteBlock.$modelId)
     ).get();
-
-    console.log('render!');
 
     const [noteBlockContent, setNoteBlockContent] = useState({
       content: noteBlock.content,

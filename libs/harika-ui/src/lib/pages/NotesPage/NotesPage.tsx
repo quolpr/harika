@@ -7,6 +7,7 @@ import ReactTimeAgo from 'react-time-ago';
 
 import TimeAgo from 'javascript-time-ago';
 import en from 'javascript-time-ago/locale/en';
+import { paths } from '../../paths';
 
 TimeAgo.addDefaultLocale(en);
 
@@ -17,10 +18,16 @@ type NoteTuple = {
 };
 
 const NoteRow = observer(({ note }: { note: NoteTuple }) => {
+  const vault = useCurrentVault();
+
   return (
     <tr>
       <td className="pl-1">
-        <Link to={`/notes/${note.id}`}>{note.title}</Link>
+        <Link
+          to={paths.vaultNotePath({ vaultId: vault.$modelId, noteId: note.id })}
+        >
+          {note.title}
+        </Link>
       </td>
       <td className="notes-table__time">
         <ReactTimeAgo date={note.createdAt} locale="en-US" />

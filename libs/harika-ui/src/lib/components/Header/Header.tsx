@@ -10,6 +10,7 @@ import { useClickAway, useKey } from 'react-use';
 import { useCurrentNote, useCurrentVault } from '@harika/harika-utils';
 import { observer } from 'mobx-react-lite';
 import { CommandPaletteModal } from '../CommandPaletteModal/CommandPaleteModal';
+import { paths } from '../../paths';
 
 export const Header = observer(
   ({
@@ -56,7 +57,12 @@ export const Header = observer(
         const result = await vault.getOrCreateDailyNote(dayjs(date));
 
         if (result.status === 'ok') {
-          history.replace(`/notes/${result.data.$modelId}`);
+          history.replace(
+            paths.vaultNotePath({
+              vaultId: vault.$modelId,
+              noteId: result.data.$modelId,
+            })
+          );
         }
       },
       [vault, history]

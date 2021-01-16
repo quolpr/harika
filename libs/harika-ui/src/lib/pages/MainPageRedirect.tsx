@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import dayjs from 'dayjs';
 import { useHistory } from 'react-router-dom';
 import { useCurrentVault } from '@harika/harika-utils';
+import { paths } from '../paths';
 
 export const MainPageRedirect = () => {
   const vault = useCurrentVault();
@@ -12,7 +13,12 @@ export const MainPageRedirect = () => {
       const result = await vault.getOrCreateDailyNote(dayjs());
 
       if (result.status === 'ok') {
-        history.replace(`/notes/${result.data.$modelId}`);
+        history.replace(
+          paths.vaultNotePath({
+            vaultId: vault.$modelId,
+            noteId: result.data.$modelId,
+          })
+        );
       }
     };
 

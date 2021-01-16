@@ -1,0 +1,9 @@
+.vaults {
+  @apply max-w-screen-sm mx-auto px-10 py-10;
+
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+
+  &__box {
+  }
+}

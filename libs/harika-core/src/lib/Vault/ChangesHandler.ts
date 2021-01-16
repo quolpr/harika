@@ -4,12 +4,12 @@ import { NoteBlockModel } from './models/NoteBlockModel';
 import { NoteBlockRow } from './db/rows/NoteBlockRow';
 import { NoteRow } from './db/rows/NoteRow';
 import { Queries } from './db/Queries';
-import { HarikaNotesTableName } from './db/schema';
+import { VaultTableNames } from './db/schema';
 import { NoteModel } from './models/NoteModel';
 import { Subject } from 'rxjs';
 import { buffer, concatMap, debounceTime } from 'rxjs/operators';
 import { Syncher } from './sync';
-import { Vault } from './Vault';
+import { Vault } from '../Vault';
 import { NoteLinkModel } from './models/NoteLinkModel';
 
 export class ChangesHandler {
@@ -24,11 +24,11 @@ export class ChangesHandler {
     private syncher: Syncher
   ) {
     this.notesCollection = this.database.collections.get<NoteRow>(
-      HarikaNotesTableName.NOTES
+      VaultTableNames.NOTES
     );
 
     this.noteBlocksCollection = this.database.collections.get<NoteBlockRow>(
-      HarikaNotesTableName.NOTE_BLOCKS
+      VaultTableNames.NOTE_BLOCKS
     );
 
     this.patchesSubject = new Subject<Patch>();

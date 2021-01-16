@@ -3,7 +3,7 @@ import { synchronize } from '@nozbe/watermelondb/sync';
 import { Subject, Observable, merge } from 'rxjs';
 import { auditTime, concatMap, find, share } from 'rxjs/operators';
 import { Queries } from './db/Queries';
-import { Vault } from './Vault';
+import { Vault } from '../Vault';
 import { v4 as uuidv4 } from 'uuid';
 import { Channel, Socket } from 'phoenix';
 

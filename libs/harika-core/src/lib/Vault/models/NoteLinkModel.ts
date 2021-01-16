@@ -7,7 +7,7 @@ import {
   tProp_dateTimestamp,
   types,
 } from 'mobx-keystone';
-import { NoteBlockModel, NoteModel } from '../Vault';
+import { NoteBlockModel, NoteModel } from '../../Vault';
 
 @model('harika/NoteLinkModel')
 export class NoteLinkModel extends Model({

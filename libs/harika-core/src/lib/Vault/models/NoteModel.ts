@@ -2,7 +2,7 @@ import { comparer, computed } from 'mobx';
 import {
   customRef,
   detach,
-  getRoot,
+  findParent,
   model,
   Model,
   modelAction,
@@ -14,7 +14,7 @@ import {
 import { Optional } from 'utility-types';
 import { v4 as uuidv4 } from 'uuid';
 import { NoteBlockModel } from './NoteBlockModel';
-import { Vault } from '../Vault';
+import { isVault, Vault } from '../../Vault';
 
 export const noteRef = customRef<NoteModel>('harika/NoteRef', {
   // this works, but we will use getRefId() from the Todo class instead
@@ -23,12 +23,13 @@ export const noteRef = customRef<NoteModel>('harika/NoteRef', {
   // },
 
   resolve(ref) {
-    const vault = getRoot<Vault>(ref);
+    const vault = findParent<Vault>(this, isVault);
 
-    if (!vault || vault.$modelType !== 'harika/Vault') return undefined;
+    if (!vault) return undefined;
 
     return vault.notesMap[ref.id];
   },
+
   onResolvedValueChange(ref, newTodo, oldTodo) {
     if (oldTodo && !newTodo) {
       // if the todo value we were referencing disappeared then remove the reference
@@ -38,7 +39,13 @@ export const noteRef = customRef<NoteModel>('harika/NoteRef', {
   },
 });
 
-@model('harika/NoteModel')
+const modelType = 'harika/NoteModel';
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const isNoteModel = (model: any): model is NoteModel =>
+  '$modelType' in model && model.$modelType === modelType;
+
+@model(modelType)
 export class NoteModel extends Model({
   title: prop<string>(),
   dailyNoteDate: tProp_dateTimestamp(types.dateTimestamp),
@@ -49,7 +56,8 @@ export class NoteModel extends Model({
 }) {
   @computed
   get vault() {
-    return getRoot<Vault>(this);
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    return findParent<Vault>(this, isVault)!;
   }
 
   @computed({ equals: comparer.shallow })

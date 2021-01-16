@@ -1,7 +1,7 @@
 import {
   customRef,
   detach,
-  getRoot,
+  findParent,
   model,
   Model,
   modelAction,
@@ -13,10 +13,9 @@ import {
 } from 'mobx-keystone';
 import { comparer, computed } from 'mobx';
 import { NoteModel } from './NoteModel';
-import { Vault } from '../Vault';
+import { isVault, Vault } from '../../Vault';
 import { BlocksViewModel } from './BlocksViewModel';
 
-// TODO maybe root ref? What is the best way to manage??
 export const noteBlockRef = customRef<NoteBlockModel>('harika/NoteBlockRef', {
   // this works, but we will use getRefId() from the Todo class instead
   // getId(maybeTodo) {
@@ -24,7 +23,7 @@ export const noteBlockRef = customRef<NoteBlockModel>('harika/NoteBlockRef', {
   // },
 
   resolve(ref) {
-    const vault = getRoot<Vault>(ref);
+    const vault = findParent<Vault>(this, isVault);
 
     if (!vault || vault.$modelType !== 'harika/Vault') return undefined;
 
@@ -68,7 +67,8 @@ export class NoteBlockModel extends Model({
 
   @computed
   get vault() {
-    return getRoot<Vault>(this);
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    return findParent<Vault>(this, isVault)!;
   }
 
   @computed({ equals: comparer.shallow })

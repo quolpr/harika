@@ -12,6 +12,7 @@ import { cn } from '../../utils';
 import { useKey } from 'react-use';
 import { v4 as uuidv4 } from 'uuid';
 import { IFocusBlockState } from '../Note/Note';
+import { paths } from '../../paths';
 
 // Command executes on each user type and as result gives list of actions
 // Commands are start with `!`. If no `!` present - then search happen between all start view actions names
@@ -48,24 +49,6 @@ type IView = {
   actions: IAction[];
 };
 
-const startView: IView = {
-  actions: [
-    { id: uuidv4(), name: 'Daily note', type: 'goToPage', href: '/' },
-    {
-      id: uuidv4(),
-      name: 'Create new note',
-      type: 'typeCommand',
-      commandToType: '!new ',
-    },
-    {
-      id: uuidv4(),
-      name: 'Find note',
-      type: 'typeCommand',
-      commandToType: '!find ',
-    },
-  ],
-};
-
 export const CommandPaletteModal = ({
   isOpened,
   onClose,
@@ -76,6 +59,32 @@ export const CommandPaletteModal = ({
   const history = useHistory();
   const vault = useCurrentVault();
   const [inputCommandValue, setInputCommandValue] = useState('');
+
+  const startView: IView = React.useMemo(
+    () => ({
+      actions: [
+        {
+          id: uuidv4(),
+          name: 'Daily note',
+          type: 'goToPage',
+          href: paths.vaultDailyPath({ vaultId: vault.$modelId }),
+        },
+        {
+          id: uuidv4(),
+          name: 'Create new note',
+          type: 'typeCommand',
+          commandToType: '!new ',
+        },
+        {
+          id: uuidv4(),
+          name: 'Find note',
+          type: 'typeCommand',
+          commandToType: '!find ',
+        },
+      ],
+    }),
+    [vault.$modelId]
+  );
 
   const [view, setView] = useState(startView);
   const [focusedActionId, setActionCommandId] = useState<undefined | string>(
@@ -121,7 +130,10 @@ export const CommandPaletteModal = ({
               id,
               name: title,
               type: 'goToPage',
-              href: `/notes/${id}`,
+              href: paths.vaultNotePath({
+                vaultId: vault.$modelId,
+                noteId: id,
+              }),
             })),
           };
         } else {
@@ -170,9 +182,15 @@ export const CommandPaletteModal = ({
             return;
           }
 
-          history.push(`/notes/${result.data.$modelId}`, {
-            focusOnBlockId: result.data.children[0].$modelId,
-          } as IFocusBlockState);
+          history.push(
+            paths.vaultNotePath({
+              vaultId: vault.$modelId,
+              noteId: result.data.$modelId,
+            }),
+            {
+              focusOnBlockId: result.data.children[0].$modelId,
+            } as IFocusBlockState
+          );
 
           onClose();
           break;
