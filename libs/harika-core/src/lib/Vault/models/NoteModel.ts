@@ -14,7 +14,7 @@ import {
 import { Optional } from 'utility-types';
 import { v4 as uuidv4 } from 'uuid';
 import { NoteBlockModel } from './NoteBlockModel';
-import { isVault, Vault } from '../../Vault';
+import { isVault, VaultModel } from './Vault';
 
 export const noteRef = customRef<NoteModel>('harika/NoteRef', {
   // this works, but we will use getRefId() from the Todo class instead
@@ -23,7 +23,7 @@ export const noteRef = customRef<NoteModel>('harika/NoteRef', {
   // },
 
   resolve(ref) {
-    const vault = findParent<Vault>(this, isVault);
+    const vault = findParent<VaultModel>(this, isVault);
 
     if (!vault) return undefined;
 
@@ -57,7 +57,7 @@ export class NoteModel extends Model({
   @computed
   get vault() {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    return findParent<Vault>(this, isVault)!;
+    return findParent<VaultModel>(this, isVault)!;
   }
 
   @computed({ equals: comparer.shallow })

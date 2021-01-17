@@ -4,13 +4,13 @@ import { NoteBlockModel } from './models/NoteBlockModel';
 import { NoteBlockRow } from './db/rows/NoteBlockRow';
 import { NoteRow } from './db/rows/NoteRow';
 import { Queries } from './db/Queries';
-import { VaultTableNames } from './db/schema';
+import { NoteTableNames } from './db/notesSchema';
 import { NoteModel } from './models/NoteModel';
 import { Subject } from 'rxjs';
 import { buffer, concatMap, debounceTime } from 'rxjs/operators';
 import { Syncher } from './sync';
-import { Vault } from '../Vault';
 import { NoteLinkModel } from './models/NoteLinkModel';
+import { VaultModel } from './models/Vault';
 
 export class ChangesHandler {
   notesCollection: Collection<NoteRow>;
@@ -20,15 +20,15 @@ export class ChangesHandler {
   constructor(
     private database: Database,
     private queries: Queries,
-    private vault: Vault,
+    private vault: VaultModel,
     private syncher: Syncher
   ) {
     this.notesCollection = this.database.collections.get<NoteRow>(
-      VaultTableNames.NOTES
+      NoteTableNames.NOTES
     );
 
     this.noteBlocksCollection = this.database.collections.get<NoteBlockRow>(
-      VaultTableNames.NOTE_BLOCKS
+      NoteTableNames.NOTE_BLOCKS
     );
 
     this.patchesSubject = new Subject<Patch>();

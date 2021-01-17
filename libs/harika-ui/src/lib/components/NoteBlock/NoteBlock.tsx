@@ -29,6 +29,7 @@ import { Link } from 'react-router-dom';
 import { Arrow } from '../Arrow/Arrow';
 import { computed } from 'mobx';
 import { paths } from '../../paths';
+import { useNoteRepository } from '../../contexts/CurrentNoteRepositoryContext';
 
 const reBlankLine = /^[ \t]*(\n|$)/;
 
@@ -235,6 +236,7 @@ export const NoteBlock = observer(
     view: BlocksViewModel;
   }) => {
     const vault = useCurrentVault();
+    const noteRepo = useNoteRepository();
     const isExpanded = computed(() =>
       view.isExpanded(noteBlock.$modelId)
     ).get();
@@ -397,8 +399,8 @@ export const NoteBlock = observer(
     }, [noteBlock, setEditState]);
 
     const handleBlur = useCallback(() => {
-      vault.updateNoteBlockLinks(noteBlock);
-    }, [noteBlock, vault]);
+      noteRepo.updateNoteBlockLinks(vault, noteBlock);
+    }, [noteBlock, vault, noteRepo]);
 
     return (
       <div className="note-block">

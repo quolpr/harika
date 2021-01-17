@@ -6,23 +6,23 @@ import {
   readonly,
   relation,
 } from '@nozbe/watermelondb/decorators';
-import { VaultTableNames } from '../schema';
+import { NoteTableNames } from '../notesSchema';
 import { NoteBlockRow } from './NoteBlockRow';
 import { NoteRow } from './NoteRow';
 
 export class NoteLinkRow extends Model {
-  static table = VaultTableNames.NOTE_LINKS;
+  static table = NoteTableNames.NOTE_LINKS;
 
   static associations: Associations = {
-    [VaultTableNames.NOTES]: { type: 'belongs_to', key: 'note_id' },
-    [VaultTableNames.NOTE_BLOCKS]: {
+    [NoteTableNames.NOTES]: { type: 'belongs_to', key: 'note_id' },
+    [NoteTableNames.NOTE_BLOCKS]: {
       type: 'belongs_to',
       key: 'note_block_id',
     },
   };
 
-  @relation(VaultTableNames.NOTES, 'note_id') note!: Relation<NoteRow>;
-  @relation(VaultTableNames.NOTE_BLOCKS, 'note_block_id')
+  @relation(NoteTableNames.NOTES, 'note_id') note!: Relation<NoteRow>;
+  @relation(NoteTableNames.NOTE_BLOCKS, 'note_block_id')
   noteBlock!: Relation<NoteBlockRow>;
 
   @readonly @date('created_at') createdAt!: Date;

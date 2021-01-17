@@ -8,19 +8,19 @@ import {
   lazy,
   readonly,
 } from '@nozbe/watermelondb/decorators';
-import { VaultTableNames } from '../schema';
+import { NoteTableNames } from '../notesSchema';
 import { NoteBlockRow } from './NoteBlockRow';
 import { NoteLinkRow } from './NoteLinkRow';
 
 export class NoteRow extends Model {
-  static table = VaultTableNames.NOTES;
+  static table = NoteTableNames.NOTES;
 
   static associations: Associations = {
-    [VaultTableNames.NOTE_BLOCKS]: {
+    [NoteTableNames.NOTE_BLOCKS]: {
       type: 'has_many',
       foreignKey: 'note_id',
     },
-    [VaultTableNames.NOTE_LINKS]: {
+    [NoteTableNames.NOTE_LINKS]: {
       type: 'has_many',
       foreignKey: 'note_id',
     },
@@ -32,13 +32,13 @@ export class NoteRow extends Model {
   @date('created_at') createdAt!: Date;
   @readonly @date('updated_at') updatedAt!: Date;
 
-  @children(VaultTableNames.NOTE_BLOCKS) noteBlocks!: Query<NoteBlockRow>;
-  @children(VaultTableNames.NOTE_LINKS) links!: Query<NoteLinkRow>;
+  @children(NoteTableNames.NOTE_BLOCKS) noteBlocks!: Query<NoteBlockRow>;
+  @children(NoteTableNames.NOTE_LINKS) links!: Query<NoteLinkRow>;
 
   @lazy
   linkedNoteBlocks = this.collections
-    .get(VaultTableNames.NOTE_BLOCKS)
-    .query(Q.on(VaultTableNames.NOTE_LINKS, 'note_id', this.id));
+    .get(NoteTableNames.NOTE_BLOCKS)
+    .query(Q.on(NoteTableNames.NOTE_LINKS, 'note_id', this.id));
 
   @lazy
   childNoteBlocks = this.noteBlocks.extend(

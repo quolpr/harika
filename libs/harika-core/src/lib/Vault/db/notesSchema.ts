@@ -1,16 +1,16 @@
 import { appSchema, tableSchema } from '@nozbe/watermelondb';
 
-export enum VaultTableNames {
+export enum NoteTableNames {
   NOTES = 'notes',
   NOTE_BLOCKS = 'note_blocks',
   NOTE_LINKS = 'note_links',
 }
 
-export const schema = appSchema({
+export const notesSchema = appSchema({
   version: 39,
   tables: [
     tableSchema({
-      name: VaultTableNames.NOTES,
+      name: NoteTableNames.NOTES,
       columns: [
         { name: 'title', type: 'string', isIndexed: true },
         { name: 'linked_note_block_ids', type: 'string' },
@@ -25,7 +25,7 @@ export const schema = appSchema({
       ],
     }),
     tableSchema({
-      name: VaultTableNames.NOTE_LINKS,
+      name: NoteTableNames.NOTE_LINKS,
       columns: [
         { name: 'note_id', type: 'string', isIndexed: true },
         { name: 'note_block_id', type: 'string', isIndexed: true },
@@ -34,7 +34,7 @@ export const schema = appSchema({
       ],
     }),
     tableSchema({
-      name: VaultTableNames.NOTE_BLOCKS,
+      name: NoteTableNames.NOTE_BLOCKS,
       columns: [
         {
           name: 'parent_block_id',

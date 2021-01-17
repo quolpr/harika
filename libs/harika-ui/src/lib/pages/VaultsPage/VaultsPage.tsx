@@ -1,4 +1,4 @@
-import { HarikaVaults } from '@harika/harika-core';
+import { VaultRepository } from '@harika/harika-core';
 import React, { useCallback, useMemo, useState } from 'react';
 import { cn } from '../../utils';
 import './styles.css';
@@ -40,7 +40,7 @@ const VaultForm = ({
   );
 };
 
-export const VaultsPage = ({ vaults }: { vaults: HarikaVaults }) => {
+export const VaultsPage = ({ vaults }: { vaults: VaultRepository }) => {
   const allVaultTuples = useMemo(() => vaults.getAllVaultTuples$(), [vaults]);
   const allVaults = useObservableState(allVaultTuples, []);
 

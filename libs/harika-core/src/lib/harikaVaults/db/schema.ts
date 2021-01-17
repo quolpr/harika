@@ -4,7 +4,7 @@ export enum VaultsTableNames {
   VAULTS = 'vaults',
 }
 
-export const schema = appSchema({
+export const vaultsSchema = appSchema({
   version: 39,
   tables: [
     tableSchema({

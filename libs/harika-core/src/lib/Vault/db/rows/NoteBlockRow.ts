@@ -9,29 +9,29 @@ import {
 } from '@nozbe/watermelondb/decorators';
 import { Associations } from '@nozbe/watermelondb/Model';
 import { NoteRow } from './NoteRow';
-import { VaultTableNames } from '../schema';
+import { NoteTableNames } from '../notesSchema';
 import { NoteLinkRow } from './NoteLinkRow';
 
 export class NoteBlockRow extends Model {
-  static table = VaultTableNames.NOTE_BLOCKS;
+  static table = NoteTableNames.NOTE_BLOCKS;
 
   static associations: Associations = {
-    [VaultTableNames.NOTES]: { type: 'belongs_to', key: 'note_id' },
-    [VaultTableNames.NOTE_BLOCKS]: {
+    [NoteTableNames.NOTES]: { type: 'belongs_to', key: 'note_id' },
+    [NoteTableNames.NOTE_BLOCKS]: {
       type: 'has_many',
       foreignKey: 'parent_block_id',
     },
-    [VaultTableNames.NOTE_LINKS]: {
+    [NoteTableNames.NOTE_LINKS]: {
       type: 'has_many',
       foreignKey: 'note_block_id',
     },
   };
 
-  @relation(VaultTableNames.NOTES, 'note_id') note!: Relation<NoteRow>;
-  @relation(VaultTableNames.NOTE_BLOCKS, 'parent_block_id')
+  @relation(NoteTableNames.NOTES, 'note_id') note!: Relation<NoteRow>;
+  @relation(NoteTableNames.NOTE_BLOCKS, 'parent_block_id')
   parentBlock!: Relation<NoteBlockRow>;
-  @children(VaultTableNames.NOTE_BLOCKS) childBlocks!: Query<NoteBlockRow>;
-  @children(VaultTableNames.NOTE_LINKS) links!: Query<NoteLinkRow>;
+  @children(NoteTableNames.NOTE_BLOCKS) childBlocks!: Query<NoteBlockRow>;
+  @children(NoteTableNames.NOTE_LINKS) links!: Query<NoteLinkRow>;
 
   @field('note_id') noteId!: string;
   @field('parent_block_id') parentBlockId!: string | undefined;

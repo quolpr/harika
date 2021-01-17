@@ -8,6 +8,7 @@ import ReactTimeAgo from 'react-time-ago';
 import TimeAgo from 'javascript-time-ago';
 import en from 'javascript-time-ago/locale/en';
 import { paths } from '../../paths';
+import { useNoteRepository } from '../../contexts/CurrentNoteRepositoryContext';
 
 TimeAgo.addDefaultLocale(en);
 
@@ -39,6 +40,7 @@ const NoteRow = observer(({ note }: { note: NoteTuple }) => {
 
 export const NotesPage = () => {
   const vault = useCurrentVault();
+  const noteRepo = useNoteRepository();
 
   const [noteTuples, setNoteTuples] = useState<
     {
@@ -50,11 +52,11 @@ export const NotesPage = () => {
 
   useEffect(() => {
     const callback = async () => {
-      setNoteTuples(await vault.getAllNotesTuples());
+      setNoteTuples(await noteRepo.getAllNotesTuples(vault.$modelId));
     };
 
     callback();
-  }, [vault]);
+  }, [vault.$modelId, noteRepo]);
 
   return (
     <table className="notes-table">

@@ -13,8 +13,8 @@ import {
 } from 'mobx-keystone';
 import { comparer, computed } from 'mobx';
 import { NoteModel } from './NoteModel';
-import { isVault, Vault } from '../../Vault';
 import { BlocksViewModel } from './BlocksViewModel';
+import { isVault, VaultModel } from './Vault';
 
 export const noteBlockRef = customRef<NoteBlockModel>('harika/NoteBlockRef', {
   // this works, but we will use getRefId() from the Todo class instead
@@ -23,9 +23,9 @@ export const noteBlockRef = customRef<NoteBlockModel>('harika/NoteBlockRef', {
   // },
 
   resolve(ref) {
-    const vault = findParent<Vault>(this, isVault);
+    const vault = findParent<VaultModel>(this, isVault);
 
-    if (!vault || vault.$modelType !== 'harika/Vault') return undefined;
+    if (!vault) return undefined;
 
     return vault.blocksMap[ref.id];
   },
@@ -68,7 +68,7 @@ export class NoteBlockModel extends Model({
   @computed
   get vault() {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    return findParent<Vault>(this, isVault)!;
+    return findParent<VaultModel>(this, isVault)!;
   }
 
   @computed({ equals: comparer.shallow })

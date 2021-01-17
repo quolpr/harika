@@ -3,9 +3,10 @@ import { synchronize } from '@nozbe/watermelondb/sync';
 import { Subject, Observable, merge } from 'rxjs';
 import { auditTime, concatMap, find, share } from 'rxjs/operators';
 import { Queries } from './db/Queries';
-import { Vault } from '../Vault';
+import { NoteRepository } from '../Vault';
 import { v4 as uuidv4 } from 'uuid';
 import { Channel, Socket } from 'phoenix';
+import { VaultModel } from './models/Vault';
 
 const socket = new Socket('ws://localhost:5000/socket');
 
@@ -16,8 +17,9 @@ export class Syncher {
 
   constructor(
     private database: Database,
-    private vault: Vault,
-    private queries: Queries
+    private vault: VaultModel,
+    private queries: Queries,
+    private noteRepository: NoteRepository
   ) {
     socket.connect();
     this.channel = socket.channel(`vault:${vault.$modelId}`);
@@ -163,7 +165,7 @@ export class Syncher {
             );
           }
 
-          await this.vault.preloadNote(noteBlock.noteId);
+          await this.noteRepository.preloadNote(this.vault, noteBlock.noteId);
         }
       })
     );
@@ -171,7 +173,7 @@ export class Syncher {
     await Promise.all(
       noteIdsToSelect.map(async (noteId) => {
         console.log('syncing', noteId);
-        await this.vault.preloadNote(noteId, true, true);
+        await this.noteRepository.preloadNote(this.vault, noteId, true, true);
       })
     );
   }

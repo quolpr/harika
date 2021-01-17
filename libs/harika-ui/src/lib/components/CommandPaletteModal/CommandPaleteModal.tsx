@@ -13,6 +13,7 @@ import { useKey } from 'react-use';
 import { v4 as uuidv4 } from 'uuid';
 import { IFocusBlockState } from '../Note/Note';
 import { paths } from '../../paths';
+import { useNoteRepository } from '../../contexts/CurrentNoteRepositoryContext';
 
 // Command executes on each user type and as result gives list of actions
 // Commands are start with `!`. If no `!` present - then search happen between all start view actions names
@@ -58,6 +59,7 @@ export const CommandPaletteModal = ({
 }) => {
   const history = useHistory();
   const vault = useCurrentVault();
+  const noteRepo = useNoteRepository();
   const [inputCommandValue, setInputCommandValue] = useState('');
 
   const startView: IView = React.useMemo(
@@ -122,7 +124,10 @@ export const CommandPaletteModal = ({
             .replace(/^!find/, '')
             .trim();
 
-          const notes = await vault.searchNotesTuples(toFind);
+          const notes = await noteRepo.searchNotesTuples(
+            vault.$modelId,
+            toFind
+          );
 
           return {
             highlight: toFind,
@@ -163,7 +168,7 @@ export const CommandPaletteModal = ({
     };
 
     cb();
-  }, [inputCommandValue, vault]);
+  }, [inputCommandValue, vault, noteRepo, startView]);
 
   const performAction = useCallback(
     async (action: IAction) => {
@@ -174,7 +179,9 @@ export const CommandPaletteModal = ({
           onClose();
           break;
         case 'createNote': {
-          const result = await vault.createNote({ title: action.noteName });
+          const result = await noteRepo.createNote(vault, {
+            title: action.noteName,
+          });
 
           if (result.status === 'error') {
             alert(JSON.stringify(result.errors));
@@ -200,7 +207,7 @@ export const CommandPaletteModal = ({
           break;
       }
     },
-    [onClose, history, vault]
+    [onClose, history, vault, noteRepo]
   );
 
   useKey(

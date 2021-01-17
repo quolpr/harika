@@ -16,9 +16,6 @@ module.exports = (config, context) => {
     ].filter(Boolean)
   }
 
-  console.log(config);
-
-
   return {
     ...config,
     plugins: [

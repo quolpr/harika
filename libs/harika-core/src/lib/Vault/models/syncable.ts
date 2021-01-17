@@ -32,6 +32,8 @@ export function syncMiddleware(
     return ctx.rootContext.data[patchRecorderSymbol];
   }
 
+  // TODO: dispose
+  // TODO: make custom decorator insted of hardcoding of method name
   const middlewareDisposer = actionTrackingMiddleware(subtreeRoot, {
     onStart(ctx) {
       if (ctx.rootContext.actionName === 'createOrUpdateEntitiesFromAttrs')

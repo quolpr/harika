@@ -3,7 +3,7 @@ import { Dayjs } from 'dayjs';
 import { NoteBlockRow } from './rows/NoteBlockRow';
 import { NoteLinkRow } from './rows/NoteLinkRow';
 import { NoteRow } from './rows/NoteRow';
-import { VaultTableNames } from './schema';
+import { NoteTableNames } from './notesSchema';
 
 export class Queries {
   private database: Database;
@@ -15,15 +15,15 @@ export class Queries {
     this.database = database;
 
     this.notesCollection = this.database.collections.get<NoteRow>(
-      VaultTableNames.NOTES
+      NoteTableNames.NOTES
     );
 
     this.noteBlocksCollection = this.database.collections.get<NoteBlockRow>(
-      VaultTableNames.NOTE_BLOCKS
+      NoteTableNames.NOTE_BLOCKS
     );
 
     this.noteLinksCollection = this.database.collections.get<NoteLinkRow>(
-      VaultTableNames.NOTE_LINKS
+      NoteTableNames.NOTE_LINKS
     );
   }
 
@@ -47,7 +47,7 @@ export class Queries {
 
   async getNoteRowById(id: string) {
     const noteCollection = this.database.collections.get<NoteRow>(
-      VaultTableNames.NOTES
+      NoteTableNames.NOTES
     );
 
     return noteCollection.find(id);
@@ -55,7 +55,7 @@ export class Queries {
 
   async getNoteBlockRowById(id: string) {
     const noteBlockCollection = this.database.collections.get<NoteBlockRow>(
-      VaultTableNames.NOTE_BLOCKS
+      NoteTableNames.NOTE_BLOCKS
     );
 
     return noteBlockCollection.find(id);
@@ -82,7 +82,7 @@ export class Queries {
     // TODO: check that no duplication
     return this.notesCollection
       .query(
-        Q.on(VaultTableNames.NOTE_BLOCKS, Q.where('id', Q.oneOf(noteBlockIds)))
+        Q.on(NoteTableNames.NOTE_BLOCKS, Q.where('id', Q.oneOf(noteBlockIds)))
       )
       .fetch();
   }

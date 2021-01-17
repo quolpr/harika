@@ -11,6 +11,7 @@ import { useCurrentNote, useCurrentVault } from '@harika/harika-utils';
 import { observer } from 'mobx-react-lite';
 import { CommandPaletteModal } from '../CommandPaletteModal/CommandPaleteModal';
 import { paths } from '../../paths';
+import { useNoteRepository } from '../../contexts/CurrentNoteRepositoryContext';
 
 export const Header = observer(
   ({
@@ -23,6 +24,7 @@ export const Header = observer(
     isTogglerToggled: boolean;
   }) => {
     const vault = useCurrentVault();
+    const noteRepo = useNoteRepository();
     const history = useHistory();
 
     const [isModalOpened, setIsModalOpened] = useState(false);
@@ -54,7 +56,7 @@ export const Header = observer(
       async (date: Date | Date[]) => {
         if (isArray(date)) return;
 
-        const result = await vault.getOrCreateDailyNote(dayjs(date));
+        const result = await noteRepo.getOrCreateDailyNote(vault, dayjs(date));
 
         if (result.status === 'ok') {
           history.replace(
@@ -65,7 +67,7 @@ export const Header = observer(
           );
         }
       },
-      [vault, history]
+      [vault, history, noteRepo]
     );
 
     // <Link to="/">

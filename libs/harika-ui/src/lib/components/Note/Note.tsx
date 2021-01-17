@@ -154,7 +154,7 @@ export const Note: React.FC<{ note: NoteModel }> = observer(({ note }) => {
   );
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const memoziedStateActions = useMemo(() => stateActions, [...stateActions]);
+  const memoziedStateActions = useMemo(() => stateActions, stateActions);
 
   const [editState, setEditState] = useState({
     title: note.title,
