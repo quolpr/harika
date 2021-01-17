@@ -10,19 +10,19 @@ import { Note } from '../components/Note/Note';
 
 export const NotePage = React.memo(() => {
   const vault = useCurrentVault();
-  const { id } = useParams<{ id: string }>();
+  const { noteId } = useParams<{ noteId: string }>();
   const [, setCurrentNote] = useContext(CurrentNoteContext);
 
   useEffect(() => {
     const callback = async () => {
-      const note = await vault.findNote(id);
+      const note = await vault.findNote(noteId);
       setCurrentNote(note);
     };
 
     callback();
 
     return () => setCurrentNote(undefined);
-  }, [setCurrentNote, vault, id]);
+  }, [setCurrentNote, vault, noteId]);
 
   const note = useCurrentNote();
 

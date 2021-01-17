@@ -1,7 +1,7 @@
 import './wdyr';
 import React from 'react';
 import './App.css';
-import { BrowserRouter, Route, Switch } from 'react-router-dom';
+import { BrowserRouter, Redirect, Route, Switch } from 'react-router-dom';
 import { MainPageRedirect } from './pages/MainPageRedirect';
 import { NotePage } from './pages/NotePage';
 import { NotesPage } from './pages/NotesPage/NotesPage';
@@ -10,6 +10,7 @@ import { VaultsPage } from './pages/VaultsPage/VaultsPage';
 import { VaultLayout } from './components/VaultLayout/VaultLayout';
 import { initializeVaults } from '@harika/harika-core';
 import LokiJSAdapter from '@nozbe/watermelondb/adapters/lokijs';
+import { PATHS } from './paths';
 
 Modal.setAppElement('body');
 
@@ -39,23 +40,26 @@ export function App() {
     <React.StrictMode>
       <BrowserRouter>
         <Switch>
-          <Route exact path="/vaults/:vaultId">
+          <Route exact path={PATHS.VAULT_DAILY_PATH}>
             <VaultLayout vaults={vaults}>
               <MainPageRedirect />
             </VaultLayout>
           </Route>
-          <Route path="/vaults/:vaultId/notes/:id">
+          <Route path={PATHS.VAULT_NOTE_PATH}>
             <VaultLayout vaults={vaults}>
               <NotePage />
             </VaultLayout>
           </Route>
-          <Route path="/vaults/:vaultId/notes">
+          <Route path={PATHS.VAULT_NOTE_INDEX_PATH}>
             <VaultLayout vaults={vaults}>
               <NotesPage />
             </VaultLayout>
           </Route>
-          <Route path="/vaults">
+          <Route path={PATHS.VAULT_INDEX_PATH}>
             <VaultsPage vaults={vaults} />
+          </Route>
+          <Route path="/">
+            <Redirect to={PATHS.DEFAULT_PATH} />
           </Route>
         </Switch>
       </BrowserRouter>
