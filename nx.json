@@ -30,13 +30,7 @@
       "tags": [],
       "implicitDependencies": ["harika-web"]
     },
-    "harika-mobile": {
-      "tags": []
-    },
     "harika-core": {
-      "tags": []
-    },
-    "harika-utils": {
       "tags": []
     },
     "harika-mobile-ionic": {

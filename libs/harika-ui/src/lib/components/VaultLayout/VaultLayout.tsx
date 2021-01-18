@@ -1,12 +1,9 @@
-import { VaultRepository, Vault } from '@harika/harika-core';
-import {
-  CurrentNoteContext,
-  CurrentVaultContext,
-  ICurrentNoteState,
-} from '@harika/harika-utils';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { VaultRepository, Vault, VaultUiState } from '@harika/harika-core';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { NoteRepositoryContext } from '../../contexts/CurrentNoteRepositoryContext';
+import { CurrentVaultContext } from '../../contexts/CurrentVaultContext';
+import { CurrentVaultUiStateContext } from '../../contexts/CurrentVaultUiStateContext';
 import { cn } from '../../utils';
 import { Header } from '../Header/Header';
 import { Sidebar } from '../Sidebar/Sidebar';
@@ -36,18 +33,7 @@ export const VaultLayout: React.FC<{
   vaultRepository: VaultRepository;
 }> = ({ children, vaultRepository }) => {
   const { vaultId } = useParams<{ vaultId: string }>();
-
   const [vault, setVault] = useState<Vault | undefined>();
-
-  const [currentNote, setCurrentNote] = useState<ICurrentNoteState>();
-  // TODO: extract type
-  const currentNoteActionsMemoized: [
-    editState: ICurrentNoteState,
-    setEditState: (state: ICurrentNoteState) => void
-  ] = useMemo(() => [currentNote, setCurrentNote], [
-    currentNote,
-    setCurrentNote,
-  ]);
   const [isSidebarOpened, setIsSidebarOpened] = useState(true);
 
   const handleTogglerClick = useCallback(() => {
@@ -60,14 +46,18 @@ export const VaultLayout: React.FC<{
     cb();
   }, [vaultRepository, vaultId]);
 
+  const [vaultUiState] = useState(new VaultUiState({}));
+
+  // TODO: reset focused block on page change
+
   if (!vault) return null;
 
   return (
-    <CurrentVaultContext.Provider value={vault}>
-      <NoteRepositoryContext.Provider
-        value={vaultRepository.getNoteRepository()}
-      >
-        <CurrentNoteContext.Provider value={currentNoteActionsMemoized}>
+    <CurrentVaultUiStateContext.Provider value={vaultUiState}>
+      <CurrentVaultContext.Provider value={vault}>
+        <NoteRepositoryContext.Provider
+          value={vaultRepository.getNoteRepository()}
+        >
           <div className={layoutClass()}>
             <Sidebar
               className={layoutClass('sidebar', {
@@ -96,8 +86,8 @@ export const VaultLayout: React.FC<{
               </div>
             </div>
           </div>
-        </CurrentNoteContext.Provider>
-      </NoteRepositoryContext.Provider>
-    </CurrentVaultContext.Provider>
+        </NoteRepositoryContext.Provider>
+      </CurrentVaultContext.Provider>
+    </CurrentVaultUiStateContext.Provider>
   );
 };

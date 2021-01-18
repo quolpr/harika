@@ -15,7 +15,10 @@ export { NoteModel } from './NoteRepository/models/NoteModel';
 export { VaultModel as Vault } from './NoteRepository/models/Vault';
 export { NoteLinkModel } from './NoteRepository/models/NoteLinkModel';
 export { BlocksViewModel } from './NoteRepository/models/BlocksViewModel';
-export { NoteBlockModel, noteBlockRef } from './NoteRepository/models/NoteBlockModel';
+export {
+  NoteBlockModel,
+  noteBlockRef,
+} from './NoteRepository/models/NoteBlockModel';
 
 export interface IAdapterBuilder {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -53,7 +56,7 @@ export class NoteRepository {
       } as ICreationResult<NoteModel>;
     }
 
-    return { status: 'ok', data: vault.createNote(attrs) } as ICreationResult<
+    return { status: 'ok', data: vault.newNote(attrs) } as ICreationResult<
       NoteModel
     >;
   }

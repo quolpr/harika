@@ -1,4 +1,3 @@
-import { useCurrentVault } from '@harika/harika-utils';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
 import './styles.css';
@@ -9,6 +8,7 @@ import TimeAgo from 'javascript-time-ago';
 import en from 'javascript-time-ago/locale/en';
 import { paths } from '../../paths';
 import { useNoteRepository } from '../../contexts/CurrentNoteRepositoryContext';
+import { useCurrentVault } from '../../hooks/useCurrentVault';
 
 TimeAgo.addDefaultLocale(en);
 

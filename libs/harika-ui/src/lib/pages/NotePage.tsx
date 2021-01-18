@@ -1,30 +1,29 @@
-import React, { useContext, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import 'react-calendar/dist/Calendar.css';
-import {
-  CurrentNoteContext,
-  useCurrentNote,
-  useCurrentVault,
-} from '@harika/harika-utils';
 import { Note } from '../components/Note/Note';
 import { useNoteRepository } from '../contexts/CurrentNoteRepositoryContext';
+import { useCurrentVaultUiState } from '../contexts/CurrentVaultUiStateContext';
+import { observer } from 'mobx-react-lite';
+import { useCurrentVault } from '../hooks/useCurrentVault';
+import { useCurrentNote } from '../hooks/useCurrentNote';
 
-export const NotePage = React.memo(() => {
+export const NotePage = observer(() => {
   const vault = useCurrentVault();
   const noteRepo = useNoteRepository();
   const { noteId } = useParams<{ noteId: string }>();
-  const [, setCurrentNote] = useContext(CurrentNoteContext);
+  const vaultUiState = useCurrentVaultUiState();
 
   useEffect(() => {
     const callback = async () => {
       const note = await noteRepo.findNote(vault, noteId);
-      setCurrentNote(note);
+      vaultUiState.setCurrentNoteId(note.$modelId);
     };
 
     callback();
 
-    return () => setCurrentNote(undefined);
-  }, [setCurrentNote, vault, noteId, noteRepo]);
+    return () => vaultUiState.setCurrentNoteId(undefined);
+  }, [vault, noteId, noteRepo, vaultUiState]);
 
   const note = useCurrentNote();
 

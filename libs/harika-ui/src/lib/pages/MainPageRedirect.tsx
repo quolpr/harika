@@ -1,9 +1,9 @@
 import { useEffect } from 'react';
 import dayjs from 'dayjs';
 import { useHistory } from 'react-router-dom';
-import { useCurrentVault } from '@harika/harika-utils';
 import { paths } from '../paths';
 import { useNoteRepository } from '../contexts/CurrentNoteRepositoryContext';
+import { useCurrentVault } from '../hooks/useCurrentVault';
 
 export const MainPageRedirect = () => {
   const vault = useCurrentVault();

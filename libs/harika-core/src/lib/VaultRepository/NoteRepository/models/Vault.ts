@@ -30,7 +30,7 @@ export class VaultModel extends Model({
   noteLinks: prop<NoteLinkModel[]>(() => []),
 }) {
   @modelAction
-  createNote(
+  newNote(
     attrs: Required<
       Optional<
         ModelInstanceCreationData<NoteModel>,
@@ -90,7 +90,7 @@ export class VaultModel extends Model({
 
     if (this.blocksViewsMap[key]) return this.blocksViewsMap[key];
 
-    this.blocksViewsMap[key] = new BlocksViewModel({});
+    this.blocksViewsMap[key] = new BlocksViewModel({ $modelId: key });
 
     return this.blocksViewsMap[key];
   }

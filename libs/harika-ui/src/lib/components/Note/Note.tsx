@@ -14,14 +14,11 @@ import {
 import { Link, useHistory } from 'react-router-dom';
 import { Link as LinkIcon } from 'heroicons-react';
 import groupBy from 'lodash.groupby';
-import {
-  CurrentFocusedBlockContext,
-  ICurrentFocusedBlockState,
-  useCurrentVault,
-} from '@harika/harika-utils';
 import clsx from 'clsx';
 import { Arrow } from '../Arrow/Arrow';
 import { paths } from '../../paths';
+import { useCurrentVault } from '../../hooks/useCurrentVault';
+import { useCurrentVaultUiState } from '../../contexts/CurrentVaultUiStateContext';
 
 export interface IFocusBlockState {
   focusOnBlockId: string;
@@ -149,14 +146,9 @@ const NoteBlocks = React.memo(
 
 export const Note: React.FC<{ note: NoteModel }> = observer(({ note }) => {
   const vault = useCurrentVault();
+  const vaultUiState = useCurrentVaultUiState();
   const history = useHistory<IFocusBlockState>();
   const focusOnBlockId = (history.location.state || {}).focusOnBlockId;
-  const stateActions = useState<ICurrentFocusedBlockState>(
-    focusOnBlockId ? { noteBlock: vault.blocksMap[focusOnBlockId] } : undefined
-  );
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const memoziedStateActions = useMemo(() => stateActions, stateActions);
 
   const [editState, setEditState] = useState({
     title: note.title,
@@ -192,6 +184,12 @@ export const Note: React.FC<{ note: NoteModel }> = observer(({ note }) => {
     history.replace(`/`);
   }, [note, history]);
 
+  useEffect(() => {
+    if (focusOnBlockId) {
+      vaultUiState.setFocusedBlock(note.$modelId, focusOnBlockId);
+    }
+  }, [focusOnBlockId, note.$modelId, vaultUiState]);
+
   return (
     <div className="note">
       <h2 className="note__header">
@@ -202,12 +200,10 @@ export const Note: React.FC<{ note: NoteModel }> = observer(({ note }) => {
         />
       </h2>
 
-      <CurrentFocusedBlockContext.Provider value={memoziedStateActions}>
-        <NoteBlocks
-          view={vault.getOrCreateViewByModel(note)}
-          childBlocks={note.children}
-        />
-      </CurrentFocusedBlockContext.Provider>
+      <NoteBlocks
+        view={vault.getOrCreateViewByModel(note)}
+        childBlocks={note.children}
+      />
 
       <div className="note__linked-references">
         <LinkIcon className="mr-2" size={16} />

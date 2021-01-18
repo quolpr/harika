@@ -7,13 +7,8 @@ import React, {
 } from 'react';
 import './styles.css';
 import { useClickAway } from 'react-use';
-import { useContextSelector } from 'use-context-selector';
 import clsx from 'clsx';
 import TextareaAutosize from 'react-textarea-autosize';
-import {
-  CurrentFocusedBlockContext,
-  useCurrentVault,
-} from '@harika/harika-utils';
 import { Observer, observer } from 'mobx-react-lite';
 import { BlocksViewModel, NoteBlockModel } from '@harika/harika-core';
 import ReactMarkdown from 'react-markdown';
@@ -30,6 +25,8 @@ import { Arrow } from '../Arrow/Arrow';
 import { computed } from 'mobx';
 import { paths } from '../../paths';
 import { useNoteRepository } from '../../contexts/CurrentNoteRepositoryContext';
+import { useCurrentFocusedBlockState } from '../../hooks/useFocusedBlockState';
+import { useCurrentVault } from '../../hooks/useCurrentVault';
 
 const reBlankLine = /^[ \t]*(\n|$)/;
 
@@ -227,6 +224,7 @@ const MarkdownRenderer = observer(
   }
 );
 
+//TODO: fix textarea performance
 export const NoteBlock = observer(
   ({
     noteBlock,
@@ -240,6 +238,11 @@ export const NoteBlock = observer(
     const isExpanded = computed(() =>
       view.isExpanded(noteBlock.$modelId)
     ).get();
+
+    const [{ isFocused, startAt }, setEditState] = useCurrentFocusedBlockState(
+      view.$modelId,
+      noteBlock.$modelId
+    );
 
     const [noteBlockContent, setNoteBlockContent] = useState({
       content: noteBlock.content,
@@ -259,45 +262,28 @@ export const NoteBlock = observer(
       });
     }, [noteBlock.$modelId, noteBlock.content]);
 
-    const setEditState = useContextSelector(
-      CurrentFocusedBlockContext,
-      ([, setEditState]) => setEditState
-    );
-    const isEditing = useContextSelector(
-      CurrentFocusedBlockContext,
-      ([editState]) => editState?.noteBlock === noteBlock
-    );
-    const startPositionAt = useContextSelector(
-      CurrentFocusedBlockContext,
-      ([editState]) =>
-        editState?.noteBlock === noteBlock
-          ? editState.startPositionAt
-          : undefined
-    );
-
     const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
     useClickAway(inputRef, () => {
-      if (isEditing) {
+      if (isFocused) {
         setEditState(undefined);
       }
     });
 
     useEffect(() => {
       if (
-        isEditing &&
+        isFocused &&
         inputRef.current &&
         document.activeElement !== inputRef.current
       ) {
         inputRef.current.focus();
 
-        const posAt = (() =>
-          startPositionAt ? startPositionAt : noteBlock.content.length)();
+        const posAt = (() => (startAt ? startAt : noteBlock.content.length))();
 
         inputRef.current.selectionStart = posAt;
         inputRef.current.selectionEnd = posAt;
       }
-    }, [isEditing, startPositionAt, noteBlock.content.length]);
+    }, [isFocused, startAt, noteBlock.content.length]);
 
     useEffect(() => {
       if (noteBlock.$modelId !== noteBlockContent.id) return;
@@ -315,7 +301,8 @@ export const NoteBlock = observer(
           if (!newBlock) return;
 
           setEditState({
-            noteBlock: newBlock,
+            viewId: view.$modelId,
+            blockId: newBlock.$modelId,
           });
         }
       },
@@ -337,9 +324,9 @@ export const NoteBlock = observer(
 
             if (mergedTo) {
               setEditState({
-                noteBlock: mergedTo,
-                startPositionAt:
-                  mergedTo.content.length - noteBlock.content.length,
+                viewId: view.$modelId,
+                blockId: mergedTo.$modelId,
+                startAt: mergedTo.content.length - noteBlock.content.length,
               });
             }
           }
@@ -366,7 +353,8 @@ export const NoteBlock = observer(
 
           if (right) {
             setEditState({
-              noteBlock: right,
+              viewId: view.$modelId,
+              blockId: right.$modelId,
             });
           }
         } else if (e.key === 'ArrowUp') {
@@ -375,11 +363,11 @@ export const NoteBlock = observer(
           const [left] = noteBlock.leftAndRight;
 
           if (left) {
-            setEditState({ noteBlock: left });
+            setEditState({ viewId: view.$modelId, blockId: left.$modelId });
           }
         }
       },
-      [noteBlock, setEditState]
+      [noteBlock, setEditState, view.$modelId]
     );
 
     const handleChange = useCallback(
@@ -395,8 +383,8 @@ export const NoteBlock = observer(
     );
 
     const handleClick = useCallback(() => {
-      setEditState({ noteBlock: noteBlock });
-    }, [noteBlock, setEditState]);
+      setEditState({ viewId: view.$modelId, blockId: noteBlock.$modelId });
+    }, [noteBlock.$modelId, setEditState, view.$modelId]);
 
     const handleBlur = useCallback(() => {
       noteRepo.updateNoteBlockLinks(vault, noteBlock);
@@ -423,14 +411,14 @@ export const NoteBlock = observer(
           <TextareaAutosize
             ref={inputRef}
             autoFocus
-            className={clsx('note-block__content', { hidden: !isEditing })}
+            className={clsx('note-block__content', { hidden: !isFocused })}
             onKeyDown={handleKeyDown}
             onKeyPress={handleKeyPress}
             onChange={handleChange}
             value={noteBlockContent.content}
             onBlur={handleBlur}
           />
-          {!isEditing && (
+          {!isFocused && (
             <div onClick={handleClick} className={clsx('note-block__content')}>
               <MarkdownRenderer
                 noteBlock={noteBlock}

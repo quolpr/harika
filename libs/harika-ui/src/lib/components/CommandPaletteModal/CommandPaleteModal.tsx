@@ -5,7 +5,6 @@ import {
   ChevronRight as ChevronRightIcon,
   Reply as ReplyIcon,
 } from 'heroicons-react';
-import { useCurrentVault } from '@harika/harika-utils';
 import Highlighter from 'react-highlight-words';
 import { Link, useHistory } from 'react-router-dom';
 import { cn } from '../../utils';
@@ -14,6 +13,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { IFocusBlockState } from '../Note/Note';
 import { paths } from '../../paths';
 import { useNoteRepository } from '../../contexts/CurrentNoteRepositoryContext';
+import { useCurrentVault } from '../../hooks/useCurrentVault';
 
 // Command executes on each user type and as result gives list of actions
 // Commands are start with `!`. If no `!` present - then search happen between all start view actions names

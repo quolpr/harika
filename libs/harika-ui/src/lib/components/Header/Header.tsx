@@ -7,11 +7,12 @@ import dayjs from 'dayjs';
 import Calendar from 'react-calendar';
 import clsx from 'clsx';
 import { useClickAway, useKey } from 'react-use';
-import { useCurrentNote, useCurrentVault } from '@harika/harika-utils';
 import { observer } from 'mobx-react-lite';
 import { CommandPaletteModal } from '../CommandPaletteModal/CommandPaleteModal';
 import { paths } from '../../paths';
 import { useNoteRepository } from '../../contexts/CurrentNoteRepositoryContext';
+import { useCurrentVault } from '../../hooks/useCurrentVault';
+import { useCurrentNote } from '../../hooks/useCurrentNote';
 
 export const Header = observer(
   ({
