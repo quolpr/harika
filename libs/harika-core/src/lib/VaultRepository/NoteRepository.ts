@@ -1,21 +1,21 @@
 import { ModelInstanceCreationData } from 'mobx-keystone';
 import { Database, DatabaseAdapter } from '@nozbe/watermelondb';
-import { Queries } from './Vault/db/Queries';
-import { convertNoteRowToModelAttrs } from './Vault/convertRowToModel';
+import { Queries } from './NoteRepository/db/Queries';
+import { convertNoteRowToModelAttrs } from './NoteRepository/convertRowToModel';
 import { Dayjs } from 'dayjs';
-import { NoteBlockModel } from './Vault/models/NoteBlockModel';
-import { NoteModel } from './Vault/models/NoteModel';
+import { NoteBlockModel } from './NoteRepository/models/NoteBlockModel';
+import { NoteModel } from './NoteRepository/models/NoteModel';
 import { Optional } from 'utility-types';
 import { Required } from 'utility-types';
-import { ICreationResult } from './Vault/types';
-import { VaultModel } from './Vault/models/Vault';
+import { ICreationResult } from './NoteRepository/types';
+import { VaultModel } from './NoteRepository/models/Vault';
 
-export { NoteModel } from './Vault/models/NoteModel';
+export { NoteModel } from './NoteRepository/models/NoteModel';
 // TODO: rename to VaultModel
-export { VaultModel as Vault } from './Vault/models/Vault';
-export { NoteLinkModel } from './Vault/models/NoteLinkModel';
-export { BlocksViewModel } from './Vault/models/BlocksViewModel';
-export { NoteBlockModel, noteBlockRef } from './Vault/models/NoteBlockModel';
+export { VaultModel as Vault } from './NoteRepository/models/Vault';
+export { NoteLinkModel } from './NoteRepository/models/NoteLinkModel';
+export { BlocksViewModel } from './NoteRepository/models/BlocksViewModel';
+export { NoteBlockModel, noteBlockRef } from './NoteRepository/models/NoteBlockModel';
 
 export interface IAdapterBuilder {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -26,7 +26,6 @@ export interface IAdapterBuilder {
 // Model = DDD model
 // Tuple = plain object data, used for fast data getting
 
-// TODO: rename file
 export class NoteRepository {
   constructor(private vaultDbs: Record<string, Database>) {}
 
@@ -208,7 +207,7 @@ export class NoteRepository {
 
   private getDbByVaultId(vaultId: string) {
     if (!this.vaultDbs[vaultId])
-      throw new Error('Vault db was not initialized!');
+      throw new Error('NoteRepository vaultDb was not initialized!');
 
     return this.vaultDbs[vaultId];
   }

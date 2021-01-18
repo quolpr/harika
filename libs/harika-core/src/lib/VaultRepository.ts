@@ -1,20 +1,18 @@
-import { IAdapterBuilder, NoteRepository, Vault } from './Vault';
-import { VaultRow } from './HarikaVaults/db/VaultRow';
-import { vaultsSchema, VaultsTableNames } from './HarikaVaults/db/schema';
+import { IAdapterBuilder, NoteRepository, Vault } from './VaultRepository/NoteRepository';
+import { VaultRow } from './VaultRepository/vaultDb/VaultRow';
+import { vaultsSchema, VaultsTableNames } from './VaultRepository/vaultDb/schema';
 import { Collection, Database, Q } from '@nozbe/watermelondb';
 import { map } from 'rxjs/operators';
-import { VaultModel } from './Vault/models/Vault';
-import { Queries } from './Vault/db/Queries';
-import { ChangesHandler } from './Vault/ChangesHandler';
-import { NoteBlockRow } from './Vault/db/rows/NoteBlockRow';
-import { NoteLinkRow } from './Vault/db/rows/NoteLinkRow';
-import { NoteRow } from './Vault/db/rows/NoteRow';
-import { syncMiddleware } from './Vault/models/syncable';
-import { Syncher } from './Vault/sync';
-import { notesSchema } from './Vault/db/notesSchema';
+import { VaultModel } from './VaultRepository/NoteRepository/models/Vault';
+import { Queries } from './VaultRepository/NoteRepository/db/Queries';
+import { ChangesHandler } from './VaultRepository/NoteRepository/ChangesHandler';
+import { NoteBlockRow } from './VaultRepository/NoteRepository/db/rows/NoteBlockRow';
+import { NoteLinkRow } from './VaultRepository/NoteRepository/db/rows/NoteLinkRow';
+import { NoteRow } from './VaultRepository/NoteRepository/db/rows/NoteRow';
+import { syncMiddleware } from './VaultRepository/NoteRepository/models/syncable';
+import { Syncher } from './VaultRepository/NoteRepository/sync';
+import { notesSchema } from './VaultRepository/NoteRepository/db/notesSchema';
 
-// TODO: rename to VaultRepository
-// TODO: rename file
 export class VaultRepository {
   // TODO: finde better naming(instead of conatiner)
   private vaultContainers: Record<string, Vault | undefined> = {};

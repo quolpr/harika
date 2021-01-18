@@ -5,17 +5,14 @@ import {
   ModelInstanceCreationData,
   prop,
 } from 'mobx-keystone';
-import {
-  BlocksViewModel,
-  NoteBlockModel,
-  noteBlockRef,
-  NoteLinkModel,
-} from '../../Vault';
 import { NoteModel, noteRef } from './NoteModel';
 import { v4 as uuidv4 } from 'uuid';
 import { Optional, Required } from 'utility-types';
+import { NoteBlockModel, noteBlockRef } from './NoteBlockModel';
+import { BlocksViewModel } from './BlocksViewModel';
+import { NoteLinkModel } from './NoteLinkModel';
 
-const modelType = 'harika/Vault';
+const modelType = 'harika/NoteRepository';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const isVault = (model: any): model is VaultModel =>

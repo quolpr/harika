@@ -1,2 +1,2 @@
-export * from './lib/Vault';
-export * from './lib/HarikaVaults';
+export * from './lib/VaultRepository/NoteRepository';
+export * from './lib/VaultRepository';
