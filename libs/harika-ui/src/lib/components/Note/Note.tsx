@@ -123,26 +123,28 @@ const Backlinks = observer(
   }
 );
 
-const NoteBlocks = observer(
-  ({
-    childBlocks,
-    view,
-  }: {
-    childBlocks: NoteBlockModel[];
-    view: BlocksViewModel;
-  }) => {
-    return (
-      <div className="note__body">
-        {childBlocks.map((noteBlock) => (
-          <NoteBlock
-            key={noteBlock.$modelId}
-            noteBlock={noteBlock}
-            view={view}
-          />
-        ))}
-      </div>
-    );
-  }
+const NoteBlocks = React.memo(
+  observer(
+    ({
+      childBlocks,
+      view,
+    }: {
+      childBlocks: NoteBlockModel[];
+      view: BlocksViewModel;
+    }) => {
+      return (
+        <div className="note__body">
+          {childBlocks.map((noteBlock) => (
+            <NoteBlock
+              key={noteBlock.$modelId}
+              noteBlock={noteBlock}
+              view={view}
+            />
+          ))}
+        </div>
+      );
+    }
+  )
 );
 
 export const Note: React.FC<{ note: NoteModel }> = observer(({ note }) => {

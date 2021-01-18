@@ -18,7 +18,7 @@ const vaultRepository = new VaultRepository(
   ({ schema, dbName }) =>
     new LokiJSAdapter({
       schema,
-      dbName, // optional db name
+      dbName, // optional vaultDb name
       // migrations, // optional migrations
       useWebWorker: false, // recommended for new projects. tends to improve performance and reduce glitches in most cases, but also has downsides - test with and without it
       useIncrementalIndexedDB: true, // recommended for new projects. improves performance (but incompatible with early Watermelon databases)
