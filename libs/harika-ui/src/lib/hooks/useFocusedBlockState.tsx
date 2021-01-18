@@ -1,5 +1,5 @@
 import { FocusedBlockState } from '@harika/harika-core';
-import { computed } from 'mobx';
+import { comparer, computed } from 'mobx';
 import { useCallback } from 'react';
 import { useCurrentVaultUiState } from '../contexts/CurrentVaultUiStateContext';
 
@@ -14,8 +14,9 @@ export const useCurrentFocusedBlockState = (
 ] => {
   const vaultUiState = useCurrentVaultUiState();
 
-  const focusState = computed(() =>
-    vaultUiState.getBlockFocusState(viewId, blockId)
+  const focusState = computed(
+    () => vaultUiState.getBlockFocusState(viewId, blockId),
+    { equals: comparer.shallow }
   ).get();
 
   const setState = useCallback(
