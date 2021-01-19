@@ -73,8 +73,8 @@ export class Syncher {
       this.channel
         .push(event, payload)
         .receive('ok', (msg) => resolve(msg))
-        .receive('error', (reasons) => reject(reasons))
-        .receive('timeout', () => reject('timeout'));
+        .receive('error', (reasons) => reject(reasons));
+      // .receive('timeout', () => reject('timeout'));
     });
   };
 

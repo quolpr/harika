@@ -5,53 +5,27 @@ import './styles.css';
 import { useObservableState } from 'observable-hooks';
 import { Link } from 'react-router-dom';
 import { paths } from '../../paths';
+import { Plus as PlusIcon } from 'heroicons-react';
+import { CreateVaultModal } from './CreateVaultModal';
 
 const vaultsClass = cn('vaults');
 
-const VaultForm = ({
-  currentName,
-  onSubmit,
-}: {
-  currentName: string;
-  onSubmit: (name: string) => void;
-}) => {
-  const [vaultName, setVaultName] = useState(currentName);
-
-  return (
-    <div className={vaultsClass('box')}>
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          onSubmit(vaultName);
-        }}
-      >
-        <input
-          ref={(el) => {
-            if (el) el.focus();
-          }}
-          className={vaultsClass('input')}
-          value={vaultName}
-          onChange={(e) => {
-            setVaultName(e.target.value);
-          }}
-        />
-      </form>
-    </div>
-  );
-};
-
 export const VaultsPage = ({ vaults }: { vaults: VaultRepository }) => {
+  const [isCreateModalOpened, setIsCreateModalOpened] = useState(false);
   const allVaultTuples = useMemo(() => vaults.getAllVaultTuples$(), [vaults]);
   const allVaults = useObservableState(allVaultTuples, []);
 
-  const [isFormTrigerred, setIsFormTrigerred] = useState(false);
   const handleSubmit = useCallback(
-    (name) => {
-      vaults.createVault({ name });
-      setIsFormTrigerred(false);
+    (data: { name: string }) => {
+      vaults.createVault({ name: data.name });
+      setIsCreateModalOpened(false);
     },
     [vaults]
   );
+
+  const handleClose = useCallback(() => {
+    setIsCreateModalOpened(false);
+  }, []);
 
   return (
     <div className={vaultsClass()}>
@@ -65,16 +39,22 @@ export const VaultsPage = ({ vaults }: { vaults: VaultRepository }) => {
         </Link>
       ))}
 
-      {isFormTrigerred ? (
-        <VaultForm currentName="" onSubmit={handleSubmit} />
-      ) : (
-        <div
-          className={vaultsClass('box')}
-          onClick={() => setIsFormTrigerred(!isFormTrigerred)}
-        >
-          Create Vault
+      <div
+        className={`${vaultsClass('box')} ${vaultsClass('create-box')}`}
+        onClick={() => setIsCreateModalOpened(true)}
+      >
+        <div className={vaultsClass('vault-create-title')}>Create Vault</div>
+
+        <div className={vaultsClass('add-icon')}>
+          <PlusIcon />
         </div>
-      )}
+      </div>
+
+      <CreateVaultModal
+        isOpened={isCreateModalOpened}
+        onClose={handleClose}
+        onSubmit={handleSubmit}
+      />
     </div>
   );
 };

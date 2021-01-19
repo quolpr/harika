@@ -1,6 +1,8 @@
 .command-palette-modal {
   &__header {
-    @apply px-6;
+  }
+
+  &__actions-list {
   }
 
   &__form {
@@ -20,6 +22,7 @@
     @apply border-gray-800 bg-gray-900 text-gray-300 px-2 py-1 rounded w-40;
     @apply focus:outline-none focus:border-gray-700;
     @apply ml-2;
+    @apply bg-opacity-0;
 
     width: 100%;
     height: 100%;
@@ -55,33 +58,8 @@
   }
 
   &__actions-list-container {
-    @apply mb-8 mt-6;
+    @apply mt-6;
     flex: auto;
     overflow: auto;
   }
-
-  &__actions-list {
-    @apply mx-8;
-  }
-}
-
-.ReactModal__Overlay {
-  @apply bg-gray-600 bg-opacity-30;
-
-  position: fixed;
-  inset: 0px;
-  z-index: 110;
-}
-
-.ReactModal__Content {
-  display: flex;
-  flex-direction: column;
-
-  position: absolute;
-  inset: 12vh;
-  overflow: auto;
-  border-radius: 4px;
-  outline: none;
-
-  @apply bg-gray-900 max-w-screen-sm mx-auto rounded-2xl shadow;
 }

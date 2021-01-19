@@ -1,9 +1,86 @@
 .vaults {
-  @apply max-w-screen-sm mx-auto px-10 py-10;
+  @apply max-w-screen-md mx-auto mt-10 px-6;
 
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  @apply grid gap-6;
 
   &__box {
+    display: flex;
+
+    position: relative;
+
+    @apply px-4 py-2 transition-all;
+    @apply rounded-xl bg-gray-800 bg-opacity-80 shadow;
+
+    grid-auto-flow: column;
+
+    backdrop-filter: blur(5px);
+    min-height: 100px;
+
+    &:hover {
+      @apply bg-opacity-70;
+    }
+  }
+
+  &__create-box {
+    cursor: pointer;
+    align-items: center;
+  }
+
+  &__vault-name {
+    @apply font-bold;
+  }
+
+  &__vault-create-title {
+    @apply font-bold;
+  }
+
+  &__add-icon {
+    @apply bg-gray-700 p-1;
+    @apply bg-opacity-80;
+
+    margin-left: auto;
+    border-radius: 100%;
+  }
+}
+
+.vault-form-modal {
+  &__header {
+    @apply text-gray-100 text-3xl font-bold pt-2;
+  }
+}
+
+.vault-form {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+
+  @apply mt-6;
+
+  &__label {
+    @apply ml-1 mb-2;
+  }
+
+  &__input {
+    @apply bg-gray-800 px-3 py-3 rounded-lg focus:ring-2;
+    outline: none;
+  }
+
+  &__error {
+    @apply ml-2 mt-1 text-red-600;
+  }
+
+  &__submit-btn {
+    display: block;
+
+    width: 100%;
+
+    cursor: pointer;
+
+    outline: none;
+
+    @apply bg-pink-800 rounded-lg shadow px-2 py-3;
+    @apply font-bold mt-10 text-gray-100 focus:ring-2;
   }
 }

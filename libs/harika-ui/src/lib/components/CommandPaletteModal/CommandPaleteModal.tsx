@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import Modal from 'react-modal';
 import './styles.css';
 import {
   ChevronRight as ChevronRightIcon,
@@ -14,6 +13,7 @@ import { IFocusBlockState } from '../Note/Note';
 import { paths } from '../../paths';
 import { useNoteRepository } from '../../contexts/CurrentNoteRepositoryContext';
 import { useCurrentVault } from '../../hooks/useCurrentVault';
+import { Modal, modalClass } from '../Modal/Modal';
 
 // Command executes on each user type and as result gives list of actions
 // Commands are start with `!`. If no `!` present - then search happen between all start view actions names
@@ -281,15 +281,12 @@ export const CommandPaletteModal = ({
   }, [focusedActionId]);
 
   return (
-    <Modal
-      isOpen={isOpened}
-      style={{ overlay: { zIndex: 110 }, content: {} }}
-      overlayClassName="ReactModal__Overlay"
-      className="ReactModal__Content"
-      shouldCloseOnOverlayClick={true}
-      onRequestClose={onClose}
-    >
-      <header className={commandPaletteModalClass('header')}>
+    <Modal isOpened={isOpened} onClose={onClose} fullHeight>
+      <header
+        className={`${commandPaletteModalClass('header')} ${modalClass(
+          'header'
+        )}`}
+      >
         <form
           action=""
           role="search"
@@ -317,7 +314,11 @@ export const CommandPaletteModal = ({
           />
         </form>
       </header>
-      <div className={commandPaletteModalClass('actions-list-container')}>
+      <div
+        className={`${commandPaletteModalClass(
+          'actions-list-container'
+        )} ${modalClass('row')} ${modalClass('footer')}`}
+      >
         <div className={commandPaletteModalClass('actions-list')}>
           {view.actions.map((action, i) => {
             const props = {
