@@ -126,7 +126,7 @@
     "eslint-plugin-react-hooks": "4.2.0",
     "jest": "26.2.2",
     "metro-react-native-babel-preset": "0.63.0",
-    "postcss": "^8.1.14",
+    "postcss": "^8.2.4",
     "postcss-cli": "^8.3.0",
     "postcss-nested": "^4.2.3",
     "prettier": "2.1.2",
