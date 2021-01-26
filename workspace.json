@@ -118,6 +118,16 @@
             "jestConfig": "libs/harika-core/jest.config.js",
             "passWithNoTests": true
           }
+        },
+        "generate": {
+          "builder": "@nrwl/workspace:run-commands",
+          "options": {
+            "commands": [
+              {
+                "command": "npx graphql-codegen --config libs/harika-ui/codegen.yml"
+              }
+            ]
+          }
         }
       }
     },

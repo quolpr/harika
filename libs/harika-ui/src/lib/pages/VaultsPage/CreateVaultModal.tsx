@@ -19,7 +19,7 @@ export const CreateVaultModal = ({
   onClose: () => void;
   onSubmit: (data: IFormData) => void;
 }) => {
-  const { register, handleSubmit, errors } = useForm<{ name: string }>();
+  const { register, handleSubmit, errors } = useForm<IFormData>();
 
   return (
     <Modal isOpened={isOpened} onClose={onClose}>

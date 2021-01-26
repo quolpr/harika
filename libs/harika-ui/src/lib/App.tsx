@@ -11,6 +11,8 @@ import { VaultLayout } from './components/VaultLayout/VaultLayout';
 import { VaultRepository } from '@harika/harika-core';
 import LokiJSAdapter from '@nozbe/watermelondb/adapters/lokijs';
 import { PATHS } from './paths';
+import { QueryClient, QueryClientProvider } from 'react-query';
+import { SignupPage } from './pages/SignupPage/SignupPage';
 
 Modal.setAppElement('body');
 
@@ -35,34 +37,41 @@ const vaultRepository = new VaultRepository(
     } as any)
 );
 
+const queryClient = new QueryClient();
+
 export function App() {
   return (
     <React.StrictMode>
-      <BrowserRouter>
-        <Switch>
-          <Route exact path={PATHS.VAULT_DAILY_PATH}>
-            <VaultLayout vaultRepository={vaultRepository}>
-              <MainPageRedirect />
-            </VaultLayout>
-          </Route>
-          <Route path={PATHS.VAULT_NOTE_PATH}>
-            <VaultLayout vaultRepository={vaultRepository}>
-              <NotePage />
-            </VaultLayout>
-          </Route>
-          <Route path={PATHS.VAULT_NOTE_INDEX_PATH}>
-            <VaultLayout vaultRepository={vaultRepository}>
-              <NotesPage />
-            </VaultLayout>
-          </Route>
-          <Route path={PATHS.VAULT_INDEX_PATH}>
-            <VaultsPage vaults={vaultRepository} />
-          </Route>
-          <Route path="/">
-            <Redirect to={PATHS.DEFAULT_PATH} />
-          </Route>
-        </Switch>
-      </BrowserRouter>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <Switch>
+            <Route exact path={PATHS.VAULT_DAILY_PATH}>
+              <VaultLayout vaultRepository={vaultRepository}>
+                <MainPageRedirect />
+              </VaultLayout>
+            </Route>
+            <Route path={PATHS.VAULT_NOTE_PATH}>
+              <VaultLayout vaultRepository={vaultRepository}>
+                <NotePage />
+              </VaultLayout>
+            </Route>
+            <Route path={PATHS.VAULT_NOTE_INDEX_PATH}>
+              <VaultLayout vaultRepository={vaultRepository}>
+                <NotesPage />
+              </VaultLayout>
+            </Route>
+            <Route path={PATHS.VAULT_INDEX_PATH}>
+              <VaultsPage vaults={vaultRepository} />
+            </Route>
+            <Route path={PATHS.SIGNUP_PATH}>
+              <SignupPage />
+            </Route>
+            <Route path="/">
+              <Redirect to={PATHS.DEFAULT_PATH} />
+            </Route>
+          </Switch>
+        </BrowserRouter>
+      </QueryClientProvider>
     </React.StrictMode>
   );
 }

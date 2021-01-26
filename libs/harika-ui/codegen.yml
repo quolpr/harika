@@ -1,0 +1,15 @@
+overwrite: true
+schema: "http://localhost:5000/api/graphql"
+documents: "libs/harika-ui/src/**/*.graphql"
+generates:
+  libs/harika-ui/src/lib/generated/graphql.ts:
+    plugins:
+      - typescript
+      - typescript-operations
+      - typescript-react-query
+    config:
+      fetcher: 
+        endpoint: 'http://localhost:5000/api/graphql'
+        fetchParams:
+          headers:
+            Content-Type: 'application/json'

@@ -1,0 +1,13 @@
+mutation signup($email: String!, $password: String!) {
+  createUser(params: {email: $email, password: $password}) {
+    messages {
+      field
+      message
+      template
+    }
+    result {
+      email
+    }
+  }
+}
+
