@@ -7,6 +7,7 @@ import { Link } from 'react-router-dom';
 import { paths } from '../../paths';
 import { Plus as PlusIcon } from 'heroicons-react';
 import { CreateVaultModal } from './CreateVaultModal';
+import { useAuthState } from '../../hooks/useAuthState';
 
 const vaultsClass = cn('vaults');
 
@@ -27,34 +28,46 @@ export const VaultsPage = ({ vaults }: { vaults: VaultRepository }) => {
     setIsCreateModalOpened(false);
   }, []);
 
+  const [, setAuthInfo] = useAuthState();
+
   return (
-    <div className={vaultsClass()}>
-      {allVaults.map((vault) => (
-        <Link
-          key={vault.id}
-          className={vaultsClass('box')}
-          to={paths.vaultDailyPath({ vaultId: vault.id })}
-        >
-          <div className={vaultsClass('vault-name')}>{vault.name}</div>
-        </Link>
-      ))}
-
-      <div
-        className={`${vaultsClass('box')} ${vaultsClass('create-box')}`}
-        onClick={() => setIsCreateModalOpened(true)}
+    <>
+      <button
+        onClick={() => {
+          setAuthInfo(undefined);
+        }}
       >
-        <div className={vaultsClass('vault-create-title')}>Create Vault</div>
+        Log Out
+      </button>
 
-        <div className={vaultsClass('add-icon')}>
-          <PlusIcon />
+      <div className={vaultsClass()}>
+        {allVaults.map((vault) => (
+          <Link
+            key={vault.id}
+            className={vaultsClass('box')}
+            to={paths.vaultDailyPath({ vaultId: vault.id })}
+          >
+            <div className={vaultsClass('vault-name')}>{vault.name}</div>
+          </Link>
+        ))}
+
+        <div
+          className={`${vaultsClass('box')} ${vaultsClass('create-box')}`}
+          onClick={() => setIsCreateModalOpened(true)}
+        >
+          <div className={vaultsClass('vault-create-title')}>Create Vault</div>
+
+          <div className={vaultsClass('add-icon')}>
+            <PlusIcon />
+          </div>
         </div>
-      </div>
 
-      <CreateVaultModal
-        isOpened={isCreateModalOpened}
-        onClose={handleClose}
-        onSubmit={handleSubmit}
-      />
-    </div>
+        <CreateVaultModal
+          isOpened={isCreateModalOpened}
+          onClose={handleClose}
+          onSubmit={handleSubmit}
+        />
+      </div>
+    </>
   );
 };

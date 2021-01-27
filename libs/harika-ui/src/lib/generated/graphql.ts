@@ -39,7 +39,7 @@ export type CreateUserParams = {
 
 export type RootMutationType = {
   __typename?: 'RootMutationType';
-  createUser: UserPayload;
+  createUser: SessionPayload;
   login: Session;
 };
 
@@ -61,24 +61,24 @@ export type RootQueryType = {
 
 export type Session = {
   __typename?: 'Session';
-  token?: Maybe<Scalars['String']>;
-  user?: Maybe<User>;
+  token: Scalars['String'];
+  user: User;
+};
+
+export type SessionPayload = {
+  __typename?: 'SessionPayload';
+  /** A list of failed validations. May be blank or null if mutation succeeded. */
+  messages: Array<ValidationMessage>;
+  /** The object created/updated/deleted by the mutation. May be null if mutation failed. */
+  result?: Maybe<Session>;
+  /** Indicates if the mutation completed successfully or not. */
+  successful: Scalars['Boolean'];
 };
 
 export type User = {
   __typename?: 'User';
-  email?: Maybe<Scalars['String']>;
-  id?: Maybe<Scalars['ID']>;
-};
-
-export type UserPayload = {
-  __typename?: 'UserPayload';
-  /** A list of failed validations. May be blank or null if mutation succeeded. */
-  messages: Array<ValidationMessage>;
-  /** The object created/updated/deleted by the mutation. May be null if mutation failed. */
-  result?: Maybe<User>;
-  /** Indicates if the mutation completed successfully or not. */
-  successful: Scalars['Boolean'];
+  email: Scalars['String'];
+  id: Scalars['ID'];
 };
 
 /**
@@ -114,7 +114,7 @@ export type ValidationMessage = {
    * This message may change without notice, so we do not recommend you match against the text.
    * Instead, use the *code* field for matching.
    */
-  message?: Maybe<Scalars['String']>;
+  message: Scalars['String'];
   /** A list of substitutions to be applied to a validation message template */
   options?: Maybe<Array<Maybe<ValidationOption>>>;
   /**
@@ -134,6 +134,24 @@ export type ValidationOption = {
   value: Scalars['String'];
 };
 
+export type LoginMutationVariables = Exact<{
+  email: Scalars['String'];
+  password: Scalars['String'];
+}>;
+
+
+export type LoginMutation = (
+  { __typename?: 'RootMutationType' }
+  & { login: (
+    { __typename?: 'Session' }
+    & Pick<Session, 'token'>
+    & { user: (
+      { __typename?: 'User' }
+      & Pick<User, 'id'>
+    ) }
+  ) }
+);
+
 export type SignupMutationVariables = Exact<{
   email: Scalars['String'];
   password: Scalars['String'];
@@ -143,18 +161,40 @@ export type SignupMutationVariables = Exact<{
 export type SignupMutation = (
   { __typename?: 'RootMutationType' }
   & { createUser: (
-    { __typename?: 'UserPayload' }
+    { __typename?: 'SessionPayload' }
     & { messages: Array<(
       { __typename?: 'ValidationMessage' }
       & Pick<ValidationMessage, 'field' | 'message' | 'template'>
     )>, result?: Maybe<(
-      { __typename?: 'User' }
-      & Pick<User, 'email'>
+      { __typename?: 'Session' }
+      & Pick<Session, 'token'>
+      & { user: (
+        { __typename?: 'User' }
+        & Pick<User, 'id'>
+      ) }
     )> }
   ) }
 );
 
 
+export const LoginDocument = `
+    mutation login($email: String!, $password: String!) {
+  login(email: $email, password: $password) {
+    user {
+      id
+    }
+    token
+  }
+}
+    `;
+export const useLoginMutation = <
+      TError = unknown,
+      TContext = unknown
+    >(options?: UseMutationOptions<LoginMutation, TError, LoginMutationVariables, TContext>) => 
+    useMutation<LoginMutation, TError, LoginMutationVariables, TContext>(
+      (variables?: LoginMutationVariables) => fetcher<LoginMutation, LoginMutationVariables>(LoginDocument, variables)(),
+      options
+    );
 export const SignupDocument = `
     mutation signup($email: String!, $password: String!) {
   createUser(params: {email: $email, password: $password}) {
@@ -164,7 +204,10 @@ export const SignupDocument = `
       template
     }
     result {
-      email
+      token
+      user {
+        id
+      }
     }
   }
 }

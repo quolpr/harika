@@ -1,6 +1,13 @@
-import { IAdapterBuilder, NoteRepository, Vault } from './VaultRepository/NoteRepository';
+import {
+  IAdapterBuilder,
+  NoteRepository,
+  Vault,
+} from './VaultRepository/NoteRepository';
 import { VaultRow } from './VaultRepository/vaultDb/VaultRow';
-import { vaultsSchema, VaultsTableNames } from './VaultRepository/vaultDb/schema';
+import {
+  vaultsSchema,
+  VaultsTableNames,
+} from './VaultRepository/vaultDb/schema';
 import { Collection, Database, Q } from '@nozbe/watermelondb';
 import { map } from 'rxjs/operators';
 import { VaultModel } from './VaultRepository/NoteRepository/models/Vault';
@@ -22,10 +29,17 @@ export class VaultRepository {
   private vaultDbs: Record<string, Database> = {};
   private noteRepo = new NoteRepository(this.vaultDbs);
 
-  constructor(private buildAdapter: IAdapterBuilder) {
+  constructor(
+    private buildAdapter: IAdapterBuilder,
+    userId: string,
+    authToken: string
+  ) {
     this.database = new Database({
       // TODO: add user id to dbName
-      adapter: this.buildAdapter({ dbName: `vaults`, schema: vaultsSchema }),
+      adapter: this.buildAdapter({
+        dbName: `vaults-${userId}`,
+        schema: vaultsSchema,
+      }),
       modelClasses: [VaultRow],
       actionsEnabled: true,
     });

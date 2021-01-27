@@ -23,3 +23,52 @@ input[type='search']::-webkit-search-results-button,
 input[type='search']::-webkit-search-results-decoration {
   display: none;
 }
+
+.form {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+
+  @apply mt-6;
+
+  &__field {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+
+    @apply mt-5;
+
+    &:first-child {
+      @apply mt-0;
+    }
+  }
+
+  &__label {
+    @apply ml-1 mb-2;
+  }
+
+  &__input {
+    @apply bg-gray-800 px-3 py-3 rounded-lg focus:ring-2;
+    outline: none;
+  }
+
+  &__error {
+    @apply ml-2 mt-1 text-red-600;
+  }
+
+  &__submit-btn {
+    display: block;
+
+    width: 100%;
+
+    cursor: pointer;
+
+    outline: none;
+
+    @apply bg-pink-800 rounded-lg shadow px-2 py-3;
+    @apply font-bold mt-8 text-gray-100 focus:ring-2;
+
+    &--loading {
+    }
+  }
+}

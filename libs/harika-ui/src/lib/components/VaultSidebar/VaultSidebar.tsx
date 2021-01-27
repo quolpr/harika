@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import { paths } from '../../paths';
 import { useCurrentVault } from '../../hooks/useCurrentVault';
 
-export const Sidebar = ({
+export const VaultSidebar = ({
   className,
   isOpened,
 }: {

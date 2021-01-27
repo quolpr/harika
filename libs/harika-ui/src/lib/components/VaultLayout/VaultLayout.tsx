@@ -5,8 +5,8 @@ import { NoteRepositoryContext } from '../../contexts/CurrentNoteRepositoryConte
 import { CurrentVaultContext } from '../../contexts/CurrentVaultContext';
 import { CurrentVaultUiStateContext } from '../../contexts/CurrentVaultUiStateContext';
 import { cn } from '../../utils';
-import { Header } from '../Header/Header';
-import { Sidebar } from '../Sidebar/Sidebar';
+import { VaultHeader } from '../VaultHeader/VaultHeader';
+import { VaultSidebar } from '../VaultSidebar/VaultSidebar';
 
 import './styles.css';
 
@@ -59,7 +59,7 @@ export const VaultLayout: React.FC<{
           value={vaultRepository.getNoteRepository()}
         >
           <div className={layoutClass()}>
-            <Sidebar
+            <VaultSidebar
               className={layoutClass('sidebar', {
                 closed: !isSidebarOpened,
               })}
@@ -68,7 +68,7 @@ export const VaultLayout: React.FC<{
 
             <div className={layoutClass('container')}>
               <div className={layoutClass('header-wrapper')}>
-                <Header
+                <VaultHeader
                   className={layoutClass('header')}
                   onTogglerClick={handleTogglerClick}
                   isTogglerToggled={isSidebarOpened}

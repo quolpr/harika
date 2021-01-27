@@ -4,7 +4,7 @@ import { Modal, modalClass } from '../../components/Modal/Modal';
 import { cn } from '../../utils';
 
 const formModalClass = cn('vault-form-modal');
-const formClass = cn('vault-form');
+const formClass = cn('form');
 
 type IFormData = {
   name: string;

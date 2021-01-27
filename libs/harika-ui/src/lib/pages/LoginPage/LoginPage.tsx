@@ -1,11 +1,10 @@
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { useHistory } from 'react-router-dom';
-import { useSignupMutation } from '../../generated/graphql';
+import { useLoginMutation } from '../../generated/graphql';
 import { useAuthState } from '../../hooks/useAuthState';
 import { paths } from '../../paths';
 import { cn } from '../../utils';
-import { setServerErrors } from '../../utils/setServerErrors';
 
 const formClass = cn('form');
 
@@ -14,27 +13,30 @@ type IFormData = {
   password: string;
 };
 
-export const SignupPage = () => {
+export const LoginPage = () => {
   const history = useHistory();
-  const signup = useSignupMutation();
+  const login = useLoginMutation();
   const [, setAuthInfo] = useAuthState();
 
   const { register, handleSubmit, errors, setError } = useForm<IFormData>();
 
   const onSubmit = async (data: IFormData) => {
-    const res = await signup.mutateAsync(data);
+    try {
+      const res = await login.mutateAsync(data);
 
-    if (res.createUser.result) {
       const {
         token,
         user: { id: userId },
-      } = res.createUser.result;
+      } = res.login;
 
       setAuthInfo({ token, userId });
 
       history.push(paths.vaultIndexPath());
-    } else {
-      setServerErrors(res.createUser.messages, setError);
+    } catch {
+      setError('email', {
+        type: 'server',
+        message: 'Email or password is wrong',
+      });
     }
   };
 
@@ -77,18 +79,13 @@ export const SignupPage = () => {
           {errors.password && errors.password.type === 'required' && (
             <span className={formClass('error')}>Password is required</span>
           )}
-          {errors.password && errors.password.message && (
-            <span className={formClass('error')}>
-              {errors.password.message}
-            </span>
-          )}
         </div>
 
         <input
           type="submit"
-          className={formClass('submit-btn', { loading: signup.isLoading })}
-          disabled={signup.isLoading}
-          value="Sign Up"
+          className={formClass('submit-btn', { loading: login.isLoading })}
+          disabled={login.isLoading}
+          value="Log In"
         />
       </form>
     </div>

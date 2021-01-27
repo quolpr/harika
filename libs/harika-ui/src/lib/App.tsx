@@ -1,5 +1,5 @@
 import './wdyr';
-import React from 'react';
+import React, { useMemo } from 'react';
 import './App.css';
 import { BrowserRouter, Redirect, Route, Switch } from 'react-router-dom';
 import { MainPageRedirect } from './pages/MainPageRedirect';
@@ -13,58 +13,90 @@ import LokiJSAdapter from '@nozbe/watermelondb/adapters/lokijs';
 import { PATHS } from './paths';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { SignupPage } from './pages/SignupPage/SignupPage';
+import { OnlyAuthed } from './components/OnlyAuthed';
+import { LoginPage } from './pages/LoginPage/LoginPage';
+import { useAuthState } from './hooks/useAuthState';
 
 Modal.setAppElement('body');
-
-const vaultRepository = new VaultRepository(
-  ({ schema, dbName }) =>
-    new LokiJSAdapter({
-      schema,
-      dbName, // optional vaultDb name
-      // migrations, // optional migrations
-      useWebWorker: false, // recommended for new projects. tends to improve performance and reduce glitches in most cases, but also has downsides - test with and without it
-      useIncrementalIndexedDB: true, // recommended for new projects. improves performance (but incompatible with early Watermelon databases)
-      // It's recommended you implement this method:
-      // onIndexedDBVersionChange: () => {
-      //   // database was deleted in another browser tab (user logged out), so we must make sure we delete
-      //   // it in this tab as well
-      //   if (checkIfUserIsLoggedIn()) {
-      //     window.location.reload()
-      //   }
-      // },
-      // Optional:
-      // onQuotaExceededError: (error) => { /* do something when user runs out of disk space */ },
-    } as any)
-);
 
 const queryClient = new QueryClient();
 
 export function App() {
+  const [authInfo] = useAuthState();
+  const userId = authInfo?.userId;
+  const token = authInfo?.token;
+
+  const vaultRepository = useMemo(
+    () =>
+      userId &&
+      token &&
+      new VaultRepository(
+        ({ schema, dbName }) =>
+          new LokiJSAdapter({
+            schema,
+            dbName, // optional vaultDb name
+            // migrations, // optional migrations
+            useWebWorker: false, // recommended for new projects. tends to improve performance and reduce glitches in most cases, but also has downsides - test with and without it
+            useIncrementalIndexedDB: true, // recommended for new projects. improves performance (but incompatible with early Watermelon databases)
+            // It's recommended you implement this method:
+            // onIndexedDBVersionChange: () => {
+            //   // database was deleted in another browser tab (user logged out), so we must make sure we delete
+            //   // it in this tab as well
+            //   if (checkIfUserIsLoggedIn()) {
+            //     window.location.reload()
+            //   }
+            // },
+            // Optional:
+            // onQuotaExceededError: (error) => { /* do something when user runs out of disk space */ },
+          } as any),
+        userId,
+        token
+      ),
+    [userId, token]
+  );
+
   return (
     <React.StrictMode>
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <Switch>
             <Route exact path={PATHS.VAULT_DAILY_PATH}>
-              <VaultLayout vaultRepository={vaultRepository}>
-                <MainPageRedirect />
-              </VaultLayout>
+              <OnlyAuthed>
+                {vaultRepository && (
+                  <VaultLayout vaultRepository={vaultRepository}>
+                    <MainPageRedirect />
+                  </VaultLayout>
+                )}
+              </OnlyAuthed>
             </Route>
             <Route path={PATHS.VAULT_NOTE_PATH}>
-              <VaultLayout vaultRepository={vaultRepository}>
-                <NotePage />
-              </VaultLayout>
+              <OnlyAuthed>
+                {vaultRepository && (
+                  <VaultLayout vaultRepository={vaultRepository}>
+                    <NotePage />
+                  </VaultLayout>
+                )}
+              </OnlyAuthed>
             </Route>
             <Route path={PATHS.VAULT_NOTE_INDEX_PATH}>
-              <VaultLayout vaultRepository={vaultRepository}>
-                <NotesPage />
-              </VaultLayout>
+              <OnlyAuthed>
+                {vaultRepository && (
+                  <VaultLayout vaultRepository={vaultRepository}>
+                    <NotesPage />
+                  </VaultLayout>
+                )}
+              </OnlyAuthed>
             </Route>
             <Route path={PATHS.VAULT_INDEX_PATH}>
-              <VaultsPage vaults={vaultRepository} />
+              <OnlyAuthed>
+                {vaultRepository && <VaultsPage vaults={vaultRepository} />}
+              </OnlyAuthed>
             </Route>
             <Route path={PATHS.SIGNUP_PATH}>
               <SignupPage />
+            </Route>
+            <Route path={PATHS.LOGIN_PATH}>
+              <LoginPage />
             </Route>
             <Route path="/">
               <Redirect to={PATHS.DEFAULT_PATH} />

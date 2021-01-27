@@ -2276,6 +2276,11 @@
     schema-utils "^2.6.5"
     source-map "^0.7.3"
 
+"@rehooks/local-storage@^2.4.0":
+  version "2.4.0"
+  resolved "https://registry.yarnpkg.com/@rehooks/local-storage/-/local-storage-2.4.0.tgz#fb884b2b657cad5f77aa6ab60bb3532f0e0725d2"
+  integrity sha512-LoXDbEHsuIckVgBsFAv8SuU/M7memjyfWut9Zf36TQXqqCHBRFv8bweg9PymQCa1aWIMjNrZQflFdo55FDlXYg==
+
 "@rollup/plugin-babel@5.0.2":
   version "5.0.2"
   resolved "https://registry.yarnpkg.com/@rollup/plugin-babel/-/plugin-babel-5.0.2.tgz#d9351b9545b0c586a193fc99830d4b1a25317ed5"
@@ -2329,6 +2334,11 @@
     "@types/estree" "0.0.39"
     estree-walker "^1.0.1"
     picomatch "^2.2.2"
+
+"@rooks/use-localstorage@^4.6.1":
+  version "4.6.1"
+  resolved "https://registry.yarnpkg.com/@rooks/use-localstorage/-/use-localstorage-4.6.1.tgz#0b14bcb44e26728a1d37a299378d2631e15a521a"
+  integrity sha512-QYId41Ykdq6rTC/sC5+CkftEHqwvIG/Nqembr2PzmujpbrQ623VTC88wab0nV0B8xL1eOFPaLHQJugIpeOiitw==
 
 "@samverschueren/stream-to-observable@^0.3.0":
   version "0.3.1"

@@ -14,7 +14,7 @@ import { useNoteRepository } from '../../contexts/CurrentNoteRepositoryContext';
 import { useCurrentVault } from '../../hooks/useCurrentVault';
 import { useCurrentNote } from '../../hooks/useCurrentNote';
 
-export const Header = observer(
+export const VaultHeader = observer(
   ({
     className,
     onTogglerClick,
