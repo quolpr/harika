@@ -2,7 +2,7 @@ import {
   IAdapterBuilder,
   NoteRepository,
   Vault,
-} from './VaultRepository/NoteRepository';
+} from './NoteRepository';
 import { VaultRow } from './VaultRepository/vaultDb/VaultRow';
 import {
   vaultsSchema,
@@ -10,15 +10,15 @@ import {
 } from './VaultRepository/vaultDb/schema';
 import { Collection, Database, Q } from '@nozbe/watermelondb';
 import { map } from 'rxjs/operators';
-import { VaultModel } from './VaultRepository/NoteRepository/models/Vault';
-import { Queries } from './VaultRepository/NoteRepository/db/Queries';
-import { ChangesHandler } from './VaultRepository/NoteRepository/ChangesHandler';
-import { NoteBlockRow } from './VaultRepository/NoteRepository/db/rows/NoteBlockRow';
-import { NoteLinkRow } from './VaultRepository/NoteRepository/db/rows/NoteLinkRow';
-import { NoteRow } from './VaultRepository/NoteRepository/db/rows/NoteRow';
-import { syncMiddleware } from './VaultRepository/NoteRepository/models/syncable';
-import { Syncher } from './VaultRepository/NoteRepository/sync';
-import { notesSchema } from './VaultRepository/NoteRepository/db/notesSchema';
+import { VaultModel } from './NoteRepository/models/Vault';
+import { Queries } from './NoteRepository/db/Queries';
+import { ChangesHandler } from './NoteRepository/ChangesHandler';
+import { NoteBlockRow } from './NoteRepository/db/rows/NoteBlockRow';
+import { NoteLinkRow } from './NoteRepository/db/rows/NoteLinkRow';
+import { NoteRow } from './NoteRepository/db/rows/NoteRow';
+import { syncMiddleware } from './NoteRepository/models/syncable';
+import { Syncher } from './NoteRepository/sync';
+import { notesSchema } from './NoteRepository/db/notesSchema';
 
 export class VaultRepository {
   // TODO: finde better naming(instead of conatiner)
