@@ -90,7 +90,7 @@
     "@nrwl/cli": "10.4.4",
     "@nrwl/cypress": "10.4.4",
     "@nrwl/eslint-plugin-nx": "10.4.4",
-    "@nrwl/jest": "10.4.4",
+    "@nrwl/jest": "11.2.6",
     "@nrwl/linter": "10.4.4",
     "@nrwl/node": "^10.4.4",
     "@nrwl/react": "10.4.4",
