@@ -1,5 +1,5 @@
 import './wdyr';
-import React, { useMemo } from 'react';
+import React, { useEffect } from 'react';
 import './App.css';
 import { BrowserRouter, Redirect, Route, Switch } from 'react-router-dom';
 import { MainPageRedirect } from './pages/MainPageRedirect';
@@ -16,6 +16,7 @@ import { SignupPage } from './pages/SignupPage/SignupPage';
 import { OnlyAuthed } from './components/OnlyAuthed';
 import { LoginPage } from './pages/LoginPage/LoginPage';
 import { useAuthState } from './hooks/useAuthState';
+import { useState } from 'react';
 
 Modal.setAppElement('body');
 
@@ -26,34 +27,43 @@ export function App() {
   const userId = authInfo?.userId;
   const token = authInfo?.token;
 
-  const vaultRepository = useMemo(
-    () =>
-      userId &&
-      token &&
-      new VaultRepository(
-        ({ schema, dbName }) =>
-          new LokiJSAdapter({
-            schema,
-            dbName, // optional vaultDb name
-            // migrations, // optional migrations
-            useWebWorker: false, // recommended for new projects. tends to improve performance and reduce glitches in most cases, but also has downsides - test with and without it
-            useIncrementalIndexedDB: true, // recommended for new projects. improves performance (but incompatible with early Watermelon databases)
-            // It's recommended you implement this method:
-            // onIndexedDBVersionChange: () => {
-            //   // database was deleted in another browser tab (user logged out), so we must make sure we delete
-            //   // it in this tab as well
-            //   if (checkIfUserIsLoggedIn()) {
-            //     window.location.reload()
-            //   }
-            // },
-            // Optional:
-            // onQuotaExceededError: (error) => { /* do something when user runs out of disk space */ },
-          } as any),
-        userId,
-        token
-      ),
-    [userId, token]
-  );
+  const [vaultRepository, setVaultRepository] = useState<
+    VaultRepository | undefined
+  >();
+
+  useEffect(() => {
+    if (!userId || !token) return;
+
+    const repo = new VaultRepository(
+      ({ schema, dbName }) =>
+        new LokiJSAdapter({
+          schema,
+          dbName, // optional vaultDb name
+          // migrations, // optional migrations
+          useWebWorker: false, // recommended for new projects. tends to improve performance and reduce glitches in most cases, but also has downsides - test with and without it
+          useIncrementalIndexedDB: true, // recommended for new projects. improves performance (but incompatible with early Watermelon databases)
+          // It's recommended you implement this method:
+          // onIndexedDBVersionChange: () => {
+          //   // database was deleted in another browser tab (user logged out), so we must make sure we delete
+          //   // it in this tab as well
+          //   if (checkIfUserIsLoggedIn()) {
+          //     window.location.reload()
+          //   }
+          // },
+          // Optional:
+          // onQuotaExceededError: (error) => { /* do something when user runs out of disk space */ },
+        } as any),
+      userId,
+      token
+    );
+
+    setVaultRepository(repo);
+
+    return () => {
+      repo.destroy();
+      setVaultRepository(undefined);
+    };
+  }, [userId, token]);
 
   return (
     <React.StrictMode>

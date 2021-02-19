@@ -8,7 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { Channel, Socket } from 'phoenix';
 import { VaultModel } from './models/Vault';
 
-const socket = new Socket('ws://localhost:5000/socket');
+const synchers = [];
 
 export class Syncher {
   private syncSubject: Subject<void | { id: string }>;
@@ -17,12 +17,12 @@ export class Syncher {
 
   constructor(
     private database: Database,
+    socket: Socket,
     private vault: VaultModel,
     private queries: Queries,
     private noteRepository: NoteRepository
   ) {
-    socket.connect();
-    this.channel = socket.channel(`vault:${vault.$modelId}`);
+    this.channel = socket.channel(`vaults:${vault.$modelId}`);
     this.channel.join();
 
     const vaultUpdated = new Observable<void>((observer) => {
@@ -34,15 +34,15 @@ export class Syncher {
     });
 
     this.syncSubject = new Subject();
-    this.syncPipe = merge(this.syncSubject, vaultUpdated)
-      .pipe(auditTime(200))
-      .pipe(
-        concatMap(async (data) => {
-          await this.performSync();
-          return data;
-        })
-      )
-      .pipe(share());
+    this.syncPipe = merge(this.syncSubject, vaultUpdated).pipe(
+      auditTime(500),
+      concatMap(async (data) => {
+        console.log('new sync!', data);
+        await this.performSync();
+        return data;
+      }),
+      share()
+    );
 
     this.syncPipe.subscribe();
   }
@@ -57,8 +57,9 @@ export class Syncher {
   //   });
   // };
 
-  async sync() {
+  sync = async () => {
     const id = uuidv4();
+    console.log('start sync', id);
     const promise = this.syncPipe
       .pipe(find((ev) => typeof ev === 'object' && 'id' in ev && ev.id === id))
       .toPromise();
@@ -66,7 +67,7 @@ export class Syncher {
     this.syncSubject.next({ id });
 
     await promise;
-  }
+  };
 
   private pushMessage = (event: string, payload: object) => {
     return new Promise<any>((resolve, reject) => {

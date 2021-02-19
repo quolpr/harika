@@ -14,7 +14,8 @@ import {
 import { comparer, computed } from 'mobx';
 import { NoteModel } from './NoteModel';
 import { BlocksViewModel } from './BlocksViewModel';
-import { isVault, VaultModel } from './Vault';
+import type { VaultModel } from './Vault';
+import { isVault } from './utils';
 
 export const noteBlockRef = customRef<NoteBlockModel>('harika/NoteBlockRef', {
   // this works, but we will use getRefId() from the Todo class instead
@@ -209,8 +210,8 @@ export class NoteBlockModel extends Model({
       ch.parentBlockRef = noteBlockRef(left);
     });
 
-    this.isDeleted = true;
     this.parentBlockRef = undefined;
+    this.isDeleted = true;
 
     return left;
   }

@@ -102,6 +102,7 @@ export class ChangesHandler {
 
         if (patch.op === 'replace') {
           if (patch.path.length === 3 && patch.path[0] === 'blocksMap') {
+            console.log({ patch });
             const noteBlock = await this.queries.noteBlocksCollection.find(
               patch.path[1] as string
             );
@@ -164,7 +165,7 @@ export class ChangesHandler {
               patch.path[1] as string
             );
 
-            await note.destroyPermanently();
+            await note.markAsDeleted();
           }
 
           if (
@@ -178,8 +179,10 @@ export class ChangesHandler {
               patch.path[1] as string
             );
 
-            await noteBlock.destroyPermanently();
+            await noteBlock.markAsDeleted();
           }
+
+          // TODO: delete NoteLinkRow too
         }
       }
     });

@@ -1,8 +1,4 @@
-import {
-  IAdapterBuilder,
-  NoteRepository,
-  Vault,
-} from './NoteRepository';
+import { IAdapterBuilder, NoteRepository, Vault } from './NoteRepository';
 import { VaultRow } from './VaultRepository/vaultDb/VaultRow';
 import {
   vaultsSchema,
@@ -19,6 +15,9 @@ import { NoteRow } from './NoteRepository/db/rows/NoteRow';
 import { syncMiddleware } from './NoteRepository/models/syncable';
 import { Syncher } from './NoteRepository/sync';
 import { notesSchema } from './NoteRepository/db/notesSchema';
+import { VaultsSyncer } from './VaultRepository/vaultDb/VaultsSyncer';
+import { Socket } from 'phoenix';
+import { v4 as uuidv4 } from 'uuid';
 
 export class VaultRepository {
   // TODO: finde better naming(instead of conatiner)
@@ -28,6 +27,8 @@ export class VaultRepository {
 
   private vaultDbs: Record<string, Database> = {};
   private noteRepo = new NoteRepository(this.vaultDbs);
+  syncer: VaultsSyncer;
+  private socket: Socket;
 
   constructor(
     private buildAdapter: IAdapterBuilder,
@@ -47,6 +48,15 @@ export class VaultRepository {
     this.vaultsCollection = this.database.collections.get<VaultRow>(
       VaultsTableNames.VAULTS
     );
+
+    this.socket = new Socket('ws://localhost:5000/socket', {
+      params: { token: authToken },
+    });
+    this.socket.connect();
+
+    this.syncer = new VaultsSyncer(this.database, this.socket, userId);
+    this.syncer.sync();
+    console.log('vault reposting initialized!');
   }
 
   // TODO: refactor to get noteRepo()
@@ -80,6 +90,7 @@ export class VaultRepository {
   async createVault({ name }: { name: string }) {
     return this.database.action(async () => {
       const { id } = await this.vaultsCollection.create((rec) => {
+        rec._raw.id = uuidv4();
         rec.name = name;
       });
       return this.getVault(id);
@@ -106,6 +117,7 @@ export class VaultRepository {
     const queries = new Queries(this.vaultDbs[id]);
     const syncer = new Syncher(
       this.vaultDbs[id],
+      this.socket,
       vault,
       queries,
       this.getNoteRepository()
@@ -118,4 +130,8 @@ export class VaultRepository {
 
     return vault;
   }
+
+  destroy = () => {
+    // TODO: implement
+  };
 }

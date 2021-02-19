@@ -11,16 +11,11 @@ import { Optional, Required } from 'utility-types';
 import { NoteBlockModel, noteBlockRef } from './NoteBlockModel';
 import { BlocksViewModel } from './BlocksViewModel';
 import { NoteLinkModel } from './NoteLinkModel';
-
-const modelType = 'harika/NoteRepository';
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const isVault = (model: any): model is VaultModel =>
-  '$modelType' in model && model.$modelType === modelType;
+import { vaultModelType } from './consts';
 
 // TODO: rename file
 
-@model(modelType)
+@model(vaultModelType)
 export class VaultModel extends Model({
   name: prop<string>(),
   notesMap: prop<Record<string, NoteModel>>(() => ({})),
