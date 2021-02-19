@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { Calendar as CalendarIcon } from 'heroicons-react';
 import './styles.css';
@@ -6,7 +6,7 @@ import { isArray } from 'util';
 import dayjs from 'dayjs';
 import Calendar from 'react-calendar';
 import clsx from 'clsx';
-import { useClickAway, useKey } from 'react-use';
+import { useClickAway, useKey, useMedia } from 'react-use';
 import { observer } from 'mobx-react-lite';
 import { CommandPaletteModal } from '../CommandPaletteModal/CommandPaleteModal';
 import { paths } from '../../paths';
@@ -19,10 +19,12 @@ export const VaultHeader = observer(
     className,
     onTogglerClick,
     isTogglerToggled,
+    togglerRef,
   }: {
     className?: string;
-    onTogglerClick: () => void;
+    onTogglerClick: (e: React.MouseEvent) => void;
     isTogglerToggled: boolean;
+    togglerRef: React.Ref<HTMLDivElement>;
   }) => {
     const vault = useCurrentVault();
     const noteRepo = useNoteRepository();
@@ -82,6 +84,7 @@ export const VaultHeader = observer(
             'header__sidebar-toggler--toggled': isTogglerToggled,
           })}
           onClick={onTogglerClick}
+          ref={togglerRef}
         >
           <svg
             stroke="currentColor"

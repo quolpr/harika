@@ -9,7 +9,7 @@
 
   &__sidebar {
     @apply transition-all transform-gpu;
-    width: 300px;
+    width: 260px;
   }
 
   &__sidebar--closed {

@@ -48,7 +48,7 @@
   }
 
   &__command-palette {
-    @apply text-gray-500 mr-10;
+    @apply text-gray-500;
     @apply focus:outline-none;
   }
 }

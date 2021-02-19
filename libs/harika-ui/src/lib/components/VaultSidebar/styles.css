@@ -5,6 +5,16 @@
   flex-direction: column;
   overflow: hidden;
 
+  position: absolute;
+  height: calc(100vh - 60px);
+  top: 60px;
+  z-index: 1000;
+
+  @media (min-width: 768px) {
+    position: inherit;
+    height: 100%;
+  }
+
   &__brand {
     @apply text-gray-100 text-3xl ml-6 mb-3 font-bold;
 

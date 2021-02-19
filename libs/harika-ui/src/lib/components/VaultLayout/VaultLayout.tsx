@@ -1,6 +1,7 @@
 import { VaultRepository, Vault, VaultUiState } from '@harika/harika-core';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { useClickAway, useMedia } from 'react-use';
 import { NoteRepositoryContext } from '../../contexts/CurrentNoteRepositoryContext';
 import { CurrentVaultContext } from '../../contexts/CurrentVaultContext';
 import { CurrentVaultUiStateContext } from '../../contexts/CurrentVaultUiStateContext';
@@ -33,8 +34,12 @@ export const VaultLayout: React.FC<{
   vaultRepository: VaultRepository;
 }> = ({ children, vaultRepository }) => {
   const { vaultId } = useParams<{ vaultId: string }>();
+  const isWide = useMedia('(min-width: 768px)');
   const [vault, setVault] = useState<Vault | undefined>();
-  const [isSidebarOpened, setIsSidebarOpened] = useState(true);
+  const [isSidebarOpened, setIsSidebarOpened] = useState(isWide);
+
+  const togglerRef = useRef<HTMLDivElement>(null);
+  const sidebarRef = useRef<HTMLDivElement>(null);
 
   const handleTogglerClick = useCallback(() => {
     setIsSidebarOpened(!isSidebarOpened);
@@ -50,6 +55,17 @@ export const VaultLayout: React.FC<{
 
   // TODO: reset focused block on page change
 
+  const closeSidebar = useCallback(
+    (e: React.MouseEvent | Event) => {
+      if (togglerRef.current?.contains(e.target as Node)) return;
+
+      !isWide && isSidebarOpened && setIsSidebarOpened(false);
+    },
+    [isWide, isSidebarOpened, setIsSidebarOpened]
+  );
+
+  useClickAway(sidebarRef, closeSidebar);
+
   if (!vault) return null;
 
   return (
@@ -60,10 +76,12 @@ export const VaultLayout: React.FC<{
         >
           <div className={layoutClass()}>
             <VaultSidebar
+              ref={sidebarRef}
               className={layoutClass('sidebar', {
                 closed: !isSidebarOpened,
               })}
               isOpened={isSidebarOpened}
+              onNavClick={closeSidebar}
             />
 
             <div className={layoutClass('container')}>
@@ -72,6 +90,7 @@ export const VaultLayout: React.FC<{
                   className={layoutClass('header')}
                   onTogglerClick={handleTogglerClick}
                   isTogglerToggled={isSidebarOpened}
+                  togglerRef={togglerRef}
                 />
               </div>
 

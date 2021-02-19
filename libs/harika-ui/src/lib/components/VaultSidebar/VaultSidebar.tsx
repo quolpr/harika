@@ -1,48 +1,60 @@
-import React from 'react';
-import clsx from 'clsx';
+import React, { useCallback, useRef } from 'react';
 import './styles.css';
 import { Link } from 'react-router-dom';
 import { paths } from '../../paths';
 import { useCurrentVault } from '../../hooks/useCurrentVault';
+import { cn } from '../../utils';
+import { useClickAway, useMedia } from 'react-use';
 
-export const VaultSidebar = ({
-  className,
-  isOpened,
-}: {
+const sidebarClass = cn('sidebar');
+
+type IProps = {
   className?: string;
   isOpened: boolean;
-}) => {
-  const vault = useCurrentVault();
-
-  return (
-    <div
-      className={clsx('sidebar', { 'sidebar--is-opened': isOpened }, className)}
-    >
-      <div className="sidebar__links">
-        <Link
-          className="sidebar__link"
-          to={paths.vaultDailyPath({ vaultId: vault.$modelId })}
-        >
-          Daily note
-        </Link>
-
-        <Link
-          className="sidebar__link"
-          to={paths.vaultNoteIndexPath({ vaultId: vault.$modelId })}
-        >
-          All Notes
-        </Link>
-
-        <Link className="sidebar__link" to={paths.vaultIndexPath()}>
-          Vaults
-        </Link>
-      </div>
-
-      <div className="sidebar__brand">
-        <Link to={paths.defaultPath()}>
-          Harika<div className="sidebar__brand-dot">.</div>
-        </Link>
-      </div>
-    </div>
-  );
+  onNavClick: (e: React.MouseEvent) => void;
 };
+
+export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
+  ({ className, isOpened, onNavClick }: IProps, ref) => {
+    const vault = useCurrentVault();
+
+    return (
+      <div
+        ref={ref}
+        className={`${sidebarClass({ isOpened: isOpened })} ${className}`}
+      >
+        <div className={sidebarClass('links')}>
+          <Link
+            className={sidebarClass('link')}
+            to={paths.vaultDailyPath({ vaultId: vault.$modelId })}
+            onClick={onNavClick}
+          >
+            Daily note
+          </Link>
+
+          <Link
+            className={sidebarClass('link')}
+            to={paths.vaultNoteIndexPath({ vaultId: vault.$modelId })}
+            onClick={onNavClick}
+          >
+            All Notes
+          </Link>
+
+          <Link
+            className={sidebarClass('link')}
+            to={paths.vaultIndexPath()}
+            onClick={onNavClick}
+          >
+            Vaults
+          </Link>
+        </div>
+
+        <div className={sidebarClass('brand')}>
+          <Link to={paths.defaultPath()} onClick={onNavClick}>
+            Harika<div className="sidebar__brand-dot">.</div>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+);
