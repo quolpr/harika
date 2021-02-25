@@ -88,7 +88,7 @@
     "@graphql-codegen/typescript-operations": "^1.17.14",
     "@graphql-codegen/typescript-react-query": "^1.1.0",
     "@nrwl/cli": "10.4.4",
-    "@nrwl/cypress": "10.4.4",
+    "@nrwl/cypress": "11.3.2",
     "@nrwl/eslint-plugin-nx": "10.4.4",
     "@nrwl/jest": "11.3.0",
     "@nrwl/linter": "10.4.4",
