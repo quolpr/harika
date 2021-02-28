@@ -3,6 +3,7 @@ body,
 #root {
   font-family: 'Inter', sans-serif;
   @apply bg-gray-900 text-gray-300;
+  min-width: 320px;
 }
 
 /* clears the ‘X’ from Internet Explorer */

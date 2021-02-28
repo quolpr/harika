@@ -2,15 +2,10 @@ import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
 import './styles.css';
 import { Link } from 'react-router-dom';
-import ReactTimeAgo from 'react-time-ago';
-
-import TimeAgo from 'javascript-time-ago';
-import en from 'javascript-time-ago/locale/en';
+import TimeAgo from 'react-timeago';
 import { paths } from '../../paths';
 import { useNoteRepository } from '../../contexts/CurrentNoteRepositoryContext';
 import { useCurrentVault } from '../../hooks/useCurrentVault';
-
-TimeAgo.addDefaultLocale(en);
 
 type NoteTuple = {
   id: string;
@@ -31,7 +26,7 @@ const NoteRow = observer(({ note }: { note: NoteTuple }) => {
         </Link>
       </td>
       <td className="notes-table__time">
-        <ReactTimeAgo date={note.createdAt} locale="en-US" />
+        <TimeAgo date={note.createdAt} />
       </td>
       <td />
     </tr>

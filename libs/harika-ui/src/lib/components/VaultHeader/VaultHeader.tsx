@@ -13,6 +13,9 @@ import { paths } from '../../paths';
 import { useNoteRepository } from '../../contexts/CurrentNoteRepositoryContext';
 import { useCurrentVault } from '../../hooks/useCurrentVault';
 import { useCurrentNote } from '../../hooks/useCurrentNote';
+import { cn } from '../../utils';
+
+const vaultHeaderClass = cn('header');
 
 export const VaultHeader = observer(
   ({
@@ -78,10 +81,10 @@ export const VaultHeader = observer(
     // </Link>
 
     return (
-      <div className={clsx('header', className)}>
+      <div className={clsx(vaultHeaderClass(), className)}>
         <div
-          className={clsx('header__sidebar-toggler', {
-            'header__sidebar-toggler--toggled': isTogglerToggled,
+          className={vaultHeaderClass('sidebar-toggler', {
+            toggled: isTogglerToggled,
           })}
           onClick={onTogglerClick}
           ref={togglerRef}
@@ -107,10 +110,10 @@ export const VaultHeader = observer(
           onClick={() => {
             setIsModalOpened(!isModalOpened);
           }}
-          className="header__command-palette"
+          className={vaultHeaderClass('command-palette')}
         >
           Command Palette
-          <span className="command">
+          <span className={vaultHeaderClass('command-palette-hotkey')}>
             <kbd className="font-sans">
               <abbr title="Command" className="no-underline">
                 ⌘
@@ -120,24 +123,30 @@ export const VaultHeader = observer(
           </span>
         </button>
 
-        <div className="header__right">
+        <div className={vaultHeaderClass('right')}>
           {isModalOpened && (
             <CommandPaletteModal
               isOpened={isModalOpened}
               onClose={() => setIsModalOpened(false)}
             />
           )}
-          <div ref={calendarRef} className="header__calendar-wrapper">
+          <div
+            ref={calendarRef}
+            className={vaultHeaderClass('calendar-wrapper')}
+          >
             <button onClick={handleOnCalendarClick}>
-              <CalendarIcon className="header__calendar-icon" size={26} />
+              <CalendarIcon
+                className={vaultHeaderClass('calendar-icon')}
+                size={26}
+              />
             </button>
 
             {/** Calendar doesn't have inputRef in typing :(*/}
             <Calendar
               onChange={handleCalendarChange}
               value={currentNote?.dailyNoteDate}
-              className={clsx('header__calendar', {
-                'header__calendar--opened': isCalendarOpened,
+              className={vaultHeaderClass('calendar', {
+                opened: isCalendarOpened,
               })}
             />
           </div>

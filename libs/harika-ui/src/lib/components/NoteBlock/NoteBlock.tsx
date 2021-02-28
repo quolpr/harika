@@ -1,155 +1,15 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import './styles.css';
 import { useClickAway } from 'react-use';
 import clsx from 'clsx';
 import TextareaAutosize from 'react-textarea-autosize';
-import { Observer, observer } from 'mobx-react-lite';
+import { observer } from 'mobx-react-lite';
 import { BlocksViewModel, NoteBlockModel } from '@harika/harika-core';
-import ReactMarkdown from 'react-markdown';
-import {
-  Settings,
-  Processor,
-  ParserConstructor,
-  ParserFunction,
-} from 'unified/types';
-import { Node } from 'unist';
-import visit from 'unist-util-visit';
-import { Link } from 'react-router-dom';
 import { Arrow } from '../Arrow/Arrow';
 import { computed } from 'mobx';
-import { paths } from '../../paths';
 import { useNoteRepository } from '../../contexts/CurrentNoteRepositoryContext';
 import { useCurrentFocusedBlockState } from '../../hooks/useFocusedBlockState';
 import { useCurrentVault } from '../../hooks/useCurrentVault';
-
-const reBlankLine = /^[ \t]*(\n|$)/;
-
-export function blankLines(this: Processor<Settings>) {
-  const parser = this.Parser;
-
-  if (!isRemarkParser(parser)) {
-    throw new Error('Missing parser to attach `blankLines` to');
-  }
-
-  parser.prototype.blockTokenizers.blankLine = blankLine;
-  // NOTE react-markdown@4.3.1 we use depends on remark-parse@5.0.0  while we use remark-parse@8.0.3
-  if (parser.prototype.blockMethods.indexOf('blankLine') === -1) {
-    parser.prototype.blockMethods.unshift('blankLine');
-  }
-
-  function blankLine(
-    this: Tokenizer,
-    eat: (consumed: string) => (node: Node) => void,
-    value: string,
-    silent: boolean
-  ): true | void {
-    let index = 0;
-    const length = value.length;
-    let eatenLines = 0;
-    while (index < length) {
-      const match = reBlankLine.exec(value.slice(index));
-
-      if (match == null) {
-        break;
-      }
-      if (silent) {
-        return true;
-      }
-      // debugger;
-      const line = match[0];
-      index += line.length;
-
-      const add = eat(line);
-      // NOTE if we are at start we add break for each line
-      // otherwise we ignore first line as it's newline of previous block
-      if (this.atStart === true || eatenLines > 0) {
-        add({ type: 'break' });
-      }
-      eatenLines++;
-    }
-  }
-}
-
-const splice = [].splice;
-
-function attacher(this: Processor<Settings>) {
-  const parser = this.Parser;
-
-  const inlineMethods = parser.prototype.inlineMethods;
-
-  if (inlineMethods.indexOf('reference') !== -1) {
-    inlineMethods.splice(inlineMethods.indexOf('reference'), 1);
-  }
-
-  return transformer;
-
-  function transformer(tree, file) {
-    visit(tree, 'text', visitor);
-
-    function visitor(node, index, parent) {
-      const result = [];
-      let start = 0;
-
-      const noteLinkRegex = /\[\[.+?\]\]/g;
-      let match = noteLinkRegex.exec(node.value);
-
-      while (match) {
-        const position = match.index;
-        if (start !== position) {
-          result.push({
-            type: 'text',
-            value: node.value.slice(start, position),
-          });
-        }
-
-        result.push({
-          type: 'noteLink',
-          value: match[0],
-          data: {
-            noteName: match[0].substring(2, match[0].length - 2),
-          },
-        });
-
-        start = position + match[0].length;
-        match = noteLinkRegex.exec(node.value);
-      }
-
-      if (result.length > 0) {
-        if (start < node.value.length) {
-          result.push({ type: 'text', value: node.value.slice(start) });
-        }
-
-        splice.apply(parent.children, [index, 1].concat(result));
-        // parent.children.splice(index, 1, result);
-
-        return index + result.length;
-      }
-
-      // return index;
-    }
-  }
-}
-
-function isRemarkParser(parser: ParserConstructor | ParserFunction) {
-  return (
-    parser != null &&
-    parser.prototype != null &&
-    parser.prototype.blockTokenizers != null
-  );
-}
-
-type Tokenizer = {
-  atStart: boolean;
-  inBlock: boolean;
-  inLink: boolean;
-  inList: boolean;
-};
 
 const NoteBlockChildren = observer(
   ({
@@ -173,54 +33,45 @@ const NoteBlockChildren = observer(
   }
 );
 
-const plugins = [blankLines, attacher];
-
 const MarkdownRenderer = observer(
   ({ noteBlock, content }: { noteBlock: NoteBlockModel; content: string }) => {
-    const vault = useCurrentVault();
-    const links = noteBlock.noteLinks;
+    /* const vault = useCurrentVault(); */
+    /* const links = noteBlock.noteLinks; */
 
-    const renderers = useMemo(
-      () => ({
-        ...ReactMarkdown.renderers,
-        noteLink: (node) => {
-          return (
-            <Observer>
-              {() => {
-                const link = links.find(
-                  (link) => link.noteRef.current.title === node.data.noteName
-                );
+    /* const renderers = useMemo( */
+    /*   () => ({ */
+    /*     ...ReactMarkdown.renderers, */
+    /*     noteLink: (node) => { */
+    /*       return ( */
+    /*         <Observer> */
+    /*           {() => { */
+    /*             const link = links.find( */
+    /*               (link) => link.noteRef.current.title === node.data.noteName */
+    /*             ); */
 
-                if (!link) return node.value;
+    /*             if (!link) return node.value; */
 
-                return (
-                  <Link
-                    to={paths.vaultNotePath({
-                      vaultId: vault.$modelId,
-                      noteId: link?.noteRef.id,
-                    })}
-                    className="text-pink-500 hover:underline"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    {node.value}
-                  </Link>
-                );
-              }}
-            </Observer>
-          );
-        },
-      }),
-      [links, vault.$modelId]
-    );
+    /*             return ( */
+    /*               <Link */
+    /*                 to={paths.vaultNotePath({ */
+    /*                   vaultId: vault.$modelId, */
+    /*                   noteId: link?.noteRef.id, */
+    /*                 })} */
+    /*                 className="text-pink-500 hover:underline" */
+    /*                 onClick={(e) => e.stopPropagation()} */
+    /*               > */
+    /*                 {node.value} */
+    /*               </Link> */
+    /*             ); */
+    /*           }} */
+    /*         </Observer> */
+    /*       ); */
+    /*     }, */
+    /*   }), */
+    /*   [links, vault.$modelId] */
+    /* ); */
 
-    return (
-      <ReactMarkdown
-        plugins={plugins}
-        className="whitespace-pre-wrap"
-        children={content}
-        renderers={renderers}
-      />
-    );
+    return <div>{content}</div>;
   }
 );
 

@@ -39,7 +39,13 @@
   }
 
   &__main {
-    @apply transition-all max-w-screen-sm mx-auto px-10 py-10;
+    @apply transition-all max-w-screen-sm mx-auto p-8;
+  }
+
+  @media (min-width: 768px) {
+    &__main {
+      @apply p-10;
+    }
   }
 }
 

@@ -26,13 +26,14 @@ export function App() {
   const [authInfo] = useAuthState();
   const userId = authInfo?.userId;
   const token = authInfo?.token;
+  const isOffline = authInfo?.isOffline;
 
   const [vaultRepository, setVaultRepository] = useState<
     VaultRepository | undefined
   >();
 
   useEffect(() => {
-    if (!userId || !token) return;
+    if (!userId || !token || isOffline === undefined) return;
 
     const repo = new VaultRepository(
       ({ schema, dbName }) =>
@@ -54,7 +55,8 @@ export function App() {
           // onQuotaExceededError: (error) => { /* do something when user runs out of disk space */ },
         } as any),
       userId,
-      token
+      token,
+      isOffline
     );
 
     setVaultRepository(repo);
@@ -63,7 +65,7 @@ export function App() {
       repo.destroy();
       setVaultRepository(undefined);
     };
-  }, [userId, token]);
+  }, [userId, token, isOffline]);
 
   return (
     <React.StrictMode>

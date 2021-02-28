@@ -1,10 +1,13 @@
 import React from 'react';
+import { useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { useHistory } from 'react-router-dom';
 import { useLoginMutation } from '../../generated/graphql';
 import { useAuthState } from '../../hooks/useAuthState';
 import { paths } from '../../paths';
 import { cn } from '../../utils';
+import { v4 as uuidv4 } from 'uuid';
+import { useOfflineAccounts } from '../../hooks/useOfflineAccounts';
 
 const formClass = cn('form');
 
@@ -17,6 +20,7 @@ export const LoginPage = () => {
   const history = useHistory();
   const login = useLoginMutation();
   const [, setAuthInfo] = useAuthState();
+  const [offlineAccounts, addOfflineAccount] = useOfflineAccounts();
 
   const { register, handleSubmit, errors, setError } = useForm<IFormData>();
 
@@ -29,7 +33,7 @@ export const LoginPage = () => {
         user: { id: userId },
       } = res.login;
 
-      setAuthInfo({ token, userId });
+      setAuthInfo({ token, userId, isOffline: false });
 
       history.push(paths.vaultIndexPath());
     } catch {
@@ -39,6 +43,26 @@ export const LoginPage = () => {
       });
     }
   };
+
+  const handleWorkOffline = useCallback(() => {
+    const token = 'not-set';
+
+    const userId = (() => {
+      if (offlineAccounts.accounts.length > 0) {
+        return offlineAccounts.accounts[0].id;
+      } else {
+        const newUserId = uuidv4();
+
+        addOfflineAccount(newUserId);
+
+        return newUserId;
+      }
+    })();
+
+    setAuthInfo({ token, userId, isOffline: true });
+
+    history.push(paths.vaultIndexPath());
+  }, [setAuthInfo, history, offlineAccounts.accounts, addOfflineAccount]);
 
   return (
     <div className="max-w-screen-sm mx-auto">
@@ -87,6 +111,16 @@ export const LoginPage = () => {
           disabled={login.isLoading}
           value="Log In"
         />
+
+        <div className="mx-auto mt-3 text-gray-600 text-sm">
+          Or{' '}
+          <button
+            className="underline cursor-pointer"
+            onClick={handleWorkOffline}
+          >
+            work offline
+          </button>
+        </div>
       </form>
     </div>
   );

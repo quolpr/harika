@@ -27,13 +27,15 @@ export class VaultRepository {
 
   private vaultDbs: Record<string, Database> = {};
   private noteRepo = new NoteRepository(this.vaultDbs);
-  syncer: VaultsSyncer;
-  private socket: Socket;
+
+  syncer?: VaultsSyncer;
+  private socket?: Socket;
 
   constructor(
     private buildAdapter: IAdapterBuilder,
     userId: string,
-    authToken: string
+    authToken: string,
+    private isOffline: boolean
   ) {
     this.database = new Database({
       // TODO: add user id to dbName
@@ -49,13 +51,16 @@ export class VaultRepository {
       VaultsTableNames.VAULTS
     );
 
-    this.socket = new Socket('ws://localhost:5000/socket', {
-      params: { token: authToken },
-    });
-    this.socket.connect();
+    if (!this.isOffline) {
+      this.socket = new Socket('ws://localhost:5000/socket', {
+        params: { token: authToken },
+      });
+      this.socket.connect();
 
-    this.syncer = new VaultsSyncer(this.database, this.socket, userId);
-    this.syncer.sync();
+      this.syncer = new VaultsSyncer(this.database, this.socket, userId);
+      this.syncer.sync();
+    }
+
     console.log('vault reposting initialized!');
   }
 
@@ -115,17 +120,23 @@ export class VaultRepository {
 
     const vault = new VaultModel({ name: vaultRow.name, $modelId: id });
     const queries = new Queries(this.vaultDbs[id]);
-    const syncer = new Syncher(
-      this.vaultDbs[id],
-      this.socket,
-      vault,
-      queries,
-      this.getNoteRepository()
-    );
+
+    const syncer =
+      !this.isOffline && this.socket
+        ? new Syncher(
+            this.vaultDbs[id],
+            this.socket,
+            vault,
+            queries,
+            this.getNoteRepository()
+          )
+        : undefined;
 
     syncMiddleware(
       vault,
-      new ChangesHandler(this.vaultDbs[id], queries, vault, syncer).handlePatch
+      new ChangesHandler(this.vaultDbs[id], queries, vault, () =>
+        syncer?.sync()
+      ).handlePatch
     );
 
     return vault;

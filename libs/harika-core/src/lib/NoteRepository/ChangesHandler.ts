@@ -7,8 +7,7 @@ import { Queries } from './db/Queries';
 import { NoteTableNames } from './db/notesSchema';
 import { NoteModel } from './models/NoteModel';
 import { Subject } from 'rxjs';
-import { buffer, concatMap, debounceTime } from 'rxjs/operators';
-import { Syncher } from './sync';
+import { buffer, concatMap, debounceTime, tap } from 'rxjs/operators';
 import { NoteLinkModel } from './models/NoteLinkModel';
 import { VaultModel } from './models/Vault';
 
@@ -21,7 +20,7 @@ export class ChangesHandler {
     private database: Database,
     private queries: Queries,
     private vault: VaultModel,
-    private syncher: Syncher
+    onPatchesApplied?: () => void
   ) {
     this.notesCollection = this.database.collections.get<NoteRow>(
       NoteTableNames.NOTES
@@ -36,7 +35,8 @@ export class ChangesHandler {
     this.patchesSubject
       .pipe(
         buffer(this.patchesSubject.pipe(debounceTime(50))),
-        concatMap((patches) => this.applyPatches(patches))
+        concatMap((patches) => this.applyPatches(patches)),
+        tap(() => onPatchesApplied?.())
       )
       .subscribe();
   }
@@ -102,7 +102,6 @@ export class ChangesHandler {
 
         if (patch.op === 'replace') {
           if (patch.path.length === 3 && patch.path[0] === 'blocksMap') {
-            console.log({ patch });
             const noteBlock = await this.queries.noteBlocksCollection.find(
               patch.path[1] as string
             );
@@ -186,8 +185,5 @@ export class ChangesHandler {
         }
       }
     });
-
-    this.syncher.sync();
-    // Don't need to await
   };
 }
