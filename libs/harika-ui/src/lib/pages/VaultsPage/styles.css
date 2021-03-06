@@ -1,3 +1,24 @@
+.vaults-navbar {
+  @apply bg-gray-800 px-4 py-2;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  width: 100%;
+
+  &__logout {
+    @apply bg-gray-700 py-1 px-3 rounded transition-all text-sm;
+
+    margin-left: auto;
+
+    &:hover {
+      --tw-bg-opacity: 0.85;
+    }
+  }
+}
+
 .vaults {
   @apply max-w-screen-md mx-auto mt-10 px-6;
 
@@ -10,7 +31,7 @@
 
     position: relative;
 
-    @apply px-4 py-2 transition-all;
+    @apply px-4 py-3 transition-all;
     @apply rounded-xl bg-gray-800 bg-opacity-80 shadow;
 
     grid-auto-flow: column;

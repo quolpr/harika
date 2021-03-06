@@ -1,0 +1,15 @@
+.brand {
+  @apply text-gray-100 text-3xl font-bold;
+
+  display: flex;
+
+  margin-top: auto;
+
+  &--sm {
+    @apply text-2xl;
+  }
+
+  &__dot {
+    @apply inline text-pink-600 ml-0.5;
+  }
+}

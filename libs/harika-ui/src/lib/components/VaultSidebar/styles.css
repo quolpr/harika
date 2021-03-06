@@ -16,13 +16,9 @@
   }
 
   &__brand {
-    @apply text-gray-100 text-3xl ml-6 mb-3 font-bold;
+    @apply ml-6 mb-3;
 
     margin-top: auto;
-  }
-
-  &__brand-dot {
-    @apply inline text-pink-600 ml-0.5;
   }
 
   &__links {

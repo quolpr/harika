@@ -1,10 +1,10 @@
-import React, { useCallback, useRef } from 'react';
+import React from 'react';
 import './styles.css';
 import { Link } from 'react-router-dom';
 import { paths } from '../../paths';
 import { useCurrentVault } from '../../hooks/useCurrentVault';
 import { cn } from '../../utils';
-import { useClickAway, useMedia } from 'react-use';
+import { Brand } from '../Brand/Brand';
 
 const sidebarClass = cn('sidebar');
 
@@ -49,11 +49,7 @@ export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
           </Link>
         </div>
 
-        <div className={sidebarClass('brand')}>
-          <Link to={paths.defaultPath()} onClick={onNavClick}>
-            Harika<div className="sidebar__brand-dot">.</div>
-          </Link>
-        </div>
+        <Brand className={sidebarClass('brand')} onClick={onNavClick} />
       </div>
     );
   }

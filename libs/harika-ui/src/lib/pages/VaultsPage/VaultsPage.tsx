@@ -8,8 +8,10 @@ import { paths } from '../../paths';
 import { Plus as PlusIcon } from 'heroicons-react';
 import { CreateVaultModal } from './CreateVaultModal';
 import { useAuthState } from '../../hooks/useAuthState';
+import { Brand } from '../../components/Brand/Brand';
 
 const vaultsClass = cn('vaults');
+const vaultsNavbarClass = cn('vaults-navbar');
 
 export const VaultsPage = ({ vaults }: { vaults: VaultRepository }) => {
   const [isCreateModalOpened, setIsCreateModalOpened] = useState(false);
@@ -32,13 +34,18 @@ export const VaultsPage = ({ vaults }: { vaults: VaultRepository }) => {
 
   return (
     <>
-      <button
-        onClick={() => {
-          setAuthInfo(undefined);
-        }}
-      >
-        Log Out
-      </button>
+      <div className={vaultsNavbarClass()}>
+        <Brand sm />
+
+        <button
+          className={vaultsNavbarClass('logout')}
+          onClick={() => {
+            setAuthInfo(undefined);
+          }}
+        >
+          Log Out
+        </button>
+      </div>
 
       <div className={vaultsClass()}>
         {allVaults.map((vault) => (
