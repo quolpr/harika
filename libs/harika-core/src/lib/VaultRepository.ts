@@ -18,6 +18,8 @@ import { notesSchema } from './NoteRepository/db/notesSchema';
 import { VaultsSyncer } from './VaultRepository/vaultDb/VaultsSyncer';
 import { Socket } from 'phoenix';
 import { v4 as uuidv4 } from 'uuid';
+import * as remotedev from 'remotedev';
+import { connectReduxDevTools } from 'mobx-keystone';
 
 export class VaultRepository {
   // TODO: finde better naming(instead of conatiner)
@@ -138,6 +140,11 @@ export class VaultRepository {
         syncer?.sync()
       ).handlePatch
     );
+    const connection = remotedev.connectViaExtension({
+      name: `Vault ${vault.name}`,
+    });
+
+    connectReduxDevTools(remotedev, connection, vault);
 
     return vault;
   }

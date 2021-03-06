@@ -12,16 +12,16 @@ module.exports = (config, context) => {
     ...config.module.rules[0].options,
     plugins: [
       // ... other plugins
-      isDevelopment && require.resolve('react-refresh/babel'),
-    ].filter(Boolean)
-  }
+      // isDevelopment && require.resolve('react-refresh/babel'),
+    ].filter(Boolean),
+  };
 
   return {
     ...config,
     plugins: [
       ...config.plugins,
-      isDevelopment && new webpack.HotModuleReplacementPlugin(),
-      isDevelopment && new ReactRefreshWebpackPlugin(),
+      // isDevelopment && new webpack.HotModuleReplacementPlugin(),
+      // isDevelopment && new ReactRefreshWebpackPlugin({overlay: false}),
     ],
     module: {
       rules: [
@@ -29,8 +29,8 @@ module.exports = (config, context) => {
         webpackTailwindConfig.tailwindWebpackRule,
         {
           test: /\.worker\.js$/,
-          use: { loader: 'worker-loader' }
-        }
+          use: { loader: 'worker-loader' },
+        },
       ],
     },
     output: {
@@ -38,13 +38,12 @@ module.exports = (config, context) => {
       // globalObject: 'this'
     },
     node: {
-     fs: "empty"
+      fs: 'empty',
     },
     devServer: {
       ...config.devServer,
       liveReload: false,
-      hot: true
-    }
+      hot: true,
+    },
   };
 };
-

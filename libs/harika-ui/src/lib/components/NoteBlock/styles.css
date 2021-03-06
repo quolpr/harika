@@ -71,6 +71,10 @@
     background: transparent;
     resize: none;
     min-height: 24px;
+
+    &--focused {
+      @apply bg-gray-800 bg-opacity-80;
+    }
   }
 
   &__input {

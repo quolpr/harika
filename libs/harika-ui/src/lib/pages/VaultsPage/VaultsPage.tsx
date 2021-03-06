@@ -35,7 +35,7 @@ export const VaultsPage = ({ vaults }: { vaults: VaultRepository }) => {
   return (
     <>
       <div className={vaultsNavbarClass()}>
-        <Brand sm />
+        <Brand />
 
         <button
           className={vaultsNavbarClass('logout')}

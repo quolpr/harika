@@ -186,10 +186,12 @@ export const NoteBlock = observer(
       view.isExpanded(noteBlock.$modelId)
     ).get();
 
-    const [{ isFocused, startAt }, setEditState] = useCurrentFocusedBlockState(
+    const [editState, setEditState] = useCurrentFocusedBlockState(
       view.$modelId,
       noteBlock.$modelId
     );
+
+    const { isFocused, startAt, isEditing } = editState;
 
     const [noteBlockContent, setNoteBlockContent] = useState({
       content: noteBlock.content,
@@ -217,14 +219,18 @@ export const NoteBlock = observer(
     const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
     useClickAway(inputRef, () => {
-      if (isFocused) {
-        setEditState(undefined);
+      if (isEditing) {
+        setEditState({
+          viewId: view.$modelId,
+          blockId: noteBlock.$modelId,
+          isEditing: false,
+        });
       }
     });
 
     useEffect(() => {
       if (
-        isFocused &&
+        isEditing &&
         inputRef.current &&
         document.activeElement !== inputRef.current
       ) {
@@ -235,7 +241,7 @@ export const NoteBlock = observer(
         inputRef.current.selectionStart = posAt;
         inputRef.current.selectionEnd = posAt;
       }
-    }, [isFocused, startAt, noteBlock.content.length]);
+    }, [isFocused, isEditing, startAt, noteBlock.content.length]);
 
     useEffect(() => {
       if (noteBlock.$modelId !== noteBlockContent.id) return;
@@ -255,6 +261,7 @@ export const NoteBlock = observer(
           setEditState({
             viewId: view.$modelId,
             blockId: newBlock.$modelId,
+            isEditing: true,
           });
         }
       },
@@ -279,6 +286,7 @@ export const NoteBlock = observer(
                 viewId: view.$modelId,
                 blockId: mergedTo.$modelId,
                 startAt: mergedTo.content.length - noteBlock.content.length,
+                isEditing: true,
               });
             }
           }
@@ -307,6 +315,7 @@ export const NoteBlock = observer(
             setEditState({
               viewId: view.$modelId,
               blockId: right.$modelId,
+              isEditing: true,
             });
           }
         } else if (e.key === 'ArrowUp') {
@@ -315,7 +324,11 @@ export const NoteBlock = observer(
           const [left] = noteBlock.leftAndRight;
 
           if (left) {
-            setEditState({ viewId: view.$modelId, blockId: left.$modelId });
+            setEditState({
+              viewId: view.$modelId,
+              blockId: left.$modelId,
+              isEditing: true,
+            });
           }
         }
       },
@@ -335,12 +348,21 @@ export const NoteBlock = observer(
     );
 
     const handleClick = useCallback(() => {
-      setEditState({ viewId: view.$modelId, blockId: noteBlock.$modelId });
+      setEditState({
+        viewId: view.$modelId,
+        blockId: noteBlock.$modelId,
+        isEditing: true,
+      });
     }, [noteBlock.$modelId, setEditState, view.$modelId]);
 
     const handleBlur = useCallback(() => {
       noteRepo.updateNoteBlockLinks(vault, noteBlock);
-    }, [noteBlock, vault, noteRepo]);
+      setEditState({
+        viewId: view.$modelId,
+        blockId: noteBlock.$modelId,
+        isEditing: false,
+      });
+    }, [noteBlock, vault, noteRepo, setEditState, view.$modelId]);
 
     return (
       <div className="note-block">
@@ -360,24 +382,35 @@ export const NoteBlock = observer(
               'note-block__dot--expanded': isExpanded,
             })}
           />
+          {/* <div */}
+          {/*   className={clsx('note-block__outline', { */}
+          {/*     'note-block__outline--show': isFocused, */}
+          {/*   })} */}
+          {/* > */}
           <TextareaAutosize
             ref={inputRef}
             autoFocus
-            className={clsx('note-block__content', { hidden: !isFocused })}
+            className={clsx('note-block__content', { hidden: !isEditing })}
             onKeyDown={handleKeyDown}
             onKeyPress={handleKeyPress}
             onChange={handleChange}
             value={noteBlockContent.content}
             onBlur={handleBlur}
           />
-          {!isFocused && (
-            <div onClick={handleClick} className={clsx('note-block__content')}>
+          {!isEditing && (
+            <div
+              onClick={handleClick}
+              className={clsx('note-block__content', {
+                'note-block__content--focused': isFocused,
+              })}
+            >
               <MarkdownRenderer
                 noteBlock={noteBlock}
                 content={noteBlockContent.content}
               />
             </div>
           )}
+          {/* </div> */}
         </div>
         {isExpanded && (
           <NoteBlockChildren childBlocks={noteBlock.children} view={view} />

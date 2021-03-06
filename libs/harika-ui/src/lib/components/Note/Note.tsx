@@ -10,6 +10,7 @@ import {
   NoteModel,
   NoteLinkModel,
   BlocksViewModel,
+  FocusedBlockState,
 } from '@harika/harika-core';
 import { Link, useHistory } from 'react-router-dom';
 import { Link as LinkIcon } from 'heroicons-react';
@@ -19,6 +20,8 @@ import { Arrow } from '../Arrow/Arrow';
 import { paths } from '../../paths';
 import { useCurrentVault } from '../../hooks/useCurrentVault';
 import { useCurrentVaultUiState } from '../../contexts/CurrentVaultUiStateContext';
+import { Toolbar } from './Toolbar';
+import { useMedia } from 'react-use';
 
 export interface IFocusBlockState {
   focusOnBlockId: string;
@@ -120,16 +123,18 @@ const Backlinks = observer(
   }
 );
 
-const NoteBlocks = React.memo(
-  observer(
-    ({
-      childBlocks,
-      view,
-    }: {
-      childBlocks: NoteBlockModel[];
-      view: BlocksViewModel;
-    }) => {
-      return (
+const NoteBlocks = observer(
+  ({
+    childBlocks,
+    view,
+  }: {
+    childBlocks: NoteBlockModel[];
+    view: BlocksViewModel;
+  }) => {
+    const isWide = useMedia('(min-width: 768px)');
+
+    return (
+      <>
         <div className="note__body">
           {childBlocks.map((noteBlock) => (
             <NoteBlock
@@ -139,9 +144,10 @@ const NoteBlocks = React.memo(
             />
           ))}
         </div>
-      );
-    }
-  )
+        {!isWide && <Toolbar view={view} />}
+      </>
+    );
+  }
 );
 
 export const Note: React.FC<{ note: NoteModel }> = observer(({ note }) => {
@@ -186,7 +192,9 @@ export const Note: React.FC<{ note: NoteModel }> = observer(({ note }) => {
 
   useEffect(() => {
     if (focusOnBlockId) {
-      vaultUiState.setFocusedBlock(note.$modelId, focusOnBlockId);
+      vaultUiState.setFocusedBlock(
+        FocusedBlockState.create(note.$modelId, focusOnBlockId)
+      );
     }
   }, [focusOnBlockId, note.$modelId, vaultUiState]);
 

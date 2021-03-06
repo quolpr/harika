@@ -32,6 +32,8 @@
     "@capacitor/core": "^2.4.5",
     "@ionic/react": "^5.5.2",
     "@ionic/react-router": "^5.5.2",
+    "@material-ui/core": "^4.11.3",
+    "@material-ui/icons": "^4.11.2",
     "@nozbe/watermelondb": "^0.20.0",
     "@rehooks/local-storage": "^2.4.0",
     "@welldone-software/why-did-you-render": "^6.0.5",

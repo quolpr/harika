@@ -8,6 +8,8 @@ import { CurrentVaultUiStateContext } from '../../contexts/CurrentVaultUiStateCo
 import { cn } from '../../utils';
 import { VaultHeader } from '../VaultHeader/VaultHeader';
 import { VaultSidebar } from '../VaultSidebar/VaultSidebar';
+import * as remotedev from 'remotedev';
+import { connectReduxDevTools } from 'mobx-keystone';
 
 import './styles.css';
 
@@ -52,6 +54,14 @@ export const VaultLayout: React.FC<{
   }, [vaultRepository, vaultId]);
 
   const [vaultUiState] = useState(new VaultUiState({}));
+
+  useEffect(() => {
+    const connection = remotedev.connectViaExtension({
+      name: `Vault UI`,
+    });
+
+    connectReduxDevTools(remotedev, connection, vaultUiState);
+  }, [vaultUiState]);
 
   // TODO: reset focused block on page change
 

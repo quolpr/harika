@@ -65,7 +65,7 @@ export const LoginPage = () => {
   }, [setAuthInfo, history, offlineAccounts.accounts, addOfflineAccount]);
 
   return (
-    <div className="max-w-screen-sm mx-auto">
+    <div className="max-w-screen-sm mx-auto px-5">
       <form onSubmit={handleSubmit(onSubmit)} className={`${formClass()}`}>
         <div className={formClass('field')}>
           <label htmlFor="name" className={formClass('label')}>

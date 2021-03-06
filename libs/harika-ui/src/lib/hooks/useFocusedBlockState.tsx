@@ -7,9 +7,16 @@ export const useCurrentFocusedBlockState = (
   viewId: string,
   blockId: string
 ): [
-  { isFocused: boolean; startAt?: number },
+  { isFocused: boolean; isEditing: boolean; startAt?: number },
   (
-    block: { viewId: string; blockId: string; startAt?: number } | undefined
+    block:
+      | {
+          viewId: string;
+          blockId: string;
+          startAt?: number;
+          isEditing?: boolean;
+        }
+      | undefined
   ) => void
 ] => {
   const vaultUiState = useCurrentVaultUiState();
@@ -25,16 +32,19 @@ export const useCurrentFocusedBlockState = (
         | {
             viewId: string;
             blockId: string;
+            isEditing?: boolean;
             startAt?: number;
           }
         | undefined
     ) => {
       if (block) {
         vaultUiState.setFocusedBlock(
-          new FocusedBlockState({
-            id: `${block.viewId}-${block.blockId}`,
-            startAt: block.startAt,
-          })
+          FocusedBlockState.create(
+            block.viewId,
+            block.blockId,
+            block.isEditing,
+            block.startAt
+          )
         );
       } else {
         vaultUiState.setFocusedBlock(undefined);
