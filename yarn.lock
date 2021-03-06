@@ -1333,10 +1333,10 @@
   resolved "https://registry.yarnpkg.com/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz#75a2e8b51cb758a7553d6804a5932d7aace75c39"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
-"@bem-react/classname@^1.5.8":
-  version "1.5.8"
-  resolved "https://registry.yarnpkg.com/@bem-react/classname/-/classname-1.5.8.tgz#cbb5fb6b3d5e662ef7cad7f57941cb3aa044be4f"
-  integrity sha512-F+s5TVxOrznvnx7hYMq43RQ5ZNKk1fSMZX9PRObVco2bGYwNGEKTtvHTeY5wGVjkB7OJlq+/8QPDV2CJnbzaxg==
+"@bem-react/classname@^1.5.9":
+  version "1.5.9"
+  resolved "https://registry.yarnpkg.com/@bem-react/classname/-/classname-1.5.9.tgz#4b04e6c70a5d9a6522ed2d9712cfc959aecd7e6e"
+  integrity sha512-I2uqyN+r1TdjSjOc7RiP8pmQVR1TBF0avIAXDHr7PcZVV828CXPFvoabkE+FTIFUnb2QjsgAXtvsGVsf/TU8SA==
 
 "@capacitor/android@^2.4.5":
   version "2.4.6"

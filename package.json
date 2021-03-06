@@ -28,7 +28,7 @@
   },
   "private": true,
   "dependencies": {
-    "@bem-react/classname": "^1.5.8",
+    "@bem-react/classname": "^1.5.9",
     "@capacitor/core": "^2.4.5",
     "@ionic/react": "^5.5.2",
     "@ionic/react-router": "^5.5.2",
