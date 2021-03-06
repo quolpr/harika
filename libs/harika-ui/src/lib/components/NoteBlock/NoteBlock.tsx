@@ -1,15 +1,28 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import './styles.css';
 import { useClickAway } from 'react-use';
 import clsx from 'clsx';
 import TextareaAutosize from 'react-textarea-autosize';
-import { observer } from 'mobx-react-lite';
-import { BlocksViewModel, NoteBlockModel } from '@harika/harika-core';
+import { Observer, observer } from 'mobx-react-lite';
+import {
+  blockParser,
+  BlocksViewModel,
+  NoteBlockModel,
+  Token,
+} from '@harika/harika-core';
 import { Arrow } from '../Arrow/Arrow';
 import { computed } from 'mobx';
 import { useNoteRepository } from '../../contexts/CurrentNoteRepositoryContext';
 import { useCurrentFocusedBlockState } from '../../hooks/useFocusedBlockState';
 import { useCurrentVault } from '../../hooks/useCurrentVault';
+import { Link } from 'react-router-dom';
+import { paths } from '../../paths';
 
 const NoteBlockChildren = observer(
   ({
@@ -33,47 +46,130 @@ const NoteBlockChildren = observer(
   }
 );
 
-const MarkdownRenderer = observer(
-  ({ noteBlock, content }: { noteBlock: NoteBlockModel; content: string }) => {
-    /* const vault = useCurrentVault(); */
-    /* const links = noteBlock.noteLinks; */
+const TokensRenderer = ({
+  noteBlock,
+  tokens,
+}: {
+  noteBlock: NoteBlockModel;
+  tokens: Token[];
+}) => {
+  return (
+    <>
+      {tokens.map((token, i) => (
+        <TokenRenderer key={i} noteBlock={noteBlock} token={token} />
+      ))}
+    </>
+  );
+};
 
-    /* const renderers = useMemo( */
-    /*   () => ({ */
-    /*     ...ReactMarkdown.renderers, */
-    /*     noteLink: (node) => { */
-    /*       return ( */
-    /*         <Observer> */
-    /*           {() => { */
-    /*             const link = links.find( */
-    /*               (link) => link.noteRef.current.title === node.data.noteName */
-    /*             ); */
+const TokenRenderer = ({
+  noteBlock,
+  token,
+}: {
+  noteBlock: NoteBlockModel;
+  token: Token;
+}) => {
+  const vault = useCurrentVault();
+  const links = noteBlock.noteLinks;
 
-    /*             if (!link) return node.value; */
+  switch (token.type) {
+    case 'tag':
+      return <a href="#">#[[{token.content}]]</a>;
+    case 'ref':
+      return (
+        <Observer>
+          {() => {
+            const link = links.find(
+              (link) => link.noteRef?.current.title === token.content
+            );
 
-    /*             return ( */
-    /*               <Link */
-    /*                 to={paths.vaultNotePath({ */
-    /*                   vaultId: vault.$modelId, */
-    /*                   noteId: link?.noteRef.id, */
-    /*                 })} */
-    /*                 className="text-pink-500 hover:underline" */
-    /*                 onClick={(e) => e.stopPropagation()} */
-    /*               > */
-    /*                 {node.value} */
-    /*               </Link> */
-    /*             ); */
-    /*           }} */
-    /*         </Observer> */
-    /*       ); */
-    /*     }, */
-    /*   }), */
-    /*   [links, vault.$modelId] */
-    /* ); */
+            if (!link) return <>[[{token.content}]]</>;
 
-    return <div>{content}</div>;
+            return (
+              <Link
+                to={paths.vaultNotePath({
+                  vaultId: vault.$modelId,
+                  noteId: link?.noteRef.id,
+                })}
+                className="text-pink-500 hover:underline"
+                onClick={(e) => e.stopPropagation()}
+              >
+                [[{token.content}]]
+              </Link>
+            );
+          }}
+        </Observer>
+      );
+    case 'bold':
+      return (
+        <b>
+          <TokensRenderer noteBlock={noteBlock} tokens={token.content} />
+        </b>
+      );
+    case 'italic':
+      return (
+        <i>
+          <TokensRenderer noteBlock={noteBlock} tokens={token.content} />
+        </i>
+      );
+    case 'highlight':
+      return (
+        <mark>
+          <TokensRenderer noteBlock={noteBlock} tokens={token.content} />
+        </mark>
+      );
+    case 'head':
+      return (() => {
+        if (token.depth === 3) {
+          return (
+            <h3>
+              <TokensRenderer noteBlock={noteBlock} tokens={token.content} />
+            </h3>
+          );
+        } else if (token.depth === 2) {
+          return (
+            <h2>
+              <TokensRenderer noteBlock={noteBlock} tokens={token.content} />
+            </h2>
+          );
+        } else {
+          return (
+            <h1>
+              <TokensRenderer noteBlock={noteBlock} tokens={token.content} />
+            </h1>
+          );
+        }
+      })();
+    case 'inlineCode':
+      return <pre>{token.content}</pre>;
+    case 'codeBlock':
+      return <pre>{token.content}</pre>;
+    case 'str':
+      return <>{token.content}</>;
+    default:
+      return <span></span>;
   }
-);
+};
+
+const MarkdownRenderer = ({
+  noteBlock,
+  content,
+}: {
+  noteBlock: NoteBlockModel;
+  content: string;
+}) => {
+  const rendered = useMemo(
+    () => (
+      <TokensRenderer
+        noteBlock={noteBlock}
+        tokens={blockParser.parse(content)}
+      />
+    ),
+    [content, noteBlock]
+  );
+
+  return <div>{rendered}</div>;
+};
 
 //TODO: fix textarea performance
 export const NoteBlock = observer(
@@ -100,18 +196,23 @@ export const NoteBlock = observer(
       id: noteBlock.$modelId,
     });
 
-    useEffect(() => {
-      if (
-        noteBlock.content === noteBlockContent.content &&
-        noteBlock.$modelId === noteBlockContent.id
-      )
-        return;
+    /* useEffect(() => { */
+    /*   if ( */
+    /*     noteBlock.content === noteBlockContent.content && */
+    /*     noteBlock.$modelId === noteBlockContent.id */
+    /*   ) */
+    /*     return; */
 
-      setNoteBlockContent({
-        content: noteBlock.content,
-        id: noteBlock.$modelId,
-      });
-    }, [noteBlock.$modelId, noteBlock.content]);
+    /*   setNoteBlockContent({ */
+    /*     content: noteBlock.content, */
+    /*     id: noteBlock.$modelId, */
+    /*   }); */
+    /* }, [ */
+    /*   noteBlock.$modelId, */
+    /*   noteBlock.content, */
+    /*   noteBlockContent.content, */
+    /*   noteBlockContent.id, */
+    /* ]); */
 
     const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
