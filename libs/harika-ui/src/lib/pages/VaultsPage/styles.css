@@ -22,6 +22,8 @@
 .vaults {
   @apply max-w-screen-md mx-auto mt-10 px-6;
 
+  width: 100%;
+
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   @apply grid gap-6;

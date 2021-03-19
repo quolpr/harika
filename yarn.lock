@@ -13537,10 +13537,10 @@ react-use@^15.3.4:
     ts-easing "^0.2.0"
     tslib "^2.0.0"
 
-react@0.0.0-experimental-27659559e:
-  version "0.0.0-experimental-27659559e"
-  resolved "https://registry.yarnpkg.com/react/-/react-0.0.0-experimental-27659559e.tgz#d882070dab7bd5ccb71fcabcdabb1f668060911e"
-  integrity sha512-HlKnbtDDSz1ywwI1VQVp5aAmivglqHyOOaLDW5ZijF6bLf3gUsLyhAL2zHG6SF83ZWAqUnSjROsmMOXn7chyTw==
+react@^17:
+  version "17.0.1"
+  resolved "https://registry.yarnpkg.com/react/-/react-17.0.1.tgz#6e0600416bd57574e3f86d92edba3d9008726127"
+  integrity sha512-lG9c9UuMHdcAexXtigOZLX8exLWkW0Ku29qPRU8uhF2R9BN96dLCt0psvzPLlHc5OWkgymP3qwTRgbnw5BKx3w==
   dependencies:
     loose-envify "^1.1.0"
     object-assign "^4.1.1"

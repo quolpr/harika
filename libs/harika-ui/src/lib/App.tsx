@@ -1,7 +1,6 @@
 import './wdyr';
 import React, { useEffect } from 'react';
 import './App.css';
-import { BrowserRouter, Redirect, Route, Switch } from 'react-router-dom';
 import { MainPageRedirect } from './pages/MainPageRedirect';
 import { NotePage } from './pages/NotePage';
 import { NotesPage } from './pages/NotesPage/NotesPage';
@@ -17,6 +16,10 @@ import { OnlyAuthed } from './components/OnlyAuthed';
 import { LoginPage } from './pages/LoginPage/LoginPage';
 import { useAuthState } from './hooks/useAuthState';
 import { useState } from 'react';
+import { Redirect, Route, Router, Switch } from 'react-router-dom';
+import { createBrowserHistory } from 'history';
+
+const history = createBrowserHistory();
 
 Modal.setAppElement('body');
 
@@ -70,51 +73,49 @@ export function App() {
   return (
     <React.StrictMode>
       <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
-          <Switch>
-            <Route exact path={PATHS.VAULT_DAILY_PATH}>
-              <OnlyAuthed>
-                {vaultRepository && (
-                  <VaultLayout vaultRepository={vaultRepository}>
-                    <MainPageRedirect />
-                  </VaultLayout>
-                )}
-              </OnlyAuthed>
-            </Route>
-            <Route path={PATHS.VAULT_NOTE_PATH}>
-              <OnlyAuthed>
-                {vaultRepository && (
-                  <VaultLayout vaultRepository={vaultRepository}>
-                    <NotePage />
-                  </VaultLayout>
-                )}
-              </OnlyAuthed>
-            </Route>
-            <Route path={PATHS.VAULT_NOTE_INDEX_PATH}>
-              <OnlyAuthed>
-                {vaultRepository && (
-                  <VaultLayout vaultRepository={vaultRepository}>
-                    <NotesPage />
-                  </VaultLayout>
-                )}
-              </OnlyAuthed>
-            </Route>
-            <Route path={PATHS.VAULT_INDEX_PATH}>
-              <OnlyAuthed>
-                {vaultRepository && <VaultsPage vaults={vaultRepository} />}
-              </OnlyAuthed>
-            </Route>
-            <Route path={PATHS.SIGNUP_PATH}>
-              <SignupPage />
-            </Route>
-            <Route path={PATHS.LOGIN_PATH}>
-              <LoginPage />
-            </Route>
-            <Route path="/">
-              <Redirect to={PATHS.DEFAULT_PATH} />
-            </Route>
-          </Switch>
-        </BrowserRouter>
+        <Router history={history}>
+          <Route exact path={PATHS.VAULT_DAILY_PATH}>
+            <OnlyAuthed>
+              {vaultRepository && (
+                <VaultLayout vaultRepository={vaultRepository}>
+                  <MainPageRedirect />
+                </VaultLayout>
+              )}
+            </OnlyAuthed>
+          </Route>
+          <Route exact path={PATHS.VAULT_NOTE_PATH}>
+            <OnlyAuthed>
+              {vaultRepository && (
+                <VaultLayout vaultRepository={vaultRepository}>
+                  <NotePage />
+                </VaultLayout>
+              )}
+            </OnlyAuthed>
+          </Route>
+          <Route exact path={PATHS.VAULT_NOTE_INDEX_PATH}>
+            <OnlyAuthed>
+              {vaultRepository && (
+                <VaultLayout vaultRepository={vaultRepository}>
+                  <NotesPage />
+                </VaultLayout>
+              )}
+            </OnlyAuthed>
+          </Route>
+          <Route exact path={PATHS.VAULT_INDEX_PATH}>
+            <OnlyAuthed>
+              {vaultRepository && <VaultsPage vaults={vaultRepository} />}
+            </OnlyAuthed>
+          </Route>
+          <Route exact path={PATHS.SIGNUP_PATH}>
+            <SignupPage />
+          </Route>
+          <Route exact path={PATHS.LOGIN_PATH}>
+            <LoginPage />
+          </Route>
+          <Route exact path="/">
+            <Redirect to={PATHS.DEFAULT_PATH} />
+          </Route>
+        </Router>
       </QueryClientProvider>
     </React.StrictMode>
   );

@@ -1,31 +1,34 @@
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import dayjs from 'dayjs';
 import { useHistory } from 'react-router-dom';
-import { paths } from '../paths';
 import { useNoteRepository } from '../contexts/CurrentNoteRepositoryContext';
 import { useCurrentVault } from '../hooks/useCurrentVault';
+import { useCurrentVaultUiState } from '../contexts/CurrentVaultUiStateContext';
+import { useCurrentNote } from '../hooks/useCurrentNote';
+import { Note } from '../components/Note/Note';
+import { observer } from 'mobx-react-lite';
 
-export const MainPageRedirect = () => {
+export const MainPageRedirect = observer(() => {
   const vault = useCurrentVault();
   const noteRepo = useNoteRepository();
   const history = useHistory();
+  const vaultUiState = useCurrentVaultUiState();
 
   useEffect(() => {
     const toExecute = async () => {
       const result = await noteRepo.getOrCreateDailyNote(vault, dayjs());
 
       if (result.status === 'ok') {
-        history.replace(
-          paths.vaultNotePath({
-            vaultId: vault.$modelId,
-            noteId: result.data.$modelId,
-          })
-        );
+        vaultUiState.setCurrentNoteId(result.data.$modelId);
       }
     };
 
     toExecute();
-  }, [history, vault, noteRepo]);
 
-  return null;
-};
+    return () => vaultUiState.setCurrentNoteId(undefined);
+  }, [history, vault, noteRepo, vaultUiState]);
+
+  const note = useCurrentNote();
+
+  return note ? <Note note={note} /> : null;
+});
