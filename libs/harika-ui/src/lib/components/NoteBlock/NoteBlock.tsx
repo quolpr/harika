@@ -218,15 +218,15 @@ export const NoteBlock = observer(
 
     const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
-    useClickAway(inputRef, () => {
-      if (isEditing) {
-        setEditState({
-          viewId: view.$modelId,
-          blockId: noteBlock.$modelId,
-          isEditing: false,
-        });
-      }
-    });
+    /* useClickAway(inputRef, () => { */
+    /*   if (isEditing) { */
+    /*     setEditState({ */
+    /*       viewId: view.$modelId, */
+    /*       blockId: noteBlock.$modelId, */
+    /*       isEditing: false, */
+    /*     }); */
+    /*   } */
+    /* }); */
 
     useEffect(() => {
       if (
@@ -357,11 +357,11 @@ export const NoteBlock = observer(
 
     const handleBlur = useCallback(() => {
       noteRepo.updateNoteBlockLinks(vault, noteBlock);
-      setEditState({
-        viewId: view.$modelId,
-        blockId: noteBlock.$modelId,
-        isEditing: false,
-      });
+      /* setEditState({ */
+      /*   viewId: view.$modelId, */
+      /*   blockId: noteBlock.$modelId, */
+      /*   isEditing: false, */
+      /* }); */
     }, [noteBlock, vault, noteRepo, setEditState, view.$modelId]);
 
     return (

@@ -7,11 +7,17 @@ body,
 }
 
 body {
-  min-height: 100vh;
-  min-height: -webkit-fill-available;
-
   padding-top: constant(safe-area-inset-top);
   padding-top: env(safe-area-inset-top);
+
+  height: calc(100vh - env(safe-area-inset-top));
+
+  overflow: hidden;
+
+  #root {
+    height: calc(100vh - 20px);
+    overflow: hidden;
+  }
 }
 
 html {
