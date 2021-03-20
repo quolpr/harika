@@ -20,7 +20,7 @@ import { Modal, modalClass } from '../Modal/Modal';
 
 const commandPaletteModalClass = cn('command-palette-modal');
 
-type IAction =
+type IAction = (
   | {
       id: string;
       name: string;
@@ -43,10 +43,10 @@ type IAction =
       id: string;
       name: string;
       type: 'dummy';
-    };
+    }
+) & { highlight?: string };
 
 type IView = {
-  highlight?: string;
   actions: IAction[];
 };
 
@@ -60,7 +60,7 @@ export const CommandPaletteModal = ({
   const history = useHistory();
   const vault = useCurrentVault();
   const noteRepo = useNoteRepository();
-  const [inputCommandValue, setInputCommandValue] = useState('');
+  const [inputCommandValue, setInputCommandValue] = useState('!findOrCreate ');
 
   const startView: IView = React.useMemo(
     () => ({
@@ -73,15 +73,9 @@ export const CommandPaletteModal = ({
         },
         {
           id: uuidv4(),
-          name: 'Create new note',
+          name: 'Find or create note',
           type: 'typeCommand',
-          commandToType: '!new ',
-        },
-        {
-          id: uuidv4(),
-          name: 'Find note',
-          type: 'typeCommand',
-          commandToType: '!find ',
+          commandToType: '!findOrCreate ',
         },
       ],
     }),
@@ -102,26 +96,10 @@ export const CommandPaletteModal = ({
     // TODO: rxJS
     const cb = async () => {
       const newView = await (async (): Promise<IView> => {
-        if (inputCommandValue.startsWith('!new')) {
-          const newNoteName = inputCommandValue
-            .trim()
-            .replace(/^!new/, '')
-            .trim();
-
-          return {
-            actions: [
-              {
-                id: uuidv4(),
-                name: `Create note "${newNoteName}"`,
-                type: 'createNote',
-                noteName: newNoteName,
-              },
-            ],
-          };
-        } else if (inputCommandValue.startsWith('!find')) {
+        if (inputCommandValue.startsWith('!findOrCreate')) {
           const toFind = inputCommandValue
             .trim()
-            .replace(/^!find/, '')
+            .replace(/^!findOrCreate/, '')
             .trim();
 
           const notes = await noteRepo.searchNotesTuples(
@@ -129,30 +107,48 @@ export const CommandPaletteModal = ({
             toFind
           );
 
+          const createNoteAction: IAction = {
+            id: uuidv4(),
+            name: `Create note "${toFind}"`,
+            type: 'createNote',
+            noteName: toFind,
+          };
+
           return {
-            highlight: toFind,
-            actions: notes.map(({ id, title }) => ({
-              id,
-              name: title,
-              type: 'goToPage',
-              href: paths.vaultNotePath({
-                vaultId: vault.$modelId,
-                noteId: id,
-              }),
-            })),
+            actions: [
+              ...notes.map(
+                ({ id, title }): IAction => ({
+                  id,
+                  name: title,
+                  type: 'goToPage',
+                  href: paths.vaultNotePath({
+                    vaultId: vault.$modelId,
+                    noteId: id,
+                  }),
+                  highlight: toFind,
+                })
+              ),
+              ...(toFind.length !== 0 ? [createNoteAction] : []),
+            ],
           };
         } else {
           const actualInputValue = inputCommandValue.trim();
 
           return actualInputValue.length !== 0
             ? {
-                actions: startView.actions.filter(
-                  ({ name }) =>
-                    name
-                      .toLowerCase()
-                      .indexOf(inputCommandValue.toLowerCase()) !== -1
-                ),
-                highlight: actualInputValue,
+                actions: startView.actions
+                  .filter(
+                    (action) =>
+                      action.name
+                        .toLowerCase()
+                        .indexOf(inputCommandValue.toLowerCase()) !== -1 ||
+                      ('commandToType' in action &&
+                        action.commandToType.indexOf(inputCommandValue) !== -1)
+                  )
+                  .map((action) => ({
+                    ...action,
+                    highlight: actualInputValue,
+                  })),
               }
             : startView;
         }
@@ -352,9 +348,9 @@ export const CommandPaletteModal = ({
 
               children: (
                 <>
-                  {view.highlight ? (
+                  {action.highlight ? (
                     <Highlighter
-                      searchWords={[view.highlight]}
+                      searchWords={[action.highlight]}
                       autoEscape={true}
                       textToHighlight={action.name}
                     />

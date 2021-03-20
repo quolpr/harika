@@ -112,7 +112,7 @@ export const VaultHeader = observer(
           }}
           className={vaultHeaderClass('command-palette')}
         >
-          Command Palette
+          Find Or Create
           <span className={vaultHeaderClass('command-palette-hotkey')}>
             <kbd className="font-sans">
               <abbr title="Command" className="no-underline">

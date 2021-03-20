@@ -55,6 +55,8 @@
   &__command-palette-hotkey {
     display: none;
 
+    @apply ml-2;
+
     @media (min-width: 768px) {
       display: inline-block;
     }
