@@ -62,94 +62,94 @@ const TokensRenderer = ({
   );
 };
 
-const TokenRenderer = ({
-  noteBlock,
-  token,
-}: {
-  noteBlock: NoteBlockModel;
-  token: Token;
-}) => {
-  const vault = useCurrentVault();
-  const links = noteBlock.noteLinks;
+const TokenRenderer = observer(
+  ({ noteBlock, token }: { noteBlock: NoteBlockModel; token: Token }) => {
+    const vault = useCurrentVault();
+    const links = noteBlock.noteLinks;
 
-  switch (token.type) {
-    case 'tag':
-      return <a href="#">#[[{token.content}]]</a>;
-    case 'ref':
-      return (
-        <Observer>
-          {() => {
-            const link = links.find(
-              (link) => link.noteRef?.current.title === token.content
-            );
+    switch (token.type) {
+      case 'tag':
+        return <a href="#">#[[{token.content}]]</a>;
+      case 'ref':
+        return (
+          <Observer>
+            {() => {
+              const link = links.find((link) => {
+                try {
+                  return link.noteRef.current.title === token.content;
+                } catch {
+                  return false;
+                }
+              });
 
-            if (!link) return <>[[{token.content}]]</>;
+              if (!link) return <>[[{token.content}]]</>;
 
+              return (
+                <Link
+                  to={paths.vaultNotePath({
+                    vaultId: vault.$modelId,
+                    noteId: link?.noteRef.id,
+                  })}
+                  className="text-pink-500 hover:underline"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  [[{token.content}]]
+                </Link>
+              );
+            }}
+          </Observer>
+        );
+      case 'bold':
+        return (
+          <b>
+            <TokensRenderer noteBlock={noteBlock} tokens={token.content} />
+          </b>
+        );
+      case 'italic':
+        return (
+          <i>
+            <TokensRenderer noteBlock={noteBlock} tokens={token.content} />
+          </i>
+        );
+      case 'highlight':
+        return (
+          <mark>
+            <TokensRenderer noteBlock={noteBlock} tokens={token.content} />
+          </mark>
+        );
+      case 'head':
+        return (() => {
+          if (token.depth === 3) {
             return (
-              <Link
-                to={paths.vaultNotePath({
-                  vaultId: vault.$modelId,
-                  noteId: link?.noteRef.id,
-                })}
-                className="text-pink-500 hover:underline"
-                onClick={(e) => e.stopPropagation()}
-              >
-                [[{token.content}]]
-              </Link>
+              <h3>
+                <TokensRenderer noteBlock={noteBlock} tokens={token.content} />
+              </h3>
             );
-          }}
-        </Observer>
-      );
-    case 'bold':
-      return (
-        <b>
-          <TokensRenderer noteBlock={noteBlock} tokens={token.content} />
-        </b>
-      );
-    case 'italic':
-      return (
-        <i>
-          <TokensRenderer noteBlock={noteBlock} tokens={token.content} />
-        </i>
-      );
-    case 'highlight':
-      return (
-        <mark>
-          <TokensRenderer noteBlock={noteBlock} tokens={token.content} />
-        </mark>
-      );
-    case 'head':
-      return (() => {
-        if (token.depth === 3) {
-          return (
-            <h3>
-              <TokensRenderer noteBlock={noteBlock} tokens={token.content} />
-            </h3>
-          );
-        } else if (token.depth === 2) {
-          return (
-            <h2>
-              <TokensRenderer noteBlock={noteBlock} tokens={token.content} />
-            </h2>
-          );
-        } else {
-          return (
-            <h1>
-              <TokensRenderer noteBlock={noteBlock} tokens={token.content} />
-            </h1>
-          );
-        }
-      })();
-    case 'inlineCode':
-      return <pre>{token.content}</pre>;
-    case 'codeBlock':
-      return <pre>{token.content}</pre>;
-    case 'str':
-      return <>{token.content}</>;
-    default:
-      return <span></span>;
+          } else if (token.depth === 2) {
+            return (
+              <h2>
+                <TokensRenderer noteBlock={noteBlock} tokens={token.content} />
+              </h2>
+            );
+          } else {
+            return (
+              <h1>
+                <TokensRenderer noteBlock={noteBlock} tokens={token.content} />
+              </h1>
+            );
+          }
+        })();
+      case 'inlineCode':
+        return <pre>{token.content}</pre>;
+      case 'codeBlock':
+        return <pre>{token.content}</pre>;
+      case 'str':
+        return <>{token.content}</>;
+      default:
+        return <span></span>;
+    }
   }
-};
+);
 
 const MarkdownRenderer = ({
   noteBlock,
@@ -193,40 +193,17 @@ export const NoteBlock = observer(
 
     const { isFocused, startAt, isEditing } = editState;
 
-    const [noteBlockContent, setNoteBlockContent] = useState({
-      content: noteBlock.content,
-      id: noteBlock.$modelId,
-    });
-
-    /* useEffect(() => { */
-    /*   if ( */
-    /*     noteBlock.content === noteBlockContent.content && */
-    /*     noteBlock.$modelId === noteBlockContent.id */
-    /*   ) */
-    /*     return; */
-
-    /*   setNoteBlockContent({ */
-    /*     content: noteBlock.content, */
-    /*     id: noteBlock.$modelId, */
-    /*   }); */
-    /* }, [ */
-    /*   noteBlock.$modelId, */
-    /*   noteBlock.content, */
-    /*   noteBlockContent.content, */
-    /*   noteBlockContent.id, */
-    /* ]); */
-
     const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
-    /* useClickAway(inputRef, () => { */
-    /*   if (isEditing) { */
-    /*     setEditState({ */
-    /*       viewId: view.$modelId, */
-    /*       blockId: noteBlock.$modelId, */
-    /*       isEditing: false, */
-    /*     }); */
-    /*   } */
-    /* }); */
+    useClickAway(inputRef, () => {
+      if (isEditing) {
+        setEditState({
+          viewId: view.$modelId,
+          blockId: noteBlock.$modelId,
+          isEditing: false,
+        });
+      }
+    });
 
     useEffect(() => {
       if (
@@ -242,13 +219,6 @@ export const NoteBlock = observer(
         inputRef.current.selectionEnd = posAt;
       }
     }, [isFocused, isEditing, startAt, noteBlock.content.length]);
-
-    useEffect(() => {
-      if (noteBlock.$modelId !== noteBlockContent.id) return;
-      if (noteBlock.content === noteBlockContent.content) return;
-
-      noteBlock.updateContent(noteBlockContent.content);
-    }, [vault, noteBlock, noteBlockContent.content, noteBlockContent.id]);
 
     const handleKeyPress = useCallback(
       async (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -337,14 +307,9 @@ export const NoteBlock = observer(
 
     const handleChange = useCallback(
       (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-        if (e.target.value === noteBlockContent.content) return;
-
-        setNoteBlockContent({
-          content: e.target.value,
-          id: noteBlock.$modelId,
-        });
+        noteBlock.updateContent(e.target.value);
       },
-      [noteBlock.$modelId, noteBlockContent.content]
+      [noteBlock]
     );
 
     const handleClick = useCallback(() => {
@@ -357,15 +322,14 @@ export const NoteBlock = observer(
 
     const handleBlur = useCallback(() => {
       noteRepo.updateNoteBlockLinks(vault, noteBlock);
-      /* setEditState({ */
-      /*   viewId: view.$modelId, */
-      /*   blockId: noteBlock.$modelId, */
-      /*   isEditing: false, */
-      /* }); */
-    }, [noteBlock, vault, noteRepo, setEditState, view.$modelId]);
+    }, [noteBlock, noteRepo, vault]);
 
     return (
-      <div className="note-block">
+      <div
+        className="note-block"
+        data-id={noteBlock.$modelId}
+        data-order={noteBlock.orderPosition}
+      >
         <div className="note-block__body">
           {noteBlock.hasChildren && (
             <Arrow
@@ -394,7 +358,7 @@ export const NoteBlock = observer(
             onKeyDown={handleKeyDown}
             onKeyPress={handleKeyPress}
             onChange={handleChange}
-            value={noteBlockContent.content}
+            value={noteBlock.content}
             onBlur={handleBlur}
           />
           {!isEditing && (
@@ -406,7 +370,7 @@ export const NoteBlock = observer(
             >
               <MarkdownRenderer
                 noteBlock={noteBlock}
-                content={noteBlockContent.content}
+                content={noteBlock.content}
               />
             </div>
           )}

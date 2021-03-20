@@ -83,25 +83,33 @@ export const convertNoteRowToModelAttrs = async (
     ).map((row) => ({ ...mapLink(row), loatNoteOfBlock: false }))
   );
 
-  const linkedNotes = await Promise.all(
-    links.map(async (link) =>
-      link.loatNoteOfBlock
-        ? convertNoteRowToModelAttrs(
-            queries,
-            (await (
+  const linkedNotes = (
+    await Promise.all(
+      links.map(async (link) => {
+        const noteRow = await (async () => {
+          if (link.loatNoteOfBlock) {
+            return (
               await queries.getNoteBlockRowById(link.noteBlockRef.id)
-            ).note.fetch())!,
-            true,
-            false
-          )
-        : convertNoteRowToModelAttrs(
+            )?.note?.fetch();
+          } else {
+            return queries.getNoteRowById(link.noteRef.id);
+          }
+        })();
+
+        const preloadNoteChildren = link.loatNoteOfBlock;
+
+        return (
+          noteRow &&
+          convertNoteRowToModelAttrs(
             queries,
-            await queries.getNoteRowById(link.noteRef.id),
-            false,
+            noteRow,
+            preloadNoteChildren,
             false
           )
+        );
+      })
     )
-  );
+  ).filter(Boolean) as IConvertResult[];
 
   const noteModel = {
     $modelId: dbModel.id,

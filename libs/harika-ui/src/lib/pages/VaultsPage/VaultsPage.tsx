@@ -3,7 +3,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { cn } from '../../utils';
 import './styles.css';
 import { useObservableState } from 'observable-hooks';
-import { Link } from 'react-router-dom';
+import { Link, useHistory } from 'react-router-dom';
 import { paths } from '../../paths';
 import { Plus as PlusIcon } from 'heroicons-react';
 import { CreateVaultModal } from './CreateVaultModal';
@@ -14,16 +14,20 @@ const vaultsClass = cn('vaults');
 const vaultsNavbarClass = cn('vaults-navbar');
 
 export const VaultsPage = ({ vaults }: { vaults: VaultRepository }) => {
+  const history = useHistory();
+
   const [isCreateModalOpened, setIsCreateModalOpened] = useState(false);
   const allVaultTuples = useMemo(() => vaults.getAllVaultTuples$(), [vaults]);
   const allVaults = useObservableState(allVaultTuples, []);
 
   const handleSubmit = useCallback(
-    (data: { name: string }) => {
-      vaults.createVault({ name: data.name });
+    async (data: { name: string }) => {
+      const { $modelId } = await vaults.createVault({ name: data.name });
       setIsCreateModalOpened(false);
+
+      history.push(paths.vaultDailyPath({ vaultId: $modelId }));
     },
-    [vaults]
+    [vaults, history]
   );
 
   const handleClose = useCallback(() => {

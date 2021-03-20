@@ -1,11 +1,13 @@
 import { observer } from 'mobx-react-lite';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import './styles.css';
 import { Link } from 'react-router-dom';
 import TimeAgo from 'react-timeago';
 import { paths } from '../../paths';
 import { useNoteRepository } from '../../contexts/CurrentNoteRepositoryContext';
 import { useCurrentVault } from '../../hooks/useCurrentVault';
+import { Trash as TrashIcon } from 'heroicons-react';
+import { useObservable, useObservableEagerState } from 'observable-hooks';
 
 type NoteTuple = {
   id: string;
@@ -15,6 +17,12 @@ type NoteTuple = {
 
 const NoteRow = observer(({ note }: { note: NoteTuple }) => {
   const vault = useCurrentVault();
+  const noteRepo = useNoteRepository();
+
+  const handleDelete = useCallback(async () => {
+    const noteModel = await noteRepo.findNote(vault, note.id);
+    noteModel?.delete();
+  }, [note.id, noteRepo, vault]);
 
   return (
     <tr>
@@ -28,7 +36,11 @@ const NoteRow = observer(({ note }: { note: NoteTuple }) => {
       <td className="notes-table__time">
         <TimeAgo date={note.createdAt} />
       </td>
-      <td />
+      <td className="text-center">
+        <button onClick={handleDelete}>
+          <TrashIcon />
+        </button>
+      </td>
     </tr>
   );
 });
@@ -37,21 +49,11 @@ export const NotesPage = () => {
   const vault = useCurrentVault();
   const noteRepo = useNoteRepository();
 
-  const [noteTuples, setNoteTuples] = useState<
-    {
-      id: string;
-      title: string;
-      createdAt: Date;
-    }[]
-  >([]);
+  const input$ = useObservable(() =>
+    noteRepo.getAllNotesTuples(vault.$modelId)
+  );
 
-  useEffect(() => {
-    const callback = async () => {
-      setNoteTuples(await noteRepo.getAllNotesTuples(vault.$modelId));
-    };
-
-    callback();
-  }, [vault.$modelId, noteRepo]);
+  const observedNotes = useObservableEagerState(input$) || [];
 
   return (
     <table className="notes-table">
@@ -59,11 +61,11 @@ export const NotesPage = () => {
         <tr>
           <th className="w-1/2 pb-2 text-left">Title</th>
           <th className="w-1/4 pb-2">Created At</th>
-          <th className="w-1/4 pb-2">Updated At</th>
+          <th className="w-12" />
         </tr>
       </thead>
       <tbody>
-        {noteTuples
+        {observedNotes
           .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
           .map((note) => (
             <NoteRow note={note} key={note.id} />

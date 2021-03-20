@@ -9,7 +9,7 @@ import { VaultsPage } from './pages/VaultsPage/VaultsPage';
 import { VaultLayout } from './components/VaultLayout/VaultLayout';
 import { VaultRepository } from '@harika/harika-core';
 import LokiJSAdapter from '@nozbe/watermelondb/adapters/lokijs';
-import { PATHS } from './paths';
+import { PATHS, VAULT_PREFIX } from './paths';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { SignupPage } from './pages/SignupPage/SignupPage';
 import { OnlyAuthed } from './components/OnlyAuthed';
@@ -74,44 +74,40 @@ export function App() {
     <React.StrictMode>
       <QueryClientProvider client={queryClient}>
         <Router history={history}>
-          <Route exact path={PATHS.VAULT_DAILY_PATH}>
+          <Route path={VAULT_PREFIX}>
             <OnlyAuthed>
               {vaultRepository && (
                 <VaultLayout vaultRepository={vaultRepository}>
-                  <MainPageRedirect />
+                  <Route exact path={PATHS.VAULT_DAILY_PATH}>
+                    <MainPageRedirect />
+                  </Route>
+
+                  <Route exact path={PATHS.VAULT_NOTE_PATH}>
+                    <NotePage />
+                  </Route>
+
+                  <Route exact path={PATHS.VAULT_NOTE_INDEX_PATH}>
+                    <NotesPage />
+                  </Route>
                 </VaultLayout>
               )}
             </OnlyAuthed>
           </Route>
-          <Route exact path={PATHS.VAULT_NOTE_PATH}>
-            <OnlyAuthed>
-              {vaultRepository && (
-                <VaultLayout vaultRepository={vaultRepository}>
-                  <NotePage />
-                </VaultLayout>
-              )}
-            </OnlyAuthed>
-          </Route>
-          <Route exact path={PATHS.VAULT_NOTE_INDEX_PATH}>
-            <OnlyAuthed>
-              {vaultRepository && (
-                <VaultLayout vaultRepository={vaultRepository}>
-                  <NotesPage />
-                </VaultLayout>
-              )}
-            </OnlyAuthed>
-          </Route>
+
           <Route exact path={PATHS.VAULT_INDEX_PATH}>
             <OnlyAuthed>
               {vaultRepository && <VaultsPage vaults={vaultRepository} />}
             </OnlyAuthed>
           </Route>
+
           <Route exact path={PATHS.SIGNUP_PATH}>
             <SignupPage />
           </Route>
+
           <Route exact path={PATHS.LOGIN_PATH}>
             <LoginPage />
           </Route>
+
           <Route exact path="/">
             <Redirect to={PATHS.DEFAULT_PATH} />
           </Route>

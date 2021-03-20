@@ -17,7 +17,11 @@ export const NotePage = observer(() => {
   useEffect(() => {
     const callback = async () => {
       const note = await noteRepo.findNote(vault, noteId);
-      vaultUiState.setCurrentNoteId(note.$modelId);
+      if (!note) {
+        alert('note not found!');
+      } else {
+        vaultUiState.setCurrentNoteId(note.$modelId);
+      }
     };
 
     callback();

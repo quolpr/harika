@@ -9,6 +9,7 @@ import { Optional } from 'utility-types';
 import { Required } from 'utility-types';
 import { ICreationResult } from './NoteRepository/types';
 import { VaultModel } from './NoteRepository/models/Vault';
+import { map } from 'rxjs/operators';
 
 export { NoteModel } from './NoteRepository/models/NoteModel';
 // TODO: rename to VaultModel
@@ -98,6 +99,8 @@ export class NoteRepository {
     if (vault.notesMap[id]) {
       const noteInStore = vault.notesMap[id];
 
+      if (vault.notesMap[id].isDeleted) return;
+
       if (
         !(preloadChildren && !noteInStore.areChildrenLoaded) &&
         !(preloadLinks && !noteInStore.areLinksLoaded)
@@ -167,6 +170,9 @@ export class NoteRepository {
     preloadLinks = true
   ) {
     const row = await this.getQueries(vault.$modelId).getNoteRowById(id);
+
+    if (!row) return;
+
     const data = await convertNoteRowToModelAttrs(
       this.getQueries(vault.$modelId),
       row,
@@ -196,12 +202,19 @@ export class NoteRepository {
     }));
   }
 
-  async getAllNotesTuples(vaultId: string) {
-    return (await this.getQueries(vaultId).getAllNotes()).map((row) => ({
-      id: row.id,
-      title: row.title,
-      createdAt: row.createdAt,
-    }));
+  getAllNotesTuples(vaultId: string) {
+    return this.getQueries(vaultId)
+      .notesCollection.query()
+      .observe()
+      .pipe(
+        map((rows) =>
+          rows.map((row) => ({
+            id: row.id,
+            title: row.title,
+            createdAt: row.createdAt,
+          }))
+        )
+      );
   }
 
   private getQueries(vaultId: string) {

@@ -75,7 +75,7 @@ export class NoteBlockModel extends Model({
   @computed({ equals: comparer.shallow })
   get noteLinks() {
     return this.vault.noteLinks.filter(
-      (link) => link.noteBlockRef.id === this.$modelId
+      (link) => !link.isDeleted && link.noteBlockRef.id === this.$modelId
     );
   }
 
@@ -257,6 +257,8 @@ export class NoteBlockModel extends Model({
   tryMoveLeft() {
     const [left] = this.leftAndRight;
 
+    console.log({ left: left?.$modelId });
+
     if (!left) return;
 
     if (left === this.parentBlockRef?.current) {
@@ -276,14 +278,23 @@ export class NoteBlockModel extends Model({
 
   @modelAction
   tryMoveRight() {
-    const [, right] = this.leftAndRight;
+    let [, right] = this.leftAndRightSibling;
+    let isSibling = true;
+
+    if (!right) {
+      right = this.nearestRightToParent;
+      isSibling = false;
+    }
 
     if (!right) return;
 
     if (right.children.length) {
       this.move(right, 'start');
     } else {
-      this.move(right.parentBlockRef?.current, right.orderPosition + 1);
+      this.move(
+        right.parentBlockRef?.current,
+        isSibling ? right.orderPosition + 1 : right.orderPosition
+      );
     }
   }
 
@@ -340,5 +351,18 @@ export class NoteBlockModel extends Model({
     if (data.parentBlockRef?.id !== this.parentBlockRef?.id) {
       this.parentBlockRef = data.parentBlockRef;
     }
+  }
+
+  @modelAction
+  delete(recursively = true, links = true) {
+    if (recursively) {
+      this.children.forEach((block) => block.delete(true, links));
+    }
+
+    if (links) {
+      this.noteLinks.forEach((link) => link.delete());
+    }
+
+    this.isDeleted = true;
   }
 }

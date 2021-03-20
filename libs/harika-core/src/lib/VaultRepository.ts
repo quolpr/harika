@@ -95,7 +95,7 @@ export class VaultRepository {
   }
 
   async createVault({ name }: { name: string }) {
-    return this.database.action(async () => {
+    return this.database.action<Vault>(async () => {
       const { id } = await this.vaultsCollection.create((rec) => {
         rec._raw.id = uuidv4();
         rec.name = name;

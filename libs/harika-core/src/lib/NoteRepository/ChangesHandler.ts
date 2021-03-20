@@ -181,7 +181,23 @@ export class ChangesHandler {
             await noteBlock.markAsDeleted();
           }
 
-          // TODO: delete NoteLinkRow too
+          if (
+            patch.path.length === 3 &&
+            patch.path[0] === 'noteLinks' &&
+            patch.path[2] === 'isDeleted' &&
+            patch.value === true
+          ) {
+            console.log('deleting note link');
+            const noteLinkModel = this.vault.noteLinks[patch.path[1] as number];
+
+            console.log(patch);
+
+            const noteLink = await this.queries.noteLinksCollection.find(
+              noteLinkModel.$modelId
+            );
+
+            await noteLink.markAsDeleted();
+          }
         }
       }
     });

@@ -18,7 +18,7 @@ export class NoteLinkModel extends Model({
   isDeleted: prop<boolean>(false),
 }) {
   @modelAction
-  markAsDeleted() {
+  delete() {
     this.isDeleted = true;
   }
 }

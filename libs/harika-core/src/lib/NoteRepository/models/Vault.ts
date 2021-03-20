@@ -74,9 +74,7 @@ export class VaultModel extends Model({
 
     if (!link) return;
 
-    link.markAsDeleted();
-
-    this.noteLinks.splice(this.noteLinks.indexOf(link), 1);
+    link.delete();
   }
 
   @modelAction

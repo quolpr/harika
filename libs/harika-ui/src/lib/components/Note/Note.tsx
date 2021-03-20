@@ -185,7 +185,7 @@ export const Note: React.FC<{ note: NoteModel }> = observer(({ note }) => {
   );
 
   const handleDestroy = useCallback(() => {
-    note.destroy();
+    note.delete();
 
     history.replace(`/`);
   }, [note, history]);

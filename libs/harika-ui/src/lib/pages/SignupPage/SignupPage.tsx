@@ -30,7 +30,7 @@ export const SignupPage = () => {
         user: { id: userId },
       } = res.createUser.result;
 
-      setAuthInfo({ token, userId });
+      setAuthInfo({ token, userId, isOffline: false });
 
       history.push(paths.vaultIndexPath());
     } else {

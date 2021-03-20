@@ -3,6 +3,8 @@ import { compile } from 'path-to-regexp';
 
 const VAULT_INDEX_PATH = '/vaults';
 
+export const VAULT_PREFIX = '/vaults/:vaultId';
+
 export const PATHS = {
   VAULT_INDEX_PATH: VAULT_INDEX_PATH,
 

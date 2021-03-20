@@ -64,7 +64,7 @@ export class NoteModel extends Model({
   @computed({ equals: comparer.shallow })
   get noteBlockLinks() {
     return this.vault.noteLinks.filter(
-      (link) => link.noteRef.id === this.$modelId
+      (link) => !link.isDeleted && link.noteRef.id === this.$modelId
     );
   }
 
@@ -118,8 +118,16 @@ export class NoteModel extends Model({
   }
 
   @modelAction
-  destroy() {
+  delete(recursively = true, links = true) {
     this.isDeleted = true;
+
+    if (recursively) {
+      this.children.forEach((block) => block.delete(true, links));
+    }
+
+    if (links) {
+      this.noteBlockLinks.forEach((link) => link.delete());
+    }
   }
 
   @modelAction

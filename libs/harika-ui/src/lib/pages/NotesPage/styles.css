@@ -1,6 +1,8 @@
 .notes-table {
   @apply mt-10;
 
+  table-layout: fixed;
+
   width: 100%;
 
   tbody {
@@ -13,6 +15,12 @@
 
   td {
     @apply py-3;
+
+    svg {
+      @apply text-pink-600;
+      margin: 0 auto;
+      cursor: pointer;
+    }
   }
 
   &__time {

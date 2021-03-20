@@ -50,7 +50,11 @@ export class Queries {
       NoteTableNames.NOTES
     );
 
-    return noteCollection.find(id);
+    const result = await noteCollection.find(id);
+
+    if (result.syncStatus === 'deleted') return;
+
+    return result;
   }
 
   async getNoteBlockRowById(id: string) {
@@ -58,7 +62,11 @@ export class Queries {
       NoteTableNames.NOTE_BLOCKS
     );
 
-    return noteBlockCollection.find(id);
+    const result = await noteBlockCollection.find(id);
+
+    if (result.syncStatus === 'deleted') return;
+
+    return result;
   }
 
   async getNoteRowsByNames(names: string[]) {
