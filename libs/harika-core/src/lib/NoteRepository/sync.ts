@@ -143,20 +143,25 @@ export class Syncher {
     const noteBlocksChanges = changesOfSession.note_blocks;
 
     const noteBlockIdsToSelect = [
-      ...noteBlocksChanges.created.map(({ id }) => id),
-      ...noteBlocksChanges.updated.map(({ id }) => id),
+      ...noteBlocksChanges.created.map(({ id }: { id: string }) => id),
+      ...noteBlocksChanges.updated.map(({ id }: { id: string }) => id),
     ];
 
     const notesChanges = changesOfSession.notes;
 
     const noteIdsToSelect = [
-      ...notesChanges.created.map(({ id }) => id),
-      ...notesChanges.updated.map(({ id }) => id),
+      ...notesChanges.created.map(({ id }: { id: string }) => id),
+      ...notesChanges.updated.map(({ id }: { id: string }) => id),
     ];
 
     await Promise.all(
       noteBlockIdsToSelect.map(async (noteBlockId) => {
         const noteBlock = await this.queries.getNoteBlockRowById(noteBlockId);
+
+        if (!noteBlock) {
+          console.error('noteBlock note found');
+          return;
+        }
 
         if (this.vault.notesMap[noteBlock.noteId]) {
           if (noteIdsToSelect.indexOf(noteBlock.id) !== -1) {

@@ -156,39 +156,12 @@ export const Note: React.FC<{ note: NoteModel }> = observer(({ note }) => {
   const history = useHistory<IFocusBlockState>();
   const focusOnBlockId = (history.location.state || {}).focusOnBlockId;
 
-  const [editState, setEditState] = useState({
-    title: note.title,
-    id: note.$modelId,
-  });
-
-  useEffect(() => {
-    if (note.title === editState.title && note.$modelId === editState.id)
-      return;
-
-    setEditState({ title: note.title, id: note.$modelId });
-  }, [editState.id, editState.title, note.$modelId, note.title]);
-
-  useEffect(() => {
-    if (note.title === editState.title && note.$modelId === editState.id)
-      return;
-    if (editState.id !== note.$modelId) return;
-    if (editState.title === note.title) return;
-
-    note.updateTitle(editState.title);
-  }, [editState.id, editState.title, note]);
-
   const handleChange = useCallback(
     (e: ChangeEvent<HTMLTextAreaElement>) => {
-      setEditState({ id: note.$modelId, title: e.target.value });
+      note.updateTitle(e.target.value);
     },
-    [note.$modelId]
+    [note]
   );
-
-  const handleDestroy = useCallback(() => {
-    note.delete();
-
-    history.replace(`/`);
-  }, [note, history]);
 
   useEffect(() => {
     if (focusOnBlockId) {
@@ -203,7 +176,7 @@ export const Note: React.FC<{ note: NoteModel }> = observer(({ note }) => {
       <h2 className="note__header">
         <TextareaAutosize
           className="note__input"
-          value={editState.title}
+          value={note.title}
           onChange={handleChange}
         />
       </h2>

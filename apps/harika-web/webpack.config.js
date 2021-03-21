@@ -12,7 +12,7 @@ module.exports = (config, context) => {
     ...config.module.rules[0].options,
     plugins: [
       // ... other plugins
-      // isDevelopment && require.resolve('react-refresh/babel'),
+      isDevelopment && require.resolve('react-refresh/babel'),
     ].filter(Boolean),
   };
 
@@ -20,8 +20,8 @@ module.exports = (config, context) => {
     ...config,
     plugins: [
       ...config.plugins,
-      // isDevelopment && new webpack.HotModuleReplacementPlugin(),
-      // isDevelopment && new ReactRefreshWebpackPlugin({overlay: false}),
+      isDevelopment && new webpack.HotModuleReplacementPlugin(),
+      isDevelopment && new ReactRefreshWebpackPlugin({ overlay: false }),
     ],
     module: {
       rules: [

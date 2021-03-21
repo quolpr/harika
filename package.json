@@ -99,6 +99,7 @@
     "@nxtend/capacitor": "^11.0.0",
     "@nxtend/ionic-react": "^11.0.0",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.4.3",
+    "@tailwindcss/jit": "^0.1.5",
     "@testing-library/react": "11.1.2",
     "@types/jest": "26.0.8",
     "@types/lodash-es": "^4.17.4",
@@ -118,7 +119,6 @@
     "@types/uuid": "^8.3.0",
     "@typescript-eslint/eslint-plugin": "4.3.0",
     "@typescript-eslint/parser": "4.3.0",
-    "autoprefixer": "^9.8.6",
     "babel-jest": "26.2.2",
     "cypress": "^5.5.0",
     "dotenv": "6.2.0",
@@ -132,17 +132,21 @@
     "jest": "26.2.2",
     "metro-react-native-babel-preset": "0.63.0",
     "pegjs": "^0.10.0",
-    "postcss": "^8.1.14",
-    "postcss-cli": "^8.3.0",
-    "postcss-nested": "^4.2.3",
     "prettier": "2.1.2",
     "react-refresh": "^0.9.0",
     "react-test-renderer": "17.0.1",
-    "tailwindcss": "^2.0.1",
+    "tailwindcss": "^2.0.4",
     "ts-jest": "26.4.0",
     "ts-node": "~7.0.0",
     "tslint": "~6.0.0",
     "typescript": "~4.0.3",
     "worker-loader": "^3.0.6"
+  },
+  "resolutions": {
+    "autoprefixer": "^10.2.5",
+    "postcss": "^8.2.8",
+    "postcss-cli": "^8.0.0",
+    "postcss-import": "^14.0.0",
+    "postcss-nested": "^5.0.5"
   }
 }

@@ -10,12 +10,10 @@ body {
   padding-top: constant(safe-area-inset-top);
   padding-top: env(safe-area-inset-top);
 
-  height: calc(100vh - env(safe-area-inset-top));
-
   overflow: hidden;
 
   #root {
-    height: calc(100vh - 20px);
+    height: calc(100vh - env(safe-area-inset-top));
     overflow: hidden;
   }
 }

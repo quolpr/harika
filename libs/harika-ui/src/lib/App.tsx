@@ -1,7 +1,7 @@
 import './wdyr';
 import React, { useEffect } from 'react';
 import './App.css';
-import { MainPageRedirect } from './pages/MainPageRedirect';
+import { DailyNotePage } from './pages/DailyNotePage';
 import { NotePage } from './pages/NotePage';
 import { NotesPage } from './pages/NotesPage/NotesPage';
 import Modal from 'react-modal';
@@ -79,7 +79,7 @@ export function App() {
               {vaultRepository && (
                 <VaultLayout vaultRepository={vaultRepository}>
                   <Route exact path={PATHS.VAULT_DAILY_PATH}>
-                    <MainPageRedirect />
+                    <DailyNotePage />
                   </Route>
 
                   <Route exact path={PATHS.VAULT_NOTE_PATH}>

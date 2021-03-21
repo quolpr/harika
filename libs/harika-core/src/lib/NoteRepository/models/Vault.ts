@@ -20,10 +20,11 @@ export class VaultModel extends Model({
   name: prop<string>(),
   notesMap: prop<Record<string, NoteModel>>(() => ({})),
   blocksMap: prop<Record<string, NoteBlockModel>>(() => ({})),
-  blocksViewsMap: prop<Record<string, BlocksViewModel>>(() => ({})),
   // TODO: could be optimize with Record
   noteLinks: prop<NoteLinkModel[]>(() => []),
 }) {
+  blocksViewsMap: Record<string, BlocksViewModel> = {};
+
   @modelAction
   newNote(
     attrs: Required<

@@ -8,13 +8,14 @@ import { useCurrentNote } from '../hooks/useCurrentNote';
 import { Note } from '../components/Note/Note';
 import { observer } from 'mobx-react-lite';
 
-export const MainPageRedirect = observer(() => {
+export const DailyNotePage = observer(() => {
   const vault = useCurrentVault();
   const noteRepo = useNoteRepository();
   const history = useHistory();
   const vaultUiState = useCurrentVaultUiState();
 
   useEffect(() => {
+    console.log('init!', vaultUiState.currentNoteId);
     const toExecute = async () => {
       const result = await noteRepo.getOrCreateDailyNote(vault, dayjs());
 
@@ -25,7 +26,7 @@ export const MainPageRedirect = observer(() => {
 
     toExecute();
 
-    return () => vaultUiState.setCurrentNoteId(undefined);
+    /* return () => vaultUiState.setCurrentNoteId(undefined); */
   }, [history, vault, noteRepo, vaultUiState]);
 
   const note = useCurrentNote();

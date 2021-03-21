@@ -7,6 +7,7 @@ import { useCurrentVaultUiState } from '../contexts/CurrentVaultUiStateContext';
 import { observer } from 'mobx-react-lite';
 import { useCurrentVault } from '../hooks/useCurrentVault';
 import { useCurrentNote } from '../hooks/useCurrentNote';
+import { useUnmount } from 'react-use';
 
 export const NotePage = observer(() => {
   const vault = useCurrentVault();
@@ -25,9 +26,11 @@ export const NotePage = observer(() => {
     };
 
     callback();
-
-    return () => vaultUiState.setCurrentNoteId(undefined);
   }, [vault, noteId, noteRepo, vaultUiState]);
+
+  useUnmount(() => {
+    vaultUiState.setCurrentNoteId(undefined);
+  });
 
   const note = useCurrentNote();
 
