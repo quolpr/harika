@@ -1,6 +1,7 @@
 import './wdyr';
 import React, { useEffect } from 'react';
 import './App.css';
+import './variables.css';
 import { DailyNotePage } from './pages/DailyNotePage';
 import { NotePage } from './pages/NotePage';
 import { NotesPage } from './pages/NotesPage/NotesPage';

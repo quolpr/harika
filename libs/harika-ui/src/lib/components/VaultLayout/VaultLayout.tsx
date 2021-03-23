@@ -94,7 +94,11 @@ export const VaultLayout: React.FC<{
               onNavClick={closeSidebar}
             />
 
-            <div className={layoutClass('container')}>
+            <div
+              className={layoutClass('container', {
+                'with-padding': isSidebarOpened,
+              })}
+            >
               <div className={layoutClass('header-wrapper')}>
                 <VaultHeader
                   className={layoutClass('header')}

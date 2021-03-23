@@ -304,8 +304,9 @@ export const CommandPaletteModal = ({
             value={inputCommandValue}
             onChange={(e) => setInputCommandValue(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === 'ArrowUp' || e.key === 'ArrowDown')
+              if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
                 e.preventDefault();
+              }
             }}
           />
         </form>

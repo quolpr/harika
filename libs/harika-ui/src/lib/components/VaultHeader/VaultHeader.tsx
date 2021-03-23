@@ -76,10 +76,6 @@ export const VaultHeader = observer(
       [vault, history, noteRepo]
     );
 
-    // <Link to="/">
-    //   Harika<div className="header__brand-dot">.</div>
-    // </Link>
-
     return (
       <div className={clsx(vaultHeaderClass(), className)}>
         <div

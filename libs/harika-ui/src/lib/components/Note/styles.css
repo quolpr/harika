@@ -1,6 +1,6 @@
 .note {
   &__header {
-    @apply text-gray-100 text-3xl pt-10 pb-5 font-bold;
+    @apply text-gray-100 text-3xl pt-5 pb-5 font-bold;
   }
 
   @media (min-width: 768px) {
@@ -37,6 +37,10 @@
 
     display: flex;
     align-items: center;
+  }
+
+  &__link-icon {
+    @apply mr-2;
   }
 }
 
@@ -86,15 +90,18 @@
 
   &__noteblock-path {
     @apply mb-2;
-
-    display: flex;
   }
 
   &__noteblock-path-step {
+    display: inline;
+    word-break: break-all;
+
     &:after {
       @apply mx-1.5;
 
       content: '->';
+
+      white-space: nowrap;
     }
 
     &--last {
@@ -106,7 +113,7 @@
 }
 
 .toolbar {
-  @apply bg-gray-900 py-4 bg-opacity-90;
+  @apply bg-gray-900 py-4 bg-opacity-90 pb-8;
 
   backdrop-filter: blur(5px);
 
@@ -120,6 +127,6 @@
   width: 100%;
 
   &__button {
-    width: 15%;
+    width: 10%;
   }
 }

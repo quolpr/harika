@@ -83,7 +83,7 @@ const BacklinkedNote = observer(
                         )}
                         key={n.$modelId}
                       >
-                        {n.content}
+                        {n.content.trim().length === 0 ? '[blank]' : n.content}
                       </div>
                     ))}
                   </div>
@@ -187,7 +187,7 @@ export const Note: React.FC<{ note: NoteModel }> = observer(({ note }) => {
       />
 
       <div className="note__linked-references">
-        <LinkIcon className="mr-2" size={16} />
+        <LinkIcon className="note__link-icon" size={16} />
         {note.noteBlockLinks.length} Linked References
       </div>
 

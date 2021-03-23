@@ -5,7 +5,14 @@ import { useCurrentVault } from '../../hooks/useCurrentVault';
 import { cn } from '../../utils';
 import { BlocksViewModel, FocusedBlockState } from '@harika/harika-core';
 import { Portal } from '../Portal';
-import { FormatIndentDecrease, FormatIndentIncrease } from '@material-ui/icons';
+import {
+  ArrowDropDown,
+  ArrowDropUp,
+  FormatIndentDecrease,
+  FormatIndentIncrease,
+  KeyboardHide,
+  KeyboardReturn,
+} from '@material-ui/icons';
 
 const toolbarClass = cn('toolbar');
 
@@ -17,68 +24,99 @@ export const Toolbar = observer(({ view }: { view: BlocksViewModel }) => {
     ? vault.blocksMap[vaultUiState.focusedBlock?.blockId]
     : undefined;
 
-  const handleNewBlockPress = useCallback(async () => {
-    if (!currentBlock) return;
+  const handleNewBlockPress = useCallback(
+    async (e: React.MouseEvent) => {
+      e.preventDefault();
 
-    const newBlock = currentBlock.injectNewRightBlock('', view);
+      if (!currentBlock) return;
 
-    if (!newBlock) return;
+      const newBlock = currentBlock.injectNewRightBlock('', view);
 
-    vaultUiState.setFocusedBlock(
-      FocusedBlockState.create(view.$modelId, newBlock.$modelId, true)
-    );
-  }, [currentBlock, vaultUiState, view]);
+      if (!newBlock) return;
 
-  const handleMoveUpPress = useCallback(async () => {
-    if (!currentBlock) return;
+      vaultUiState.setFocusedBlock(
+        FocusedBlockState.create(view.$modelId, newBlock.$modelId, true)
+      );
+    },
+    [currentBlock, vaultUiState, view]
+  );
 
-    currentBlock.tryMoveUp();
-  }, [currentBlock]);
+  const handleMoveUpPress = useCallback(
+    async (e: React.MouseEvent) => {
+      e.preventDefault();
 
-  const handleMoveDownPress = useCallback(async () => {
-    if (!currentBlock) return;
+      if (!currentBlock) return;
 
-    currentBlock.tryMoveDown();
-  }, [currentBlock]);
+      currentBlock.tryMoveUp();
+    },
+    [currentBlock]
+  );
 
-  const handleMoveLeft = useCallback(async () => {
-    if (!currentBlock) return;
+  const handleMoveDownPress = useCallback(
+    async (e: React.MouseEvent) => {
+      e.preventDefault();
 
-    currentBlock.tryMoveLeft();
-  }, [currentBlock]);
+      if (!currentBlock) return;
 
-  const handleMoveRight = useCallback(async () => {
-    if (!currentBlock) return;
+      currentBlock.tryMoveDown();
+    },
+    [currentBlock]
+  );
 
-    currentBlock.tryMoveRight();
-  }, [currentBlock]);
+  const handleMoveLeft = useCallback(
+    async (e: React.MouseEvent) => {
+      e.preventDefault();
+
+      if (!currentBlock) return;
+
+      currentBlock.tryMoveLeft();
+    },
+    [currentBlock]
+  );
+
+  const handleMoveRight = useCallback(
+    async (e: React.MouseEvent) => {
+      e.preventDefault();
+
+      if (!currentBlock) return;
+
+      currentBlock.tryMoveRight();
+    },
+    [currentBlock]
+  );
 
   return (
     <Portal>
       <div className={toolbarClass()}>
         <button
-          onClick={handleMoveDownPress}
+          onMouseDown={handleMoveDownPress}
           className={toolbarClass('button')}
         >
           <FormatIndentDecrease />
         </button>
-        <button onClick={handleMoveUpPress} className={toolbarClass('button')}>
+        <button
+          onMouseDown={handleMoveUpPress}
+          className={toolbarClass('button')}
+        >
           <FormatIndentIncrease />
         </button>
         <button
-          onClick={handleMoveDownPress}
+          onMouseDown={handleMoveRight}
           className={toolbarClass('button')}
         >
-          D
+          <ArrowDropDown />
         </button>
-        <button onClick={handleMoveUpPress} className={toolbarClass('button')}>
-          U
+        <button onMouseDown={handleMoveLeft} className={toolbarClass('button')}>
+          <ArrowDropUp />
+        </button>
+        <button className={toolbarClass('button')} data-defocus>
+          <KeyboardHide />
         </button>
         <button
           onClick={handleNewBlockPress}
           className={toolbarClass('button')}
         >
-          +
+          <KeyboardReturn />
         </button>
       </div>
     </Portal>

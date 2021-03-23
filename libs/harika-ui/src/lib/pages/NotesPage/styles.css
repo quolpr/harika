@@ -1,5 +1,5 @@
 .notes-table {
-  @apply mt-10;
+  @apply mt-5;
 
   table-layout: fixed;
 
@@ -23,7 +23,20 @@
     }
   }
 
-  &__time {
+  &__title-head {
+    @apply w-1/2 pb-2 text-left;
+  }
+
+  &__time-head {
+    @apply w-1/4 pb-2;
+  }
+
+  &__action-head {
+    @apply w-12;
+  }
+
+  &__time,
+  &__action {
     text-align: center;
   }
 }

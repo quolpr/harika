@@ -6,10 +6,16 @@
 .vault-layout {
   display: flex;
   height: 100vh;
+  position: relative;
 
   &__sidebar {
+    position: absolute;
     @apply transition-all transform-gpu;
     width: 260px;
+
+    @media (min-width: 768px) {
+      top: 0;
+    }
   }
 
   &__sidebar--closed {
@@ -24,27 +30,44 @@
   &__header {
     @apply transition-all;
     position: absolute;
-    height: 60px;
     right: 0;
     left: 0;
+
+    box-sizing: content-box;
+
+    height: var(--vault-header-height);
+    padding-top: var(--vault-header-padding-top);
+    padding-bottom: var(--vault-header-padding-bottom);
   }
 
   &__container {
     width: 100%;
+    padding-left: 0px;
+
+    @apply transition-all transform-gpu;
+
+    &--with-padding {
+      @media (min-width: 768px) {
+        padding-left: 260px;
+      }
+    }
   }
 
   &__main-wrapper {
-    height: calc(100vh);
     overflow: scroll;
+    height: 100%;
+    -webkit-overflow-scrolling: auto;
   }
 
   &__main {
-    @apply transition-all max-w-screen-sm mx-auto p-8 pb-20;
+    @apply transition-all max-w-screen-sm mx-auto px-8 pb-20;
+
+    padding-top: var(--vault-header-full-height);
   }
 
   @media (min-width: 768px) {
     &__main {
-      @apply p-10;
+      @apply px-10;
     }
   }
 }

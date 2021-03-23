@@ -9,6 +9,14 @@
     @apply flex relative;
   }
 
+  &__content {
+    word-break: break-all;
+
+    &--hidden {
+      display: none;
+    }
+  }
+
   &__dot {
     @apply flex items-start justify-end w-9;
 

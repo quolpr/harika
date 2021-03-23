@@ -4,24 +4,15 @@ body,
   font-family: 'Inter', sans-serif;
   @apply bg-gray-900 text-gray-300;
   min-width: 320px;
+  -webkit-overflow-scrolling: auto;
 }
 
+html,
 body {
-  padding-top: constant(safe-area-inset-top);
-  padding-top: env(safe-area-inset-top);
-
   overflow: hidden;
-
-  #root {
-    height: calc(100vh - env(safe-area-inset-top));
-    overflow: hidden;
-  }
-}
-
-html {
-  height: -webkit-fill-available;
-  width: 100%;
+  position: relative;
   height: 100%;
+  height: -webkit-fill-available;
 }
 
 /* clears the ‘X’ from Internet Explorer */
@@ -95,4 +86,8 @@ input[type='search']::-webkit-search-results-decoration {
 .ion-page {
   overflow: scroll !important;
   display: block !important;
+}
+
+.link {
+  @apply text-pink-500 hover:underline;
 }

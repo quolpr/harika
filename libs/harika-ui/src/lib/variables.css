@@ -1,0 +1,12 @@
+:root {
+  --vault-header-padding-top: max(constant(safe-area-inset-top), 0.5rem);
+  --vault-header-padding-top: max(env(safe-area-inset-top), 0.5rem);
+
+  --vault-header-height: 2rem;
+  --vault-header-padding-bottom: 0.5rem;
+
+  --vault-header-full-height: calc(
+    var(--vault-header-padding-top) + var(--vault-header-height) +
+      var(--vault-header-padding-bottom)
+  );
+}

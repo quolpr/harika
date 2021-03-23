@@ -2,6 +2,8 @@ const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin'
 const webpack = require('webpack');
 const nrwlConfig = require('@nrwl/react/plugins/webpack.js');
 const webpackTailwindConfig = require('../../webpack-tailwind.config');
+const BundleAnalyzerPlugin = require('webpack-bundle-analyzer')
+  .BundleAnalyzerPlugin;
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
 
@@ -22,7 +24,8 @@ module.exports = (config, context) => {
       ...config.plugins,
       isDevelopment && new webpack.HotModuleReplacementPlugin(),
       isDevelopment && new ReactRefreshWebpackPlugin({ overlay: false }),
-    ],
+      // new BundleAnalyzerPlugin({ analyzerMode: 'static' }),
+    ].filter(Boolean),
     module: {
       rules: [
         ...config.module.rules,

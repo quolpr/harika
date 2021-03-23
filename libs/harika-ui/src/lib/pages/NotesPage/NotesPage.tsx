@@ -36,7 +36,7 @@ const NoteRow = observer(({ note }: { note: NoteTuple }) => {
       <td className="notes-table__time">
         <TimeAgo date={note.createdAt} />
       </td>
-      <td className="text-center">
+      <td className="notes-table__action">
         <button onClick={handleDelete}>
           <TrashIcon />
         </button>
@@ -59,9 +59,9 @@ export const NotesPage = () => {
     <table className="notes-table">
       <thead>
         <tr>
-          <th className="w-1/2 pb-2 text-left">Title</th>
-          <th className="w-1/4 pb-2">Created At</th>
-          <th className="w-12" />
+          <th className="notes-table__title-head">Title</th>
+          <th className="notes-table__time-head">Created At</th>
+          <th className="notes-table__action-head" />
         </tr>
       </thead>
       <tbody>

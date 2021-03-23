@@ -23,6 +23,7 @@ import { useCurrentFocusedBlockState } from '../../hooks/useFocusedBlockState';
 import { useCurrentVault } from '../../hooks/useCurrentVault';
 import { Link } from 'react-router-dom';
 import { paths } from '../../paths';
+import { isIOS } from '../../utils';
 
 const NoteBlockChildren = observer(
   ({
@@ -90,7 +91,7 @@ const TokenRenderer = observer(
                     vaultId: vault.$modelId,
                     noteId: link?.noteRef.id,
                   })}
-                  className="text-pink-500 hover:underline"
+                  className="link"
                   onClick={(e) => e.stopPropagation()}
                 >
                   [[{token.content}]]
@@ -195,8 +196,15 @@ export const NoteBlock = observer(
 
     const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
-    useClickAway(inputRef, () => {
-      if (isEditing) {
+    useClickAway(inputRef, (e) => {
+      if (
+        isEditing &&
+        !(
+          e.target instanceof Element &&
+          e.target.closest('.toolbar') &&
+          !e.target.closest('[data-defocus]')
+        )
+      ) {
         setEditState({
           viewId: view.$modelId,
           blockId: noteBlock.$modelId,
@@ -222,7 +230,8 @@ export const NoteBlock = observer(
 
     const handleKeyPress = useCallback(
       async (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
+        // on ios sometime shiftKey === caps lock
+        if (e.key === 'Enter' && (isIOS || !e.shiftKey)) {
           e.preventDefault();
           const newBlock = noteBlock.injectNewRightBlock('', view);
 
@@ -354,7 +363,9 @@ export const NoteBlock = observer(
           <TextareaAutosize
             ref={inputRef}
             autoFocus
-            className={clsx('note-block__content', { hidden: !isEditing })}
+            className={clsx('note-block__content', {
+              'note-block__content--hidden': !isEditing,
+            })}
             onKeyDown={handleKeyDown}
             onKeyPress={handleKeyPress}
             onChange={handleChange}

@@ -6,8 +6,8 @@
   overflow: hidden;
 
   position: absolute;
-  height: calc(100vh - 60px);
-  top: 60px;
+  height: calc(100vh - var(--vault-header-full-height));
+  top: var(--vault-header-full-height);
   z-index: 1000;
 
   @media (min-width: 768px) {
@@ -16,7 +16,7 @@
   }
 
   &__brand {
-    @apply ml-6 mb-3;
+    @apply ml-7 mb-5;
 
     margin-top: auto;
   }
