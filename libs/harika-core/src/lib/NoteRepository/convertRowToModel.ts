@@ -6,15 +6,19 @@ import { Queries } from './db/Queries';
 import { ModelInstanceCreationData } from 'mobx-keystone';
 import { NoteLinkModel } from './models/NoteLinkModel';
 import { NoteLinkRow } from './db/rows/NoteLinkRow';
+import { NoteDocument } from './rxdb/NoteRx';
+import { NoteBlockDocument } from './rxdb/NoteBlockRx';
+import { HarikaRxDatabase } from './rxdb/initDb';
+import { NoteLinkRxDocument } from './rxdb/NoteLinkRx';
 
 export const convertNoteBlockRowToModelAttrs = async (
-  dbModel: NoteBlockRow,
+  dbModel: NoteBlockDocument,
   noteId: string
 ) => {
   return {
-    $modelId: dbModel.id,
+    $modelId: dbModel._id,
     content: dbModel.content,
-    createdAt: dbModel.createdAt,
+    createdAt: new Date(dbModel.createdAt),
     parentBlockRef: dbModel.parentBlockId
       ? noteBlockRef(dbModel.parentBlockId)
       : undefined,
@@ -35,21 +39,21 @@ interface IConvertResult {
 }
 
 const mapLink = (
-  row: NoteLinkRow
+  row: NoteLinkRxDocument
 ): ModelInstanceCreationData<NoteLinkModel> & {
   $modelId: string;
 } => {
   return {
-    $modelId: row.id,
+    $modelId: row._id,
     noteRef: noteRef(row.noteId),
     noteBlockRef: noteBlockRef(row.noteBlockId),
-    createdAt: row.createdAt,
+    createdAt: new Date(row.createdAt),
   };
 };
 
 export const convertNoteRowToModelAttrs = async (
-  queries: Queries,
-  dbModel: NoteRow,
+  db: HarikaRxDatabase,
+  dbModel: NoteDocument,
   preloadChildren = true,
   preloadLinks = true
 ): Promise<IConvertResult> => {
@@ -60,15 +64,15 @@ export const convertNoteRowToModelAttrs = async (
 
   const noteBlockAttrs = preloadChildren
     ? await Promise.all(
-        (await dbModel.noteBlocks.fetch()).map((m) =>
-          convertNoteBlockRowToModelAttrs(m, dbModel.id)
+        (await dbModel.getNoteBlocks()).map((m) =>
+          convertNoteBlockRowToModelAttrs(m, dbModel._id)
         )
       )
     : [];
 
   links.push(
     ...(preloadLinks
-      ? (await dbModel.links.fetch()).map((row) => ({
+      ? (await dbModel.getLinks()).map((row) => ({
           ...mapLink(row),
           loatNoteOfBlock: true,
         }))
@@ -77,7 +81,7 @@ export const convertNoteRowToModelAttrs = async (
 
   links.push(
     ...(
-      await queries.getLinksByBlockIds(
+      await db.notelinks.getLinksByBlockIds(
         noteBlockAttrs.map(({ $modelId }) => $modelId)
       )
     ).map((row) => ({ ...mapLink(row), loatNoteOfBlock: false }))
@@ -89,10 +93,10 @@ export const convertNoteRowToModelAttrs = async (
         const noteRow = await (async () => {
           if (link.loatNoteOfBlock) {
             return (
-              await queries.getNoteBlockRowById(link.noteBlockRef.id)
-            )?.note?.fetch();
+              await db.noteblocks.getById(link.noteBlockRef.id)
+            )?.getNote();
           } else {
-            return queries.getNoteRowById(link.noteRef.id);
+            return db.notes.getNoteById(link.noteRef.id);
           }
         })();
 
@@ -100,22 +104,19 @@ export const convertNoteRowToModelAttrs = async (
 
         return (
           noteRow &&
-          convertNoteRowToModelAttrs(
-            queries,
-            noteRow,
-            preloadNoteChildren,
-            false
-          )
+          convertNoteRowToModelAttrs(db, noteRow, preloadNoteChildren, false)
         );
       })
     )
   ).filter(Boolean) as IConvertResult[];
 
   const noteModel = {
-    $modelId: dbModel.id,
+    $modelId: dbModel._id,
     title: dbModel.title,
-    dailyNoteDate: dbModel.dailyNoteDate || new Date(),
-    createdAt: dbModel.createdAt,
+    dailyNoteDate: dbModel.dailyNoteDate
+      ? new Date(dbModel.dailyNoteDate)
+      : new Date(),
+    createdAt: new Date(dbModel.createdAt),
     areChildrenLoaded: preloadChildren,
     areLinksLoaded: preloadLinks,
   };

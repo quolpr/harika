@@ -20,6 +20,8 @@ import { Socket } from 'phoenix';
 import { v4 as uuidv4 } from 'uuid';
 import * as remotedev from 'remotedev';
 import { connectReduxDevTools } from 'mobx-keystone';
+import { RxdbChangesHandler } from './NoteRepository/rxdb/ChangesHandler';
+import { HarikaRxDatabase, initDb } from './NoteRepository/rxdb/initDb';
 
 export class VaultRepository {
   // TODO: finde better naming(instead of conatiner)
@@ -27,8 +29,8 @@ export class VaultRepository {
   private database: Database;
   private vaultsCollection: Collection<VaultRow>;
 
-  private vaultDbs: Record<string, Database> = {};
-  private noteRepo = new NoteRepository(this.vaultDbs);
+  private rxVaultsDbs: Record<string, HarikaRxDatabase> = {};
+  private noteRepo = new NoteRepository(this.rxVaultsDbs);
 
   syncer?: VaultsSyncer;
   private socket?: Socket;
@@ -111,35 +113,43 @@ export class VaultRepository {
 
     if (!vaultRow) return;
 
-    this.vaultDbs[id] = new Database({
-      adapter: this.buildAdapter({
-        dbName: `vault-${id}`,
-        schema: notesSchema,
-      }),
-      modelClasses: [NoteRow, NoteBlockRow, NoteLinkRow],
-      actionsEnabled: true,
-    });
+    // this.vaultDbs[id] = new Database({
+    //   adapter: this.buildAdapter({
+    //     dbName: `vault-${id}`,
+    //     schema: notesSchema,
+    //   }),
+    //   modelClasses: [NoteRow, NoteBlockRow, NoteLinkRow],
+    //   actionsEnabled: true,
+    // });
+
+    this.rxVaultsDbs[id] = await initDb(id);
 
     const vault = new VaultModel({ name: vaultRow.name, $modelId: id });
-    const queries = new Queries(this.vaultDbs[id]);
+    // const queries = new Queries(this.vaultDbs[id]);
 
-    const syncer =
-      !this.isOffline && this.socket
-        ? new Syncher(
-            this.vaultDbs[id],
-            this.socket,
-            vault,
-            queries,
-            this.getNoteRepository()
-          )
-        : undefined;
+    // const syncer =
+    //   !this.isOffline && this.socket
+    //     ? new Syncher(
+    //         this.vaultDbs[id],
+    //         this.socket,
+    //         vault,
+    //         queries,
+    //         this.getNoteRepository()
+    //       )
+    //     : undefined;
+
+    // syncMiddleware(
+    //   vault,
+    //   new ChangesHandler(this.vaultDbs[id], queries, vault, () =>
+    //     syncer?.sync()
+    //   ).handlePatch
+    // );
 
     syncMiddleware(
       vault,
-      new ChangesHandler(this.vaultDbs[id], queries, vault, () =>
-        syncer?.sync()
-      ).handlePatch
+      new RxdbChangesHandler(this.rxVaultsDbs[id], vault).handlePatch
     );
+
     const connection = remotedev.connectViaExtension({
       name: `Vault ${vault.name}`,
     });
