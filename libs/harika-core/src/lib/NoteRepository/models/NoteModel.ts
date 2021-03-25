@@ -8,12 +8,13 @@ import {
   modelAction,
   ModelInstanceCreationData,
   prop,
+  Ref,
   tProp_dateTimestamp,
   types,
 } from 'mobx-keystone';
 import { Optional } from 'utility-types';
 import { v4 as uuidv4 } from 'uuid';
-import { NoteBlockModel } from './NoteBlockModel';
+import { NoteBlockModel, noteBlockRef } from './NoteBlockModel';
 import { isVault } from './utils';
 import type { VaultModel } from './Vault';
 
@@ -51,10 +52,23 @@ export class NoteModel extends Model({
   title: prop<string>(),
   dailyNoteDate: tProp_dateTimestamp(types.dateTimestamp),
   createdAt: tProp_dateTimestamp(types.dateTimestamp),
+  noteBlockRefs: prop<Ref<NoteBlockModel>[]>(),
   areChildrenLoaded: prop<boolean>(false),
   areLinksLoaded: prop<boolean>(false),
   isDeleted: prop<boolean>(false),
 }) {
+  @computed
+  // performance optimization
+  get orderHash() {
+    const obj: Record<string, number> = {};
+
+    this.noteBlockRefs.forEach((ref, i) => {
+      obj[ref.id] = i;
+    });
+
+    return obj;
+  }
+
   @computed
   get vault() {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -69,18 +83,6 @@ export class NoteModel extends Model({
   }
 
   @computed({ equals: comparer.shallow })
-  get children() {
-    return Object.values(this.vault.blocksMap)
-      .filter(
-        (block) =>
-          block.noteRef.id === this.$modelId &&
-          block.parentBlockRef === undefined &&
-          !block.isDeleted
-      )
-      .sort((a, b) => a.orderPosition - b.orderPosition);
-  }
-
-  @computed({ equals: comparer.shallow })
   get allChildren() {
     return Object.values(this.vault.blocksMap).filter(
       (block) => block.noteRef.id === this.$modelId && !block.isDeleted
@@ -91,15 +93,20 @@ export class NoteModel extends Model({
   createBlock(
     attrs: Optional<
       ModelInstanceCreationData<NoteBlockModel>,
-      'createdAt' | 'noteRef'
-    >
+      'createdAt' | 'noteRef' | 'noteBlockRefs'
+    >,
+    parent: NoteBlockModel | NoteModel,
+    pos: number
   ) {
     const newNoteBlock = new NoteBlockModel({
       $modelId: uuidv4(),
       createdAt: new Date(),
       noteRef: noteRef(this),
+      noteBlockRefs: [],
       ...attrs,
     });
+
+    parent.noteBlockRefs.splice(pos, 0, noteBlockRef(newNoteBlock));
 
     this.vault.blocksMap[newNoteBlock.$modelId] = newNoteBlock;
 
@@ -122,7 +129,7 @@ export class NoteModel extends Model({
     this.isDeleted = true;
 
     if (recursively) {
-      this.children.forEach((block) => block.delete(true, links));
+      this.noteBlockRefs.forEach((block) => block.current.delete(true, links));
     }
 
     if (links) {

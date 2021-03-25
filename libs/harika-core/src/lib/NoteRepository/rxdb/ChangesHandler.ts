@@ -33,8 +33,55 @@ export class RxdbChangesHandler {
   };
 
   private applyPatches = async (patches: Patch[]) => {
+    console.log('RxPatches', patches);
     for (let i = 0; i < patches.length; i++) {
       const patch = patches[i];
+
+      if (
+        patch.path.length === 4 &&
+        patch.path[0] === 'blocksMap' &&
+        patch.path[2] === 'noteBlockRefs'
+      ) {
+        const noteBlock = await this.database.noteblocks
+          .findOne({
+            selector: { _id: patch.path[1] },
+          })
+          .exec();
+
+        if (!noteBlock) {
+          console.error(`Failed to find noteblock with id ${patch.path[1]}`);
+          continue;
+        }
+
+        noteBlock.atomicPatch({
+          noteBlocks: this.vault.blocksMap[patch.path[1]].noteBlockRefs.map(
+            ({ id }) => id
+          ),
+        });
+      }
+
+      if (
+        patch.path.length === 4 &&
+        patch.path[0] === 'notesMap' &&
+        patch.path[2] === 'noteBlockRefs'
+      ) {
+        const note = await this.database.notes
+          .findOne({
+            selector: { _id: patch.path[1] },
+          })
+          .exec();
+
+        if (!note) {
+          console.error(`Failed to find noteblock with id ${patch.path[1]}`);
+          continue;
+        }
+
+        note.atomicPatch({
+          noteBlocks: this.vault.notesMap[patch.path[1]].noteBlockRefs.map(
+            ({ id }) => id
+          ),
+        });
+      }
 
       if (patch.op === 'add') {
         if (patch.path.length === 2 && patch.path[0] === 'blocksMap') {
@@ -44,11 +91,11 @@ export class RxdbChangesHandler {
 
           await this.database.noteblocks.insert({
             _id: value.$modelId,
-            noteId: value.noteRef.id,
-            parentBlockId: value.parentBlockRef?.id,
+            note: value.noteRef.id,
+            parentBlock: value.parentBlockRef?.id,
             content: value.content,
             createdAt: value.createdAt,
-            orderPosition: value.orderPosition,
+            noteBlocks: [],
           });
         }
 
@@ -61,8 +108,8 @@ export class RxdbChangesHandler {
 
           await this.database.notelinks.insert({
             _id: value.$modelId,
-            noteId: value.noteRef.id,
-            noteBlockId: value.noteBlockRef.id,
+            note: value.noteRef.id,
+            noteBlock: value.noteBlockRef.id,
             createdAt: Date.now(),
           });
         }
@@ -79,6 +126,7 @@ export class RxdbChangesHandler {
             dailyNoteDate: value.dailyNoteDate,
             title: value.title,
             createdAt: value.createdAt,
+            noteBlocks: [],
           });
         }
       }
@@ -98,9 +146,9 @@ export class RxdbChangesHandler {
 
           if (
             patch.path[2] === 'parentBlockRef' &&
-            noteBlock.parentBlockId !== patch.value?.id
+            noteBlock.parentBlock !== patch.value?.id
           ) {
-            await noteBlock.atomicPatch({ parentBlockId: patch.value?.id });
+            await noteBlock.atomicPatch({ parentBlock: patch.value?.id });
           }
 
           if (
@@ -109,15 +157,6 @@ export class RxdbChangesHandler {
           ) {
             await noteBlock.atomicPatch({
               content: patch.value,
-            });
-          }
-
-          if (
-            patch.path[2] === 'orderPosition' &&
-            noteBlock.orderPosition !== patch.value
-          ) {
-            await noteBlock.atomicPatch({
-              orderPosition: patch.value,
             });
           }
         }
@@ -157,7 +196,7 @@ export class RxdbChangesHandler {
 
           const note = await this.database.notes
             .findOne({
-              selector: { id: patch.path[1] },
+              selector: { _id: patch.path[1] },
             })
             .exec();
 
@@ -212,6 +251,5 @@ export class RxdbChangesHandler {
         }
       }
     }
-    console.log('RxPatches', patches);
   };
 }

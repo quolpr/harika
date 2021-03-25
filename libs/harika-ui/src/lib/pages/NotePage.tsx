@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import 'react-calendar/dist/Calendar.css';
 import { Note } from '../components/Note/Note';

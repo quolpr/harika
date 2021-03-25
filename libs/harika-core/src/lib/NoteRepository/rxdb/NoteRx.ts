@@ -1,5 +1,6 @@
 import { Dayjs } from 'dayjs';
 import { RxJsonSchema, RxCollection, RxDocument } from 'rxdb';
+import { HarikaDatabaseDocuments } from './collectionTypes';
 import { NoteBlockDocument } from './NoteBlockRx';
 import { NoteLinkRxDocument } from './NoteLinkRx';
 
@@ -7,6 +8,7 @@ export type NoteDocType = {
   _id: string;
   title: string;
   dailyNoteDate: number;
+  noteBlocks: string[];
   createdAt: number;
   updatedAt?: number;
 };
@@ -21,6 +23,13 @@ export const schema: RxJsonSchema<NoteDocType> = {
       type: 'string',
       primary: true,
     },
+    noteBlocks: {
+      type: 'array',
+      ref: HarikaDatabaseDocuments.NOTE_BLOCKS,
+      items: {
+        type: 'string',
+      },
+    },
     title: {
       type: 'string',
     },
@@ -34,7 +43,7 @@ export const schema: RxJsonSchema<NoteDocType> = {
       type: 'integer',
     },
   },
-  required: ['title', 'dailyNoteDate'],
+  required: ['title', 'dailyNoteDate', 'noteBlocks'],
   indexes: ['_id', 'title', 'dailyNoteDate'],
 };
 
@@ -101,14 +110,14 @@ export const documentMethods: DocumentMethods = {
   async getNoteBlocks(this: NoteDocument) {
     return this.collection.database.noteblocks
       .find({
-        selector: { noteId: this._id },
+        selector: { note: this._id },
       })
       .exec();
   },
   async getLinks(this: NoteDocument) {
     return this.collection.database.notelinks
       .find({
-        selector: { noteId: this._id },
+        selector: { note: this._id },
       })
       .exec();
   },

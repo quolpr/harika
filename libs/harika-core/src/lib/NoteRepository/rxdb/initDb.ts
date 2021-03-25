@@ -17,9 +17,9 @@ import pouchdbDebug from 'pouchdb-debug';
 // })()
 //
 
-// PouchDB.plugin(pouchdbDebug);
+PouchDB.plugin(pouchdbDebug);
 
-// PouchDB.debug.enable('*');
+PouchDB.debug.enable('*');
 
 addRxPlugin(RxDBNoValidatePlugin);
 addRxPlugin(indexedDb);

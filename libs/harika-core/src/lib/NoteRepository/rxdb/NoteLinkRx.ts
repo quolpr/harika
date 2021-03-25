@@ -3,8 +3,8 @@ import { HarikaDatabaseDocuments } from './collectionTypes';
 
 export type NoteLinkRxDocType = {
   _id: string;
-  noteBlockId: string;
-  noteId: string;
+  noteBlock: string;
+  note: string;
   createdAt: number;
   updatedAt?: number;
 };
@@ -18,11 +18,11 @@ export const schema: RxJsonSchema<NoteLinkRxDocType> = {
       type: 'string',
       primary: true,
     },
-    noteBlockId: {
+    noteBlock: {
       ref: HarikaDatabaseDocuments.NOTE_BLOCKS,
       type: 'string',
     },
-    noteId: {
+    note: {
       ref: HarikaDatabaseDocuments.NOTES,
       type: 'string',
     },
@@ -33,8 +33,8 @@ export const schema: RxJsonSchema<NoteLinkRxDocType> = {
       type: 'integer',
     },
   },
-  required: ['_id', 'noteId', 'noteBlockId', 'createdAt'],
-  indexes: ['_id', 'noteId', 'noteBlockId', 'createdAt'],
+  required: ['_id', 'note', 'noteBlock', 'createdAt'],
+  indexes: ['_id', 'note', 'noteBlock', 'createdAt'],
 };
 
 type CollectionMethods = {
@@ -43,7 +43,7 @@ type CollectionMethods = {
 
 const collectionMethods: CollectionMethods = {
   async getLinksByBlockIds(this: NoteLinkRxCollection, ids: string[]) {
-    return this.find({ selector: { noteBlockId: { $in: ids } } }).exec();
+    return this.find({ selector: { noteBlock: { $in: ids } } }).exec();
   },
 };
 

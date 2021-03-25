@@ -46,7 +46,7 @@ export class VaultModel extends Model({
 
     this.notesMap[note.$modelId] = note;
 
-    note.createBlock({ content: '', orderPosition: 0 });
+    note.createBlock({ content: '' }, note, 0);
 
     return note;
   }

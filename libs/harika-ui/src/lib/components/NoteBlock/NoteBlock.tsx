@@ -24,21 +24,22 @@ import { useCurrentVault } from '../../hooks/useCurrentVault';
 import { Link } from 'react-router-dom';
 import { paths } from '../../paths';
 import { isIOS } from '../../utils';
+import { Ref } from 'mobx-keystone';
 
 const NoteBlockChildren = observer(
   ({
     childBlocks,
     view,
   }: {
-    childBlocks: NoteBlockModel[];
+    childBlocks: Ref<NoteBlockModel>[];
     view: BlocksViewModel;
   }) => {
     return childBlocks.length !== 0 ? (
       <div className="note-block__child-blocks">
         {childBlocks.map((childNoteBlock) => (
           <NoteBlock
-            key={childNoteBlock.$modelId}
-            noteBlock={childNoteBlock}
+            key={childNoteBlock.current.$modelId}
+            noteBlock={childNoteBlock.current}
             view={view}
           />
         ))}
@@ -340,7 +341,7 @@ export const NoteBlock = observer(
         data-order={noteBlock.orderPosition}
       >
         <div className="note-block__body">
-          {noteBlock.hasChildren && (
+          {noteBlock.noteBlockRefs.length !== 0 && (
             <Arrow
               className="note-block__arrow"
               isExpanded={isExpanded}
@@ -360,18 +361,20 @@ export const NoteBlock = observer(
           {/*     'note-block__outline--show': isFocused, */}
           {/*   })} */}
           {/* > */}
-          <TextareaAutosize
-            ref={inputRef}
-            autoFocus
-            className={clsx('note-block__content', {
-              'note-block__content--hidden': !isEditing,
-            })}
-            onKeyDown={handleKeyDown}
-            onKeyPress={handleKeyPress}
-            onChange={handleChange}
-            value={noteBlock.content}
-            onBlur={handleBlur}
-          />
+          {isEditing && (
+            <TextareaAutosize
+              ref={inputRef}
+              autoFocus
+              className={clsx('note-block__content', {
+                'note-block__content--hidden': !isEditing,
+              })}
+              onKeyDown={handleKeyDown}
+              onKeyPress={handleKeyPress}
+              onChange={handleChange}
+              value={noteBlock.content}
+              onBlur={handleBlur}
+            />
+          )}
           {!isEditing && (
             <div
               onClick={handleClick}
@@ -388,7 +391,10 @@ export const NoteBlock = observer(
           {/* </div> */}
         </div>
         {isExpanded && (
-          <NoteBlockChildren childBlocks={noteBlock.children} view={view} />
+          <NoteBlockChildren
+            childBlocks={noteBlock.noteBlockRefs}
+            view={view}
+          />
         )}
       </div>
     );

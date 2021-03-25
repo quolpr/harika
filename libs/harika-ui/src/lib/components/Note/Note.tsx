@@ -1,4 +1,4 @@
-import React, { ChangeEvent, useCallback, useMemo } from 'react';
+import React, { ChangeEvent, useCallback } from 'react';
 import TextareaAutosize from 'react-textarea-autosize';
 import { NoteBlock } from '../NoteBlock/NoteBlock';
 import './styles.css';
@@ -11,6 +11,7 @@ import {
   NoteLinkModel,
   BlocksViewModel,
   FocusedBlockState,
+  noteBlockRef,
 } from '@harika/harika-core';
 import { Link, useHistory } from 'react-router-dom';
 import { Link as LinkIcon } from 'heroicons-react';
@@ -22,6 +23,8 @@ import { useCurrentVault } from '../../hooks/useCurrentVault';
 import { useCurrentVaultUiState } from '../../contexts/CurrentVaultUiStateContext';
 import { Toolbar } from './Toolbar';
 import { useMedia } from 'react-use';
+import { useNoteRepository } from '../../contexts/CurrentNoteRepositoryContext';
+import { Ref } from 'mobx-keystone';
 
 export interface IFocusBlockState {
   focusOnBlockId: string;
@@ -128,7 +131,7 @@ const NoteBlocks = observer(
     childBlocks,
     view,
   }: {
-    childBlocks: NoteBlockModel[];
+    childBlocks: Ref<NoteBlockModel>[];
     view: BlocksViewModel;
   }) => {
     const isWide = useMedia('(min-width: 768px)');
@@ -138,8 +141,8 @@ const NoteBlocks = observer(
         <div className="note__body">
           {childBlocks.map((noteBlock) => (
             <NoteBlock
-              key={noteBlock.$modelId}
-              noteBlock={noteBlock}
+              key={noteBlock.current.$modelId}
+              noteBlock={noteBlock.current}
               view={view}
             />
           ))}
@@ -155,6 +158,7 @@ export const Note: React.FC<{ note: NoteModel }> = observer(({ note }) => {
   const vaultUiState = useCurrentVaultUiState();
   const history = useHistory<IFocusBlockState>();
   const focusOnBlockId = (history.location.state || {}).focusOnBlockId;
+  const noteRepo = useNoteRepository();
 
   const handleChange = useCallback(
     (e: ChangeEvent<HTMLTextAreaElement>) => {
@@ -171,6 +175,17 @@ export const Note: React.FC<{ note: NoteModel }> = observer(({ note }) => {
     }
   }, [focusOnBlockId, note.$modelId, vaultUiState]);
 
+  const populateNotes = useCallback(() => {
+    /* for (let i = 0; i < 1000; i++) { */
+    /*   console.log('create note!'); */
+    /*   noteRepo.createNote(vault, { title: `Test note ${Date.now() + i}` }); */
+    /* } */
+    for (let i = 0; i < 1000; i++) {
+      const block = note.createBlock({ content: 'test' }, note, i);
+      console.log('create block');
+    }
+  }, [noteRepo, vault, note]);
+
   return (
     <div className="note">
       <h2 className="note__header">
@@ -181,9 +196,11 @@ export const Note: React.FC<{ note: NoteModel }> = observer(({ note }) => {
         />
       </h2>
 
+      <button onClick={populateNotes}>Populate notes</button>
+
       <NoteBlocks
         view={vault.getOrCreateViewByModel(note)}
-        childBlocks={note.children}
+        childBlocks={note.noteBlockRefs}
       />
 
       <div className="note__linked-references">

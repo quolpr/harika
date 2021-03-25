@@ -1,11 +1,7 @@
 import { NoteBlockModel, noteBlockRef } from './models/NoteBlockModel';
 import { NoteModel, noteRef } from './models/NoteModel';
-import { NoteBlockRow } from './db/rows/NoteBlockRow';
-import { NoteRow } from './db/rows/NoteRow';
-import { Queries } from './db/Queries';
 import { ModelInstanceCreationData } from 'mobx-keystone';
 import { NoteLinkModel } from './models/NoteLinkModel';
-import { NoteLinkRow } from './db/rows/NoteLinkRow';
 import { NoteDocument } from './rxdb/NoteRx';
 import { NoteBlockDocument } from './rxdb/NoteBlockRx';
 import { HarikaRxDatabase } from './rxdb/initDb';
@@ -19,11 +15,11 @@ export const convertNoteBlockRowToModelAttrs = async (
     $modelId: dbModel._id,
     content: dbModel.content,
     createdAt: new Date(dbModel.createdAt),
-    parentBlockRef: dbModel.parentBlockId
-      ? noteBlockRef(dbModel.parentBlockId)
+    parentBlockRef: dbModel.parentBlock
+      ? noteBlockRef(dbModel.parentBlock)
       : undefined,
     noteRef: noteRef(noteId),
-    orderPosition: dbModel.orderPosition,
+    noteBlockRefs: dbModel.noteBlocks.map((b) => noteBlockRef(b)),
   };
 };
 
@@ -45,8 +41,8 @@ const mapLink = (
 } => {
   return {
     $modelId: row._id,
-    noteRef: noteRef(row.noteId),
-    noteBlockRef: noteBlockRef(row.noteBlockId),
+    noteRef: noteRef(row.note),
+    noteBlockRef: noteBlockRef(row.noteBlock),
     createdAt: new Date(row.createdAt),
   };
 };
@@ -69,6 +65,8 @@ export const convertNoteRowToModelAttrs = async (
         )
       )
     : [];
+
+  console.log({ noteBlockAttrs, preloadChildren });
 
   links.push(
     ...(preloadLinks
@@ -119,6 +117,7 @@ export const convertNoteRowToModelAttrs = async (
     createdAt: new Date(dbModel.createdAt),
     areChildrenLoaded: preloadChildren,
     areLinksLoaded: preloadLinks,
+    noteBlockRefs: dbModel.noteBlocks.map((id) => noteBlockRef(id)),
   };
 
   return {

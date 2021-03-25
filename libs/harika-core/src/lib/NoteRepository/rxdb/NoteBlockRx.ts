@@ -4,10 +4,10 @@ import { NoteDocument } from './NoteRx';
 
 export type NoteBlockDocType = {
   _id: string;
-  parentBlockId?: string;
-  noteId: string;
+  parentBlock?: string;
+  note: string;
+  noteBlocks: string[];
   content: string;
-  orderPosition: number;
   createdAt: number;
   updatedAt?: number;
 };
@@ -22,19 +22,23 @@ export const schema: RxJsonSchema<NoteBlockDocType> = {
       type: 'string',
       primary: true,
     },
-    parentBlockId: {
+    parentBlock: {
       ref: HarikaDatabaseDocuments.NOTE_BLOCKS,
       type: 'string',
     },
-    noteId: {
+    note: {
       ref: HarikaDatabaseDocuments.NOTES,
       type: 'string',
     },
+    noteBlocks: {
+      type: 'array',
+      ref: HarikaDatabaseDocuments.NOTE_BLOCKS,
+      items: {
+        type: 'string',
+      },
+    },
     content: {
       type: 'string',
-    },
-    orderPosition: {
-      type: 'integer',
     },
     createdAt: {
       type: 'integer',
@@ -43,8 +47,8 @@ export const schema: RxJsonSchema<NoteBlockDocType> = {
       type: 'integer',
     },
   },
-  required: ['noteId', 'content', 'orderPosition'],
-  indexes: ['_id', 'noteId', 'content', 'orderPosition', 'parentBlockId'],
+  required: ['note', 'content', 'noteBlocks'],
+  indexes: ['_id', 'note', 'content', 'parentBlock'],
 };
 
 type CollectionMethods = {
@@ -67,7 +71,7 @@ const documentMethods = {
   getNote(this: NoteBlockDocument) {
     return this.collection.database.notes
       .findOne({
-        selector: { _id: this.noteId },
+        selector: { _id: this.note },
       })
       .exec();
   },

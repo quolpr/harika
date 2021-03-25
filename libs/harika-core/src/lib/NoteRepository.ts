@@ -40,7 +40,7 @@ export class NoteRepository {
     attrs: Required<
       Optional<
         ModelInstanceCreationData<NoteModel>,
-        'createdAt' | 'dailyNoteDate'
+        'createdAt' | 'dailyNoteDate' | 'noteBlockRefs'
       >,
       'title'
     >
@@ -63,9 +63,10 @@ export class NoteRepository {
       } as ICreationResult<NoteModel>;
     }
 
-    return { status: 'ok', data: vault.newNote(attrs) } as ICreationResult<
-      NoteModel
-    >;
+    return {
+      status: 'ok',
+      data: vault.newNote({ ...attrs, noteBlockRefs: [] }),
+    } as ICreationResult<NoteModel>;
   }
 
   async getOrCreateDailyNote(
