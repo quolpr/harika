@@ -22,6 +22,7 @@ import * as remotedev from 'remotedev';
 import { connectReduxDevTools } from 'mobx-keystone';
 import { RxdbChangesHandler } from './NoteRepository/rxdb/ChangesHandler';
 import { HarikaRxDatabase, initDb } from './NoteRepository/rxdb/initDb';
+import { initRxDbToLocalSync } from './NoteRepository/rxdb/sync';
 
 export class VaultRepository {
   // TODO: finde better naming(instead of conatiner)
@@ -149,6 +150,8 @@ export class VaultRepository {
       vault,
       new RxdbChangesHandler(this.rxVaultsDbs[id], vault).handlePatch
     );
+
+    initRxDbToLocalSync(this.rxVaultsDbs[id], this.noteRepo, vault);
 
     const connection = remotedev.connectViaExtension({
       name: `Vault ${vault.name}`,

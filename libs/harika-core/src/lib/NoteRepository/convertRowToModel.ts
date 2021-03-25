@@ -7,10 +7,7 @@ import { NoteBlockDocument } from './rxdb/NoteBlockRx';
 import { HarikaRxDatabase } from './rxdb/initDb';
 import { NoteLinkRxDocument } from './rxdb/NoteLinkRx';
 
-export const convertNoteBlockRowToModelAttrs = async (
-  dbModel: NoteBlockDocument,
-  noteId: string
-) => {
+export const convertNoteBlockRowToModelAttrs = (dbModel: NoteBlockDocument) => {
   return {
     $modelId: dbModel._id,
     content: dbModel.content,
@@ -18,7 +15,7 @@ export const convertNoteBlockRowToModelAttrs = async (
     parentBlockRef: dbModel.parentBlock
       ? noteBlockRef(dbModel.parentBlock)
       : undefined,
-    noteRef: noteRef(noteId),
+    noteRef: noteRef(dbModel.note),
     noteBlockRefs: dbModel.noteBlocks.map((b) => noteBlockRef(b)),
   };
 };
@@ -47,6 +44,24 @@ const mapLink = (
   };
 };
 
+export const simpleConvertNoteDbToModelAttrsSync = (
+  dbModel: NoteDocument,
+  areChildrenLoaded: boolean,
+  areLinksLoaded: boolean
+): ModelInstanceCreationData<NoteModel> & { $modelId: string } => {
+  return {
+    $modelId: dbModel._id,
+    title: dbModel.title,
+    dailyNoteDate: dbModel.dailyNoteDate
+      ? new Date(dbModel.dailyNoteDate)
+      : new Date(),
+    createdAt: new Date(dbModel.createdAt),
+    areChildrenLoaded: areChildrenLoaded,
+    areLinksLoaded: areLinksLoaded,
+    noteBlockRefs: dbModel.noteBlocks.map((id) => noteBlockRef(id)),
+  };
+};
+
 export const convertNoteRowToModelAttrs = async (
   db: HarikaRxDatabase,
   dbModel: NoteDocument,
@@ -61,7 +76,7 @@ export const convertNoteRowToModelAttrs = async (
   const noteBlockAttrs = preloadChildren
     ? await Promise.all(
         (await dbModel.getNoteBlocks()).map((m) =>
-          convertNoteBlockRowToModelAttrs(m, dbModel._id)
+          convertNoteBlockRowToModelAttrs(m)
         )
       )
     : [];
@@ -108,17 +123,11 @@ export const convertNoteRowToModelAttrs = async (
     )
   ).filter(Boolean) as IConvertResult[];
 
-  const noteModel = {
-    $modelId: dbModel._id,
-    title: dbModel.title,
-    dailyNoteDate: dbModel.dailyNoteDate
-      ? new Date(dbModel.dailyNoteDate)
-      : new Date(),
-    createdAt: new Date(dbModel.createdAt),
-    areChildrenLoaded: preloadChildren,
-    areLinksLoaded: preloadLinks,
-    noteBlockRefs: dbModel.noteBlocks.map((id) => noteBlockRef(id)),
-  };
+  const noteModel = simpleConvertNoteDbToModelAttrsSync(
+    dbModel,
+    preloadChildren,
+    preloadLinks
+  );
 
   return {
     note: noteModel,

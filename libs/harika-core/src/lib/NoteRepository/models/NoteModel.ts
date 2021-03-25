@@ -17,6 +17,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { NoteBlockModel, noteBlockRef } from './NoteBlockModel';
 import { isVault } from './utils';
 import type { VaultModel } from './Vault';
+import { isEqual } from 'lodash-es';
 
 export const noteRef = customRef<NoteModel>('harika/NoteRef', {
   // this works, but we will use getRefId() from the Todo class instead
@@ -57,6 +58,11 @@ export class NoteModel extends Model({
   areLinksLoaded: prop<boolean>(false),
   isDeleted: prop<boolean>(false),
 }) {
+  @computed
+  get noteBlockIds() {
+    return this.noteBlockRefs.map(({ id }) => id);
+  }
+
   @computed
   // performance optimization
   get orderHash() {
@@ -161,6 +167,16 @@ export class NoteModel extends Model({
 
     if (attrs.isDeleted && attrs.isDeleted !== this.isDeleted) {
       this.isDeleted = attrs.isDeleted;
+    }
+
+    if (
+      attrs.noteBlockRefs &&
+      !isEqual(
+        attrs.noteBlockRefs.map(({ id }) => id),
+        this.noteBlockIds
+      )
+    ) {
+      this.noteBlockRefs = attrs.noteBlockRefs;
     }
   }
 }

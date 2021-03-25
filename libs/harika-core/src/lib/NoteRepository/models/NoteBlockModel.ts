@@ -16,6 +16,7 @@ import { NoteModel } from './NoteModel';
 import { BlocksViewModel } from './BlocksViewModel';
 import type { VaultModel } from './Vault';
 import { isVault } from './utils';
+import { isEqual } from 'lodash-es';
 
 export const noteBlockRef = customRef<NoteBlockModel>('harika/NoteBlockRef', {
   // this works, but we will use getRefId() from the Todo class instead
@@ -48,6 +49,11 @@ export class NoteBlockModel extends Model({
   createdAt: tProp_dateTimestamp(types.dateTimestamp),
   isDeleted: prop<boolean>(false),
 }) {
+  @computed
+  get noteBlockIds() {
+    return this.noteBlockRefs.map(({ id }) => id);
+  }
+
   @computed
   // performance optimization
   get orderHash() {
@@ -229,13 +235,12 @@ export class NoteBlockModel extends Model({
 
   @modelAction
   injectNewRightBlock(content: string, view: BlocksViewModel) {
-    const { injectTo, parentRef, parent, list } = (() => {
+    const { injectTo, parentRef, parent } = (() => {
       if (this.noteBlockRefs.length && view.isExpanded(this.$modelId)) {
         return {
           injectTo: 0,
           parent: this,
           parentRef: noteBlockRef(this),
-          list: this.noteBlockRefs,
         };
       } else {
         return {
@@ -244,7 +249,6 @@ export class NoteBlockModel extends Model({
           parentRef: this.parentBlockRef
             ? noteBlockRef(this.parentBlockRef.current)
             : undefined,
-          list: this.siblings,
         };
       }
     })();
@@ -349,6 +353,16 @@ export class NoteBlockModel extends Model({
 
     if (data.parentBlockRef?.id !== this.parentBlockRef?.id) {
       this.parentBlockRef = data.parentBlockRef;
+    }
+
+    if (
+      data.noteBlockRefs &&
+      !isEqual(
+        data.noteBlockRefs.map(({ id }) => id),
+        this.noteBlockIds
+      )
+    ) {
+      this.noteBlockRefs = data.noteBlockRefs;
     }
   }
 
