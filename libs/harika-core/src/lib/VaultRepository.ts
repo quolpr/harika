@@ -8,12 +8,10 @@ import { Collection, Database, Q } from '@nozbe/watermelondb';
 import { map } from 'rxjs/operators';
 import { VaultModel } from './NoteRepository/models/Vault';
 import { Queries } from './NoteRepository/db/Queries';
-import { ChangesHandler } from './NoteRepository/ChangesHandler';
 import { NoteBlockRow } from './NoteRepository/db/rows/NoteBlockRow';
 import { NoteLinkRow } from './NoteRepository/db/rows/NoteLinkRow';
 import { NoteRow } from './NoteRepository/db/rows/NoteRow';
 import { syncMiddleware } from './NoteRepository/models/syncable';
-import { Syncher } from './NoteRepository/sync';
 import { notesSchema } from './NoteRepository/db/notesSchema';
 import { VaultsSyncer } from './VaultRepository/vaultDb/VaultsSyncer';
 import { Socket } from 'phoenix';
@@ -145,6 +143,28 @@ export class VaultRepository {
     //     syncer?.sync()
     //   ).handlePatch
     // );
+
+    const firstSync = this.rxVaultsDbs[id].noteblocks.sync({
+      remote: `http://localhost:5984/harika_noteblocks_${id.replace(/-/g, '')}`, // remote database. This can be the serverURL, another RxCollection or a PouchDB-instance
+      waitForLeadership: false, // (optional) [default=true] to save performance, the sync starts on leader-instance only
+      options: {
+        live: false,
+      },
+    });
+
+    await firstSync.awaitInitialReplication();
+
+    this.rxVaultsDbs[id].noteblocks.sync({
+      remote: `http://localhost:5984/harika_noteblocks_${id.replaceAll(
+        '-',
+        ''
+      )}`, // remote database. This can be the serverURL, another RxCollection or a PouchDB-instance
+      waitForLeadership: true, // (optional) [default=true] to save performance, the sync starts on leader-instance only
+      options: {
+        live: true,
+        retry: true,
+      },
+    });
 
     syncMiddleware(
       vault,

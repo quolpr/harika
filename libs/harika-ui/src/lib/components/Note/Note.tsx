@@ -180,7 +180,7 @@ export const Note: React.FC<{ note: NoteModel }> = observer(({ note }) => {
     /*   console.log('create note!'); */
     /*   noteRepo.createNote(vault, { title: `Test note ${Date.now() + i}` }); */
     /* } */
-    for (let i = 0; i < 1000; i++) {
+    for (let i = 0; i < 100; i++) {
       const block = note.createBlock({ content: 'test' }, note, i);
       console.log('create block');
     }

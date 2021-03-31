@@ -3,7 +3,7 @@ import { NoteModel, noteRef } from './models/NoteModel';
 import { ModelInstanceCreationData } from 'mobx-keystone';
 import { NoteLinkModel } from './models/NoteLinkModel';
 import { NoteDocument } from './rxdb/NoteRx';
-import { NoteBlockDocument } from './rxdb/NoteBlockRx';
+import { NoteBlockDocument } from './rxdb/NoteBlockDb';
 import { HarikaRxDatabase } from './rxdb/initDb';
 import { NoteLinkRxDocument } from './rxdb/NoteLinkRx';
 

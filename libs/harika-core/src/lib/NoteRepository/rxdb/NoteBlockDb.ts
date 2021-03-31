@@ -1,5 +1,5 @@
 import { RxJsonSchema, RxCollection, RxDocument } from 'rxdb';
-import { HarikaDatabaseDocuments } from './collectionTypes';
+import { HarikaDatabaseCollections } from './collectionTypes';
 import { NoteDocument } from './NoteRx';
 
 export type NoteBlockDocType = {
@@ -23,16 +23,16 @@ export const schema: RxJsonSchema<NoteBlockDocType> = {
       primary: true,
     },
     parentBlock: {
-      ref: HarikaDatabaseDocuments.NOTE_BLOCKS,
+      ref: HarikaDatabaseCollections.NOTE_BLOCKS,
       type: 'string',
     },
     note: {
-      ref: HarikaDatabaseDocuments.NOTES,
+      ref: HarikaDatabaseCollections.NOTES,
       type: 'string',
     },
     noteBlocks: {
       type: 'array',
-      ref: HarikaDatabaseDocuments.NOTE_BLOCKS,
+      ref: HarikaDatabaseCollections.NOTE_BLOCKS,
       items: {
         type: 'string',
       },

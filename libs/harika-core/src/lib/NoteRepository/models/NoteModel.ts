@@ -112,9 +112,9 @@ export class NoteModel extends Model({
       ...attrs,
     });
 
-    parent.noteBlockRefs.splice(pos, 0, noteBlockRef(newNoteBlock));
-
     this.vault.blocksMap[newNoteBlock.$modelId] = newNoteBlock;
+
+    parent.noteBlockRefs.splice(pos, 0, noteBlockRef(newNoteBlock));
 
     return newNoteBlock;
   }

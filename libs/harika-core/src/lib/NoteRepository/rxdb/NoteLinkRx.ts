@@ -1,5 +1,5 @@
 import { RxJsonSchema, RxCollection, RxDocument } from 'rxdb';
-import { HarikaDatabaseDocuments } from './collectionTypes';
+import { HarikaDatabaseCollections } from './collectionTypes';
 
 export type NoteLinkRxDocType = {
   _id: string;
@@ -19,11 +19,11 @@ export const schema: RxJsonSchema<NoteLinkRxDocType> = {
       primary: true,
     },
     noteBlock: {
-      ref: HarikaDatabaseDocuments.NOTE_BLOCKS,
+      ref: HarikaDatabaseCollections.NOTE_BLOCKS,
       type: 'string',
     },
     note: {
-      ref: HarikaDatabaseDocuments.NOTES,
+      ref: HarikaDatabaseCollections.NOTES,
       type: 'string',
     },
     createdAt: {

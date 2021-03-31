@@ -1,11 +1,13 @@
 import { createRxDatabase, addRxPlugin, RxDatabase, PouchDB } from 'rxdb';
 import { RxDBNoValidatePlugin } from 'rxdb/plugins/no-validate';
 import indexedDb from 'pouchdb-adapter-idb';
+import pouchdbHttp from 'pouchdb-adapter-http';
 import { dbNotesCollection, NoteCollection } from './NoteRx';
-import { dbNoteBlocksCollection, NoteBlockCollection } from './NoteBlockRx';
+import { dbNoteBlocksCollection, NoteBlockCollection } from './NoteBlockDb';
 import { dbNoteLinkRxCollection, NoteLinkRxCollection } from './NoteLinkRx';
-import { HarikaDatabaseDocuments } from './collectionTypes';
+import { HarikaDatabaseCollections } from './collectionTypes';
 import pouchdbDebug from 'pouchdb-debug';
+import idb from 'pouchdb-adapter-indexeddb';
 
 // (async() => {
 //   console.time('timer1');
@@ -23,13 +25,13 @@ PouchDB.debug.enable('*');
 
 addRxPlugin(RxDBNoValidatePlugin);
 addRxPlugin(indexedDb);
-//
-// addRxPlugin(require('pouchdb-adapter-idb'));
+addRxPlugin(pouchdbHttp);
+addRxPlugin(idb);
 
 export type DbCollections = {
-  [HarikaDatabaseDocuments.NOTES]: NoteCollection;
-  [HarikaDatabaseDocuments.NOTE_BLOCKS]: NoteBlockCollection;
-  [HarikaDatabaseDocuments.NOTE_LINKS]: NoteLinkRxCollection;
+  [HarikaDatabaseCollections.NOTES]: NoteCollection;
+  [HarikaDatabaseCollections.NOTE_BLOCKS]: NoteBlockCollection;
+  [HarikaDatabaseCollections.NOTE_LINKS]: NoteLinkRxCollection;
 };
 
 export type HarikaRxDatabase = RxDatabase<DbCollections>;
@@ -37,8 +39,11 @@ export type HarikaRxDatabase = RxDatabase<DbCollections>;
 export const initDb = async (id: string) => {
   const db: HarikaRxDatabase = await createRxDatabase<DbCollections>({
     name: `harika_notes_${id.replaceAll('-', '')}`,
-    adapter: 'idb',
-    eventReduce: false,
+    adapter: 'indexeddb',
+    pouchSettings: {
+      revs_limit: 0,
+    },
+    multiInstance: true,
   });
 
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -57,9 +62,9 @@ export const initDb = async (id: string) => {
   console.log('DatabaseService: create collections');
 
   await db.addCollections({
-    [HarikaDatabaseDocuments.NOTES]: dbNotesCollection,
-    [HarikaDatabaseDocuments.NOTE_BLOCKS]: dbNoteBlocksCollection,
-    [HarikaDatabaseDocuments.NOTE_LINKS]: dbNoteLinkRxCollection,
+    [HarikaDatabaseCollections.NOTES]: dbNotesCollection,
+    [HarikaDatabaseCollections.NOTE_BLOCKS]: dbNoteBlocksCollection,
+    [HarikaDatabaseCollections.NOTE_LINKS]: dbNoteLinkRxCollection,
   });
 
   return db;

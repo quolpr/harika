@@ -1,7 +1,7 @@
 import { Dayjs } from 'dayjs';
 import { RxJsonSchema, RxCollection, RxDocument } from 'rxdb';
-import { HarikaDatabaseDocuments } from './collectionTypes';
-import { NoteBlockDocument } from './NoteBlockRx';
+import { HarikaDatabaseCollections } from './collectionTypes';
+import { NoteBlockDocument } from './NoteBlockDb';
 import { NoteLinkRxDocument } from './NoteLinkRx';
 
 export type NoteDocType = {
@@ -25,7 +25,7 @@ export const schema: RxJsonSchema<NoteDocType> = {
     },
     noteBlocks: {
       type: 'array',
-      ref: HarikaDatabaseDocuments.NOTE_BLOCKS,
+      ref: HarikaDatabaseCollections.NOTE_BLOCKS,
       items: {
         type: 'string',
       },
