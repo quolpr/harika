@@ -1,6 +1,4 @@
 import { ModelInstanceCreationData } from 'mobx-keystone';
-import { Database, DatabaseAdapter } from '@nozbe/watermelondb';
-import { Queries } from './NoteRepository/db/Queries';
 import { convertNoteRowToModelAttrs } from './NoteRepository/convertRowToModel';
 import { Dayjs } from 'dayjs';
 import { NoteBlockModel } from './NoteRepository/models/NoteBlockModel';
@@ -21,11 +19,6 @@ export {
   NoteBlockModel,
   noteBlockRef,
 } from './NoteRepository/models/NoteBlockModel';
-
-export interface IAdapterBuilder {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (opts: { dbName: string; schema: any }): DatabaseAdapter;
-}
 
 // Row = DB projection of the model
 // Model = DDD model

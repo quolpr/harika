@@ -1,75 +1,34 @@
-import { IAdapterBuilder, NoteRepository, Vault } from './NoteRepository';
-import { VaultRow } from './VaultRepository/vaultDb/VaultRow';
-import {
-  vaultsSchema,
-  VaultsTableNames,
-} from './VaultRepository/vaultDb/schema';
-import { Collection, Database, Q } from '@nozbe/watermelondb';
+import { NoteRepository, Vault } from './NoteRepository';
 import { map } from 'rxjs/operators';
 import { VaultModel } from './NoteRepository/models/Vault';
-import { Queries } from './NoteRepository/db/Queries';
-import { NoteBlockRow } from './NoteRepository/db/rows/NoteBlockRow';
-import { NoteLinkRow } from './NoteRepository/db/rows/NoteLinkRow';
-import { NoteRow } from './NoteRepository/db/rows/NoteRow';
 import { syncMiddleware } from './NoteRepository/models/syncable';
-import { notesSchema } from './NoteRepository/db/notesSchema';
-import { VaultsSyncer } from './VaultRepository/vaultDb/VaultsSyncer';
-import { Socket } from 'phoenix';
-import { v4 as uuidv4 } from 'uuid';
 import * as remotedev from 'remotedev';
 import { connectReduxDevTools } from 'mobx-keystone';
 import { RxdbChangesHandler } from './NoteRepository/rxdb/ChangesHandler';
 import { VaultRxDatabase, initDb } from './NoteRepository/rxdb/initDb';
+import { initDb as initStockDb } from './VaultRepository/rxdb/initDb';
 import { initRxDbToLocalSync } from './NoteRepository/rxdb/sync';
+import { StockRxDatabase } from './VaultRepository/rxdb/initDb';
+import { generateId } from './generateId';
 
 export class VaultRepository {
   // TODO: finde better naming(instead of conatiner)
   private vaultContainers: Record<string, Vault | undefined> = {};
-  private database: Database;
-  private vaultsCollection: Collection<VaultRow>;
 
   private rxVaultsDbs: Record<string, VaultRxDatabase> = {};
   private noteRepo = new NoteRepository(this.rxVaultsDbs);
 
-  syncer?: VaultsSyncer;
-  private socket?: Socket;
+  database!: StockRxDatabase;
 
-  constructor(
-    private buildAdapter: IAdapterBuilder,
-    userId: string,
-    authToken: string,
-    private isOffline: boolean
-  ) {
-    this.database = new Database({
-      // TODO: add user id to dbName
-      adapter: this.buildAdapter({
-        dbName: `vaults-${userId}`,
-        schema: vaultsSchema,
-      }),
-      modelClasses: [VaultRow],
-      actionsEnabled: true,
-    });
+  constructor(private stockId: string) {}
 
-    this.vaultsCollection = this.database.collections.get<VaultRow>(
-      VaultsTableNames.VAULTS
-    );
-
-    if (!this.isOffline) {
-      this.socket = new Socket('ws://localhost:5000/socket', {
-        params: { token: authToken },
-      });
-      this.socket.connect();
-
-      this.syncer = new VaultsSyncer(this.database, this.socket, userId);
-      this.syncer.sync();
-    }
-
-    console.log('vault reposting initialized!');
-  }
-
-  // TODO: refactor to get noteRepo()
   getNoteRepository() {
     return this.noteRepo;
+  }
+
+  async init() {
+    console.log('init!');
+    this.database = await initStockDb(this.stockId);
   }
 
   async getVault(vaultId: string) {
@@ -81,36 +40,35 @@ export class VaultRepository {
   }
 
   getAllVaultTuples$() {
-    return this.vaultsCollection
-      .query()
-      .observe()
-      .pipe(
-        map((vaults) =>
-          vaults.map((v) => ({
-            id: v.id,
-            name: v.name,
-            createAd: v.createdAt,
-          }))
-        )
-      );
+    return this.database.vaults.find().$.pipe(
+      map((vaults) =>
+        vaults.map((v) => ({
+          id: v._id,
+          name: v.name,
+          createAd: v.createdAt,
+        }))
+      )
+    );
   }
 
   async createVault({ name }: { name: string }) {
-    return this.database.action<Vault>(async () => {
-      const { id } = await this.vaultsCollection.create((rec) => {
-        rec._raw.id = uuidv4();
-        rec.name = name;
-      });
-      return this.getVault(id);
+    const id = generateId();
+
+    this.database.vaults.insert({
+      _id: id,
+      name,
+      createdAt: new Date().getTime(),
     });
+
+    return this.getVault(id);
   }
 
   private async initializeVaultAndRepo(id: string) {
-    const [vaultRow] = await this.vaultsCollection
-      .query(Q.where('id', Q.eq(id)))
-      .fetch();
+    const vaultDoc = await this.database.vaults
+      .findOne({ selector: { _id: id } })
+      .exec();
 
-    if (!vaultRow) return;
+    if (!vaultDoc) return;
 
     // this.vaultDbs[id] = new Database({
     //   adapter: this.buildAdapter({
@@ -123,7 +81,7 @@ export class VaultRepository {
 
     this.rxVaultsDbs[id] = await initDb(id);
 
-    const vault = new VaultModel({ name: vaultRow.name, $modelId: id });
+    const vault = new VaultModel({ name: vaultDoc.name, $modelId: id });
     // const queries = new Queries(this.vaultDbs[id]);
 
     // const syncer =
@@ -144,27 +102,27 @@ export class VaultRepository {
     //   ).handlePatch
     // );
 
-    const firstSync = this.rxVaultsDbs[id].noteblocks.sync({
-      remote: `http://localhost:5984/harika_noteblocks_${id.replace(/-/g, '')}`, // remote database. This can be the serverURL, another RxCollection or a PouchDB-instance
-      waitForLeadership: false, // (optional) [default=true] to save performance, the sync starts on leader-instance only
-      options: {
-        live: false,
-      },
-    });
+    // const firstSync = this.rxVaultsDbs[id].noteblocks.sync({
+    //   remote: `http://localhost:5984/harika_noteblocks_${id.replace(/-/g, '')}`, // remote database. This can be the serverURL, another RxCollection or a PouchDB-instance
+    //   waitForLeadership: false, // (optional) [default=true] to save performance, the sync starts on leader-instance only
+    //   options: {
+    //     live: false,
+    //   },
+    // });
 
-    await firstSync.awaitInitialReplication();
+    // await firstSync.awaitInitialReplication();
 
-    this.rxVaultsDbs[id].noteblocks.sync({
-      remote: `http://localhost:5984/harika_noteblocks_${id.replaceAll(
-        '-',
-        ''
-      )}`, // remote database. This can be the serverURL, another RxCollection or a PouchDB-instance
-      waitForLeadership: true, // (optional) [default=true] to save performance, the sync starts on leader-instance only
-      options: {
-        live: true,
-        retry: true,
-      },
-    });
+    // this.rxVaultsDbs[id].noteblocks.sync({
+    //   remote: `http://localhost:5984/harika_noteblocks_${id.replaceAll(
+    //     '-',
+    //     ''
+    //   )}`, // remote database. This can be the serverURL, another RxCollection or a PouchDB-instance
+    //   waitForLeadership: true, // (optional) [default=true] to save performance, the sync starts on leader-instance only
+    //   options: {
+    //     live: true,
+    //     retry: true,
+    //   },
+    // });
 
     syncMiddleware(
       vault,

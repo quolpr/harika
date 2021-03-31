@@ -6,8 +6,8 @@ import { useLoginMutation } from '../../generated/graphql';
 import { useAuthState } from '../../hooks/useAuthState';
 import { paths } from '../../paths';
 import { cn } from '../../utils';
-import { v4 as uuidv4 } from 'uuid';
 import { useOfflineAccounts } from '../../hooks/useOfflineAccounts';
+import { generateId } from '@harika/harika-core';
 
 const formClass = cn('form');
 
@@ -33,7 +33,7 @@ export const LoginPage = () => {
         user: { id: userId },
       } = res.login;
 
-      setAuthInfo({ token, userId, isOffline: false });
+      setAuthInfo({ token, userId, stockId: 'todo', isOffline: false });
 
       history.push(paths.vaultIndexPath());
     } catch {
@@ -47,19 +47,23 @@ export const LoginPage = () => {
   const handleWorkOffline = useCallback(() => {
     const token = 'not-set';
 
-    const userId = (() => {
+    const { userId, stockId } = (() => {
       if (offlineAccounts.accounts.length > 0) {
-        return offlineAccounts.accounts[0].id;
+        return {
+          userId: offlineAccounts.accounts[0].id,
+          stockId: offlineAccounts.accounts[0].stockId,
+        };
       } else {
-        const newUserId = uuidv4();
+        const newUserId = generateId();
+        const newStockId = generateId();
 
-        addOfflineAccount(newUserId);
+        addOfflineAccount(newUserId, newStockId);
 
-        return newUserId;
+        return { userId: newUserId, stockId: newStockId };
       }
     })();
 
-    setAuthInfo({ token, userId, isOffline: true });
+    setAuthInfo({ token, userId, stockId, isOffline: true });
 
     history.push(paths.vaultIndexPath());
   }, [setAuthInfo, history, offlineAccounts.accounts, addOfflineAccount]);

@@ -22,10 +22,16 @@ export const VaultsPage = ({ vaults }: { vaults: VaultRepository }) => {
 
   const handleSubmit = useCallback(
     async (data: { name: string }) => {
-      const { $modelId } = await vaults.createVault({ name: data.name });
+      const vault = await vaults.createVault({ name: data.name });
+      if (!vault) {
+        console.error('Failed to create vault');
+
+        return;
+      }
+
       setIsCreateModalOpened(false);
 
-      history.push(paths.vaultDailyPath({ vaultId: $modelId }));
+      history.push(paths.vaultDailyPath({ vaultId: vault.$modelId }));
     },
     [vaults, history]
   );

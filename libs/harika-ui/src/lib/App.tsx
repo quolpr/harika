@@ -9,7 +9,6 @@ import Modal from 'react-modal';
 import { VaultsPage } from './pages/VaultsPage/VaultsPage';
 import { VaultLayout } from './components/VaultLayout/VaultLayout';
 import { VaultRepository } from '@harika/harika-core';
-import LokiJSAdapter from '@nozbe/watermelondb/adapters/lokijs';
 import { PATHS, VAULT_PREFIX } from './paths';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { SignupPage } from './pages/SignupPage/SignupPage';
@@ -17,7 +16,7 @@ import { OnlyAuthed } from './components/OnlyAuthed';
 import { LoginPage } from './pages/LoginPage/LoginPage';
 import { useAuthState } from './hooks/useAuthState';
 import { useState } from 'react';
-import { Redirect, Route, Router, Switch } from 'react-router-dom';
+import { Redirect, Route, Router } from 'react-router-dom';
 import { createBrowserHistory } from 'history';
 
 const history = createBrowserHistory();
@@ -31,45 +30,32 @@ export function App() {
   const userId = authInfo?.userId;
   const token = authInfo?.token;
   const isOffline = authInfo?.isOffline;
+  const stockId = authInfo?.stockId;
 
   const [vaultRepository, setVaultRepository] = useState<
     VaultRepository | undefined
   >();
 
   useEffect(() => {
-    if (!userId || !token || isOffline === undefined) return;
+    if (!userId || !token || !stockId || isOffline === undefined) return;
 
-    const repo = new VaultRepository(
-      ({ schema, dbName }) =>
-        new LokiJSAdapter({
-          schema,
-          dbName, // optional vaultDb name
-          // migrations, // optional migrations
-          useWebWorker: false, // recommended for new projects. tends to improve performance and reduce glitches in most cases, but also has downsides - test with and without it
-          useIncrementalIndexedDB: true, // recommended for new projects. improves performance (but incompatible with early Watermelon databases)
-          // It's recommended you implement this method:
-          // onIndexedDBVersionChange: () => {
-          //   // database was deleted in another browser tab (user logged out), so we must make sure we delete
-          //   // it in this tab as well
-          //   if (checkIfUserIsLoggedIn()) {
-          //     window.location.reload()
-          //   }
-          // },
-          // Optional:
-          // onQuotaExceededError: (error) => { /* do something when user runs out of disk space */ },
-        } as any),
-      userId,
-      token,
-      isOffline
-    );
+    let repo: VaultRepository | undefined = undefined;
 
-    setVaultRepository(repo);
+    const cb = async () => {
+      repo = new VaultRepository(stockId);
+
+      await repo.init();
+
+      setVaultRepository(repo);
+    };
+
+    cb();
 
     return () => {
-      repo.destroy();
+      repo?.destroy();
       setVaultRepository(undefined);
     };
-  }, [userId, token, isOffline]);
+  }, [userId, token, isOffline, stockId]);
 
   return (
     <React.StrictMode>

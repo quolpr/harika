@@ -3,6 +3,7 @@ import { useCallback, useMemo } from 'react';
 
 interface Account {
   id: string;
+  stockId: string;
 }
 
 export interface OfflineAccounts {
@@ -13,7 +14,7 @@ const storageKey = 'offlineAccounts';
 
 export const useOfflineAccounts = (): [
   accounts: OfflineAccounts,
-  addOfflineAccount: (id: string) => void
+  addOfflineAccount: (id: string, stockId: string) => void
 ] => {
   const emptyAccounts = useMemo(() => ({ accounts: [] }), []);
 
@@ -22,8 +23,8 @@ export const useOfflineAccounts = (): [
     emptyAccounts;
 
   const addAccount = useCallback(
-    (id: string) => {
-      offlineAccounts.accounts.push({ id });
+    (id: string, stockId: string) => {
+      offlineAccounts.accounts.push({ id, stockId: stockId });
 
       writeStorage(storageKey, offlineAccounts);
     },
