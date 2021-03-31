@@ -1,7 +1,7 @@
 import { RxJsonSchema, RxCollection, RxDocument } from 'rxdb';
 import { HarikaDatabaseCollections } from './collectionTypes';
 
-export type NoteLinkRxDocType = {
+export type NoteLinkDocType = {
   _id: string;
   noteBlock: string;
   note: string;
@@ -9,7 +9,7 @@ export type NoteLinkRxDocType = {
   updatedAt?: number;
 };
 
-export const schema: RxJsonSchema<NoteLinkRxDocType> = {
+export const schema: RxJsonSchema<NoteLinkDocType> = {
   description: 'describes a note link',
   version: 0,
   type: 'object',
@@ -38,23 +38,24 @@ export const schema: RxJsonSchema<NoteLinkRxDocType> = {
 };
 
 type CollectionMethods = {
-  getLinksByBlockIds(ids: string[]): Promise<NoteLinkRxDocument[]>;
+  getLinksByBlockIds(ids: string[]): Promise<NoteLinkDocument[]>;
 };
 
 const collectionMethods: CollectionMethods = {
-  async getLinksByBlockIds(this: NoteLinkRxCollection, ids: string[]) {
+  async getLinksByBlockIds(this: NoteLinkCollection, ids: string[]) {
     return this.find({ selector: { noteBlock: { $in: ids } } }).exec();
   },
 };
 
-export type NoteLinkRxCollection = RxCollection<
-  NoteLinkRxDocType,
+export type NoteLinkCollection = RxCollection<
+  NoteLinkDocType,
+  // eslint-disable-next-line @typescript-eslint/ban-types
   {},
   CollectionMethods
 >;
-export type NoteLinkRxDocument = RxDocument<NoteLinkRxDocType>;
+export type NoteLinkDocument = RxDocument<NoteLinkDocType>;
 
-export const dbNoteLinkRxCollection = {
+export const dbNoteLinkCollection = {
   schema,
   statics: collectionMethods,
 };

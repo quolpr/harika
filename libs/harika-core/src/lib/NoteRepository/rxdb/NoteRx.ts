@@ -2,7 +2,7 @@ import { Dayjs } from 'dayjs';
 import { RxJsonSchema, RxCollection, RxDocument } from 'rxdb';
 import { HarikaDatabaseCollections } from './collectionTypes';
 import { NoteBlockDocument } from './NoteBlockDb';
-import { NoteLinkRxDocument } from './NoteLinkRx';
+import { NoteLinkDocument } from './NoteLinkRx';
 
 export type NoteDocType = {
   _id: string;
@@ -103,7 +103,7 @@ export const collectionMethods: CollectionMethods = {
 
 type DocumentMethods = {
   getNoteBlocks(): Promise<NoteBlockDocument[]>;
-  getLinks(): Promise<NoteLinkRxDocument[]>;
+  getLinks(): Promise<NoteLinkDocument[]>;
 };
 
 export const documentMethods: DocumentMethods = {

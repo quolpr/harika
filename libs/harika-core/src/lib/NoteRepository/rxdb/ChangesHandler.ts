@@ -5,7 +5,7 @@ import { buffer, concatMap, debounceTime, tap } from 'rxjs/operators';
 import { Vault } from '../../NoteRepository';
 import { NoteBlockModel } from '../models/NoteBlockModel';
 import { NoteModel } from '../models/NoteModel';
-import { HarikaRxDatabase } from './initDb';
+import { VaultRxDatabase } from './initDb';
 
 // TODO: type rootKey
 const zipPatches = (rootKey: string, patches: Patch[]) => {
@@ -73,7 +73,7 @@ export class RxdbChangesHandler {
   patchesSubject: Subject<Patch>;
 
   constructor(
-    private database: HarikaRxDatabase,
+    private database: VaultRxDatabase,
     private vault: Vault,
     onPatchesApplied?: () => void
   ) {

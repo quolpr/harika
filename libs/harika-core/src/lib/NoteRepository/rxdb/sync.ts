@@ -7,7 +7,7 @@ import {
   simpleConvertNoteDbToModelAttrsSync,
 } from '../convertRowToModel';
 import { HarikaDatabaseCollections } from './collectionTypes';
-import { HarikaRxDatabase } from './initDb';
+import { VaultRxDatabase } from './initDb';
 import { NoteBlockDocument } from './NoteBlockDb';
 import { NoteDocument } from './NoteRx';
 
@@ -28,7 +28,7 @@ const bufferDebounce: BufferDebounce = (debounce) => (source) =>
   );
 
 export const initRxDbToLocalSync = (
-  db: HarikaRxDatabase,
+  db: VaultRxDatabase,
   noteRepository: NoteRepository,
   vault: Vault
 ) => {

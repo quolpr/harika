@@ -13,8 +13,6 @@ export type NoteBlockDocType = {
 };
 
 export const schema: RxJsonSchema<NoteBlockDocType> = {
-  title: 'hero schema',
-  description: 'describes a note',
   version: 0,
   type: 'object',
   properties: {

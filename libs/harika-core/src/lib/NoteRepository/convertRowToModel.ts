@@ -4,8 +4,8 @@ import { ModelInstanceCreationData } from 'mobx-keystone';
 import { NoteLinkModel } from './models/NoteLinkModel';
 import { NoteDocument } from './rxdb/NoteRx';
 import { NoteBlockDocument } from './rxdb/NoteBlockDb';
-import { HarikaRxDatabase } from './rxdb/initDb';
-import { NoteLinkRxDocument } from './rxdb/NoteLinkRx';
+import { VaultRxDatabase } from './rxdb/initDb';
+import { NoteLinkDocument } from './rxdb/NoteLinkRx';
 
 export const convertNoteBlockRowToModelAttrs = (dbModel: NoteBlockDocument) => {
   return {
@@ -32,7 +32,7 @@ interface IConvertResult {
 }
 
 const mapLink = (
-  row: NoteLinkRxDocument
+  row: NoteLinkDocument
 ): ModelInstanceCreationData<NoteLinkModel> & {
   $modelId: string;
 } => {
@@ -63,7 +63,7 @@ export const simpleConvertNoteDbToModelAttrsSync = (
 };
 
 export const convertNoteRowToModelAttrs = async (
-  db: HarikaRxDatabase,
+  db: VaultRxDatabase,
   dbModel: NoteDocument,
   preloadChildren = true,
   preloadLinks = true

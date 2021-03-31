@@ -10,7 +10,7 @@ import { Required } from 'utility-types';
 import { ICreationResult } from './NoteRepository/types';
 import { VaultModel } from './NoteRepository/models/Vault';
 import { map } from 'rxjs/operators';
-import { HarikaRxDatabase } from './NoteRepository/rxdb/initDb';
+import { VaultRxDatabase } from './NoteRepository/rxdb/initDb';
 
 export { NoteModel } from './NoteRepository/models/NoteModel';
 // TODO: rename to VaultModel
@@ -33,7 +33,7 @@ export interface IAdapterBuilder {
 
 // TODO refactor Row to Db postfix.
 export class NoteRepository {
-  constructor(private vaultRxDbs: Record<string, HarikaRxDatabase>) {}
+  constructor(private vaultRxDbs: Record<string, VaultRxDatabase>) {}
 
   async createNote(
     vault: VaultModel,

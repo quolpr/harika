@@ -19,7 +19,7 @@ import { v4 as uuidv4 } from 'uuid';
 import * as remotedev from 'remotedev';
 import { connectReduxDevTools } from 'mobx-keystone';
 import { RxdbChangesHandler } from './NoteRepository/rxdb/ChangesHandler';
-import { HarikaRxDatabase, initDb } from './NoteRepository/rxdb/initDb';
+import { VaultRxDatabase, initDb } from './NoteRepository/rxdb/initDb';
 import { initRxDbToLocalSync } from './NoteRepository/rxdb/sync';
 
 export class VaultRepository {
@@ -28,7 +28,7 @@ export class VaultRepository {
   private database: Database;
   private vaultsCollection: Collection<VaultRow>;
 
-  private rxVaultsDbs: Record<string, HarikaRxDatabase> = {};
+  private rxVaultsDbs: Record<string, VaultRxDatabase> = {};
   private noteRepo = new NoteRepository(this.rxVaultsDbs);
 
   syncer?: VaultsSyncer;
