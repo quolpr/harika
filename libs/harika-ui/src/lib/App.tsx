@@ -30,19 +30,19 @@ export function App() {
   const userId = authInfo?.userId;
   const token = authInfo?.token;
   const isOffline = authInfo?.isOffline;
-  const stockId = authInfo?.stockId;
+  const dbId = authInfo?.dbId;
 
   const [vaultRepository, setVaultRepository] = useState<
     VaultRepository | undefined
   >();
 
   useEffect(() => {
-    if (!userId || !token || !stockId || isOffline === undefined) return;
+    if (!userId || !token || !dbId || isOffline === undefined) return;
 
     let repo: VaultRepository | undefined = undefined;
 
     const cb = async () => {
-      repo = new VaultRepository(stockId);
+      repo = new VaultRepository(dbId, !isOffline);
 
       await repo.init();
 
@@ -55,7 +55,7 @@ export function App() {
       repo?.destroy();
       setVaultRepository(undefined);
     };
-  }, [userId, token, isOffline, stockId]);
+  }, [userId, token, isOffline, dbId]);
 
   return (
     <React.StrictMode>

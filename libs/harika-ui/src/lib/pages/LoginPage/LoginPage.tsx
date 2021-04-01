@@ -30,10 +30,10 @@ export const LoginPage = () => {
 
       const {
         token,
-        user: { id: userId },
+        user: { id: userId, dbId },
       } = res.login;
 
-      setAuthInfo({ token, userId, stockId: 'todo', isOffline: false });
+      setAuthInfo({ token, userId, dbId, isOffline: false });
 
       history.push(paths.vaultIndexPath());
     } catch {
@@ -47,23 +47,23 @@ export const LoginPage = () => {
   const handleWorkOffline = useCallback(() => {
     const token = 'not-set';
 
-    const { userId, stockId } = (() => {
+    const { userId, dbId } = (() => {
       if (offlineAccounts.accounts.length > 0) {
         return {
           userId: offlineAccounts.accounts[0].id,
-          stockId: offlineAccounts.accounts[0].stockId,
+          dbId: offlineAccounts.accounts[0].dbId,
         };
       } else {
         const newUserId = generateId();
-        const newStockId = generateId();
+        const dbId = generateId();
 
-        addOfflineAccount(newUserId, newStockId);
+        addOfflineAccount(newUserId, dbId);
 
-        return { userId: newUserId, stockId: newStockId };
+        return { userId: newUserId, dbId };
       }
     })();
 
-    setAuthInfo({ token, userId, stockId, isOffline: true });
+    setAuthInfo({ token, userId, dbId, isOffline: true });
 
     history.push(paths.vaultIndexPath());
   }, [setAuthInfo, history, offlineAccounts.accounts, addOfflineAccount]);

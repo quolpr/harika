@@ -8,6 +8,7 @@ mutation signup($email: String!, $password: String!) {
     result {
       token
       user {
+        dbId
         id
       }
     }

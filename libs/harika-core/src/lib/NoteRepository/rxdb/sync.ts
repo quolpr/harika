@@ -34,12 +34,16 @@ export const initRxDbToLocalSync = (
 ) => {
   db.$.pipe(bufferDebounce(1000)).subscribe(
     (events: RxChangeEvent<NoteDocument | NoteBlockDocument>[]) => {
-      const remoteEvents = events
-        .filter((ev) => ev.databaseToken !== db.token)
-        .reverse();
+      // TODO: filter local events from remote events
+
+      // const remoteEvents = events
+      //   .filter((ev) => ev.databaseToken !== db.token)
+      //   .reverse();
+
+      // console.log({ events, remoteEvents, db });
 
       const notes = (() => {
-        const noteEvents = remoteEvents.filter(
+        const noteEvents = events.filter(
           (ev) => ev.collectionName === HarikaDatabaseCollections.NOTES
         ) as RxChangeEvent<NoteDocument>[];
 
@@ -66,7 +70,7 @@ export const initRxDbToLocalSync = (
       })();
 
       const blocks = (() => {
-        const blockEvents = remoteEvents.filter(
+        const blockEvents = events.filter(
           (ev) => ev.collectionName === HarikaDatabaseCollections.NOTE_BLOCKS
         ) as RxChangeEvent<NoteBlockDocument>[];
 

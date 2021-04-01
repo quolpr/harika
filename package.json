@@ -25,7 +25,8 @@
     "dep-graph": "nx dep-graph",
     "help": "nx help",
     "gen-block-parser": "pegjs -o libs/harika-core/src/lib/blockParser/blockParser.js --cache libs/harika-core/src/lib/blockParser/blockParser.pegjs",
-    "build:mobile": "NODE_ENV=production nx run harika-mobile-ionic:build:production"
+    "build:mobile": "NODE_ENV=production nx run harika-mobile-ionic:build:production",
+    "graphql-generate": "graphql-codegen"
   },
   "private": true,
   "dependencies": {

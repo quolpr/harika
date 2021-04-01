@@ -3,7 +3,7 @@ import pouchdbHttp from 'pouchdb-adapter-http';
 import pouchdbDebug from 'pouchdb-debug';
 import idb from 'pouchdb-adapter-indexeddb';
 import { vaultCollection, VaultCollection } from './VaultDoc';
-import { StockCollectionTypes } from './stockCollectionTypes';
+import { HarikaDbCollectionTypes } from './harikaCollectionTypes';
 
 PouchDB.plugin(pouchdbDebug);
 
@@ -12,15 +12,17 @@ PouchDB.plugin(pouchdbDebug);
 addRxPlugin(pouchdbHttp);
 addRxPlugin(idb);
 
-export type StockDbCollections = {
-  [StockCollectionTypes.VAULTS]: VaultCollection;
+export type HarikaDbCollections = {
+  [HarikaDbCollectionTypes.VAULTS]: VaultCollection;
 };
 
-export type StockRxDatabase = RxDatabase<StockDbCollections>;
+export type HarikaRxDatabase = RxDatabase<HarikaDbCollections>;
 
-export const initDb = async (id: string) => {
-  const db: StockRxDatabase = await createRxDatabase<StockDbCollections>({
-    name: `harika_stock_${id}`,
+export const initHarikaDb = async (id: string, sync: boolean) => {
+  const dbName = `harika_${id}`;
+
+  const db: HarikaRxDatabase = await createRxDatabase<HarikaDbCollections>({
+    name: dbName,
     adapter: 'indexeddb',
     pouchSettings: {
       revs_limit: 0,
@@ -44,8 +46,39 @@ export const initDb = async (id: string) => {
   console.log('DatabaseService: create collections');
 
   await db.addCollections({
-    [StockCollectionTypes.VAULTS]: vaultCollection,
+    [HarikaDbCollectionTypes.VAULTS]: vaultCollection,
   });
+
+  if (sync) {
+    const firstSync = db.vaults.sync({
+      remote: `http://localhost:5984/${dbName}_vaults`,
+      waitForLeadership: false,
+      options: {
+        live: false,
+        fetch: (url, opts) =>
+          PouchDB.fetch(url, {
+            ...opts,
+            credentials: 'include',
+          }),
+      },
+    });
+
+    await firstSync.awaitInitialReplication();
+
+    db.vaults.sync({
+      remote: `http://localhost:5984/${dbName}_vaults`,
+      waitForLeadership: true,
+      options: {
+        live: true,
+        retry: true,
+        fetch: (url, opts) =>
+          PouchDB.fetch(url, {
+            ...opts,
+            credentials: 'include',
+          }),
+      },
+    });
+  }
 
   return db;
 };

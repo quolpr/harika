@@ -24,9 +24,10 @@ export type DbCollections = {
 
 export type VaultRxDatabase = RxDatabase<DbCollections>;
 
-export const initDb = async (id: string) => {
+export const initDb = async (id: string, sync: boolean) => {
+  const dbName = `harika_vault_${id}`;
   const db: VaultRxDatabase = await createRxDatabase<DbCollections>({
-    name: `harika_vault_${id.replaceAll('-', '')}`,
+    name: dbName,
     adapter: 'indexeddb',
     pouchSettings: {
       revs_limit: 0,
@@ -54,6 +55,41 @@ export const initDb = async (id: string) => {
     [VaultDatabaseCollections.NOTE_BLOCKS]: dbNoteBlocksCollection,
     [VaultDatabaseCollections.NOTE_LINKS]: dbNoteLinkCollection,
   });
+
+  if (sync) {
+    await Promise.all(
+      Object.values(VaultDatabaseCollections).map(async (collectionName) => {
+        const firstSync = db[collectionName].sync({
+          remote: `http://localhost:5984/${dbName}_${collectionName}`,
+          waitForLeadership: false,
+          options: {
+            live: false,
+            fetch: (url, opts) =>
+              PouchDB.fetch(url, {
+                ...opts,
+                credentials: 'include',
+              }),
+          },
+        });
+
+        await firstSync.awaitInitialReplication();
+
+        db[collectionName].sync({
+          remote: `http://localhost:5984/${dbName}_${collectionName}`,
+          waitForLeadership: true,
+          options: {
+            live: true,
+            retry: true,
+            fetch: (url, opts) =>
+              PouchDB.fetch(url, {
+                ...opts,
+                credentials: 'include',
+              }),
+          },
+        });
+      })
+    );
+  }
 
   return db;
 };

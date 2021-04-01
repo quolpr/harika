@@ -6,10 +6,11 @@ import * as remotedev from 'remotedev';
 import { connectReduxDevTools } from 'mobx-keystone';
 import { RxdbChangesHandler } from './NoteRepository/rxdb/ChangesHandler';
 import { VaultRxDatabase, initDb } from './NoteRepository/rxdb/initDb';
-import { initDb as initStockDb } from './VaultRepository/rxdb/initDb';
+import { initHarikaDb } from './VaultRepository/rxdb/initDb';
 import { initRxDbToLocalSync } from './NoteRepository/rxdb/sync';
-import { StockRxDatabase } from './VaultRepository/rxdb/initDb';
+import { HarikaRxDatabase } from './VaultRepository/rxdb/initDb';
 import { generateId } from './generateId';
+import { authCouchDB } from './authCouchDB';
 
 export class VaultRepository {
   // TODO: finde better naming(instead of conatiner)
@@ -18,17 +19,17 @@ export class VaultRepository {
   private rxVaultsDbs: Record<string, VaultRxDatabase> = {};
   private noteRepo = new NoteRepository(this.rxVaultsDbs);
 
-  database!: StockRxDatabase;
+  database!: HarikaRxDatabase;
 
-  constructor(private stockId: string) {}
+  constructor(private dbId: string, private sync: boolean) {}
 
   getNoteRepository() {
     return this.noteRepo;
   }
 
   async init() {
-    console.log('init!');
-    this.database = await initStockDb(this.stockId);
+    await authCouchDB();
+    this.database = await initHarikaDb(this.dbId, this.sync);
   }
 
   async getVault(vaultId: string) {
@@ -70,59 +71,9 @@ export class VaultRepository {
 
     if (!vaultDoc) return;
 
-    // this.vaultDbs[id] = new Database({
-    //   adapter: this.buildAdapter({
-    //     dbName: `vault-${id}`,
-    //     schema: notesSchema,
-    //   }),
-    //   modelClasses: [NoteRow, NoteBlockRow, NoteLinkRow],
-    //   actionsEnabled: true,
-    // });
-
-    this.rxVaultsDbs[id] = await initDb(id);
+    this.rxVaultsDbs[id] = await initDb(id, this.sync);
 
     const vault = new VaultModel({ name: vaultDoc.name, $modelId: id });
-    // const queries = new Queries(this.vaultDbs[id]);
-
-    // const syncer =
-    //   !this.isOffline && this.socket
-    //     ? new Syncher(
-    //         this.vaultDbs[id],
-    //         this.socket,
-    //         vault,
-    //         queries,
-    //         this.getNoteRepository()
-    //       )
-    //     : undefined;
-
-    // syncMiddleware(
-    //   vault,
-    //   new ChangesHandler(this.vaultDbs[id], queries, vault, () =>
-    //     syncer?.sync()
-    //   ).handlePatch
-    // );
-
-    // const firstSync = this.rxVaultsDbs[id].noteblocks.sync({
-    //   remote: `http://localhost:5984/harika_noteblocks_${id.replace(/-/g, '')}`, // remote database. This can be the serverURL, another RxCollection or a PouchDB-instance
-    //   waitForLeadership: false, // (optional) [default=true] to save performance, the sync starts on leader-instance only
-    //   options: {
-    //     live: false,
-    //   },
-    // });
-
-    // await firstSync.awaitInitialReplication();
-
-    // this.rxVaultsDbs[id].noteblocks.sync({
-    //   remote: `http://localhost:5984/harika_noteblocks_${id.replaceAll(
-    //     '-',
-    //     ''
-    //   )}`, // remote database. This can be the serverURL, another RxCollection or a PouchDB-instance
-    //   waitForLeadership: true, // (optional) [default=true] to save performance, the sync starts on leader-instance only
-    //   options: {
-    //     live: true,
-    //     retry: true,
-    //   },
-    // });
 
     syncMiddleware(
       vault,
