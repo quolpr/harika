@@ -9,11 +9,19 @@ import { Plus as PlusIcon } from 'heroicons-react';
 import { CreateVaultModal } from './CreateVaultModal';
 import { useAuthState } from '../../hooks/useAuthState';
 import { Brand } from '../../components/Brand/Brand';
+import { useCreateRemoteVaultDbMutation } from '../../generated/graphql';
+import { generateId } from '@harika/harika-core';
 
 const vaultsClass = cn('vaults');
 const vaultsNavbarClass = cn('vaults-navbar');
 
 export const VaultsPage = ({ vaults }: { vaults: VaultRepository }) => {
+  const [authInfo] = useAuthState();
+  const isOffline =
+    authInfo?.isOffline === undefined ? true : authInfo?.isOffline;
+
+  const createRemoteVault = useCreateRemoteVaultDbMutation();
+
   const history = useHistory();
 
   const [isCreateModalOpened, setIsCreateModalOpened] = useState(false);
@@ -22,7 +30,19 @@ export const VaultsPage = ({ vaults }: { vaults: VaultRepository }) => {
 
   const handleSubmit = useCallback(
     async (data: { name: string }) => {
-      const vault = await vaults.createVault({ name: data.name });
+      const dbId = generateId();
+
+      if (!isOffline) {
+        const res = await createRemoteVault.mutateAsync({ dbId });
+
+        if (!res.createVaultDb) {
+          console.error('Failed to create vault - failed to create remote DB');
+
+          return;
+        }
+      }
+
+      const vault = await vaults.createVault({ name: data.name, dbId });
       if (!vault) {
         console.error('Failed to create vault');
 
@@ -33,7 +53,7 @@ export const VaultsPage = ({ vaults }: { vaults: VaultRepository }) => {
 
       history.push(paths.vaultDailyPath({ vaultId: vault.$modelId }));
     },
-    [vaults, history]
+    [isOffline, vaults, history, createRemoteVault]
   );
 
   const handleClose = useCallback(() => {

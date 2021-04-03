@@ -18,7 +18,10 @@ export type HarikaDbCollections = {
 
 export type HarikaRxDatabase = RxDatabase<HarikaDbCollections>;
 
-export const initHarikaDb = async (id: string, sync: boolean) => {
+export const initHarikaDb = async (
+  id: string,
+  sync: false | { token: string }
+) => {
   const dbName = `harika_${id}`;
 
   const db: HarikaRxDatabase = await createRxDatabase<HarikaDbCollections>({
@@ -50,30 +53,54 @@ export const initHarikaDb = async (id: string, sync: boolean) => {
   });
 
   if (sync) {
+    console.log(
+      await fetch('http://94.228.113.213:5984/_session', {
+        headers: {
+          Authorization: `Basic ${sync.token}`,
+          'Content-Type': 'application/json',
+        },
+      })
+    );
+
     const firstSync = db.vaults.sync({
-      remote: `http://localhost:5984/${dbName}_vaults`,
+      remote: `http://94.228.113.213:5984/harika_vaults_${id}`,
       waitForLeadership: false,
       options: {
         live: false,
-        fetch: (url, opts) =>
-          PouchDB.fetch(url, {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        fetch: (url, opts) => {
+          return PouchDB.fetch(url, {
             ...opts,
+            headers: {
+              ...opts.headers,
+              Authorization: `Basic ${sync.token}`,
+              'Content-Type': 'application/json',
+            },
             credentials: 'include',
-          }),
+          });
+        },
       },
     });
 
     await firstSync.awaitInitialReplication();
 
     db.vaults.sync({
-      remote: `http://localhost:5984/${dbName}_vaults`,
+      remote: `http://localhost:5984/harika_vaults_${id}`,
       waitForLeadership: true,
       options: {
         live: true,
         retry: true,
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
         fetch: (url, opts) =>
           PouchDB.fetch(url, {
             ...opts,
+            headers: {
+              ...opts.headers,
+              Authorization: `Basic ${sync.token}`,
+              'Content-Type': 'application/json',
+            },
             credentials: 'include',
           }),
       },

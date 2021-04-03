@@ -24,7 +24,7 @@ export type DbCollections = {
 
 export type VaultRxDatabase = RxDatabase<DbCollections>;
 
-export const initDb = async (id: string, sync: boolean) => {
+export const initDb = async (id: string, sync: false | { token: string }) => {
   const dbName = `harika_vault_${id}`;
   const db: VaultRxDatabase = await createRxDatabase<DbCollections>({
     name: dbName,
@@ -58,36 +58,58 @@ export const initDb = async (id: string, sync: boolean) => {
 
   if (sync) {
     await Promise.all(
-      Object.values(VaultDatabaseCollections).map(async (collectionName) => {
-        const firstSync = db[collectionName].sync({
-          remote: `http://localhost:5984/${dbName}_${collectionName}`,
-          waitForLeadership: false,
-          options: {
-            live: false,
-            fetch: (url, opts) =>
-              PouchDB.fetch(url, {
-                ...opts,
-                credentials: 'include',
-              }),
-          },
-        });
+      ([
+        [VaultDatabaseCollections.NOTES as const, `harika_vault_${id}_notes`],
+        [
+          VaultDatabaseCollections.NOTE_BLOCKS as const,
+          `harika_vault_${id}_noteblocks`,
+        ],
+      ] as [VaultDatabaseCollections, string][]).map(
+        async ([collectionName, toSync]) => {
+          const firstSync = db[collectionName].sync({
+            remote: `http://94.228.113.213:5984/${toSync}`,
+            waitForLeadership: false,
+            options: {
+              live: false,
+              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+              // @ts-ignore
+              fetch: (url, opts) =>
+                PouchDB.fetch(url, {
+                  ...opts,
+                  headers: {
+                    ...opts.headers,
+                    Authorization: `Basic ${sync.token}`,
+                    'Content-Type': 'application/json',
+                  },
+                  credentials: 'include',
+                }),
+            },
+          });
 
-        await firstSync.awaitInitialReplication();
+          await firstSync.awaitInitialReplication();
 
-        db[collectionName].sync({
-          remote: `http://localhost:5984/${dbName}_${collectionName}`,
-          waitForLeadership: true,
-          options: {
-            live: true,
-            retry: true,
-            fetch: (url, opts) =>
-              PouchDB.fetch(url, {
-                ...opts,
-                credentials: 'include',
-              }),
-          },
-        });
-      })
+          db[collectionName].sync({
+            remote: `http://94.228.113.213:5984/${toSync}`,
+            waitForLeadership: true,
+            options: {
+              live: true,
+              retry: true,
+              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+              // @ts-ignore
+              fetch: (url, opts) =>
+                PouchDB.fetch(url, {
+                  ...opts,
+                  headers: {
+                    ...opts.headers,
+                    Authorization: `Basic ${sync.token}`,
+                    'Content-Type': 'application/json',
+                  },
+                  credentials: 'include',
+                }),
+            },
+          });
+        }
+      )
     );
   }
 

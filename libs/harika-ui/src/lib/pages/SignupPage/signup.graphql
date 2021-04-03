@@ -1,14 +1,13 @@
-mutation signup($email: String!, $password: String!) {
-  createUser(params: {email: $email, password: $password}) {
+mutation signup($email: String!, $password: String!, $dbId: String!) {
+  createUser(params: {email: $email, password: $password, dbId: $dbId}) {
     messages {
       field
       message
       template
     }
     result {
-      token
+    dbAuthToken
       user {
-        dbId
         id
       }
     }

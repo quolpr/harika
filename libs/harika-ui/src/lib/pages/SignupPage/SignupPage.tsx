@@ -6,6 +6,7 @@ import { useAuthState } from '../../hooks/useAuthState';
 import { paths } from '../../paths';
 import { cn } from '../../utils';
 import { setServerErrors } from '../../utils/setServerErrors';
+import { generateId } from '@harika/harika-core';
 
 const formClass = cn('form');
 
@@ -22,15 +23,16 @@ export const SignupPage = () => {
   const { register, handleSubmit, errors, setError } = useForm<IFormData>();
 
   const onSubmit = async (data: IFormData) => {
-    const res = await signup.mutateAsync(data);
+    const dbId = generateId();
+    const res = await signup.mutateAsync({ ...data, dbId });
 
     if (res.createUser.result) {
       const {
-        token,
-        user: { id: userId, dbId },
+        user: { id: userId },
+        dbAuthToken,
       } = res.createUser.result;
 
-      setAuthInfo({ token, userId, dbId, isOffline: false });
+      setAuthInfo({ dbToken: dbAuthToken, userId, dbId, isOffline: false });
 
       history.push(paths.vaultIndexPath());
     } else {

@@ -28,7 +28,7 @@ const queryClient = new QueryClient();
 export function App() {
   const [authInfo] = useAuthState();
   const userId = authInfo?.userId;
-  const token = authInfo?.token;
+  const token = authInfo?.dbToken;
   const isOffline = authInfo?.isOffline;
   const dbId = authInfo?.dbId;
 
@@ -42,7 +42,7 @@ export function App() {
     let repo: VaultRepository | undefined = undefined;
 
     const cb = async () => {
-      repo = new VaultRepository(dbId, !isOffline);
+      repo = new VaultRepository(dbId, isOffline ? false : { token: token });
 
       await repo.init();
 

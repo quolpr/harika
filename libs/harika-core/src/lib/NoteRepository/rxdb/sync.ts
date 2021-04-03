@@ -34,16 +34,16 @@ export const initRxDbToLocalSync = (
 ) => {
   db.$.pipe(bufferDebounce(1000)).subscribe(
     (events: RxChangeEvent<NoteDocument | NoteBlockDocument>[]) => {
-      // TODO: filter local events from remote events
+      // When rxDocument is not present - it means event came from remote DB
+      // When token are not the same - it means event came from the neighbor table
+      // Otherwise - it came from mobx-keystone, and we don't need to apply such changes
 
-      // const remoteEvents = events
-      //   .filter((ev) => ev.databaseToken !== db.token)
-      //   .reverse();
-
-      // console.log({ events, remoteEvents, db });
+      const remoteEvents = events
+        .filter((ev) => ev.databaseToken !== db.token || !ev.rxDocument)
+        .reverse();
 
       const notes = (() => {
-        const noteEvents = events.filter(
+        const noteEvents = remoteEvents.filter(
           (ev) => ev.collectionName === HarikaDatabaseCollections.NOTES
         ) as RxChangeEvent<NoteDocument>[];
 
@@ -63,14 +63,14 @@ export const initRxDbToLocalSync = (
 
           return simpleConvertNoteDbToModelAttrsSync(
             ev.documentData,
-            note.areChildrenLoaded,
-            note.areLinksLoaded
+            Boolean(note?.areChildrenLoaded),
+            Boolean(note?.areLinksLoaded)
           );
         });
       })();
 
       const blocks = (() => {
-        const blockEvents = events.filter(
+        const blockEvents = remoteEvents.filter(
           (ev) => ev.collectionName === HarikaDatabaseCollections.NOTE_BLOCKS
         ) as RxChangeEvent<NoteBlockDocument>[];
 

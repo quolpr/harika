@@ -10,7 +10,6 @@ import { initHarikaDb } from './VaultRepository/rxdb/initDb';
 import { initRxDbToLocalSync } from './NoteRepository/rxdb/sync';
 import { HarikaRxDatabase } from './VaultRepository/rxdb/initDb';
 import { generateId } from './generateId';
-import { authCouchDB } from './authCouchDB';
 
 export class VaultRepository {
   // TODO: finde better naming(instead of conatiner)
@@ -21,14 +20,13 @@ export class VaultRepository {
 
   database!: HarikaRxDatabase;
 
-  constructor(private dbId: string, private sync: boolean) {}
+  constructor(private dbId: string, private sync: false | { token: string }) {}
 
   getNoteRepository() {
     return this.noteRepo;
   }
 
   async init() {
-    await authCouchDB();
     this.database = await initHarikaDb(this.dbId, this.sync);
   }
 
@@ -52,16 +50,14 @@ export class VaultRepository {
     );
   }
 
-  async createVault({ name }: { name: string }) {
-    const id = generateId();
-
+  async createVault({ name, dbId }: { name: string; dbId: string }) {
     this.database.vaults.insert({
-      _id: id,
+      _id: dbId,
       name,
       createdAt: new Date().getTime(),
     });
 
-    return this.getVault(id);
+    return this.getVault(dbId);
   }
 
   private async initializeVaultAndRepo(id: string) {

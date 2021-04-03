@@ -1,0 +1,4 @@
+mutation createRemoteVaultDb($dbId: String!) {
+  createVaultDb(dbId: $dbId)
+}
+
