@@ -4,9 +4,9 @@ import { NoteDocument } from './NoteRx';
 
 export type NoteBlockDocType = {
   _id: string;
-  parentBlock?: string;
-  note: string;
-  noteBlocks: string[];
+  parentBlockRef?: string;
+  noteRef: string;
+  noteBlockRefs: string[];
   content: string;
   createdAt: number;
   updatedAt?: number;
@@ -20,15 +20,15 @@ export const schema: RxJsonSchema<NoteBlockDocType> = {
       type: 'string',
       primary: true,
     },
-    parentBlock: {
+    parentBlockRef: {
       ref: HarikaDatabaseCollections.NOTE_BLOCKS,
       type: 'string',
     },
-    note: {
+    noteRef: {
       ref: HarikaDatabaseCollections.NOTES,
       type: 'string',
     },
-    noteBlocks: {
+    noteBlockRefs: {
       type: 'array',
       ref: HarikaDatabaseCollections.NOTE_BLOCKS,
       items: {
@@ -45,8 +45,8 @@ export const schema: RxJsonSchema<NoteBlockDocType> = {
       type: 'integer',
     },
   },
-  required: ['note', 'content', 'noteBlocks'],
-  indexes: ['_id', 'note', 'content', 'parentBlock'],
+  required: ['noteRef', 'content', 'noteBlockRefs'],
+  indexes: ['_id', 'noteRef', 'content', 'parentBlockRef'],
 };
 
 type CollectionMethods = {
@@ -69,7 +69,7 @@ const documentMethods = {
   getNote(this: NoteBlockDocument) {
     return this.collection.database.notes
       .findOne({
-        selector: { _id: this.note },
+        selector: { _id: this.noteRef },
       })
       .exec();
   },

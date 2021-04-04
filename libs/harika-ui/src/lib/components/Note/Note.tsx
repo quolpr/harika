@@ -181,10 +181,14 @@ export const Note: React.FC<{ note: NoteModel }> = observer(({ note }) => {
     /*   noteRepo.createNote(vault, { title: `Test note ${Date.now() + i}` }); */
     /* } */
     for (let i = 0; i < 100; i++) {
-      const block = note.createBlock({ content: 'test' }, note, i);
+      const block = note.createBlock(
+        { content: 'test' },
+        note.rootBlockRef.current,
+        i
+      );
       console.log('create block');
     }
-  }, [noteRepo, vault, note]);
+  }, [note]);
 
   return (
     <div className="note">
@@ -200,7 +204,7 @@ export const Note: React.FC<{ note: NoteModel }> = observer(({ note }) => {
 
       <NoteBlocks
         view={vault.getOrCreateViewByModel(note)}
-        childBlocks={note.noteBlockRefs}
+        childBlocks={note.rootBlockRef.current.noteBlockRefs}
       />
 
       <div className="note__linked-references">

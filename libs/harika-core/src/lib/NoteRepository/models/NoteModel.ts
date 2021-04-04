@@ -14,10 +14,10 @@ import {
 } from 'mobx-keystone';
 import { Optional } from 'utility-types';
 import { v4 as uuidv4 } from 'uuid';
+import { generateId } from '../../generateId';
 import { NoteBlockModel, noteBlockRef } from './NoteBlockModel';
 import { isVault } from './utils';
 import type { VaultModel } from './Vault';
-import { isEqual } from 'lodash-es';
 
 export const noteRef = customRef<NoteModel>('harika/NoteRef', {
   // this works, but we will use getRefId() from the Todo class instead
@@ -53,28 +53,11 @@ export class NoteModel extends Model({
   title: prop<string>(),
   dailyNoteDate: tProp_dateTimestamp(types.dateTimestamp),
   createdAt: tProp_dateTimestamp(types.dateTimestamp),
-  noteBlockRefs: prop<Ref<NoteBlockModel>[]>(),
   areChildrenLoaded: prop<boolean>(false),
   areLinksLoaded: prop<boolean>(false),
   isDeleted: prop<boolean>(false),
+  rootBlockRef: prop<Ref<NoteBlockModel>>(),
 }) {
-  @computed
-  get noteBlockIds() {
-    return this.noteBlockRefs.map(({ id }) => id);
-  }
-
-  @computed
-  // performance optimization
-  get orderHash() {
-    const obj: Record<string, number> = {};
-
-    this.noteBlockRefs.forEach((ref, i) => {
-      obj[ref.id] = i;
-    });
-
-    return obj;
-  }
-
   @computed
   get vault() {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -88,27 +71,21 @@ export class NoteModel extends Model({
     );
   }
 
-  @computed({ equals: comparer.shallow })
-  get allChildren() {
-    return Object.values(this.vault.blocksMap).filter(
-      (block) => block.noteRef.id === this.$modelId && !block.isDeleted
-    );
-  }
-
   @modelAction
   createBlock(
     attrs: Optional<
       ModelInstanceCreationData<NoteBlockModel>,
       'createdAt' | 'noteRef' | 'noteBlockRefs'
     >,
-    parent: NoteBlockModel | NoteModel,
+    parent: NoteBlockModel,
     pos: number
   ) {
     const newNoteBlock = new NoteBlockModel({
-      $modelId: uuidv4(),
+      $modelId: generateId(),
       createdAt: new Date(),
       noteRef: noteRef(this),
       noteBlockRefs: [],
+      parentBlockRef: noteBlockRef(parent),
       ...attrs,
     });
 
@@ -135,7 +112,7 @@ export class NoteModel extends Model({
     this.isDeleted = true;
 
     if (recursively) {
-      this.noteBlockRefs.forEach((block) => block.current.delete(true, links));
+      this.rootBlockRef.current.delete(true, links);
     }
 
     if (links) {
@@ -167,16 +144,6 @@ export class NoteModel extends Model({
 
     if (attrs.isDeleted && attrs.isDeleted !== this.isDeleted) {
       this.isDeleted = attrs.isDeleted;
-    }
-
-    if (
-      attrs.noteBlockRefs &&
-      !isEqual(
-        attrs.noteBlockRefs.map(({ id }) => id),
-        this.noteBlockIds
-      )
-    ) {
-      this.noteBlockRefs = attrs.noteBlockRefs;
     }
   }
 }

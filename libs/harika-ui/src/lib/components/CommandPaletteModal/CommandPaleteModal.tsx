@@ -191,7 +191,8 @@ export const CommandPaletteModal = ({
               noteId: result.data.$modelId,
             }),
             {
-              focusOnBlockId: result.data.noteBlockRefs[0].id,
+              focusOnBlockId:
+                result.data.rootBlockRef.current.noteBlockRefs[0].id,
             } as IFocusBlockState
           );
 

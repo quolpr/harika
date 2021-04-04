@@ -10,7 +10,7 @@ export type MakeMaybe<T, K extends keyof T> = Omit<T, K> &
 
 function fetcher<TData, TVariables>(query: string, variables?: TVariables) {
   return async (): Promise<TData> => {
-    const res = await fetch('http://490473-cf31878.tmweb.ru:5000/api/graphql', {
+    const res = await fetch('https://harika.io/api/graphql', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',

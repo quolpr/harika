@@ -48,13 +48,22 @@ const zipPatches = (rootKey: string, patches: Patch[]) => {
 };
 
 const mapNoteBlock = (model: NoteBlockModel) => {
-  return {
+  console.log({
     _id: model.$modelId,
-    note: model.noteRef.id,
-    parentBlock: model.parentBlockRef?.id,
+    noteRef: model.noteRef.id,
+    parentBlockRef: model.parentBlockRef?.id,
     content: model.content,
     createdAt: model.createdAt.getTime(),
-    noteBlocks: model.noteBlockRefs.map(({ id }) => id),
+    noteBlockRefs: model.noteBlockRefs.map(({ id }) => id),
+  });
+
+  return {
+    _id: model.$modelId,
+    noteRef: model.noteRef.id,
+    parentBlockRef: model.parentBlockRef?.id,
+    content: model.content,
+    createdAt: model.createdAt.getTime(),
+    noteBlockRefs: model.noteBlockRefs.map(({ id }) => id),
   };
 };
 
@@ -65,7 +74,7 @@ const mapNote = (model: NoteModel) => {
     dailyNoteDate: model.dailyNoteDate?.getTime(),
     title: model.title,
     createdAt: model.createdAt.getTime(),
-    noteBlocks: model.noteBlockRefs.map(({ id }) => id),
+    rootBlockRef: model.rootBlockRef.id,
   };
 };
 
@@ -97,6 +106,8 @@ export class RxdbChangesHandler {
   private applyPatches = async (patches: Patch[]) => {
     const blocksResult = zipPatches('blocksMap', patches);
     const noteResult = zipPatches('notesMap', patches);
+
+    console.log({ blocksResult, noteResult });
 
     const applyForNoteBlocks = () =>
       Promise.all([

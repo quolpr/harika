@@ -12,11 +12,11 @@ export const convertNoteBlockRowToModelAttrs = (dbModel: NoteBlockDocument) => {
     $modelId: dbModel._id,
     content: dbModel.content,
     createdAt: new Date(dbModel.createdAt),
-    parentBlockRef: dbModel.parentBlock
-      ? noteBlockRef(dbModel.parentBlock)
+    parentBlockRef: dbModel.parentBlockRef
+      ? noteBlockRef(dbModel.parentBlockRef)
       : undefined,
-    noteRef: noteRef(dbModel.note),
-    noteBlockRefs: dbModel.noteBlocks.map((b) => noteBlockRef(b)),
+    noteRef: noteRef(dbModel.noteRef),
+    noteBlockRefs: dbModel.noteBlockRefs.map((b) => noteBlockRef(b)),
   };
 };
 
@@ -58,7 +58,7 @@ export const simpleConvertNoteDbToModelAttrsSync = (
     createdAt: new Date(dbModel.createdAt),
     areChildrenLoaded: areChildrenLoaded,
     areLinksLoaded: areLinksLoaded,
-    noteBlockRefs: dbModel.noteBlocks.map((id) => noteBlockRef(id)),
+    rootBlockRef: noteBlockRef(dbModel.rootBlockRef),
   };
 };
 

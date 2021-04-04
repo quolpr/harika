@@ -8,7 +8,7 @@ export type NoteDocType = {
   _id: string;
   title: string;
   dailyNoteDate: number;
-  noteBlocks: string[];
+  rootBlockRef: string;
   createdAt: number;
   updatedAt?: number;
 };
@@ -23,12 +23,9 @@ export const schema: RxJsonSchema<NoteDocType> = {
       type: 'string',
       primary: true,
     },
-    noteBlocks: {
-      type: 'array',
+    rootBlockRef: {
+      type: 'string',
       ref: HarikaDatabaseCollections.NOTE_BLOCKS,
-      items: {
-        type: 'string',
-      },
     },
     title: {
       type: 'string',
@@ -43,7 +40,7 @@ export const schema: RxJsonSchema<NoteDocType> = {
       type: 'integer',
     },
   },
-  required: ['title', 'dailyNoteDate', 'noteBlocks'],
+  required: ['title', 'dailyNoteDate', 'rootBlockRef'],
   indexes: ['_id', 'title', 'dailyNoteDate'],
 };
 
@@ -110,14 +107,14 @@ export const documentMethods: DocumentMethods = {
   async getNoteBlocks(this: NoteDocument) {
     return this.collection.database.noteblocks
       .find({
-        selector: { note: this._id },
+        selector: { noteRef: this._id },
       })
       .exec();
   },
   async getLinks(this: NoteDocument) {
     return this.collection.database.notelinks
       .find({
-        selector: { note: this._id },
+        selector: { noteRef: this._id },
       })
       .exec();
   },

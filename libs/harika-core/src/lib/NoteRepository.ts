@@ -1,4 +1,4 @@
-import { ModelInstanceCreationData } from 'mobx-keystone';
+import { ModelInstanceCreationData, Ref } from 'mobx-keystone';
 import { convertNoteRowToModelAttrs } from './NoteRepository/convertRowToModel';
 import { Dayjs } from 'dayjs';
 import { NoteBlockModel } from './NoteRepository/models/NoteBlockModel';
@@ -33,7 +33,7 @@ export class NoteRepository {
     attrs: Required<
       Optional<
         ModelInstanceCreationData<NoteModel>,
-        'createdAt' | 'dailyNoteDate' | 'noteBlockRefs'
+        'createdAt' | 'dailyNoteDate' | 'rootBlockRef'
       >,
       'title'
     >
@@ -58,7 +58,7 @@ export class NoteRepository {
 
     return {
       status: 'ok',
-      data: vault.newNote({ ...attrs, noteBlockRefs: [] }),
+      data: vault.newNote(attrs),
     } as ICreationResult<NoteModel>;
   }
 

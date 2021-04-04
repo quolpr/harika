@@ -26,7 +26,7 @@ Modal.setAppElement('body');
 const queryClient = new QueryClient();
 
 export function App() {
-  const [authInfo] = useAuthState();
+  const [authInfo, setAuthInfo] = useAuthState();
   const userId = authInfo?.userId;
   const token = authInfo?.dbToken;
   const isOffline = authInfo?.isOffline;
@@ -61,6 +61,16 @@ export function App() {
     <React.StrictMode>
       <QueryClientProvider client={queryClient}>
         <Router history={history}>
+          {!vaultRepository && (
+            <button
+              onClick={() => {
+                setAuthInfo(undefined);
+              }}
+              style={{ marginTop: 50 }}
+            >
+              Reset auth
+            </button>
+          )}
           <Route path={VAULT_PREFIX}>
             <OnlyAuthed>
               {vaultRepository && (

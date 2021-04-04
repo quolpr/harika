@@ -4,6 +4,7 @@ import {
   modelAction,
   ModelInstanceCreationData,
   prop,
+  Ref,
 } from 'mobx-keystone';
 import { NoteModel, noteRef } from './NoteModel';
 import { v4 as uuidv4 } from 'uuid';
@@ -12,6 +13,7 @@ import { NoteBlockModel, noteBlockRef } from './NoteBlockModel';
 import { BlocksViewModel } from './BlocksViewModel';
 import { NoteLinkModel } from './NoteLinkModel';
 import { vaultModelType } from './consts';
+import { generateId } from '../../generateId';
 
 // TODO: rename file
 
@@ -30,23 +32,35 @@ export class VaultModel extends Model({
     attrs: Required<
       Optional<
         ModelInstanceCreationData<NoteModel>,
-        'createdAt' | 'dailyNoteDate'
+        'createdAt' | 'dailyNoteDate' | 'rootBlockRef'
       >,
       'title'
     >
   ) {
+    const noteId = generateId();
+
+    const rootBlock = new NoteBlockModel({
+      $modelId: generateId(),
+      createdAt: new Date(),
+      noteRef: noteRef(noteId),
+      noteBlockRefs: [],
+      content: '',
+    });
+
     const note = new NoteModel({
-      $modelId: uuidv4(),
+      $modelId: noteId,
       createdAt: new Date(),
       dailyNoteDate: new Date(),
       areLinksLoaded: true,
       areChildrenLoaded: true,
+      rootBlockRef: noteBlockRef(rootBlock),
       ...attrs,
     });
 
     this.notesMap[note.$modelId] = note;
+    this.blocksMap[rootBlock.$modelId] = rootBlock;
 
-    note.createBlock({ content: '' }, note, 0);
+    note.createBlock({ content: '' }, rootBlock, 0);
 
     return note;
   }
@@ -133,6 +147,32 @@ export class VaultModel extends Model({
       }
 
       return linkInStore;
+    });
+
+    blocks.forEach((model) => {
+      const toRemoveRefs = model.noteBlockRefs
+        .map((ref, i) => {
+          if (!this.blocksMap[ref.id]) {
+            return ref;
+          }
+
+          return false;
+        })
+        .filter(Boolean) as Ref<NoteBlockModel>[];
+
+      toRemoveRefs.forEach((ref) => {
+        console.error(
+          'removing noteblock ref',
+          ref.id,
+          model.noteBlockRefs.indexOf(ref)
+        );
+
+        model.noteBlockRefs.splice(model.noteBlockRefs.indexOf(ref), 1);
+      });
+
+      if (toRemoveRefs.length) {
+        console.log(model.noteBlockRefs);
+      }
     });
 
     return { notes, blocks, noteLinks };
