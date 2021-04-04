@@ -13,7 +13,6 @@ import { VaultRxDatabase } from './NoteRepository/rxdb/initDb';
 export { NoteModel } from './NoteRepository/models/NoteModel';
 // TODO: rename to VaultModel
 export { VaultModel as Vault } from './NoteRepository/models/Vault';
-export { NoteLinkModel } from './NoteRepository/models/NoteLinkModel';
 export { BlocksViewModel } from './NoteRepository/models/BlocksViewModel';
 export {
   NoteBlockModel,
@@ -114,6 +113,8 @@ export class NoteRepository {
   }
 
   async updateNoteBlockLinks(vault: VaultModel, noteBlock: NoteBlockModel) {
+    console.log('updating links');
+
     // TODO: use parser
     const titles = [...noteBlock.content.matchAll(/\[\[(.+?)\]\]/g)].map(
       ([, name]) => name
@@ -150,7 +151,7 @@ export class NoteRepository {
     );
 
     const existingLinkedNotesIndexed = Object.fromEntries(
-      noteBlock.noteLinks.map((link) => [link.noteRef.id, link.noteRef.current])
+      noteBlock.linkedNoteRefs.map((ref) => [ref.id, ref.current])
     );
 
     allNotes.forEach((note) => {
@@ -188,10 +189,6 @@ export class NoteRepository {
       [
         ...data.noteBlocks,
         ...data.linkedNotes.flatMap(({ noteBlocks }) => noteBlocks),
-      ],
-      [
-        ...data.noteLinks,
-        ...data.linkedNotes.flatMap(({ noteLinks }) => noteLinks),
       ]
     );
 

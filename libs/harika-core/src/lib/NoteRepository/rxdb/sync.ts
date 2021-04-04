@@ -90,7 +90,7 @@ export const initRxDbToLocalSync = (
         );
       })();
 
-      vault.createOrUpdateEntitiesFromAttrs(notes, blocks, []);
+      vault.createOrUpdateEntitiesFromAttrs(notes, blocks);
     }
   );
 };

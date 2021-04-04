@@ -3,6 +3,7 @@ import {
   customRef,
   detach,
   findParent,
+  getSnapshot,
   model,
   Model,
   modelAction,
@@ -65,17 +66,20 @@ export class NoteModel extends Model({
   }
 
   @computed({ equals: comparer.shallow })
-  get noteBlockLinks() {
-    return this.vault.noteLinks.filter(
-      (link) => !link.isDeleted && link.noteRef.id === this.$modelId
-    );
+  get linkedBlocks() {
+    // TODO: optimize
+    return Object.values(this.vault.blocksMap).filter((block) => {
+      return Boolean(
+        block.linkedNoteRefs.find((ref) => ref.id === this.$modelId)
+      );
+    });
   }
 
   @modelAction
   createBlock(
     attrs: Optional<
       ModelInstanceCreationData<NoteBlockModel>,
-      'createdAt' | 'noteRef' | 'noteBlockRefs'
+      'createdAt' | 'noteRef' | 'noteBlockRefs' | 'linkedNoteRefs'
     >,
     parent: NoteBlockModel,
     pos: number
@@ -86,6 +90,7 @@ export class NoteModel extends Model({
       noteRef: noteRef(this),
       noteBlockRefs: [],
       parentBlockRef: noteBlockRef(parent),
+      linkedNoteRefs: [],
       ...attrs,
     });
 
@@ -98,8 +103,8 @@ export class NoteModel extends Model({
 
   @modelAction
   updateTitle(newTitle: string) {
-    this.noteBlockLinks.forEach((link) => {
-      link.noteBlockRef.current.content = link.noteBlockRef.current.content
+    this.linkedBlocks.forEach((block) => {
+      block.content = block.content
         .split(`[[${this.title}]]`)
         .join(`[[${newTitle}]]`);
     });
@@ -113,10 +118,6 @@ export class NoteModel extends Model({
 
     if (recursively) {
       this.rootBlockRef.current.delete(true, links);
-    }
-
-    if (links) {
-      this.noteBlockLinks.forEach((link) => link.delete());
     }
   }
 

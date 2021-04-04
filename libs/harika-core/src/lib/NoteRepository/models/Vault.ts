@@ -11,7 +11,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { Optional, Required } from 'utility-types';
 import { NoteBlockModel, noteBlockRef } from './NoteBlockModel';
 import { BlocksViewModel } from './BlocksViewModel';
-import { NoteLinkModel } from './NoteLinkModel';
 import { vaultModelType } from './consts';
 import { generateId } from '../../generateId';
 
@@ -22,8 +21,6 @@ export class VaultModel extends Model({
   name: prop<string>(),
   notesMap: prop<Record<string, NoteModel>>(() => ({})),
   blocksMap: prop<Record<string, NoteBlockModel>>(() => ({})),
-  // TODO: could be optimize with Record
-  noteLinks: prop<NoteLinkModel[]>(() => []),
 }) {
   blocksViewsMap: Record<string, BlocksViewModel> = {};
 
@@ -45,6 +42,7 @@ export class VaultModel extends Model({
       noteRef: noteRef(noteId),
       noteBlockRefs: [],
       content: '',
+      linkedNoteRefs: [],
     });
 
     const note = new NoteModel({
@@ -65,31 +63,18 @@ export class VaultModel extends Model({
     return note;
   }
 
+  // TODO: maybe move link to block model?
   @modelAction
   createLink(note: NoteModel, noteBlock: NoteBlockModel) {
-    const link = new NoteLinkModel({
-      $modelId: uuidv4(),
-      noteRef: noteRef(note),
-      noteBlockRef: noteBlockRef(noteBlock),
-      createdAt: new Date(),
-    });
-
-    this.noteLinks.push(link);
-
-    return link;
+    noteBlock.linkedNoteRefs.push(noteRef(note));
   }
 
   @modelAction
   unlink(note: NoteModel, noteBlock: NoteBlockModel) {
-    const link = this.noteLinks.find(
-      (link) =>
-        link.noteBlockRef.id === noteBlock.$modelId &&
-        link.noteRef.id === note.$modelId
+    noteBlock.linkedNoteRefs.splice(
+      noteBlock.linkedNoteRefs.findIndex(({ id }) => note.$modelId === id),
+      1
     );
-
-    if (!link) return;
-
-    link.delete();
   }
 
   @modelAction
@@ -109,9 +94,6 @@ export class VaultModel extends Model({
       $modelId: string;
     })[],
     blocksAttrs: (ModelInstanceCreationData<NoteBlockModel> & {
-      $modelId: string;
-    })[],
-    noteLinksAttrs: (ModelInstanceCreationData<NoteLinkModel> & {
       $modelId: string;
     })[]
   ) {
@@ -133,20 +115,6 @@ export class VaultModel extends Model({
       }
 
       return this.blocksMap[block.$modelId];
-    });
-
-    const noteLinks = noteLinksAttrs.map((link) => {
-      let linkInStore = this.noteLinks.find(
-        ({ $modelId }) => $modelId === link.$modelId
-      );
-
-      if (!linkInStore) {
-        linkInStore = new NoteLinkModel(link);
-
-        this.noteLinks.push(linkInStore);
-      }
-
-      return linkInStore;
     });
 
     blocks.forEach((model) => {
@@ -175,6 +143,6 @@ export class VaultModel extends Model({
       }
     });
 
-    return { notes, blocks, noteLinks };
+    return { notes, blocks };
   }
 }

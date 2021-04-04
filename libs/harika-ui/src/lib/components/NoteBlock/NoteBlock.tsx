@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import './styles.css';
-import { useClickAway } from 'react-use';
+import { useClickAway, usePrevious } from 'react-use';
 import clsx from 'clsx';
 import TextareaAutosize from 'react-textarea-autosize';
 import { Observer, observer } from 'mobx-react-lite';
@@ -61,7 +61,7 @@ const TokensRenderer = ({
 const TokenRenderer = observer(
   ({ noteBlock, token }: { noteBlock: NoteBlockModel; token: Token }) => {
     const vault = useCurrentVault();
-    const links = noteBlock.noteLinks;
+    const linkedNotes = noteBlock.linkedNoteRefs;
 
     switch (token.type) {
       case 'tag':
@@ -70,21 +70,21 @@ const TokenRenderer = observer(
         return (
           <Observer>
             {() => {
-              const link = links.find((link) => {
+              const noteRef = linkedNotes.find((note) => {
                 try {
-                  return link.noteRef.current.title === token.content;
+                  return note.current.title === token.content;
                 } catch {
                   return false;
                 }
               });
 
-              if (!link) return <>[[{token.content}]]</>;
+              if (!noteRef) return <>[[{token.content}]]</>;
 
               return (
                 <Link
                   to={paths.vaultNotePath({
                     vaultId: vault.$modelId,
-                    noteId: link?.noteRef.id,
+                    noteId: noteRef?.id,
                   })}
                   className="link"
                   onClick={(e) => e.stopPropagation()}
@@ -186,6 +186,8 @@ export const NoteBlock = observer(
       view.$modelId,
       noteBlock.$modelId
     );
+
+    const wasEditing = usePrevious(editState.isEditing);
 
     const { isFocused, startAt, isEditing } = editState;
 
@@ -324,9 +326,11 @@ export const NoteBlock = observer(
       });
     }, [noteBlock.$modelId, setEditState, view.$modelId]);
 
-    const handleBlur = useCallback(() => {
-      noteRepo.updateNoteBlockLinks(vault, noteBlock);
-    }, [noteBlock, noteRepo, vault]);
+    useEffect(() => {
+      if (!editState.isEditing && wasEditing) {
+        noteRepo.updateNoteBlockLinks(vault, noteBlock);
+      }
+    }, [editState.isEditing, noteBlock, noteRepo, vault, wasEditing]);
 
     return (
       <div
@@ -366,7 +370,6 @@ export const NoteBlock = observer(
               onKeyPress={handleKeyPress}
               onChange={handleChange}
               value={noteBlock.content}
-              onBlur={handleBlur}
             />
           )}
           {!isEditing && (

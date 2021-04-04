@@ -48,15 +48,6 @@ const zipPatches = (rootKey: string, patches: Patch[]) => {
 };
 
 const mapNoteBlock = (model: NoteBlockModel) => {
-  console.log({
-    _id: model.$modelId,
-    noteRef: model.noteRef.id,
-    parentBlockRef: model.parentBlockRef?.id,
-    content: model.content,
-    createdAt: model.createdAt.getTime(),
-    noteBlockRefs: model.noteBlockRefs.map(({ id }) => id),
-  });
-
   return {
     _id: model.$modelId,
     noteRef: model.noteRef.id,
@@ -64,6 +55,7 @@ const mapNoteBlock = (model: NoteBlockModel) => {
     content: model.content,
     createdAt: model.createdAt.getTime(),
     noteBlockRefs: model.noteBlockRefs.map(({ id }) => id),
+    linkedNoteRefs: model.linkedNoteRefs.map(({ id }) => id),
   };
 };
 

@@ -8,10 +8,8 @@ import { observer } from 'mobx-react-lite';
 import {
   NoteBlockModel,
   NoteModel,
-  NoteLinkModel,
   BlocksViewModel,
   FocusedBlockState,
-  noteBlockRef,
 } from '@harika/harika-core';
 import { Link, useHistory } from 'react-router-dom';
 import { Link as LinkIcon } from 'heroicons-react';
@@ -31,7 +29,7 @@ export interface IFocusBlockState {
 }
 
 const BacklinkedNote = observer(
-  ({ note, links }: { note: NoteModel; links: NoteLinkModel[] }) => {
+  ({ note, blocks }: { note: NoteModel; blocks: NoteBlockModel[] }) => {
     const vault = useCurrentVault();
     const [isExpanded, setIsExpanded] = useState(true);
 
@@ -64,13 +62,12 @@ const BacklinkedNote = observer(
             'backlinked-note__noteblocks--expanded': isExpanded,
           })}
         >
-          {links.map((currentLink) => {
-            const noteBlock = currentLink.noteBlockRef.current;
+          {blocks.map((noteBlock) => {
             const path = noteBlock.path;
 
             return (
               <div
-                key={currentLink.$modelId}
+                key={noteBlock.$modelId}
                 className="backlinked-note__noteblock-root"
               >
                 {path.length > 0 && (
@@ -93,7 +90,7 @@ const BacklinkedNote = observer(
                 )}
                 <NoteBlock
                   noteBlock={noteBlock}
-                  view={vault.getOrCreateViewByModel(currentLink)}
+                  view={vault.getOrCreateViewByModel(noteBlock)}
                 />
               </div>
             );
@@ -105,20 +102,16 @@ const BacklinkedNote = observer(
 );
 
 const Backlinks = observer(
-  ({ noteBlockLinks }: { noteBlockLinks: NoteLinkModel[] }) => {
+  ({ linkedBlocks }: { linkedBlocks: NoteBlockModel[] }) => {
     return (
       <>
         {Object.entries(
-          groupBy(
-            noteBlockLinks,
-            ({ noteBlockRef }: NoteLinkModel): string =>
-              noteBlockRef.current.noteRef.id
-          )
-        ).map(([, links]) => {
-          const note = links[0].noteBlockRef.current.noteRef.current;
+          groupBy(linkedBlocks, (block): string => block.noteRef.id)
+        ).map(([, blocks]) => {
+          const note = blocks[0].noteRef.current;
 
           return (
-            <BacklinkedNote key={note.$modelId} note={note} links={links} />
+            <BacklinkedNote key={note.$modelId} note={note} blocks={blocks} />
           );
         })}
       </>
@@ -209,10 +202,10 @@ export const Note: React.FC<{ note: NoteModel }> = observer(({ note }) => {
 
       <div className="note__linked-references">
         <LinkIcon className="note__link-icon" size={16} />
-        {note.noteBlockLinks.length} Linked References
+        {note.linkedBlocks.length} Linked References
       </div>
 
-      <Backlinks noteBlockLinks={note.noteBlockLinks} />
+      <Backlinks linkedBlocks={note.linkedBlocks} />
     </div>
   );
 });

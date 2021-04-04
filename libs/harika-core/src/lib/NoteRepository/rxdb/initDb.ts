@@ -2,7 +2,6 @@ import { createRxDatabase, addRxPlugin, RxDatabase, PouchDB } from 'rxdb';
 import { RxDBNoValidatePlugin } from 'rxdb/plugins/no-validate';
 import { dbNotesCollection, NoteCollection } from './NoteRx';
 import { dbNoteBlocksCollection, NoteBlockCollection } from './NoteBlockDb';
-import { dbNoteLinkCollection, NoteLinkCollection } from './NoteLinkRx';
 import { HarikaDatabaseCollections as VaultDatabaseCollections } from './collectionTypes';
 import pouchdbHttp from 'pouchdb-adapter-http';
 import pouchdbDebug from 'pouchdb-debug';
@@ -19,7 +18,6 @@ addRxPlugin(idb);
 export type DbCollections = {
   [VaultDatabaseCollections.NOTES]: NoteCollection;
   [VaultDatabaseCollections.NOTE_BLOCKS]: NoteBlockCollection;
-  [VaultDatabaseCollections.NOTE_LINKS]: NoteLinkCollection;
 };
 
 export type VaultRxDatabase = RxDatabase<DbCollections>;
@@ -33,6 +31,7 @@ export const initDb = async (id: string, sync: false | { token: string }) => {
       revs_limit: 0,
     },
     multiInstance: true,
+    ignoreDuplicate: true,
   });
 
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -53,7 +52,6 @@ export const initDb = async (id: string, sync: false | { token: string }) => {
   await db.addCollections({
     [VaultDatabaseCollections.NOTES]: dbNotesCollection,
     [VaultDatabaseCollections.NOTE_BLOCKS]: dbNoteBlocksCollection,
-    [VaultDatabaseCollections.NOTE_LINKS]: dbNoteLinkCollection,
   });
 
   if (sync) {

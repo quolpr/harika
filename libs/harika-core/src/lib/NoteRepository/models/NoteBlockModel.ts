@@ -46,6 +46,7 @@ export class NoteBlockModel extends Model({
   noteRef: prop<Ref<NoteModel>>(),
   content: prop<string>(),
   noteBlockRefs: prop<Ref<NoteBlockModel>[]>(),
+  linkedNoteRefs: prop<Ref<NoteModel>[]>(),
   createdAt: tProp_dateTimestamp(types.dateTimestamp),
   isDeleted: prop<boolean>(false),
 }) {
@@ -89,6 +90,8 @@ export class NoteBlockModel extends Model({
     const path: NoteBlockModel[] = [];
 
     while (current) {
+      if (current.isRoot) break;
+
       path.unshift(current);
       current = current.parentBlockRef?.current;
     }
@@ -100,13 +103,6 @@ export class NoteBlockModel extends Model({
   get vault() {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     return findParent<VaultModel>(this, isVault)!;
-  }
-
-  @computed({ equals: comparer.shallow })
-  get noteLinks() {
-    return this.vault.noteLinks.filter(
-      (link) => !link.isDeleted && link.noteBlockRef.id === this.$modelId
-    );
   }
 
   @computed({ equals: comparer.shallow })
@@ -379,16 +375,22 @@ export class NoteBlockModel extends Model({
     ) {
       this.noteBlockRefs = data.noteBlockRefs;
     }
+
+    if (
+      data.linkedNoteRefs &&
+      !isEqual(
+        data.linkedNoteRefs.map(({ id }) => id),
+        this.linkedNoteRefs
+      )
+    ) {
+      this.linkedNoteRefs = data.linkedNoteRefs;
+    }
   }
 
   @modelAction
   delete(recursively = true, links = true) {
     if (recursively) {
       this.noteBlockRefs.forEach((block) => block.current.delete(true, links));
-    }
-
-    if (links) {
-      this.noteLinks.forEach((link) => link.delete());
     }
 
     if (this.parentBlockRef) {

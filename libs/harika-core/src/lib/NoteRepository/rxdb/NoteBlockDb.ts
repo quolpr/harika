@@ -7,6 +7,7 @@ export type NoteBlockDocType = {
   parentBlockRef?: string;
   noteRef: string;
   noteBlockRefs: string[];
+  linkedNoteRefs: string[];
   content: string;
   createdAt: number;
   updatedAt?: number;
@@ -35,6 +36,13 @@ export const schema: RxJsonSchema<NoteBlockDocType> = {
         type: 'string',
       },
     },
+    linkedNoteRefs: {
+      type: 'array',
+      ref: HarikaDatabaseCollections.NOTES,
+      items: {
+        type: 'string',
+      },
+    },
     content: {
       type: 'string',
     },
@@ -45,12 +53,13 @@ export const schema: RxJsonSchema<NoteBlockDocType> = {
       type: 'integer',
     },
   },
-  required: ['noteRef', 'content', 'noteBlockRefs'],
-  indexes: ['_id', 'noteRef', 'content', 'parentBlockRef'],
+  required: ['noteRef', 'content', 'noteBlockRefs', 'linkedNoteRefs'],
+  indexes: ['_id', 'noteRef', 'content', 'parentBlockRef', 'linkedNoteRefs.[]'],
 };
 
 type CollectionMethods = {
   getById(id: string): Promise<NoteBlockDocument | null>;
+  getByIds(ids: string[]): Promise<NoteBlockDocument[]>;
 };
 
 const collectionMethods: CollectionMethods = {
@@ -58,6 +67,9 @@ const collectionMethods: CollectionMethods = {
     return this.findOne({
       selector: { _id: id },
     }).exec();
+  },
+  async getByIds(this: NoteBlockCollection, ids: string[]) {
+    return Array.from((await this.database.noteblocks.findByIds(ids)).values());
   },
 };
 
