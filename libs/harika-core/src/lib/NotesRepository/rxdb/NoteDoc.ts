@@ -118,7 +118,7 @@ export const documentMethods: DocumentMethods = {
   async getLinkedBlocks(this: NoteDocument) {
     return this.collection.database.noteblocks
       .find({
-        selector: { linkedNoteIds: this._id },
+        selector: { linkedNoteIds: { $elemMatch: this._id } },
       })
       .exec();
   },
