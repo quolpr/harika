@@ -1,0 +1,9 @@
+{
+  "name": "Harika",
+  "short_name": "Harika",
+  "theme_color": "#2196f3",
+  "background_color": "#2196f3",
+  "display": "standalone",
+  "scope": "https://app-dev.harika.io/",
+  "start_url": "https://app-dev.harika.io/"
+}
