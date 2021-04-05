@@ -193,8 +193,6 @@ export const Note: React.FC<{ note: NoteModel }> = observer(({ note }) => {
         />
       </h2>
 
-      <button onClick={populateNotes}>Populate notes</button>
-
       <NoteBlocks
         view={vault.getOrCreateViewByModel(note)}
         childBlocks={note.rootBlockRef.current.noteBlockRefs}
