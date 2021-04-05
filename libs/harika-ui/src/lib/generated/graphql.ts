@@ -1,22 +1,18 @@
 import { useMutation, UseMutationOptions } from 'react-query';
 export type Maybe<T> = T | null;
-export type Exact<T extends { [key: string]: unknown }> = {
-  [K in keyof T]: T[K];
-};
-export type MakeOptional<T, K extends keyof T> = Omit<T, K> &
-  { [SubKey in K]?: Maybe<T[SubKey]> };
-export type MakeMaybe<T, K extends keyof T> = Omit<T, K> &
-  { [SubKey in K]: Maybe<T[SubKey]> };
+export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
+export type MakeOptional<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]?: Maybe<T[SubKey]> };
+export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]: Maybe<T[SubKey]> };
 
 function fetcher<TData, TVariables>(query: string, variables?: TVariables) {
   return async (): Promise<TData> => {
-    const res = await fetch('https://harika.io/api/graphql', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
+    const res = await fetch("https://app-dev.harika.io/api/graphql", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      credentials: "include",
       body: JSON.stringify({ query, variables }),
     });
-
+    
     const json = await res.json();
 
     if (json.errors) {
@@ -26,7 +22,7 @@ function fetcher<TData, TVariables>(query: string, variables?: TVariables) {
     }
 
     return json.data;
-  };
+  }
 }
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
@@ -50,13 +46,16 @@ export type RootMutationType = {
   login: Session;
 };
 
+
 export type RootMutationTypeCreateUserArgs = {
   params: CreateUserParams;
 };
 
+
 export type RootMutationTypeCreateVaultDbArgs = {
   dbId: Scalars['String'];
 };
+
 
 export type RootMutationTypeLoginArgs = {
   email: Scalars['String'];
@@ -149,11 +148,18 @@ export type LoginMutationVariables = Exact<{
   password: Scalars['String'];
 }>;
 
-export type LoginMutation = { __typename?: 'RootMutationType' } & {
-  login: { __typename?: 'Session' } & Pick<Session, 'dbAuthToken'> & {
-      user: { __typename?: 'User' } & Pick<User, 'id' | 'dbId'>;
-    };
-};
+
+export type LoginMutation = (
+  { __typename?: 'RootMutationType' }
+  & { login: (
+    { __typename?: 'Session' }
+    & Pick<Session, 'dbAuthToken'>
+    & { user: (
+      { __typename?: 'User' }
+      & Pick<User, 'id' | 'dbId'>
+    ) }
+  ) }
+);
 
 export type SignupMutationVariables = Exact<{
   email: Scalars['String'];
@@ -161,29 +167,35 @@ export type SignupMutationVariables = Exact<{
   dbId: Scalars['String'];
 }>;
 
-export type SignupMutation = { __typename?: 'RootMutationType' } & {
-  createUser: { __typename?: 'SessionPayload' } & {
-    messages: Array<
-      { __typename?: 'ValidationMessage' } & Pick<
-        ValidationMessage,
-        'field' | 'message' | 'template'
-      >
-    >;
-    result?: Maybe<
-      { __typename?: 'Session' } & Pick<Session, 'dbAuthToken'> & {
-          user: { __typename?: 'User' } & Pick<User, 'id'>;
-        }
-    >;
-  };
-};
+
+export type SignupMutation = (
+  { __typename?: 'RootMutationType' }
+  & { createUser: (
+    { __typename?: 'SessionPayload' }
+    & { messages: Array<(
+      { __typename?: 'ValidationMessage' }
+      & Pick<ValidationMessage, 'field' | 'message' | 'template'>
+    )>, result?: Maybe<(
+      { __typename?: 'Session' }
+      & Pick<Session, 'dbAuthToken'>
+      & { user: (
+        { __typename?: 'User' }
+        & Pick<User, 'id'>
+      ) }
+    )> }
+  ) }
+);
 
 export type CreateRemoteVaultDbMutationVariables = Exact<{
   dbId: Scalars['String'];
 }>;
 
-export type CreateRemoteVaultDbMutation = {
-  __typename?: 'RootMutationType';
-} & Pick<RootMutationType, 'createVaultDb'>;
+
+export type CreateRemoteVaultDbMutation = (
+  { __typename?: 'RootMutationType' }
+  & Pick<RootMutationType, 'createVaultDb'>
+);
+
 
 export const LoginDocument = `
     mutation login($email: String!, $password: String!) {
@@ -196,22 +208,14 @@ export const LoginDocument = `
   }
 }
     `;
-export const useLoginMutation = <TError = unknown, TContext = unknown>(
-  options?: UseMutationOptions<
-    LoginMutation,
-    TError,
-    LoginMutationVariables,
-    TContext
-  >
-) =>
-  useMutation<LoginMutation, TError, LoginMutationVariables, TContext>(
-    (variables?: LoginMutationVariables) =>
-      fetcher<LoginMutation, LoginMutationVariables>(
-        LoginDocument,
-        variables
-      )(),
-    options
-  );
+export const useLoginMutation = <
+      TError = unknown,
+      TContext = unknown
+    >(options?: UseMutationOptions<LoginMutation, TError, LoginMutationVariables, TContext>) => 
+    useMutation<LoginMutation, TError, LoginMutationVariables, TContext>(
+      (variables?: LoginMutationVariables) => fetcher<LoginMutation, LoginMutationVariables>(LoginDocument, variables)(),
+      options
+    );
 export const SignupDocument = `
     mutation signup($email: String!, $password: String!, $dbId: String!) {
   createUser(params: {email: $email, password: $password, dbId: $dbId}) {
@@ -229,49 +233,24 @@ export const SignupDocument = `
   }
 }
     `;
-export const useSignupMutation = <TError = unknown, TContext = unknown>(
-  options?: UseMutationOptions<
-    SignupMutation,
-    TError,
-    SignupMutationVariables,
-    TContext
-  >
-) =>
-  useMutation<SignupMutation, TError, SignupMutationVariables, TContext>(
-    (variables?: SignupMutationVariables) =>
-      fetcher<SignupMutation, SignupMutationVariables>(
-        SignupDocument,
-        variables
-      )(),
-    options
-  );
+export const useSignupMutation = <
+      TError = unknown,
+      TContext = unknown
+    >(options?: UseMutationOptions<SignupMutation, TError, SignupMutationVariables, TContext>) => 
+    useMutation<SignupMutation, TError, SignupMutationVariables, TContext>(
+      (variables?: SignupMutationVariables) => fetcher<SignupMutation, SignupMutationVariables>(SignupDocument, variables)(),
+      options
+    );
 export const CreateRemoteVaultDbDocument = `
     mutation createRemoteVaultDb($dbId: String!) {
   createVaultDb(dbId: $dbId)
 }
     `;
 export const useCreateRemoteVaultDbMutation = <
-  TError = unknown,
-  TContext = unknown
->(
-  options?: UseMutationOptions<
-    CreateRemoteVaultDbMutation,
-    TError,
-    CreateRemoteVaultDbMutationVariables,
-    TContext
-  >
-) =>
-  useMutation<
-    CreateRemoteVaultDbMutation,
-    TError,
-    CreateRemoteVaultDbMutationVariables,
-    TContext
-  >(
-    (variables?: CreateRemoteVaultDbMutationVariables) =>
-      fetcher<
-        CreateRemoteVaultDbMutation,
-        CreateRemoteVaultDbMutationVariables
-      >(CreateRemoteVaultDbDocument, variables)(),
-    options
-  );
-
+      TError = unknown,
+      TContext = unknown
+    >(options?: UseMutationOptions<CreateRemoteVaultDbMutation, TError, CreateRemoteVaultDbMutationVariables, TContext>) => 
+    useMutation<CreateRemoteVaultDbMutation, TError, CreateRemoteVaultDbMutationVariables, TContext>(
+      (variables?: CreateRemoteVaultDbMutationVariables) => fetcher<CreateRemoteVaultDbMutation, CreateRemoteVaultDbMutationVariables>(CreateRemoteVaultDbDocument, variables)(),
+      options
+    );

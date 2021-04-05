@@ -2,7 +2,7 @@ import { createRxDatabase, addRxPlugin, RxDatabase, PouchDB } from 'rxdb';
 import { RxDBNoValidatePlugin } from 'rxdb/plugins/no-validate';
 import { dbNotesCollection, NoteCollection } from './NoteDoc';
 import { dbNoteBlocksCollection, NoteBlockCollection } from './NoteBlockDoc';
-import { VaultDatabaseCollections as VaultDatabaseCollections } from './collectionTypes';
+import { VaultDatabaseCollections } from './collectionTypes';
 import pouchdbHttp from 'pouchdb-adapter-http';
 import pouchdbDebug from 'pouchdb-debug';
 import idb from 'pouchdb-adapter-indexeddb';
@@ -65,7 +65,7 @@ export const initDb = async (id: string, sync: false | { token: string }) => {
       ] as [VaultDatabaseCollections, string][]).map(
         async ([collectionName, toSync]) => {
           const firstSync = db[collectionName].sync({
-            remote: `http://94.228.113.213:5984/${toSync}`,
+            remote: `https://app-dev.harika.io/db/${toSync}`,
             waitForLeadership: false,
             options: {
               live: false,
@@ -87,7 +87,7 @@ export const initDb = async (id: string, sync: false | { token: string }) => {
           await firstSync.awaitInitialReplication();
 
           db[collectionName].sync({
-            remote: `http://94.228.113.213:5984/${toSync}`,
+            remote: `https://app-dev.harika.io/db/${toSync}`,
             waitForLeadership: true,
             options: {
               live: true,

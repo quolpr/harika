@@ -1,5 +1,5 @@
 overwrite: true
-schema: "http://94.228.113.213:5000/api/graphql"
+schema: "https://app-dev.harika.io/api/graphql"
 documents: "libs/harika-ui/src/**/*.graphql"
 generates:
   libs/harika-ui/src/lib/generated/graphql.ts:
@@ -9,7 +9,7 @@ generates:
       - typescript-react-query
     config:
       fetcher: 
-        endpoint: 'http://94.228.113.213:5000/api/graphql'
+        endpoint: 'https://app-dev.harika.io/api/graphql'
         fetchParams:
           headers:
             Content-Type: 'application/json'

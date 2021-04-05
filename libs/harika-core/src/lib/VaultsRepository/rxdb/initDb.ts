@@ -55,7 +55,7 @@ export const initHarikaDb = async (
 
   if (sync) {
     console.log(
-      await fetch('http://94.228.113.213:5984/_session', {
+      await fetch('https://app-dev.harika.io/db/_session', {
         headers: {
           Authorization: `Basic ${sync.token}`,
           'Content-Type': 'application/json',
@@ -64,7 +64,7 @@ export const initHarikaDb = async (
     );
 
     const firstSync = db.vaults.sync({
-      remote: `http://94.228.113.213:5984/harika_vaults_${id}`,
+      remote: `https://app-dev.harika.io/db/harika_vaults_${id}`,
       waitForLeadership: false,
       options: {
         live: false,
@@ -87,7 +87,7 @@ export const initHarikaDb = async (
     await firstSync.awaitInitialReplication();
 
     db.vaults.sync({
-      remote: `http://localhost:5984/harika_vaults_${id}`,
+      remote: `https://app-dev.harika.io/db/harika_vaults_${id}`,
       waitForLeadership: true,
       options: {
         live: true,
