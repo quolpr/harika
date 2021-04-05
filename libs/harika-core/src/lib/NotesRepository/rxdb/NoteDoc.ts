@@ -1,13 +1,13 @@
 import { Dayjs } from 'dayjs';
 import { RxJsonSchema, RxCollection, RxDocument } from 'rxdb';
-import { HarikaDatabaseCollections } from './collectionTypes';
-import { NoteBlockDocument } from './NoteBlockDb';
+import { VaultDatabaseCollections } from './collectionTypes';
+import { NoteBlockDocument } from './NoteBlockDoc';
 
 export type NoteDocType = {
   _id: string;
   title: string;
   dailyNoteDate: number;
-  rootBlockRef: string;
+  rootBlockId: string;
   createdAt: number;
   updatedAt?: number;
 };
@@ -22,9 +22,9 @@ export const schema: RxJsonSchema<NoteDocType> = {
       type: 'string',
       primary: true,
     },
-    rootBlockRef: {
+    rootBlockId: {
       type: 'string',
-      ref: HarikaDatabaseCollections.NOTE_BLOCKS,
+      ref: VaultDatabaseCollections.NOTE_BLOCKS,
     },
     title: {
       type: 'string',
@@ -39,7 +39,7 @@ export const schema: RxJsonSchema<NoteDocType> = {
       type: 'integer',
     },
   },
-  required: ['title', 'dailyNoteDate', 'rootBlockRef'],
+  required: ['title', 'dailyNoteDate', 'rootBlockId'],
   indexes: ['_id', 'title', 'dailyNoteDate'],
 };
 
@@ -94,7 +94,7 @@ export const collectionMethods: CollectionMethods = {
   },
   async getNotesOfNoteBlockIds(this: NoteCollection, noteBlockIds: string[]) {
     const noteIds = (await this.database.noteblocks.getByIds(noteBlockIds)).map(
-      ({ noteRef }: NoteBlockDocument) => noteRef
+      ({ noteId }: NoteBlockDocument) => noteId
     );
 
     return this.getByIds(noteIds);
@@ -111,21 +111,21 @@ export const documentMethods: DocumentMethods = {
   async getNoteBlocks(this: NoteDocument) {
     return this.collection.database.noteblocks
       .find({
-        selector: { noteRef: this._id },
+        selector: { noteId: this._id },
       })
       .exec();
   },
   async getLinkedBlocks(this: NoteDocument) {
     return this.collection.database.noteblocks
       .find({
-        selector: { linkedNoteRefs: this._id },
+        selector: { linkedNoteIds: this._id },
       })
       .exec();
   },
 
   async getLinkedNotes(this: NoteDocument) {
     return await this.collection.getByIds(
-      (await this.getLinkedBlocks()).map(({ noteRef }) => noteRef)
+      (await this.getLinkedBlocks()).map(({ noteId }) => noteId)
     );
   },
 };

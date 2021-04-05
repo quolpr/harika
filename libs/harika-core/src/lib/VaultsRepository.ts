@@ -1,22 +1,21 @@
-import { NoteRepository, Vault } from './NoteRepository';
+import { NotesRepository } from './NotesRepository';
 import { map } from 'rxjs/operators';
-import { VaultModel } from './NoteRepository/models/Vault';
-import { syncMiddleware } from './NoteRepository/models/syncable';
+import { VaultModel } from './NotesRepository/models/VaultModel';
+import { syncMiddleware } from './NotesRepository/models/syncable';
 import * as remotedev from 'remotedev';
 import { connectReduxDevTools } from 'mobx-keystone';
-import { RxdbChangesHandler } from './NoteRepository/rxdb/ChangesHandler';
-import { VaultRxDatabase, initDb } from './NoteRepository/rxdb/initDb';
-import { initHarikaDb } from './VaultRepository/rxdb/initDb';
-import { initRxDbToLocalSync } from './NoteRepository/rxdb/sync';
-import { HarikaRxDatabase } from './VaultRepository/rxdb/initDb';
-import { generateId } from './generateId';
+import { ChangesHandler } from './NotesRepository/rxdb/ChangesHandler';
+import { VaultRxDatabase, initDb } from './NotesRepository/rxdb/initDb';
+import { initHarikaDb } from './VaultsRepository/rxdb/initDb';
+import { initRxDbToLocalSync } from './NotesRepository/rxdb/sync';
+import { HarikaRxDatabase } from './VaultsRepository/rxdb/initDb';
 
-export class VaultRepository {
+export class VaultsRepository {
   // TODO: finde better naming(instead of conatiner)
-  private vaultContainers: Record<string, Vault | undefined> = {};
+  private vaultContainers: Record<string, VaultModel | undefined> = {};
 
   private rxVaultsDbs: Record<string, VaultRxDatabase> = {};
-  private noteRepo = new NoteRepository(this.rxVaultsDbs);
+  private noteRepo = new NotesRepository(this.rxVaultsDbs);
 
   database!: HarikaRxDatabase;
 
@@ -73,7 +72,7 @@ export class VaultRepository {
 
     syncMiddleware(
       vault,
-      new RxdbChangesHandler(this.rxVaultsDbs[id], vault).handlePatch
+      new ChangesHandler(this.rxVaultsDbs[id], vault).handlePatch
     );
 
     initRxDbToLocalSync(this.rxVaultsDbs[id], this.noteRepo, vault);

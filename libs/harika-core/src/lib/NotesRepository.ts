@@ -1,30 +1,28 @@
 import { ModelInstanceCreationData, Ref } from 'mobx-keystone';
-import { convertNoteRowToModelAttrs } from './NoteRepository/convertRowToModel';
+import { convertNoteRowToModelAttrs } from './NotesRepository/convertRowToModel';
 import { Dayjs } from 'dayjs';
-import { NoteBlockModel } from './NoteRepository/models/NoteBlockModel';
-import { NoteModel } from './NoteRepository/models/NoteModel';
+import { NoteBlockModel } from './NotesRepository/models/NoteBlockModel';
+import { NoteModel } from './NotesRepository/models/NoteModel';
 import { Optional } from 'utility-types';
 import { Required } from 'utility-types';
-import { ICreationResult } from './NoteRepository/types';
-import { VaultModel } from './NoteRepository/models/Vault';
+import { ICreationResult } from './NotesRepository/types';
+import { VaultModel } from './NotesRepository/models/VaultModel';
 import { map } from 'rxjs/operators';
-import { VaultRxDatabase } from './NoteRepository/rxdb/initDb';
+import { VaultRxDatabase } from './NotesRepository/rxdb/initDb';
 
-export { NoteModel } from './NoteRepository/models/NoteModel';
-// TODO: rename to VaultModel
-export { VaultModel as Vault } from './NoteRepository/models/Vault';
-export { BlocksViewModel } from './NoteRepository/models/BlocksViewModel';
+export { NoteModel } from './NotesRepository/models/NoteModel';
+export { VaultModel } from './NotesRepository/models/VaultModel';
+export { BlocksViewModel } from './NotesRepository/models/BlocksViewModel';
 export {
   NoteBlockModel,
   noteBlockRef,
-} from './NoteRepository/models/NoteBlockModel';
+} from './NotesRepository/models/NoteBlockModel';
 
-// Row = DB projection of the model
+// Document = RxDb doc
 // Model = DDD model
 // Tuple = plain object data, used for fast data getting
 
-// TODO refactor Row to Db postfix.
-export class NoteRepository {
+export class NotesRepository {
   constructor(private vaultRxDbs: Record<string, VaultRxDatabase>) {}
 
   async createNote(
@@ -62,7 +60,7 @@ export class NoteRepository {
   }
 
   async getOrCreateDailyNote(
-    this: NoteRepository,
+    this: NotesRepository,
     vault: VaultModel,
     date: Dayjs
   ) {
@@ -84,11 +82,6 @@ export class NoteRepository {
       title,
       dailyNoteDate: startOfDate.toDate(),
     });
-  }
-
-  async sync() {
-    return true;
-    // return this.syncer.sync();
   }
 
   async findNote(
@@ -221,7 +214,7 @@ export class NoteRepository {
 
   private getDbByVaultId(vaultId: string) {
     if (!this.vaultRxDbs[vaultId])
-      throw new Error('NoteRepository vaultDb was not initialized!');
+      throw new Error('NotesRepository vaultDb was not initialized!');
 
     return this.vaultRxDbs[vaultId];
   }

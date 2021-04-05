@@ -1,4 +1,4 @@
-import { VaultRepository, Vault, VaultUiState } from '@harika/harika-core';
+import { VaultsRepository, VaultModel, VaultUiState } from '@harika/harika-core';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useClickAway, useMedia } from 'react-use';
@@ -33,11 +33,11 @@ const layoutClass = cn('vault-layout');
 // };
 
 export const VaultLayout: React.FC<{
-  vaultRepository: VaultRepository;
+  vaultRepository: VaultsRepository;
 }> = ({ children, vaultRepository }) => {
   const { vaultId } = useParams<{ vaultId: string }>();
   const isWide = useMedia('(min-width: 768px)');
-  const [vault, setVault] = useState<Vault | undefined>();
+  const [vault, setVault] = useState<VaultModel | undefined>();
   const [isSidebarOpened, setIsSidebarOpened] = useState(isWide);
 
   const togglerRef = useRef<HTMLDivElement>(null);

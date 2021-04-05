@@ -1,8 +1,8 @@
 import { NoteBlockModel, noteBlockRef } from './models/NoteBlockModel';
 import { NoteModel, noteRef } from './models/NoteModel';
 import { ModelInstanceCreationData } from 'mobx-keystone';
-import { NoteDocument } from './rxdb/NoteRx';
-import { NoteBlockDocument } from './rxdb/NoteBlockDb';
+import { NoteDocument } from './rxdb/NoteDoc';
+import { NoteBlockDocument } from './rxdb/NoteBlockDoc';
 import { VaultRxDatabase } from './rxdb/initDb';
 import { uniq } from 'lodash-es';
 
@@ -26,12 +26,12 @@ export const convertNoteBlockRowToModelAttrs = (
     $modelId: dbModel._id,
     content: dbModel.content,
     createdAt: new Date(dbModel.createdAt),
-    parentBlockRef: dbModel.parentBlockRef
-      ? noteBlockRef(dbModel.parentBlockRef)
+    parentBlockRef: dbModel.parentBlockId
+      ? noteBlockRef(dbModel.parentBlockId)
       : undefined,
-    noteRef: noteRef(dbModel.noteRef),
-    noteBlockRefs: dbModel.noteBlockRefs.map((b) => noteBlockRef(b)),
-    linkedNoteRefs: dbModel.linkedNoteRefs.map((n) => noteRef(n)),
+    noteRef: noteRef(dbModel.noteId),
+    noteBlockRefs: dbModel.noteBlockIds.map((b) => noteBlockRef(b)),
+    linkedNoteRefs: dbModel.linkedNoteIds.map((n) => noteRef(n)),
   };
 };
 
@@ -49,7 +49,7 @@ export const simpleConvertNoteDbToModelAttrsSync = (
     createdAt: new Date(dbModel.createdAt),
     areChildrenLoaded: areChildrenLoaded,
     areLinksLoaded: areLinksLoaded,
-    rootBlockRef: noteBlockRef(dbModel.rootBlockRef),
+    rootBlockRef: noteBlockRef(dbModel.rootBlockId),
   };
 };
 
@@ -66,46 +66,6 @@ export const convertNoteRowToModelAttrs = async (
         )
       )
     : [];
-
-  // linkedBlocks.push(
-  //   ...(preloadLinks
-  //     ? (await dbModel.getLinkedBlocks()).map((row) => ({
-  //         noteblock: convertNoteBlockRowToModelAttrs(row),
-  //         loatNoteOfBlock: true,
-  //       }))
-  //     : [])
-  // );
-
-  // linkedBlocks.push(
-  //   ...(
-  //     await db.notelinks.getLinksByBlockIds(
-  //       noteBlockAttrs.map(({ $modelId }) => $modelId)
-  //     )
-  //   ).map((row) => ({ ...mapLink(row), loatNoteOfBlock: false }))
-  // );
-
-  // const linkedNotes = (
-  //   await Promise.all(
-  //     linkedBlocks.map(async (link) => {
-  //       const noteRow = await (async () => {
-  //         if (link.loatNoteOfBlock) {
-  //           return (
-  //             await db.noteblocks.getById(link.noteBlockRef.id)
-  //           )?.getNote();
-  //         } else {
-  //           return db.notes.getNoteById(link.noteRef.id);
-  //         }
-  //       })();
-
-  //       const preloadNoteChildren = link.loatNoteOfBlock;
-
-  //       return (
-  //         noteRow &&
-  //         convertNoteRowToModelAttrs(db, noteRow, preloadNoteChildren, false)
-  //       );
-  //     })
-  //   )
-  // ).filter(Boolean) as IConvertResult[];
 
   const linkedNotes: IConvertResult[] = [];
 

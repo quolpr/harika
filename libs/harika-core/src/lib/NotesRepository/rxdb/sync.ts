@@ -1,15 +1,15 @@
 import { RxChangeEvent } from 'rxdb';
 import { Observable, OperatorFunction, Subject, timer } from 'rxjs';
 import { buffer, debounceTime } from 'rxjs/operators';
-import { NoteRepository, Vault } from '../../NoteRepository';
+import { NotesRepository, VaultModel } from '../../NotesRepository';
 import {
   convertNoteBlockRowToModelAttrs,
   simpleConvertNoteDbToModelAttrsSync,
 } from '../convertRowToModel';
-import { HarikaDatabaseCollections } from './collectionTypes';
+import { VaultDatabaseCollections } from './collectionTypes';
 import { VaultRxDatabase } from './initDb';
-import { NoteBlockDocument } from './NoteBlockDb';
-import { NoteDocument } from './NoteRx';
+import { NoteBlockDocument } from './NoteBlockDoc';
+import { NoteDocument } from './NoteDoc';
 
 type BufferDebounce = <T>(debounce: number) => OperatorFunction<T, T[]>;
 const bufferDebounce: BufferDebounce = (debounce) => (source) =>
@@ -29,8 +29,8 @@ const bufferDebounce: BufferDebounce = (debounce) => (source) =>
 
 export const initRxDbToLocalSync = (
   db: VaultRxDatabase,
-  noteRepository: NoteRepository,
-  vault: Vault
+  noteRepository: NotesRepository,
+  vault: VaultModel
 ) => {
   db.$.pipe(bufferDebounce(1000)).subscribe(
     (events: RxChangeEvent<NoteDocument | NoteBlockDocument>[]) => {
@@ -44,7 +44,7 @@ export const initRxDbToLocalSync = (
 
       const notes = (() => {
         const noteEvents = remoteEvents.filter(
-          (ev) => ev.collectionName === HarikaDatabaseCollections.NOTES
+          (ev) => ev.collectionName === VaultDatabaseCollections.NOTES
         ) as RxChangeEvent<NoteDocument>[];
 
         const latestDedupedEvents: Record<
@@ -71,7 +71,7 @@ export const initRxDbToLocalSync = (
 
       const blocks = (() => {
         const blockEvents = remoteEvents.filter(
-          (ev) => ev.collectionName === HarikaDatabaseCollections.NOTE_BLOCKS
+          (ev) => ev.collectionName === VaultDatabaseCollections.NOTE_BLOCKS
         ) as RxChangeEvent<NoteBlockDocument>[];
 
         const latestDedupedEvents: Record<

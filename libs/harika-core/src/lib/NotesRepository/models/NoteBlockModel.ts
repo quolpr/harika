@@ -14,7 +14,7 @@ import {
 import { comparer, computed } from 'mobx';
 import { NoteModel } from './NoteModel';
 import { BlocksViewModel } from './BlocksViewModel';
-import type { VaultModel } from './Vault';
+import type { VaultModel } from './VaultModel';
 import { isVault } from './utils';
 import { isEqual } from 'lodash-es';
 

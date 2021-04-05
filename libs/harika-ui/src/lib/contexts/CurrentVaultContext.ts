@@ -1,4 +1,4 @@
 import { createContext } from 'react';
-import { Vault } from '@harika/harika-core';
+import { VaultModel } from '@harika/harika-core';
 
-export const CurrentVaultContext = createContext<Vault>({} as Vault);
+export const CurrentVaultContext = createContext<VaultModel>({} as VaultModel);

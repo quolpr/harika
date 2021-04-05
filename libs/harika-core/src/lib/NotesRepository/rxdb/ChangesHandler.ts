@@ -2,10 +2,12 @@ import { uniq } from 'lodash-es';
 import { Patch } from 'mobx-keystone';
 import { Subject } from 'rxjs';
 import { buffer, concatMap, debounceTime, tap } from 'rxjs/operators';
-import { Vault } from '../../NoteRepository';
+import { VaultModel } from '../../NotesRepository';
 import { NoteBlockModel } from '../models/NoteBlockModel';
 import { NoteModel } from '../models/NoteModel';
 import { VaultRxDatabase } from './initDb';
+import { NoteBlockDocType } from './NoteBlockDoc';
+import { NoteDocType } from './NoteDoc';
 
 // TODO: type rootKey
 const zipPatches = (rootKey: string, patches: Patch[]) => {
@@ -47,35 +49,34 @@ const zipPatches = (rootKey: string, patches: Patch[]) => {
   };
 };
 
-const mapNoteBlock = (model: NoteBlockModel) => {
+const mapNoteBlock = (model: NoteBlockModel): NoteBlockDocType => {
   return {
     _id: model.$modelId,
-    noteRef: model.noteRef.id,
-    parentBlockRef: model.parentBlockRef?.id,
+    noteId: model.noteRef.id,
+    parentBlockId: model.parentBlockRef?.id,
     content: model.content,
     createdAt: model.createdAt.getTime(),
-    noteBlockRefs: model.noteBlockRefs.map(({ id }) => id),
-    linkedNoteRefs: model.linkedNoteRefs.map(({ id }) => id),
+    noteBlockIds: model.noteBlockRefs.map(({ id }) => id),
+    linkedNoteIds: model.linkedNoteRefs.map(({ id }) => id),
   };
 };
 
-const mapNote = (model: NoteModel) => {
-  console.log({ model });
+const mapNote = (model: NoteModel): NoteDocType => {
   return {
     _id: model.$modelId,
     dailyNoteDate: model.dailyNoteDate?.getTime(),
     title: model.title,
     createdAt: model.createdAt.getTime(),
-    rootBlockRef: model.rootBlockRef.id,
+    rootBlockId: model.rootBlockRef.id,
   };
 };
 
-export class RxdbChangesHandler {
+export class ChangesHandler {
   patchesSubject: Subject<Patch>;
 
   constructor(
     private database: VaultRxDatabase,
-    private vault: Vault,
+    private vault: VaultModel,
     onPatchesApplied?: () => void
   ) {
     this.patchesSubject = new Subject<Patch>();
@@ -98,8 +99,6 @@ export class RxdbChangesHandler {
   private applyPatches = async (patches: Patch[]) => {
     const blocksResult = zipPatches('blocksMap', patches);
     const noteResult = zipPatches('notesMap', patches);
-
-    console.log({ blocksResult, noteResult });
 
     const applyForNoteBlocks = () =>
       Promise.all([

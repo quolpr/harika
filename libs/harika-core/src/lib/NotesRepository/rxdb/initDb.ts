@@ -1,8 +1,8 @@
 import { createRxDatabase, addRxPlugin, RxDatabase, PouchDB } from 'rxdb';
 import { RxDBNoValidatePlugin } from 'rxdb/plugins/no-validate';
-import { dbNotesCollection, NoteCollection } from './NoteRx';
-import { dbNoteBlocksCollection, NoteBlockCollection } from './NoteBlockDb';
-import { HarikaDatabaseCollections as VaultDatabaseCollections } from './collectionTypes';
+import { dbNotesCollection, NoteCollection } from './NoteDoc';
+import { dbNoteBlocksCollection, NoteBlockCollection } from './NoteBlockDoc';
+import { VaultDatabaseCollections as VaultDatabaseCollections } from './collectionTypes';
 import pouchdbHttp from 'pouchdb-adapter-http';
 import pouchdbDebug from 'pouchdb-debug';
 import idb from 'pouchdb-adapter-indexeddb';

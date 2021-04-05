@@ -8,7 +8,7 @@ import { NotesPage } from './pages/NotesPage/NotesPage';
 import Modal from 'react-modal';
 import { VaultsPage } from './pages/VaultsPage/VaultsPage';
 import { VaultLayout } from './components/VaultLayout/VaultLayout';
-import { VaultRepository } from '@harika/harika-core';
+import { VaultsRepository } from '@harika/harika-core';
 import { PATHS, VAULT_PREFIX } from './paths';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { SignupPage } from './pages/SignupPage/SignupPage';
@@ -33,16 +33,16 @@ export function App() {
   const dbId = authInfo?.dbId;
 
   const [vaultRepository, setVaultRepository] = useState<
-    VaultRepository | undefined
+    VaultsRepository | undefined
   >();
 
   useEffect(() => {
     if (!userId || !token || !dbId || isOffline === undefined) return;
 
-    let repo: VaultRepository | undefined = undefined;
+    let repo: VaultsRepository | undefined = undefined;
 
     const cb = async () => {
-      repo = new VaultRepository(dbId, isOffline ? false : { token: token });
+      repo = new VaultsRepository(dbId, isOffline ? false : { token: token });
 
       await repo.init();
 

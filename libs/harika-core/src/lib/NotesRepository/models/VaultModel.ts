@@ -7,14 +7,11 @@ import {
   Ref,
 } from 'mobx-keystone';
 import { NoteModel, noteRef } from './NoteModel';
-import { v4 as uuidv4 } from 'uuid';
 import { Optional, Required } from 'utility-types';
 import { NoteBlockModel, noteBlockRef } from './NoteBlockModel';
 import { BlocksViewModel } from './BlocksViewModel';
 import { vaultModelType } from './consts';
 import { generateId } from '../../generateId';
-
-// TODO: rename file
 
 @model(vaultModelType)
 export class VaultModel extends Model({

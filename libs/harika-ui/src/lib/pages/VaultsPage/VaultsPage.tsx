@@ -1,4 +1,4 @@
-import { VaultRepository } from '@harika/harika-core';
+import { VaultsRepository } from '@harika/harika-core';
 import React, { useCallback, useMemo, useState } from 'react';
 import { cn } from '../../utils';
 import './styles.css';
@@ -15,7 +15,7 @@ import { generateId } from '@harika/harika-core';
 const vaultsClass = cn('vaults');
 const vaultsNavbarClass = cn('vaults-navbar');
 
-export const VaultsPage = ({ vaults }: { vaults: VaultRepository }) => {
+export const VaultsPage = ({ vaults }: { vaults: VaultsRepository }) => {
   const [authInfo] = useAuthState();
   const isOffline =
     authInfo?.isOffline === undefined ? true : authInfo?.isOffline;

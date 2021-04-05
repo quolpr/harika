@@ -1,8 +1,8 @@
 import { createContext, useContext } from 'react';
-import { NoteRepository } from '@harika/harika-core';
+import { NotesRepository } from '@harika/harika-core';
 
-export const NoteRepositoryContext = createContext<NoteRepository>(
-  {} as NoteRepository
+export const NoteRepositoryContext = createContext<NotesRepository>(
+  {} as NotesRepository
 );
 
 export const useNoteRepository = () => {

@@ -1,13 +1,13 @@
 import { RxJsonSchema, RxCollection, RxDocument } from 'rxdb';
-import { HarikaDatabaseCollections } from './collectionTypes';
-import { NoteDocument } from './NoteRx';
+import { VaultDatabaseCollections } from './collectionTypes';
+import { NoteDocument } from './NoteDoc';
 
 export type NoteBlockDocType = {
   _id: string;
-  parentBlockRef?: string;
-  noteRef: string;
-  noteBlockRefs: string[];
-  linkedNoteRefs: string[];
+  parentBlockId?: string;
+  noteId: string;
+  noteBlockIds: string[];
+  linkedNoteIds: string[];
   content: string;
   createdAt: number;
   updatedAt?: number;
@@ -21,24 +21,24 @@ export const schema: RxJsonSchema<NoteBlockDocType> = {
       type: 'string',
       primary: true,
     },
-    parentBlockRef: {
-      ref: HarikaDatabaseCollections.NOTE_BLOCKS,
+    parentBlockId: {
+      ref: VaultDatabaseCollections.NOTE_BLOCKS,
       type: 'string',
     },
-    noteRef: {
-      ref: HarikaDatabaseCollections.NOTES,
+    noteId: {
+      ref: VaultDatabaseCollections.NOTES,
       type: 'string',
     },
-    noteBlockRefs: {
+    noteBlockIds: {
       type: 'array',
-      ref: HarikaDatabaseCollections.NOTE_BLOCKS,
+      ref: VaultDatabaseCollections.NOTE_BLOCKS,
       items: {
         type: 'string',
       },
     },
-    linkedNoteRefs: {
+    linkedNoteIds: {
       type: 'array',
-      ref: HarikaDatabaseCollections.NOTES,
+      ref: VaultDatabaseCollections.NOTES,
       items: {
         type: 'string',
       },
@@ -53,8 +53,8 @@ export const schema: RxJsonSchema<NoteBlockDocType> = {
       type: 'integer',
     },
   },
-  required: ['noteRef', 'content', 'noteBlockRefs', 'linkedNoteRefs'],
-  indexes: ['_id', 'noteRef', 'content', 'parentBlockRef', 'linkedNoteRefs.[]'],
+  required: ['noteId', 'content', 'noteBlockIds', 'linkedNoteIds'],
+  indexes: ['_id', 'noteId', 'content', 'parentBlockId', 'linkedNoteIds.[]'],
 };
 
 type CollectionMethods = {
@@ -81,7 +81,7 @@ const documentMethods = {
   getNote(this: NoteBlockDocument) {
     return this.collection.database.notes
       .findOne({
-        selector: { _id: this.noteRef },
+        selector: { _id: this.noteId },
       })
       .exec();
   },
