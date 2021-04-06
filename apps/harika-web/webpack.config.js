@@ -26,7 +26,10 @@ module.exports = (config, context) => {
       isDevelopment && new webpack.HotModuleReplacementPlugin(),
       isDevelopment && new ReactRefreshWebpackPlugin({ overlay: false }),
       // new BundleAnalyzerPlugin({ analyzerMode: 'static' }),
-      new WorkboxPlugin.GenerateSW(),
+      new WorkboxPlugin.GenerateSW({
+        navigateFallback: '/index.html',
+        maximumFileSizeToCacheInBytes: 1024 * 1024 * 50,
+      }),
     ].filter(Boolean),
     module: {
       rules: [
