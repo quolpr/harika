@@ -4,6 +4,7 @@ import pouchdbDebug from 'pouchdb-debug';
 import idb from 'pouchdb-adapter-indexeddb';
 import { vaultCollection, VaultCollection } from './VaultDoc';
 import { HarikaDbCollectionTypes } from './harikaCollectionTypes';
+import { configureSync } from '../../utils/configureSync';
 
 PouchDB.plugin(pouchdbDebug);
 
@@ -18,10 +19,7 @@ export type HarikaDbCollections = {
 
 export type HarikaRxDatabase = RxDatabase<HarikaDbCollections>;
 
-export const initHarikaDb = async (
-  id: string,
-  sync: false | { token: string }
-) => {
+export const initHarikaDb = async (id: string) => {
   const dbName = `harika_${id}`;
 
   const db: HarikaRxDatabase = await createRxDatabase<HarikaDbCollections>({
@@ -53,60 +51,21 @@ export const initHarikaDb = async (
     [HarikaDbCollectionTypes.VAULTS]: vaultCollection,
   });
 
-  if (sync) {
-    console.log(
-      await fetch('https://app-dev.harika.io/db/_session', {
-        headers: {
-          Authorization: `Basic ${sync.token}`,
-          'Content-Type': 'application/json',
-        },
-      })
-    );
-
-    const firstSync = db.vaults.sync({
-      remote: `https://app-dev.harika.io/db/harika_vaults_${id}`,
-      waitForLeadership: false,
-      options: {
-        live: false,
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        fetch: (url, opts) => {
-          return PouchDB.fetch(url, {
-            ...opts,
-            headers: {
-              ...opts.headers,
-              Authorization: `Basic ${sync.token}`,
-              'Content-Type': 'application/json',
-            },
-            credentials: 'include',
-          });
-        },
-      },
-    });
-
-    await firstSync.awaitInitialReplication();
-
-    db.vaults.sync({
-      remote: `https://app-dev.harika.io/db/harika_vaults_${id}`,
-      waitForLeadership: true,
-      options: {
-        live: true,
-        retry: true,
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        fetch: (url, opts) =>
-          PouchDB.fetch(url, {
-            ...opts,
-            headers: {
-              ...opts.headers,
-              Authorization: `Basic ${sync.token}`,
-              'Content-Type': 'application/json',
-            },
-            credentials: 'include',
-          }),
-      },
-    });
-  }
-
   return db;
+};
+
+export const initHarikaSync = async (
+  db: HarikaRxDatabase,
+  id: string,
+  token: string
+) => {
+  const dbName = `harika_vaults_${id}`;
+
+  const firstSync = db.vaults.sync(
+    configureSync({ db: dbName, token: token, firstTime: true })
+  );
+
+  await firstSync.awaitInitialReplication();
+
+  db.vaults.sync(configureSync({ db: dbName, token: token, firstTime: false }));
 };

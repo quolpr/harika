@@ -17,6 +17,7 @@
             "tsConfig": "apps/harika-web/tsconfig.app.json",
             "assets": [
               "apps/harika-web/src/favicon.ico",
+              "apps/harika-web/src/manifest.json",
               "apps/harika-web/src/assets"
             ],
             "styles": ["apps/harika-web/src/styles.css"],

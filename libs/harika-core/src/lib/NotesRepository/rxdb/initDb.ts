@@ -6,6 +6,7 @@ import { VaultDatabaseCollections } from './collectionTypes';
 import pouchdbHttp from 'pouchdb-adapter-http';
 import pouchdbDebug from 'pouchdb-debug';
 import idb from 'pouchdb-adapter-indexeddb';
+import { configureSync } from '../../utils/configureSync';
 
 PouchDB.plugin(pouchdbDebug);
 
@@ -22,7 +23,7 @@ export type DbCollections = {
 
 export type VaultRxDatabase = RxDatabase<DbCollections>;
 
-export const initDb = async (id: string, sync: false | { token: string }) => {
+export const initDb = async (id: string) => {
   const dbName = `harika_vault_${id}`;
   const db: VaultRxDatabase = await createRxDatabase<DbCollections>({
     name: dbName,
@@ -54,62 +55,33 @@ export const initDb = async (id: string, sync: false | { token: string }) => {
     [VaultDatabaseCollections.NOTE_BLOCKS]: dbNoteBlocksCollection,
   });
 
-  if (sync) {
-    await Promise.all(
-      ([
-        [VaultDatabaseCollections.NOTES as const, `harika_vault_${id}_notes`],
-        [
-          VaultDatabaseCollections.NOTE_BLOCKS as const,
-          `harika_vault_${id}_noteblocks`,
-        ],
-      ] as [VaultDatabaseCollections, string][]).map(
-        async ([collectionName, toSync]) => {
-          const firstSync = db[collectionName].sync({
-            remote: `https://app-dev.harika.io/db/${toSync}`,
-            waitForLeadership: false,
-            options: {
-              live: false,
-              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-              // @ts-ignore
-              fetch: (url, opts) =>
-                PouchDB.fetch(url, {
-                  ...opts,
-                  headers: {
-                    ...opts.headers,
-                    Authorization: `Basic ${sync.token}`,
-                    'Content-Type': 'application/json',
-                  },
-                  credentials: 'include',
-                }),
-            },
-          });
-
-          await firstSync.awaitInitialReplication();
-
-          db[collectionName].sync({
-            remote: `https://app-dev.harika.io/db/${toSync}`,
-            waitForLeadership: true,
-            options: {
-              live: true,
-              retry: true,
-              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-              // @ts-ignore
-              fetch: (url, opts) =>
-                PouchDB.fetch(url, {
-                  ...opts,
-                  headers: {
-                    ...opts.headers,
-                    Authorization: `Basic ${sync.token}`,
-                    'Content-Type': 'application/json',
-                  },
-                  credentials: 'include',
-                }),
-            },
-          });
-        }
-      )
-    );
-  }
-
   return db;
+};
+
+export const initVaultSync = async (
+  db: VaultRxDatabase,
+  id: string,
+  token: string
+) => {
+  await Promise.all(
+    ([
+      [VaultDatabaseCollections.NOTES as const, `harika_vault_${id}_notes`],
+      [
+        VaultDatabaseCollections.NOTE_BLOCKS as const,
+        `harika_vault_${id}_noteblocks`,
+      ],
+    ] as [VaultDatabaseCollections, string][]).map(
+      async ([collectionName, toSync]) => {
+        const firstSync = db[collectionName].sync(
+          configureSync({ db: toSync, token: token, firstTime: true })
+        );
+
+        await firstSync.awaitInitialReplication();
+
+        db[collectionName].sync(
+          configureSync({ db: toSync, token: token, firstTime: false })
+        );
+      }
+    )
+  );
 };

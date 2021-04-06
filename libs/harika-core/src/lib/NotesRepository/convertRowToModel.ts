@@ -53,11 +53,14 @@ export const simpleConvertNoteDbToModelAttrsSync = (
   };
 };
 
+// TODO add areBacklinksLoaded not NoteModel
+// TODO make linkedNotes flatter
 export const convertNoteRowToModelAttrs = async (
   db: VaultRxDatabase,
   noteDoc: NoteDocument,
   preloadChildren = true,
-  preloadLinks = true
+  preloadBlockLinks = true,
+  preloadNoteBacklinks = true
 ): Promise<IConvertResult> => {
   const noteBlockAttrs = preloadChildren
     ? await Promise.all(
@@ -69,15 +72,17 @@ export const convertNoteRowToModelAttrs = async (
 
   const linkedNotes: IConvertResult[] = [];
 
-  if (preloadChildren) {
+  if (preloadNoteBacklinks) {
     linkedNotes.push(
       ...(await Promise.all(
         (await noteDoc.getLinkedNotes()).map((doc) =>
-          convertNoteRowToModelAttrs(db, doc, true, false)
+          convertNoteRowToModelAttrs(db, doc, true, true, false)
         )
       ))
     );
+  }
 
+  if (preloadBlockLinks) {
     const noteIds = uniq(
       noteBlockAttrs.flatMap(({ linkedNoteRefs }) =>
         linkedNoteRefs.map(({ id }) => id)
@@ -87,7 +92,7 @@ export const convertNoteRowToModelAttrs = async (
     linkedNotes.push(
       ...(await Promise.all(
         (await db.notes.getByIds(noteIds)).map((doc) =>
-          convertNoteRowToModelAttrs(db, doc, false, false)
+          convertNoteRowToModelAttrs(db, doc, false, false, false)
         )
       ))
     );
@@ -96,7 +101,7 @@ export const convertNoteRowToModelAttrs = async (
   const noteModel = simpleConvertNoteDbToModelAttrsSync(
     noteDoc,
     preloadChildren,
-    preloadLinks
+    preloadBlockLinks
   );
 
   return {

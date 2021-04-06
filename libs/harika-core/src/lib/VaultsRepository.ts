@@ -5,8 +5,12 @@ import { syncMiddleware } from './NotesRepository/models/syncable';
 import * as remotedev from 'remotedev';
 import { connectReduxDevTools } from 'mobx-keystone';
 import { ChangesHandler } from './NotesRepository/rxdb/ChangesHandler';
-import { VaultRxDatabase, initDb } from './NotesRepository/rxdb/initDb';
-import { initHarikaDb } from './VaultsRepository/rxdb/initDb';
+import {
+  VaultRxDatabase,
+  initDb,
+  initVaultSync,
+} from './NotesRepository/rxdb/initDb';
+import { initHarikaDb, initHarikaSync } from './VaultsRepository/rxdb/initDb';
 import { initRxDbToLocalSync } from './NotesRepository/rxdb/sync';
 import { HarikaRxDatabase } from './VaultsRepository/rxdb/initDb';
 
@@ -26,7 +30,12 @@ export class VaultsRepository {
   }
 
   async init() {
-    this.database = await initHarikaDb(this.dbId, this.sync);
+    this.database = await initHarikaDb(this.dbId);
+
+    if (this.sync) {
+      // Don't await to not block UI
+      initHarikaSync(this.database, this.dbId, this.sync.token);
+    }
   }
 
   async getVault(vaultId: string) {
@@ -66,7 +75,12 @@ export class VaultsRepository {
 
     if (!vaultDoc) return;
 
-    this.rxVaultsDbs[id] = await initDb(id, this.sync);
+    this.rxVaultsDbs[id] = await initDb(id);
+
+    if (this.sync) {
+      // Don't await to not block ui
+      initVaultSync(this.rxVaultsDbs[id], id, this.sync.token);
+    }
 
     const vault = new VaultModel({ name: vaultDoc.name, $modelId: id });
 
