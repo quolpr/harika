@@ -26,8 +26,8 @@ module.exports = (config, context) => {
       isDevelopment && new webpack.HotModuleReplacementPlugin(),
       isDevelopment && new ReactRefreshWebpackPlugin({ overlay: false }),
       // new BundleAnalyzerPlugin({ analyzerMode: 'static' }),
-      new WorkboxPlugin.GenerateSW({
-        navigateFallback: '/index.html',
+      new WorkboxPlugin.InjectManifest({
+        swSrc: './serviceWorker.ts',
         maximumFileSizeToCacheInBytes: 1024 * 1024 * 50,
         additionalManifestEntries: [
           // TODO: investigate why index.html is not adding
