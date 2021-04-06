@@ -31,7 +31,7 @@ module.exports = (config, context) => {
         maximumFileSizeToCacheInBytes: 1024 * 1024 * 50,
         additionalManifestEntries: [
           // TODO: investigate why index.html is not adding
-          { url: 'index.html', revision: new Date().getTime().toString() },
+          { url: '/index.html', revision: new Date().getTime().toString() },
         ],
       }),
     ].filter(Boolean),
