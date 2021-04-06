@@ -29,7 +29,10 @@ module.exports = (config, context) => {
       new WorkboxPlugin.GenerateSW({
         navigateFallback: '/index.html',
         maximumFileSizeToCacheInBytes: 1024 * 1024 * 50,
-        include: ['index.html'],
+        additionalManifestEntries: [
+          // TODO: investigate why index.html is not adding
+          { url: 'index.html', revision: new Date().getTime().toString() },
+        ],
       }),
     ].filter(Boolean),
     module: {
