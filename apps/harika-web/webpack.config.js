@@ -4,6 +4,7 @@ const nrwlConfig = require('@nrwl/react/plugins/webpack.js');
 const webpackTailwindConfig = require('../../webpack-tailwind.config');
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer')
   .BundleAnalyzerPlugin;
+const WorkboxPlugin = require('workbox-webpack-plugin');
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
 
@@ -25,6 +26,7 @@ module.exports = (config, context) => {
       isDevelopment && new webpack.HotModuleReplacementPlugin(),
       isDevelopment && new ReactRefreshWebpackPlugin({ overlay: false }),
       // new BundleAnalyzerPlugin({ analyzerMode: 'static' }),
+      new WorkboxPlugin.GenerateSW(),
     ].filter(Boolean),
     module: {
       rules: [
