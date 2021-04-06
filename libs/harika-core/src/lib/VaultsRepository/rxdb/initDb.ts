@@ -6,7 +6,7 @@ import { vaultCollection, VaultCollection } from './VaultDoc';
 import { HarikaDbCollectionTypes } from './harikaCollectionTypes';
 import { configureSync } from '../../utils/configureSync';
 
-PouchDB.plugin(pouchdbDebug);
+// PouchDB.plugin(pouchdbDebug);
 
 // PouchDB.debug.enable('*');
 

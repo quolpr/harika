@@ -1,4 +1,8 @@
-import { VaultsRepository, VaultModel, VaultUiState } from '@harika/harika-core';
+import {
+  VaultsRepository,
+  VaultModel,
+  VaultUiState,
+} from '@harika/harika-core';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useClickAway, useMedia } from 'react-use';
@@ -12,6 +16,7 @@ import * as remotedev from 'remotedev';
 import { connectReduxDevTools } from 'mobx-keystone';
 
 import './styles.css';
+import { writeStorage } from '@rehooks/local-storage';
 
 const layoutClass = cn('vault-layout');
 
@@ -75,6 +80,10 @@ export const VaultLayout: React.FC<{
   );
 
   useClickAway(sidebarRef, closeSidebar);
+
+  useEffect(() => {
+    writeStorage('lastVaultId', vaultId);
+  }, [vaultId]);
 
   if (!vault) return null;
 

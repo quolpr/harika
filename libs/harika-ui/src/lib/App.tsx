@@ -9,7 +9,7 @@ import Modal from 'react-modal';
 import { VaultsPage } from './pages/VaultsPage/VaultsPage';
 import { VaultLayout } from './components/VaultLayout/VaultLayout';
 import { VaultsRepository } from '@harika/harika-core';
-import { PATHS, VAULT_PREFIX } from './paths';
+import { paths, PATHS, VAULT_PREFIX } from './paths';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { SignupPage } from './pages/SignupPage/SignupPage';
 import { OnlyAuthed } from './components/OnlyAuthed';
@@ -18,6 +18,7 @@ import { useAuthState } from './hooks/useAuthState';
 import { useState } from 'react';
 import { Redirect, Route, Router } from 'react-router-dom';
 import { createBrowserHistory } from 'history';
+import { useLocalStorage } from '@rehooks/local-storage';
 
 const history = createBrowserHistory();
 
@@ -31,6 +32,8 @@ export function App() {
   const token = authInfo?.dbToken;
   const isOffline = authInfo?.isOffline;
   const dbId = authInfo?.dbId;
+
+  const [lastVaultId] = useLocalStorage<string | undefined>('lastVaultId');
 
   const [vaultRepository, setVaultRepository] = useState<
     VaultsRepository | undefined
@@ -61,16 +64,14 @@ export function App() {
     <React.StrictMode>
       <QueryClientProvider client={queryClient}>
         <Router history={history}>
-          {!vaultRepository && (
-            <button
-              onClick={() => {
-                setAuthInfo(undefined);
-              }}
-              style={{ marginTop: 50 }}
-            >
-              Reset auth
-            </button>
-          )}
+          {/* <button */}
+          {/*   onClick={() => { */}
+          {/*     setAuthInfo(undefined); */}
+          {/*   }} */}
+          {/*   style={{ marginTop: 50 }} */}
+          {/* > */}
+          {/*   Reset auth */}
+          {/* </button> */}
           <Route path={VAULT_PREFIX}>
             <OnlyAuthed>
               {vaultRepository && (
@@ -106,7 +107,18 @@ export function App() {
           </Route>
 
           <Route exact path="/">
-            <Redirect to={PATHS.DEFAULT_PATH} />
+            {() => {
+              console.log({ lastVaultId, authInfo });
+              if (lastVaultId && authInfo) {
+                return (
+                  <Redirect
+                    to={paths.vaultDailyPath({ vaultId: lastVaultId })}
+                  />
+                );
+              } else {
+                return <Redirect to={PATHS.DEFAULT_PATH} />;
+              }
+            }}
           </Route>
         </Router>
       </QueryClientProvider>
