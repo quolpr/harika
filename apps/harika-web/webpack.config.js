@@ -29,6 +29,7 @@ module.exports = (config, context) => {
       new WorkboxPlugin.GenerateSW({
         navigateFallback: '/index.html',
         maximumFileSizeToCacheInBytes: 1024 * 1024 * 50,
+        include: ['index.html'],
       }),
     ].filter(Boolean),
     module: {
