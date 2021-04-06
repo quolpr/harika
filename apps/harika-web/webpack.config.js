@@ -28,6 +28,10 @@ module.exports = (config, context) => {
       // new BundleAnalyzerPlugin({ analyzerMode: 'static' }),
       new WorkboxPlugin.InjectManifest({
         swSrc: './serviceWorker.ts',
+        include: [
+          /\.(html|js|css|woff2|json|wasm)$/,
+          /static\/.*\.(png|gif|jpg|svg)$/,
+        ],
         maximumFileSizeToCacheInBytes: 1024 * 1024 * 50,
         additionalManifestEntries: [
           // TODO: investigate why index.html is not adding
