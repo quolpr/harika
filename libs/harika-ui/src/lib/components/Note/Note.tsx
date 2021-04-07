@@ -23,6 +23,7 @@ import { Toolbar } from './Toolbar';
 import { useMedia } from 'react-use';
 import { useNoteRepository } from '../../contexts/CurrentNoteRepositoryContext';
 import { Ref } from 'mobx-keystone';
+import { BlockContentModel } from '../../../../../harika-core/src/lib/NotesRepository/models/BlockContentModel';
 
 export interface IFocusBlockState {
   focusOnBlockId: string;
@@ -83,7 +84,9 @@ const BacklinkedNote = observer(
                         )}
                         key={n.$modelId}
                       >
-                        {n.content.trim().length === 0 ? '[blank]' : n.content}
+                        {n.content.value.trim().length === 0
+                          ? '[blank]'
+                          : n.content}
                       </div>
                     ))}
                   </div>
@@ -175,7 +178,7 @@ export const Note: React.FC<{ note: NoteModel }> = observer(({ note }) => {
     /* } */
     for (let i = 0; i < 100; i++) {
       const block = note.createBlock(
-        { content: 'test' },
+        { content: new BlockContentModel({ value: 'test' }) },
         note.rootBlockRef.current,
         i
       );

@@ -17,6 +17,7 @@ import { BlocksViewModel } from './BlocksViewModel';
 import type { VaultModel } from './VaultModel';
 import { isVault } from './utils';
 import { isEqual } from 'lodash-es';
+import { BlockContentModel } from './BlockContentModel';
 
 export const noteBlockRef = customRef<NoteBlockModel>('harika/NoteBlockRef', {
   // this works, but we will use getRefId() from the Todo class instead
@@ -44,7 +45,7 @@ export const noteBlockRef = customRef<NoteBlockModel>('harika/NoteBlockRef', {
 export class NoteBlockModel extends Model({
   parentBlockRef: prop<Ref<NoteBlockModel> | undefined>(),
   noteRef: prop<Ref<NoteModel>>(),
-  content: prop<string>(),
+  content: prop<BlockContentModel>(),
   noteBlockRefs: prop<Ref<NoteBlockModel>[]>(),
   linkedNoteRefs: prop<Ref<NoteModel>[]>(),
   createdAt: tProp_dateTimestamp(types.dateTimestamp),
@@ -225,7 +226,7 @@ export class NoteBlockModel extends Model({
 
     if (!left) return;
 
-    left.content = left.content + this.content;
+    left.content.update(left.content.value + this.content.value);
 
     this.noteBlockRefs.forEach((ch) => {
       ch.current.parentBlockRef = noteBlockRef(left);
@@ -261,7 +262,7 @@ export class NoteBlockModel extends Model({
     const newNoteBlock = this.noteRef.current.createBlock(
       {
         parentBlockRef: parentRef,
-        content: content,
+        content: new BlockContentModel({ value: content }),
       },
       parent,
       injectTo
@@ -340,16 +341,11 @@ export class NoteBlockModel extends Model({
   }
 
   @modelAction
-  updateContent(content: string) {
-    this.content = content;
-  }
-
-  @modelAction
   updateAttrs(data: ModelInstanceCreationData<NoteBlockModel>) {
     if (
       data.content !== undefined &&
       data.content !== null &&
-      data.content !== this.$.content
+      data.content.value !== this.$.content.value
     ) {
       this.content = data.content;
     }

@@ -1,4 +1,5 @@
 import { NoteBlockModel, noteBlockRef } from './models/NoteBlockModel';
+import { BlockContentModel } from './models/BlockContentModel';
 import { NoteModel, noteRef } from './models/NoteModel';
 import { ModelInstanceCreationData } from 'mobx-keystone';
 import { NoteDocument } from './rxdb/NoteDoc';
@@ -24,7 +25,7 @@ export const convertNoteBlockRowToModelAttrs = (
 ): NoteBlockData => {
   return {
     $modelId: dbModel._id,
-    content: dbModel.content,
+    content: new BlockContentModel({ value: dbModel.content }),
     createdAt: new Date(dbModel.createdAt),
     parentBlockRef: dbModel.parentBlockId
       ? noteBlockRef(dbModel.parentBlockId)

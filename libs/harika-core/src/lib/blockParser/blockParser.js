@@ -149,42 +149,42 @@ function peg$parse(input, options) {
       peg$c5 = peg$classExpectation(["^", "'", "]", "]", "'"], true, false),
       peg$c6 = "]]",
       peg$c7 = peg$literalExpectation("]]", false),
-      peg$c8 = function(content) { return {type: 'ref', content: content.join('')} },
+      peg$c8 = function(content) { return {id: generateId(), type: 'ref', content: content.join('')} },
       peg$c9 = "#[[",
       peg$c10 = peg$literalExpectation("#[[", false),
-      peg$c11 = function(content) { return {type: 'tag', content: content.join('')} },
+      peg$c11 = function(content) { return {id: generateId(), type: 'tag', content: content.join('')} },
       peg$c12 = "**",
       peg$c13 = peg$literalExpectation("**", false),
       peg$c14 = /^[^'**']/,
       peg$c15 = peg$classExpectation(["'", "*", "*", "'"], true, false),
-      peg$c16 = function(content) { return {type: 'bold', content: joinChars(content)} },
+      peg$c16 = function(content) { return {id: generateId(), type: 'bold', content: joinChars(content)} },
       peg$c17 = "__",
       peg$c18 = peg$literalExpectation("__", false),
       peg$c19 = /^[^'__']/,
       peg$c20 = peg$classExpectation(["'", "_", "_", "'"], true, false),
-      peg$c21 = function(content) { return {type: 'italic', content: joinChars(content)} },
+      peg$c21 = function(content) { return {id: generateId(), type: 'italic', content: joinChars(content)} },
       peg$c22 = "^^",
       peg$c23 = peg$literalExpectation("^^", false),
       peg$c24 = /^[^'\^\^']/,
       peg$c25 = peg$classExpectation(["'", "^", "^", "'"], true, false),
-      peg$c26 = function(content) { return {type: 'highlight', content: joinChars(content)} },
+      peg$c26 = function(content) { return {id: generateId(), type: 'highlight', content: joinChars(content)} },
       peg$c27 = "###",
       peg$c28 = peg$literalExpectation("###", false),
       peg$c29 = "##",
       peg$c30 = peg$literalExpectation("##", false),
       peg$c31 = "#",
       peg$c32 = peg$literalExpectation("#", false),
-      peg$c33 = function(depth, content) { return {type: 'head', depth: depth.length, content: joinChars(content.map(([, val]) => val))} },
+      peg$c33 = function(depth, content) { return {id: generateId(), type: 'head', depth: depth.length, content: joinChars(content.map(([, val]) => val))} },
       peg$c34 = "`",
       peg$c35 = peg$literalExpectation("`", false),
       peg$c36 = /^[^`]/,
       peg$c37 = peg$classExpectation(["`"], true, false),
-      peg$c38 = function(content) { return {type: 'inlineCode', content: content.join('')} },
+      peg$c38 = function(content) { return {id: generateId(), type: 'inlineCode', content: content.join('')} },
       peg$c39 = "```",
       peg$c40 = peg$literalExpectation("```", false),
       peg$c41 = /^[^(```)]/,
       peg$c42 = peg$classExpectation(["(", "`", "`", "`", ")"], true, false),
-      peg$c43 = function(content) { return {type: 'codeBlock', content: content.join('')} },
+      peg$c43 = function(content) { return {id: generateId(), type: 'codeBlock', content: content.join('')} },
       peg$c44 = peg$otherExpectation("end of line"),
       peg$c45 = "\n",
       peg$c46 = peg$literalExpectation("\n", false),
@@ -1131,6 +1131,13 @@ function peg$parse(input, options) {
   }
 
 
+    const generateId = function () {
+      // Math.random should be unique because of its seeding algorithm.
+      // Convert it to base 36 (numbers + letters), and grab the first 9 characters
+      // after the decimal.
+      return '_' + Math.random().toString(36).substr(2, 9);
+    };
+
     function joinChars(tokens) {
       let currentStr = '';
       const newTokens = [];
@@ -1140,7 +1147,7 @@ function peg$parse(input, options) {
           currentStr += token;
         } else {
           if (currentStr.length !== 0) {
-            newTokens.push({type: 'str', content: currentStr});
+            newTokens.push({id: generateId(), type: 'str', content: currentStr});
             currentStr = '';
           }
           newTokens.push(token);
@@ -1148,7 +1155,7 @@ function peg$parse(input, options) {
       });
       
       if (currentStr.length) {
-        newTokens.push({type: 'str', content: currentStr});
+        newTokens.push({id: generateId(), type: 'str', content: currentStr});
         currentStr = '';
       }
       

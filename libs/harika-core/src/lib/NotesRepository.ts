@@ -109,7 +109,7 @@ export class NotesRepository {
     console.log('updating links');
 
     // TODO: use parser
-    const titles = [...noteBlock.content.matchAll(/\[\[(.+?)\]\]/g)].map(
+    const titles = [...noteBlock.content.value.matchAll(/\[\[(.+?)\]\]/g)].map(
       ([, name]) => name
     );
 

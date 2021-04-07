@@ -5,9 +5,9 @@ import clsx from 'clsx';
 import TextareaAutosize from 'react-textarea-autosize';
 import { Observer, observer } from 'mobx-react-lite';
 import {
-  blockParser,
   BlocksViewModel,
   NoteBlockModel,
+  RefToken,
   Token,
 } from '@harika/harika-core';
 import { Arrow } from '../Arrow/Arrow';
@@ -58,43 +58,43 @@ const TokensRenderer = ({
   );
 };
 
-const TokenRenderer = observer(
-  ({ noteBlock, token }: { noteBlock: NoteBlockModel; token: Token }) => {
+const RefRenderer = observer(
+  ({ token, noteBlock }: { token: RefToken; noteBlock: NoteBlockModel }) => {
     const vault = useCurrentVault();
     const linkedNotes = noteBlock.linkedNoteRefs;
 
+    const noteRef = linkedNotes.find((note) => {
+      try {
+        return note.current.title === token.content;
+      } catch {
+        return false;
+      }
+    });
+
+    if (!noteRef) return <>[[{token.content}]]</>;
+
+    return (
+      <Link
+        to={paths.vaultNotePath({
+          vaultId: vault.$modelId,
+          noteId: noteRef?.id,
+        })}
+        className="link"
+        onClick={(e) => e.stopPropagation()}
+      >
+        [[{token.content}]]
+      </Link>
+    );
+  }
+);
+
+const TokenRenderer = observer(
+  ({ noteBlock, token }: { noteBlock: NoteBlockModel; token: Token }) => {
     switch (token.type) {
       case 'tag':
         return <a href="#">#[[{token.content}]]</a>;
       case 'ref':
-        return (
-          <Observer>
-            {() => {
-              const noteRef = linkedNotes.find((note) => {
-                try {
-                  return note.current.title === token.content;
-                } catch {
-                  return false;
-                }
-              });
-
-              if (!noteRef) return <>[[{token.content}]]</>;
-
-              return (
-                <Link
-                  to={paths.vaultNotePath({
-                    vaultId: vault.$modelId,
-                    noteId: noteRef?.id,
-                  })}
-                  className="link"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  [[{token.content}]]
-                </Link>
-              );
-            }}
-          </Observer>
-        );
+        return <RefRenderer token={token} noteBlock={noteBlock} />;
       case 'bold':
         return (
           <b>
@@ -154,17 +154,9 @@ const MarkdownRenderer = ({
   noteBlock: NoteBlockModel;
   content: string;
 }) => {
-  const rendered = useMemo(
-    () => (
-      <TokensRenderer
-        noteBlock={noteBlock}
-        tokens={blockParser.parse(content)}
-      />
-    ),
-    [content, noteBlock]
+  return (
+    <TokensRenderer noteBlock={noteBlock} tokens={noteBlock.content.ast} />
   );
-
-  return <div>{rendered}</div>;
 };
 
 //TODO: fix textarea performance
@@ -218,12 +210,13 @@ export const NoteBlock = observer(
       ) {
         inputRef.current.focus();
 
-        const posAt = (() => (startAt ? startAt : noteBlock.content.length))();
+        const posAt = (() =>
+          startAt ? startAt : noteBlock.content.value.length)();
 
         inputRef.current.selectionStart = posAt;
         inputRef.current.selectionEnd = posAt;
       }
-    }, [isFocused, isEditing, startAt, noteBlock.content.length]);
+    }, [isFocused, isEditing, startAt, noteBlock.content.value.length]);
 
     const handleKeyPress = useCallback(
       async (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -261,7 +254,9 @@ export const NoteBlock = observer(
               setEditState({
                 viewId: view.$modelId,
                 blockId: mergedTo.$modelId,
-                startAt: mergedTo.content.length - noteBlock.content.length,
+                startAt:
+                  mergedTo.content.value.length -
+                  noteBlock.content.value.length,
                 isEditing: true,
               });
             }
@@ -313,7 +308,7 @@ export const NoteBlock = observer(
 
     const handleChange = useCallback(
       (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-        noteBlock.updateContent(e.target.value);
+        noteBlock.content.update(e.target.value);
       },
       [noteBlock]
     );
@@ -369,7 +364,7 @@ export const NoteBlock = observer(
               onKeyDown={handleKeyDown}
               onKeyPress={handleKeyPress}
               onChange={handleChange}
-              value={noteBlock.content}
+              value={noteBlock.content.value}
             />
           )}
           {!isEditing && (
@@ -379,9 +374,9 @@ export const NoteBlock = observer(
                 'note-block__content--focused': isFocused,
               })}
             >
-              <MarkdownRenderer
+              <TokensRenderer
                 noteBlock={noteBlock}
-                content={noteBlock.content}
+                tokens={noteBlock.content.ast}
               />
             </div>
           )}

@@ -12,6 +12,7 @@ import { NoteBlockModel, noteBlockRef } from './NoteBlockModel';
 import { BlocksViewModel } from './BlocksViewModel';
 import { vaultModelType } from './consts';
 import { generateId } from '../../generateId';
+import { BlockContentModel } from './BlockContentModel';
 
 @model(vaultModelType)
 export class VaultModel extends Model({
@@ -38,7 +39,7 @@ export class VaultModel extends Model({
       createdAt: new Date(),
       noteRef: noteRef(noteId),
       noteBlockRefs: [],
-      content: '',
+      content: new BlockContentModel({ value: '' }),
       linkedNoteRefs: [],
     });
 
@@ -55,7 +56,11 @@ export class VaultModel extends Model({
     this.notesMap[note.$modelId] = note;
     this.blocksMap[rootBlock.$modelId] = rootBlock;
 
-    note.createBlock({ content: '' }, rootBlock, 0);
+    note.createBlock(
+      { content: new BlockContentModel({ value: '' }) },
+      rootBlock,
+      0
+    );
 
     return note;
   }

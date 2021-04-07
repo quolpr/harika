@@ -102,9 +102,7 @@ export class NoteModel extends Model({
   @modelAction
   updateTitle(newTitle: string) {
     this.linkedBlocks.forEach((block) => {
-      block.content = block.content
-        .split(`[[${this.title}]]`)
-        .join(`[[${newTitle}]]`);
+      block.content.updateTitle(this.title, newTitle);
     });
 
     this.title = newTitle;
