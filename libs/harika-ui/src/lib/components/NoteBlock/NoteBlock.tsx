@@ -83,7 +83,7 @@ const RefRenderer = observer(
         <div className="checkbox">
           <input
             type="checkbox"
-            checked={token.content === 'TODO'}
+            checked={token.content === 'DONE'}
             onClick={(e) => {
               e.stopPropagation();
               e.preventDefault();
