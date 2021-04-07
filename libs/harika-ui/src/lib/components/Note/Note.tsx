@@ -86,7 +86,7 @@ const BacklinkedNote = observer(
                       >
                         {n.content.value.trim().length === 0
                           ? '[blank]'
-                          : n.content}
+                          : n.content.value}
                       </div>
                     ))}
                   </div>
