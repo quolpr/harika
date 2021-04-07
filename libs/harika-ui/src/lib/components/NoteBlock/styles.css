@@ -12,7 +12,7 @@
   &__content {
     display: inline;
     align-items: center;
-    word-break: break-all;
+    word-break: break-word;
 
     > * {
       vertical-align: middle;
