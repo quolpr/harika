@@ -29,7 +29,7 @@ export const initHarikaDb = async (id: string) => {
       revs_limit: 0,
     },
     multiInstance: true,
-    ignoreDuplicate: true,
+    ignoreDuplicate: false,
   });
 
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment

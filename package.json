@@ -26,7 +26,8 @@
     "help": "nx help",
     "gen-block-parser": "pegjs -o libs/harika-core/src/lib/blockParser/blockParser.js --cache libs/harika-core/src/lib/blockParser/blockParser.pegjs",
     "build:mobile": "NODE_ENV=production nx run harika-mobile-ionic:build:production",
-    "graphql-generate": "graphql-codegen"
+    "graphql-generate": "graphql-codegen",
+    "postinstall": "patch-package"
   },
   "private": true,
   "dependencies": {
@@ -40,6 +41,7 @@
     "@types/workbox-sw": "^4.3.1",
     "@welldone-software/why-did-you-render": "^6.0.5",
     "clsx": "^1.1.1",
+    "cuid": "^2.1.8",
     "dayjs": "^1.9.7",
     "document-register-element": "1.13.1",
     "graphql": "^15.5.0",
@@ -56,7 +58,9 @@
     "nanoid": "^3.1.22",
     "npm": "^6.14.9",
     "observable-hooks": "^3.1.2",
+    "patch-package": "^6.4.7",
     "path-to-regexp": "^6.2.0",
+    "postinstall-postinstall": "^2.1.0",
     "pouchdb-adapter-http": "^7.2.2",
     "pouchdb-adapter-indexeddb": "^7.2.2",
     "pouchdb-debug": "^7.2.1",
