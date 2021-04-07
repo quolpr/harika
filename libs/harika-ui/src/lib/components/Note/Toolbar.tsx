@@ -1,5 +1,5 @@
 import { observer } from 'mobx-react-lite';
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useCurrentVaultUiState } from '../../contexts/CurrentVaultUiStateContext';
 import { useCurrentVault } from '../../hooks/useCurrentVault';
 import { cn } from '../../utils';
@@ -19,6 +19,8 @@ const toolbarClass = cn('toolbar');
 export const Toolbar = observer(({ view }: { view: BlocksViewModel }) => {
   const vaultUiState = useCurrentVaultUiState();
   const vault = useCurrentVault();
+
+  const [bottomPos, setBottomPos] = useState(0);
 
   const currentBlock = vaultUiState.focusedBlock?.blockId
     ? vault.blocksMap[vaultUiState.focusedBlock?.blockId]
@@ -85,9 +87,29 @@ export const Toolbar = observer(({ view }: { view: BlocksViewModel }) => {
     [currentBlock]
   );
 
+  useEffect(() => {
+    if (!window.visualViewport) return;
+
+    const viewportHandler = () => {
+      console.log(window.innerHeight - window.visualViewport.height);
+      setBottomPos(window.innerHeight - window.visualViewport.height);
+    };
+
+    window.visualViewport.addEventListener('scroll', viewportHandler);
+    window.visualViewport.addEventListener('resize', viewportHandler);
+
+    return () => {
+      window.visualViewport.removeEventListener('scroll', viewportHandler);
+      window.visualViewport.removeEventListener('resize', viewportHandler);
+    };
+  });
+
   return (
     <Portal>
-      <div className={toolbarClass()}>
+      <div
+        className={toolbarClass()}
+        style={{ transform: `translate3d(0px, ${-bottomPos}px, 0px)` }}
+      >
         <button
           onMouseDown={handleMoveDownPress}
           className={toolbarClass('button')}

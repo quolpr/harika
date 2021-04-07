@@ -142,7 +142,7 @@ export class NoteBlockModel extends Model({
 
   @computed
   get nearestRightToParent(): NoteBlockModel | undefined {
-    if (!this.parentBlockRef || !this.parentBlockRef.current.isRoot) return;
+    if (!this.parentBlockRef || this.parentBlockRef.current.isRoot) return;
 
     const [, right] = this.parentBlockRef.current.leftAndRightSibling;
 

@@ -113,12 +113,12 @@
 }
 
 .toolbar {
-  @apply bg-gray-900 py-4 bg-opacity-90 pb-8;
+  @apply bg-gray-900 py-4 bg-opacity-90 pb-8 transition;
 
   backdrop-filter: blur(5px);
 
   position: fixed;
-  bottom: 0;
+  bottom: 0px;
 
   display: flex;
   justify-content: space-around;
