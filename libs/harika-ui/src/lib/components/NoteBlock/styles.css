@@ -10,7 +10,13 @@
   }
 
   &__content {
+    display: inline;
+    align-items: center;
     word-break: break-all;
+
+    > * {
+      vertical-align: middle;
+    }
 
     &--hidden {
       display: none;

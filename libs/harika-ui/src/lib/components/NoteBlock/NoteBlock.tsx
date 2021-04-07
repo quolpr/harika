@@ -61,7 +61,14 @@ const TokensRenderer = ({
 const RefRenderer = observer(
   ({ token, noteBlock }: { token: RefToken; noteBlock: NoteBlockModel }) => {
     const vault = useCurrentVault();
+    const noteRepo = useNoteRepository();
     const linkedNotes = noteBlock.linkedNoteRefs;
+
+    const handleTodoToggle = useCallback(() => {
+      console.log('handle toggle');
+      noteBlock.content.toggleTodo(token.id);
+      noteRepo.updateNoteBlockLinks(vault, noteBlock);
+    }, [noteBlock, noteRepo, token.id, vault]);
 
     const noteRef = linkedNotes.find((note) => {
       try {
@@ -70,6 +77,25 @@ const RefRenderer = observer(
         return false;
       }
     });
+
+    if (token.content === 'TODO' || token.content === 'DONE') {
+      return (
+        <div className="checkbox">
+          <input
+            type="checkbox"
+            checked={token.content === 'TODO'}
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+            }}
+            onChange={handleTodoToggle}
+          />
+          <svg className="checkbox__tick" viewBox="0 0 20 20">
+            <path d="M0 11l2-2 5 5L18 3l2 2L7 18z" />
+          </svg>
+        </div>
+      );
+    }
 
     if (!noteRef) return <>[[{token.content}]]</>;
 

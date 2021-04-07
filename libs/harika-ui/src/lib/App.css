@@ -91,3 +91,19 @@ input[type='search']::-webkit-search-results-decoration {
 .link {
   @apply text-pink-500 hover:underline;
 }
+
+.checkbox {
+  @apply bg-white border-2 rounded border-gray-400 w-5 h-5 inline-flex flex-shrink-0 justify-center items-center mr-1 focus-within:border-pink-500;
+
+  input {
+    @apply opacity-0 absolute;
+  }
+}
+
+.checkbox__tick {
+  @apply fill-current hidden w-3 h-3 text-pink-500 pointer-events-none;
+}
+
+.checkbox input:checked + .checkbox__tick {
+  display: block;
+}
