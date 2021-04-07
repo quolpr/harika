@@ -32,10 +32,15 @@ export class VaultsRepository {
   async init() {
     this.database = await initHarikaDb(this.dbId);
 
-    if (this.sync) {
-      // Don't await to not block UI
-      initHarikaSync(this.database, this.dbId, this.sync.token);
-    }
+    this.database.waitForLeadership().then(() => {
+      if (this.sync) {
+        // Don't await to not block UI
+        initHarikaSync(this.database, this.dbId, this.sync.token);
+
+        console.log('HarikaDb isLeader now');
+        document.title = '♛ ' + document.title;
+      }
+    });
   }
 
   async getVault(vaultId: string) {
@@ -77,10 +82,15 @@ export class VaultsRepository {
 
     this.rxVaultsDbs[id] = await initDb(id);
 
-    if (this.sync) {
-      // Don't await to not block ui
-      initVaultSync(this.rxVaultsDbs[id], id, this.sync.token);
-    }
+    this.rxVaultsDbs[id].waitForLeadership().then(() => {
+      if (this.sync) {
+        // Don't await to not block ui
+        initVaultSync(this.rxVaultsDbs[id], id, this.sync.token);
+
+        console.log('VaultDb isLeader now');
+        document.title = '♛ ' + document.title;
+      }
+    });
 
     const vault = new VaultModel({ name: vaultDoc.name, $modelId: id });
 

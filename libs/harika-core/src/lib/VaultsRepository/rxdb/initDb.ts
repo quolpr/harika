@@ -38,12 +38,6 @@ export const initHarikaDb = async (id: string) => {
 
   console.log('DatabaseService: created database');
 
-  // show leadership in title
-  db.waitForLeadership().then(() => {
-    console.log('isLeader now');
-    document.title = '♛ ' + document.title;
-  });
-
   // create collections
   console.log('DatabaseService: create collections');
 
