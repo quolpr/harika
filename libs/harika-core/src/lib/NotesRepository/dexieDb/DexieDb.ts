@@ -2,6 +2,7 @@ import { Dayjs } from 'dayjs';
 import Dexie from 'dexie';
 import 'dexie-observable';
 import 'dexie-syncable';
+import { generateId } from '../../generateId';
 
 export type NoteDocType = {
   syncId: string;
@@ -24,6 +25,8 @@ export type NoteBlockDocType = {
   createdAt: number;
   updatedAt?: number;
 };
+
+const windowId = generateId();
 
 export class VaultDexieDatabase extends Dexie {
   notes: Dexie.Table<NoteDocType, string>;
@@ -49,6 +52,10 @@ export class VaultDexieDatabase extends Dexie {
 
   get notesQueries() {
     return new NotesQueries(this);
+  }
+
+  get windowId() {
+    return windowId;
   }
 }
 

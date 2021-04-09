@@ -140,7 +140,7 @@ export class ChangesHandler {
       () => {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
-        Dexie.currentTransaction.source = Math.random().toString();
+        Dexie.currentTransaction.source = this.database.windowId;
         return Promise.all([applyForNoteBlocks(), applyForNotes()]);
       }
     );
