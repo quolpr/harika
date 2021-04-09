@@ -16,6 +16,7 @@ import { Optional } from 'utility-types';
 import { generateId } from '../../generateId';
 import { NoteBlockModel, noteBlockRef } from './NoteBlockModel';
 import { isVault } from './utils';
+import { uuid } from 'uuidv4';
 import type { VaultModel } from './VaultModel';
 
 export const noteRef = customRef<NoteModel>('harika/NoteRef', {
@@ -49,6 +50,7 @@ export const isNoteModel = (model: any): model is NoteModel =>
 
 @model(modelType)
 export class NoteModel extends Model({
+  syncId: prop<string>(),
   title: prop<string>(),
   dailyNoteDate: tProp_dateTimestamp(types.dateTimestamp),
   createdAt: tProp_dateTimestamp(types.dateTimestamp),
@@ -77,12 +79,13 @@ export class NoteModel extends Model({
   createBlock(
     attrs: Optional<
       ModelInstanceCreationData<NoteBlockModel>,
-      'createdAt' | 'noteRef' | 'noteBlockRefs' | 'linkedNoteRefs'
+      'createdAt' | 'noteRef' | 'noteBlockRefs' | 'linkedNoteRefs' | 'syncId'
     >,
     parent: NoteBlockModel,
     pos: number
   ) {
     const newNoteBlock = new NoteBlockModel({
+      syncId: uuid(),
       $modelId: generateId(),
       createdAt: new Date(),
       noteRef: noteRef(this),

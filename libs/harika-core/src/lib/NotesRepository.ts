@@ -1,5 +1,4 @@
-import { ModelInstanceCreationData, Ref } from 'mobx-keystone';
-import { convertNoteRowToModelAttrs } from './NotesRepository/convertRowToModel';
+import { ModelInstanceCreationData } from 'mobx-keystone';
 import { Dayjs } from 'dayjs';
 import { NoteBlockModel } from './NotesRepository/models/NoteBlockModel';
 import { NoteModel } from './NotesRepository/models/NoteModel';
@@ -8,7 +7,9 @@ import { Required } from 'utility-types';
 import { ICreationResult } from './NotesRepository/types';
 import { VaultModel } from './NotesRepository/models/VaultModel';
 import { map } from 'rxjs/operators';
-import { VaultRxDatabase } from './NotesRepository/rxdb/initDb';
+import { VaultDexieDatabase } from './NotesRepository/dexieDb/DexieDb';
+import { loadNoteDocToModelAttrs } from './NotesRepository/dexieDb/convertDocToModel';
+import { from } from 'rxjs';
 
 export { NoteModel } from './NotesRepository/models/NoteModel';
 export { VaultModel } from './NotesRepository/models/VaultModel';
@@ -23,14 +24,14 @@ export {
 // Tuple = plain object data, used for fast data getting
 
 export class NotesRepository {
-  constructor(private vaultRxDbs: Record<string, VaultRxDatabase>) {}
+  constructor(private vaultDexieDbs: Record<string, VaultDexieDatabase>) {}
 
   async createNote(
     vault: VaultModel,
     attrs: Required<
       Optional<
         ModelInstanceCreationData<NoteModel>,
-        'createdAt' | 'dailyNoteDate' | 'rootBlockRef'
+        'createdAt' | 'dailyNoteDate' | 'rootBlockRef' | 'syncId'
       >,
       'title'
     >
@@ -43,7 +44,7 @@ export class NotesRepository {
     }
 
     if (
-      await this.getDbByVaultId(vault.$modelId).notes.getIsNoteExists(
+      await this.getDbByVaultId(vault.$modelId).notesQueries.getIsNoteExists(
         attrs.title
       )
     ) {
@@ -66,12 +67,12 @@ export class NotesRepository {
   ) {
     const noteRow = await this.getDbByVaultId(
       vault.$modelId
-    ).notes.getDailyNote(date);
+    ).notesQueries.getDailyNote(date);
 
     if (noteRow) {
       return {
         status: 'ok',
-        data: await this.findNote(vault, noteRow._id),
+        data: await this.findNote(vault, noteRow.shortId),
       } as ICreationResult<NoteModel>;
     }
 
@@ -115,7 +116,9 @@ export class NotesRepository {
 
     const existingNotesIndexed = Object.fromEntries(
       (
-        await this.getDbByVaultId(vault.$modelId).notes.getByTitles(titles)
+        await this.getDbByVaultId(vault.$modelId).notesQueries.getByTitles(
+          titles
+        )
       ).map((n) => [n.title, n])
     );
 
@@ -133,7 +136,7 @@ export class NotesRepository {
           } else {
             const existing = existingNotesIndexed[name];
 
-            return this.findNote(vault, existing._id, false);
+            return this.findNote(vault, existing.shortId, false);
           }
         })
       )
@@ -166,11 +169,13 @@ export class NotesRepository {
     preloadChildren = true,
     preloadLinks = true
   ) {
-    const row = await this.getDbByVaultId(vault.$modelId).notes.getNoteById(id);
+    const row = await this.getDbByVaultId(vault.$modelId).notesQueries.getById(
+      id
+    );
 
     if (!row) return;
 
-    const data = await convertNoteRowToModelAttrs(
+    const data = await loadNoteDocToModelAttrs(
       this.getDbByVaultId(vault.$modelId),
       row,
       preloadChildren,
@@ -185,37 +190,35 @@ export class NotesRepository {
       ]
     );
 
-    return vault.notesMap[row._id];
+    return vault.notesMap[row.shortId];
   }
 
   // TODO: Rx way
   async searchNotesTuples(vaultId: string, title: string) {
-    return (await this.getDbByVaultId(vaultId).notes.searchNotes(title)).map(
-      (row) => ({
-        id: row._id,
-        title: row.title,
-      })
-    );
+    return (
+      await this.getDbByVaultId(vaultId).notesQueries.searchNotes(title)
+    ).map((row) => ({
+      id: row.shortId,
+      title: row.title,
+    }));
   }
 
   getAllNotesTuples(vaultId: string) {
-    return this.getDbByVaultId(vaultId)
-      .notes.find()
-      .$.pipe(
-        map((rows) =>
-          rows.map((row) => ({
-            id: row._id,
-            title: row.title,
-            createdAt: new Date(row.createdAt),
-          }))
-        )
-      );
+    return from(this.getDbByVaultId(vaultId).notesQueries.all()).pipe(
+      map((rows) =>
+        rows.map((row) => ({
+          id: row.shortId,
+          title: row.title,
+          createdAt: new Date(row.createdAt),
+        }))
+      )
+    );
   }
 
   private getDbByVaultId(vaultId: string) {
-    if (!this.vaultRxDbs[vaultId])
+    if (!this.vaultDexieDbs[vaultId])
       throw new Error('NotesRepository vaultDb was not initialized!');
 
-    return this.vaultRxDbs[vaultId];
+    return this.vaultDexieDbs[vaultId];
   }
 }

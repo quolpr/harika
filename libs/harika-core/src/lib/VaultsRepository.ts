@@ -4,22 +4,20 @@ import { VaultModel } from './NotesRepository/models/VaultModel';
 import { syncMiddleware } from './NotesRepository/models/syncable';
 import * as remotedev from 'remotedev';
 import { connectReduxDevTools } from 'mobx-keystone';
-import { ChangesHandler } from './NotesRepository/rxdb/ChangesHandler';
-import {
-  VaultRxDatabase,
-  initDb,
-  initVaultSync,
-} from './NotesRepository/rxdb/initDb';
+import { initDb, initVaultSync } from './NotesRepository/rxdb/initDb';
 import { initHarikaDb, initHarikaSync } from './VaultsRepository/rxdb/initDb';
 import { initRxDbToLocalSync } from './NotesRepository/rxdb/sync';
 import { HarikaRxDatabase } from './VaultsRepository/rxdb/initDb';
+import { VaultDexieDatabase } from './NotesRepository/dexieDb/DexieDb';
+import { ChangesHandler } from './NotesRepository/dexieDb/ChangesHandler';
+import { toMobxSync } from './NotesRepository/dexieDb/toMobxSync';
 
 export class VaultsRepository {
   // TODO: finde better naming(instead of conatiner)
   private vaultContainers: Record<string, VaultModel | undefined> = {};
 
-  private rxVaultsDbs: Record<string, VaultRxDatabase> = {};
-  private noteRepo = new NotesRepository(this.rxVaultsDbs);
+  private dexieVaultDbs: Record<string, VaultDexieDatabase> = {};
+  private noteRepo = new NotesRepository(this.dexieVaultDbs);
 
   database!: HarikaRxDatabase;
 
@@ -80,26 +78,20 @@ export class VaultsRepository {
 
     if (!vaultDoc) return;
 
-    this.rxVaultsDbs[id] = await initDb(id);
+    this.dexieVaultDbs[id] = new VaultDexieDatabase(id);
 
-    this.rxVaultsDbs[id].waitForLeadership().then(() => {
-      if (this.sync) {
-        // Don't await to not block ui
-        initVaultSync(this.rxVaultsDbs[id], id, this.sync.token);
-
-        console.log('VaultDb isLeader now');
-        document.title = '♛ ' + document.title;
-      }
-    });
+    await this.dexieVaultDbs[id].open();
 
     const vault = new VaultModel({ name: vaultDoc.name, $modelId: id });
 
     syncMiddleware(
       vault,
-      new ChangesHandler(this.rxVaultsDbs[id], vault).handlePatch
+      new ChangesHandler(this.dexieVaultDbs[id], vault).handlePatch
     );
 
-    initRxDbToLocalSync(this.rxVaultsDbs[id], this.noteRepo, vault);
+    toMobxSync(this.dexieVaultDbs[id], this.noteRepo, vault);
+
+    // initRxDbToLocalSync(this.dexieVaultDbs[id], this.noteRepo, vault);
 
     const connection = remotedev.connectViaExtension({
       name: `Vault ${vault.name}`,

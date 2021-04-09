@@ -8,9 +8,9 @@ import pouchdbDebug from 'pouchdb-debug';
 import idb from 'pouchdb-adapter-indexeddb';
 import { configureSync } from '../../utils/configureSync';
 
-// PouchDB.plugin(pouchdbDebug);
+PouchDB.plugin(pouchdbDebug);
 
-// PouchDB.debug.enable('*');
+PouchDB.debug.enable('*');
 
 addRxPlugin(RxDBNoValidatePlugin);
 addRxPlugin(pouchdbHttp);

@@ -13,6 +13,7 @@ import { BlocksViewModel } from './BlocksViewModel';
 import { vaultModelType } from './consts';
 import { generateId } from '../../generateId';
 import { BlockContentModel } from './BlockContentModel';
+import { uuid } from 'uuidv4';
 
 @model(vaultModelType)
 export class VaultModel extends Model({
@@ -27,7 +28,7 @@ export class VaultModel extends Model({
     attrs: Required<
       Optional<
         ModelInstanceCreationData<NoteModel>,
-        'createdAt' | 'dailyNoteDate' | 'rootBlockRef'
+        'createdAt' | 'dailyNoteDate' | 'rootBlockRef' | 'syncId'
       >,
       'title'
     >
@@ -35,6 +36,7 @@ export class VaultModel extends Model({
     const noteId = generateId();
 
     const rootBlock = new NoteBlockModel({
+      syncId: uuid(),
       $modelId: generateId(),
       createdAt: new Date(),
       noteRef: noteRef(noteId),
@@ -50,6 +52,7 @@ export class VaultModel extends Model({
       areLinksLoaded: true,
       areChildrenLoaded: true,
       rootBlockRef: noteBlockRef(rootBlock),
+      syncId: uuid(),
       ...attrs,
     });
 

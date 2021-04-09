@@ -89,6 +89,7 @@ export const initRxDbToLocalSync = (
           convertNoteBlockRowToModelAttrs(ev.documentData)
         );
       })();
+      console.log('sync!', events);
 
       vault.createOrUpdateEntitiesFromAttrs(notes, blocks);
     }
