@@ -334,6 +334,57 @@
           }
         }
       }
+    },
+    "harika-api": {
+      "root": "apps/harika-api",
+      "sourceRoot": "apps/harika-api/src",
+      "projectType": "application",
+      "prefix": "harika-api",
+      "schematics": {},
+      "architect": {
+        "build": {
+          "builder": "@nrwl/node:build",
+          "options": {
+            "outputPath": "dist/apps/harika-api",
+            "main": "apps/harika-api/src/main.ts",
+            "tsConfig": "apps/harika-api/tsconfig.app.json",
+            "assets": ["apps/harika-api/src/assets"]
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "extractLicenses": true,
+              "inspect": false,
+              "fileReplacements": [
+                {
+                  "replace": "apps/harika-api/src/environments/environment.ts",
+                  "with": "apps/harika-api/src/environments/environment.prod.ts"
+                }
+              ]
+            }
+          }
+        },
+        "serve": {
+          "builder": "@nrwl/node:execute",
+          "options": {
+            "buildTarget": "harika-api:build"
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["apps/harika-api/**/*.ts"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/apps/harika-api"],
+          "options": {
+            "jestConfig": "apps/harika-api/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      }
     }
   },
   "cli": {
