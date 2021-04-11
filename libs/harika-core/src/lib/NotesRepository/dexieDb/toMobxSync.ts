@@ -1,5 +1,5 @@
 import { Observable, OperatorFunction } from 'rxjs';
-import { buffer, debounceTime, filter, map } from 'rxjs/operators';
+import { buffer, debounceTime, filter } from 'rxjs/operators';
 import { NotesRepository, VaultModel } from '../../NotesRepository';
 import {
   convertNoteBlockDocToModelAttrs,
@@ -23,7 +23,10 @@ const bufferDebounce: BufferDebounce = (debounce) => (source) =>
     })
   );
 
-type ISpecificChangeEvent<Name extends string, Obj extends object> = {
+type ISpecificChangeEvent<
+  Name extends string,
+  Obj extends Record<string, unknown>
+> = {
   key: string;
   //  1=CREATED, 2=UPDATED, 3=DELETED
   type: number;
@@ -108,8 +111,6 @@ export const toMobxSync = (
           convertNoteBlockDocToModelAttrs(ev.obj)
         );
       })();
-
-      console.log('sync!', evs);
 
       vault.createOrUpdateEntitiesFromAttrs(notes, blocks);
     });
