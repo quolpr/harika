@@ -21,7 +21,7 @@ export class VaultsRepository {
 
   database!: HarikaRxDatabase;
 
-  constructor(private dbId: string, private sync: false | { token: string }) {}
+  constructor(private dbId: string, private sync: boolean) {}
 
   getNoteRepository() {
     return this.noteRepo;
@@ -33,7 +33,7 @@ export class VaultsRepository {
     this.database.waitForLeadership().then(() => {
       if (this.sync) {
         // Don't await to not block UI
-        initHarikaSync(this.database, this.dbId, this.sync.token);
+        // initHarikaSync(this.database, this.dbId, this.sync.token);
 
         console.log('HarikaDb isLeader now');
         document.title = '♛ ' + document.title;
@@ -81,6 +81,14 @@ export class VaultsRepository {
     this.dexieVaultDbs[id] = new VaultDexieDatabase(id);
 
     await this.dexieVaultDbs[id].open();
+
+    if (this.sync) {
+      this.dexieVaultDbs[id].syncable.connect(
+        'websocket',
+        'ws://localhost:3333/vault',
+        { scopeId: id }
+      );
+    }
 
     const vault = new VaultModel({ name: vaultDoc.name, $modelId: id });
 

@@ -1,16 +1,6 @@
-mutation signup($email: String!, $password: String!, $dbId: String!) {
-  createUser(params: {email: $email, password: $password, dbId: $dbId}) {
-    messages {
-      field
-      message
-      template
-    }
-    result {
-    dbAuthToken
-      user {
-        id
-      }
-    }
+mutation signup($email: String!, $password: String!) {
+  createUser(payload: {email: $email, password: $password}) {
+    id
   }
 }
 

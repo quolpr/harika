@@ -29,7 +29,6 @@ const queryClient = new QueryClient();
 export function App() {
   const [authInfo, setAuthInfo] = useAuthState();
   const userId = authInfo?.userId;
-  const token = authInfo?.dbToken;
   const isOffline = authInfo?.isOffline;
   const dbId = authInfo?.dbId;
 
@@ -40,12 +39,12 @@ export function App() {
   >();
 
   useEffect(() => {
-    if (!userId || !token || !dbId || isOffline === undefined) return;
+    if (!userId || !dbId || isOffline === undefined) return;
 
     let repo: VaultsRepository | undefined = undefined;
 
     const cb = async () => {
-      repo = new VaultsRepository(dbId, isOffline ? false : { token: token });
+      repo = new VaultsRepository(dbId, !isOffline);
 
       await repo.init();
 
@@ -58,7 +57,7 @@ export function App() {
       repo?.destroy();
       setVaultRepository(undefined);
     };
-  }, [userId, token, isOffline, dbId]);
+  }, [userId, isOffline, dbId]);
 
   return (
     <React.StrictMode>
@@ -106,20 +105,20 @@ export function App() {
             <LoginPage />
           </Route>
 
-          <Route exact path="/">
-            {() => {
-              console.log({ lastVaultId, authInfo });
-              if (lastVaultId && authInfo) {
-                return (
-                  <Redirect
-                    to={paths.vaultDailyPath({ vaultId: lastVaultId })}
-                  />
-                );
-              } else {
-                return <Redirect to={PATHS.DEFAULT_PATH} />;
-              }
-            }}
-          </Route>
+          {/* <Route exact path="/"> */}
+          {/*   {() => { */}
+          {/*     console.log({ lastVaultId, authInfo }); */}
+          {/*     if (lastVaultId && authInfo) { */}
+          {/*       return ( */}
+          {/*         <Redirect */}
+          {/*           to={paths.vaultDailyPath({ vaultId: lastVaultId })} */}
+          {/*         /> */}
+          {/*       ); */}
+          {/*     } else { */}
+          {/*       return <Redirect to={PATHS.DEFAULT_PATH} />; */}
+          {/*     } */}
+          {/*   }} */}
+          {/* </Route> */}
         </Router>
       </QueryClientProvider>
     </React.StrictMode>

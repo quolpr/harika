@@ -6,10 +6,9 @@ import {
 import { useCallback } from 'react';
 
 export interface AuthInfo {
-  dbToken: string;
   userId: string;
-  dbId: string;
   isOffline: boolean;
+  dbId: string;
 }
 
 const storageKey = 'auth';

@@ -6,7 +6,7 @@ export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]: Mayb
 
 function fetcher<TData, TVariables>(query: string, variables?: TVariables) {
   return async (): Promise<TData> => {
-    const res = await fetch("https://app-dev.harika.io/api/graphql", {
+    const res = await fetch("http://localhost:3333/graphql", {
       method: "POST",
       headers: {"Content-Type":"application/json"},
       credentials: "include",
@@ -33,114 +33,60 @@ export type Scalars = {
   Float: number;
 };
 
-export type CreateUserParams = {
-  dbId: Scalars['String'];
-  email: Scalars['String'];
-  password: Scalars['String'];
-};
-
-export type RootMutationType = {
-  __typename?: 'RootMutationType';
-  createUser: SessionPayload;
-  createVaultDb: Scalars['Boolean'];
-  login: Session;
-};
-
-
-export type RootMutationTypeCreateUserArgs = {
-  params: CreateUserParams;
-};
-
-
-export type RootMutationTypeCreateVaultDbArgs = {
-  dbId: Scalars['String'];
-};
-
-
-export type RootMutationTypeLoginArgs = {
-  email: Scalars['String'];
-  password: Scalars['String'];
-};
-
-export type RootQueryType = {
-  __typename?: 'RootQueryType';
-  currentSession?: Maybe<Session>;
-};
-
-export type Session = {
-  __typename?: 'Session';
-  dbAuthToken: Scalars['String'];
-  user: User;
-};
-
-export type SessionPayload = {
-  __typename?: 'SessionPayload';
-  /** A list of failed validations. May be blank or null if mutation succeeded. */
-  messages: Array<ValidationMessage>;
-  /** The object created/updated/deleted by the mutation. May be null if mutation failed. */
-  result?: Maybe<Session>;
-  /** Indicates if the mutation completed successfully or not. */
-  successful: Scalars['Boolean'];
-};
-
-export type User = {
-  __typename?: 'User';
-  dbId: Scalars['String'];
-  email: Scalars['String'];
+export type UserType = {
+  __typename?: 'UserType';
   id: Scalars['ID'];
+  email: Scalars['String'];
 };
 
-/**
- * Validation messages are returned when mutation input does not meet the requirements.
- *   While client-side validation is highly recommended to provide the best User Experience,
- *   All inputs will always be validated server-side.
- *   Some examples of validations are:
- *   * Username must be at least 10 characters
- *   * Email field does not contain an email address
- *   * Birth Date is required
- *   While GraphQL has support for required values, mutation data fields are always
- *   set to optional in our API. This allows 'required field' messages
- *   to be returned in the same manner as other validations. The only exceptions
- *   are id fields, which may be required to perform updates or deletes.
- */
-export type ValidationMessage = {
-  __typename?: 'ValidationMessage';
-  /** A unique error code for the type of validation used. */
-  code: Scalars['String'];
-  /**
-   * The input field that the error applies to. The field can be used to
-   * identify which field the error message should be displayed next to in the
-   * presentation layer.
-   * If there are multiple errors to display for a field, multiple validation
-   * messages will be in the result.
-   * This field may be null in cases where an error cannot be applied to a specific field.
-   */
-  field: Scalars['String'];
-  /**
-   * A friendly error message, appropriate for display to the end user.
-   * The message is interpolated to include the appropriate variables.
-   * Example: `Username must be at least 10 characters`
-   * This message may change without notice, so we do not recommend you match against the text.
-   * Instead, use the *code* field for matching.
-   */
-  message: Scalars['String'];
-  /** A list of substitutions to be applied to a validation message template */
-  options?: Maybe<Array<Maybe<ValidationOption>>>;
-  /**
-   * A template used to generate the error message, with placeholders for option substiution.
-   * Example: `Username must be at least {count} characters`
-   * This message may change without notice, so we do not recommend you match against the text.
-   * Instead, use the *code* field for matching.
-   */
-  template?: Maybe<Scalars['String']>;
+export type LoginResultType = {
+  __typename?: 'LoginResultType';
+  authed: Scalars['Boolean'];
+  user?: Maybe<UserType>;
 };
 
-export type ValidationOption = {
-  __typename?: 'ValidationOption';
-  /** The name of a variable to be subsituted in a validation message template */
-  key: Scalars['String'];
-  /** The value of a variable to be substituted in a validation message template */
-  value: Scalars['String'];
+export type VaultType = {
+  __typename?: 'VaultType';
+  id: Scalars['String'];
+  name: Scalars['String'];
+};
+
+export type Query = {
+  __typename?: 'Query';
+  viewer: UserType;
+};
+
+export type Mutation = {
+  __typename?: 'Mutation';
+  createUser: UserType;
+  login: LoginResultType;
+  createVault: VaultType;
+};
+
+
+export type MutationCreateUserArgs = {
+  payload: CreateUserInput;
+};
+
+
+export type MutationLoginArgs = {
+  payload: LoginInput;
+};
+
+
+export type MutationCreateVaultArgs = {
+  name: Scalars['String'];
+  id: Scalars['String'];
+};
+
+export type CreateUserInput = {
+  email: Scalars['String'];
+  password?: Maybe<Scalars['String']>;
+};
+
+export type LoginInput = {
+  email: Scalars['String'];
+  password: Scalars['String'];
 };
 
 export type LoginMutationVariables = Exact<{
@@ -150,60 +96,52 @@ export type LoginMutationVariables = Exact<{
 
 
 export type LoginMutation = (
-  { __typename?: 'RootMutationType' }
+  { __typename?: 'Mutation' }
   & { login: (
-    { __typename?: 'Session' }
-    & Pick<Session, 'dbAuthToken'>
-    & { user: (
-      { __typename?: 'User' }
-      & Pick<User, 'id' | 'dbId'>
-    ) }
+    { __typename?: 'LoginResultType' }
+    & Pick<LoginResultType, 'authed'>
+    & { user?: Maybe<(
+      { __typename?: 'UserType' }
+      & Pick<UserType, 'id'>
+    )> }
   ) }
 );
 
 export type SignupMutationVariables = Exact<{
   email: Scalars['String'];
   password: Scalars['String'];
-  dbId: Scalars['String'];
 }>;
 
 
 export type SignupMutation = (
-  { __typename?: 'RootMutationType' }
+  { __typename?: 'Mutation' }
   & { createUser: (
-    { __typename?: 'SessionPayload' }
-    & { messages: Array<(
-      { __typename?: 'ValidationMessage' }
-      & Pick<ValidationMessage, 'field' | 'message' | 'template'>
-    )>, result?: Maybe<(
-      { __typename?: 'Session' }
-      & Pick<Session, 'dbAuthToken'>
-      & { user: (
-        { __typename?: 'User' }
-        & Pick<User, 'id'>
-      ) }
-    )> }
+    { __typename?: 'UserType' }
+    & Pick<UserType, 'id'>
   ) }
 );
 
-export type CreateRemoteVaultDbMutationVariables = Exact<{
-  dbId: Scalars['String'];
+export type CreateVaultMutationVariables = Exact<{
+  id: Scalars['String'];
+  name: Scalars['String'];
 }>;
 
 
-export type CreateRemoteVaultDbMutation = (
-  { __typename?: 'RootMutationType' }
-  & Pick<RootMutationType, 'createVaultDb'>
+export type CreateVaultMutation = (
+  { __typename?: 'Mutation' }
+  & { createVault: (
+    { __typename?: 'VaultType' }
+    & Pick<VaultType, 'id'>
+  ) }
 );
 
 
 export const LoginDocument = `
     mutation login($email: String!, $password: String!) {
-  login(email: $email, password: $password) {
-    dbAuthToken
+  login(payload: {email: $email, password: $password}) {
+    authed
     user {
       id
-      dbId
     }
   }
 }
@@ -217,19 +155,9 @@ export const useLoginMutation = <
       options
     );
 export const SignupDocument = `
-    mutation signup($email: String!, $password: String!, $dbId: String!) {
-  createUser(params: {email: $email, password: $password, dbId: $dbId}) {
-    messages {
-      field
-      message
-      template
-    }
-    result {
-      dbAuthToken
-      user {
-        id
-      }
-    }
+    mutation signup($email: String!, $password: String!) {
+  createUser(payload: {email: $email, password: $password}) {
+    id
   }
 }
     `;
@@ -241,16 +169,18 @@ export const useSignupMutation = <
       (variables?: SignupMutationVariables) => fetcher<SignupMutation, SignupMutationVariables>(SignupDocument, variables)(),
       options
     );
-export const CreateRemoteVaultDbDocument = `
-    mutation createRemoteVaultDb($dbId: String!) {
-  createVaultDb(dbId: $dbId)
+export const CreateVaultDocument = `
+    mutation createVault($id: String!, $name: String!) {
+  createVault(id: $id, name: $name) {
+    id
+  }
 }
     `;
-export const useCreateRemoteVaultDbMutation = <
+export const useCreateVaultMutation = <
       TError = unknown,
       TContext = unknown
-    >(options?: UseMutationOptions<CreateRemoteVaultDbMutation, TError, CreateRemoteVaultDbMutationVariables, TContext>) => 
-    useMutation<CreateRemoteVaultDbMutation, TError, CreateRemoteVaultDbMutationVariables, TContext>(
-      (variables?: CreateRemoteVaultDbMutationVariables) => fetcher<CreateRemoteVaultDbMutation, CreateRemoteVaultDbMutationVariables>(CreateRemoteVaultDbDocument, variables)(),
+    >(options?: UseMutationOptions<CreateVaultMutation, TError, CreateVaultMutationVariables, TContext>) => 
+    useMutation<CreateVaultMutation, TError, CreateVaultMutationVariables, TContext>(
+      (variables?: CreateVaultMutationVariables) => fetcher<CreateVaultMutation, CreateVaultMutationVariables>(CreateVaultDocument, variables)(),
       options
     );

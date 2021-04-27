@@ -7,13 +7,13 @@ import {
   Resolver,
 } from '@nestjs/graphql';
 import { sign } from 'jsonwebtoken';
-import { environment } from '../environments/environment';
+import { environment } from '../../environments/environment';
 import { CreateUserInput } from './dto/createUser.input';
 import { UserType } from './dto/user.type';
 import { UsersService } from './users.service';
 import { Request } from 'express';
-import { LoginInput } from '../auth/dto/login.input';
 import { LoginResultType } from './dto/loginResult.types';
+import { LoginInput } from './dto/login.input';
 
 @Resolver()
 export class UsersResolver {
@@ -59,7 +59,7 @@ export class UsersResolver {
     );
 
     if (user) {
-      this.setCookie(context.req.res, user._id);
+      this.setCookie(context.req.res, user.id);
 
       return { authed: true, user: user.toGraphql() };
     } else {

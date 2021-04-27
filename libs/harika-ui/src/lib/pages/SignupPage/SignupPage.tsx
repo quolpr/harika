@@ -23,20 +23,19 @@ export const SignupPage = () => {
   const { register, handleSubmit, errors, setError } = useForm<IFormData>();
 
   const onSubmit = async (data: IFormData) => {
-    const dbId = generateId();
-    const res = await signup.mutateAsync({ ...data, dbId });
+    /* const dbId = generateId(); */
+    const res = await signup.mutateAsync({ ...data });
 
-    if (res.createUser.result) {
-      const {
-        user: { id: userId },
-        dbAuthToken,
-      } = res.createUser.result;
+    if (res.createUser) {
+      const { id: userId } = res.createUser;
 
-      setAuthInfo({ dbToken: dbAuthToken, userId, dbId, isOffline: false });
+      const dbId = new Buffer(userId).toString('hex');
+
+      setAuthInfo({ userId, dbId, isOffline: false });
 
       history.push(paths.vaultIndexPath());
     } else {
-      setServerErrors(res.createUser.messages, setError);
+      /* setServerErrors(res.createUser.messages, setError); */
     }
   };
 

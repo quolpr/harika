@@ -28,12 +28,13 @@ export const LoginPage = () => {
     try {
       const res = await login.mutateAsync(data);
 
-      const {
-        user: { id: userId, dbId },
-        dbAuthToken,
-      } = res.login;
+      if (!res.login.authed || !res.login.user) throw new Error('auth error');
 
-      setAuthInfo({ dbToken: dbAuthToken, userId, dbId, isOffline: false });
+      const { id: userId } = res.login.user;
+
+      const dbId = new Buffer(userId).toString('hex');
+
+      setAuthInfo({ userId, isOffline: false, dbId });
 
       history.push(paths.vaultIndexPath());
     } catch {
@@ -63,7 +64,7 @@ export const LoginPage = () => {
       }
     })();
 
-    setAuthInfo({ dbToken: token, userId, dbId, isOffline: true });
+    setAuthInfo({ userId, isOffline: true, dbId });
 
     history.push(paths.vaultIndexPath());
   }, [setAuthInfo, history, offlineAccounts.accounts, addOfflineAccount]);
