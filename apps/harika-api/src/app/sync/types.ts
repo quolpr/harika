@@ -36,7 +36,7 @@ export interface SyncEntitiesService {
     changes: IDatabaseChange[],
     scopeId: string,
     clientIdentity: string
-  ): Promise<void>;
+  ): Promise<number>;
 }
 
 export interface EntitySchema {

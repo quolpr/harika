@@ -16,12 +16,13 @@ export abstract class SyncEntitiesService {
 
   async getChangesFromRev(
     scopeId: string,
-    rev: number
+    rev: number,
+    clientIdentity: string
   ): Promise<{ changes: IDatabaseChange[]; lastRev: number }> {
     const changes = await this.entityChangesRepo
       .createQueryBuilder('changes')
-
-      .where('changes.rev > :rev', { rev })
+      .where('changes.source <> :clientIdentity', { clientIdentity })
+      .andWhere('changes.rev > :rev', { rev })
       .andWhere('changes.scopeId = :scopeId', { scopeId })
       .getMany();
 
@@ -42,19 +43,20 @@ export abstract class SyncEntitiesService {
     vaultId: string,
     clientIdentity: string
   ) {
-    console.log('[applyChanges]', changes);
-
     await this.connection.transaction(async (manager) => {
       for (const change of changes) {
         switch (change.type) {
           case DatabaseChangeType.Create:
-            await this.createEntity(
-              vaultId,
-              change.table,
-              change.key,
-              change.obj,
-              clientIdentity,
-              manager
+            console.log(
+              'create',
+              await this.createEntity(
+                vaultId,
+                change.table,
+                change.key,
+                change.obj,
+                clientIdentity,
+                manager
+              )
             );
             break;
           case DatabaseChangeType.Update:
@@ -106,7 +108,7 @@ export abstract class SyncEntitiesService {
       scopeId,
     });
 
-    await this.saveChangeWithIncrement(manager, change);
+    return (await this.saveChangeWithIncrement(manager, change)).rev;
   }
 
   private async updateEntity(
@@ -136,7 +138,7 @@ export abstract class SyncEntitiesService {
       mods: modifications,
     });
 
-    await this.saveChangeWithIncrement(manager, change);
+    return (await this.saveChangeWithIncrement(manager, change)).rev;
   }
 
   private async delete(
@@ -156,34 +158,35 @@ export abstract class SyncEntitiesService {
       scopeId: scopeId,
     });
 
-    await this.saveChangeWithIncrement(manager, change);
+    return (await this.saveChangeWithIncrement(manager, change)).rev;
   }
 
   private async saveChangeWithIncrement(
     manager: EntityManager,
     model: EntityChangeSchema
   ) {
-    return (
-      manager
-        .createQueryBuilder()
-        .insert()
-        .into(this.entityChangesRepo.metadata.tableName)
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        .values({
-          ...model,
-          rev: () =>
-            `(${manager
-              .createQueryBuilder()
-              .select('coalesce(max(entityChanges.rev) + 1, 1)')
-              .from(this.entityChangesRepo.metadata.tableName, 'entityChanges')
-              .where('entityChanges.scopeId = :id', {
-                id: model.scopeId,
-              })
-              .getSql()})`,
-        })
-        .execute()
-    );
+    const result = await manager
+      .createQueryBuilder()
+      .insert()
+      .into(this.entityChangesRepo.metadata.tableName)
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      .values({
+        ...model,
+        rev: () =>
+          `(${manager
+            .createQueryBuilder()
+            .select('coalesce(max(entityChanges.rev) + 1, 1)')
+            .from(this.entityChangesRepo.metadata.tableName, 'entityChanges')
+            .where('entityChanges.scopeId = :id', {
+              id: model.scopeId,
+            })
+            .getSql()})`,
+      })
+      .returning('*')
+      .execute();
+
+    return this.entityChangesRepo.create(result.generatedMaps[0]);
   }
 }
 

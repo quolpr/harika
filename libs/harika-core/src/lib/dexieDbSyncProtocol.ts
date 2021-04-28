@@ -28,7 +28,7 @@ Dexie.Syncable.registerSyncProtocol('websocket', {
       await context.save();
     }
 
-    const socket = io(url);
+    const socket = io(url, { transports: ['websocket'] });
     let isFirstRound = true;
 
     const requestCallbacks: Record<string, () => void> = {};
@@ -123,6 +123,8 @@ Dexie.Syncable.registerSyncProtocol('websocket', {
             resolve();
           });
         });
+      } else {
+        onChangesAccepted();
       }
 
       socket.emit('subscribeToChanges', { syncedRevision, requestId: v4() });
