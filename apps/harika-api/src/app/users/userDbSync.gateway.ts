@@ -8,7 +8,7 @@ import { SyncGateway } from '../sync/sync.gateway';
 import { UserDbSyncEntitiesService } from './userDbSyncEntities.service';
 
 @Injectable()
-@WebSocketGateway({ namespace: '/user' })
+@WebSocketGateway({ namespace: '/api/user' })
 export class UserDbSyncGateway
   extends SyncGateway
   implements OnGatewayConnection, OnGatewayDisconnect {

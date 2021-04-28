@@ -32,6 +32,7 @@ import { VaultsModule } from './vaults/vaults.module';
           'capacitor://localhost',
         ],
       },
+      path: '/api/graphql',
       context: ({ req }) => ({ req }),
     }),
     TypeOrmModule.forRoot({

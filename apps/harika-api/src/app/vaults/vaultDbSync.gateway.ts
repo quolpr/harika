@@ -8,7 +8,7 @@ import { SyncGateway } from '../sync/sync.gateway';
 import { VaultDbSyncEntitiesService } from './vaultDbSyncEntities.service';
 
 @Injectable()
-@WebSocketGateway({ namespace: '/vault' })
+@WebSocketGateway({ namespace: '/api/vault' })
 export class VaultDbSyncGateway
   extends SyncGateway
   implements OnGatewayConnection, OnGatewayDisconnect {

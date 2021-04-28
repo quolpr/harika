@@ -34,9 +34,13 @@ export class VaultsRepository {
     console.log('init vaults');
 
     if (this.sync) {
-      this.database.syncable.connect('websocket', 'ws://localhost:3333/user', {
-        scopeId: this.dbId,
-      });
+      this.database.syncable.connect(
+        'websocket',
+        'wss://app-dev.harika.io/api/user',
+        {
+          scopeId: this.dbId,
+        }
+      );
     }
   }
 
@@ -89,7 +93,7 @@ export class VaultsRepository {
 
       this.dexieVaultDbs[id].syncable.connect(
         'websocket',
-        'ws://localhost:3333/vault',
+        'wss://app-dev.harika.io/api/vault',
         { scopeId: vaultDoc.syncId }
       );
     }
