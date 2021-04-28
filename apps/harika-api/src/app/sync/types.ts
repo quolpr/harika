@@ -29,14 +29,15 @@ export type IDatabaseChange = ICreateChange | IUpdateChange | IDeleteChange;
 export interface SyncEntitiesService {
   getChangesFromRev(
     scopeId: string,
-    rev: number
+    rev: number,
+    clientIdentity: string
   ): Promise<{ changes: IDatabaseChange[]; lastRev: number }>;
 
   applyChanges(
     changes: IDatabaseChange[],
     scopeId: string,
     clientIdentity: string
-  ): Promise<number>;
+  ): Promise<void>;
 }
 
 export interface EntitySchema {

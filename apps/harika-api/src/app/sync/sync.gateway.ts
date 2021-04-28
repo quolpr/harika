@@ -110,7 +110,8 @@ export abstract class SyncGateway
     // Get all changes after syncedRevision that was not performed by the client we're talkin' to.
     const { changes, lastRev } = await this.syncEntities.getChangesFromRev(
       state.scopeId,
-      this.revStore[state.clientIdentity]
+      this.revStore[state.clientIdentity],
+      state.clientIdentity
     );
     // Compact changes so that multiple changes on same object is merged into a single change.
     const reducedSet = reduceChanges(changes);
@@ -150,7 +151,11 @@ export abstract class SyncGateway
 
       const baseRevision = event.baseRevision || 0;
       const serverChanges = (
-        await this.syncEntities.getChangesFromRev(state.scopeId, baseRevision)
+        await this.syncEntities.getChangesFromRev(
+          state.scopeId,
+          baseRevision,
+          state.clientIdentity
+        )
       ).changes;
 
       const reducedServerChangeSet = reduceChanges(serverChanges);
