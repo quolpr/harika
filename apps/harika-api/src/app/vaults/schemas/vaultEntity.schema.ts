@@ -18,10 +18,6 @@ export class VaultEntitySchema implements EntitySchema {
   @Index()
   key!: string;
 
-  @ManyToOne(() => Vault)
-  @JoinColumn({ name: 'scopeId' })
-  vault!: Vault;
-
   @Column('uuid')
   @Index()
   scopeId!: string;

@@ -1,6 +1,0 @@
-mutation createVault($id: String!, $name: String!) {
-  createVault(id: $id, name: $name) {
-    id
-  }
-}
-

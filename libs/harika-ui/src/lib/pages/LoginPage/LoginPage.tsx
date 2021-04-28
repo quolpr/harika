@@ -32,9 +32,7 @@ export const LoginPage = () => {
 
       const { id: userId } = res.login.user;
 
-      const dbId = new Buffer(userId).toString('hex');
-
-      setAuthInfo({ userId, isOffline: false, dbId });
+      setAuthInfo({ userId, isOffline: false });
 
       history.push(paths.vaultIndexPath());
     } catch {
@@ -64,7 +62,7 @@ export const LoginPage = () => {
       }
     })();
 
-    setAuthInfo({ userId, isOffline: true, dbId });
+    setAuthInfo({ userId, isOffline: true });
 
     history.push(paths.vaultIndexPath());
   }, [setAuthInfo, history, offlineAccounts.accounts, addOfflineAccount]);

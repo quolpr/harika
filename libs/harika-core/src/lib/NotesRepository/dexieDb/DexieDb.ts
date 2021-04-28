@@ -3,7 +3,6 @@ import Dexie from 'dexie';
 import 'dexie-observable';
 import 'dexie-syncable';
 import { generateId } from '../../generateId';
-import './sync';
 
 export type NoteDocType = {
   syncId: string;

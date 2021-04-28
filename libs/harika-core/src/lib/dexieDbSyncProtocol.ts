@@ -1,4 +1,6 @@
 import Dexie from 'dexie';
+import 'dexie-observable';
+import 'dexie-syncable';
 import { IDatabaseChange } from 'dexie-observable/api';
 import io from 'socket.io-client';
 import { v4 } from 'uuid';
@@ -20,6 +22,7 @@ Dexie.Syncable.registerSyncProtocol('websocket', {
     onSuccess,
     onError
   ) => {
+    console.log('start sync');
     if (!context.identity) {
       context.identity = v4();
       await context.save();
@@ -29,37 +32,28 @@ Dexie.Syncable.registerSyncProtocol('websocket', {
     let isFirstRound = true;
 
     const requestCallbacks: Record<string, () => void> = {};
+    console.log({ changes, baseRevision, partial, url });
 
     function sendChanges(
-      changesToSend: IDatabaseChange[],
-      baseRevision: number,
-      partial: boolean,
-      onChangesAccepted: () => void
+      sChangesToSend: IDatabaseChange[],
+      sBaseRevision: number,
+      sPartial: boolean,
+      sOnChangesAccepted: () => void
     ) {
       const requestId = v4();
-      requestCallbacks[requestId.toString()] = onChangesAccepted;
+      requestCallbacks[requestId.toString()] = sOnChangesAccepted;
 
-      // In this example, the server expects the following JSON format of the request:
-      //  {
-      //      type: "changes"
-      //      baseRevision: baseRevision,
-      //      changes: changes,
-      //      partial: partial,
-      //      requestId: id
-      //  }
-      //  To make the sample simplified, we assume the server has the exact same specification of how changes are structured.
-      //  In real world, you would have to pre-process the changes array to fit the server specification.
-      //  However, this example shows how to deal with the WebSocket to fullfill the API.
+      console.log('sending changes', { requestId, requestCallbacks });
 
       socket.emit('applyNewChanges', {
-        changes: changesToSend,
-        partial: partial,
-        baseRevision: baseRevision,
+        changes: sChangesToSend,
+        partial: sPartial,
+        baseRevision: sBaseRevision,
         requestId: requestId,
       });
     }
 
-    socket.on('connect', () => {
+    socket.on('connect', async () => {
       // handle the event sent with socket.send()
       socket.on(
         'requestHandled',
@@ -70,6 +64,7 @@ Dexie.Syncable.registerSyncProtocol('websocket', {
           requestId: string;
           status: 'ok' | 'error';
         }) => {
+          console.log('request handled', { requestId, status });
           if (requestCallbacks[requestId] && status !== 'error') {
             requestCallbacks[requestId]();
 
@@ -89,13 +84,21 @@ Dexie.Syncable.registerSyncProtocol('websocket', {
           partial: boolean;
           changes: IDatabaseChange[];
         }) => {
+          console.log('new changes!!!', { currentRevision, partial, changes });
           applyRemoteChanges(changes, currentRevision, partial);
 
           if (isFirstRound && !partial) {
+            isFirstRound = false;
+            console.log('firstRound!', onSuccess);
             // Since this is the first sync round and server sais we've got all changes - now is the time to call onsuccess()
             onSuccess({
               // Specify a react function that will react on additional client changes
               react: (changes, baseRevision, partial, onChangesAccepted) => {
+                console.log('new changes to send!', {
+                  changes,
+                  baseRevision,
+                  partial,
+                });
                 sendChanges(changes, baseRevision, partial, onChangesAccepted);
               },
               // Specify a disconnect function that will close our socket so that we dont continue to monitor changes.
@@ -103,7 +106,6 @@ Dexie.Syncable.registerSyncProtocol('websocket', {
                 socket.close();
               },
             });
-            isFirstRound = false;
           }
         }
       );
@@ -114,8 +116,14 @@ Dexie.Syncable.registerSyncProtocol('websocket', {
         requestId: v4(),
       });
 
-      // TODO: await
-      sendChanges(changes, baseRevision, partial, onChangesAccepted);
+      if (changes.length !== 0) {
+        await new Promise((resolve) => {
+          sendChanges(changes, baseRevision, partial, () => {
+            onChangesAccepted();
+            resolve();
+          });
+        });
+      }
 
       socket.emit('subscribeToChanges', { syncedRevision, requestId: v4() });
     });

@@ -8,7 +8,6 @@ import { useCallback } from 'react';
 export interface AuthInfo {
   userId: string;
   isOffline: boolean;
-  dbId: string;
 }
 
 const storageKey = 'auth';

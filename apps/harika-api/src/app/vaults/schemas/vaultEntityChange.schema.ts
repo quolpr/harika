@@ -1,18 +1,9 @@
-import {
-  Entity,
-  Unique,
-  PrimaryGeneratedColumn,
-  Column,
-  Index,
-  JoinColumn,
-  ManyToOne,
-} from 'typeorm';
+import { Entity, Unique, PrimaryGeneratedColumn, Column, Index } from 'typeorm';
 import {
   DatabaseChangeType,
   EntityChangeSchema,
   IDatabaseChange,
 } from '../../sync/types';
-import { Vault } from '../models/vault.model';
 
 @Entity('vault_entity_changes')
 @Unique(['scopeId', 'table', 'rev'])
@@ -23,10 +14,6 @@ export class VaultEntityChangeSchema implements EntityChangeSchema {
   @Column()
   @Index()
   rev!: number;
-
-  @ManyToOne(() => Vault)
-  @JoinColumn({ name: 'scopeId' })
-  vault!: Vault;
 
   @Column('uuid')
   @Index()

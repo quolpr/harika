@@ -24,10 +24,6 @@ export class UserEntityChangeSchema implements EntityChangeSchema {
   @Index()
   rev!: number;
 
-  @ManyToOne(() => User)
-  @JoinColumn({ name: 'scopeId' })
-  user!: User;
-
   @Column('uuid')
   @Index()
   scopeId!: string;

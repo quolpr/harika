@@ -20,12 +20,19 @@ export abstract class SyncEntitiesService {
   ): Promise<{ changes: IDatabaseChange[]; lastRev: number }> {
     const changes = await this.entityChangesRepo
       .createQueryBuilder('changes')
+
       .where('changes.rev > :rev', { rev })
       .andWhere('changes.scopeId = :scopeId', { scopeId })
       .getMany();
 
-    const lastRev =
-      changes.length === 0 ? 0 : Math.max(...changes.map(({ rev }) => rev));
+    // Todo: merge to query above, race condition may happen
+    const lastRev = (
+      await this.entityChangesRepo
+        .createQueryBuilder('changes')
+        .select(['MAX(changes.rev)'])
+        .where('changes.scopeId = :scopeId', { scopeId })
+        .getRawOne()
+    ).max as number;
 
     return { changes: changes.map((ch) => ch.toChange()), lastRev };
   }
@@ -35,6 +42,8 @@ export abstract class SyncEntitiesService {
     vaultId: string,
     clientIdentity: string
   ) {
+    console.log('[applyChanges]', changes);
+
     await this.connection.transaction(async (manager) => {
       for (const change of changes) {
         switch (change.type) {

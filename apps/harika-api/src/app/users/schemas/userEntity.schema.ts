@@ -18,10 +18,6 @@ export class UserEntitySchema implements EntitySchema {
   @Index()
   key!: string;
 
-  @ManyToOne(() => User)
-  @JoinColumn({ name: 'scopeId' })
-  user!: User;
-
   @Column('uuid')
   @Index()
   scopeId!: string;

@@ -29,9 +29,7 @@ export const SignupPage = () => {
     if (res.createUser) {
       const { id: userId } = res.createUser;
 
-      const dbId = new Buffer(userId).toString('hex');
-
-      setAuthInfo({ userId, dbId, isOffline: false });
+      setAuthInfo({ userId, isOffline: false });
 
       history.push(paths.vaultIndexPath());
     } else {

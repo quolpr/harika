@@ -1,6 +1,8 @@
 import { uniq } from 'lodash-es';
 import { ModelInstanceCreationData } from 'mobx-keystone';
-import { NoteBlockModel, noteBlockRef, NoteModel } from '../../NotesRepository';
+import { NoteBlockModel, noteBlockRef } from '../models/NoteBlockModel';
+import { NoteModel } from '../models/NoteModel';
+
 import { BlockContentModel } from '../models/BlockContentModel';
 import { noteRef } from '../models/NoteModel';
 import { NoteBlockDocType, NoteDocType, VaultDexieDatabase } from './DexieDb';
@@ -21,6 +23,7 @@ interface IConvertResult {
 export const convertNoteBlockDocToModelAttrs = (
   doc: NoteBlockDocType
 ): NoteBlockData => {
+  console.log({ doc });
   return {
     syncId: doc.syncId,
     $modelId: doc.shortId,
@@ -30,8 +33,9 @@ export const convertNoteBlockDocToModelAttrs = (
       ? noteBlockRef(doc.parentBlockId)
       : undefined,
     noteRef: noteRef(doc.noteId),
-    noteBlockRefs: doc.noteBlockIds.map((b) => noteBlockRef(b)),
-    linkedNoteRefs: doc.linkedNoteIds.map((n) => noteRef(n)),
+    // null == undefined for dexieDB modifications
+    noteBlockRefs: doc.noteBlockIds.filter(Boolean).map((b) => noteBlockRef(b)),
+    linkedNoteRefs: doc.linkedNoteIds.filter(Boolean).map((n) => noteRef(n)),
   };
 };
 

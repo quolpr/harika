@@ -4,13 +4,13 @@ import { VaultModel } from './NotesRepository/models/VaultModel';
 import { syncMiddleware } from './NotesRepository/models/syncable';
 import * as remotedev from 'remotedev';
 import { connectReduxDevTools } from 'mobx-keystone';
-import { initDb, initVaultSync } from './NotesRepository/rxdb/initDb';
-import { initHarikaDb, initHarikaSync } from './VaultsRepository/rxdb/initDb';
-import { initRxDbToLocalSync } from './NotesRepository/rxdb/sync';
-import { HarikaRxDatabase } from './VaultsRepository/rxdb/initDb';
 import { VaultDexieDatabase } from './NotesRepository/dexieDb/DexieDb';
 import { ChangesHandler } from './NotesRepository/dexieDb/ChangesHandler';
 import { toMobxSync } from './NotesRepository/dexieDb/toMobxSync';
+import { UserDexieDatabase } from './UserDexieDb';
+import { from } from 'rxjs';
+import { v4 } from 'uuid';
+import './dexieDbSyncProtocol';
 
 export class VaultsRepository {
   // TODO: finde better naming(instead of conatiner)
@@ -19,7 +19,7 @@ export class VaultsRepository {
   private dexieVaultDbs: Record<string, VaultDexieDatabase> = {};
   private noteRepo = new NotesRepository(this.dexieVaultDbs);
 
-  database!: HarikaRxDatabase;
+  database!: UserDexieDatabase;
 
   constructor(private dbId: string, private sync: boolean) {}
 
@@ -28,17 +28,16 @@ export class VaultsRepository {
   }
 
   async init() {
-    this.database = await initHarikaDb(this.dbId);
+    this.database = new UserDexieDatabase(this.dbId);
 
-    this.database.waitForLeadership().then(() => {
-      if (this.sync) {
-        // Don't await to not block UI
-        // initHarikaSync(this.database, this.dbId, this.sync.token);
+    await this.database.open();
+    console.log('init vaults');
 
-        console.log('HarikaDb isLeader now');
-        document.title = '♛ ' + document.title;
-      }
-    });
+    if (this.sync) {
+      this.database.syncable.connect('websocket', 'ws://localhost:3333/user', {
+        scopeId: this.dbId,
+      });
+    }
   }
 
   async getVault(vaultId: string) {
@@ -50,10 +49,11 @@ export class VaultsRepository {
   }
 
   getAllVaultTuples$() {
-    return this.database.vaults.find().$.pipe(
+    // TODO: add reactivity support
+    return from(this.database.vaults.toArray()).pipe(
       map((vaults) =>
         vaults.map((v) => ({
-          id: v._id,
+          id: v.shortId,
           name: v.name,
           createAd: v.createdAt,
         }))
@@ -62,10 +62,11 @@ export class VaultsRepository {
   }
 
   async createVault({ name, dbId }: { name: string; dbId: string }) {
-    this.database.vaults.insert({
-      _id: dbId,
+    this.database.vaults.add({
+      shortId: dbId,
       name,
       createdAt: new Date().getTime(),
+      syncId: v4(),
     });
 
     return this.getVault(dbId);
@@ -73,8 +74,9 @@ export class VaultsRepository {
 
   private async initializeVaultAndRepo(id: string) {
     const vaultDoc = await this.database.vaults
-      .findOne({ selector: { _id: id } })
-      .exec();
+      .where('shortId')
+      .equals(id)
+      .first();
 
     if (!vaultDoc) return;
 
@@ -83,10 +85,12 @@ export class VaultsRepository {
     await this.dexieVaultDbs[id].open();
 
     if (this.sync) {
+      console.log('setuping sync');
+
       this.dexieVaultDbs[id].syncable.connect(
         'websocket',
         'ws://localhost:3333/vault',
-        { scopeId: id }
+        { scopeId: vaultDoc.syncId }
       );
     }
 
