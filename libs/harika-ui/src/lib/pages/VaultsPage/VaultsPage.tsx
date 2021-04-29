@@ -10,13 +10,12 @@ import { CreateVaultModal } from './CreateVaultModal';
 import { useAuthState } from '../../hooks/useAuthState';
 import { Brand } from '../../components/Brand/Brand';
 import { generateId } from '@harika/harika-core';
+import { deleteFromStorage, writeStorage } from '@rehooks/local-storage';
 
 const vaultsClass = cn('vaults');
 const vaultsNavbarClass = cn('vaults-navbar');
 
 export const VaultsPage = ({ vaults }: { vaults: VaultsRepository }) => {
-  const [authInfo] = useAuthState();
-
   const history = useHistory();
 
   const [isCreateModalOpened, setIsCreateModalOpened] = useState(false);
@@ -56,6 +55,7 @@ export const VaultsPage = ({ vaults }: { vaults: VaultsRepository }) => {
           className={vaultsNavbarClass('logout')}
           onClick={() => {
             setAuthInfo(undefined);
+            deleteFromStorage('lastVaultId');
           }}
         >
           Log Out

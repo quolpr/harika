@@ -4,7 +4,7 @@ import {
   VaultUiState,
 } from '@harika/harika-core';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useHistory, useParams } from 'react-router-dom';
 import { useClickAway, useMedia } from 'react-use';
 import { NoteRepositoryContext } from '../../contexts/CurrentNoteRepositoryContext';
 import { CurrentVaultContext } from '../../contexts/CurrentVaultContext';
@@ -40,6 +40,8 @@ const layoutClass = cn('vault-layout');
 export const VaultLayout: React.FC<{
   vaultRepository: VaultsRepository;
 }> = ({ children, vaultRepository }) => {
+  const history = useHistory();
+
   const { vaultId } = useParams<{ vaultId: string }>();
   const isWide = useMedia('(min-width: 768px)');
   const [vault, setVault] = useState<VaultModel | undefined>();
@@ -53,10 +55,20 @@ export const VaultLayout: React.FC<{
   }, [isSidebarOpened]);
 
   useEffect(() => {
-    const cb = async () => setVault(await vaultRepository.getVault(vaultId));
+    const cb = async () => {
+      const vault = await vaultRepository.getVault(vaultId);
+
+      if (!vault) {
+        writeStorage('lastVaultId', undefined);
+
+        history.replace('/');
+      }
+
+      setVault(vault);
+    };
 
     cb();
-  }, [vaultRepository, vaultId]);
+  }, [vaultRepository, vaultId, history]);
 
   const [vaultUiState] = useState(new VaultUiState({}));
 

@@ -109,20 +109,25 @@ export function App({ environment }: { environment: Environment }) {
             <LoginPage />
           </Route>
 
-          {/* <Route exact path="/"> */}
-          {/*   {() => { */}
-          {/*     console.log({ lastVaultId, authInfo }); */}
-          {/*     if (lastVaultId && authInfo) { */}
-          {/*       return ( */}
-          {/*         <Redirect */}
-          {/*           to={paths.vaultDailyPath({ vaultId: lastVaultId })} */}
-          {/*         /> */}
-          {/*       ); */}
-          {/*     } else { */}
-          {/*       return <Redirect to={PATHS.DEFAULT_PATH} />; */}
-          {/*     } */}
-          {/*   }} */}
-          {/* </Route> */}
+          <Route exact path="/">
+            {() => {
+              if (lastVaultId && authInfo) {
+                console.log({ lastVaultId, authInfo });
+
+                return (
+                  <Redirect
+                    to={paths.vaultDailyPath({ vaultId: lastVaultId })}
+                  />
+                );
+              } else {
+                return authInfo ? (
+                  <Redirect to={PATHS.DEFAULT_PATH} />
+                ) : (
+                  <Redirect to={PATHS.LOGIN_PATH} />
+                );
+              }
+            }}
+          </Route>
         </Router>
       </QueryClientProvider>
     </React.StrictMode>
