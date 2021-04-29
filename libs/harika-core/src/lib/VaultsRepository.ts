@@ -27,7 +27,23 @@ export class VaultsRepository {
     private dbId: string,
     private sync: boolean,
     private config: { wsUrl: string }
-  ) {}
+  ) {
+    // TODO: should be called in destroy
+    // and destroy should be called by react app
+    window.addEventListener(
+      'beforeunload',
+      (e) => {
+        console.log('db are closed');
+
+        if (this.database) this.database.close();
+
+        Object.values(this.dexieVaultDbs).forEach((db) => db.close());
+
+        return null;
+      },
+      false
+    );
+  }
 
   getNoteRepository() {
     return this.noteRepo;
