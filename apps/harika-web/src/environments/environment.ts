@@ -3,4 +3,6 @@
 
 export const environment = {
   production: false,
+  wsUrl: 'ws://localhost:3333',
+  apiUrl: 'http://localhost:3333',
 };

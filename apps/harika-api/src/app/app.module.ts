@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { ClientIdentity } from './sync/models/ClientIdentity.model';
 import { User } from './users/schemas/user.schema';
 import { UserEntitySchema } from './users/schemas/userEntity.schema';
 import { UserEntityChangeSchema } from './users/schemas/userEntityChange.schema';
@@ -49,9 +50,9 @@ import { VaultsModule } from './vaults/vaults.module';
         VaultEntitySchema,
         UserEntitySchema,
         UserEntityChangeSchema,
+        ClientIdentity,
       ],
       synchronize: true,
-      logging: true,
     }),
   ],
   controllers: [AppController],

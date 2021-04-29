@@ -21,7 +21,11 @@ export class VaultsRepository {
 
   database!: UserDexieDatabase;
 
-  constructor(private dbId: string, private sync: boolean) {}
+  constructor(
+    private dbId: string,
+    private sync: boolean,
+    private config: { wsUrl: string }
+  ) {}
 
   getNoteRepository() {
     return this.noteRepo;
@@ -36,7 +40,7 @@ export class VaultsRepository {
     if (this.sync) {
       this.database.syncable.connect(
         'websocket',
-        'wss://app-dev.harika.io/api/user',
+        `${this.config.wsUrl}/api/user`,
         {
           scopeId: this.dbId,
         }
@@ -93,7 +97,7 @@ export class VaultsRepository {
 
       this.dexieVaultDbs[id].syncable.connect(
         'websocket',
-        'wss://app-dev.harika.io/api/vault',
+        `${this.config.wsUrl}/api/vault`,
         { scopeId: vaultDoc.syncId }
       );
     }

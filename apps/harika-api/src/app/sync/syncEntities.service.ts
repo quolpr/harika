@@ -35,7 +35,10 @@ export abstract class SyncEntitiesService {
         .getRawOne()
     ).max as number;
 
-    return { changes: changes.map((ch) => ch.toChange()), lastRev };
+    return {
+      changes: changes.map((ch) => ch.toChange()),
+      lastRev: lastRev !== undefined && lastRev !== null ? lastRev : 0,
+    };
   }
 
   async applyChanges(
@@ -47,16 +50,13 @@ export abstract class SyncEntitiesService {
       for (const change of changes) {
         switch (change.type) {
           case DatabaseChangeType.Create:
-            console.log(
-              'create',
-              await this.createEntity(
-                vaultId,
-                change.table,
-                change.key,
-                change.obj,
-                clientIdentity,
-                manager
-              )
+            await this.createEntity(
+              vaultId,
+              change.table,
+              change.key,
+              change.obj,
+              clientIdentity,
+              manager
             );
             break;
           case DatabaseChangeType.Update:

@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { CoreModule } from '../core/core.module';
+import { SyncModule } from '../sync/sync.module';
 import { Vault } from './models/vault.model';
 import { VaultEntitySchema } from './schemas/vaultEntity.schema';
 import { VaultEntityChangeSchema } from './schemas/vaultEntityChange.schema';
@@ -15,6 +17,8 @@ import { VaultsService } from './vaults.service';
       VaultEntitySchema,
       Vault,
     ]),
+    CoreModule,
+    SyncModule,
   ],
   providers: [
     VaultDbSyncEntitiesService,

@@ -115,6 +115,7 @@
     "@babel/preset-typescript": "7.9.0",
     "@capacitor/android": "^2.4.5",
     "@capacitor/ios": "^2.4.5",
+    "@graphql-codegen/add": "^2.0.2",
     "@graphql-codegen/cli": "^1.20.1",
     "@graphql-codegen/typescript-operations": "^1.17.14",
     "@graphql-codegen/typescript-react-query": "^1.1.0",

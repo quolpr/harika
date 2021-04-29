@@ -4,6 +4,8 @@ import {
   OnGatewayConnection,
   OnGatewayDisconnect,
 } from '@nestjs/websockets';
+import { TransientLogger } from '../core/TransientLogger';
+import { ClientIdentityService } from '../sync/clientIdentity.service';
 import { SyncGateway } from '../sync/sync.gateway';
 import { VaultDbSyncEntitiesService } from './vaultDbSyncEntities.service';
 
@@ -12,7 +14,12 @@ import { VaultDbSyncEntitiesService } from './vaultDbSyncEntities.service';
 export class VaultDbSyncGateway
   extends SyncGateway
   implements OnGatewayConnection, OnGatewayDisconnect {
-  constructor(entitiesService: VaultDbSyncEntitiesService) {
-    super(entitiesService);
+  constructor(
+    entitiesService: VaultDbSyncEntitiesService,
+    logger: TransientLogger,
+    identityService: ClientIdentityService
+  ) {
+    logger.setContext('VaultDBSyncGateway');
+    super(entitiesService, logger, identityService);
   }
 }

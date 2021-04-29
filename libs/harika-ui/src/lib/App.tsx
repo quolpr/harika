@@ -19,6 +19,8 @@ import { useState } from 'react';
 import { Redirect, Route, Router } from 'react-router-dom';
 import { createBrowserHistory } from 'history';
 import { useLocalStorage } from '@rehooks/local-storage';
+import { Environment } from './types';
+import { env } from './env';
 
 const history = createBrowserHistory();
 
@@ -26,7 +28,7 @@ Modal.setAppElement('body');
 
 const queryClient = new QueryClient();
 
-export function App() {
+export function App({ environment }: { environment: Environment }) {
   const [authInfo, setAuthInfo] = useAuthState();
   const userId = authInfo?.userId;
   const isOffline = authInfo?.isOffline;
@@ -38,12 +40,15 @@ export function App() {
   >();
 
   useEffect(() => {
+    env.baseApiUrl = environment.apiUrl;
     if (!userId || isOffline === undefined) return;
 
     let repo: VaultsRepository | undefined = undefined;
 
     const cb = async () => {
-      repo = new VaultsRepository(userId, !isOffline);
+      repo = new VaultsRepository(userId, !isOffline, {
+        wsUrl: environment.wsUrl,
+      });
 
       await repo.init();
 
@@ -56,7 +61,7 @@ export function App() {
       repo?.destroy();
       setVaultRepository(undefined);
     };
-  }, [userId, isOffline]);
+  }, [userId, isOffline, environment.apiUrl, environment.wsUrl]);
 
   return (
     <React.StrictMode>

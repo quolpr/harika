@@ -13,6 +13,9 @@ import {
   IUpdateChange,
   SyncEntitiesService,
 } from './types';
+import { Logger } from '@nestjs/common';
+import { inspect } from 'util';
+import { ClientIdentityService } from './clientIdentity.service';
 const util = require('util');
 
 interface BaseRequest {
@@ -49,7 +52,11 @@ interface IInitializeRequest extends BaseRequest {
 // TODO: auth!!!
 export abstract class SyncGateway
   implements OnGatewayConnection, OnGatewayDisconnect {
-  constructor(private syncEntities: SyncEntitiesService) {}
+  constructor(
+    private syncEntities: SyncEntitiesService,
+    private logger: Logger,
+    private identityService: ClientIdentityService
+  ) {}
 
   // TODO: maybe redis?
   private socketIOLocals = new Map<
@@ -63,10 +70,15 @@ export abstract class SyncGateway
       }
   >();
 
-  private revStore: Record<string, number> = {};
-
   @SubscribeMessage('initialize')
   async handleInitialize(client: Socket, event: IInitializeRequest) {
+    // TODO maybe set clientIdentity on server? To avoid possible secure issues
+    this.logger.debug(
+      `[${event.scopeId}] [${event.identity}] handleInitialize - ${inspect(
+        event
+      )}`
+    );
+
     // TODO: add auth check
     this.socketIOLocals.set(client, {
       clientIdentity: event.identity,
@@ -74,11 +86,6 @@ export abstract class SyncGateway
       type: 'initialized',
       subscribeToChanges: false,
     });
-
-    this.revStore[event.identity] =
-      this.revStore[event.identity] !== undefined
-        ? this.revStore[event.identity]
-        : 0;
 
     client.emit('requestHandled', { status: 'ok', requestId: event.requestId });
   }
@@ -93,9 +100,13 @@ export abstract class SyncGateway
     if (state.type !== 'initialized')
       throw "Can't send changes to uninitialized client";
 
-    this.socketIOLocals.set(client, { ...state, subscribeToChanges: true });
+    this.logger.debug(
+      `[${state.scopeId}] [${
+        state.clientIdentity
+      }] subscribeToChanges - ${inspect(event)}`
+    );
 
-    console.log('subscribed to changes!', event);
+    this.socketIOLocals.set(client, { ...state, subscribeToChanges: true });
 
     this.sendAnyChanges(client);
   }
@@ -107,10 +118,14 @@ export abstract class SyncGateway
     if (state.type !== 'initialized')
       throw "Can't send changes to uninitialized client";
 
+    const currentClientRev = await this.identityService.getLastRev(
+      state.clientIdentity
+    );
+
     // Get all changes after syncedRevision that was not performed by the client we're talkin' to.
     const { changes, lastRev } = await this.syncEntities.getChangesFromRev(
       state.scopeId,
-      this.revStore[state.clientIdentity],
+      currentClientRev,
       state.clientIdentity
     );
     // Compact changes so that multiple changes on same object is merged into a single change.
@@ -121,19 +136,23 @@ export abstract class SyncGateway
     });
     // Notice the current revision of the database. We want to send it to client so it knows what to ask for next time.
 
-    console.log({
-      syncedRevision: this.revStore[state.clientIdentity],
-      changes,
-      lastRev,
-    });
-
-    client.emit('applyNewChanges', {
+    const toSend = {
       changes: reducedArray,
       currentRevision: lastRev,
       partial: false, // Tell client that these are the only changes we are aware of. Since our mem DB is syncronous, we got all changes in one chunk.
-    });
+    };
 
-    this.revStore[state.clientIdentity] = lastRev;
+    client.emit('applyNewChanges', toSend);
+
+    await this.identityService.setNewRev(state.clientIdentity, lastRev);
+
+    this.logger.debug(
+      `[${state.scopeId}] [${
+        state.clientIdentity
+      }] changesToClientSent - ${inspect(
+        toSend
+      )}, new rev set - ${lastRev}, prev rev - ${currentClientRev}`
+    );
   }
 
   @SubscribeMessage('applyNewChanges')
@@ -145,9 +164,11 @@ export abstract class SyncGateway
         throw new Error('Not initialized');
       }
 
-      console.log('[applyNewChanges]', {
-        event: util.inspect(event, { showHidden: false, depth: null }),
-      });
+      this.logger.debug(
+        `[${state.scopeId}] [${
+          state.clientIdentity
+        }] receivedChangesFromClient - ${inspect(event)}`
+      );
 
       const baseRevision = event.baseRevision || 0;
       const serverChanges = (
@@ -160,11 +181,7 @@ export abstract class SyncGateway
 
       const reducedServerChangeSet = reduceChanges(serverChanges);
 
-      console.log({ reducedServerChangeSet, changes: event.changes });
-
       const resolved = resolveConflicts(event.changes, reducedServerChangeSet);
-
-      console.log({ reducedServerChangeSet, changes: event.changes, resolved });
 
       await this.syncEntities.applyChanges(
         resolved,
@@ -184,13 +201,10 @@ export abstract class SyncGateway
             subscriberState.scopeId === state.scopeId &&
             subscriberState.subscribeToChanges
           ) {
-            console.log('sendging changes!');
             this.sendAnyChanges(subscriber);
           }
         }
       );
-
-      // TODO: broadcast changes
     } catch (e) {
       client.emit('requestHandled', {
         status: 'error',

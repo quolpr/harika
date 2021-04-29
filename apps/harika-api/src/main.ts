@@ -22,7 +22,13 @@ declare global {
 }
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(
+    AppModule,
+
+    {
+      logger: ['error', 'warn', 'debug'],
+    }
+  );
 
   app.enableCors({
     credentials: true,
