@@ -102,10 +102,10 @@ export const CommandPaletteModal = ({
             .replace(/^!findOrCreate/, '')
             .trim();
 
-          const notes = await noteRepo.searchNotesTuples(
-            vault.$modelId,
-            toFind
-          );
+          // TODO: to RxJS
+          const notes = await noteRepo
+            .searchNotesTuples$(vault.$modelId, toFind)
+            .toPromise();
 
           const createNoteAction: IAction = {
             id: uuidv4(),

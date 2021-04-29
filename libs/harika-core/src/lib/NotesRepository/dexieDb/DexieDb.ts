@@ -3,6 +3,9 @@ import Dexie from 'dexie';
 import 'dexie-observable';
 import 'dexie-syncable';
 import { generateId } from '../../generateId';
+import { Observable, ObservableInput } from 'rxjs';
+import { onDexieChange } from '../../onDexieChange';
+import { startWith, switchMap } from 'rxjs/operators';
 
 export type NoteDocType = {
   syncId: string;
@@ -32,6 +35,9 @@ export class VaultDexieDatabase extends Dexie {
   notes: Dexie.Table<NoteDocType, string>;
   noteBlocks: Dexie.Table<NoteBlockDocType, string>;
 
+  notesChange$: Observable<void>;
+  noteBlocksChange$: Observable<void>;
+
   constructor(id: string) {
     super(`harika_vault_${id}`);
 
@@ -44,6 +50,9 @@ export class VaultDexieDatabase extends Dexie {
 
     this.noteBlocks = this.table('noteBlocks');
     this.notes = this.table('notes');
+
+    this.notesChange$ = onDexieChange(this, 'notes');
+    this.noteBlocksChange$ = onDexieChange(this, 'noteBlocks');
   }
 
   get noteBlocksQueries() {

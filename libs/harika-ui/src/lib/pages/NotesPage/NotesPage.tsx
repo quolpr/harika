@@ -50,7 +50,7 @@ export const NotesPage = () => {
   const noteRepo = useNoteRepository();
 
   const input$ = useObservable(() =>
-    noteRepo.getAllNotesTuples(vault.$modelId)
+    noteRepo.getAllNotesTuples$(vault.$modelId)
   );
 
   const observedNotes = useObservableEagerState(input$) || [];

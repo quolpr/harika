@@ -16,7 +16,7 @@ import { OnlyAuthed } from './components/OnlyAuthed';
 import { LoginPage } from './pages/LoginPage/LoginPage';
 import { useAuthState } from './hooks/useAuthState';
 import { useState } from 'react';
-import { Redirect, Route, Router } from 'react-router-dom';
+import { Redirect, Route, Router, Switch } from 'react-router-dom';
 import { createBrowserHistory } from 'history';
 import { useLocalStorage } from '@rehooks/local-storage';
 import { Environment } from './types';
@@ -67,67 +67,71 @@ export function App({ environment }: { environment: Environment }) {
     <React.StrictMode>
       <QueryClientProvider client={queryClient}>
         <Router history={history}>
-          {/* <button */}
-          {/*   onClick={() => { */}
-          {/*     setAuthInfo(undefined); */}
-          {/*   }} */}
-          {/*   style={{ marginTop: 50 }} */}
-          {/* > */}
-          {/*   Reset auth */}
-          {/* </button> */}
-          <Route path={VAULT_PREFIX}>
-            <OnlyAuthed>
-              {vaultRepository && (
-                <VaultLayout vaultRepository={vaultRepository}>
-                  <Route exact path={PATHS.VAULT_DAILY_PATH}>
-                    <DailyNotePage />
-                  </Route>
+          <Switch>
+            {/* <button */}
+            {/*   onClick={() => { */}
+            {/*     setAuthInfo(undefined); */}
+            {/*   }} */}
+            {/*   style={{ marginTop: 50 }} */}
+            {/* > */}
+            {/*   Reset auth */}
+            {/* </button> */}
+            <Route path={VAULT_PREFIX}>
+              <OnlyAuthed>
+                {vaultRepository && (
+                  <VaultLayout vaultRepository={vaultRepository}>
+                    <Switch>
+                      <Route exact path={PATHS.VAULT_DAILY_PATH}>
+                        <DailyNotePage />
+                      </Route>
 
-                  <Route exact path={PATHS.VAULT_NOTE_PATH}>
-                    <NotePage />
-                  </Route>
+                      <Route exact path={PATHS.VAULT_NOTE_PATH}>
+                        <NotePage />
+                      </Route>
 
-                  <Route exact path={PATHS.VAULT_NOTE_INDEX_PATH}>
-                    <NotesPage />
-                  </Route>
-                </VaultLayout>
-              )}
-            </OnlyAuthed>
-          </Route>
+                      <Route exact path={PATHS.VAULT_NOTE_INDEX_PATH}>
+                        <NotesPage />
+                      </Route>
+                    </Switch>
+                  </VaultLayout>
+                )}
+              </OnlyAuthed>
+            </Route>
 
-          <Route exact path={PATHS.VAULT_INDEX_PATH}>
-            <OnlyAuthed>
-              {vaultRepository && <VaultsPage vaults={vaultRepository} />}
-            </OnlyAuthed>
-          </Route>
+            <Route exact path={PATHS.VAULT_INDEX_PATH}>
+              <OnlyAuthed>
+                {vaultRepository && <VaultsPage vaults={vaultRepository} />}
+              </OnlyAuthed>
+            </Route>
 
-          <Route exact path={PATHS.SIGNUP_PATH}>
-            <SignupPage />
-          </Route>
+            <Route exact path={PATHS.SIGNUP_PATH}>
+              <SignupPage />
+            </Route>
 
-          <Route exact path={PATHS.LOGIN_PATH}>
-            <LoginPage />
-          </Route>
+            <Route exact path={PATHS.LOGIN_PATH}>
+              <LoginPage />
+            </Route>
 
-          <Route exact path="/">
-            {() => {
-              if (lastVaultId && authInfo) {
-                console.log({ lastVaultId, authInfo });
+            <Route exact strict path="/">
+              {() => {
+                if (lastVaultId && authInfo) {
+                  console.log({ lastVaultId, authInfo });
 
-                return (
-                  <Redirect
-                    to={paths.vaultDailyPath({ vaultId: lastVaultId })}
-                  />
-                );
-              } else {
-                return authInfo ? (
-                  <Redirect to={PATHS.DEFAULT_PATH} />
-                ) : (
-                  <Redirect to={PATHS.LOGIN_PATH} />
-                );
-              }
-            }}
-          </Route>
+                  return (
+                    <Redirect
+                      to={paths.vaultDailyPath({ vaultId: lastVaultId })}
+                    />
+                  );
+                } else {
+                  return authInfo ? (
+                    <Redirect to={PATHS.DEFAULT_PATH} />
+                  ) : (
+                    <Redirect to={PATHS.LOGIN_PATH} />
+                  );
+                }
+              }}
+            </Route>
+          </Switch>
         </Router>
       </QueryClientProvider>
     </React.StrictMode>

@@ -97,6 +97,7 @@
     "react-use": "^15.3.4",
     "reflect-metadata": "^0.1.13",
     "remotedev": "^0.2.9",
+    "rxjs": "^6.6.7",
     "socket.io-client": "^2.4.0",
     "tslib": "^2.0.0",
     "typeorm": "^0.2.32",

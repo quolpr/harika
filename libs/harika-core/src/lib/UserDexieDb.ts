@@ -1,4 +1,6 @@
 import Dexie from 'dexie';
+import { onDexieChange } from './onDexieChange';
+import { Observable } from 'rxjs';
 
 interface VaultDocType {
   syncId: string;
@@ -10,6 +12,7 @@ interface VaultDocType {
 
 export class UserDexieDatabase extends Dexie {
   vaults: Dexie.Table<VaultDocType, string>;
+  vaultsChange$: Observable<void>;
 
   constructor(id: string) {
     super(`harika_vault_${id}`);
@@ -19,5 +22,7 @@ export class UserDexieDatabase extends Dexie {
     });
 
     this.vaults = this.table('vaults');
+
+    this.vaultsChange$ = onDexieChange(this, 'vaults');
   }
 }

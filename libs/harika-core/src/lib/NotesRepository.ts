@@ -6,10 +6,11 @@ import { Optional } from 'utility-types';
 import { Required } from 'utility-types';
 import { ICreationResult } from './NotesRepository/types';
 import { VaultModel } from './NotesRepository/models/VaultModel';
-import { map } from 'rxjs/operators';
 import { VaultDexieDatabase } from './NotesRepository/dexieDb/DexieDb';
 import { loadNoteDocToModelAttrs } from './NotesRepository/dexieDb/convertDocToModel';
-import { from } from 'rxjs';
+import { concat, startWith, switchMap } from 'rxjs/operators';
+import { of, race } from 'rxjs';
+import { liveSwitch } from './onDexieChange';
 
 export { NoteModel } from './NotesRepository/models/NoteModel';
 export { VaultModel } from './NotesRepository/models/VaultModel';
@@ -193,20 +194,24 @@ export class NotesRepository {
     return vault.notesMap[row.shortId];
   }
 
-  // TODO: Rx way
-  async searchNotesTuples(vaultId: string, title: string) {
-    return (
-      await this.getDbByVaultId(vaultId).notesQueries.searchNotes(title)
-    ).map((row) => ({
-      id: row.shortId,
-      title: row.title,
-    }));
+  // TODO: better Rx way, put title to pipe
+  searchNotesTuples$(vaultId: string, title: string) {
+    return this.getDbByVaultId(vaultId).notesChange$.pipe(
+      liveSwitch(async () =>
+        (
+          await this.getDbByVaultId(vaultId).notesQueries.searchNotes(title)
+        ).map((row) => ({
+          id: row.shortId,
+          title: row.title,
+        }))
+      )
+    );
   }
 
-  getAllNotesTuples(vaultId: string) {
-    return from(this.getDbByVaultId(vaultId).notesQueries.all()).pipe(
-      map((rows) =>
-        rows.map((row) => ({
+  getAllNotesTuples$(vaultId: string) {
+    return this.getDbByVaultId(vaultId).notesChange$.pipe(
+      liveSwitch(async () =>
+        (await this.getDbByVaultId(vaultId).notesQueries.all()).map((row) => ({
           id: row.shortId,
           title: row.title,
           createdAt: new Date(row.createdAt),

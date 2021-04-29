@@ -11,6 +11,8 @@ import { UserDexieDatabase } from './UserDexieDb';
 import { from } from 'rxjs';
 import { v4 } from 'uuid';
 import './dexieDbSyncProtocol';
+import { switchMap } from 'rxjs/operators';
+import { liveSwitch } from './onDexieChange';
 
 export class VaultsRepository {
   // TODO: finde better naming(instead of conatiner)
@@ -57,10 +59,9 @@ export class VaultsRepository {
   }
 
   getAllVaultTuples$() {
-    // TODO: add reactivity support
-    return from(this.database.vaults.toArray()).pipe(
-      map((vaults) =>
-        vaults.map((v) => ({
+    return this.database.vaultsChange$.pipe(
+      liveSwitch(async () =>
+        (await this.database.vaults.toArray()).map((v) => ({
           id: v.shortId,
           name: v.name,
           createAd: v.createdAt,
