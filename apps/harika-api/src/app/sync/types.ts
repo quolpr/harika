@@ -1,3 +1,5 @@
+import { User } from '../users/schemas/user.schema';
+
 export enum DatabaseChangeType {
   Create = 1,
   Update = 2,
@@ -29,6 +31,7 @@ export type IDatabaseChange = ICreateChange | IUpdateChange | IDeleteChange;
 export interface SyncEntitiesService {
   getChangesFromRev(
     scopeId: string,
+    ownerId: string,
     rev: number,
     clientIdentity: string
   ): Promise<{ changes: IDatabaseChange[]; lastRev: number }>;
@@ -36,6 +39,7 @@ export interface SyncEntitiesService {
   applyChanges(
     changes: IDatabaseChange[],
     scopeId: string,
+    ownerId: string,
     clientIdentity: string
   ): Promise<void>;
 }
@@ -45,6 +49,8 @@ export interface EntitySchema {
   key: string;
   scopeId: string;
   obj: Record<string, unknown>;
+  ownerId: string;
+  owner: User;
 }
 
 export interface EntityChangeSchema {
@@ -57,6 +63,9 @@ export interface EntityChangeSchema {
   table: string;
   obj?: Record<string, unknown>;
   mods?: Record<string, unknown>;
+
+  ownerId: string;
+  owner: User;
 
   toChange(): IDatabaseChange;
 }

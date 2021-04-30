@@ -1,13 +1,14 @@
+import * as set from 'lodash.set';
 import { Connection, EntityManager, Repository } from 'typeorm';
 import {
   DatabaseChangeType,
   EntityChangeSchema,
   EntitySchema,
   IDatabaseChange,
+  SyncEntitiesService,
 } from './types';
-import set from 'lodash.set';
 
-export abstract class SyncEntitiesService {
+export abstract class BaseSyncEntitiesService implements SyncEntitiesService {
   constructor(
     private connection: Connection,
     private vaultEntitiesRepo: Repository<EntitySchema>,
@@ -16,6 +17,7 @@ export abstract class SyncEntitiesService {
 
   async getChangesFromRev(
     scopeId: string,
+    ownerId: string,
     rev: number,
     clientIdentity: string
   ): Promise<{ changes: IDatabaseChange[]; lastRev: number }> {
@@ -24,6 +26,7 @@ export abstract class SyncEntitiesService {
       .where('changes.source <> :clientIdentity', { clientIdentity })
       .andWhere('changes.rev > :rev', { rev })
       .andWhere('changes.scopeId = :scopeId', { scopeId })
+      .andWhere('changes.ownerId = :ownerId', { ownerId })
       .getMany();
 
     // Todo: merge to query above, race condition may happen
@@ -32,6 +35,7 @@ export abstract class SyncEntitiesService {
         .createQueryBuilder('changes')
         .select(['MAX(changes.rev)'])
         .where('changes.scopeId = :scopeId', { scopeId })
+        .andWhere('changes.ownerId = :ownerId', { ownerId })
         .getRawOne()
     ).max as number;
 
@@ -43,7 +47,8 @@ export abstract class SyncEntitiesService {
 
   async applyChanges(
     changes: IDatabaseChange[],
-    vaultId: string,
+    scopeId: string,
+    ownerId: string,
     clientIdentity: string
   ) {
     await this.connection.transaction(async (manager) => {
@@ -51,7 +56,8 @@ export abstract class SyncEntitiesService {
         switch (change.type) {
           case DatabaseChangeType.Create:
             await this.createEntity(
-              vaultId,
+              scopeId,
+              ownerId,
               change.table,
               change.key,
               change.obj,
@@ -61,7 +67,8 @@ export abstract class SyncEntitiesService {
             break;
           case DatabaseChangeType.Update:
             await this.updateEntity(
-              vaultId,
+              scopeId,
+              ownerId,
               change.table,
               change.key,
               change.mods,
@@ -71,7 +78,8 @@ export abstract class SyncEntitiesService {
             break;
           case DatabaseChangeType.Delete:
             await this.delete(
-              vaultId,
+              scopeId,
+              ownerId,
               change.table,
               change.key,
               clientIdentity,
@@ -85,6 +93,7 @@ export abstract class SyncEntitiesService {
 
   private async createEntity(
     scopeId: string,
+    ownerId: string,
     table: string,
     key: string,
     obj: Record<string, unknown>,
@@ -93,6 +102,7 @@ export abstract class SyncEntitiesService {
   ) {
     const entity = this.vaultEntitiesRepo.create({
       scopeId,
+      ownerId,
       key,
       obj,
     });
@@ -106,6 +116,7 @@ export abstract class SyncEntitiesService {
       table,
       obj,
       scopeId,
+      ownerId,
     });
 
     return (await this.saveChangeWithIncrement(manager, change)).rev;
@@ -113,6 +124,7 @@ export abstract class SyncEntitiesService {
 
   private async updateEntity(
     scopeId: string,
+    ownerId: string,
     table: string,
     key: string,
     modifications: Record<string, string>,
@@ -135,6 +147,7 @@ export abstract class SyncEntitiesService {
       type: DatabaseChangeType.Update,
       table: table,
       scopeId: scopeId,
+      ownerId,
       mods: modifications,
     });
 
@@ -143,6 +156,7 @@ export abstract class SyncEntitiesService {
 
   private async delete(
     scopeId: string,
+    ownerId: string,
     table: string,
     key: string,
     clientIdentity: string,
@@ -156,6 +170,7 @@ export abstract class SyncEntitiesService {
       type: DatabaseChangeType.Delete,
       table: table,
       scopeId: scopeId,
+      ownerId,
     });
 
     return (await this.saveChangeWithIncrement(manager, change)).rev;
@@ -169,8 +184,6 @@ export abstract class SyncEntitiesService {
       .createQueryBuilder()
       .insert()
       .into(this.entityChangesRepo.metadata.tableName)
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
       .values({
         ...model,
         rev: () =>
@@ -178,11 +191,12 @@ export abstract class SyncEntitiesService {
             .createQueryBuilder()
             .select('coalesce(max(entityChanges.rev) + 1, 1)')
             .from(this.entityChangesRepo.metadata.tableName, 'entityChanges')
-            .where('entityChanges.scopeId = :id', {
-              id: model.scopeId,
-            })
+            .where('entityChanges.scopeId = :id')
+            .andWhere('entityChanges.ownerId = :ownerId')
             .getSql()})`,
       })
+      .setParameter('ownerId', model.ownerId)
+      .setParameter('id', model.scopeId)
       .returning('*')
       .execute();
 

@@ -4,12 +4,13 @@ import {
   Column,
   Index,
   ManyToOne,
-  JoinColumn,
+  Unique,
 } from 'typeorm';
 import { EntitySchema } from '../../sync/types';
 import { User } from './user.schema';
 
-@Entity('user_entities')
+@Entity('userEntities')
+@Unique(['ownerId', 'scopeId', 'key'])
 export class UserEntitySchema implements EntitySchema {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
@@ -18,9 +19,16 @@ export class UserEntitySchema implements EntitySchema {
   @Index()
   key!: string;
 
-  @Column('uuid')
+  @Column()
   @Index()
   scopeId!: string;
+
+  @Column('uuid')
+  @Index()
+  ownerId!: string;
+
+  @ManyToOne(() => User)
+  owner!: User;
 
   @Column('json')
   obj!: Record<string, unknown>;

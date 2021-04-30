@@ -5,7 +5,6 @@ import {
   Column,
   Index,
   ManyToOne,
-  JoinColumn,
 } from 'typeorm';
 import {
   EntityChangeSchema,
@@ -14,8 +13,8 @@ import {
 } from '../../sync/types';
 import { User } from './user.schema';
 
-@Entity('user_entity_changes')
-@Unique(['scopeId', 'table', 'rev'])
+@Entity('userEntityChanges')
+@Unique(['ownerId', 'scopeId', 'table', 'rev'])
 export class UserEntityChangeSchema implements EntityChangeSchema {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
@@ -24,9 +23,16 @@ export class UserEntityChangeSchema implements EntityChangeSchema {
   @Index()
   rev!: number;
 
-  @Column('uuid')
+  @Column()
   @Index()
   scopeId!: string;
+
+  @Column('uuid')
+  @Index()
+  ownerId!: string;
+
+  @ManyToOne(() => User)
+  owner!: User;
 
   @Column()
   source!: string;

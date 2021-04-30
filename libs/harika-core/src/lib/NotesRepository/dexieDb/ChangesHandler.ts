@@ -48,8 +48,7 @@ const zipPatches = (rootKey: string, patches: Patch[]) => {
 
 const mapNoteBlock = (model: NoteBlockModel): NoteBlockDocType => {
   return {
-    syncId: model.syncId,
-    shortId: model.$modelId,
+    id: model.$modelId,
     noteId: model.noteRef.id,
     parentBlockId: model.parentBlockRef?.id,
     content: model.content.value,
@@ -61,8 +60,7 @@ const mapNoteBlock = (model: NoteBlockModel): NoteBlockDocType => {
 
 const mapNote = (model: NoteModel): NoteDocType => {
   return {
-    syncId: model.syncId,
-    shortId: model.$modelId,
+    id: model.$modelId,
     dailyNoteDate: model.dailyNoteDate?.getTime(),
     title: model.title,
     createdAt: model.createdAt.getTime(),

@@ -78,13 +78,13 @@ export const toMobxSync = (
         const latestDedupedEvents: Record<string, INoteChangeEvent> = {};
 
         noteEvents.forEach((ev) => {
-          if (!latestDedupedEvents[ev.obj.shortId]) {
-            latestDedupedEvents[ev.obj.shortId] = ev;
+          if (!latestDedupedEvents[ev.obj.id]) {
+            latestDedupedEvents[ev.obj.id] = ev;
           }
         });
 
         return Object.values(latestDedupedEvents).map((ev) => {
-          const note = vault.notesMap[ev.obj.shortId];
+          const note = vault.notesMap[ev.obj.id];
 
           return convertNoteDocToModelAttrs(
             ev.obj,
@@ -102,8 +102,8 @@ export const toMobxSync = (
         const latestDedupedEvents: Record<string, INoteBlockChangeEvent> = {};
 
         blockEvents.forEach((ev) => {
-          if (!latestDedupedEvents[ev.obj.shortId]) {
-            latestDedupedEvents[ev.obj.shortId] = ev;
+          if (!latestDedupedEvents[ev.obj.id]) {
+            latestDedupedEvents[ev.obj.id] = ev;
           }
         });
 

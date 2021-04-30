@@ -1,12 +1,20 @@
-import { Entity, Unique, PrimaryGeneratedColumn, Column, Index } from 'typeorm';
+import {
+  Entity,
+  Unique,
+  PrimaryGeneratedColumn,
+  Column,
+  Index,
+  ManyToOne,
+} from 'typeorm';
 import {
   DatabaseChangeType,
   EntityChangeSchema,
   IDatabaseChange,
 } from '../../sync/types';
+import { User } from '../../users/schemas/user.schema';
 
-@Entity('vault_entity_changes')
-@Unique(['scopeId', 'table', 'rev'])
+@Entity('vaultEntityChanges')
+@Unique(['ownerId', 'scopeId', 'table', 'rev'])
 export class VaultEntityChangeSchema implements EntityChangeSchema {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
@@ -16,6 +24,13 @@ export class VaultEntityChangeSchema implements EntityChangeSchema {
   rev!: number;
 
   @Column('uuid')
+  @Index()
+  ownerId!: string;
+
+  @ManyToOne(() => User)
+  owner!: User;
+
+  @Column()
   @Index()
   scopeId!: string;
 

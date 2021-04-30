@@ -4,6 +4,9 @@ import 'dexie-syncable';
 import { IDatabaseChange } from 'dexie-observable/api';
 import io from 'socket.io-client';
 import { v4 } from 'uuid';
+import { generateId } from './generateId';
+
+Dexie.Observable.createUUID = generateId;
 
 // Constants:
 const RECONNECT_DELAY = 5000; // Reconnect delay in case of errors such as network down.

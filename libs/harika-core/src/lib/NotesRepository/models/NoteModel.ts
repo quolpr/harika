@@ -50,7 +50,6 @@ export const isNoteModel = (model: any): model is NoteModel =>
 
 @model(modelType)
 export class NoteModel extends Model({
-  syncId: prop<string>(),
   title: prop<string>(),
   dailyNoteDate: tProp_dateTimestamp(types.dateTimestamp),
   createdAt: tProp_dateTimestamp(types.dateTimestamp),
@@ -79,13 +78,12 @@ export class NoteModel extends Model({
   createBlock(
     attrs: Optional<
       ModelInstanceCreationData<NoteBlockModel>,
-      'createdAt' | 'noteRef' | 'noteBlockRefs' | 'linkedNoteRefs' | 'syncId'
+      'createdAt' | 'noteRef' | 'noteBlockRefs' | 'linkedNoteRefs'
     >,
     parent: NoteBlockModel,
     pos: number
   ) {
     const newNoteBlock = new NoteBlockModel({
-      syncId: uuid(),
       $modelId: generateId(),
       createdAt: new Date(),
       noteRef: noteRef(this),

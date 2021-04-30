@@ -53,6 +53,7 @@ import { VaultsModule } from './vaults/vaults.module';
         ClientIdentity,
       ],
       synchronize: true,
+      logging: true,
     }),
   ],
   controllers: [AppController],

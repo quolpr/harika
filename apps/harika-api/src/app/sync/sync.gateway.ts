@@ -16,7 +16,9 @@ import {
 import { Logger } from '@nestjs/common';
 import { inspect } from 'util';
 import { ClientIdentityService } from './clientIdentity.service';
-const util = require('util');
+import { parse } from 'cookie';
+import { environment } from '../../environments/environment';
+import * as jwt from 'jsonwebtoken';
 
 interface BaseRequest {
   requestId: string;
@@ -61,17 +63,30 @@ export abstract class SyncGateway
   // TODO: maybe redis?
   private socketIOLocals = new Map<
     Socket,
-    | { syncedRevision: number; type: 'notInitialized' }
+    | {
+        type: 'notInitialized';
+        ownerId: string;
+      }
     | {
         clientIdentity: string;
         scopeId: string;
         type: 'initialized';
         subscribeToChanges: boolean;
+        ownerId: string;
       }
   >();
 
   @SubscribeMessage('initialize')
   async handleInitialize(client: Socket, event: IInitializeRequest) {
+    const state = this.socketIOLocals.get(client);
+    if (!state) {
+      throw new Error('no state set');
+    }
+
+    if (state?.type === 'initialized') {
+      throw new Error('already initialized!');
+    }
+
     // TODO maybe set clientIdentity on server? To avoid possible secure issues
     this.logger.debug(
       `[${event.scopeId}] [${event.identity}] handleInitialize - ${inspect(
@@ -85,6 +100,7 @@ export abstract class SyncGateway
       scopeId: event.scopeId,
       type: 'initialized',
       subscribeToChanges: false,
+      ownerId: state.ownerId,
     });
 
     client.emit('requestHandled', { status: 'ok', requestId: event.requestId });
@@ -119,12 +135,14 @@ export abstract class SyncGateway
       throw "Can't send changes to uninitialized client";
 
     const currentClientRev = await this.identityService.getLastRev(
+      state.ownerId,
       state.clientIdentity
     );
 
     // Get all changes after syncedRevision that was not performed by the client we're talkin' to.
     const { changes, lastRev } = await this.syncEntities.getChangesFromRev(
       state.scopeId,
+      state.ownerId,
       currentClientRev,
       state.clientIdentity
     );
@@ -144,7 +162,11 @@ export abstract class SyncGateway
 
     client.emit('applyNewChanges', toSend);
 
-    await this.identityService.setNewRev(state.clientIdentity, lastRev);
+    await this.identityService.setNewRev(
+      state.ownerId,
+      state.clientIdentity,
+      lastRev
+    );
 
     this.logger.debug(
       `[${state.scopeId}] [${
@@ -174,6 +196,7 @@ export abstract class SyncGateway
       const serverChanges = (
         await this.syncEntities.getChangesFromRev(
           state.scopeId,
+          state.ownerId,
           baseRevision,
           state.clientIdentity
         )
@@ -186,6 +209,7 @@ export abstract class SyncGateway
       await this.syncEntities.applyChanges(
         resolved,
         state.scopeId,
+        state.ownerId,
         state.clientIdentity
       );
 
@@ -216,9 +240,18 @@ export abstract class SyncGateway
   }
 
   handleConnection(client: Socket) {
+    const { harikaAuthToken } = parse(client.handshake.headers.cookie);
+    const { userId } = jwt.verify(harikaAuthToken, environment.userSecret) as {
+      userId: string;
+    };
+
+    if (!userId) {
+      throw new Error('should be authed!');
+    }
+
     this.socketIOLocals.set(client, {
-      syncedRevision: 0,
       type: 'notInitialized',
+      ownerId: userId,
     });
   }
 

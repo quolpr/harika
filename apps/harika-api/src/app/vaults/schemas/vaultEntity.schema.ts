@@ -2,14 +2,15 @@ import {
   Entity,
   Column,
   PrimaryGeneratedColumn,
-  ManyToOne,
   Index,
-  JoinColumn,
+  ManyToOne,
+  Unique,
 } from 'typeorm';
-import { Vault } from '../models/vault.model';
 import { EntitySchema } from '../../sync/types';
+import { User } from '../../users/schemas/user.schema';
 
-@Entity('vault_entities')
+@Entity('vaultEntities')
+@Unique(['ownerId', 'scopeId', 'key'])
 export class VaultEntitySchema implements EntitySchema {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
@@ -18,9 +19,16 @@ export class VaultEntitySchema implements EntitySchema {
   @Index()
   key!: string;
 
-  @Column('uuid')
+  @Column()
   @Index()
   scopeId!: string;
+
+  @Column('uuid')
+  @Index()
+  ownerId!: string;
+
+  @ManyToOne(() => User)
+  owner!: User;
 
   @Column('json')
   obj!: Record<string, unknown>;

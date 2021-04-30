@@ -43,7 +43,6 @@ export const noteBlockRef = customRef<NoteBlockModel>('harika/NoteBlockRef', {
 
 @model('harika/NoteBlockModel')
 export class NoteBlockModel extends Model({
-  syncId: prop<string>(),
   parentBlockRef: prop<Ref<NoteBlockModel> | undefined>(),
   noteRef: prop<Ref<NoteModel>>(),
   content: prop<BlockContentModel>(),

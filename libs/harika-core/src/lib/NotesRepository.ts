@@ -32,7 +32,7 @@ export class NotesRepository {
     attrs: Required<
       Optional<
         ModelInstanceCreationData<NoteModel>,
-        'createdAt' | 'dailyNoteDate' | 'rootBlockRef' | 'syncId'
+        'createdAt' | 'dailyNoteDate' | 'rootBlockRef'
       >,
       'title'
     >
@@ -73,7 +73,7 @@ export class NotesRepository {
     if (noteRow) {
       return {
         status: 'ok',
-        data: await this.findNote(vault, noteRow.shortId),
+        data: await this.findNote(vault, noteRow.id),
       } as ICreationResult<NoteModel>;
     }
 
@@ -137,7 +137,7 @@ export class NotesRepository {
           } else {
             const existing = existingNotesIndexed[name];
 
-            return this.findNote(vault, existing.shortId, false);
+            return this.findNote(vault, existing.id, false);
           }
         })
       )
@@ -191,7 +191,7 @@ export class NotesRepository {
       ]
     );
 
-    return vault.notesMap[row.shortId];
+    return vault.notesMap[row.id];
   }
 
   // TODO: better Rx way, put title to pipe
@@ -201,7 +201,7 @@ export class NotesRepository {
         (
           await this.getDbByVaultId(vaultId).notesQueries.searchNotes(title)
         ).map((row) => ({
-          id: row.shortId,
+          id: row.id,
           title: row.title,
         }))
       )
@@ -212,7 +212,7 @@ export class NotesRepository {
     return this.getDbByVaultId(vaultId).notesChange$.pipe(
       liveSwitch(async () =>
         (await this.getDbByVaultId(vaultId).notesQueries.all()).map((row) => ({
-          id: row.shortId,
+          id: row.id,
           title: row.title,
           createdAt: new Date(row.createdAt),
         }))

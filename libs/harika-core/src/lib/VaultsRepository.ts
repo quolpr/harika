@@ -74,7 +74,7 @@ export class VaultsRepository {
     return this.database.vaultsChange$.pipe(
       liveSwitch(async () =>
         (await this.database.vaults.toArray()).map((v) => ({
-          id: v.shortId,
+          id: v.id,
           name: v.name,
           createAd: v.createdAt,
         }))
@@ -84,20 +84,16 @@ export class VaultsRepository {
 
   async createVault({ name, dbId }: { name: string; dbId: string }) {
     this.database.vaults.add({
-      shortId: dbId,
+      id: dbId,
       name,
       createdAt: new Date().getTime(),
-      syncId: v4(),
     });
 
     return this.getVault(dbId);
   }
 
   private async initializeVaultAndRepo(id: string) {
-    const vaultDoc = await this.database.vaults
-      .where('shortId')
-      .equals(id)
-      .first();
+    const vaultDoc = await this.database.vaults.where('id').equals(id).first();
 
     if (!vaultDoc) return;
 
@@ -106,12 +102,10 @@ export class VaultsRepository {
     await this.dexieVaultDbs[id].open();
 
     if (this.sync) {
-      console.log('setuping sync');
-
       this.dexieVaultDbs[id].syncable.connect(
         'websocket',
         `${this.config.wsUrl}/api/vault`,
-        { scopeId: vaultDoc.syncId }
+        { scopeId: vaultDoc.id }
       );
     }
 

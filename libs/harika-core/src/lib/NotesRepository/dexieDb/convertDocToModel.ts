@@ -25,8 +25,7 @@ export const convertNoteBlockDocToModelAttrs = (
 ): NoteBlockData => {
   console.log({ doc });
   return {
-    syncId: doc.syncId,
-    $modelId: doc.shortId,
+    $modelId: doc.id,
     content: new BlockContentModel({ value: doc.content }),
     createdAt: new Date(doc.createdAt),
     parentBlockRef: doc.parentBlockId
@@ -45,8 +44,7 @@ export const convertNoteDocToModelAttrs = (
   areLinksLoaded: boolean
 ): NoteData => {
   return {
-    syncId: doc.syncId,
-    $modelId: doc.shortId,
+    $modelId: doc.id,
     title: doc.title,
     dailyNoteDate: doc.dailyNoteDate ? new Date(doc.dailyNoteDate) : new Date(),
     createdAt: new Date(doc.createdAt),
@@ -69,7 +67,7 @@ export const loadNoteDocToModelAttrs = async (
 
   const noteBlockAttrs = preloadChildren
     ? await Promise.all(
-        (await noteBlocksQueries.getByNoteId(noteDoc.shortId)).map((m) =>
+        (await noteBlocksQueries.getByNoteId(noteDoc.id)).map((m) =>
           convertNoteBlockDocToModelAttrs(m)
         )
       )
@@ -80,9 +78,9 @@ export const loadNoteDocToModelAttrs = async (
   if (preloadNoteBacklinks) {
     linkedNotes.push(
       ...(await Promise.all(
-        (
-          await notesQueries.getLinkedNotesOfNoteId(noteDoc.shortId)
-        ).map((doc) => loadNoteDocToModelAttrs(db, doc, true, true, false))
+        (await notesQueries.getLinkedNotesOfNoteId(noteDoc.id)).map((doc) =>
+          loadNoteDocToModelAttrs(db, doc, true, true, false)
+        )
       ))
     );
   }

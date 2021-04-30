@@ -5,11 +5,9 @@ import 'dexie-syncable';
 import { generateId } from '../../generateId';
 import { Observable, ObservableInput } from 'rxjs';
 import { onDexieChange } from '../../onDexieChange';
-import { startWith, switchMap } from 'rxjs/operators';
 
 export type NoteDocType = {
-  syncId: string;
-  shortId: string;
+  id: string;
   title: string;
   dailyNoteDate: number;
   rootBlockId: string;
@@ -18,8 +16,7 @@ export type NoteDocType = {
 };
 
 export type NoteBlockDocType = {
-  syncId: string;
-  shortId: string;
+  id: string;
   parentBlockId?: string;
   noteId: string;
   noteBlockIds: string[];
@@ -43,9 +40,8 @@ export class VaultDexieDatabase extends Dexie {
 
     this.version(1).stores({
       noteBlocks:
-        '$$syncId, &shortId, parentBlockId, noteId, *noteBlockIds, *linkedNoteIds, content, createdAt, updatedAt',
-      notes:
-        '$$syncId, &shortId, rootBlockId, title, dailyNoteDate, createdAt, updatedAt',
+        '$$id, parentBlockId, noteId, *noteBlockIds, *linkedNoteIds, content, createdAt, updatedAt',
+      notes: '$$id, rootBlockId, title, dailyNoteDate, createdAt, updatedAt',
     });
 
     this.noteBlocks = this.table('noteBlocks');
@@ -76,11 +72,11 @@ class NoteBlocksQueries {
   }
 
   getById(id: string) {
-    return this.table.where('shortId').equals(id).first();
+    return this.table.where('id').equals(id).first();
   }
 
   getByIds(ids: string[]) {
-    return this.table.where('shortId').anyOf(ids).toArray();
+    return this.table.where('id').anyOf(ids).toArray();
   }
 
   getByNoteId(id: string) {
@@ -120,11 +116,11 @@ class NotesQueries {
   }
 
   async getByIds(ids: string[]) {
-    return this.table.where('shortId').anyOf(ids).toArray();
+    return this.table.where('id').anyOf(ids).toArray();
   }
 
   async getById(id: string) {
-    return this.table.where('shortId').equals(id).first();
+    return this.table.where('id').equals(id).first();
   }
 
   async getByTitles(titles: string[]) {

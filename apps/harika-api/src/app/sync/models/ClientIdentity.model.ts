@@ -1,13 +1,28 @@
-import { Column, Entity, PrimaryGeneratedColumn, Unique } from 'typeorm';
+import {
+  Column,
+  Entity,
+  Index,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  Unique,
+} from 'typeorm';
+import { User } from '../../users/schemas/user.schema';
 
-@Entity('sync_client_identities')
-@Unique(['clientIdentity'])
+@Entity('syncClientIdentities')
+@Unique(['clientIdentity', 'ownerId'])
 export class ClientIdentity {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
   @Column('uuid')
   clientIdentity!: string;
+
+  @Column()
+  @Index()
+  ownerId!: string;
+
+  @ManyToOne(() => User)
+  owner!: User;
 
   @Column()
   lastRev!: number;
