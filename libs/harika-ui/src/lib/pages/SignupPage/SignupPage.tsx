@@ -5,8 +5,6 @@ import { useSignupMutation } from '../../generated/graphql';
 import { useAuthState } from '../../hooks/useAuthState';
 import { paths } from '../../paths';
 import { cn } from '../../utils';
-import { setServerErrors } from '../../utils/setServerErrors';
-import { generateId } from '@harika/harika-core';
 
 const formClass = cn('form');
 
