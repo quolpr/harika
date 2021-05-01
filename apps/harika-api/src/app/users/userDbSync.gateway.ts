@@ -1,9 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Catch, Injectable, UseFilters } from '@nestjs/common';
 import {
   WebSocketGateway,
   OnGatewayConnection,
   OnGatewayDisconnect,
 } from '@nestjs/websockets';
+import { AllExceptionsFilter } from '../core/AllExceptionsFilter';
 import { TransientLogger } from '../core/TransientLogger';
 import { ClientIdentityService } from '../sync/clientIdentity.service';
 import { SyncGateway } from '../sync/sync.gateway';

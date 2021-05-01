@@ -2,6 +2,7 @@ import {
   SubscribeMessage,
   OnGatewayConnection,
   OnGatewayDisconnect,
+  WsException,
 } from '@nestjs/websockets';
 import { Socket } from 'socket.io';
 import cloneDeep from 'lodash.clonedeep';
@@ -13,12 +14,13 @@ import {
   IUpdateChange,
   SyncEntitiesService,
 } from './types';
-import { Logger } from '@nestjs/common';
+import { Catch, Logger, UseFilters } from '@nestjs/common';
 import { inspect } from 'util';
 import { ClientIdentityService } from './clientIdentity.service';
 import { parse } from 'cookie';
 import { environment } from '../../environments/environment';
 import * as jwt from 'jsonwebtoken';
+import { AllExceptionsFilter } from '../core/AllExceptionsFilter';
 
 interface BaseRequest {
   requestId: string;
@@ -76,6 +78,7 @@ export abstract class SyncGateway
       }
   >();
 
+  @UseFilters(new AllExceptionsFilter())
   @SubscribeMessage('initialize')
   async handleInitialize(client: Socket, event: IInitializeRequest) {
     const state = this.socketIOLocals.get(client);
@@ -106,25 +109,130 @@ export abstract class SyncGateway
     client.emit('requestHandled', { status: 'ok', requestId: event.requestId });
   }
 
+  @UseFilters(new AllExceptionsFilter())
   @SubscribeMessage('subscribeToChanges')
   async handleSubscribeToChanges(
     client: Socket,
     event: ISubscribeToChangesRequest
   ) {
-    const state = this.getSocketState(client);
+    try {
+      const state = this.getSocketState(client);
 
-    if (state.type !== 'initialized')
-      throw "Can't send changes to uninitialized client";
+      if (state.type !== 'initialized')
+        throw "Can't send changes to uninitialized client";
 
-    this.logger.debug(
-      `[${state.scopeId}] [${
+      this.logger.debug(
+        `[${state.scopeId}] [${
+          state.clientIdentity
+        }] subscribeToChanges - ${inspect(event)}`
+      );
+
+      this.socketIOLocals.set(client, { ...state, subscribeToChanges: true });
+
+      await this.sendAnyChanges(client);
+    } catch (e) {
+      throw new WsException('error happened: ' + e.message);
+    }
+  }
+
+  @UseFilters(new AllExceptionsFilter())
+  @SubscribeMessage('applyNewChanges')
+  async applyNewChanges(client: Socket, event: IApplyNewChangesRequest) {
+    try {
+      const state = this.getSocketState(client);
+
+      if (state.type === 'notInitialized') {
+        throw new Error('Not initialized');
+      }
+
+      this.logger.debug(
+        `[${state.scopeId}] [${
+          state.clientIdentity
+        }] receivedChangesFromClient - ${inspect(event)}`
+      );
+
+      const baseRevision = event.baseRevision || 0;
+      const serverChanges = (
+        await this.syncEntities.getChangesFromRev(
+          state.scopeId,
+          state.ownerId,
+          baseRevision,
+          state.clientIdentity
+        )
+      ).changes;
+
+      const reducedServerChangeSet = reduceChanges(serverChanges);
+
+      const resolved = resolveConflicts(event.changes, reducedServerChangeSet);
+
+      await this.syncEntities.applyChanges(
+        resolved,
+        state.scopeId,
+        state.ownerId,
         state.clientIdentity
-      }] subscribeToChanges - ${inspect(event)}`
-    );
+      );
 
-    this.socketIOLocals.set(client, { ...state, subscribeToChanges: true });
+      client.emit('requestHandled', {
+        status: 'ok',
+        requestId: event.requestId,
+      });
 
-    this.sendAnyChanges(client);
+      await Promise.all(
+        Array.from(this.socketIOLocals.entries()).map(
+          ([subscriber, subscriberState]) => {
+            if (
+              subscriberState.type === 'initialized' &&
+              subscriberState.scopeId === state.scopeId &&
+              subscriberState.subscribeToChanges
+            ) {
+              return this.sendAnyChanges(subscriber);
+            }
+          }
+        )
+      );
+    } catch (e) {
+      client.emit('requestHandled', {
+        status: 'error',
+        requestId: event.requestId,
+      });
+      console.error(e);
+    }
+  }
+
+  @UseFilters(new AllExceptionsFilter())
+  handleConnection(client: Socket) {
+    try {
+      const { harikaAuthToken } = parse(client.handshake.headers.cookie);
+      const { userId } = jwt.verify(
+        harikaAuthToken,
+        environment.userSecret
+      ) as {
+        userId: string;
+      };
+
+      if (!userId) {
+        throw new Error('should be authed!');
+      }
+
+      this.socketIOLocals.set(client, {
+        type: 'notInitialized',
+        ownerId: userId,
+      });
+    } catch (e) {
+      throw new WsException('error happened: ' + e.message);
+    }
+  }
+
+  handleDisconnect(client: Socket) {
+    this.socketIOLocals.delete(client);
+  }
+
+  private getSocketState(client: Socket) {
+    const state = this.socketIOLocals.get(client);
+
+    if (!state) throw new Error('Client state was not set!');
+
+    return state;
   }
 
   // TODO: redis lock here on clientIdentity
@@ -175,96 +283,6 @@ export abstract class SyncGateway
         toSend
       )}, new rev set - ${lastRev}, prev rev - ${currentClientRev}`
     );
-  }
-
-  @SubscribeMessage('applyNewChanges')
-  async applyNewChanges(client: Socket, event: IApplyNewChangesRequest) {
-    try {
-      const state = this.getSocketState(client);
-
-      if (state.type === 'notInitialized') {
-        throw new Error('Not initialized');
-      }
-
-      this.logger.debug(
-        `[${state.scopeId}] [${
-          state.clientIdentity
-        }] receivedChangesFromClient - ${inspect(event)}`
-      );
-
-      const baseRevision = event.baseRevision || 0;
-      const serverChanges = (
-        await this.syncEntities.getChangesFromRev(
-          state.scopeId,
-          state.ownerId,
-          baseRevision,
-          state.clientIdentity
-        )
-      ).changes;
-
-      const reducedServerChangeSet = reduceChanges(serverChanges);
-
-      const resolved = resolveConflicts(event.changes, reducedServerChangeSet);
-
-      await this.syncEntities.applyChanges(
-        resolved,
-        state.scopeId,
-        state.ownerId,
-        state.clientIdentity
-      );
-
-      client.emit('requestHandled', {
-        status: 'ok',
-        requestId: event.requestId,
-      });
-
-      Array.from(this.socketIOLocals.entries()).forEach(
-        ([subscriber, subscriberState]) => {
-          if (
-            subscriberState.type === 'initialized' &&
-            subscriberState.scopeId === state.scopeId &&
-            subscriberState.subscribeToChanges
-          ) {
-            this.sendAnyChanges(subscriber);
-          }
-        }
-      );
-    } catch (e) {
-      client.emit('requestHandled', {
-        status: 'error',
-        requestId: event.requestId,
-      });
-
-      throw e;
-    }
-  }
-
-  handleConnection(client: Socket) {
-    const { harikaAuthToken } = parse(client.handshake.headers.cookie);
-    const { userId } = jwt.verify(harikaAuthToken, environment.userSecret) as {
-      userId: string;
-    };
-
-    if (!userId) {
-      throw new Error('should be authed!');
-    }
-
-    this.socketIOLocals.set(client, {
-      type: 'notInitialized',
-      ownerId: userId,
-    });
-  }
-
-  handleDisconnect(client: Socket) {
-    this.socketIOLocals.delete(client);
-  }
-
-  private getSocketState(client: Socket) {
-    const state = this.socketIOLocals.get(client);
-
-    if (!state) throw new Error('Client state was not set!');
-
-    return state;
   }
 }
 
