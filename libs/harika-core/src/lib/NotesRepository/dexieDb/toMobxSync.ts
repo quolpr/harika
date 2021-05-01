@@ -1,5 +1,6 @@
 import { Observable, OperatorFunction } from 'rxjs';
 import { buffer, debounceTime, filter } from 'rxjs/operators';
+import { DatabaseChangeType, IDatabaseChange } from '../../dexieTypes';
 import { NotesRepository, VaultModel } from '../../NotesRepository';
 import {
   convertNoteBlockDocToModelAttrs,
@@ -23,24 +24,8 @@ const bufferDebounce: BufferDebounce = (debounce) => (source) =>
     })
   );
 
-type ISpecificChangeEvent<
-  Name extends string,
-  Obj extends Record<string, unknown>
-> = {
-  key: string;
-  //  1=CREATED, 2=UPDATED, 3=DELETED
-  type: number;
-  source: string;
-  // TODO table enum
-  table: Name;
-  obj: Obj;
-};
-
-type INoteChangeEvent = ISpecificChangeEvent<'notes', NoteDocType>;
-type INoteBlockChangeEvent = ISpecificChangeEvent<
-  'noteBlocks',
-  NoteBlockDocType
->;
+type INoteChangeEvent = IDatabaseChange<'notes', NoteDocType>;
+type INoteBlockChangeEvent = IDatabaseChange<'noteBlocks', NoteBlockDocType>;
 type IChangeEvent = INoteChangeEvent | INoteBlockChangeEvent;
 
 export const toMobxSync = (
@@ -78,19 +63,30 @@ export const toMobxSync = (
         const latestDedupedEvents: Record<string, INoteChangeEvent> = {};
 
         noteEvents.forEach((ev) => {
-          if (!latestDedupedEvents[ev.obj.id]) {
-            latestDedupedEvents[ev.obj.id] = ev;
+          if (!latestDedupedEvents[ev.key]) {
+            latestDedupedEvents[ev.key] = ev;
           }
         });
 
         return Object.values(latestDedupedEvents).map((ev) => {
-          const note = vault.notesMap[ev.obj.id];
+          const note = vault.notesMap[ev.key];
 
-          return convertNoteDocToModelAttrs(
-            ev.obj,
-            Boolean(note?.areChildrenLoaded),
-            Boolean(note?.areLinksLoaded)
-          );
+          if (ev.type === DatabaseChangeType.Delete) {
+            return {
+              ...convertNoteDocToModelAttrs(
+                ev.oldObj,
+                Boolean(note?.areChildrenLoaded),
+                Boolean(note?.areLinksLoaded)
+              ),
+              isDeleted: true,
+            };
+          } else {
+            return convertNoteDocToModelAttrs(
+              ev.obj,
+              Boolean(note?.areChildrenLoaded),
+              Boolean(note?.areLinksLoaded)
+            );
+          }
         });
       })();
 
@@ -102,14 +98,21 @@ export const toMobxSync = (
         const latestDedupedEvents: Record<string, INoteBlockChangeEvent> = {};
 
         blockEvents.forEach((ev) => {
-          if (!latestDedupedEvents[ev.obj.id]) {
-            latestDedupedEvents[ev.obj.id] = ev;
+          if (!latestDedupedEvents[ev.key]) {
+            latestDedupedEvents[ev.key] = ev;
           }
         });
 
-        return Object.values(latestDedupedEvents).map((ev) =>
-          convertNoteBlockDocToModelAttrs(ev.obj)
-        );
+        return Object.values(latestDedupedEvents).map((ev) => {
+          if (ev.type === DatabaseChangeType.Delete) {
+            return {
+              ...convertNoteBlockDocToModelAttrs(ev.oldObj),
+              isDeleted: true,
+            };
+          } else {
+            return convertNoteBlockDocToModelAttrs(ev.obj);
+          }
+        });
       })();
 
       vault.createOrUpdateEntitiesFromAttrs(notes, blocks);
