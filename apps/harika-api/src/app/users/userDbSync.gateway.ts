@@ -1,10 +1,9 @@
-import { Catch, Injectable, UseFilters } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import {
   WebSocketGateway,
   OnGatewayConnection,
   OnGatewayDisconnect,
 } from '@nestjs/websockets';
-import { AllExceptionsFilter } from '../core/AllExceptionsFilter';
 import { TransientLogger } from '../core/TransientLogger';
 import { ClientIdentityService } from '../sync/clientIdentity.service';
 import { SyncGateway } from '../sync/sync.gateway';
@@ -22,5 +21,9 @@ export class UserDbSyncGateway
   ) {
     logger.setContext('UserDBSyncGateway');
     super(entitiesService, logger, identityService);
+  }
+
+  protected async auth(scopeId: string, userId: string) {
+    return scopeId === userId;
   }
 }

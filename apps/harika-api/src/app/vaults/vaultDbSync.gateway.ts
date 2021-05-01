@@ -1,12 +1,15 @@
 import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
 import {
   WebSocketGateway,
   OnGatewayConnection,
   OnGatewayDisconnect,
 } from '@nestjs/websockets';
+import { Repository } from 'typeorm';
 import { TransientLogger } from '../core/TransientLogger';
 import { ClientIdentityService } from '../sync/clientIdentity.service';
 import { SyncGateway } from '../sync/sync.gateway';
+import { UserEntitySchema } from '../users/schemas/userEntity.schema';
 import { VaultDbSyncEntitiesService } from './vaultDbSyncEntities.service';
 
 @Injectable()
@@ -17,9 +20,20 @@ export class VaultDbSyncGateway
   constructor(
     entitiesService: VaultDbSyncEntitiesService,
     logger: TransientLogger,
-    identityService: ClientIdentityService
+    identityService: ClientIdentityService,
+    @InjectRepository(UserEntitySchema)
+    private userEntitiesRepo: Repository<UserEntitySchema>
   ) {
-    logger.setContext('VaultDBSyncGateway');
     super(entitiesService, logger, identityService);
+
+    logger.setContext('VaultDBSyncGateway');
+  }
+
+  protected async auth(vaultId: string, userId: string) {
+    this.logger.debug(`[${userId}: Authed`);
+
+    return Boolean(
+      await this.userEntitiesRepo.findOne({ key: vaultId, ownerId: userId })
+    );
   }
 }

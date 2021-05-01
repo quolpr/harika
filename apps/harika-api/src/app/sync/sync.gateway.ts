@@ -53,12 +53,11 @@ interface IInitializeRequest extends BaseRequest {
 //   | { type: 'done' };
 
 // TODO: add typing to events
-// TODO: auth!!!
 export abstract class SyncGateway
   implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(
     private syncEntities: SyncEntitiesService,
-    private logger: Logger,
+    protected logger: Logger,
     private identityService: ClientIdentityService
   ) {}
 
@@ -67,14 +66,14 @@ export abstract class SyncGateway
     Socket,
     | {
         type: 'notInitialized';
-        ownerId: string;
+        currentUserId: string;
       }
     | {
         clientIdentity: string;
         scopeId: string;
         type: 'initialized';
         subscribeToChanges: boolean;
-        ownerId: string;
+        currentUserId: string;
       }
   >();
 
@@ -83,27 +82,32 @@ export abstract class SyncGateway
   async handleInitialize(client: Socket, event: IInitializeRequest) {
     const state = this.socketIOLocals.get(client);
     if (!state) {
-      throw new Error('no state set');
+      throw new WsException('no state set');
     }
 
     if (state?.type === 'initialized') {
-      throw new Error('already initialized!');
+      throw new WsException('already initialized!');
     }
 
     // TODO maybe set clientIdentity on server? To avoid possible secure issues
     this.logger.debug(
       `[${event.scopeId}] [${event.identity}] handleInitialize - ${inspect(
-        event
+        event,
+        false,
+        6
       )}`
     );
 
-    // TODO: add auth check
+    if (!(await this.auth(event.scopeId, state.currentUserId))) {
+      throw new WsException('not authed!');
+    }
+
     this.socketIOLocals.set(client, {
       clientIdentity: event.identity,
       scopeId: event.scopeId,
       type: 'initialized',
       subscribeToChanges: false,
-      ownerId: state.ownerId,
+      currentUserId: state.currentUserId,
     });
 
     client.emit('requestHandled', { status: 'ok', requestId: event.requestId });
@@ -124,7 +128,7 @@ export abstract class SyncGateway
       this.logger.debug(
         `[${state.scopeId}] [${
           state.clientIdentity
-        }] subscribeToChanges - ${inspect(event)}`
+        }] subscribeToChanges - ${inspect(event, false, 6)}`
       );
 
       this.socketIOLocals.set(client, { ...state, subscribeToChanges: true });
@@ -148,14 +152,14 @@ export abstract class SyncGateway
       this.logger.debug(
         `[${state.scopeId}] [${
           state.clientIdentity
-        }] receivedChangesFromClient - ${inspect(event)}`
+        }] receivedChangesFromClient - ${inspect(event, false, 6)}`
       );
 
       const baseRevision = event.baseRevision || 0;
       const serverChanges = (
         await this.syncEntities.getChangesFromRev(
           state.scopeId,
-          state.ownerId,
+          state.currentUserId,
           baseRevision,
           state.clientIdentity
         )
@@ -168,7 +172,7 @@ export abstract class SyncGateway
       await this.syncEntities.applyChanges(
         resolved,
         state.scopeId,
-        state.ownerId,
+        state.currentUserId,
         state.clientIdentity
       );
 
@@ -216,10 +220,11 @@ export abstract class SyncGateway
 
       this.socketIOLocals.set(client, {
         type: 'notInitialized',
-        ownerId: userId,
+        currentUserId: userId,
       });
     } catch (e) {
-      throw new WsException('error happened: ' + e.message);
+      console.log({ mes: e.message });
+      throw new WsException(`error happened: ${e.message}`);
     }
   }
 
@@ -243,14 +248,14 @@ export abstract class SyncGateway
       throw "Can't send changes to uninitialized client";
 
     const currentClientRev = await this.identityService.getLastRev(
-      state.ownerId,
+      state.currentUserId,
       state.clientIdentity
     );
 
     // Get all changes after syncedRevision that was not performed by the client we're talkin' to.
     const { changes, lastRev } = await this.syncEntities.getChangesFromRev(
       state.scopeId,
-      state.ownerId,
+      state.currentUserId,
       currentClientRev,
       state.clientIdentity
     );
@@ -271,7 +276,7 @@ export abstract class SyncGateway
     client.emit('applyNewChanges', toSend);
 
     await this.identityService.setNewRev(
-      state.ownerId,
+      state.currentUserId,
       state.clientIdentity,
       lastRev
     );
@@ -280,10 +285,17 @@ export abstract class SyncGateway
       `[${state.scopeId}] [${
         state.clientIdentity
       }] changesToClientSent - ${inspect(
-        toSend
+        toSend,
+        false,
+        6
       )}, new rev set - ${lastRev}, prev rev - ${currentClientRev}`
     );
   }
+
+  protected abstract async auth(
+    scopeId: string,
+    currentUserId: string
+  ): Promise<boolean>;
 }
 
 function reduceChanges(changes: IDatabaseChange[]) {
