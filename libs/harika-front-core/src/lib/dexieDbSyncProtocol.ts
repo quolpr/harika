@@ -1,11 +1,11 @@
 import Dexie from 'dexie';
 import 'dexie-observable';
 import 'dexie-syncable';
-import { IDatabaseChange } from 'dexie-observable/api';
 import io from 'socket.io-client';
 import { v4 } from 'uuid';
 import { generateId } from './generateId';
 import { RxSyncer } from './dexieHelpers/RxSyncer';
+import { IDatabaseChange } from '@harika/harika-core';
 
 Dexie.Observable.createUUID = generateId;
 
@@ -36,55 +36,14 @@ Dexie.Syncable.registerSyncProtocol('websocket', {
     const socket = io(url, { transports: ['websocket'] });
     const rxSyncer = new RxSyncer(socket, options.scopeId, context.identity);
 
-    let isFirstRound = true;
-
-    rxSyncer.changesFromServer$.subscribe(
-      ({
-        currentRevision,
-        partial,
-        changes,
-      }: {
-        currentRevision: number;
-        partial: boolean;
-        changes: IDatabaseChange[];
-      }) => {
-        applyRemoteChanges(changes, currentRevision, partial);
-
-        if (isFirstRound && !partial) {
-          isFirstRound = false;
-
-          onSuccess({
-            react: async (
-              changes,
-              baseRevision,
-              partial,
-              onChangesAccepted
-            ) => {
-              await rxSyncer
-                .sendChanges$(changes, baseRevision, partial)
-                .toPromise();
-
-              onChangesAccepted();
-            },
-            disconnect: function () {
-              socket.close();
-            },
-          });
-        }
-      }
+    rxSyncer.initialize(
+      changes as IDatabaseChange[],
+      baseRevision,
+      partial,
+      onChangesAccepted,
+      syncedRevision,
+      applyRemoteChanges,
+      onSuccess
     );
-
-    socket.connect();
-
-    await rxSyncer.initialize$().toPromise();
-
-    if (changes.length !== 0) {
-      await rxSyncer.sendChanges$(changes, baseRevision, partial).toPromise();
-    }
-
-    onChangesAccepted();
-    console.log(' onChangesAccepted');
-
-    rxSyncer.subscribeToServerChanges$(syncedRevision);
   },
 });

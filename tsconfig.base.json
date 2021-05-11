@@ -18,7 +18,8 @@
     "baseUrl": ".",
     "paths": {
       "@harika/harika-front-core": ["libs/harika-front-core/src/index.ts"],
-      "@harika/harika-ui": ["libs/harika-ui/src/index.ts"]
+      "@harika/harika-ui": ["libs/harika-ui/src/index.ts"],
+      "@harika/harika-core": ["libs/harika-core/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

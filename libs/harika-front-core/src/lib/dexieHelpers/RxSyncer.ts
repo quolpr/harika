@@ -1,87 +1,61 @@
-import { IDatabaseChange } from 'dexie-observable/api';
 import {
   ApplyRemoteChangesFunction,
   ReactiveContinuation,
 } from 'dexie-syncable/api';
-import { fromEvent, Observable, of, Subject } from 'rxjs';
+import {
+  BehaviorSubject,
+  combineLatest,
+  EMPTY,
+  fromEvent,
+  merge,
+  Observable,
+  of,
+  pipe,
+  Subject,
+} from 'rxjs';
 import {
   concatMap,
   filter,
+  first,
   map,
+  mapTo,
   mergeMap,
   shareReplay,
   switchMap,
-  take,
+  takeUntil,
   tap,
 } from 'rxjs/operators';
 import { v4 } from 'uuid';
+import {
+  ApplyNewChangesFromServer,
+  CommandFromClientHandled,
+  CommandsFromClient,
+  CommandTypesFromClient,
+  CommandTypesFromServer,
+  EventTypesFromServer,
+  IDatabaseChange,
+  MessageType,
+} from '@harika/harika-core';
 
-interface BaseCommand {
-  commandId: string;
-}
-
-interface IApplyNewChangesFromClient extends BaseCommand {
-  type: 'applyNewChangesFromClient';
-  changes: IDatabaseChange[];
-  partial: boolean;
-  baseRevision: number;
-}
-
-interface ISubscribeClientToChanges extends BaseCommand {
-  type: 'subscribeClientToChanges';
-  syncedRevision: number;
-}
-
-interface IInitializeClient extends BaseCommand {
-  type: 'initializeClient';
-  identity: string;
-  scopeId: string;
-}
-
-type IClientCommands =
-  | IApplyNewChangesFromClient
-  | ISubscribeClientToChanges
-  | IInitializeClient;
-
-interface IApplyNewChangesServerCommand extends BaseCommand {
-  type: 'applyNewChanges';
-  currentRevision: number;
-  partial: boolean;
-  changes: IDatabaseChange[];
-}
-
-type IServerCommands = IApplyNewChangesServerCommand;
-
-const buildCommand = <T extends IClientCommands>(
-  type: T['type'],
-  data: Omit<T, 'requestId' | 'type'>
-): T => {
-  const requestId = v4();
-
-  // TODO: fix
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  return {
-    ...data,
-    type,
-    commandId: requestId,
-  };
-};
+type DistributiveOmit<T, K extends keyof any> = T extends any
+  ? Omit<T, K>
+  : never;
 
 export class RxSyncer {
   private socket$: Observable<SocketIOClient.Socket>;
-  private connect$: Observable<SocketIOClient.Socket>;
 
-  // TODO: store the queue of events
-  private eventsBus$: Subject<IClientCommands> = new Subject();
-  private disconnect$: Observable<SocketIOClient.Socket>;
+  private clientCommandsSubject: Subject<CommandsFromClient> = new Subject();
 
-  private responseBus$: Subject<{
-    status: 'ok';
-    requestId: string;
-  }> = new Subject();
+  private responseBus$: Subject<CommandFromClientHandled> = new Subject();
 
-  private changesFromServer$: Observable<IApplyNewChangesServerCommand>;
+  private changesFromServer$: Observable<ApplyNewChangesFromServer>;
+
+  private stop$: Subject<void> = new Subject();
+  private isConnected$: Observable<boolean>;
+  private isInitialized$: BehaviorSubject<boolean> = new BehaviorSubject<
+    boolean
+  >(false);
+  private isConnectedAndInitialized$: Observable<boolean>;
 
   constructor(
     private socket: SocketIOClient.Socket,
@@ -90,64 +64,40 @@ export class RxSyncer {
   ) {
     this.socket$ = of(socket);
 
-    socket.on('connect', () => {
-      console.log('connect!');
-    });
-
-    this.connect$ = this.socket$.pipe(
-      switchMap((socket) =>
-        fromEvent(socket, 'connect').pipe(map(() => socket))
-      ),
-      shareReplay(1)
+    const connect$ = this.socket$.pipe(
+      takeUntil(this.stop$),
+      switchMap((socket) => fromEvent(socket, 'connect'))
     );
 
-    this.connect$.subscribe(() => {
-      console.log('connect rx!');
-    });
-
-    this.disconnect$ = this.connect$.pipe(
-      mergeMap((socket) =>
-        fromEvent(socket, 'disconnect').pipe(map(() => socket))
-      ),
-      shareReplay(1)
+    const disconnect$ = this.socket$.pipe(
+      takeUntil(this.stop$),
+      mergeMap((socket) => fromEvent(socket, 'disconnect'))
     );
 
-    const onEvent = (event: string) => {
-      return this.connect$.pipe(
-        switchMap((socket) =>
-          fromEvent<IApplyNewChangesServerCommand>(socket, event)
-        )
-      );
-    };
+    this.isConnected$ = merge(
+      connect$.pipe(mapTo(true)),
+      disconnect$.pipe(mapTo(false))
+    ).pipe(shareReplay());
 
-    this.changesFromServer$ = onEvent('applyNewChanges');
+    this.isConnectedAndInitialized$ = combineLatest([
+      this.isConnected$,
+      this.isInitialized$,
+    ]).pipe(
+      map(([isConnected, isInitialized]) => isConnected && isInitialized)
+    );
 
-    this.eventsBus$.subscribe((ev) => {
-      console.log({ ev });
-    });
-
-    const onRequestHandled$ = onEvent('requestHandled');
-
-    // Queue
-    this.connect$
-      .pipe(
-        switchMap(() => {
-          return this.eventsBus$.pipe(
-            concatMap((evt) => {
-              this.socket.emit(evt.type, evt);
-
-              return onRequestHandled$.pipe(
-                filter((response) => evt.data.requestId === response.requestId),
-                take(1)
-              );
-            })
-          );
-        })
+    this.changesFromServer$ = this.isConnected$.pipe(
+      switchMap((isConnected) =>
+        isConnected
+          ? fromEvent<ApplyNewChangesFromServer>(
+              socket,
+              CommandTypesFromServer.ApplyNewChanges
+            )
+          : of<ApplyNewChangesFromServer>()
       )
-      .subscribe((res) => {
-        console.log({ res });
-        this.responseBus$.next(res);
-      });
+    );
+
+    this.startCommandFlow();
   }
 
   initialize(
@@ -157,27 +107,24 @@ export class RxSyncer {
     partial: boolean,
     onChangesAccepted: () => void,
 
-    syncedRevision: boolean,
+    syncedRevision: number,
     applyRemoteChanges: ApplyRemoteChangesFunction,
-    onSuccess: (continuation: ReactiveContinuation) => void,
-    onError: () => void
+    onSuccess: (continuation: ReactiveContinuation) => void
   ) {
     let isFirstRound = true;
-    const isFirstSync = true;
     let wasFirstChangesSent = false;
 
     const sendFirstChanges = () => {
       if (wasFirstChangesSent) {
-        return of(null);
+        return EMPTY;
       } else {
-        return of(null).pipe(
-          this.sendCommand(
-            buildCommand('applyNewChanges', {
-              changes: changes,
-              partial: partial,
-              baseRevision: baseRevision,
-            })
-          ),
+        return EMPTY.pipe(
+          this.sendCommand({
+            type: CommandTypesFromClient.ApplyNewChanges,
+            changes: changes,
+            partial: partial,
+            baseRevision: baseRevision,
+          }),
           tap(() => {
             onChangesAccepted();
             wasFirstChangesSent = true;
@@ -187,45 +134,16 @@ export class RxSyncer {
     };
 
     this.changesFromServer$.subscribe(
-      ({
-        currentRevision,
-        partial,
-        changes,
-      }: {
-        currentRevision: number;
-        partial: boolean;
-        changes: IDatabaseChange[];
-      }) => {
+      ({ currentRevision, partial, changes }) => {
         applyRemoteChanges(changes, currentRevision, partial);
 
         if (isFirstRound && !partial) {
           isFirstRound = false;
 
           onSuccess({
-            react: async (
-              changes,
-              baseRevision,
-              partial,
-              onChangesAccepted
-            ) => {
-              // TODO: this.initializedAndConnected$
-              this.connect$
-                .pipe(
-                  switchMap(() =>
-                    of(null).pipe(
-                      this.sendCommand('applyNewChanges', {
-                        changes: changes,
-                        partial: partial,
-                        baseRevision: baseRevision,
-                      })
-                    )
-                  )
-                )
-                .subscribe(() => {
-                  onChangesAccepted();
-                });
-            },
+            react: this.handleNewClientChanges,
             disconnect: () => {
+              this.stop$.next();
               this.socket.close();
             },
           });
@@ -233,37 +151,109 @@ export class RxSyncer {
       }
     );
 
-    this.connect$.pipe(
-      switchMap(() =>
-        of(null).pipe(
-          this.sendCommand(
-            buildCommand('initialize', {
-              identity: this.identity,
-              scopeId: this.scopeId,
-            })
-          ),
-          switchMap(sendFirstChanges),
-          // TODO: what to do with synced revision?
-          this.sendCommand(buildCommand('subscribeToChanges', {}))
-        )
+    this.isConnected$
+      .pipe(
+        switchMap((isConnected) => {
+          console.log({ isConnected });
+          return isConnected
+            ? EMPTY.pipe(
+                this.sendCommand({
+                  type: CommandTypesFromClient.InitializeClient,
+                  identity: this.identity,
+                  scopeId: this.scopeId,
+                }),
+                switchMap(sendFirstChanges),
+                this.sendCommand({
+                  type: CommandTypesFromClient.SubscribeClientToChanges,
+                  syncedRevision,
+                }),
+                mapTo(true)
+              )
+            : of(false);
+        })
       )
-    );
+      .subscribe((isInitialized) => this.isInitialized$.next(isInitialized));
   }
 
-  private sendCommand(command: IClientCommands) {
+  private handleNewClientChanges = (
+    changes: IDatabaseChange[],
+    baseRevision: number,
+    partial: boolean,
+    onChangesAccepted: () => void
+  ) => {
+    this.isConnectedAndInitialized$
+      .pipe(
+        switchMap((isConnected) =>
+          isConnected
+            ? pipe(
+                this.sendCommand({
+                  type: CommandTypesFromClient.ApplyNewChanges,
+                  changes: changes as IDatabaseChange[],
+                  partial: partial,
+                  baseRevision: baseRevision,
+                })
+              )
+            : of()
+        ),
+        first()
+      )
+      .subscribe(() => onChangesAccepted());
+  };
+
+  private sendCommand(
+    command: DistributiveOmit<CommandsFromClient, 'id' | 'messageType'>
+  ) {
     return <T>(source: Observable<T>) => {
       const requestId = v4();
 
-      this.eventsBus$.next(command);
+      this.clientCommandsSubject.next({
+        ...command,
+        id: v4(),
+        messageType: MessageType.Command,
+      });
 
       return source.pipe(
         switchMap(() =>
           this.responseBus$.pipe(
-            filter((res) => res.requestId === requestId),
-            take(1)
+            filter((res) => res.handledId === requestId),
+            first()
           )
         )
       );
     };
+  }
+
+  private startCommandFlow() {
+    const onRequestHandled$ = this.isConnected$.pipe(
+      switchMap((isConnected) =>
+        isConnected
+          ? fromEvent<CommandFromClientHandled>(
+              this.socket,
+              EventTypesFromServer.CommandHandled
+            )
+          : of<CommandFromClientHandled>()
+      )
+    );
+
+    const clientCommandsHandler$ = this.clientCommandsSubject.pipe(
+      concatMap((command) => {
+        this.socket.emit(command.type, command);
+
+        return onRequestHandled$.pipe(
+          filter((response) => command.id === response.handledId),
+          first()
+        );
+      })
+    );
+
+    this.isConnected$
+      .pipe(
+        switchMap((isConnected) => {
+          return isConnected
+            ? clientCommandsHandler$
+            : of<CommandFromClientHandled>();
+        })
+      )
+      .subscribe();
   }
 }

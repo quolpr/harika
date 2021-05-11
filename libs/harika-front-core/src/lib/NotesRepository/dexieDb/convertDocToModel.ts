@@ -5,7 +5,8 @@ import { NoteModel } from '../models/NoteModel';
 
 import { BlockContentModel } from '../models/BlockContentModel';
 import { noteRef } from '../models/NoteModel';
-import { NoteBlockDocType, NoteDocType, VaultDexieDatabase } from './DexieDb';
+import { VaultDexieDatabase } from './DexieDb';
+import { NoteDocType, NoteBlockDocType } from '@harika/harika-core';
 
 type NoteData = ModelInstanceCreationData<NoteModel> & {
   $modelId: string;

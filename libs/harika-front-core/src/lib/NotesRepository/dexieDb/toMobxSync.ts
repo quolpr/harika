@@ -6,7 +6,8 @@ import {
   convertNoteBlockDocToModelAttrs,
   convertNoteDocToModelAttrs,
 } from './convertDocToModel';
-import { NoteBlockDocType, NoteDocType, VaultDexieDatabase } from './DexieDb';
+import { VaultDexieDatabase } from './DexieDb';
+import { NoteDocType, NoteBlockDocType } from '@harika/harika-core';
 
 type BufferDebounce = <T>(debounce: number) => OperatorFunction<T, T[]>;
 const bufferDebounce: BufferDebounce = (debounce) => (source) =>

@@ -385,6 +385,28 @@
           }
         }
       }
+    },
+    "harika-core": {
+      "root": "libs/harika-core",
+      "sourceRoot": "libs/harika-core/src",
+      "projectType": "library",
+      "schematics": {},
+      "architect": {
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["libs/harika-core/**/*.ts"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/harika-core"],
+          "options": {
+            "jestConfig": "libs/harika-core/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      }
     }
   },
   "cli": {

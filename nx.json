@@ -25,6 +25,7 @@
       "implicitDependencies": ["harika-mobile-ionic"]
     },
     "harika-ui": { "tags": [] },
-    "harika-api": { "tags": [] }
+    "harika-api": { "tags": [] },
+    "harika-core": { "tags": [] }
   }
 }

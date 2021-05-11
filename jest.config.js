@@ -5,5 +5,6 @@ module.exports = {
     '<rootDir>/apps/harika-mobile-ionic',
     '<rootDir>/libs/harika-ui',
     '<rootDir>/apps/harika-api',
+    '<rootDir>/libs/harika-core',
   ],
 };

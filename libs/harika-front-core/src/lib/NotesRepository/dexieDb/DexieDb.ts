@@ -3,28 +3,9 @@ import Dexie from 'dexie';
 import 'dexie-observable';
 import 'dexie-syncable';
 import { generateId } from '../../generateId';
-import { Observable, ObservableInput } from 'rxjs';
+import { Observable } from 'rxjs';
 import { onDexieChange } from '../../onDexieChange';
-
-export type NoteDocType = {
-  id: string;
-  title: string;
-  dailyNoteDate: number;
-  rootBlockId: string;
-  createdAt: number;
-  updatedAt?: number;
-};
-
-export type NoteBlockDocType = {
-  id: string;
-  parentBlockId?: string;
-  noteId: string;
-  noteBlockIds: string[];
-  linkedNoteIds: string[];
-  content: string;
-  createdAt: number;
-  updatedAt?: number;
-};
+import { NoteDocType, NoteBlockDocType } from '@harika/harika-core';
 
 const windowId = generateId();
 

@@ -4,7 +4,8 @@ import { Patch } from 'mobx-keystone';
 import { Subject } from 'rxjs';
 import { buffer, debounceTime, concatMap, tap } from 'rxjs/operators';
 import { NoteBlockModel, NoteModel, VaultModel } from '../../NotesRepository';
-import { NoteBlockDocType, NoteDocType, VaultDexieDatabase } from './DexieDb';
+import { VaultDexieDatabase } from './DexieDb';
+import { NoteDocType, NoteBlockDocType } from '@harika/harika-core';
 
 // TODO: type rootKey
 const zipPatches = (rootKey: string, patches: Patch[]) => {
