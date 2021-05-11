@@ -134,6 +134,11 @@ export abstract class SyncGateway
       this.socketIOLocals.set(client, { ...state, subscribeToChanges: true });
 
       await this.sendAnyChanges(client);
+
+      client.emit('requestHandled', {
+        status: 'ok',
+        requestId: event.requestId,
+      });
     } catch (e) {
       throw new WsException('error happened: ' + e.message);
     }
@@ -145,6 +150,7 @@ export abstract class SyncGateway
     try {
       const state = this.getSocketState(client);
 
+      console.log({ state });
       if (state.type === 'notInitialized') {
         throw new Error('Not initialized');
       }
@@ -352,6 +358,8 @@ function resolveConflicts(
   serverChangeSet: Record<string, IDatabaseChange>
 ) {
   const resolved: IDatabaseChange[] = [];
+
+  console.log({ clientChanges, serverChangeSet });
 
   clientChanges.forEach(function (clientChange) {
     const id = clientChange.table + ':' + clientChange.key;

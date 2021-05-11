@@ -10,7 +10,7 @@ import {
   NoteModel,
   BlocksViewModel,
   FocusedBlockState,
-} from '@harika/harika-core';
+} from '@harika/harika-front-core';
 import { Link, useHistory } from 'react-router-dom';
 import { Link as LinkIcon } from 'heroicons-react';
 import groupBy from 'lodash.groupby';
@@ -23,7 +23,7 @@ import { Toolbar } from './Toolbar';
 import { useMedia } from 'react-use';
 import { useNoteRepository } from '../../contexts/CurrentNoteRepositoryContext';
 import { Ref } from 'mobx-keystone';
-import { BlockContentModel } from '../../../../../harika-core/src/lib/NotesRepository/models/BlockContentModel';
+import { BlockContentModel } from '../../../../../harika-front-core/src/lib/NotesRepository/models/BlockContentModel';
 
 export interface IFocusBlockState {
   focusOnBlockId: string;

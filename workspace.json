@@ -101,22 +101,22 @@
         }
       }
     },
-    "harika-core": {
-      "root": "libs/harika-core",
-      "sourceRoot": "libs/harika-core/src",
+    "harika-front-core": {
+      "root": "libs/harika-front-core",
+      "sourceRoot": "libs/harika-front-core/src",
       "projectType": "library",
       "schematics": {},
       "architect": {
         "lint": {
           "builder": "@nrwl/linter:eslint",
           "options": {
-            "lintFilePatterns": ["libs/harika-core/**/*.{ts,tsx,js,jsx}"]
+            "lintFilePatterns": ["libs/harika-front-core/**/*.{ts,tsx,js,jsx}"]
           }
         },
         "test": {
           "builder": "@nrwl/jest:jest",
           "options": {
-            "jestConfig": "libs/harika-core/jest.config.js",
+            "jestConfig": "libs/harika-front-core/jest.config.js",
             "passWithNoTests": true
           }
         },

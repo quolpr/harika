@@ -25,7 +25,7 @@
     "workspace-schematic": "nx workspace-schematic",
     "dep-graph": "nx dep-graph",
     "help": "nx help",
-    "gen-block-parser": "pegjs -o libs/harika-core/src/lib/blockParser/blockParser.js --cache libs/harika-core/src/lib/blockParser/blockParser.pegjs",
+    "gen-block-parser": "pegjs -o libs/harika-front-core/src/lib/blockParser/blockParser.js --cache libs/harika-front-core/src/lib/blockParser/blockParser.pegjs",
     "build:mobile": "NODE_ENV=production nx run harika-mobile-ionic:build:production",
     "graphql-generate": "graphql-codegen",
     "postinstall": "patch-package"

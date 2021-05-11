@@ -33,7 +33,12 @@ export class VaultDbSyncGateway
     this.logger.debug(`[${userId}: Authed`);
 
     return Boolean(
-      await this.userEntitiesRepo.findOne({ key: vaultId, ownerId: userId })
+      (await this.userEntitiesRepo.findOne({
+        key: vaultId,
+        ownerId: userId,
+      })) ||
+        // if not created yet
+        !(await this.userEntitiesRepo.findOne({ key: vaultId }))
     );
   }
 }

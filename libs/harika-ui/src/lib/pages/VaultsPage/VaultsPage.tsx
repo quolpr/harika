@@ -1,4 +1,4 @@
-import { VaultsRepository } from '@harika/harika-core';
+import { VaultsRepository } from '@harika/harika-front-core';
 import React, { useCallback, useMemo, useState } from 'react';
 import { cn } from '../../utils';
 import './styles.css';
@@ -9,7 +9,7 @@ import { Plus as PlusIcon } from 'heroicons-react';
 import { CreateVaultModal } from './CreateVaultModal';
 import { useAuthState } from '../../hooks/useAuthState';
 import { Brand } from '../../components/Brand/Brand';
-import { generateId } from '@harika/harika-core';
+import { generateId } from '@harika/harika-front-core';
 import { deleteFromStorage, writeStorage } from '@rehooks/local-storage';
 
 const vaultsClass = cn('vaults');

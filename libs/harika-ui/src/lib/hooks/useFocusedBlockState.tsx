@@ -1,4 +1,4 @@
-import { FocusedBlockState } from '@harika/harika-core';
+import { FocusedBlockState } from '@harika/harika-front-core';
 import { comparer, computed } from 'mobx';
 import { useCallback } from 'react';
 import { useCurrentVaultUiState } from '../contexts/CurrentVaultUiStateContext';

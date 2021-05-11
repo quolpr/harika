@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useCurrentVaultUiState } from '../../contexts/CurrentVaultUiStateContext';
 import { useCurrentVault } from '../../hooks/useCurrentVault';
 import { cn } from '../../utils';
-import { BlocksViewModel, FocusedBlockState } from '@harika/harika-core';
+import { BlocksViewModel, FocusedBlockState } from '@harika/harika-front-core';
 import { Portal } from '../Portal';
 import {
   ArrowDropDown,

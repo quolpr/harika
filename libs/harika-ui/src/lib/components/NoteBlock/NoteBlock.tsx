@@ -9,7 +9,7 @@ import {
   NoteBlockModel,
   RefToken,
   Token,
-} from '@harika/harika-core';
+} from '@harika/harika-front-core';
 import { Arrow } from '../Arrow/Arrow';
 import { computed } from 'mobx';
 import { useNoteRepository } from '../../contexts/CurrentNoteRepositoryContext';

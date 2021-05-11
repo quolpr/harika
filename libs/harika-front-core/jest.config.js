@@ -1,5 +1,5 @@
 module.exports = {
-  displayName: 'harika-core',
+  displayName: 'harika-front-core',
   preset: '../../jest.preset.js',
   transform: {
     '^.+\\.[tj]sx?$': [
@@ -8,5 +8,5 @@ module.exports = {
     ],
   },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
-  coverageDirectory: '../../coverage/libs/harika-core',
+  coverageDirectory: '../../coverage/libs/harika-front-core',
 };

@@ -8,7 +8,7 @@ import { NotesPage } from './pages/NotesPage/NotesPage';
 import Modal from 'react-modal';
 import { VaultsPage } from './pages/VaultsPage/VaultsPage';
 import { VaultLayout } from './components/VaultLayout/VaultLayout';
-import { VaultsRepository } from '@harika/harika-core';
+import { VaultsRepository } from '@harika/harika-front-core';
 import { paths, PATHS, VAULT_PREFIX } from './paths';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { SignupPage } from './pages/SignupPage/SignupPage';

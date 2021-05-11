@@ -1,4 +1,4 @@
-import { NoteModel } from '@harika/harika-core';
+import { NoteModel } from '@harika/harika-front-core';
 import { useCurrentVaultUiState } from '../contexts/CurrentVaultUiStateContext';
 import { useCurrentVault } from './useCurrentVault';
 

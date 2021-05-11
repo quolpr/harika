@@ -18,7 +18,7 @@
   "projects": {
     "harika-web": { "tags": [] },
     "harika-web-e2e": { "tags": [], "implicitDependencies": ["harika-web"] },
-    "harika-core": { "tags": [] },
+    "harika-front-core": { "tags": [] },
     "harika-mobile-ionic": { "tags": [] },
     "harika-mobile-ionic-e2e": {
       "tags": [],

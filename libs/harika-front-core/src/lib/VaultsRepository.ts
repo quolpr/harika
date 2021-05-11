@@ -51,15 +51,15 @@ export class VaultsRepository {
     await this.database.open();
     console.log('init vaults');
 
-    if (this.sync) {
-      this.database.syncable.connect(
-        'websocket',
-        `${this.config.wsUrl}/api/user`,
-        {
-          scopeId: this.dbId,
-        }
-      );
-    }
+    // if (this.sync) {
+    //   this.database.syncable.connect(
+    //     'websocket',
+    //     `${this.config.wsUrl}/api/user`,
+    //     {
+    //       scopeId: this.dbId,
+    //     }
+    //   );
+    // }
   }
 
   async getVault(vaultId: string) {

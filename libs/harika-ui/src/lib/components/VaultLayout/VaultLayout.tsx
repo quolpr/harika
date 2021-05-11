@@ -2,7 +2,7 @@ import {
   VaultsRepository,
   VaultModel,
   VaultUiState,
-} from '@harika/harika-core';
+} from '@harika/harika-front-core';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 import { useClickAway, useMedia } from 'react-use';
