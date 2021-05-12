@@ -197,7 +197,6 @@ export abstract class SyncGateway
     }
   }
 
-  @UseFilters(new AllExceptionsFilter())
   handleConnection(client: Socket) {
     try {
       const { harikaAuthToken } = parse(client.handshake.headers.cookie);
@@ -220,8 +219,7 @@ export abstract class SyncGateway
         currentUserId: userId,
       });
     } catch (e) {
-      console.log({ mes: e.message });
-      throw new WsException(`error happened: ${e.message}`);
+      console.error('Error on connect happened', { mes: e.message });
     }
   }
 
