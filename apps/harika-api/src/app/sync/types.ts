@@ -1,32 +1,5 @@
 import { User } from '../users/schemas/user.schema';
-
-export enum DatabaseChangeType {
-  Create = 1,
-  Update = 2,
-  Delete = 3,
-}
-
-export interface ICreateChange {
-  type: DatabaseChangeType.Create;
-  table: string;
-  key: string;
-  obj: any;
-}
-
-export interface IUpdateChange {
-  type: DatabaseChangeType.Update;
-  table: string;
-  key: string;
-  mods: { [keyPath: string]: any | undefined };
-}
-
-export interface IDeleteChange {
-  type: DatabaseChangeType.Delete;
-  table: string;
-  key: string;
-}
-
-export type IDatabaseChange = ICreateChange | IUpdateChange | IDeleteChange;
+import { IDatabaseChange, DatabaseChangeType } from '@harika/harika-core';
 
 export interface SyncEntitiesService {
   getChangesFromRev(

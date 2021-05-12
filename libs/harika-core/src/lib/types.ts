@@ -1,4 +1,8 @@
-import { DatabaseChangeType } from 'dexie-observable/api';
+export enum DatabaseChangeType {
+  Create = 1,
+  Update = 2,
+  Delete = 3,
+}
 
 export enum MessageType {
   Event = 'event',
@@ -17,7 +21,7 @@ export interface BaseMessage {
   messageType: MessageType;
 }
 
-interface ApplyNewChangesFromClient extends BaseMessage {
+export interface ApplyNewChangesFromClient extends BaseMessage {
   messageType: MessageType.Command;
 
   type: CommandTypesFromClient.ApplyNewChanges;
@@ -26,14 +30,14 @@ interface ApplyNewChangesFromClient extends BaseMessage {
   baseRevision: number;
 }
 
-interface SubscribeClientToChanges extends BaseMessage {
+export interface SubscribeClientToChanges extends BaseMessage {
   messageType: MessageType.Command;
 
   type: CommandTypesFromClient.SubscribeClientToChanges;
   syncedRevision: number;
 }
 
-interface InitializeClient extends BaseMessage {
+export interface InitializeClient extends BaseMessage {
   messageType: MessageType.Command;
 
   type: CommandTypesFromClient.InitializeClient;
@@ -56,6 +60,8 @@ export enum EventTypesFromServer {
 
 export interface CommandFromClientHandled extends BaseMessage {
   messageType: MessageType.Event;
+
+  status: 'ok' | 'error';
 
   handledId: string;
 }
@@ -104,8 +110,8 @@ export type NoteBlockDocType = {
 // DatabaseChange
 
 export interface ICreateChange<
-  TableName extends string,
-  Obj extends Record<string, unknown>
+  TableName extends string = string,
+  Obj extends Record<string, unknown> = Record<string, unknown>
 > {
   type: DatabaseChangeType.Create;
   table: TableName;
@@ -115,26 +121,28 @@ export interface ICreateChange<
 }
 
 export interface IUpdateChange<
-  TableName extends string,
-  Obj extends Record<string, unknown>
+  TableName extends string = string,
+  Obj extends Record<string, unknown> = Record<string, unknown>
 > {
   type: DatabaseChangeType.Update;
   table: TableName;
   key: string;
-  mods: { [keyPath: string]: unknown | undefined };
-  obj: Obj;
-  oldObj: Obj;
+  mods: { [keyPath: string]: any };
+  obj?: Obj;
+  // undefined on backend
+  oldObj?: Obj;
   source: string;
 }
 
 export interface IDeleteChange<
-  TableName extends string,
-  Obj extends Record<string, unknown>
+  TableName extends string = string,
+  Obj extends Record<string, unknown> = Record<string, unknown>
 > {
   type: DatabaseChangeType.Delete;
   table: TableName;
   key: string;
-  oldObj: Obj;
+  // undefined on backend
+  oldObj?: Obj;
   source: string;
 }
 

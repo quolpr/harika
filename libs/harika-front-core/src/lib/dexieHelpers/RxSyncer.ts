@@ -2,6 +2,7 @@ import {
   ApplyRemoteChangesFunction,
   ReactiveContinuation,
 } from 'dexie-syncable/api';
+import { IDatabaseChange as DexieDatabaseChange } from 'dexie-observable/api';
 import {
   BehaviorSubject,
   combineLatest,
@@ -10,20 +11,22 @@ import {
   merge,
   Observable,
   of,
-  pipe,
   Subject,
 } from 'rxjs';
 import {
+  catchError,
   concatMap,
   filter,
   first,
   map,
   mapTo,
   mergeMap,
+  retry,
   shareReplay,
   switchMap,
   takeUntil,
   tap,
+  timeout,
 } from 'rxjs/operators';
 import { v4 } from 'uuid';
 import {
@@ -46,7 +49,9 @@ export class RxSyncer {
 
   private clientCommandsSubject: Subject<CommandsFromClient> = new Subject();
 
-  private responseBus$: Subject<CommandFromClientHandled> = new Subject();
+  private successCommandHandled$: Subject<
+    CommandFromClientHandled
+  > = new Subject();
 
   private changesFromServer$: Observable<ApplyNewChangesFromServer>;
 
@@ -58,6 +63,7 @@ export class RxSyncer {
   private isConnectedAndInitialized$: Observable<boolean>;
 
   constructor(
+    private gatewayName: string,
     private socket: SocketIOClient.Socket,
     private scopeId: string,
     private identity: string
@@ -116,9 +122,9 @@ export class RxSyncer {
 
     const sendFirstChanges = () => {
       if (wasFirstChangesSent) {
-        return EMPTY;
+        return of(null);
       } else {
-        return EMPTY.pipe(
+        return of(null).pipe(
           this.sendCommand({
             type: CommandTypesFromClient.ApplyNewChanges,
             changes: changes,
@@ -135,7 +141,17 @@ export class RxSyncer {
 
     this.changesFromServer$.subscribe(
       ({ currentRevision, partial, changes }) => {
-        applyRemoteChanges(changes, currentRevision, partial);
+        console.log(`[${this.gatewayName}] New changes from server`, {
+          currentRevision,
+          partial,
+          changes,
+        });
+
+        applyRemoteChanges(
+          (changes as unknown) as DexieDatabaseChange[],
+          currentRevision,
+          partial
+        );
 
         if (isFirstRound && !partial) {
           isFirstRound = false;
@@ -154,9 +170,8 @@ export class RxSyncer {
     this.isConnected$
       .pipe(
         switchMap((isConnected) => {
-          console.log({ isConnected });
           return isConnected
-            ? EMPTY.pipe(
+            ? of(isConnected).pipe(
                 this.sendCommand({
                   type: CommandTypesFromClient.InitializeClient,
                   identity: this.identity,
@@ -176,7 +191,7 @@ export class RxSyncer {
   }
 
   private handleNewClientChanges = (
-    changes: IDatabaseChange[],
+    changes: DexieDatabaseChange[],
     baseRevision: number,
     partial: boolean,
     onChangesAccepted: () => void
@@ -185,7 +200,7 @@ export class RxSyncer {
       .pipe(
         switchMap((isConnected) =>
           isConnected
-            ? pipe(
+            ? of(null).pipe(
                 this.sendCommand({
                   type: CommandTypesFromClient.ApplyNewChanges,
                   changes: changes as IDatabaseChange[],
@@ -204,19 +219,50 @@ export class RxSyncer {
     command: DistributiveOmit<CommandsFromClient, 'id' | 'messageType'>
   ) {
     return <T>(source: Observable<T>) => {
-      const requestId = v4();
-
-      this.clientCommandsSubject.next({
-        ...command,
-        id: v4(),
-        messageType: MessageType.Command,
-      });
-
       return source.pipe(
-        switchMap(() =>
-          this.responseBus$.pipe(
-            filter((res) => res.handledId === requestId),
-            first()
+        switchMap((val) =>
+          of(val).pipe(
+            map(() => {
+              const messageId = v4();
+
+              this.clientCommandsSubject.next({
+                ...command,
+                id: messageId,
+                messageType: MessageType.Command,
+              });
+
+              console.log(
+                `[${this.gatewayName}] New command to server!`,
+                command
+              );
+
+              return messageId;
+            }),
+            switchMap((messageId) =>
+              this.successCommandHandled$.pipe(
+                filter((res) => res.handledId === messageId),
+                first(),
+                tap(() => {
+                  console.log(
+                    `[${this.gatewayName}] Command handled by server!`,
+                    command
+                  );
+                })
+              )
+            ),
+            timeout(5000),
+            retry(3),
+            catchError(() => {
+              console.error(
+                `[${this.gatewayName}] Failed to send command. Reconnecting`,
+                command
+              );
+
+              this.socket.disconnect();
+              this.socket.connect();
+
+              return EMPTY;
+            })
           )
         )
       );
@@ -240,7 +286,10 @@ export class RxSyncer {
         this.socket.emit(command.type, command);
 
         return onRequestHandled$.pipe(
-          filter((response) => command.id === response.handledId),
+          filter(
+            (response) =>
+              command.id === response.handledId && response.status === 'ok'
+          ),
           first()
         );
       })
@@ -254,6 +303,6 @@ export class RxSyncer {
             : of<CommandFromClientHandled>();
         })
       )
-      .subscribe();
+      .subscribe((ev) => this.successCommandHandled$.next(ev));
   }
 }

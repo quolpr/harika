@@ -51,15 +51,16 @@ export class VaultsRepository {
     await this.database.open();
     console.log('init vaults');
 
-    // if (this.sync) {
-    //   this.database.syncable.connect(
-    //     'websocket',
-    //     `${this.config.wsUrl}/api/user`,
-    //     {
-    //       scopeId: this.dbId,
-    //     }
-    //   );
-    // }
+    if (this.sync) {
+      this.database.syncable.connect(
+        'websocket',
+        `${this.config.wsUrl}/api/user`,
+        {
+          scopeId: this.dbId,
+          gatewayName: 'user',
+        }
+      );
+    }
   }
 
   async getVault(vaultId: string) {
@@ -105,7 +106,7 @@ export class VaultsRepository {
       this.dexieVaultDbs[id].syncable.connect(
         'websocket',
         `${this.config.wsUrl}/api/vault`,
-        { scopeId: vaultDoc.id }
+        { scopeId: vaultDoc.id, gatewayName: 'vault' }
       );
     }
 

@@ -1,13 +1,17 @@
 import { Observable, OperatorFunction } from 'rxjs';
 import { buffer, debounceTime, filter } from 'rxjs/operators';
-import { DatabaseChangeType, IDatabaseChange } from '../../dexieTypes';
 import { NotesRepository, VaultModel } from '../../NotesRepository';
 import {
   convertNoteBlockDocToModelAttrs,
   convertNoteDocToModelAttrs,
 } from './convertDocToModel';
 import { VaultDexieDatabase } from './DexieDb';
-import { NoteDocType, NoteBlockDocType } from '@harika/harika-core';
+import {
+  IChangeEvent,
+  INoteChangeEvent,
+  DatabaseChangeType,
+  INoteBlockChangeEvent,
+} from '@harika/harika-core';
 
 type BufferDebounce = <T>(debounce: number) => OperatorFunction<T, T[]>;
 const bufferDebounce: BufferDebounce = (debounce) => (source) =>
@@ -24,10 +28,6 @@ const bufferDebounce: BufferDebounce = (debounce) => (source) =>
       },
     })
   );
-
-type INoteChangeEvent = IDatabaseChange<'notes', NoteDocType>;
-type INoteBlockChangeEvent = IDatabaseChange<'noteBlocks', NoteBlockDocType>;
-type IChangeEvent = INoteChangeEvent | INoteBlockChangeEvent;
 
 export const toMobxSync = (
   db: VaultDexieDatabase,
@@ -63,7 +63,7 @@ export const toMobxSync = (
 
         const latestDedupedEvents: Record<string, INoteChangeEvent> = {};
 
-        noteEvents.forEach((ev) => {
+        noteEvents.reverse().forEach((ev) => {
           if (!latestDedupedEvents[ev.key]) {
             latestDedupedEvents[ev.key] = ev;
           }
@@ -73,6 +73,8 @@ export const toMobxSync = (
           const note = vault.notesMap[ev.key];
 
           if (ev.type === DatabaseChangeType.Delete) {
+            if (!ev.oldObj) throw new Error('old obj should be present');
+
             return {
               ...convertNoteDocToModelAttrs(
                 ev.oldObj,
@@ -82,6 +84,8 @@ export const toMobxSync = (
               isDeleted: true,
             };
           } else {
+            if (!ev.obj) throw new Error('obj should be present');
+
             return convertNoteDocToModelAttrs(
               ev.obj,
               Boolean(note?.areChildrenLoaded),
@@ -98,7 +102,7 @@ export const toMobxSync = (
 
         const latestDedupedEvents: Record<string, INoteBlockChangeEvent> = {};
 
-        blockEvents.forEach((ev) => {
+        blockEvents.reverse().forEach((ev) => {
           if (!latestDedupedEvents[ev.key]) {
             latestDedupedEvents[ev.key] = ev;
           }
@@ -106,11 +110,14 @@ export const toMobxSync = (
 
         return Object.values(latestDedupedEvents).map((ev) => {
           if (ev.type === DatabaseChangeType.Delete) {
+            if (!ev.oldObj) throw new Error('old obj should be present');
             return {
               ...convertNoteBlockDocToModelAttrs(ev.oldObj),
               isDeleted: true,
             };
           } else {
+            if (!ev.obj) throw new Error('obj should be present');
+
             return convertNoteBlockDocToModelAttrs(ev.obj);
           }
         });

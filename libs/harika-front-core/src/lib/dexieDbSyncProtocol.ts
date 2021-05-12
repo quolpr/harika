@@ -16,7 +16,7 @@ Dexie.Syncable.registerSyncProtocol('websocket', {
   sync: async (
     context,
     url,
-    options: { scopeId: string },
+    options: { scopeId: string; gatewayName: string },
     baseRevision,
     syncedRevision,
     changes,
@@ -34,7 +34,12 @@ Dexie.Syncable.registerSyncProtocol('websocket', {
     }
 
     const socket = io(url, { transports: ['websocket'] });
-    const rxSyncer = new RxSyncer(socket, options.scopeId, context.identity);
+    const rxSyncer = new RxSyncer(
+      options.gatewayName,
+      socket,
+      options.scopeId,
+      context.identity
+    );
 
     rxSyncer.initialize(
       changes as IDatabaseChange[],

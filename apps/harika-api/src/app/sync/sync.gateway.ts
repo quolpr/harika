@@ -5,54 +5,36 @@ import {
   WsException,
 } from '@nestjs/websockets';
 import { Socket } from 'socket.io';
-import cloneDeep from 'lodash.clonedeep';
-import set from 'lodash.set';
-import {
-  DatabaseChangeType,
-  ICreateChange,
-  IDatabaseChange,
-  IUpdateChange,
-  SyncEntitiesService,
-} from './types';
-import { Catch, Logger, UseFilters } from '@nestjs/common';
+import { cloneDeep } from 'lodash';
+import { set } from 'lodash';
+import { SyncEntitiesService } from './types';
+import { Logger, UseFilters } from '@nestjs/common';
 import { inspect } from 'util';
 import { ClientIdentityService } from './clientIdentity.service';
 import { parse } from 'cookie';
 import { environment } from '../../environments/environment';
 import * as jwt from 'jsonwebtoken';
 import { AllExceptionsFilter } from '../core/AllExceptionsFilter';
+import {
+  CommandFromClientHandled,
+  CommandTypesFromClient,
+  EventTypesFromServer,
+  IDatabaseChange,
+  ICreateChange,
+  IUpdateChange,
+  CommandTypesFromServer,
+  ApplyNewChangesFromServer,
+  MessageType,
+  DatabaseChangeType,
+} from '@harika/harika-core';
+// Not sure why, but for this types TS shows warnings that they are not found
+import type {
+  ApplyNewChangesFromClient,
+  InitializeClient,
+  SubscribeClientToChanges,
+} from '@harika/harika-core';
+import { v4 } from 'uuid';
 
-interface BaseRequest {
-  requestId: string;
-}
-
-interface IApplyNewChangesRequest extends BaseRequest {
-  changes: IDatabaseChange[];
-  partial: boolean;
-  baseRevision: number;
-}
-
-interface ISubscribeToChangesRequest extends BaseRequest {
-  syncedRevision: number;
-}
-
-interface IInitializeRequest extends BaseRequest {
-  identity: string;
-  scopeId: string;
-}
-
-// type IResponseEvents =
-//   | {
-//       type: 'clientIdentitySet';
-//       identity: string;
-//     }
-//   | {
-//       type: 'error';
-//       message: string;
-//     }
-//   | { type: 'done' };
-
-// TODO: add typing to events
 export abstract class SyncGateway
   implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(
@@ -61,7 +43,6 @@ export abstract class SyncGateway
     private identityService: ClientIdentityService
   ) {}
 
-  // TODO: maybe redis?
   private socketIOLocals = new Map<
     Socket,
     | {
@@ -78,8 +59,8 @@ export abstract class SyncGateway
   >();
 
   @UseFilters(new AllExceptionsFilter())
-  @SubscribeMessage('initialize')
-  async handleInitialize(client: Socket, event: IInitializeRequest) {
+  @SubscribeMessage(CommandTypesFromClient.InitializeClient)
+  async handleInitialize(client: Socket, command: InitializeClient) {
     const state = this.socketIOLocals.get(client);
     if (!state) {
       throw new WsException('no state set');
@@ -91,33 +72,36 @@ export abstract class SyncGateway
 
     // TODO maybe set clientIdentity on server? To avoid possible secure issues
     this.logger.debug(
-      `[${event.scopeId}] [${event.identity}] handleInitialize - ${inspect(
-        event,
+      `[${command.scopeId}] [${command.identity}] handleInitialize - ${inspect(
+        command,
         false,
         6
       )}`
     );
 
-    if (!(await this.auth(event.scopeId, state.currentUserId))) {
+    if (!(await this.auth(command.scopeId, state.currentUserId))) {
       throw new WsException('not authed!');
     }
 
     this.socketIOLocals.set(client, {
-      clientIdentity: event.identity,
-      scopeId: event.scopeId,
+      clientIdentity: command.identity,
+      scopeId: command.scopeId,
       type: 'initialized',
       subscribeToChanges: false,
       currentUserId: state.currentUserId,
     });
 
-    client.emit('requestHandled', { status: 'ok', requestId: event.requestId });
+    client.emit(EventTypesFromServer.CommandHandled, {
+      status: 'ok',
+      handledId: command.id,
+    } as CommandFromClientHandled);
   }
 
   @UseFilters(new AllExceptionsFilter())
-  @SubscribeMessage('subscribeToChanges')
+  @SubscribeMessage(CommandTypesFromClient.SubscribeClientToChanges)
   async handleSubscribeToChanges(
     client: Socket,
-    event: ISubscribeToChangesRequest
+    command: SubscribeClientToChanges
   ) {
     try {
       const state = this.getSocketState(client);
@@ -128,25 +112,25 @@ export abstract class SyncGateway
       this.logger.debug(
         `[${state.scopeId}] [${
           state.clientIdentity
-        }] subscribeToChanges - ${inspect(event, false, 6)}`
+        }] subscribeToChanges - ${inspect(command, false, 6)}`
       );
 
       this.socketIOLocals.set(client, { ...state, subscribeToChanges: true });
 
       await this.sendAnyChanges(client);
 
-      client.emit('requestHandled', {
+      client.emit(EventTypesFromServer.CommandHandled, {
         status: 'ok',
-        requestId: event.requestId,
-      });
+        handledId: command.id,
+      } as CommandFromClientHandled);
     } catch (e) {
       throw new WsException('error happened: ' + e.message);
     }
   }
 
   @UseFilters(new AllExceptionsFilter())
-  @SubscribeMessage('applyNewChanges')
-  async applyNewChanges(client: Socket, event: IApplyNewChangesRequest) {
+  @SubscribeMessage(CommandTypesFromClient.ApplyNewChanges)
+  async applyNewChanges(client: Socket, command: ApplyNewChangesFromClient) {
     try {
       const state = this.getSocketState(client);
 
@@ -158,10 +142,10 @@ export abstract class SyncGateway
       this.logger.debug(
         `[${state.scopeId}] [${
           state.clientIdentity
-        }] receivedChangesFromClient - ${inspect(event, false, 6)}`
+        }] receivedChangesFromClient - ${inspect(command, false, 6)}`
       );
 
-      const baseRevision = event.baseRevision || 0;
+      const baseRevision = command.baseRevision || 0;
       const serverChanges = (
         await this.syncEntities.getChangesFromRev(
           state.scopeId,
@@ -173,7 +157,10 @@ export abstract class SyncGateway
 
       const reducedServerChangeSet = reduceChanges(serverChanges);
 
-      const resolved = resolveConflicts(event.changes, reducedServerChangeSet);
+      const resolved = resolveConflicts(
+        command.changes,
+        reducedServerChangeSet
+      );
 
       await this.syncEntities.applyChanges(
         resolved,
@@ -182,10 +169,10 @@ export abstract class SyncGateway
         state.clientIdentity
       );
 
-      client.emit('requestHandled', {
+      client.emit(EventTypesFromServer.CommandHandled, {
         status: 'ok',
-        requestId: event.requestId,
-      });
+        handledId: command.id,
+      } as CommandFromClientHandled);
 
       await Promise.all(
         Array.from(this.socketIOLocals.entries()).map(
@@ -201,10 +188,11 @@ export abstract class SyncGateway
         )
       );
     } catch (e) {
-      client.emit('requestHandled', {
+      client.emit(EventTypesFromServer.CommandHandled, {
         status: 'error',
-        requestId: event.requestId,
-      });
+        handledId: command.id,
+      } as CommandFromClientHandled);
+
       console.error(e);
     }
   }
@@ -273,13 +261,16 @@ export abstract class SyncGateway
     });
     // Notice the current revision of the database. We want to send it to client so it knows what to ask for next time.
 
-    const toSend = {
+    const toSend: ApplyNewChangesFromServer = {
+      id: v4(),
+      messageType: MessageType.Command,
+      type: CommandTypesFromServer.ApplyNewChanges,
       changes: reducedArray,
       currentRevision: lastRev,
-      partial: false, // Tell client that these are the only changes we are aware of. Since our mem DB is syncronous, we got all changes in one chunk.
+      partial: false,
     };
 
-    client.emit('applyNewChanges', toSend);
+    client.emit(CommandTypesFromServer.ApplyNewChanges, toSend);
 
     await this.identityService.setNewRev(
       state.currentUserId,
@@ -414,7 +405,7 @@ function combineCreateAndUpdate(
 
 function applyModifications(
   obj: Record<string, unknown>,
-  modifications: Record<string, string>
+  modifications: IUpdateChange['mods']
 ) {
   Object.keys(modifications).forEach(function (keyPath) {
     set(obj, keyPath, modifications[keyPath]);

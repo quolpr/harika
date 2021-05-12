@@ -1,12 +1,11 @@
-import * as set from 'lodash.set';
+import { set } from 'lodash';
 import { Connection, EntityManager, Repository } from 'typeorm';
+import { EntityChangeSchema, EntitySchema, SyncEntitiesService } from './types';
 import {
-  DatabaseChangeType,
-  EntityChangeSchema,
-  EntitySchema,
   IDatabaseChange,
-  SyncEntitiesService,
-} from './types';
+  IUpdateChange,
+  DatabaseChangeType,
+} from '@harika/harika-core';
 
 export abstract class BaseSyncEntitiesService implements SyncEntitiesService {
   constructor(
@@ -127,7 +126,7 @@ export abstract class BaseSyncEntitiesService implements SyncEntitiesService {
     ownerId: string,
     table: string,
     key: string,
-    modifications: Record<string, string>,
+    modifications: IUpdateChange['mods'],
     clientIdentity: string,
     manager: EntityManager
   ) {
@@ -206,7 +205,7 @@ export abstract class BaseSyncEntitiesService implements SyncEntitiesService {
 
 function applyModifications(
   obj: Record<string, unknown>,
-  modifications: Record<string, string>
+  modifications: IUpdateChange['mods']
 ) {
   Object.keys(modifications).forEach(function (keyPath) {
     set(obj, keyPath, modifications[keyPath]);
