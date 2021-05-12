@@ -53,7 +53,12 @@ export abstract class SyncGateway
         clientIdentity: string;
         scopeId: string;
         type: 'initialized';
-        subscribeToChanges: boolean;
+        subscriptionState:
+          | {
+              subscribed: true;
+              currentRev: number;
+            }
+          | { subscribed: false };
         currentUserId: string;
       }
   >();
@@ -87,7 +92,7 @@ export abstract class SyncGateway
       clientIdentity: command.identity,
       scopeId: command.scopeId,
       type: 'initialized',
-      subscribeToChanges: false,
+      subscriptionState: { subscribed: false },
       currentUserId: state.currentUserId,
     });
 
@@ -115,7 +120,13 @@ export abstract class SyncGateway
         }] subscribeToChanges - ${inspect(command, false, 6)}`
       );
 
-      this.socketIOLocals.set(client, { ...state, subscribeToChanges: true });
+      this.socketIOLocals.set(client, {
+        ...state,
+        subscriptionState: {
+          subscribed: true,
+          currentRev: command.syncedRevision,
+        },
+      });
 
       await this.sendAnyChanges(client);
 
@@ -180,7 +191,7 @@ export abstract class SyncGateway
             if (
               subscriberState.type === 'initialized' &&
               subscriberState.scopeId === state.scopeId &&
-              subscriberState.subscribeToChanges
+              subscriberState.subscriptionState.subscribed
             ) {
               return this.sendAnyChanges(subscriber);
             }
@@ -242,10 +253,9 @@ export abstract class SyncGateway
     if (state.type !== 'initialized')
       throw "Can't send changes to uninitialized client";
 
-    const currentClientRev = await this.identityService.getLastRev(
-      state.currentUserId,
-      state.clientIdentity
-    );
+    if (!state.subscriptionState.subscribed) throw 'not subscribed!';
+
+    const currentClientRev = state.subscriptionState.currentRev;
 
     // Get all changes after syncedRevision that was not performed by the client we're talkin' to.
     const { changes, lastRev } = await this.syncEntities.getChangesFromRev(
@@ -272,12 +282,6 @@ export abstract class SyncGateway
     };
 
     client.emit(CommandTypesFromServer.ApplyNewChanges, toSend);
-
-    await this.identityService.setNewRev(
-      state.currentUserId,
-      state.clientIdentity,
-      lastRev
-    );
 
     this.logger.debug(
       `[${state.scopeId}] [${

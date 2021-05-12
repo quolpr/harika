@@ -2,6 +2,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ClientIdentity } from './models/ClientIdentity.model';
 
+// TODO: remove
 export class ClientIdentityService {
   constructor(
     @InjectRepository(ClientIdentity)

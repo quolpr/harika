@@ -24,6 +24,7 @@ export class ClientIdentity {
   @ManyToOne(() => User)
   owner!: User;
 
+  // TODO: remove
   @Column()
   lastRev!: number;
 }
