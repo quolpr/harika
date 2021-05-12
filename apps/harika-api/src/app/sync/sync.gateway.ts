@@ -201,6 +201,9 @@ export abstract class SyncGateway
   handleConnection(client: Socket) {
     try {
       const { harikaAuthToken } = parse(client.handshake.headers.cookie);
+
+      console.log({ handshake: client.handshake.headers.cookie });
+
       const { userId } = jwt.verify(
         harikaAuthToken,
         environment.userSecret
