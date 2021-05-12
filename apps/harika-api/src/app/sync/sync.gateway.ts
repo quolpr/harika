@@ -169,6 +169,10 @@ export abstract class SyncGateway
 
       const reducedServerChangeSet = reduceChanges(serverChanges);
 
+      console.log(
+        inspect({ serverChanges, reducedServerChangeSet }, false, 10)
+      );
+
       const resolved = resolveConflicts(
         command.changes,
         reducedServerChangeSet
@@ -358,7 +362,7 @@ function resolveConflicts(
 ) {
   const resolved: IDatabaseChange[] = [];
 
-  console.log({ clientChanges, serverChangeSet });
+  console.log(inspect({ clientChanges, serverChangeSet }, false, 6));
 
   clientChanges.forEach(function (clientChange) {
     const id = clientChange.table + ':' + clientChange.key;
