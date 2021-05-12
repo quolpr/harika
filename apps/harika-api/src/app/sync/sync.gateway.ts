@@ -124,7 +124,8 @@ export abstract class SyncGateway
         ...state,
         subscriptionState: {
           subscribed: true,
-          currentRev: command.syncedRevision,
+          currentRev:
+            command.syncedRevision === null ? 0 : command.syncedRevision,
         },
       });
 
@@ -282,6 +283,8 @@ export abstract class SyncGateway
     };
 
     client.emit(CommandTypesFromServer.ApplyNewChanges, toSend);
+
+    state.subscriptionState.currentRev = lastRev;
 
     this.logger.debug(
       `[${state.scopeId}] [${

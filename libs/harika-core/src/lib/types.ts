@@ -34,7 +34,7 @@ export interface SubscribeClientToChanges extends BaseMessage {
   messageType: MessageType.Command;
 
   type: CommandTypesFromClient.SubscribeClientToChanges;
-  syncedRevision: number;
+  syncedRevision: number | null;
 }
 
 export interface InitializeClient extends BaseMessage {
