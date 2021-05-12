@@ -269,8 +269,12 @@ export abstract class SyncGateway
       currentClientRev === null ? 0 : currentClientRev,
       state.clientIdentity
     );
+
     // Compact changes so that multiple changes on same object is merged into a single change.
     const reducedSet = reduceChanges(changes);
+
+    console.log(inspect({ changes, reducedSet }, false, 10));
+
     // Convert the reduced set into an array again.
     const reducedArray = Object.keys(reducedSet).map(function (key) {
       return reducedSet[key];
