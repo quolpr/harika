@@ -38,7 +38,8 @@ Dexie.Syncable.registerSyncProtocol('websocket', {
       options.gatewayName,
       socket,
       options.scopeId,
-      context.identity
+      context.identity,
+      syncedRevision
     );
 
     rxSyncer.initialize(
@@ -46,7 +47,6 @@ Dexie.Syncable.registerSyncProtocol('websocket', {
       baseRevision,
       partial,
       onChangesAccepted,
-      syncedRevision,
       applyRemoteChanges,
       onSuccess
     );

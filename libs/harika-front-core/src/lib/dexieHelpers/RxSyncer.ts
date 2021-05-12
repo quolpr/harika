@@ -66,7 +66,8 @@ export class RxSyncer {
     private gatewayName: string,
     private socket: SocketIOClient.Socket,
     private scopeId: string,
-    private identity: string
+    private identity: string,
+    private syncedRevision: number
   ) {
     this.socket$ = of(socket);
 
@@ -115,7 +116,6 @@ export class RxSyncer {
     partial: boolean,
     onChangesAccepted: () => void,
 
-    syncedRevision: number,
     applyRemoteChanges: ApplyRemoteChangesFunction,
     onSuccess: (continuation: ReactiveContinuation) => void
   ) {
@@ -129,8 +129,8 @@ export class RxSyncer {
         if (changes.length === 0) {
           return of(null).pipe(
             tap(() => {
-              wasFirstChangesSent = true;
               onChangesAccepted();
+              wasFirstChangesSent = true;
             })
           );
         }
@@ -164,6 +164,8 @@ export class RxSyncer {
           partial
         );
 
+        this.syncedRevision = currentRevision;
+
         if (isFirstRound && !partial) {
           isFirstRound = false;
 
@@ -191,7 +193,7 @@ export class RxSyncer {
                 switchMap(sendFirstChanges),
                 this.sendCommand({
                   type: CommandTypesFromClient.SubscribeClientToChanges,
-                  syncedRevision,
+                  syncedRevision: this.syncedRevision,
                 }),
                 mapTo(true)
               )
