@@ -70,6 +70,8 @@ export class RxSyncer {
   ) {
     this.socket$ = of(socket);
 
+    window[gatewayName] = socket;
+
     const connect$ = this.socket$.pipe(
       takeUntil(this.stop$),
       switchMap((socket) => fromEvent(socket, 'connect'))
