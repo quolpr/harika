@@ -26,6 +26,7 @@ export abstract class BaseSyncEntitiesService implements SyncEntitiesService {
       .andWhere('changes.rev > :rev', { rev })
       .andWhere('changes.scopeId = :scopeId', { scopeId })
       .andWhere('changes.ownerId = :ownerId', { ownerId })
+      .orderBy('changes.rev', 'ASC')
       .getMany();
 
     // Todo: merge to query above, race condition may happen
