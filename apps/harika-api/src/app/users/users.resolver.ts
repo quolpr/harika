@@ -71,7 +71,9 @@ export class UsersResolver {
     const token = sign({ userId: userId }, environment.userSecret);
 
     res?.cookie('harikaAuthToken', token, {
-      httpOnly: true,
+      // safari WTF?! https://stackoverflow.com/questions/47742807/cookies-dont-work-over-websocket-on-apple-devices
+      // Security issues could be here. TODO: Maybe check UA?
+      httpOnly: false,
       maxAge: 1000 * 60 * 60 * 24 * 31,
       sameSite: 'strict',
     });
