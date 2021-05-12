@@ -126,6 +126,15 @@ export class RxSyncer {
       if (wasFirstChangesSent) {
         return of(null);
       } else {
+        if (changes.length === 0) {
+          return of(null).pipe(
+            tap(() => {
+              wasFirstChangesSent = true;
+              onChangesAccepted();
+            })
+          );
+        }
+
         return of(null).pipe(
           this.sendCommand({
             type: CommandTypesFromClient.ApplyNewChanges,

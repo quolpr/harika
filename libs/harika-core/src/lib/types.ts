@@ -27,7 +27,7 @@ export interface ApplyNewChangesFromClient extends BaseMessage {
   type: CommandTypesFromClient.ApplyNewChanges;
   changes: IDatabaseChange[];
   partial: boolean;
-  baseRevision: number;
+  baseRevision: number | null;
 }
 
 export interface SubscribeClientToChanges extends BaseMessage {
