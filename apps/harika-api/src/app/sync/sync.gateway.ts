@@ -56,7 +56,7 @@ export abstract class SyncGateway
         subscriptionState:
           | {
               subscribed: true;
-              currentRev: number;
+              currentRev: number | null;
             }
           | { subscribed: false };
         currentUserId: string;
@@ -261,7 +261,7 @@ export abstract class SyncGateway
     const { changes, lastRev } = await this.syncEntities.getChangesFromRev(
       state.scopeId,
       state.currentUserId,
-      currentClientRev,
+      currentClientRev === null ? 0 : currentClientRev,
       state.clientIdentity
     );
     // Compact changes so that multiple changes on same object is merged into a single change.
