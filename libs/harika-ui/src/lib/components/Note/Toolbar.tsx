@@ -13,6 +13,7 @@ import {
   KeyboardHide,
   KeyboardReturn,
 } from '@material-ui/icons';
+import { debounce } from 'lodash-es';
 
 const toolbarClass = cn('toolbar');
 
@@ -25,6 +26,8 @@ export const Toolbar = observer(({ view }: { view: BlocksViewModel }) => {
   const currentBlock = vaultUiState.focusedBlock?.blockId
     ? vault.blocksMap[vaultUiState.focusedBlock?.blockId]
     : undefined;
+
+  const isEditing = vaultUiState.focusedBlock?.isEditing;
 
   const handleNewBlockPress = useCallback(
     async (e: React.MouseEvent) => {
@@ -88,27 +91,52 @@ export const Toolbar = observer(({ view }: { view: BlocksViewModel }) => {
   );
 
   useEffect(() => {
-    if (!window.visualViewport) return;
+    if (isEditing) {
+      if (!window.visualViewport) return;
 
-    const viewportHandler = () => {
-      console.log(window.innerHeight - window.visualViewport.height);
-      setBottomPos(window.innerHeight - window.visualViewport.height);
-    };
+      const viewportHandler = debounce(() => {
+        // TODO: Hide on scroll, show on no events happen
+        // TODO: try position absolute
+        const bottomPos =
+          window.visualViewport.height + window.visualViewport.pageTop >
+          document.body.clientHeight
+            ? 0
+            : window.visualViewport.offsetTop +
+              window.visualViewport.height -
+              window.innerHeight;
 
-    window.visualViewport.addEventListener('scroll', viewportHandler);
-    window.visualViewport.addEventListener('resize', viewportHandler);
+        console.log({
+          innerHeight: window.innerHeight,
+          outerHeight: window.outerHeight,
+          clientHeight: document.documentElement.clientHeight,
+          windowYScroll: window.scrollY,
+          viewportHeight: window.visualViewport.height,
+          viewportOffsetTop: window.visualViewport.offsetTop,
+          viewportPageTop: window.visualViewport.pageTop,
 
-    return () => {
-      window.visualViewport.removeEventListener('scroll', viewportHandler);
-      window.visualViewport.removeEventListener('resize', viewportHandler);
-    };
-  });
+          bottomPos,
+        });
+
+        setBottomPos(bottomPos);
+      }, 250);
+
+      window.visualViewport.addEventListener('scroll', viewportHandler);
+      window.visualViewport.addEventListener('resize', viewportHandler);
+
+      return () => {
+        window.visualViewport.removeEventListener('scroll', viewportHandler);
+        window.visualViewport.removeEventListener('resize', viewportHandler);
+
+        setBottomPos(0);
+      };
+    }
+  }, [isEditing]);
 
   return (
     <Portal>
       <div
         className={toolbarClass()}
-        style={{ transform: `translate3d(0px, ${-bottomPos}px, 0px)` }}
+        style={{ transform: `translate3d(0px, ${bottomPos}px, 0px)` }}
       >
         <button
           onMouseDown={handleMoveDownPress}

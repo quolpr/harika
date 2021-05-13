@@ -40,6 +40,21 @@ export function App({ environment }: { environment: Environment }) {
   >();
 
   useEffect(() => {
+    function handleResize() {
+      document.documentElement.style.setProperty(
+        '--app-height',
+        `${window.innerHeight}px`
+      );
+    }
+
+    window.addEventListener('resize', handleResize);
+
+    handleResize();
+
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
     env.baseApiUrl = environment.apiUrl;
     if (!userId || isOffline === undefined) return;
 

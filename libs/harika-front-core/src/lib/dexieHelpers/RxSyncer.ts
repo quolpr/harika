@@ -71,6 +71,8 @@ export class RxSyncer {
   ) {
     this.socket$ = of(socket);
 
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     window[gatewayName] = socket;
 
     const connect$ = this.socket$.pipe(

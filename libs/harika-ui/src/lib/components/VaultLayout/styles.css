@@ -5,11 +5,10 @@
 
 .vault-layout {
   display: flex;
-  height: 100vh;
   position: relative;
 
   &__sidebar {
-    position: absolute;
+    position: fixed;
     @apply transition-all transform-gpu;
     width: 260px;
 
@@ -29,9 +28,10 @@
 
   &__header {
     @apply transition-all;
-    position: absolute;
+    position: fixed;
     right: 0;
     left: 0;
+    top: 0;
 
     box-sizing: content-box;
 
@@ -44,7 +44,7 @@
     width: 100%;
     padding-left: 0px;
 
-    @apply transition-all transform-gpu;
+    @apply transition-all;
 
     &--with-padding {
       @media (min-width: 768px) {
@@ -54,9 +54,6 @@
   }
 
   &__main-wrapper {
-    overflow: scroll;
-    height: 100%;
-    -webkit-overflow-scrolling: auto;
   }
 
   &__main {

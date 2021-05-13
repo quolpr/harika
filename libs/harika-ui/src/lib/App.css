@@ -7,14 +7,6 @@ body,
   -webkit-overflow-scrolling: auto;
 }
 
-html,
-body {
-  overflow: hidden;
-  position: relative;
-  height: 100%;
-  height: -webkit-fill-available;
-}
-
 /* clears the ‘X’ from Internet Explorer */
 input[type='search']::-ms-clear {
   display: none;
@@ -81,11 +73,6 @@ input[type='search']::-webkit-search-results-decoration {
     &--loading {
     }
   }
-}
-
-.ion-page {
-  overflow: scroll !important;
-  display: block !important;
 }
 
 .link {

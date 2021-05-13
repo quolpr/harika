@@ -6,7 +6,7 @@
   overflow: hidden;
 
   position: absolute;
-  height: calc(100vh - var(--vault-header-full-height));
+  height: calc(var(--app-height) - var(--vault-header-full-height));
   top: var(--vault-header-full-height);
   z-index: 1000;
 
