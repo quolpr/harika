@@ -98,39 +98,37 @@ export class ChangesHandler {
     const blocksResult = zipPatches('blocksMap', patches);
     const noteResult = zipPatches('notesMap', patches);
 
-    const applyForNoteBlocks = () =>
-      Promise.all([
-        (this.database.noteBlocks.bulkAdd(
-          blocksResult.toCreateIds.map((id) => {
-            return mapNoteBlock(this.vault.blocksMap[id]);
-          })
-        ) as unknown) as Promise<void>,
-        this.database.noteBlocks.bulkPut(
-          blocksResult.toUpdateIds.map((id) => {
-            return mapNoteBlock(this.vault.blocksMap[id]);
-          })
-        ),
-        (this.database.noteBlocks.bulkDelete(
-          blocksResult.toDeleteIds
-        ) as unknown) as Promise<void>,
-      ]);
+    const applyForNoteBlocks = async () => {
+      await this.database.noteBlocks.bulkAdd(
+        blocksResult.toCreateIds.map((id) => {
+          return mapNoteBlock(this.vault.blocksMap[id]);
+        })
+      );
 
-    const applyForNotes = () =>
-      Promise.all([
-        (this.database.notes.bulkAdd(
-          noteResult.toCreateIds.map((id) => {
-            return mapNote(this.vault.notesMap[id]);
-          })
-        ) as unknown) as Promise<void>,
-        this.database.notes.bulkPut(
-          noteResult.toUpdateIds.map((id) => {
-            return mapNote(this.vault.notesMap[id]);
-          })
-        ),
-        (this.database.notes.bulkDelete(
-          noteResult.toDeleteIds
-        ) as unknown) as Promise<void>,
-      ]);
+      await this.database.noteBlocks.bulkPut(
+        blocksResult.toUpdateIds.map((id) => {
+          return mapNoteBlock(this.vault.blocksMap[id]);
+        })
+      );
+
+      await this.database.noteBlocks.bulkDelete(blocksResult.toDeleteIds);
+    };
+
+    const applyForNotes = async () => {
+      await this.database.notes.bulkAdd(
+        noteResult.toCreateIds.map((id) => {
+          return mapNote(this.vault.notesMap[id]);
+        })
+      );
+
+      await this.database.notes.bulkPut(
+        noteResult.toUpdateIds.map((id) => {
+          return mapNote(this.vault.notesMap[id]);
+        })
+      );
+
+      await this.database.notes.bulkDelete(noteResult.toDeleteIds);
+    };
 
     this.database.transaction(
       'rw',
