@@ -73,8 +73,6 @@ export const toMobxSync = (
           const note = vault.notesMap[ev.key];
 
           if (ev.type === DatabaseChangeType.Delete) {
-            if (!ev.oldObj) throw new Error('old obj should be present');
-
             return {
               ...convertNoteDocToModelAttrs(
                 ev.oldObj,
@@ -110,7 +108,6 @@ export const toMobxSync = (
 
         return Object.values(latestDedupedEvents).map((ev) => {
           if (ev.type === DatabaseChangeType.Delete) {
-            if (!ev.oldObj) throw new Error('old obj should be present');
             return {
               ...convertNoteBlockDocToModelAttrs(ev.oldObj),
               isDeleted: true,
