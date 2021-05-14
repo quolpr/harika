@@ -21,14 +21,33 @@ import { createBrowserHistory } from 'history';
 import { useLocalStorage } from '@rehooks/local-storage';
 import { Environment } from './types';
 import { env } from './env';
+import { Integrations } from '@sentry/tracing';
+import * as Sentry from '@sentry/react';
 
 const history = createBrowserHistory();
+
+if (process.env.NODE_ENV === 'production') {
+  Sentry.init({
+    dsn:
+      'https://6ce6cfabdd2b45aa8d6b402a10e261b1@o662294.ingest.sentry.io/5765293',
+    integrations: [
+      new Integrations.BrowserTracing({
+        routingInstrumentation: Sentry.reactRouterV5Instrumentation(history),
+      }),
+    ],
+
+    // Set tracesSampleRate to 1.0 to capture 100%
+    // of transactions for performance monitoring.
+    // We recommend adjusting this value in production
+    tracesSampleRate: 1.0,
+  });
+}
 
 Modal.setAppElement('body');
 
 const queryClient = new QueryClient();
 
-export function App({ environment }: { environment: Environment }) {
+function NotProfiledApp({ environment }: { environment: Environment }) {
   const [authInfo, setAuthInfo] = useAuthState();
   const userId = authInfo?.userId;
   const isOffline = authInfo?.isOffline;
@@ -152,3 +171,5 @@ export function App({ environment }: { environment: Environment }) {
     </React.StrictMode>
   );
 }
+
+export const App = Sentry.withProfiler(NotProfiledApp);
