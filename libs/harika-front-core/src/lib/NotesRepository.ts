@@ -107,60 +107,70 @@ export class NotesRepository {
   }
 
   async updateNoteBlockLinks(vault: VaultModel, noteBlock: NoteBlockModel) {
-    console.log('updating links');
+    return this.getDbByVaultId(vault.$modelId).transaction(
+      'r',
 
-    // TODO: use parser
-    const titles = [...noteBlock.content.value.matchAll(/\[\[(.+?)\]\]/g)].map(
-      ([, name]) => name
-    );
+      this.getDbByVaultId(vault.$modelId).notes,
+      this.getDbByVaultId(vault.$modelId).noteBlocks,
 
-    const existingNotesIndexed = Object.fromEntries(
-      (
-        await this.getDbByVaultId(vault.$modelId).notesQueries.getByTitles(
-          titles
-        )
-      ).map((n) => [n.title, n])
-    );
+      async () => {
+        console.log('updating links');
+        // TODO: transaction
 
-    const allNotes = (
-      await Promise.all(
-        titles.map(async (name) => {
-          if (!existingNotesIndexed[name]) {
-            const result = await this.createNote(vault, { title: name });
+        // TODO: use parser
+        const titles = [
+          ...noteBlock.content.value.matchAll(/\[\[(.+?)\]\]/g),
+        ].map(([, name]) => name);
 
-            if (result.status === 'ok') {
-              return result.data;
-            } else {
-              alert(JSON.stringify(result.errors));
-            }
-          } else {
-            const existing = existingNotesIndexed[name];
+        const existingNotesIndexed = Object.fromEntries(
+          (
+            await this.getDbByVaultId(vault.$modelId).notesQueries.getByTitles(
+              titles
+            )
+          ).map((n) => [n.title, n])
+        );
 
-            return this.findNote(vault, existing.id, false);
+        const allNotes = (
+          await Promise.all(
+            titles.map(async (name) => {
+              if (!existingNotesIndexed[name]) {
+                const result = await this.createNote(vault, { title: name });
+
+                if (result.status === 'ok') {
+                  return result.data;
+                } else {
+                  alert(JSON.stringify(result.errors));
+                }
+              } else {
+                const existing = existingNotesIndexed[name];
+
+                return this.findNote(vault, existing.id, false);
+              }
+            })
+          )
+        ).flatMap((n) => (n ? [n] : []));
+
+        const allNotesIndexed = Object.fromEntries(
+          allNotes.map((n) => [n.$modelId, n])
+        );
+
+        const existingLinkedNotesIndexed = Object.fromEntries(
+          noteBlock.linkedNoteRefs.map((ref) => [ref.id, ref.current])
+        );
+
+        allNotes.forEach((note) => {
+          if (!existingLinkedNotesIndexed[note.$modelId]) {
+            vault.createLink(note, noteBlock);
           }
-        })
-      )
-    ).flatMap((n) => (n ? [n] : []));
+        });
 
-    const allNotesIndexed = Object.fromEntries(
-      allNotes.map((n) => [n.$modelId, n])
-    );
-
-    const existingLinkedNotesIndexed = Object.fromEntries(
-      noteBlock.linkedNoteRefs.map((ref) => [ref.id, ref.current])
-    );
-
-    allNotes.forEach((note) => {
-      if (!existingLinkedNotesIndexed[note.$modelId]) {
-        vault.createLink(note, noteBlock);
+        Object.values(existingLinkedNotesIndexed).forEach((note) => {
+          if (!allNotesIndexed[note.$modelId]) {
+            vault.unlink(note, noteBlock);
+          }
+        });
       }
-    });
-
-    Object.values(existingLinkedNotesIndexed).forEach((note) => {
-      if (!allNotesIndexed[note.$modelId]) {
-        vault.unlink(note, noteBlock);
-      }
-    });
+    );
   }
 
   async preloadNote(

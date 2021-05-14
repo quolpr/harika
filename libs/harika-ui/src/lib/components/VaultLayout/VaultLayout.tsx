@@ -76,8 +76,6 @@ const useKeepScroll = () => {
       if (!location.key) return;
       if (!listenScroll.current) return;
 
-      console.log(`setScroll[${location.key}]`, e.currentTarget.scrollTop);
-
       scrollHistory.current[location.key] = e.currentTarget.scrollTop;
     },
     [location.key]
