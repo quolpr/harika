@@ -56,7 +56,7 @@ export const convertNoteDocToModelAttrs = (
 };
 
 // TODO: could be optimized
-export const loadNoteDocToModelAttrs = async (
+const loadNoteDocToModelAttrsWithoutTx = async (
   db: VaultDexieDatabase,
   noteDoc: NoteDocType,
   preloadChildren = true,
@@ -66,50 +66,41 @@ export const loadNoteDocToModelAttrs = async (
   const noteBlocksQueries = db.noteBlocksQueries;
   const notesQueries = db.notesQueries;
 
-  const { noteBlockAttrs, linkedNotes } = await db.transaction(
-    'r',
-    db.notes,
-    db.noteBlocks,
-    async () => {
-      const noteBlockAttrs = preloadChildren
-        ? await Promise.all(
-            (await noteBlocksQueries.getByNoteId(noteDoc.id)).map((m) =>
-              convertNoteBlockDocToModelAttrs(m)
-            )
-          )
-        : [];
+  const noteBlockAttrs = preloadChildren
+    ? await Promise.all(
+        (await noteBlocksQueries.getByNoteId(noteDoc.id)).map((m) =>
+          convertNoteBlockDocToModelAttrs(m)
+        )
+      )
+    : [];
 
-      const linkedNotes: IConvertResult[] = [];
+  const linkedNotes: IConvertResult[] = [];
 
-      if (preloadNoteBacklinks) {
-        linkedNotes.push(
-          ...(await Promise.all(
-            (await notesQueries.getLinkedNotesOfNoteId(noteDoc.id)).map((doc) =>
-              loadNoteDocToModelAttrs(db, doc, true, true, false)
-            )
-          ))
-        );
-      }
+  if (preloadNoteBacklinks) {
+    linkedNotes.push(
+      ...(await Promise.all(
+        (await notesQueries.getLinkedNotesOfNoteId(noteDoc.id)).map((doc) =>
+          loadNoteDocToModelAttrs(db, doc, true, true, false)
+        )
+      ))
+    );
+  }
 
-      if (preloadBlockLinks) {
-        const noteIds = uniq(
-          noteBlockAttrs.flatMap(({ linkedNoteRefs }) =>
-            linkedNoteRefs.map(({ id }) => id)
-          )
-        );
+  if (preloadBlockLinks) {
+    const noteIds = uniq(
+      noteBlockAttrs.flatMap(({ linkedNoteRefs }) =>
+        linkedNoteRefs.map(({ id }) => id)
+      )
+    );
 
-        linkedNotes.push(
-          ...(await Promise.all(
-            (await notesQueries.getByIds(noteIds)).map((doc) =>
-              loadNoteDocToModelAttrs(db, doc, false, false, false)
-            )
-          ))
-        );
-      }
-
-      return { noteBlockAttrs, linkedNotes };
-    }
-  );
+    linkedNotes.push(
+      ...(await Promise.all(
+        (await notesQueries.getByIds(noteIds)).map((doc) =>
+          loadNoteDocToModelAttrs(db, doc, false, false, false)
+        )
+      ))
+    );
+  }
 
   const noteModel = convertNoteDocToModelAttrs(
     noteDoc,
@@ -122,4 +113,29 @@ export const loadNoteDocToModelAttrs = async (
     noteBlocks: noteBlockAttrs,
     linkedNotes: linkedNotes,
   };
+};
+
+export const loadNoteDocToModelAttrs = async (
+  db: VaultDexieDatabase,
+  noteDoc: NoteDocType,
+  preloadChildren = true,
+  preloadBlockLinks = true,
+  preloadNoteBacklinks = true
+) => {
+  return db.transaction(
+    'r',
+
+    db.notes,
+    db.noteBlocks,
+
+    async () => {
+      return loadNoteDocToModelAttrsWithoutTx(
+        db,
+        noteDoc,
+        preloadChildren,
+        preloadBlockLinks,
+        preloadNoteBacklinks
+      );
+    }
+  );
 };
