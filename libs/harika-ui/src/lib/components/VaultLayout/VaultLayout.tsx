@@ -4,7 +4,7 @@ import {
   VaultUiState,
 } from '@harika/harika-front-core';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useHistory, useParams } from 'react-router-dom';
+import { useHistory, useLocation, useParams } from 'react-router-dom';
 import { useClickAway, useMedia } from 'react-use';
 import { NoteRepositoryContext } from '../../contexts/CurrentNoteRepositoryContext';
 import { CurrentVaultContext } from '../../contexts/CurrentVaultContext';
@@ -38,11 +38,58 @@ const layoutClass = cn('vault-layout');
 //   return <>{wasSynched && children}</>;
 // };
 
+// Keep scroll position when back/forward borwser button hits
+const useKeepScroll = () => {
+  const history = useHistory();
+  const location = useLocation();
+
+  const mainRef = useRef<HTMLDivElement>(null);
+  const scrollHistory = useRef<Record<string, number>>({});
+
+  const listenScroll = useRef(true);
+
+  useEffect(() => {
+    return history.listen((ev, act) => {
+      listenScroll.current = false;
+      setTimeout(() => {
+        const top = (() => {
+          if (ev.key && scrollHistory.current[ev.key] && act === 'POP') {
+            return scrollHistory.current[ev.key];
+          } else {
+            return 0;
+          }
+        })();
+
+        mainRef.current?.scrollTo({
+          top,
+          // https://github.com/Microsoft/TypeScript/issues/28755
+          behavior: 'instant' as 'auto',
+        });
+
+        listenScroll.current = true;
+      }, 0);
+    });
+  }, [history]);
+
+  const handleScroll = useCallback(
+    (e: React.UIEvent<HTMLDivElement>) => {
+      if (!location.key) return;
+      if (!listenScroll.current) return;
+
+      console.log(`setScroll[${location.key}]`, e.currentTarget.scrollTop);
+
+      scrollHistory.current[location.key] = e.currentTarget.scrollTop;
+    },
+    [location.key]
+  );
+
+  return { mainRef, handleScroll };
+};
+
 export const VaultLayout: React.FC<{
   vaultRepository: VaultsRepository;
 }> = ({ children, vaultRepository }) => {
   const history = useHistory();
-
   const { vaultId } = useParams<{ vaultId: string }>();
   const isWide = useMedia('(min-width: 768px)');
   const [vault, setVault] = useState<VaultModel | undefined>();
@@ -99,6 +146,8 @@ export const VaultLayout: React.FC<{
     writeStorage('lastVaultId', vaultId);
   }, [vaultId]);
 
+  const { mainRef, handleScroll } = useKeepScroll();
+
   if (!vault) return null;
 
   return (
@@ -132,7 +181,11 @@ export const VaultLayout: React.FC<{
                   />
                 </div>
 
-                <div className={layoutClass('main-wrapper')}>
+                <div
+                  className={layoutClass('main-wrapper')}
+                  onScroll={handleScroll}
+                  ref={mainRef}
+                >
                   <section
                     className={layoutClass('main', {
                       'sidebar-opened': isSidebarOpened,
