@@ -101,6 +101,7 @@
     "socket.io-client": "^2.4.0",
     "tslib": "^2.0.0",
     "typeorm": "^0.2.32",
+    "use-resize-observer": "^7.0.0",
     "utility-types": "^3.10.0",
     "uuid": "^8.3.2",
     "uuidv4": "^6.2.7",

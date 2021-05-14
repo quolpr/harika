@@ -1,10 +1,9 @@
 import { observer } from 'mobx-react-lite';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { useCurrentVaultUiState } from '../../contexts/CurrentVaultUiStateContext';
 import { useCurrentVault } from '../../hooks/useCurrentVault';
 import { cn } from '../../utils';
 import { BlocksViewModel, FocusedBlockState } from '@harika/harika-front-core';
-import { Portal } from '../Portal';
 import {
   ArrowDropDown,
   ArrowDropUp,
@@ -13,11 +12,15 @@ import {
   KeyboardHide,
   KeyboardReturn,
 } from '@material-ui/icons';
-import { debounce } from 'lodash-es';
+import { FooterRefContext } from '../../contexts/FooterRefContext';
+import ReactDOM from 'react-dom';
+import useResizeObserver from 'use-resize-observer/polyfilled';
+import { useUnmount } from 'react-use';
 
 const toolbarClass = cn('toolbar');
 
 export const Toolbar = observer(({ view }: { view: BlocksViewModel }) => {
+  const footerRef = useContext(FooterRefContext);
   const vaultUiState = useCurrentVaultUiState();
   const vault = useCurrentVault();
 
@@ -26,8 +29,6 @@ export const Toolbar = observer(({ view }: { view: BlocksViewModel }) => {
   const currentBlock = vaultUiState.focusedBlock?.blockId
     ? vault.blocksMap[vaultUiState.focusedBlock?.blockId]
     : undefined;
-
-  const isEditing = vaultUiState.focusedBlock?.isEditing;
 
   const handleNewBlockPress = useCallback(
     async (e: React.MouseEvent) => {
@@ -91,84 +92,76 @@ export const Toolbar = observer(({ view }: { view: BlocksViewModel }) => {
   );
 
   useEffect(() => {
-    if (isEditing) {
-      if (!window.visualViewport) return;
+    if (!window.visualViewport) return;
 
-      const viewportHandler = debounce(() => {
-        // TODO: Hide on scroll, show on no events happen
-        // TODO: try position absolute
-        const bottomPos =
-          window.visualViewport.height + window.visualViewport.pageTop >
-          document.body.clientHeight
-            ? 0
-            : window.visualViewport.offsetTop +
-              window.visualViewport.height -
-              window.innerHeight;
+    const viewportHandler = () => {
+      setBottomPos(window.innerHeight - window.visualViewport.height);
+    };
 
-        console.log({
-          innerHeight: window.innerHeight,
-          outerHeight: window.outerHeight,
-          clientHeight: document.documentElement.clientHeight,
-          windowYScroll: window.scrollY,
-          viewportHeight: window.visualViewport.height,
-          viewportOffsetTop: window.visualViewport.offsetTop,
-          viewportPageTop: window.visualViewport.pageTop,
+    window.visualViewport.addEventListener('scroll', viewportHandler);
+    window.visualViewport.addEventListener('resize', viewportHandler);
 
-          bottomPos,
-        });
+    return () => {
+      window.visualViewport.removeEventListener('scroll', viewportHandler);
+      window.visualViewport.removeEventListener('resize', viewportHandler);
+    };
+  });
 
-        setBottomPos(bottomPos);
-      }, 250);
+  const { ref, height: toolbarHeight = 0 } = useResizeObserver<
+    HTMLDivElement
+  >();
 
-      window.visualViewport.addEventListener('scroll', viewportHandler);
-      window.visualViewport.addEventListener('resize', viewportHandler);
+  useEffect(() => {
+    document.documentElement.style.setProperty(
+      '--vault-footer-height',
+      `${toolbarHeight}px`
+    );
+  }, [toolbarHeight]);
 
-      return () => {
-        window.visualViewport.removeEventListener('scroll', viewportHandler);
-        window.visualViewport.removeEventListener('resize', viewportHandler);
-
-        setBottomPos(0);
-      };
-    }
-  }, [isEditing]);
+  useUnmount(() => {
+    document.documentElement.style.setProperty('--vault-footer-height', '0px');
+  });
 
   return (
-    <Portal>
-      <div
-        className={toolbarClass()}
-        style={{ transform: `translate3d(0px, ${bottomPos}px, 0px)` }}
-      >
-        <button
-          onMouseDown={handleMoveDownPress}
-          className={toolbarClass('button')}
+    (footerRef?.current &&
+      ReactDOM.createPortal(
+        <div
+          className={toolbarClass()}
+          style={{ transform: `translate3d(0px, ${-bottomPos}px, 0px)` }}
+          ref={ref}
         >
-          <FormatIndentDecrease />
-        </button>
-        <button
-          onMouseDown={handleMoveUpPress}
-          className={toolbarClass('button')}
-        >
-          <FormatIndentIncrease />
-        </button>
-        <button
-          onMouseDown={handleMoveRight}
-          className={toolbarClass('button')}
-        >
-          <ArrowDropDown />
-        </button>
-        <button onMouseDown={handleMoveLeft} className={toolbarClass('button')}>
-          <ArrowDropUp />
-        </button>
-        <button className={toolbarClass('button')} data-defocus>
-          <KeyboardHide />
-        </button>
-        <button
-          onClick={handleNewBlockPress}
-          className={toolbarClass('button')}
-        >
-          <KeyboardReturn />
-        </button>
-      </div>
-    </Portal>
+          <div className={toolbarClass('content')}>
+            <button
+              onMouseDown={handleMoveDownPress}
+              className={toolbarClass('button')}
+            >
+              <FormatIndentDecrease />
+            </button>
+            <button
+              onMouseDown={handleMoveUpPress}
+              className={toolbarClass('button')}
+            >
+              <FormatIndentIncrease />
+            </button>
+            <button
+              onMouseDown={handleMoveRight}
+              className={toolbarClass('button')}
+            >
+              <ArrowDropDown />
+            </button>
+            <button
+              onMouseDown={handleMoveLeft}
+              className={toolbarClass('button')}
+            >
+              <ArrowDropUp />
+            </button>
+            <button className={toolbarClass('button')} data-defocus>
+              <KeyboardHide />
+            </button>
+          </div>
+        </div>,
+        footerRef.current
+      )) ||
+    null
   );
 });

@@ -113,18 +113,22 @@
 }
 
 .toolbar {
-  @apply bg-gray-900 py-4 bg-opacity-90 pb-8 transition;
+  @apply transition bg-gray-900 bg-opacity-90;
+
+  display: flex;
+  position: relative;
 
   backdrop-filter: blur(5px);
 
-  position: fixed;
-  bottom: 0px;
+  &__content {
+    @apply py-4 pb-8;
 
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
 
-  width: 100%;
+    width: 100%;
+  }
 
   &__button {
     width: 10%;

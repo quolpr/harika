@@ -17,6 +17,7 @@ import { connectReduxDevTools } from 'mobx-keystone';
 
 import './styles.css';
 import { writeStorage } from '@rehooks/local-storage';
+import { FooterRefContext } from '../../contexts/FooterRefContext';
 
 const layoutClass = cn('vault-layout');
 
@@ -49,6 +50,7 @@ export const VaultLayout: React.FC<{
 
   const togglerRef = useRef<HTMLDivElement>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
+  const footerRef = useRef<HTMLDivElement>(null);
 
   const handleTogglerClick = useCallback(() => {
     setIsSidebarOpened(!isSidebarOpened);
@@ -105,41 +107,48 @@ export const VaultLayout: React.FC<{
         <NoteRepositoryContext.Provider
           value={vaultRepository.getNoteRepository()}
         >
-          <div className={layoutClass()}>
-            <VaultSidebar
-              ref={sidebarRef}
-              className={layoutClass('sidebar', {
-                closed: !isSidebarOpened,
-              })}
-              isOpened={isSidebarOpened}
-              onNavClick={closeSidebar}
-            />
+          <FooterRefContext.Provider value={footerRef}>
+            <div className={layoutClass()}>
+              <VaultSidebar
+                ref={sidebarRef}
+                className={layoutClass('sidebar', {
+                  closed: !isSidebarOpened,
+                })}
+                isOpened={isSidebarOpened}
+                onNavClick={closeSidebar}
+              />
 
-            <div
-              className={layoutClass('container', {
-                'with-padding': isSidebarOpened,
-              })}
-            >
-              <div className={layoutClass('header-wrapper')}>
-                <VaultHeader
-                  className={layoutClass('header')}
-                  onTogglerClick={handleTogglerClick}
-                  isTogglerToggled={isSidebarOpened}
-                  togglerRef={togglerRef}
-                />
-              </div>
+              <div
+                className={layoutClass('container', {
+                  'with-padding': isSidebarOpened,
+                })}
+              >
+                <div className={layoutClass('header-wrapper')}>
+                  <VaultHeader
+                    className={layoutClass('header')}
+                    onTogglerClick={handleTogglerClick}
+                    isTogglerToggled={isSidebarOpened}
+                    togglerRef={togglerRef}
+                  />
+                </div>
 
-              <div className={layoutClass('main-wrapper')}>
-                <section
-                  className={layoutClass('main', {
-                    'sidebar-opened': isSidebarOpened,
-                  })}
-                >
-                  {children}
-                </section>
+                <div className={layoutClass('main-wrapper')}>
+                  <section
+                    className={layoutClass('main', {
+                      'sidebar-opened': isSidebarOpened,
+                    })}
+                  >
+                    {children}
+                  </section>
+                </div>
+
+                <div
+                  className={layoutClass('footer-wrapper')}
+                  ref={footerRef}
+                ></div>
               </div>
             </div>
-          </div>
+          </FooterRefContext.Provider>
         </NoteRepositoryContext.Provider>
       </CurrentVaultContext.Provider>
     </CurrentVaultUiStateContext.Provider>

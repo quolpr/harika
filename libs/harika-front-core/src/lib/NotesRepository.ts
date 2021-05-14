@@ -8,8 +8,6 @@ import { ICreationResult } from './NotesRepository/types';
 import { VaultModel } from './NotesRepository/models/VaultModel';
 import { VaultDexieDatabase } from './NotesRepository/dexieDb/DexieDb';
 import { loadNoteDocToModelAttrs } from './NotesRepository/dexieDb/convertDocToModel';
-import { concat, startWith, switchMap } from 'rxjs/operators';
-import { of, race } from 'rxjs';
 import { liveSwitch } from './onDexieChange';
 
 export { NoteModel } from './NotesRepository/models/NoteModel';
@@ -19,6 +17,7 @@ export {
   NoteBlockModel,
   noteBlockRef,
 } from './NotesRepository/models/NoteBlockModel';
+export { BlockContentModel } from './NotesRepository/models/BlockContentModel';
 
 // Document = RxDb doc
 // Model = DDD model

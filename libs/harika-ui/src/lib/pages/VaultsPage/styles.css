@@ -1,6 +1,12 @@
 .vaults-navbar {
   @apply bg-gray-800 px-4 py-2;
 
+  position: absolute;
+
+  top: 0px;
+  left: 0px;
+  right: 0px;
+
   display: flex;
 
   align-items: center;
@@ -17,6 +23,20 @@
       --tw-bg-opacity: 0.85;
     }
   }
+}
+
+.vaults-container {
+  position: absolute;
+  top: 60px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  overscroll-behavior: contain;
+
+  overflow: auto;
 }
 
 .vaults {

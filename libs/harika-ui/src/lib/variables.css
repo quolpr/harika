@@ -9,4 +9,6 @@
     var(--vault-header-padding-top) + var(--vault-header-height) +
       var(--vault-header-padding-bottom)
   );
+
+  --vault-footer-height: 0px;
 }

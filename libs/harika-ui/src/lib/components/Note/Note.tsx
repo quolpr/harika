@@ -1,4 +1,4 @@
-import React, { ChangeEvent, useCallback } from 'react';
+import React, { ChangeEvent, useCallback, useContext } from 'react';
 import TextareaAutosize from 'react-textarea-autosize';
 import { NoteBlock } from '../NoteBlock/NoteBlock';
 import './styles.css';
@@ -23,7 +23,7 @@ import { Toolbar } from './Toolbar';
 import { useMedia } from 'react-use';
 import { useNoteRepository } from '../../contexts/CurrentNoteRepositoryContext';
 import { Ref } from 'mobx-keystone';
-import { BlockContentModel } from '../../../../../harika-front-core/src/lib/NotesRepository/models/BlockContentModel';
+import { BlockContentModel } from '@harika/harika-front-core';
 
 export interface IFocusBlockState {
   focusOnBlockId: string;
