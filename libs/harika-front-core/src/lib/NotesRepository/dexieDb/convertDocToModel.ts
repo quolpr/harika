@@ -8,10 +8,10 @@ import { noteRef } from '../models/NoteModel';
 import { VaultDexieDatabase } from './DexieDb';
 import { NoteDocType, NoteBlockDocType } from '@harika/harika-core';
 
-type NoteData = ModelInstanceCreationData<NoteModel> & {
+export type NoteData = ModelInstanceCreationData<NoteModel> & {
   $modelId: string;
 };
-type NoteBlockData = ModelInstanceCreationData<NoteBlockModel> & {
+export type NoteBlockData = ModelInstanceCreationData<NoteBlockModel> & {
   $modelId: string;
 };
 

@@ -4,6 +4,8 @@ import { NotesRepository, VaultModel } from '../../NotesRepository';
 import {
   convertNoteBlockDocToModelAttrs,
   convertNoteDocToModelAttrs,
+  NoteBlockData,
+  NoteData,
 } from './convertDocToModel';
 import { VaultDexieDatabase } from './DexieDb';
 import {
@@ -73,6 +75,11 @@ export const toMobxSync = (
           const note = vault.notesMap[ev.key];
 
           if (ev.type === DatabaseChangeType.Delete) {
+            if (!ev.oldObj) {
+              console.error('FIXME ev.oldObj is null', ev);
+              return undefined;
+            }
+
             return {
               ...convertNoteDocToModelAttrs(
                 ev.oldObj,
@@ -108,6 +115,11 @@ export const toMobxSync = (
 
         return Object.values(latestDedupedEvents).map((ev) => {
           if (ev.type === DatabaseChangeType.Delete) {
+            if (!ev.oldObj) {
+              console.error('FIXME ev.oldObj is null', ev);
+              return undefined;
+            }
+
             return {
               ...convertNoteBlockDocToModelAttrs(ev.oldObj),
               isDeleted: true,
@@ -120,6 +132,9 @@ export const toMobxSync = (
         });
       })();
 
-      vault.createOrUpdateEntitiesFromAttrs(notes, blocks);
+      vault.createOrUpdateEntitiesFromAttrs(
+        notes.filter((n) => !!n) as NoteData[],
+        blocks.filter((n) => !!n) as NoteBlockData[]
+      );
     });
 };
