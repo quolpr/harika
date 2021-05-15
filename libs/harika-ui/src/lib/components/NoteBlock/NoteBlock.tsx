@@ -1,17 +1,9 @@
-import React, {
-  MutableRefObject,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import './styles.css';
 import { useClickAway, usePrevious } from 'react-use';
 import clsx from 'clsx';
 import TextareaAutosize from 'react-textarea-autosize';
-import { Observer, observer } from 'mobx-react-lite';
+import { observer } from 'mobx-react-lite';
 import {
   BlocksViewModel,
   NoteBlockModel,
@@ -25,11 +17,8 @@ import { useCurrentFocusedBlockState } from '../../hooks/useFocusedBlockState';
 import { useCurrentVault } from '../../hooks/useCurrentVault';
 import { Link } from 'react-router-dom';
 import { paths } from '../../paths';
-import { isIOS } from '../../utils';
+import { insertText, isIOS } from '../../utils';
 import { Ref } from 'mobx-keystone';
-import { position, offset } from 'caret-pos';
-import { useCurrentVaultUiState } from '../../contexts/CurrentVaultUiStateContext';
-import { CurrentBlockInputRefContext } from '../../contexts';
 import { useFakeInput, usePassCurrentInput } from './hooks';
 
 const NoteBlockChildren = observer(
@@ -336,11 +325,26 @@ export const NoteBlock = observer(
 
     const handleKeyDown = useCallback(
       async (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        const content = noteBlock.content.value;
+
         if (e.key === 'Backspace') {
           const start = e.currentTarget.selectionStart;
           const end = e.currentTarget.selectionEnd;
 
           const isOnStart = start === end && start === 0;
+
+          if (start === end) {
+            const nextChar = content[start];
+
+            if (nextChar === ']') {
+              e.preventDefault();
+
+              insertText(e.currentTarget, '', 0, {
+                start: start - 1,
+                end: start + 1,
+              });
+            }
+          }
 
           if (isOnStart) {
             e.preventDefault();
@@ -378,6 +382,10 @@ export const NoteBlock = observer(
           e.preventDefault();
 
           noteBlock.tryMoveRight();
+        } else if (e.key === '[') {
+          e.preventDefault();
+
+          insertText(e.currentTarget, '[]', 1);
         } else if (e.key === 'ArrowDown') {
           e.preventDefault();
 
@@ -402,6 +410,10 @@ export const NoteBlock = observer(
               isEditing: true,
             });
           }
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+
+          e.currentTarget.blur();
         }
       },
       [insertFakeInput, noteBlock, setEditState, view.$modelId]
@@ -418,8 +430,6 @@ export const NoteBlock = observer(
 
     const handleClick = useCallback(
       (e: React.MouseEvent<HTMLDivElement>) => {
-        const selection = window.getSelection();
-
         let startAt = contentLength;
 
         if (e.target instanceof HTMLElement) {

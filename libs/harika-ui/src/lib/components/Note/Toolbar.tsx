@@ -2,7 +2,7 @@ import { observer } from 'mobx-react-lite';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { useCurrentVaultUiState } from '../../contexts/CurrentVaultUiStateContext';
 import { useCurrentVault } from '../../hooks/useCurrentVault';
-import { cn } from '../../utils';
+import { cn, insertText } from '../../utils';
 import { BlocksViewModel } from '@harika/harika-front-core';
 import {
   ArrowDropDown,
@@ -19,39 +19,6 @@ import { useUnmount } from 'react-use';
 import { CurrentBlockInputRefContext } from '../../contexts';
 
 const toolbarClass = cn('toolbar');
-
-const insertText = (
-  el: HTMLTextAreaElement,
-  text: string,
-  cursorOffset = text.length
-) => {
-  // https://stackoverflow.com/questions/23892547/what-is-the-best-way-to-trigger-onchange-event-in-react-js
-  const nativeInputValueSetter = Object?.getOwnPropertyDescriptor(
-    window?.HTMLTextAreaElement?.prototype,
-    'value'
-  )?.set;
-
-  const set = (text: string) => nativeInputValueSetter?.call(el, text);
-
-  if (el.selectionStart || el.selectionStart === 0) {
-    const startPos = el.selectionStart;
-    const endPos = el.selectionEnd;
-
-    set(
-      el.value.substring(0, startPos) +
-        text +
-        el.value.substring(endPos, el.value.length)
-    );
-
-    el.selectionStart = startPos + cursorOffset;
-    el.selectionEnd = startPos + cursorOffset;
-  } else {
-    set(el.value + text);
-  }
-
-  const ev = new Event('input', { bubbles: true });
-  el.dispatchEvent(ev);
-};
 
 export const Toolbar = observer(({ view }: { view: BlocksViewModel }) => {
   const footerRef = useContext(FooterRefContext);
