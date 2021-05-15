@@ -15,7 +15,6 @@ const RefRenderer = observer(
     const handleTodoToggle = useCallback(
       (e: React.SyntheticEvent) => {
         e.stopPropagation();
-        e.preventDefault();
 
         noteBlock.content.toggleTodo(token.id);
         noteRepo.updateNoteBlockLinks(vault, noteBlock);
@@ -33,17 +32,16 @@ const RefRenderer = observer(
 
     if (token.content === 'TODO' || token.content === 'DONE') {
       return (
-        <span className="checkbox" onClick={handleTodoToggle}>
+        <label className="checkbox" onClick={(e) => e.stopPropagation()}>
           <input
             type="checkbox"
             checked={token.content === 'DONE'}
-            onClick={handleTodoToggle}
             onChange={handleTodoToggle}
           />
           <svg className="checkbox__tick" viewBox="0 0 20 20">
             <path d="M0 11l2-2 5 5L18 3l2 2L7 18z" />
           </svg>
-        </span>
+        </label>
       );
     }
 
@@ -142,8 +140,12 @@ export const TokensRenderer = ({
 }) => {
   return (
     <>
-      {tokens.map((token, i) => (
-        <TokenRenderer key={i} noteBlock={noteBlock} token={token} />
+      {tokens.map((token) => (
+        <TokenRenderer
+          key={`${token.offsetStart}${token.offsetEnd}`}
+          noteBlock={noteBlock}
+          token={token}
+        />
       ))}
     </>
   );
