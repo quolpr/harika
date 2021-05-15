@@ -72,10 +72,16 @@ const RefRenderer = observer(
     const noteRepo = useNoteRepository();
     const linkedNotes = noteBlock.linkedNoteRefs;
 
-    const handleTodoToggle = useCallback(() => {
-      noteBlock.content.toggleTodo(token.id);
-      noteRepo.updateNoteBlockLinks(vault, noteBlock);
-    }, [noteBlock, noteRepo, token.id, vault]);
+    const handleTodoToggle = useCallback(
+      (e: React.MouseEvent) => {
+        e.stopPropagation();
+        e.preventDefault();
+
+        noteBlock.content.toggleTodo(token.id);
+        noteRepo.updateNoteBlockLinks(vault, noteBlock);
+      },
+      [noteBlock, noteRepo, token.id, vault]
+    );
 
     const noteRef = linkedNotes.find((note) => {
       try {
@@ -86,17 +92,12 @@ const RefRenderer = observer(
     });
 
     if (token.content === 'TODO' || token.content === 'DONE') {
-      console.log(token.content);
       return (
-        <span className="checkbox">
+        <span className="checkbox" onClick={handleTodoToggle}>
           <input
             type="checkbox"
             checked={token.content === 'DONE'}
-            onClick={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-            }}
-            onChange={handleTodoToggle}
+            onClick={handleTodoToggle}
           />
           <svg className="checkbox__tick" viewBox="0 0 20 20">
             <path d="M0 11l2-2 5 5L18 3l2 2L7 18z" />
@@ -443,11 +444,13 @@ export const NoteBlock = observer(
       [noteBlock]
     );
 
+    const contentLength = noteBlock.content.value.length;
+
     const handleClick = useCallback(
       (e: React.MouseEvent<HTMLDivElement>) => {
         const selection = window.getSelection();
 
-        let startAt = 0;
+        let startAt = contentLength;
 
         if (e.target instanceof HTMLElement) {
           // TODO: no FF support
@@ -470,7 +473,13 @@ export const NoteBlock = observer(
           startAt,
         });
       },
-      [insertFakeInput, noteBlock.$modelId, setEditState, view.$modelId]
+      [
+        contentLength,
+        insertFakeInput,
+        noteBlock.$modelId,
+        setEditState,
+        view.$modelId,
+      ]
     );
 
     useEffect(() => {
@@ -523,7 +532,7 @@ export const NoteBlock = observer(
             />
           )}
           {!isEditing && (
-            <div
+            <span
               onClick={handleClick}
               className={clsx('note-block__content', {
                 'note-block__content--focused': isFocused,
@@ -533,7 +542,7 @@ export const NoteBlock = observer(
                 noteBlock={noteBlock}
                 tokens={noteBlock.content.ast}
               />
-            </div>
+            </span>
           )}
           {/* </div> */}
         </div>

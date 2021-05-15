@@ -95,6 +95,8 @@ input[type='search']::-webkit-search-results-decoration {
 .checkbox {
   @apply bg-white border-2 rounded border-gray-400 w-5 h-5 inline-flex flex-shrink-0 justify-center items-center mr-1 focus-within:border-pink-500;
 
+  -webkit-tap-highlight-color: transparent;
+
   input {
     @apply opacity-0 absolute;
   }
