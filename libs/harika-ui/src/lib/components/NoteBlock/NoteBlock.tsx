@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import './styles.css';
 import { useClickAway, usePrevious } from 'react-use';
 import clsx from 'clsx';
@@ -20,6 +26,7 @@ import { paths } from '../../paths';
 import { isIOS } from '../../utils';
 import { Ref } from 'mobx-keystone';
 import { position, offset } from 'caret-pos';
+import { useCurrentVaultUiState } from '../../contexts/CurrentVaultUiStateContext';
 
 const NoteBlockChildren = observer(
   ({
@@ -79,6 +86,7 @@ const RefRenderer = observer(
     });
 
     if (token.content === 'TODO' || token.content === 'DONE') {
+      console.log(token.content);
       return (
         <span className="checkbox">
           <input
@@ -191,8 +199,12 @@ const useFakeInput = () => {
     // create invisible dummy input to receive the focus first
     const fakeInput = document.createElement('input');
     fakeInput.setAttribute('type', 'text');
+    fakeInput.style.position = 'absolute';
     fakeInput.style.fontSize = '16px'; // disable auto zoom
-    fakeInput.style.opacity = '0';
+    fakeInput.style.width = '5px';
+    fakeInput.style.height = '5px';
+    fakeInput.style.opacity = '0.1';
+    fakeInput.style.backgroundColor = '#000';
 
     // you may need to append to another element depending on the browser's auto
     // zoom/scroll behavior
@@ -251,6 +263,30 @@ export const NoteBlock = observer(
     const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
     const { insertFakeInput, releaseFakeInput, fakeInputRef } = useFakeInput();
+
+    const [wasBlurred, setWasBlurred] = useState(false);
+
+    const handleBlur = useCallback(() => {
+      setWasBlurred(true);
+    }, []);
+
+    // When `Done` button clicked on iOS keybaord
+    useEffect(() => {
+      if (wasBlurred && isEditing) {
+        setEditState({
+          viewId: view.$modelId,
+          blockId: noteBlock.$modelId,
+          isEditing: false,
+        });
+      }
+      setWasBlurred(false);
+    }, [
+      wasBlurred,
+      isEditing,
+      setEditState,
+      view.$modelId,
+      noteBlock.$modelId,
+    ]);
 
     useClickAway(inputRef, (e) => {
       if (
@@ -483,6 +519,7 @@ export const NoteBlock = observer(
               onKeyPress={handleKeyPress}
               onChange={handleChange}
               value={noteBlock.content.value}
+              onBlur={handleBlur}
             />
           )}
           {!isEditing && (

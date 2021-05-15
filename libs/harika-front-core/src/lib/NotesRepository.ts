@@ -115,7 +115,6 @@ export class NotesRepository {
 
       async () => {
         console.log('updating links');
-        // TODO: transaction
 
         // TODO: use parser
         const titles = [
@@ -144,7 +143,7 @@ export class NotesRepository {
               } else {
                 const existing = existingNotesIndexed[name];
 
-                return this.findNote(vault, existing.id, false);
+                return this.findNote(vault, existing.id, false, false);
               }
             })
           )
