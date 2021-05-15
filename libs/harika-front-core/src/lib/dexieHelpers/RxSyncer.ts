@@ -131,6 +131,7 @@ export class RxSyncer {
         if (changes.length === 0) {
           return of(null).pipe(
             tap(() => {
+              console.log('On changes accepted');
               onChangesAccepted();
               wasFirstChangesSent = true;
             })
@@ -145,6 +146,7 @@ export class RxSyncer {
             baseRevision: baseRevision,
           }),
           tap(() => {
+            console.log('On changes accepted');
             onChangesAccepted();
             wasFirstChangesSent = true;
           })
@@ -171,6 +173,7 @@ export class RxSyncer {
         if (isFirstRound && !partial) {
           isFirstRound = false;
 
+          console.log('onSuccess');
           onSuccess({
             react: this.handleNewClientChanges,
             disconnect: () => {
@@ -211,6 +214,8 @@ export class RxSyncer {
     partial: boolean,
     onChangesAccepted: () => void
   ) => {
+    console.log('handleNewClientChanges', { changes });
+
     this.isConnectedAndInitialized$
       .pipe(
         switchMap((isConnected) =>

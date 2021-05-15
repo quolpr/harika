@@ -104,21 +104,21 @@ export class ChangesHandler {
     mapper: (id: string) => T
   ) => {
     return Promise.all([
-      async () => {
+      (async () => {
         if (result.toCreateIds.length > 0) {
           await table.bulkAdd(result.toCreateIds.map(mapper));
         }
-      },
-      async () => {
+      })(),
+      (async () => {
         if (result.toUpdateIds.length > 0) {
           await table.bulkPut(result.toUpdateIds.map(mapper));
         }
-      },
-      async () => {
+      })(),
+      (async () => {
         if (result.toDeleteIds.length > 0) {
           await table.bulkDelete(result.toDeleteIds);
         }
-      },
+      })(),
     ]);
   };
 
@@ -135,6 +135,11 @@ export class ChangesHandler {
         // @ts-ignore
         Dexie.currentTransaction.source = this.database.windowId;
 
+        console.log(
+          'start patches applying',
+          JSON.stringify({ blocksResult, noteResult })
+        );
+
         await Promise.all([
           this.applier(noteResult, this.database.notes, (id) =>
             mapNote(this.vault.notesMap[id])
@@ -143,6 +148,8 @@ export class ChangesHandler {
             mapNoteBlock(this.vault.blocksMap[id])
           ),
         ]);
+
+        console.log('finish patches applying', patches);
       }
     );
   };
