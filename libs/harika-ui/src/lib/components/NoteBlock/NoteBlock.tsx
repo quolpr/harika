@@ -183,16 +183,38 @@ const TokenRenderer = observer(
   }
 );
 
-const MarkdownRenderer = ({
-  noteBlock,
-  content,
-}: {
-  noteBlock: NoteBlockModel;
-  content: string;
-}) => {
-  return (
-    <TokensRenderer noteBlock={noteBlock} tokens={noteBlock.content.ast} />
-  );
+// https://stackoverflow.com/a/55652503/3872807
+const useFakeInput = () => {
+  const fakeInputRef = useRef<HTMLInputElement | null>(null);
+
+  const insertFakeInput = useCallback((el?: HTMLElement) => {
+    // create invisible dummy input to receive the focus first
+    const fakeInput = document.createElement('input');
+    fakeInput.setAttribute('type', 'text');
+    fakeInput.style.fontSize = '16px'; // disable auto zoom
+    fakeInput.style.opacity = '0';
+    fakeInput.style.position = 'absolute';
+
+    // you may need to append to another element depending on the browser's auto
+    // zoom/scroll behavior
+    (el || document.body).prepend(fakeInput);
+
+    // focus so that subsequent async focus will work
+    fakeInput.focus();
+    fakeInputRef.current = fakeInput;
+    // Fake input end
+  }, []);
+
+  const releaseFakeInput = useCallback(() => {
+    if (fakeInputRef.current) {
+      fakeInputRef.current.remove();
+      fakeInputRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => releaseFakeInput, [releaseFakeInput]);
+
+  return { insertFakeInput, releaseFakeInput, fakeInputRef };
 };
 
 //TODO: fix textarea performance
@@ -210,6 +232,14 @@ export const NoteBlock = observer(
       view.isExpanded(noteBlock.$modelId)
     ).get();
 
+    const getHtmlElId = useCallback(
+      (blockId: string) => `block-${view.$modelId}-${blockId}`,
+      [view.$modelId]
+    );
+    const htmlElId = getHtmlElId(noteBlock.$modelId);
+
+    const noteBlockRef = useRef<HTMLDivElement>(null);
+
     const [editState, setEditState] = useCurrentFocusedBlockState(
       view.$modelId,
       noteBlock.$modelId
@@ -221,7 +251,7 @@ export const NoteBlock = observer(
 
     const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
-    const fakeInputRef = useRef<HTMLInputElement | null>(null);
+    const { insertFakeInput, releaseFakeInput, fakeInputRef } = useFakeInput();
 
     useClickAway(inputRef, (e) => {
       if (
@@ -230,6 +260,10 @@ export const NoteBlock = observer(
           e.target instanceof Element &&
           e.target.closest('.toolbar') &&
           !e.target.closest('[data-defocus]')
+        ) &&
+        !(
+          e.target instanceof Element &&
+          e.target.closest('[data-type="note-block"]')
         )
       ) {
         setEditState({
@@ -256,21 +290,33 @@ export const NoteBlock = observer(
         inputRef.current.selectionStart = posAt;
         inputRef.current.selectionEnd = posAt;
 
-        if (fakeInputRef.current) {
-          // cleanup
-          fakeInputRef.current.remove();
-        }
+        releaseFakeInput();
       }
-    }, [isFocused, isEditing, startAt, noteBlock.content.value.length]);
+    }, [
+      isFocused,
+      isEditing,
+      startAt,
+      noteBlock.content.value.length,
+      fakeInputRef,
+      releaseFakeInput,
+    ]);
 
     const handleKeyPress = useCallback(
-      async (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         // on ios sometime shiftKey === caps lock
         if (e.key === 'Enter' && (isIOS || !e.shiftKey)) {
           e.preventDefault();
           const newBlock = noteBlock.injectNewRightBlock('', view);
 
           if (!newBlock) return;
+
+          if (noteBlockRef.current) {
+            // New noteBlock is still not available in DOM,
+            // so lets insert input near current block
+            insertFakeInput(noteBlockRef.current);
+
+            setTimeout(releaseFakeInput, 0);
+          }
 
           setEditState({
             viewId: view.$modelId,
@@ -279,7 +325,7 @@ export const NoteBlock = observer(
           });
         }
       },
-      [setEditState, noteBlock, view]
+      [noteBlock, view, insertFakeInput, releaseFakeInput, setEditState]
     );
 
     const handleKeyDown = useCallback(
@@ -372,27 +418,11 @@ export const NoteBlock = observer(
             startAt =
               parseInt(e.target.dataset.offsetStart, 10) + range.startOffset;
           }
+
+          if (noteBlockRef.current) {
+            insertFakeInput(noteBlockRef.current);
+          }
         }
-
-        // Fake input start
-        // https://stackoverflow.com/a/55652503/3872807
-
-        // create invisible dummy input to receive the focus first
-        const fakeInput = document.createElement('input');
-        fakeInput.setAttribute('type', 'text');
-        fakeInput.style.position = 'absolute';
-        fakeInput.style.opacity = '0';
-        fakeInput.style.height = '0';
-        fakeInput.style.fontSize = '16px'; // disable auto zoom
-
-        // you may need to append to another element depending on the browser's auto
-        // zoom/scroll behavior
-        document.body.prepend(fakeInput);
-
-        // focus so that subsequent async focus will work
-        fakeInput.focus();
-        fakeInputRef.current = fakeInput;
-        // Fake input end
 
         setEditState({
           viewId: view.$modelId,
@@ -401,7 +431,7 @@ export const NoteBlock = observer(
           startAt,
         });
       },
-      [noteBlock.$modelId, setEditState, view.$modelId]
+      [insertFakeInput, noteBlock.$modelId, setEditState, view.$modelId]
     );
 
     useEffect(() => {
@@ -412,9 +442,12 @@ export const NoteBlock = observer(
 
     return (
       <div
+        id={htmlElId}
         className="note-block"
         data-id={noteBlock.$modelId}
         data-order={noteBlock.orderPosition}
+        data-type="note-block"
+        ref={noteBlockRef}
       >
         <div className="note-block__body">
           {noteBlock.noteBlockRefs.length !== 0 && (
@@ -451,7 +484,7 @@ export const NoteBlock = observer(
           )}
           {!isEditing && (
             <div
-              onClick={handleClick}
+              onMouseDown={handleClick}
               className={clsx('note-block__content', {
                 'note-block__content--focused': isFocused,
               })}
