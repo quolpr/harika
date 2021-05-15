@@ -1,4 +1,4 @@
-import Dexie from 'dexie';
+import Dexie, { Table } from 'dexie';
 import { uniq } from 'lodash-es';
 import { Patch } from 'mobx-keystone';
 import { Subject } from 'rxjs';
@@ -94,51 +94,55 @@ export class ChangesHandler {
     });
   };
 
+  private applier = <T extends object>(
+    result: {
+      toCreateIds: string[];
+      toUpdateIds: string[];
+      toDeleteIds: string[];
+    },
+    table: Table,
+    mapper: (id: string) => T
+  ) => {
+    return Promise.all([
+      async () => {
+        if (result.toCreateIds.length > 0) {
+          await table.bulkAdd(result.toCreateIds.map(mapper));
+        }
+      },
+      async () => {
+        if (result.toUpdateIds.length > 0) {
+          await table.bulkPut(result.toUpdateIds.map(mapper));
+        }
+      },
+      async () => {
+        if (result.toDeleteIds.length > 0) {
+          await table.bulkDelete(result.toDeleteIds);
+        }
+      },
+    ]);
+  };
+
   private applyPatches = async (patches: Patch[]) => {
     const blocksResult = zipPatches('blocksMap', patches);
     const noteResult = zipPatches('notesMap', patches);
-
-    const applyForNoteBlocks = async () => {
-      await this.database.noteBlocks.bulkAdd(
-        blocksResult.toCreateIds.map((id) => {
-          return mapNoteBlock(this.vault.blocksMap[id]);
-        })
-      );
-
-      await this.database.noteBlocks.bulkPut(
-        blocksResult.toUpdateIds.map((id) => {
-          return mapNoteBlock(this.vault.blocksMap[id]);
-        })
-      );
-
-      await this.database.noteBlocks.bulkDelete(blocksResult.toDeleteIds);
-    };
-
-    const applyForNotes = async () => {
-      await this.database.notes.bulkAdd(
-        noteResult.toCreateIds.map((id) => {
-          return mapNote(this.vault.notesMap[id]);
-        })
-      );
-
-      await this.database.notes.bulkPut(
-        noteResult.toUpdateIds.map((id) => {
-          return mapNote(this.vault.notesMap[id]);
-        })
-      );
-
-      await this.database.notes.bulkDelete(noteResult.toDeleteIds);
-    };
 
     this.database.transaction(
       'rw',
       this.database.notes,
       this.database.noteBlocks,
-      () => {
+      async () => {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         Dexie.currentTransaction.source = this.database.windowId;
-        return Promise.all([applyForNoteBlocks(), applyForNotes()]);
+
+        await Promise.all([
+          this.applier(noteResult, this.database.notes, (id) =>
+            mapNote(this.vault.notesMap[id])
+          ),
+          this.applier(blocksResult, this.database.noteBlocks, (id) =>
+            mapNoteBlock(this.vault.blocksMap[id])
+          ),
+        ]);
       }
     );
   };
