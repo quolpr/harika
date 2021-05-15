@@ -193,7 +193,6 @@ const useFakeInput = () => {
     fakeInput.setAttribute('type', 'text');
     fakeInput.style.fontSize = '16px'; // disable auto zoom
     fakeInput.style.opacity = '0';
-    fakeInput.style.position = 'absolute';
 
     // you may need to append to another element depending on the browser's auto
     // zoom/scroll behavior
