@@ -4,22 +4,21 @@ import { useClickAway, usePrevious } from 'react-use';
 import clsx from 'clsx';
 import TextareaAutosize from 'react-textarea-autosize';
 import { observer } from 'mobx-react-lite';
-import {
-  BlocksViewModel,
-  NoteBlockModel,
-  RefToken,
-  Token,
-} from '@harika/harika-front-core';
+import { BlocksViewModel, NoteBlockModel } from '@harika/harika-front-core';
 import { Arrow } from '../Arrow/Arrow';
 import { computed } from 'mobx';
 import { useNoteRepository } from '../../contexts/CurrentNoteRepositoryContext';
 import { useCurrentFocusedBlockState } from '../../hooks/useFocusedBlockState';
 import { useCurrentVault } from '../../hooks/useCurrentVault';
-import { Link } from 'react-router-dom';
-import { paths } from '../../paths';
 import { insertText, isIOS } from '../../utils';
 import { Ref } from 'mobx-keystone';
-import { useFakeInput, usePassCurrentInput } from './hooks';
+import {
+  useFakeInput,
+  useHandleDoneIosButton,
+  usePassCurrentInput,
+} from './hooks';
+import { TokensRenderer } from './TokensRenderer';
+import { getTokensAtCursor } from './utils';
 
 const NoteBlockChildren = observer(
   ({
@@ -43,149 +42,6 @@ const NoteBlockChildren = observer(
   }
 );
 
-const TokensRenderer = ({
-  noteBlock,
-  tokens,
-}: {
-  noteBlock: NoteBlockModel;
-  tokens: Token[];
-}) => {
-  return (
-    <>
-      {tokens.map((token, i) => (
-        <TokenRenderer key={i} noteBlock={noteBlock} token={token} />
-      ))}
-    </>
-  );
-};
-
-const RefRenderer = observer(
-  ({ token, noteBlock }: { token: RefToken; noteBlock: NoteBlockModel }) => {
-    const vault = useCurrentVault();
-    const noteRepo = useNoteRepository();
-    const linkedNotes = noteBlock.linkedNoteRefs;
-
-    const handleTodoToggle = useCallback(
-      (e: React.SyntheticEvent) => {
-        e.stopPropagation();
-        e.preventDefault();
-
-        noteBlock.content.toggleTodo(token.id);
-        noteRepo.updateNoteBlockLinks(vault, noteBlock);
-      },
-      [noteBlock, noteRepo, token.id, vault]
-    );
-
-    const noteRef = linkedNotes.find((note) => {
-      try {
-        return note.current.title === token.content;
-      } catch {
-        return false;
-      }
-    });
-
-    if (token.content === 'TODO' || token.content === 'DONE') {
-      return (
-        <span className="checkbox" onClick={handleTodoToggle}>
-          <input
-            type="checkbox"
-            checked={token.content === 'DONE'}
-            onClick={handleTodoToggle}
-            onChange={handleTodoToggle}
-          />
-          <svg className="checkbox__tick" viewBox="0 0 20 20">
-            <path d="M0 11l2-2 5 5L18 3l2 2L7 18z" />
-          </svg>
-        </span>
-      );
-    }
-
-    if (!noteRef) return <>[[{token.content}]]</>;
-
-    return (
-      <Link
-        to={paths.vaultNotePath({
-          vaultId: vault.$modelId,
-          noteId: noteRef?.id,
-        })}
-        className="link"
-        onClick={(e) => e.stopPropagation()}
-      >
-        [[{token.content}]]
-      </Link>
-    );
-  }
-);
-
-const TokenRenderer = observer(
-  ({ noteBlock, token }: { noteBlock: NoteBlockModel; token: Token }) => {
-    switch (token.type) {
-      case 'tag':
-        return <a href="#">#[[{token.content}]]</a>;
-      case 'ref':
-        return <RefRenderer token={token} noteBlock={noteBlock} />;
-      case 'bold':
-        return (
-          <b>
-            <TokensRenderer noteBlock={noteBlock} tokens={token.content} />
-          </b>
-        );
-      case 'italic':
-        return (
-          <i>
-            <TokensRenderer noteBlock={noteBlock} tokens={token.content} />
-          </i>
-        );
-      case 'highlight':
-        return (
-          <mark>
-            <TokensRenderer noteBlock={noteBlock} tokens={token.content} />
-          </mark>
-        );
-      case 'head':
-        return (() => {
-          if (token.depth === 3) {
-            return (
-              <h3>
-                <TokensRenderer noteBlock={noteBlock} tokens={token.content} />
-              </h3>
-            );
-          } else if (token.depth === 2) {
-            return (
-              <h2>
-                <TokensRenderer noteBlock={noteBlock} tokens={token.content} />
-              </h2>
-            );
-          } else {
-            return (
-              <h1>
-                <TokensRenderer noteBlock={noteBlock} tokens={token.content} />
-              </h1>
-            );
-          }
-        })();
-      case 'inlineCode':
-        return <pre>{token.content}</pre>;
-      case 'codeBlock':
-        return <pre>{token.content}</pre>;
-      case 'str':
-        return (
-          <span
-            data-offset-start={token.offsetStart}
-            data-offset-end={token.offsetEnd}
-            style={{
-              userSelect: 'text',
-            }}
-          >
-            {token.content}
-          </span>
-        );
-      default:
-        return <span></span>;
-    }
-  }
-);
-
 //TODO: fix textarea performance
 export const NoteBlock = observer(
   ({
@@ -200,12 +56,6 @@ export const NoteBlock = observer(
     const isExpanded = computed(() =>
       view.isExpanded(noteBlock.$modelId)
     ).get();
-
-    const getHtmlElId = useCallback(
-      (blockId: string) => `block-${view.$modelId}-${blockId}`,
-      [view.$modelId]
-    );
-    const htmlElId = getHtmlElId(noteBlock.$modelId);
 
     const noteBlockRef = useRef<HTMLDivElement>(null);
 
@@ -224,29 +74,7 @@ export const NoteBlock = observer(
 
     const { insertFakeInput, releaseFakeInput, fakeInputRef } = useFakeInput();
 
-    const [wasBlurred, setWasBlurred] = useState(false);
-
-    const handleBlur = useCallback(() => {
-      setWasBlurred(true);
-    }, []);
-
-    // When `Done` button clicked on iOS keybaord
-    useEffect(() => {
-      if (wasBlurred && isEditing) {
-        setEditState({
-          viewId: view.$modelId,
-          blockId: noteBlock.$modelId,
-          isEditing: false,
-        });
-      }
-      setWasBlurred(false);
-    }, [
-      wasBlurred,
-      isEditing,
-      setEditState,
-      view.$modelId,
-      noteBlock.$modelId,
-    ]);
+    const handleBlur = useHandleDoneIosButton(view, noteBlock);
 
     useClickAway(inputRef, (e) => {
       if (
@@ -301,7 +129,35 @@ export const NoteBlock = observer(
         // on ios sometime shiftKey === caps lock
         if (e.key === 'Enter' && (isIOS || !e.shiftKey)) {
           e.preventDefault();
-          const newBlock = noteBlock.injectNewRightBlock('', view);
+
+          const content = noteBlock.content.value;
+
+          const start = e.currentTarget.selectionStart;
+          const end = e.currentTarget.selectionEnd;
+
+          if (start === end) {
+            const firstToken = getTokensAtCursor(
+              start,
+              noteBlock.content.ast
+            )[0];
+
+            if (firstToken?.type === 'ref' && start !== firstToken.offsetEnd) {
+              e.currentTarget.selectionStart = firstToken.offsetEnd;
+              e.currentTarget.selectionEnd = firstToken.offsetEnd;
+
+              return;
+            }
+          }
+
+          let newContent = '';
+
+          if (start === end && start !== content.length) {
+            newContent = content.slice(start, content.length);
+
+            noteBlock.content.update(content.slice(0, start));
+          }
+
+          const newBlock = noteBlock.injectNewRightBlock(newContent, view);
 
           if (!newBlock) return;
 
@@ -317,6 +173,7 @@ export const NoteBlock = observer(
             viewId: view.$modelId,
             blockId: newBlock.$modelId,
             isEditing: true,
+            startAt: 0,
           });
         }
       },
@@ -326,23 +183,25 @@ export const NoteBlock = observer(
     const handleKeyDown = useCallback(
       async (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         const content = noteBlock.content.value;
+        const start = e.currentTarget.selectionStart;
+        const end = e.currentTarget.selectionEnd;
 
         if (e.key === 'Backspace') {
-          const start = e.currentTarget.selectionStart;
-          const end = e.currentTarget.selectionEnd;
-
           const isOnStart = start === end && start === 0;
 
           if (start === end) {
+            const prevChar = content[start - 1];
             const nextChar = content[start];
 
-            if (nextChar === ']') {
+            if (nextChar === ']' && prevChar === '[') {
               e.preventDefault();
 
               insertText(e.currentTarget, '', 0, {
                 start: start - 1,
                 end: start + 1,
               });
+
+              return;
             }
           }
 
@@ -422,6 +281,17 @@ export const NoteBlock = observer(
     const handleChange = useCallback(
       (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         noteBlock.content.update(e.target.value);
+
+        const start = e.currentTarget.selectionStart;
+        const end = e.currentTarget.selectionEnd;
+
+        if (start === end) {
+          const token = getTokensAtCursor(start, noteBlock.content.ast);
+
+          if (token[0]?.type === 'ref') {
+            console.log('Trigger autocomplete for', token[0].content);
+          }
+        }
       },
       [noteBlock]
     );
@@ -470,7 +340,6 @@ export const NoteBlock = observer(
 
     return (
       <div
-        id={htmlElId}
         className="note-block"
         data-id={noteBlock.$modelId}
         data-order={noteBlock.orderPosition}

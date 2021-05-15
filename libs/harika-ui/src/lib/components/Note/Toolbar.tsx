@@ -40,7 +40,7 @@ export const Toolbar = observer(({ view }: { view: BlocksViewModel }) => {
       const el = currentBlockInputRef.current;
 
       if (el) {
-        insertText(el, '[[TODO]]');
+        insertText(el, '[[TODO]] ');
       }
     },
     [currentBlockInputRef]

@@ -4,8 +4,11 @@ import {
   useEffect,
   MutableRefObject,
   useContext,
+  useState,
 } from 'react';
 import { CurrentBlockInputRefContext } from '../../contexts';
+import { useCurrentFocusedBlockState } from '../../hooks/useFocusedBlockState';
+import { BlocksViewModel, NoteBlockModel } from '@harika/harika-front-core';
 
 // https://stackoverflow.com/a/55652503/3872807
 export const useFakeInput = () => {
@@ -59,4 +62,37 @@ export const usePassCurrentInput = (
       }
     }
   }, [currentBlockInputRef, inputRef, isEditing]);
+};
+
+// Handle iOS DONE button on keyboard
+export const useHandleDoneIosButton = (
+  view: BlocksViewModel,
+  noteBlock: NoteBlockModel
+) => {
+  const [wasBlurred, setWasBlurred] = useState(false);
+
+  const [editState, setEditState] = useCurrentFocusedBlockState(
+    view.$modelId,
+    noteBlock.$modelId
+  );
+
+  const { isEditing } = editState;
+
+  const handleBlur = useCallback(() => {
+    setWasBlurred(true);
+  }, []);
+
+  // When `Done` button clicked on iOS keybaord
+  useEffect(() => {
+    if (wasBlurred && isEditing) {
+      setEditState({
+        viewId: view.$modelId,
+        blockId: noteBlock.$modelId,
+        isEditing: false,
+      });
+    }
+    setWasBlurred(false);
+  }, [wasBlurred, isEditing, setEditState, view.$modelId, noteBlock.$modelId]);
+
+  return handleBlur;
 };
