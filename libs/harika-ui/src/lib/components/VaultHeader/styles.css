@@ -30,7 +30,7 @@
   }
 
   &__sidebar-toggler {
-    @apply ml-5 hover:text-pink-600 transition-all p-3;
+    @apply hover:text-pink-600 transition-all p-3 pl-6;
 
     cursor: pointer;
 

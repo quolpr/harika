@@ -1,5 +1,5 @@
 import './wdyr';
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import './App.css';
 import './variables.css';
 import { DailyNotePage } from './pages/DailyNotePage';

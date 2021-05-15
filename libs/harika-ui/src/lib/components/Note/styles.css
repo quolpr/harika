@@ -121,8 +121,6 @@
   backdrop-filter: blur(5px);
 
   &__content {
-    @apply py-4 pb-8;
-
     display: flex;
     justify-content: space-around;
     align-items: center;
@@ -131,6 +129,8 @@
   }
 
   &__button {
-    width: 10%;
+    height: 4rem;
+
+    flex: 1;
   }
 }

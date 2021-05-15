@@ -1,5 +1,7 @@
 import React, {
+  MutableRefObject,
   useCallback,
+  useContext,
   useEffect,
   useMemo,
   useRef,
@@ -27,6 +29,8 @@ import { isIOS } from '../../utils';
 import { Ref } from 'mobx-keystone';
 import { position, offset } from 'caret-pos';
 import { useCurrentVaultUiState } from '../../contexts/CurrentVaultUiStateContext';
+import { CurrentBlockInputRefContext } from '../../contexts';
+import { useFakeInput, usePassCurrentInput } from './hooks';
 
 const NoteBlockChildren = observer(
   ({
@@ -73,7 +77,7 @@ const RefRenderer = observer(
     const linkedNotes = noteBlock.linkedNoteRefs;
 
     const handleTodoToggle = useCallback(
-      (e: React.MouseEvent) => {
+      (e: React.SyntheticEvent) => {
         e.stopPropagation();
         e.preventDefault();
 
@@ -98,6 +102,7 @@ const RefRenderer = observer(
             type="checkbox"
             checked={token.content === 'DONE'}
             onClick={handleTodoToggle}
+            onChange={handleTodoToggle}
           />
           <svg className="checkbox__tick" viewBox="0 0 20 20">
             <path d="M0 11l2-2 5 5L18 3l2 2L7 18z" />
@@ -192,43 +197,6 @@ const TokenRenderer = observer(
   }
 );
 
-// https://stackoverflow.com/a/55652503/3872807
-const useFakeInput = () => {
-  const fakeInputRef = useRef<HTMLInputElement | null>(null);
-
-  const insertFakeInput = useCallback((el?: HTMLElement) => {
-    // create invisible dummy input to receive the focus first
-    const fakeInput = document.createElement('input');
-    fakeInput.setAttribute('type', 'text');
-    fakeInput.style.position = 'absolute';
-    fakeInput.style.fontSize = '16px'; // disable auto zoom
-    fakeInput.style.width = '5px';
-    fakeInput.style.height = '5px';
-    fakeInput.style.opacity = '0.1';
-    fakeInput.style.backgroundColor = '#000';
-
-    // you may need to append to another element depending on the browser's auto
-    // zoom/scroll behavior
-    (el || document.body).prepend(fakeInput);
-
-    // focus so that subsequent async focus will work
-    fakeInput.focus();
-    fakeInputRef.current = fakeInput;
-    // Fake input end
-  }, []);
-
-  const releaseFakeInput = useCallback(() => {
-    if (fakeInputRef.current) {
-      fakeInputRef.current.remove();
-      fakeInputRef.current = null;
-    }
-  }, []);
-
-  useEffect(() => releaseFakeInput, [releaseFakeInput]);
-
-  return { insertFakeInput, releaseFakeInput, fakeInputRef };
-};
-
 //TODO: fix textarea performance
 export const NoteBlock = observer(
   ({
@@ -262,6 +230,8 @@ export const NoteBlock = observer(
     const { isFocused, startAt, isEditing } = editState;
 
     const inputRef = useRef<HTMLTextAreaElement | null>(null);
+
+    usePassCurrentInput(inputRef, isEditing);
 
     const { insertFakeInput, releaseFakeInput, fakeInputRef } = useFakeInput();
 

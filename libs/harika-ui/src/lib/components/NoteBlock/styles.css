@@ -80,7 +80,7 @@
   &__content {
     @apply focus:outline-none focus:ring-2 rounded-sm text-warmGray-300;
 
-    display: inline-flex;
+    display: inline;
 
     width: 100%;
     white-space: pre-wrap;
