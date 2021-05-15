@@ -342,6 +342,10 @@ export const NoteBlock = observer(
             const mergedTo = noteBlock.mergeToLeftAndDelete();
 
             if (mergedTo) {
+              if (noteBlockRef.current) {
+                insertFakeInput();
+              }
+
               setEditState({
                 viewId: view.$modelId,
                 blockId: mergedTo.$modelId,
@@ -394,7 +398,7 @@ export const NoteBlock = observer(
           }
         }
       },
-      [noteBlock, setEditState, view.$modelId]
+      [insertFakeInput, noteBlock, setEditState, view.$modelId]
     );
 
     const handleChange = useCallback(
@@ -484,7 +488,7 @@ export const NoteBlock = observer(
           )}
           {!isEditing && (
             <div
-              onMouseDown={handleClick}
+              onClick={handleClick}
               className={clsx('note-block__content', {
                 'note-block__content--focused': isFocused,
               })}
