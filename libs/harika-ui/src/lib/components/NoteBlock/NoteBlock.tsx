@@ -170,6 +170,9 @@ const TokenRenderer = observer(
           <span
             data-offset-start={token.offsetStart}
             data-offset-end={token.offsetEnd}
+            style={{
+              userSelect: 'text',
+            }}
           >
             {token.content}
           </span>
@@ -241,13 +244,40 @@ export const NoteBlock = observer(
         inputRef.current &&
         document.activeElement !== inputRef.current
       ) {
-        inputRef.current.focus();
-
         const posAt = (() =>
-          startAt ? startAt : noteBlock.content.value.length)();
+          startAt !== undefined ? startAt : noteBlock.content.value.length)();
 
-        inputRef.current.selectionStart = posAt;
-        inputRef.current.selectionEnd = posAt;
+        console.log({ posAt, startAt });
+
+        // https://stackoverflow.com/a/55652503/3872807
+
+        // create invisible dummy input to receive the focus first
+        const fakeInput = document.createElement('input');
+        fakeInput.setAttribute('type', 'text');
+        fakeInput.style.position = 'absolute';
+        fakeInput.style.opacity = '0';
+        fakeInput.style.height = '0';
+        fakeInput.style.fontSize = '16px'; // disable auto zoom
+
+        // you may need to append to another element depending on the browser's auto
+        // zoom/scroll behavior
+        document.body.prepend(fakeInput);
+
+        // focus so that subsequent async focus will work
+        fakeInput.focus();
+
+        requestAnimationFrame(() => {
+          // now we can focus on the target input
+
+          if (!inputRef.current) return;
+
+          inputRef.current.focus();
+
+          inputRef.current.selectionStart = posAt;
+          inputRef.current.selectionEnd = posAt;
+          // cleanup
+          fakeInput.remove();
+        });
       }
     }, [isFocused, isEditing, startAt, noteBlock.content.value.length]);
 
@@ -352,12 +382,13 @@ export const NoteBlock = observer(
 
         let startAt = 0;
 
-        if (selection && selection.anchorNode) {
-          const dataset = selection.anchorNode?.parentElement?.dataset;
+        if (e.target instanceof HTMLElement) {
+          // TODO: no FF support
+          const range = document.caretRangeFromPoint(e.clientX, e.clientY);
 
-          if (dataset && dataset.offsetStart) {
+          if (e.target.dataset.offsetStart) {
             startAt =
-              selection.anchorOffset + parseInt(dataset.offsetStart, 10);
+              parseInt(e.target.dataset.offsetStart, 10) + range.startOffset;
           }
         }
 
