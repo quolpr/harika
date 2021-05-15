@@ -221,6 +221,8 @@ export const NoteBlock = observer(
 
     const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
+    const fakeInputRef = useRef<HTMLInputElement | null>(null);
+
     useClickAway(inputRef, (e) => {
       if (
         isEditing &&
@@ -244,40 +246,20 @@ export const NoteBlock = observer(
         inputRef.current &&
         document.activeElement !== inputRef.current
       ) {
+        if (!inputRef.current) return;
+
         const posAt = (() =>
           startAt !== undefined ? startAt : noteBlock.content.value.length)();
 
-        console.log({ posAt, startAt });
+        inputRef.current.focus();
 
-        // https://stackoverflow.com/a/55652503/3872807
+        inputRef.current.selectionStart = posAt;
+        inputRef.current.selectionEnd = posAt;
 
-        // create invisible dummy input to receive the focus first
-        const fakeInput = document.createElement('input');
-        fakeInput.setAttribute('type', 'text');
-        fakeInput.style.position = 'absolute';
-        fakeInput.style.opacity = '0';
-        fakeInput.style.height = '0';
-        fakeInput.style.fontSize = '16px'; // disable auto zoom
-
-        // you may need to append to another element depending on the browser's auto
-        // zoom/scroll behavior
-        document.body.prepend(fakeInput);
-
-        // focus so that subsequent async focus will work
-        fakeInput.focus();
-
-        requestAnimationFrame(() => {
-          // now we can focus on the target input
-
-          if (!inputRef.current) return;
-
-          inputRef.current.focus();
-
-          inputRef.current.selectionStart = posAt;
-          inputRef.current.selectionEnd = posAt;
+        if (fakeInputRef.current) {
           // cleanup
-          fakeInput.remove();
-        });
+          fakeInputRef.current.remove();
+        }
       }
     }, [isFocused, isEditing, startAt, noteBlock.content.value.length]);
 
@@ -391,6 +373,26 @@ export const NoteBlock = observer(
               parseInt(e.target.dataset.offsetStart, 10) + range.startOffset;
           }
         }
+
+        // Fake input start
+        // https://stackoverflow.com/a/55652503/3872807
+
+        // create invisible dummy input to receive the focus first
+        const fakeInput = document.createElement('input');
+        fakeInput.setAttribute('type', 'text');
+        fakeInput.style.position = 'absolute';
+        fakeInput.style.opacity = '0';
+        fakeInput.style.height = '0';
+        fakeInput.style.fontSize = '16px'; // disable auto zoom
+
+        // you may need to append to another element depending on the browser's auto
+        // zoom/scroll behavior
+        document.body.prepend(fakeInput);
+
+        // focus so that subsequent async focus will work
+        fakeInput.focus();
+        fakeInputRef.current = fakeInput;
+        // Fake input end
 
         setEditState({
           viewId: view.$modelId,
