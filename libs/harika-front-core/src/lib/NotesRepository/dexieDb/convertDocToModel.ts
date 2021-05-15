@@ -24,7 +24,6 @@ interface IConvertResult {
 export const convertNoteBlockDocToModelAttrs = (
   doc: NoteBlockDocType
 ): NoteBlockData => {
-  console.log({ doc });
   return {
     $modelId: doc.id,
     content: new BlockContentModel({ value: doc.content }),

@@ -135,11 +135,6 @@ export class ChangesHandler {
         // @ts-ignore
         Dexie.currentTransaction.source = this.database.windowId;
 
-        console.log(
-          'start patches applying',
-          JSON.stringify({ blocksResult, noteResult })
-        );
-
         await Promise.all([
           this.applier(noteResult, this.database.notes, (id) =>
             mapNote(this.vault.notesMap[id])
@@ -148,8 +143,6 @@ export class ChangesHandler {
             mapNoteBlock(this.vault.blocksMap[id])
           ),
         ]);
-
-        console.log('finish patches applying', patches);
       }
     );
   };

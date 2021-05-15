@@ -19,6 +19,7 @@ import { Link } from 'react-router-dom';
 import { paths } from '../../paths';
 import { isIOS } from '../../utils';
 import { Ref } from 'mobx-keystone';
+import { position, offset } from 'caret-pos';
 
 const NoteBlockChildren = observer(
   ({
@@ -65,7 +66,6 @@ const RefRenderer = observer(
     const linkedNotes = noteBlock.linkedNoteRefs;
 
     const handleTodoToggle = useCallback(() => {
-      console.log('handle toggle');
       noteBlock.content.toggleTodo(token.id);
       noteRepo.updateNoteBlockLinks(vault, noteBlock);
     }, [noteBlock, noteRepo, token.id, vault]);
@@ -80,7 +80,7 @@ const RefRenderer = observer(
 
     if (token.content === 'TODO' || token.content === 'DONE') {
       return (
-        <div className="checkbox">
+        <span className="checkbox">
           <input
             type="checkbox"
             checked={token.content === 'DONE'}
@@ -93,7 +93,7 @@ const RefRenderer = observer(
           <svg className="checkbox__tick" viewBox="0 0 20 20">
             <path d="M0 11l2-2 5 5L18 3l2 2L7 18z" />
           </svg>
-        </div>
+        </span>
       );
     }
 
@@ -166,7 +166,14 @@ const TokenRenderer = observer(
       case 'codeBlock':
         return <pre>{token.content}</pre>;
       case 'str':
-        return <>{token.content}</>;
+        return (
+          <span
+            data-offset-start={token.offsetStart}
+            data-offset-end={token.offsetEnd}
+          >
+            {token.content}
+          </span>
+        );
       default:
         return <span></span>;
     }
@@ -339,13 +346,30 @@ export const NoteBlock = observer(
       [noteBlock]
     );
 
-    const handleClick = useCallback(() => {
-      setEditState({
-        viewId: view.$modelId,
-        blockId: noteBlock.$modelId,
-        isEditing: true,
-      });
-    }, [noteBlock.$modelId, setEditState, view.$modelId]);
+    const handleClick = useCallback(
+      (e: React.MouseEvent<HTMLDivElement>) => {
+        const selection = window.getSelection();
+
+        let startAt = 0;
+
+        if (selection && selection.anchorNode) {
+          const dataset = selection.anchorNode?.parentElement?.dataset;
+
+          if (dataset && dataset.offsetStart) {
+            startAt =
+              selection.anchorOffset + parseInt(dataset.offsetStart, 10);
+          }
+        }
+
+        setEditState({
+          viewId: view.$modelId,
+          blockId: noteBlock.$modelId,
+          isEditing: true,
+          startAt,
+        });
+      },
+      [noteBlock.$modelId, setEditState, view.$modelId]
+    );
 
     useEffect(() => {
       if (!editState.isEditing && wasEditing) {
@@ -383,7 +407,6 @@ export const NoteBlock = observer(
           {isEditing && (
             <TextareaAutosize
               ref={inputRef}
-              autoFocus
               className={clsx('note-block__content', {
                 'note-block__content--hidden': !isEditing,
               })}

@@ -6696,6 +6696,11 @@ capture-stack-trace@^1.0.0:
   resolved "https://registry.yarnpkg.com/capture-stack-trace/-/capture-stack-trace-1.0.1.tgz#a6c0bbe1f38f3aa0b92238ecb6ff42c344d4135d"
   integrity sha512-mYQLZnx5Qt1JgB1WEiMCf2647plpGeQ2NMR/5L0HNZzGQo4fuSPnK+wjfPnKZV0aiJDgzmWqqkV/g7JD+DW0qw==
 
+caret-pos@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/caret-pos/-/caret-pos-2.0.0.tgz#f4a222a14951a1f5fa6543d73f79ec6892223326"
+  integrity sha512-cOIiBS1SjzXg+LXSiQAzGg89dHDKq/y4c30+tB5hkVN7GbtXh1BNypOmjti4LwAWQrvP4y+bNG7RJFxLGoL3bA==
+
 caseless@~0.12.0:
   version "0.12.0"
   resolved "https://registry.yarnpkg.com/caseless/-/caseless-0.12.0.tgz#1b681c21ff84033c826543090689420d187151dc"
@@ -14891,10 +14896,10 @@ pbkdf2@^3.0.3:
     safe-buffer "^5.0.1"
     sha.js "^2.4.8"
 
-pegjs@^0.10.0:
-  version "0.10.0"
-  resolved "https://registry.yarnpkg.com/pegjs/-/pegjs-0.10.0.tgz#cf8bafae6eddff4b5a7efb185269eaaf4610ddbd"
-  integrity sha1-z4uvrm7d/0tafvsYUmnqr0YQ3b0=
+peggy@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/peggy/-/peggy-1.1.0.tgz#aca11837e60d83bc9490c3483d0462f934fa501a"
+  integrity sha512-bErGGMGiCxH8HHJh2M9+bUuUJi9zzqVLhrisQBlfBEi1aRqP/r4yfQX0k5od3a9SNfpzJsbaTfruNW7Y1lbJrQ==
 
 pend@~1.2.0:
   version "1.2.0"
