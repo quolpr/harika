@@ -150,6 +150,7 @@ const NoteBlocks = observer(
   }
 );
 
+// TODO: on NoteBlock change it still rerenders. Why?
 const NoteBody = observer(({ note }: { note: NoteModel }) => {
   const vault = useCurrentVault();
   const vaultUiState = useCurrentVaultUiState();

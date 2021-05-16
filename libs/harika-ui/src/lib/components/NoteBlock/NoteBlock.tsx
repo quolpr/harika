@@ -13,8 +13,9 @@ import {
   useProvideInputToContext,
   useUpdateBlockLinks,
 } from './hooks/otherHooks';
-import { useFocusHandler } from './hooks/useFocuseHandler';
+import { useFocusHandler } from './hooks/useFocusHandler';
 import { useHandleInput } from './hooks/useHandleInput';
+import { NoteTitleAutocomplete } from './NoteTitleAutocomplete';
 
 const NoteBlockChildren = observer(
   ({
@@ -66,7 +67,12 @@ const NoteBlockBody = observer(
       releaseFakeInput,
       handleContentClick,
     } = useFocusHandler(view, noteBlock, inputRef, noteBlockBodyElRef);
-    const { handleKeyPress, handleKeyDown, handleChange } = useHandleInput(
+    const {
+      handleKeyPress,
+      handleKeyDown,
+      handleChange,
+      noteTitleToSearch,
+    } = useHandleInput(
       noteBlock,
       view,
       noteBlockBodyElRef,
@@ -99,17 +105,20 @@ const NoteBlockBody = observer(
         {/*   })} */}
         {/* > */}
         {isEditing && (
-          <TextareaAutosize
-            ref={inputRef}
-            className={clsx('note-block__content', {
-              'note-block__content--hidden': !isEditing,
-            })}
-            onKeyDown={handleKeyDown}
-            onKeyPress={handleKeyPress}
-            onChange={handleChange}
-            value={noteBlock.content.value}
-            onBlur={handleInputBlur}
-          />
+          <>
+            <TextareaAutosize
+              ref={inputRef}
+              className={clsx('note-block__content', {
+                'note-block__content--hidden': !isEditing,
+              })}
+              onKeyDown={handleKeyDown}
+              onKeyPress={handleKeyPress}
+              onChange={handleChange}
+              value={noteBlock.content.value}
+              onBlur={handleInputBlur}
+            />
+            <NoteTitleAutocomplete value={noteTitleToSearch} />
+          </>
         )}
         {!isEditing && (
           <span

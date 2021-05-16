@@ -1,5 +1,5 @@
 import { BlocksViewModel, NoteBlockModel } from '@harika/harika-front-core';
-import { RefObject, useCallback } from 'react';
+import { RefObject, useCallback, useEffect, useState } from 'react';
 import { useCurrentFocusedBlockState } from '../../../hooks/useFocusedBlockState';
 import { isIOS, insertText } from '../../../utils';
 import { getTokensAtCursor } from '../utils';
@@ -11,10 +11,18 @@ export const useHandleInput = (
   insertFakeInput: (el?: HTMLElement) => void,
   releaseFakeInput: () => void
 ) => {
-  const [editState, setEditState] = useCurrentFocusedBlockState(
+  const [, setEditState] = useCurrentFocusedBlockState(
     view.$modelId,
     noteBlock.$modelId
   );
+
+  const [singleCaretPos, setSingleCaretPos] = useState<number | undefined>(
+    undefined
+  );
+
+  const [noteTitleToSearch, setNoteTitleToSearch] = useState<
+    string | undefined
+  >(undefined);
 
   const handleKeyPress = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -169,27 +177,40 @@ export const useHandleInput = (
 
         e.currentTarget.blur();
       }
+
+      if (start === end) {
+        setSingleCaretPos(start);
+      } else {
+        setSingleCaretPos(undefined);
+      }
     },
     [insertFakeInput, noteBlock, noteBlockElRef, setEditState, view.$modelId]
   );
 
+  const firstToken =
+    singleCaretPos === undefined
+      ? undefined
+      : getTokensAtCursor(singleCaretPos, noteBlock.content.ast)[0];
+
+  useEffect(() => {
+    if (singleCaretPos) {
+      if (firstToken?.type === 'ref') {
+        setNoteTitleToSearch(firstToken.content);
+        console.log('to search', firstToken.content);
+      } else {
+        setNoteTitleToSearch(undefined);
+      }
+    } else {
+      setNoteTitleToSearch(undefined);
+    }
+  }, [firstToken, singleCaretPos]);
+
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
       noteBlock.content.update(e.target.value);
-
-      const start = e.currentTarget.selectionStart;
-      const end = e.currentTarget.selectionEnd;
-
-      if (start === end) {
-        const token = getTokensAtCursor(start, noteBlock.content.ast);
-
-        if (token[0]?.type === 'ref') {
-          console.log('Trigger autocomplete for', token[0].content);
-        }
-      }
     },
     [noteBlock]
   );
 
-  return { handleKeyDown, handleKeyPress, handleChange };
+  return { handleKeyDown, handleKeyPress, handleChange, noteTitleToSearch };
 };

@@ -37,5 +37,3 @@ export const useUpdateBlockLinks = (
     }
   }, [editState.isEditing, noteBlock, noteRepo, vault, wasEditing]);
 };
-
-export const useHandleTextChange = () => {};
