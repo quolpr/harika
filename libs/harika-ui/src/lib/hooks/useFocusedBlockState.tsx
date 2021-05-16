@@ -1,4 +1,4 @@
-import { FocusedBlockState } from '@harika/harika-front-core';
+import { EditState, FocusedBlockState } from '@harika/harika-front-core';
 import { comparer, computed } from 'mobx';
 import { useCallback } from 'react';
 import { useCurrentVaultUiState } from '../contexts/CurrentVaultUiStateContext';
@@ -7,7 +7,7 @@ export const useCurrentFocusedBlockState = (
   viewId: string,
   blockId: string
 ): [
-  { isFocused: boolean; isEditing: boolean; startAt?: number },
+  EditState,
   (
     block:
       | {

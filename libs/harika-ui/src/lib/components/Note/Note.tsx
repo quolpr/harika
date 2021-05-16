@@ -150,14 +150,11 @@ const NoteBlocks = observer(
   }
 );
 
-export const Note: React.FC<{ note: NoteModel }> = observer(({ note }) => {
+const NoteBody = observer(({ note }: { note: NoteModel }) => {
   const vault = useCurrentVault();
   const vaultUiState = useCurrentVaultUiState();
   const history = useHistory<IFocusBlockState>();
   const focusOnBlockId = (history.location.state || {}).focusOnBlockId;
-  const noteRepo = useNoteRepository();
-
-  const currentBlockInputRef = useRef<HTMLTextAreaElement>(null);
 
   const handleChange = useCallback(
     (e: ChangeEvent<HTMLTextAreaElement>) => {
@@ -190,28 +187,37 @@ export const Note: React.FC<{ note: NoteModel }> = observer(({ note }) => {
   }, [note]);
 
   return (
-    <CurrentBlockInputRefContext.Provider value={currentBlockInputRef}>
-      <div className="note">
-        <h2 className="note__header">
-          <TextareaAutosize
-            className="note__input"
-            value={note.title}
-            onChange={handleChange}
-          />
-        </h2>
-
-        <NoteBlocks
-          view={vault.getOrCreateViewByModel(note)}
-          childBlocks={note.rootBlockRef.current.noteBlockRefs}
+    <div className="note">
+      <h2 className="note__header">
+        <TextareaAutosize
+          className="note__input"
+          value={note.title}
+          onChange={handleChange}
         />
+      </h2>
 
-        <div className="note__linked-references">
-          <LinkIcon className="note__link-icon" size={16} />
-          {note.linkedBlocks.length} Linked References
-        </div>
+      <NoteBlocks
+        view={vault.getOrCreateViewByModel(note)}
+        childBlocks={note.rootBlockRef.current.noteBlockRefs}
+      />
 
-        <Backlinks linkedBlocks={note.linkedBlocks} />
+      <div className="note__linked-references">
+        <LinkIcon className="note__link-icon" size={16} />
+        {note.linkedBlocks.length} Linked References
       </div>
+
+      <Backlinks linkedBlocks={note.linkedBlocks} />
+    </div>
+  );
+});
+
+// Performance optimization here with context and separate component
+export const Note: React.FC<{ note: NoteModel }> = React.memo(({ note }) => {
+  const currentBlockInputRef = useRef<HTMLTextAreaElement>(null);
+
+  return (
+    <CurrentBlockInputRefContext.Provider value={currentBlockInputRef}>
+      <NoteBody note={note} />
     </CurrentBlockInputRefContext.Provider>
   );
 });

@@ -1,5 +1,11 @@
 import { model, Model, modelAction, prop } from 'mobx-keystone';
 
+export interface EditState {
+  isFocused: boolean;
+  isEditing: boolean;
+  startAt?: number;
+}
+
 @model('FocusedBlockState')
 export class FocusedBlockState extends Model({
   viewId: prop<string>(),
@@ -40,7 +46,7 @@ export class VaultUiState extends Model({
     this.focusedBlock = block;
   }
 
-  getBlockFocusState(viewId: string, blockId: string) {
+  getBlockFocusState(viewId: string, blockId: string): EditState {
     const isFocused =
       this.focusedBlock?.viewId === viewId &&
       this.focusedBlock?.blockId === blockId;
