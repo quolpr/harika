@@ -26,14 +26,14 @@ export const useHandleInput = (
 
   const handleKeyPress = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      const start = e.currentTarget.selectionStart;
+      const end = e.currentTarget.selectionEnd;
+
       // on ios sometime shiftKey === caps lock
       if (e.key === 'Enter' && (isIOS || !e.shiftKey)) {
         e.preventDefault();
 
         const content = noteBlock.content.value;
-
-        const start = e.currentTarget.selectionStart;
-        const end = e.currentTarget.selectionEnd;
 
         if (start === end) {
           const firstToken = getTokensAtCursor(start, noteBlock.content.ast)[0];
@@ -177,6 +177,14 @@ export const useHandleInput = (
 
         e.currentTarget.blur();
       }
+    },
+    [insertFakeInput, noteBlock, noteBlockElRef, setEditState, view.$modelId]
+  );
+
+  const handleCaretChange = useCallback(
+    (e: React.SyntheticEvent<HTMLTextAreaElement>) => {
+      const start = e.currentTarget.selectionStart;
+      const end = e.currentTarget.selectionEnd;
 
       if (start === end) {
         setSingleCaretPos(start);
@@ -184,7 +192,7 @@ export const useHandleInput = (
         setSingleCaretPos(undefined);
       }
     },
-    [insertFakeInput, noteBlock, noteBlockElRef, setEditState, view.$modelId]
+    []
   );
 
   const firstToken =
@@ -195,15 +203,16 @@ export const useHandleInput = (
   useEffect(() => {
     if (singleCaretPos) {
       if (firstToken?.type === 'ref') {
-        setNoteTitleToSearch(firstToken.content);
-        console.log('to search', firstToken.content);
+        if (noteTitleToSearch !== firstToken.content) {
+          setNoteTitleToSearch(firstToken.content);
+        }
       } else {
         setNoteTitleToSearch(undefined);
       }
     } else {
       setNoteTitleToSearch(undefined);
     }
-  }, [firstToken, singleCaretPos]);
+  }, [firstToken, noteTitleToSearch, singleCaretPos]);
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -212,5 +221,22 @@ export const useHandleInput = (
     [noteBlock]
   );
 
-  return { handleKeyDown, handleKeyPress, handleChange, noteTitleToSearch };
+  return {
+    textareaHandlers: {
+      onKeyUp: handleCaretChange,
+      onMouseDown: handleCaretChange,
+      onMouseMove: handleCaretChange,
+      onTouchStart: handleCaretChange,
+      onInput: handleCaretChange,
+      onPaste: handleCaretChange,
+      onCut: handleCaretChange,
+      onSelect: handleCaretChange,
+
+      onKeyDown: handleKeyDown,
+      onKeyPress: handleKeyPress,
+      onChange: handleChange,
+    },
+    handleChange,
+    noteTitleToSearch,
+  };
 };

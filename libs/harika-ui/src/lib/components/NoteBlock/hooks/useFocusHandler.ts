@@ -122,7 +122,8 @@ export const useFocusHandler = (
       isEditing &&
       !(
         e.target instanceof Element &&
-        e.target.closest('.toolbar') &&
+        (e.target.closest('.toolbar') ||
+          e.target.closest('.note-autocomplete')) &&
         !e.target.closest('[data-defocus]')
       ) &&
       !(

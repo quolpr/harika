@@ -15,7 +15,7 @@ import {
 } from './hooks/otherHooks';
 import { useFocusHandler } from './hooks/useFocusHandler';
 import { useHandleInput } from './hooks/useHandleInput';
-import { NoteTitleAutocomplete } from './NoteTitleAutocomplete';
+import { NoteTitleAutocomplete } from './NoteTitleAutocomplete/NoteTitleAutocomplete';
 
 const NoteBlockChildren = observer(
   ({
@@ -67,12 +67,7 @@ const NoteBlockBody = observer(
       releaseFakeInput,
       handleContentClick,
     } = useFocusHandler(view, noteBlock, inputRef, noteBlockBodyElRef);
-    const {
-      handleKeyPress,
-      handleKeyDown,
-      handleChange,
-      noteTitleToSearch,
-    } = useHandleInput(
+    const { textareaHandlers, noteTitleToSearch } = useHandleInput(
       noteBlock,
       view,
       noteBlockBodyElRef,
@@ -111,11 +106,8 @@ const NoteBlockBody = observer(
               className={clsx('note-block__content', {
                 'note-block__content--hidden': !isEditing,
               })}
-              onKeyDown={handleKeyDown}
-              onKeyPress={handleKeyPress}
-              onChange={handleChange}
               value={noteBlock.content.value}
-              onBlur={handleInputBlur}
+              {...textareaHandlers}
             />
             <NoteTitleAutocomplete value={noteTitleToSearch} />
           </>
