@@ -1,16 +1,26 @@
 .note-autocomplete {
   @apply bg-gray-800 rounded-md bg-opacity-80 py-2;
 
-  max-height: 200px;
-  width: 200px;
-
-  overflow-y: auto;
-  overflow-x: hidden;
-
   position: absolute;
+  top: 10px;
+
+  z-index: 1000;
+
+  &__content {
+    max-height: calc(1.75rem * 4);
+    width: 10rem;
+
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    -webkit-overflow-scrolling: auto;
+  }
 
   &__item {
-    @apply px-2 py-1.5 hover:bg-gray-700;
+    @apply px-2 h-7;
+
+    display: flex;
+    align-items: center;
 
     cursor: pointer;
 
@@ -21,9 +31,13 @@
     &:last-child {
       @apply pb-0;
     }
+
+    &--focused {
+      @apply bg-gray-700;
+    }
   }
 
-  &__content {
+  &__item-content {
     overflow: hidden;
     text-overflow: ellipsis;
   }

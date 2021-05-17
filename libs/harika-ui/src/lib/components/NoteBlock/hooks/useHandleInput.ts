@@ -1,13 +1,15 @@
 import { BlocksViewModel, NoteBlockModel } from '@harika/harika-front-core';
-import { RefObject, useCallback, useEffect, useState } from 'react';
+import { RefObject, useCallback, useState } from 'react';
 import { useCurrentFocusedBlockState } from '../../../hooks/useFocusedBlockState';
 import { isIOS, insertText } from '../../../utils';
+import { SearchedNote } from '../NoteTitleAutocomplete/NoteTitleAutocomplete';
 import { getTokensAtCursor } from '../utils';
 
 export const useHandleInput = (
   noteBlock: NoteBlockModel,
   view: BlocksViewModel,
   noteBlockElRef: RefObject<HTMLDivElement | null>,
+  inputRef: RefObject<HTMLTextAreaElement | null>,
   insertFakeInput: (el?: HTMLElement) => void,
   releaseFakeInput: () => void
 ) => {
@@ -16,13 +18,11 @@ export const useHandleInput = (
     noteBlock.$modelId
   );
 
-  const [singleCaretPos, setSingleCaretPos] = useState<number | undefined>(
-    undefined
-  );
-
   const [noteTitleToSearch, setNoteTitleToSearch] = useState<
     string | undefined
   >(undefined);
+
+  const isSearching = Boolean(noteTitleToSearch);
 
   const handleKeyPress = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -60,7 +60,7 @@ export const useHandleInput = (
 
         if (noteBlockElRef.current) {
           // New noteBlock is still not available in DOM,
-          // so lets insert input near current block
+          // so lets insert fake input near current block
           insertFakeInput(noteBlockElRef.current);
 
           setTimeout(releaseFakeInput, 0);
@@ -139,11 +139,11 @@ export const useHandleInput = (
       } else if (e.key === 'ArrowUp' && e.shiftKey) {
         e.preventDefault();
 
-        noteBlock.tryMoveLeft();
+        if (!isSearching) noteBlock.tryMoveLeft();
       } else if (e.key === 'ArrowDown' && e.shiftKey) {
         e.preventDefault();
 
-        noteBlock.tryMoveRight();
+        if (!isSearching) noteBlock.tryMoveRight();
       } else if (e.key === '[') {
         e.preventDefault();
 
@@ -151,26 +151,30 @@ export const useHandleInput = (
       } else if (e.key === 'ArrowDown') {
         e.preventDefault();
 
-        const [, right] = noteBlock.leftAndRight;
+        if (!isSearching) {
+          const [, right] = noteBlock.leftAndRight;
 
-        if (right) {
-          setEditState({
-            viewId: view.$modelId,
-            blockId: right.$modelId,
-            isEditing: true,
-          });
+          if (right) {
+            setEditState({
+              viewId: view.$modelId,
+              blockId: right.$modelId,
+              isEditing: true,
+            });
+          }
         }
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
 
-        const [left] = noteBlock.leftAndRight;
+        if (!isSearching) {
+          const [left] = noteBlock.leftAndRight;
 
-        if (left) {
-          setEditState({
-            viewId: view.$modelId,
-            blockId: left.$modelId,
-            isEditing: true,
-          });
+          if (left) {
+            setEditState({
+              viewId: view.$modelId,
+              blockId: left.$modelId,
+              isEditing: true,
+            });
+          }
         }
       } else if (e.key === 'Escape') {
         e.preventDefault();
@@ -178,7 +182,14 @@ export const useHandleInput = (
         e.currentTarget.blur();
       }
     },
-    [insertFakeInput, noteBlock, noteBlockElRef, setEditState, view.$modelId]
+    [
+      insertFakeInput,
+      isSearching,
+      noteBlock,
+      noteBlockElRef,
+      setEditState,
+      view.$modelId,
+    ]
   );
 
   const handleCaretChange = useCallback(
@@ -187,38 +198,57 @@ export const useHandleInput = (
       const end = e.currentTarget.selectionEnd;
 
       if (start === end) {
-        setSingleCaretPos(start);
-      } else {
-        setSingleCaretPos(undefined);
+        const firstToken = getTokensAtCursor(start, noteBlock.content.ast)[0];
+
+        if (firstToken?.type !== 'ref') {
+          setNoteTitleToSearch(undefined);
+        }
       }
     },
-    []
+    [noteBlock.content.ast]
   );
 
-  const firstToken =
-    singleCaretPos === undefined
-      ? undefined
-      : getTokensAtCursor(singleCaretPos, noteBlock.content.ast)[0];
+  const handleChange = useCallback(
+    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      noteBlock.content.update(e.target.value);
 
-  useEffect(() => {
-    if (singleCaretPos) {
-      if (firstToken?.type === 'ref') {
-        if (noteTitleToSearch !== firstToken.content) {
+      const start = e.currentTarget.selectionStart;
+      const end = e.currentTarget.selectionEnd;
+
+      if (start === end) {
+        const firstToken = getTokensAtCursor(start, noteBlock.content.ast)[0];
+
+        if (firstToken?.type === 'ref') {
           setNoteTitleToSearch(firstToken.content);
         }
       } else {
         setNoteTitleToSearch(undefined);
       }
-    } else {
-      setNoteTitleToSearch(undefined);
-    }
-  }, [firstToken, noteTitleToSearch, singleCaretPos]);
-
-  const handleChange = useCallback(
-    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-      noteBlock.content.update(e.target.value);
     },
     [noteBlock]
+  );
+
+  const handleSearchSelect = useCallback(
+    (res: SearchedNote) => {
+      if (!inputRef.current) return;
+      const input = inputRef.current;
+
+      const start = input.selectionStart;
+
+      const firstToken = getTokensAtCursor(start, noteBlock.content.ast)[0];
+
+      if (firstToken?.type === 'ref') {
+        const toInsert = `[[${res.title}]]`;
+
+        insertText(input, toInsert, toInsert.length, {
+          start: firstToken.offsetStart,
+          end: firstToken.offsetEnd,
+        });
+      }
+
+      setNoteTitleToSearch(undefined);
+    },
+    [inputRef, noteBlock.content.ast]
   );
 
   return {
@@ -238,5 +268,6 @@ export const useHandleInput = (
     },
     handleChange,
     noteTitleToSearch,
+    handleSearchSelect,
   };
 };

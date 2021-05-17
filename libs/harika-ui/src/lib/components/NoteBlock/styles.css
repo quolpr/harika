@@ -9,20 +9,6 @@
     @apply flex relative;
   }
 
-  &__content {
-    display: inline;
-    align-items: center;
-    word-break: break-word;
-
-    > * {
-      vertical-align: middle;
-    }
-
-    &--hidden {
-      display: none;
-    }
-  }
-
   &__dot {
     @apply flex items-start justify-end w-9;
 
@@ -75,6 +61,12 @@
       top: 5px;
       height: calc(100% - 5px);
     }
+  }
+
+  &__input-container {
+    display: flex;
+    width: 100%;
+    flex-direction: column;
   }
 
   &__content {

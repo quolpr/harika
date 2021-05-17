@@ -54,7 +54,7 @@ const useHandleDoneIosButton = (
 
   const { isEditing } = editState;
 
-  const handleBlur = useCallback(() => {
+  const handleBlur = useCallback((e) => {
     setWasBlurred(true);
   }, []);
 

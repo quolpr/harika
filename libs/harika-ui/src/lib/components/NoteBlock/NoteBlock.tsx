@@ -67,10 +67,15 @@ const NoteBlockBody = observer(
       releaseFakeInput,
       handleContentClick,
     } = useFocusHandler(view, noteBlock, inputRef, noteBlockBodyElRef);
-    const { textareaHandlers, noteTitleToSearch } = useHandleInput(
+    const {
+      textareaHandlers,
+      noteTitleToSearch,
+      handleSearchSelect,
+    } = useHandleInput(
       noteBlock,
       view,
       noteBlockBodyElRef,
+      inputRef,
       insertFakeInput,
       releaseFakeInput
     );
@@ -100,17 +105,21 @@ const NoteBlockBody = observer(
         {/*   })} */}
         {/* > */}
         {isEditing && (
-          <>
+          <div className="note-block__input-container">
             <TextareaAutosize
               ref={inputRef}
               className={clsx('note-block__content', {
                 'note-block__content--hidden': !isEditing,
               })}
               value={noteBlock.content.value}
+              onBlur={handleInputBlur}
               {...textareaHandlers}
             />
-            <NoteTitleAutocomplete value={noteTitleToSearch} />
-          </>
+            <NoteTitleAutocomplete
+              value={noteTitleToSearch}
+              onSelect={handleSearchSelect}
+            />
+          </div>
         )}
         {!isEditing && (
           <span
