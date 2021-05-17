@@ -119,13 +119,14 @@ export class VaultsRepository {
 
     toMobxSync(this.dexieVaultDbs[id], this.noteRepo, vault);
 
-    // initRxDbToLocalSync(this.dexieVaultDbs[id], this.noteRepo, vault);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if ((window as any).__REDUX_DEVTOOLS_EXTENSION__) {
+      const connection = remotedev.connectViaExtension({
+        name: `Vault ${vault.name}`,
+      });
 
-    const connection = remotedev.connectViaExtension({
-      name: `Vault ${vault.name}`,
-    });
-
-    connectReduxDevTools(remotedev, connection, vault);
+      connectReduxDevTools(remotedev, connection, vault);
+    }
 
     return vault;
   }
