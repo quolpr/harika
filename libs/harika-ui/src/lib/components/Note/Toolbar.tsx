@@ -17,6 +17,7 @@ import ReactDOM from 'react-dom';
 import useResizeObserver from 'use-resize-observer/polyfilled';
 import { useUnmount } from 'react-use';
 import { CurrentBlockInputRefContext } from '../../contexts';
+import scrollIntoView from 'scroll-into-view-if-needed';
 
 const toolbarClass = cn('toolbar');
 
@@ -26,6 +27,16 @@ export const Toolbar = observer(({ view }: { view: BlocksViewModel }) => {
   const vault = useCurrentVault();
 
   const currentBlockInputRef = useContext(CurrentBlockInputRefContext);
+
+  const scrollToInput = useCallback(() => {
+    setTimeout(() => {
+      if (currentBlockInputRef.current) {
+        scrollIntoView(currentBlockInputRef.current, {
+          behavior: 'smooth',
+        });
+      }
+    }, 0);
+  }, [currentBlockInputRef]);
 
   const [bottomPos, setBottomPos] = useState(0);
 
@@ -88,8 +99,10 @@ export const Toolbar = observer(({ view }: { view: BlocksViewModel }) => {
       if (!currentBlock) return;
 
       currentBlock.tryMoveLeft();
+
+      scrollToInput();
     },
-    [currentBlock]
+    [currentBlock, scrollToInput]
   );
 
   const handleMoveRight = useCallback(
@@ -99,8 +112,10 @@ export const Toolbar = observer(({ view }: { view: BlocksViewModel }) => {
       if (!currentBlock) return;
 
       currentBlock.tryMoveRight();
+
+      scrollToInput();
     },
-    [currentBlock]
+    [currentBlock, scrollToInput]
   );
 
   useEffect(() => {
