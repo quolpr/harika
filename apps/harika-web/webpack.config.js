@@ -20,6 +20,8 @@ module.exports = (config, context) => {
     ].filter(Boolean),
   };
 
+  console.log(process.env.SENTRY_AUTH_TOKEN);
+
   return {
     ...config,
     plugins: [
@@ -48,15 +50,9 @@ module.exports = (config, context) => {
           release: process.env.NX_RELEASE_VERSION,
 
           // webpack specific configuration
-          include: '.',
-          ignore: [
-            'node_modules',
-            'webpack.config.js',
-            'tools',
-            'tmp',
-            'patches',
-            'dist',
-          ],
+          include: ['apps/harika-web/src', 'libs'],
+          ext: ['ts', 'tsx', 'js'],
+          ignore: ['node_modules', 'webpack.config.js', 'jest.config.js'],
         }),
     ].filter(Boolean),
     module: {
