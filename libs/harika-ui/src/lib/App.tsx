@@ -98,6 +98,30 @@ function NotProfiledApp({ environment }: { environment: Environment }) {
     };
   }, [userId, isOffline, environment.apiUrl, environment.wsUrl]);
 
+  useEffect(() => {
+    // lol safari
+    // https://stackoverflow.com/questions/56496296/how-do-i-fix-firestore-sdk-hitting-an-internal-error-was-encountered-in-the-ind
+
+    const handle = ({ message }: ErrorEvent) => {
+      if (
+        (message.indexOf(
+          'An internal error was encountered in the Indexed Database server'
+        ) >= 0 || message.indexOf('Connection to Indexed Database server')) >= 0
+      ) {
+        console.log('Refreshing page due to safari issue');
+
+        // Refresh the page to restore IndexedDb to a working state.
+        window.location.reload();
+      }
+    };
+
+    window.addEventListener('error', handle);
+
+    return () => {
+      window.removeEventListener('error', handle);
+    };
+  }, []);
+
   return (
     <React.StrictMode>
       <QueryClientProvider client={queryClient}>
