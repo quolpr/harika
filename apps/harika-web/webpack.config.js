@@ -50,9 +50,7 @@ module.exports = (config, context) => {
           release: process.env.NX_RELEASE_VERSION,
 
           // webpack specific configuration
-          include: ['apps/harika-web/src', 'libs'],
-          ext: ['ts', 'tsx', 'js'],
-          ignore: ['node_modules', 'webpack.config.js', 'jest.config.js'],
+          include: ['dist/apps/harika-web'],
         }),
     ].filter(Boolean),
     module: {

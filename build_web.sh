@@ -12,3 +12,4 @@ echo "Building release:" $NX_RELEASE_VERSION
 
 NODE_ENV=production yarn nx run harika-web:build:production
 
+rm -Rf dist/apps/harika-web/**/*.map
