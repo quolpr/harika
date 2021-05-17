@@ -9,6 +9,8 @@ import { VaultModel } from './NotesRepository/models/VaultModel';
 import { VaultDexieDatabase } from './NotesRepository/dexieDb/DexieDb';
 import { loadNoteDocToModelAttrs } from './NotesRepository/dexieDb/convertDocToModel';
 import { liveSwitch } from './onDexieChange';
+import { filterAst } from './astHelpers';
+import { RefToken } from './blockParser/blockParser';
 
 export { NoteModel } from './NotesRepository/models/NoteModel';
 export { VaultModel } from './NotesRepository/models/VaultModel';
@@ -116,10 +118,10 @@ export class NotesRepository {
       async () => {
         console.log('updating links');
 
-        // TODO: use parser
-        const titles = [
-          ...noteBlock.content.value.matchAll(/\[\[(.+?)\]\]/g),
-        ].map(([, name]) => name);
+        const titles = (filterAst(
+          noteBlock.content.ast,
+          (t) => t.type === 'ref'
+        ) as RefToken[]).map((t: RefToken) => t.content);
 
         const existingNotesIndexed = Object.fromEntries(
           (

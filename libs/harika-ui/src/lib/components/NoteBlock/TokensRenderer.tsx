@@ -32,7 +32,11 @@ const RefRenderer = observer(
 
     if (token.content === 'TODO' || token.content === 'DONE') {
       return (
-        <label className="checkbox" onClick={(e) => e.stopPropagation()}>
+        <label
+          className="checkbox"
+          onClick={(e) => e.stopPropagation()}
+          style={{ verticalAlign: 'middle', marginBottom: 3 }}
+        >
           <input
             type="checkbox"
             checked={token.content === 'DONE'}

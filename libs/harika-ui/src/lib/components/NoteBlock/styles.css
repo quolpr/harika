@@ -82,10 +82,6 @@
     white-space: pre-wrap;
     word-break: break-word;
 
-    > * {
-      vertical-align: middle;
-    }
-
     &--hidden {
       display: none;
     }

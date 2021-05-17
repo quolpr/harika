@@ -36,4 +36,13 @@ export const useUpdateBlockLinks = (
       noteRepo.updateNoteBlockLinks(vault, noteBlock);
     }
   }, [editState.isEditing, noteBlock, noteRepo, vault, wasEditing]);
+
+  // on demount
+  useEffect(() => {
+    return () => {
+      if (wasEditing) {
+        noteRepo.updateNoteBlockLinks(vault, noteBlock);
+      }
+    };
+  }, [noteBlock, noteRepo, vault, wasEditing]);
 };

@@ -78,6 +78,7 @@
 
   &__main {
     @apply transition-all max-w-screen-lg px-8;
+    width: 100%;
   }
 
   @media (min-width: 768px) {
