@@ -5,6 +5,7 @@ const webpackTailwindConfig = require('../../webpack-tailwind.config');
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer')
   .BundleAnalyzerPlugin;
 const WorkboxPlugin = require('workbox-webpack-plugin');
+const SentryWebpackPlugin = require('@sentry/webpack-plugin');
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
 
@@ -38,6 +39,25 @@ module.exports = (config, context) => {
           { url: '/index.html', revision: new Date().getTime().toString() },
         ],
       }),
+      !isDevelopment &&
+        new SentryWebpackPlugin({
+          // sentry-cli configuration
+          authToken: process.env.SENTRY_AUTH_TOKEN,
+          org: 'harika',
+          project: 'web-dev',
+          release: process.env.NX_RELEASE_VERSION,
+
+          // webpack specific configuration
+          include: '.',
+          ignore: [
+            'node_modules',
+            'webpack.config.js',
+            'tools',
+            'tmp',
+            'patches',
+            'dist',
+          ],
+        }),
     ].filter(Boolean),
     module: {
       rules: [

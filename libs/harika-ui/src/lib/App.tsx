@@ -35,6 +35,7 @@ if (process.env.NODE_ENV === 'production') {
         routingInstrumentation: Sentry.reactRouterV5Instrumentation(history),
       }),
     ],
+    release: process.env.NX_RELEASE_VERSION,
 
     // Set tracesSampleRate to 1.0 to capture 100%
     // of transactions for performance monitoring.

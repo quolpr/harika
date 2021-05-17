@@ -142,6 +142,7 @@
     "@nxtend/capacitor": "^11.0.0",
     "@nxtend/ionic-react": "^11.0.0",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.4.3",
+    "@sentry/webpack-plugin": "^1.15.1",
     "@tailwindcss/jit": "^0.1.5",
     "@testing-library/react": "11.1.2",
     "@types/async": "^3.2.6",
