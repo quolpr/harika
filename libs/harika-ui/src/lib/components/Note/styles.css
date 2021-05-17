@@ -3,10 +3,10 @@
   flex-direction: column;
   clear: both;
 
-  @apply pb-5;
+  @apply pb-5 pt-5;
 
   &__header {
-    @apply text-gray-100 text-3xl pt-5 pb-8 font-bold;
+    @apply text-gray-100 text-3xl pb-4 font-bold;
   }
 
   @media (min-width: 768px) {

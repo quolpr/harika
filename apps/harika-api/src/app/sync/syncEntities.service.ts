@@ -100,14 +100,20 @@ export abstract class BaseSyncEntitiesService implements SyncEntitiesService {
     clientIdentity: string,
     manager: EntityManager
   ) {
-    const entity = this.vaultEntitiesRepo.create({
-      scopeId,
-      ownerId,
-      key,
-      obj,
-    });
-
-    await manager.save(entity);
+    await this.vaultEntitiesRepo
+      .createQueryBuilder()
+      .insert()
+      .values({
+        scopeId,
+        ownerId,
+        key,
+        // eslint-disable-next-line @typescript-eslint/ban-types
+        obj: obj as object,
+      })
+      .onConflict(
+        '("ownerId", "scopeId", "key") DO UPDATE SET "obj" = excluded."obj"'
+      )
+      .execute();
 
     const change = this.entityChangesRepo.create({
       key,
@@ -162,7 +168,11 @@ export abstract class BaseSyncEntitiesService implements SyncEntitiesService {
     clientIdentity: string,
     manager: EntityManager
   ) {
-    await this.vaultEntitiesRepo.delete({ key });
+    try {
+      await this.vaultEntitiesRepo.delete({ key });
+    } catch (e) {
+      console.error(`Failed to remove entity with key ${key}`);
+    }
 
     const change = this.entityChangesRepo.create({
       key: key,
