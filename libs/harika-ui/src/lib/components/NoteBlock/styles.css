@@ -75,10 +75,20 @@
     display: inline;
 
     width: 100%;
-    white-space: pre-wrap;
     background: transparent;
     resize: none;
     min-height: 24px;
+
+    white-space: pre-wrap;
+    word-break: break-word;
+
+    > * {
+      vertical-align: middle;
+    }
+
+    &--hidden {
+      display: none;
+    }
 
     &--focused {
       @apply bg-gray-800 bg-opacity-80;

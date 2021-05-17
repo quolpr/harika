@@ -124,9 +124,7 @@ const NoteBlockBody = observer(
         {!isEditing && (
           <span
             onClick={handleContentClick}
-            className={clsx('note-block__content', {
-              'note-block__content--focused': isFocused,
-            })}
+            className={clsx('note-block__content', {})}
           >
             <TokensRenderer
               noteBlock={noteBlock}

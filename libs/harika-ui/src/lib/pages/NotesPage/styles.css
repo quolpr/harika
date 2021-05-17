@@ -1,9 +1,13 @@
 .notes-table {
-  @apply mt-5;
-
-  table-layout: fixed;
+  @apply pt-5 pb-5;
 
   width: 100%;
+
+  &__table {
+    table-layout: fixed;
+
+    width: 100%;
+  }
 
   tbody {
     @apply pt-2;

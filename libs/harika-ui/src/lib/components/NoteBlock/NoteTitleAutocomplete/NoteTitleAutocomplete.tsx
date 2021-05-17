@@ -114,9 +114,11 @@ export const NoteTitleAutocomplete = React.memo(
 
           handleNewIndexSet(newIndex);
         } else if (e.key === 'Enter') {
-          e.preventDefault();
+          if (value !== undefined) {
+            e.preventDefault();
 
-          onSelect(searchResults[currentIdIndex]);
+            onSelect(searchResults[currentIdIndex]);
+          }
         }
       };
 
@@ -125,7 +127,7 @@ export const NoteTitleAutocomplete = React.memo(
       return () => {
         document.removeEventListener('keydown', onKeyDown);
       };
-    }, [focusedId, onSelect, searchResults]);
+    }, [focusedId, onSelect, searchResults, value]);
 
     return (
       // eslint-disable-next-line react/jsx-no-useless-fragment

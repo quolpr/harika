@@ -47,13 +47,14 @@
 
   &__container {
     width: 100%;
-    padding-left: 0px;
+    margin-left: 0px;
+    position: relative;
 
     @apply transition-all;
 
     &--with-padding {
       @media (min-width: 768px) {
-        padding-left: 260px;
+        margin-left: 260px;
       }
     }
   }
@@ -71,10 +72,12 @@
     overscroll-behavior: contain;
 
     width: 100%;
+    display: flex;
+    justify-content: center;
   }
 
   &__main {
-    @apply transition-all max-w-screen-sm mx-auto px-8;
+    @apply transition-all max-w-screen-lg px-8;
   }
 
   @media (min-width: 768px) {
