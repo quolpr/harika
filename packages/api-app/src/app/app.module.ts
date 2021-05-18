@@ -1,0 +1,62 @@
+import { Module } from '@nestjs/common';
+import { GraphQLModule } from '@nestjs/graphql';
+import { TypeOrmModule } from '@nestjs/typeorm';
+
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+import { ClientIdentity } from './sync/models/ClientIdentity.model';
+import { User } from './users/schemas/user.schema';
+import { UserEntitySchema } from './users/schemas/userEntity.schema';
+import { UserEntityChangeSchema } from './users/schemas/userEntityChange.schema';
+import { UsersModule } from './users/users.module';
+import { VaultEntitySchema } from './vaults/schemas/vaultEntity.schema';
+import { VaultEntityChangeSchema } from './vaults/schemas/vaultEntityChange.schema';
+import { VaultsModule } from './vaults/vaults.module';
+import { ConfigModule } from '@nestjs/config';
+
+@Module({
+  imports: [
+    ConfigModule.forRoot(),
+    UsersModule,
+    VaultsModule,
+    GraphQLModule.forRoot({
+      autoSchemaFile: true,
+      debug: true,
+      playground: true,
+      cors: {
+        credentials: true,
+        origin: [
+          'http://localhost:3333',
+          'http://localhost:8080',
+          'http://192.168.1.41:8080',
+          'ionic://localhost',
+          'http://localhost',
+          'capacitor://localhost',
+        ],
+      },
+      path: '/api/graphql',
+      context: ({ req }) => ({ req }),
+    }),
+    TypeOrmModule.forRoot({
+      type: 'postgres',
+      host: 'localhost',
+      port: 5432,
+      username: 'postgres',
+      password: 'postgres',
+      database: 'harika',
+      entities: [
+        User,
+        VaultEntityChangeSchema,
+        VaultEntitySchema,
+        UserEntitySchema,
+        UserEntityChangeSchema,
+        ClientIdentity,
+      ],
+      synchronize: true,
+      logging: true,
+    }),
+  ],
+  controllers: [AppController],
+  providers: [AppService],
+})
+export class AppModule {}

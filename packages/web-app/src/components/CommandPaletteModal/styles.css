@@ -1,0 +1,65 @@
+.command-palette-modal {
+  &__header {
+  }
+
+  &__actions-list {
+  }
+
+  &__form {
+    @apply h-16 border-b border-gray-800;
+    display: flex;
+
+    align-items: center;
+  }
+
+  &__command-icon {
+    display: block-inline;
+
+    @apply text-gray-600 w-5;
+  }
+
+  &__command-input {
+    @apply border-gray-800 bg-gray-900 text-gray-300 px-2 py-1 rounded w-40;
+    @apply focus:outline-none focus:border-gray-700;
+    @apply ml-2;
+    @apply bg-opacity-0;
+
+    width: 100%;
+    height: 100%;
+  }
+
+  &__action {
+    @apply px-5 py-3 mb-3;
+    @apply bg-gray-800 rounded-xl shadow;
+
+    display: flex;
+    align-items: center;
+
+    width: 100%;
+    text-align: left;
+
+    &--focused {
+      @apply bg-pink-800;
+    }
+  }
+
+  &__key {
+    @apply text-gray-500;
+    margin-left: auto;
+
+    &--enter {
+      margin-right: 3px;
+      transform: rotate(180deg) scaleX(-1);
+    }
+
+    &--focused {
+      @apply text-gray-300;
+    }
+  }
+
+  &__actions-list-container {
+    @apply mt-6;
+    flex: auto;
+    overflow: auto;
+  }
+}
