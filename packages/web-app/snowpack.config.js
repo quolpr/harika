@@ -8,6 +8,7 @@ module.exports = {
     '../common': '/@harika/common',
   },
   plugins: [
+    ['@snowpack/plugin-webpack', { sourceMap: true }],
     '@snowpack/plugin-react-refresh',
     '@snowpack/plugin-dotenv',
     [
@@ -25,7 +26,11 @@ module.exports = {
   ],
   optimize: {
     /* Example: Bundle your final build: */
-    // "bundle": true,
+    bundle: true,
+    minify: true,
+    target: 'es2018',
+    sourcemap: true,
+    treeshake: true,
   },
   packageOptions: {
     knownEntrypoints: ['@welldone-software/why-did-you-render'],
@@ -33,6 +38,7 @@ module.exports = {
   },
   devOptions: {
     /* ... */
+    sourcemap: true,
   },
   buildOptions: {
     /* ... */

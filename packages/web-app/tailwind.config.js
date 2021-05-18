@@ -1,9 +1,9 @@
 // tailwind.config.js
 
+// To add all colors support
 const colors = require('tailwindcss/colors');
 
 module.exports = {
-  mode: 'jit',
   purge: ['./public/**/*.html', './src/**/*.{js,jsx,ts,tsx,vue}'],
   theme: {
     extend: {},

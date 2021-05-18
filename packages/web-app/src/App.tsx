@@ -31,7 +31,7 @@ if (import.meta.env.MODE === 'production') {
         routingInstrumentation: Sentry.reactRouterV5Instrumentation(history),
       }),
     ],
-    release: import.meta.env.SNOWPACK_RELEASE_VERSION,
+    release: import.meta.env.SNOWPACK_PUBLIC_RELEASE_VERSION,
 
     // Set tracesSampleRate to 1.0 to capture 100%
     // of transactions for performance monitoring.
