@@ -1,5 +1,7 @@
 /** @type {import("snowpack").SnowpackUserConfig } */
 
+process.env.SNOWPACK_PUBLIC_SERVICE_WORKER = 'sw.js';
+
 module.exports = {
   mount: {
     public: { url: '/', static: true },
@@ -8,7 +10,6 @@ module.exports = {
     '../common': '/@harika/common',
   },
   plugins: [
-    ['@snowpack/plugin-webpack', { sourceMap: true }],
     '@snowpack/plugin-react-refresh',
     '@snowpack/plugin-dotenv',
     [
@@ -19,6 +20,33 @@ module.exports = {
       },
     ],
     '@snowpack/plugin-postcss',
+    [
+      '@snowpack/plugin-webpack',
+      {
+        sourceMap: true,
+        collapseWhitespace: false,
+        extendConfig: (config) => {
+          const { glob } = require('glob');
+          const { InjectManifest } = require('workbox-webpack-plugin');
+          const additionalManifestEntries = [
+            ...glob.sync('*.{png,html,json,txt}', { cwd: './build' }),
+          ].map((e) => ({
+            url: e,
+            revision: process.env.SNOWPACK_PUBLIC_PACKAGE_VERSION,
+          }));
+
+          config.plugins.push(
+            new InjectManifest({
+              mode: 'development',
+              additionalManifestEntries: additionalManifestEntries,
+              swSrc: './dist/serviceWorker.js',
+              swDest: process.env.SNOWPACK_PUBLIC_SERVICE_WORKER,
+            }),
+          );
+          return config;
+        },
+      },
+    ],
   ],
   routes: [
     /* Enable an SPA Fallback in development: */
@@ -26,11 +54,7 @@ module.exports = {
   ],
   optimize: {
     /* Example: Bundle your final build: */
-    bundle: true,
-    minify: true,
-    target: 'es2018',
-    sourcemap: true,
-    treeshake: true,
+    target: 'es2017',
   },
   packageOptions: {
     knownEntrypoints: ['@welldone-software/why-did-you-render'],
@@ -42,7 +66,6 @@ module.exports = {
   },
   buildOptions: {
     /* ... */
-    sourcemap: true,
   },
   alias: {
     '@harika/web-core': '../web-core',
