@@ -1281,7 +1281,7 @@
     lz-string "^1.4.4"
     pretty-format "^26.6.2"
 
-"@testing-library/react@^11.2.6":
+"@testing-library/react@^11.2.6", "@testing-library/react@^11.2.7":
   version "11.2.7"
   resolved "https://registry.yarnpkg.com/@testing-library/react/-/react-11.2.7.tgz#b29e2e95c6765c815786c0bc1d5aed9cb2bf7818"
   integrity sha512-tzRNp7pzd5QmbtXNG/mhdcl7Awfu/Iz1RaVHY75zTdOkmHCuzMhRL83gWHSgOAcjS3CCbyfwUHMZgRJb4kAfpA==
@@ -1369,7 +1369,7 @@
     "@types/connect" "*"
     "@types/node" "*"
 
-"@types/chai@^4.2.17":
+"@types/chai@^4.2.17", "@types/chai@^4.2.18":
   version "4.2.18"
   resolved "https://registry.yarnpkg.com/@types/chai/-/chai-4.2.18.tgz#0c8e298dbff8205e2266606c1ea5fbdba29b46e4"
   integrity sha512-rS27+EkB/RE1Iz3u0XtVL5q36MGDWbgYe7zWiodyKNUnthxY0rukK5V36eiUCtCisB7NN8zKYH6DO2M37qxFEQ==
@@ -1705,7 +1705,7 @@
   resolved "https://registry.yarnpkg.com/@types/react-calendar/-/react-calendar-3.1.5.tgz#99d94a58feddb4ea60f747a6e34425a427f4708c"
   integrity sha512-dGp0/c3v1YZHsj7DOcb8o3pbLoqdUa8XxofwLa391T+E1V3y9iVj4i84Fa54SHAQ/uEKgT4Oe33KRfkkyqb6dw==
 
-"@types/react-dom@^17.0.3":
+"@types/react-dom@^17.0.5":
   version "17.0.5"
   resolved "https://registry.yarnpkg.com/@types/react-dom/-/react-dom-17.0.5.tgz#df44eed5b8d9e0b13bb0cd38e0ea6572a1231227"
   integrity sha512-ikqukEhH4H9gr4iJCmQVNzTB307kROe3XFfHAOTxOXPOw7lAoEXnM5KWTkzeANGL5Ce6ABfiMl/zJBYNi7ObmQ==
@@ -1757,7 +1757,7 @@
   dependencies:
     "@types/react" "*"
 
-"@types/react@*", "@types/react@^17.0.4":
+"@types/react@*", "@types/react@^17.0.5":
   version "17.0.5"
   resolved "https://registry.yarnpkg.com/@types/react/-/react-17.0.5.tgz#3d887570c4489011f75a3fc8f965bf87d09a1bea"
   integrity sha512-bj4biDB9ZJmGAYTWSKJly6bMr4BLUiBrx9ujiJEoP9XIDY9CTaPGxE5QWN/1WjpPLzYF7/jRNnV2nNxNe970sw==
@@ -2089,7 +2089,7 @@
     "@types/mocha" "^8.2.0"
     "@web/test-runner-core" "^0.10.8"
 
-"@web/test-runner@^0.13.3":
+"@web/test-runner@^0.13.3", "@web/test-runner@^0.13.4":
   version "0.13.4"
   resolved "https://registry.yarnpkg.com/@web/test-runner/-/test-runner-0.13.4.tgz#e0cd1dcf24b4aa53284b5fa8c099a6b00108f447"
   integrity sha512-TuS8UnW+bdY0K2RoqldyORJime4R1cnARvUtxsXJDbHq78Dcfud2xCgrOepQbbxbniF77OShuEEwCXNULftobw==
@@ -7664,10 +7664,10 @@ mobx-react-lite@^3.2.0:
   resolved "https://registry.yarnpkg.com/mobx-react-lite/-/mobx-react-lite-3.2.0.tgz#331d7365a6b053378dfe9c087315b4e41c5df69f"
   integrity sha512-q5+UHIqYCOpBoFm/PElDuOhbcatvTllgRp3M1s+Hp5j0Z6XNgDbgqxawJ0ZAUEyKM8X1zs70PCuhAIzX1f4Q/g==
 
-mobx@^6.3.0:
-  version "6.3.0"
-  resolved "https://registry.yarnpkg.com/mobx/-/mobx-6.3.0.tgz#a8fb693c3047bdfcb1eaff9aa48e36a7eb084f96"
-  integrity sha512-Aa1+VXsg4WxqJMTQfWoYuJi5UD10VZhiobSmcs5kcmI3BIT0aVtn7DysvCeDADCzl7dnbX+0BTHUj/v7gLlZpQ==
+mobx@^6.3.1:
+  version "6.3.1"
+  resolved "https://registry.yarnpkg.com/mobx/-/mobx-6.3.1.tgz#6d2e519e7bb0275dd5b9b1fa81475894e85aad99"
+  integrity sha512-by0VQNBltxLKcQ0uIz2h2mnVv1ZV0ief8mRRw+0k7mL2vSS3806rZg42bt8Vy78szaODtij/5iWIGvc46ZC3Cw==
 
 modern-normalize@^1.0.0:
   version "1.1.0"
@@ -9185,7 +9185,7 @@ prettier-linter-helpers@^1.0.0:
   dependencies:
     fast-diff "^1.1.2"
 
-prettier@^2.2.1:
+prettier@^2.2.1, prettier@^2.3.0:
   version "2.3.0"
   resolved "https://registry.yarnpkg.com/prettier/-/prettier-2.3.0.tgz#b6a5bf1284026ae640f17f7ff5658a7567fc0d18"
   integrity sha512-kXtO4s0Lz/DW/IJ9QdWhAf7/NmPWQXkFr/r/WkR3vyI+0v8amTDxiaQSLzs8NBlytfLWX/7uQUMIW677yLKl4w==
@@ -9406,10 +9406,10 @@ react-highlight-words@^0.17.0:
     memoize-one "^4.0.0"
     prop-types "^15.5.8"
 
-react-hook-form@^7.6.0:
-  version "7.6.0"
-  resolved "https://registry.yarnpkg.com/react-hook-form/-/react-hook-form-7.6.0.tgz#ec8aa8376738356c5af09992404292ba04067ac4"
-  integrity sha512-Ai3lx5TZO/W274PVgIqOkjhCAxQJ7KRU9c6tTM1M0LDctCUZ0LavirUiy+42b0gxGLUswO0vPsxcpw1CkkebUA==
+react-hook-form@^7.6.1:
+  version "7.6.1"
+  resolved "https://registry.yarnpkg.com/react-hook-form/-/react-hook-form-7.6.1.tgz#e351ec43972a09dc74f969a9b248fe3281b08afe"
+  integrity sha512-wwLBe9NKtXYdCErx/+0UTG05toNYKi6/HnoLa8/W0EjqyDXnCByheNpszyFhUmljNdxrr0nBcSyf2K/Fdx1LDQ==
 
 react-is@^16.6.0, react-is@^16.7.0, react-is@^16.8.1:
   version "16.13.1"
@@ -10212,7 +10212,7 @@ snapdragon@^0.8.1:
     source-map-resolve "^0.5.0"
     use "^3.1.0"
 
-snowpack@^3.3.7:
+snowpack@^3.3.7, snowpack@^3.4.0:
   version "3.4.0"
   resolved "https://registry.yarnpkg.com/snowpack/-/snowpack-3.4.0.tgz#649b0ae009e241401ee8b8d0a174d29a608998c9"
   integrity sha512-11kiRbqbmagFagjxYB9V3L0stZq7G9mkaaUCwSDbHj2YLc3zWKuOoBCeWAPwQeUCGMEFadHaftJmPttUBujKcw==
