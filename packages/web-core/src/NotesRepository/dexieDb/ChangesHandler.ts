@@ -9,7 +9,7 @@ import type {
   VaultModel,
 } from '../../NotesRepository';
 import type { VaultDexieDatabase } from './DexieDb';
-import type { NoteDocType, NoteBlockDocType } from '@harika/core';
+import type { NoteDocType, NoteBlockDocType } from '@harika/common';
 
 // TODO: type rootKey
 const zipPatches = (rootKey: string, patches: Patch[]) => {

@@ -1,5 +1,5 @@
 import type { User } from '../users/schemas/user.schema';
-import type { IDatabaseChange, DatabaseChangeType } from '@harika/core';
+import type { IDatabaseChange, DatabaseChangeType } from '@harika/common';
 
 export interface SyncEntitiesService {
   getChangesFromRev(

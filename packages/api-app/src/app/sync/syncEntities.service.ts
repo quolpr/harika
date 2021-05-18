@@ -9,7 +9,7 @@ import {
   IDatabaseChange,
   IUpdateChange,
   DatabaseChangeType,
-} from '@harika/core';
+} from '@harika/common';
 
 export abstract class BaseSyncEntitiesService implements SyncEntitiesService {
   constructor(

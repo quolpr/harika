@@ -13,7 +13,7 @@ import {
   INoteChangeEvent,
   DatabaseChangeType,
   INoteBlockChangeEvent,
-} from '@harika/core';
+} from '@harika/common';
 
 type BufferDebounce = <T>(debounce: number) => OperatorFunction<T, T[]>;
 const bufferDebounce: BufferDebounce = (debounce) => (source) =>

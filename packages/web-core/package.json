@@ -11,7 +11,7 @@
     "lint": "prettier --check \"src/**/*.{js,jsx,ts,tsx}\""
   },
   "dependencies": {
-    "@harika/core": "*",
+    "@harika/common": "*",
     "dayjs": "^1.10.4",
     "dexie": "^3.0.3",
     "dexie-observable": "^3.0.0-beta.10",

@@ -7,7 +7,7 @@ import {
 } from 'typeorm';
 import { User } from '../../users/schemas/user.schema';
 import type { EntityChangeSchema } from '../types';
-import { DatabaseChangeType, IDatabaseChange } from '@harika/core';
+import { DatabaseChangeType, IDatabaseChange } from '@harika/common';
 
 @Unique(['ownerId', 'scopeId', 'table', 'rev'])
 export abstract class BaseEntityChangeSchema implements EntityChangeSchema {

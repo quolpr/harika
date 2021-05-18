@@ -5,7 +5,7 @@ import 'dexie-syncable';
 import { generateId } from '../../generateId';
 import type { Observable } from 'rxjs';
 import { onDexieChange } from '../../dexieHelpers/onDexieChange';
-import type { NoteDocType, NoteBlockDocType } from '@harika/core';
+import type { NoteDocType, NoteBlockDocType } from '@harika/common';
 
 const windowId = generateId();
 

@@ -5,7 +5,7 @@ import io from 'socket.io-client';
 import { v4 } from 'uuid';
 import { generateId } from '../generateId';
 import { RxSyncer } from './RxSyncer';
-import type { IDatabaseChange } from '@harika/core';
+import type { IDatabaseChange } from '@harika/common';
 
 Dexie.Observable.createUUID = generateId;
 

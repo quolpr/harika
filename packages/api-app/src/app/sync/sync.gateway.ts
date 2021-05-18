@@ -28,7 +28,7 @@ import {
   ApplyNewChangesFromClient,
   InitializeClient,
   SubscribeClientToChanges,
-} from '@harika/core';
+} from '@harika/common';
 import { v4 } from 'uuid';
 
 export abstract class SyncGateway
