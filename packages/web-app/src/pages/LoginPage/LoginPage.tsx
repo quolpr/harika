@@ -7,7 +7,7 @@ import { useAuthState } from '../../hooks/useAuthState';
 import { paths } from '../../paths';
 import { cn } from '../../utils';
 import { useOfflineAccounts } from '../../hooks/useOfflineAccounts';
-import { generateId } from '@harika/web-core';
+import { generateId } from '@harika/common';
 
 const formClass = cn('form');
 

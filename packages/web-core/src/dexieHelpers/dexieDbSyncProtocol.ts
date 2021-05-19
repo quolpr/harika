@@ -3,7 +3,7 @@ import 'dexie-observable';
 import 'dexie-syncable';
 import io from 'socket.io-client';
 import { v4 } from 'uuid';
-import { generateId } from '../generateId';
+import { generateId } from '@harika/common';
 import { RxSyncer } from './RxSyncer';
 import type { IDatabaseChange } from '@harika/common';
 

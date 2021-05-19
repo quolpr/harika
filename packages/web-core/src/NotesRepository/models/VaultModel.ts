@@ -11,7 +11,7 @@ import type { Optional, Required } from 'utility-types';
 import { NoteBlockModel, noteBlockRef } from './NoteBlockModel';
 import { BlocksViewModel } from './BlocksViewModel';
 import { vaultModelType } from './consts';
-import { generateId } from '../../generateId';
+import { generateId } from '@harika/common';
 import { BlockContentModel } from './BlockContentModel';
 
 @model(vaultModelType)

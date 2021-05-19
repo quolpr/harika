@@ -13,7 +13,7 @@ import {
   types,
 } from 'mobx-keystone';
 import type { Optional } from 'utility-types';
-import { generateId } from '../../generateId';
+import { generateId } from '@harika/common';
 import { NoteBlockModel, noteBlockRef } from './NoteBlockModel';
 import { isVault } from './utils';
 import type { VaultModel } from './VaultModel';

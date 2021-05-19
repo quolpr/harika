@@ -27,7 +27,6 @@ export const SignupPage = () => {
   } = useForm<IFormData>();
 
   const onSubmit = async (data: IFormData) => {
-    /* const dbId = generateId(); */
     const res = await signup.mutateAsync({ ...data });
 
     if (res.createUser) {

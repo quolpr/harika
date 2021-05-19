@@ -8,7 +8,6 @@ import { useAuthState } from './hooks/useAuthState';
 import { Redirect, Route, Router, Switch } from 'react-router-dom';
 import { createBrowserHistory } from 'history';
 import { useLocalStorage } from '@rehooks/local-storage';
-import { Integrations } from '@sentry/tracing';
 
 const SignupPage = React.lazy(() => import('./pages/SignupPage/SignupPage'));
 const LoginPage = React.lazy(() => import('./pages/LoginPage/LoginPage'));
@@ -18,7 +17,10 @@ const history = createBrowserHistory();
 
 const importSentry = async () => {
   if (import.meta.env.MODE === 'production') {
-    const Sentry = await import('@sentry/react');
+    const [Sentry, { Integrations }] = await Promise.all([
+      import('@sentry/react'),
+      import('@sentry/tracing'),
+    ]);
 
     Sentry.init({
       dsn: 'https://6ce6cfabdd2b45aa8d6b402a10e261b1@o662294.ingest.sentry.io/5765293',
@@ -99,15 +101,6 @@ export const App = () => {
       <QueryClientProvider client={queryClient}>
         <Router history={history}>
           <Switch>
-            {/* <button */}
-            {/*   onClick={() => { */}
-            {/*     setAuthInfo(undefined); */}
-            {/*   }} */}
-            {/*   style={{ marginTop: 50 }} */}
-            {/* > */}
-            {/*   Reset auth */}
-            {/* </button> */}
-
             <Route path={[VAULT_PREFIX, PATHS.VAULT_INDEX_PATH]}>
               <Suspense fallback={<div>Loading...</div>}>
                 <VaultAppRoute />

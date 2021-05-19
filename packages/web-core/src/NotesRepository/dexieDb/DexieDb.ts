@@ -2,7 +2,7 @@ import type { Dayjs } from 'dayjs';
 import Dexie from 'dexie';
 import 'dexie-observable';
 import 'dexie-syncable';
-import { generateId } from '../../generateId';
+import { generateId } from '@harika/common';
 import type { Observable } from 'rxjs';
 import { onDexieChange } from '../../dexieHelpers/onDexieChange';
 import type { NoteDocType, NoteBlockDocType } from '@harika/common';
