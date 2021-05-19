@@ -4,6 +4,11 @@ import { NetworkFirst, StaleWhileRevalidate } from 'workbox-strategies';
 import { CacheableResponsePlugin } from 'workbox-cacheable-response';
 import { precacheAndRoute, matchPrecache } from 'workbox-precaching';
 
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+// eslint-disable-next-line no-restricted-globals
+precacheAndRoute(self.__WB_MANIFEST);
+
 // Cache page navigations (html) with a Network First strategy
 registerRoute(
   // Check to see if the request is a navigation to a new page
@@ -38,11 +43,6 @@ registerRoute(
     plugins: [new ExpirationPlugin({ maxEntries: 20 })],
   }),
 );
-
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-// eslint-disable-next-line no-restricted-globals
-precacheAndRoute(self.__WB_MANIFEST);
 
 // Catch routing errors, like if the user is offline
 setCatchHandler(async ({ event }): Promise<any> => {

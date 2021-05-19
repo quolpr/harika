@@ -102,19 +102,19 @@ export const App = () => {
         <Router history={history}>
           <Switch>
             <Route path={[VAULT_PREFIX, PATHS.VAULT_INDEX_PATH]}>
-              <Suspense fallback={<div>Loading...</div>}>
+              <Suspense fallback={<div></div>}>
                 <VaultAppRoute />
               </Suspense>
             </Route>
 
             <Route exact path={PATHS.SIGNUP_PATH}>
-              <Suspense fallback={<div>Loading...</div>}>
+              <Suspense fallback={<div></div>}>
                 <SignupPage />
               </Suspense>
             </Route>
 
             <Route exact path={PATHS.LOGIN_PATH}>
-              <Suspense fallback={<div>Loading...</div>}>
+              <Suspense fallback={<div></div>}>
                 <LoginPage />
               </Suspense>
             </Route>

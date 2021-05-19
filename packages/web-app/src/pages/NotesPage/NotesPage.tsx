@@ -37,8 +37,8 @@ const NoteRow = observer(({ note }: { note: NoteTuple }) => {
         <TimeAgo date={note.createdAt} />
       </td>
       <td className="notes-table__action">
-        <button onClick={handleDelete}>
-          <TrashIcon />
+        <button onClick={handleDelete} style={{ verticalAlign: 'middle' }}>
+          <TrashIcon style={{ width: '1.5rem' }} />
         </button>
       </td>
     </tr>
