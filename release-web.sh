@@ -2,7 +2,7 @@
 
 set -e
 
-export SNOWPACK_PUBLIC_PACKAGE_VERSION="$(git rev-parse --short HEAD)@$(date +'%d.%m.%Y-%R:%S')"
+export SNOWPACK_PUBLIC_PACKAGE_VERSION="$(git rev-parse --short HEAD)+$(date +'%d.%m.%Y-%R:%S')"
 export SENTRY_ORG="harika"
 export SENTRY_PROJECT="web-dev"
 
