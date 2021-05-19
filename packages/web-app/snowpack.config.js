@@ -68,7 +68,6 @@ module.exports = {
     /* Example: Bundle your final build: */
     target: 'es2017',
     treeshake: true,
-    preload: true,
   },
   packageOptions: {
     knownEntrypoints: ['@welldone-software/why-did-you-render'],
