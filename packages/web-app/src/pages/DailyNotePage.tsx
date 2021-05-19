@@ -30,3 +30,5 @@ export const DailyNotePage = observer(() => {
 
   return note ? <Note note={note} /> : null;
 });
+
+export default DailyNotePage;

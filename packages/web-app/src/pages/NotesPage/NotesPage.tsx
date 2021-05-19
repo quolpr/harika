@@ -76,3 +76,5 @@ export const NotesPage = () => {
     </div>
   );
 };
+
+export default NotesPage;

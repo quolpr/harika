@@ -36,3 +36,5 @@ export const NotePage = observer(() => {
 
   return note ? <Note note={note} /> : null;
 });
+
+export default NotePage;

@@ -97,3 +97,5 @@ export const VaultsPage = ({ vaults }: { vaults: VaultsRepository }) => {
     </>
   );
 };
+
+export default VaultsPage;
