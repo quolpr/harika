@@ -202,3 +202,5 @@ export const VaultLayout: React.FC<{
     </CurrentVaultUiStateContext.Provider>
   );
 };
+
+export default VaultLayout;

@@ -28,6 +28,7 @@ module.exports = {
         extendConfig: (config) => {
           const { glob } = require('glob');
           const { InjectManifest } = require('workbox-webpack-plugin');
+
           const additionalManifestEntries = [
             ...glob.sync('*.{png,html,json,txt}', { cwd: './build' }),
           ].map((e) => ({
@@ -43,6 +44,17 @@ module.exports = {
               swDest: process.env.SNOWPACK_PUBLIC_SERVICE_WORKER,
             }),
           );
+
+          const BundleAnalyzerPlugin =
+            require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+
+          config.plugins.push(
+            new BundleAnalyzerPlugin({
+              analyzerMode: 'static',
+              defaultSizes: 'gzip',
+            }),
+          );
+
           return config;
         },
       },
@@ -55,6 +67,8 @@ module.exports = {
   optimize: {
     /* Example: Bundle your final build: */
     target: 'es2017',
+    treeshake: true,
+    preload: true,
   },
   packageOptions: {
     knownEntrypoints: ['@welldone-software/why-did-you-render'],
