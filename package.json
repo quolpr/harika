@@ -10,5 +10,8 @@
   },
   "workspaces": [
     "packages/*"
-  ]
+  ],
+  "devDependencies": {
+    "@sentry/cli": "^1.64.2"
+  }
 }
