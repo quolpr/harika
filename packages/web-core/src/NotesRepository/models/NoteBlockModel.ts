@@ -28,7 +28,11 @@ export const noteBlockRef = customRef<NoteBlockModel>('harika/NoteBlockRef', {
   resolve(ref) {
     const vault = findParent<VaultModel>(this, isVault);
 
-    if (!vault) return undefined;
+    if (!vault) {
+      console.error('Vault not found for noteBlockRef', ref.$modelId);
+
+      return undefined;
+    }
 
     return vault.blocksMap[ref.id];
   },

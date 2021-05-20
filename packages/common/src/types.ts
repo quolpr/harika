@@ -14,6 +14,10 @@ export enum CommandTypesFromClient {
   ApplyNewChanges = 'applyNewChanges',
   InitializeClient = 'initializeClient',
   SubscribeClientToChanges = 'subscribeClientToChanges',
+  // Locking is needed to perform notes merginf with the same title - the conflicts resolution
+  // If lock happened - nobody will be able to send changes except the one who made the lock
+  StartLock = 'startLock',
+  EndLock = 'endLock',
 }
 
 export interface BaseMessage {
@@ -45,10 +49,24 @@ export interface InitializeClient extends BaseMessage {
   scopeId: string;
 }
 
+export interface StartClientLock extends BaseMessage {
+  messageType: MessageType.Command;
+
+  type: CommandTypesFromClient.StartLock;
+}
+
+export interface EndClientLock extends BaseMessage {
+  messageType: MessageType.Command;
+
+  type: CommandTypesFromClient.EndLock;
+}
+
 export type CommandsFromClient =
   | ApplyNewChangesFromClient
   | SubscribeClientToChanges
-  | InitializeClient;
+  | InitializeClient
+  | StartClientLock
+  | EndClientLock;
 
 export type MessagesFromClient = CommandsFromClient;
 
@@ -56,17 +74,37 @@ export type MessagesFromClient = CommandsFromClient;
 
 export enum EventTypesFromServer {
   CommandHandled = 'commandHandled',
+  ChangesHandlingLocked = 'changesHandlingLocked',
+  ChangesHandlingUnlocked = 'changesHandlingLocked',
 }
 
 export interface CommandFromClientHandled extends BaseMessage {
   messageType: MessageType.Event;
+  type: EventTypesFromServer.CommandHandled;
 
   status: 'ok' | 'error';
 
   handledId: string;
 }
 
-export type EventsFromServer = CommandFromClientHandled;
+export interface ChangesFromClientsHandlingLocked extends BaseMessage {
+  messageType: MessageType.Event;
+  type: EventTypesFromServer.ChangesHandlingLocked;
+
+  identity: string;
+}
+
+export interface ChangesFromClientsHandlingUnlocked extends BaseMessage {
+  messageType: MessageType.Event;
+  type: EventTypesFromServer.ChangesHandlingUnlocked;
+
+  identity: string;
+}
+
+export type EventsFromServer =
+  | CommandFromClientHandled
+  | ChangesFromClientsHandlingUnlocked
+  | ChangesFromClientsHandlingLocked;
 
 export enum CommandTypesFromServer {
   ApplyNewChanges = 'applyNewChanges',

@@ -31,6 +31,8 @@ import {
 import { v4 } from 'uuid';
 import {
   ApplyNewChangesFromServer,
+  ChangesFromClientsHandlingLocked,
+  ChangesFromClientsHandlingUnlocked,
   CommandFromClientHandled,
   CommandsFromClient,
   CommandTypesFromClient,
@@ -43,6 +45,11 @@ import {
 type DistributiveOmit<T, K extends keyof any> = T extends any
   ? Omit<T, K>
   : never;
+
+export interface IConflictsResolver<T extends any = unknown> {
+  checkConflicts(dbId: string): Promise<T | false>;
+  resolveConflicts(dbId: string, conflicts: T): Promise<void>;
+}
 
 export class RxSyncer {
   private socket$: Observable<SocketIOClient.Socket>;
@@ -59,6 +66,7 @@ export class RxSyncer {
   private isInitialized$: BehaviorSubject<boolean> =
     new BehaviorSubject<boolean>(false);
   private isConnectedAndInitialized$: Observable<boolean>;
+  private isLocked$: Observable<boolean>;
 
   constructor(
     private gatewayName: string,
@@ -66,6 +74,7 @@ export class RxSyncer {
     private scopeId: string,
     private identity: string,
     private syncedRevision: number,
+    private conflictsResolver?: IConflictsResolver,
   ) {
     this.socket$ = of(socket);
 
@@ -102,9 +111,35 @@ export class RxSyncer {
               socket,
               CommandTypesFromServer.ApplyNewChanges,
             )
-          : of<ApplyNewChangesFromServer>(),
+          : EMPTY,
       ),
     );
+
+    // Lock message will be sent to all except the one who requested the lock
+    this.isLocked$ = this.isConnected$.pipe(
+      switchMap((isConnected) => {
+        console.log({ isConnected });
+
+        return isConnected
+          ? merge(
+              fromEvent<ChangesFromClientsHandlingLocked>(
+                socket,
+                EventTypesFromServer.ChangesHandlingLocked,
+              ).pipe(mapTo(true)),
+              fromEvent<ChangesFromClientsHandlingUnlocked>(
+                socket,
+                EventTypesFromServer.ChangesHandlingUnlocked,
+              ).pipe(mapTo(false)),
+              of(false),
+            )
+          : of(false);
+      }),
+      shareReplay(1),
+    );
+
+    this.isLocked$.subscribe((isLocked) => {
+      console.log(isLocked ? 'LOCKED' : 'NOT_LOCKED');
+    });
 
     this.startCommandFlow();
   }
@@ -152,36 +187,51 @@ export class RxSyncer {
       }
     };
 
-    this.changesFromServer$.subscribe(
-      ({ currentRevision, partial, changes }) => {
-        console.log(`[${this.gatewayName}] New changes from server`, {
-          currentRevision,
-          partial,
-          changes,
-        });
-
-        applyRemoteChanges(
-          changes as unknown as DexieDatabaseChange[],
-          currentRevision,
-          partial,
-        );
-
-        this.syncedRevision = currentRevision;
-
-        if (isFirstRound && !partial) {
-          isFirstRound = false;
-
-          console.log('onSuccess');
-          onSuccess({
-            react: this.handleNewClientChanges,
-            disconnect: () => {
-              this.stop$.next();
-              this.socket.close();
-            },
+    this.changesFromServer$
+      .pipe(
+        concatMap(async ({ currentRevision, partial, changes }) => {
+          console.log(`[${this.gatewayName}] New changes from server`, {
+            currentRevision,
+            partial,
+            changes,
           });
-        }
-      },
-    );
+
+          await applyRemoteChanges(
+            changes as unknown as DexieDatabaseChange[],
+            currentRevision,
+            partial,
+          );
+
+          this.syncedRevision = currentRevision;
+
+          const conflicts = await this.conflictsResolver?.checkConflicts(
+            this.scopeId,
+          );
+
+          if (conflicts) {
+            // start lock
+            await this.conflictsResolver?.resolveConflicts(
+              this.scopeId,
+              conflicts,
+            );
+            // finally end lock
+          }
+
+          if (isFirstRound && !partial) {
+            isFirstRound = false;
+
+            console.log('onSuccess');
+            onSuccess({
+              react: this.handleNewClientChanges,
+              disconnect: () => {
+                this.stop$.next();
+                this.socket.close();
+              },
+            });
+          }
+        }),
+      )
+      .subscribe();
 
     this.isConnected$
       .pipe(
@@ -214,10 +264,10 @@ export class RxSyncer {
   ) => {
     console.log('handleNewClientChanges', { changes });
 
-    this.isConnectedAndInitialized$
+    combineLatest([this.isConnectedAndInitialized$, this.isLocked$])
       .pipe(
-        switchMap((isConnected) =>
-          isConnected
+        switchMap(([isConnected, isLocked]) =>
+          isConnected && !isLocked
             ? of(null).pipe(
                 this.sendCommand({
                   type: CommandTypesFromClient.ApplyNewChanges,
@@ -295,7 +345,7 @@ export class RxSyncer {
               this.socket,
               EventTypesFromServer.CommandHandled,
             )
-          : of<CommandFromClientHandled>(),
+          : EMPTY,
       ),
     );
 
@@ -316,9 +366,7 @@ export class RxSyncer {
     this.isConnected$
       .pipe(
         switchMap((isConnected) => {
-          return isConnected
-            ? clientCommandsHandler$
-            : of<CommandFromClientHandled>();
+          return isConnected ? clientCommandsHandler$ : EMPTY;
         }),
       )
       .subscribe((ev) => this.successCommandHandled$.next(ev));

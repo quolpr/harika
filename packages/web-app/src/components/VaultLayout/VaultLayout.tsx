@@ -103,6 +103,15 @@ export const VaultLayout: React.FC<{
         writeStorage('lastVaultId', undefined);
 
         history.replace('/');
+        return;
+      } else {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        if ((window as any).__REDUX_DEVTOOLS_EXTENSION__) {
+          (await import('../../connectReduxDevtool')).connect(
+            vault,
+            `Vault ${vault.name}`,
+          );
+        }
       }
 
       setVault(vault);

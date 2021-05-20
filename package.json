@@ -6,12 +6,17 @@
   "scripts": {
     "web-app": "yarn workspace @harika/web-app",
     "start-web": "yarn workspace @harika/web-app start",
-    "start-api": "yarn workspace @harika/api-app start"
+    "start-api": "yarn workspace @harika/api-app start",
+    "postinstall": "patch-package"
   },
   "workspaces": [
     "packages/*"
   ],
   "devDependencies": {
     "@sentry/cli": "^1.64.2"
+  },
+  "dependencies": {
+    "patch-package": "^6.4.7",
+    "postinstall-postinstall": "^2.1.0"
   }
 }

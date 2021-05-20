@@ -24,6 +24,12 @@ export class VaultDexieDatabase extends Dexie {
         '$$id, parentBlockId, noteId, *noteBlockIds, *linkedNoteIds, content, createdAt, updatedAt',
       notes: '$$id, rootBlockId, title, dailyNoteDate, createdAt, updatedAt',
     });
+    this.version(2).stores({
+      noteBlocks:
+        '$$id, parentBlockId, noteId, *noteBlockIds, *linkedNoteIds, content, createdAt, updatedAt',
+      notes:
+        '$$id, rootBlockId, title, dailyNoteDate, createdAt, updatedAt, [title+id]',
+    });
 
     this.noteBlocks = this.table('noteBlocks');
     this.notes = this.table('notes');
@@ -53,11 +59,13 @@ class NoteBlocksQueries {
   }
 
   getById(id: string) {
-    return this.table.where('id').equals(id).first();
+    return this.table.get({ id });
   }
 
-  getByIds(ids: string[]) {
-    return this.table.where('id').anyOf(ids).toArray();
+  async getByIds(ids: string[]) {
+    return (await this.table.bulkGet(ids)).filter(
+      (v) => !!v,
+    ) as NoteBlockDocType[];
   }
 
   getByNoteId(id: string) {
@@ -66,6 +74,14 @@ class NoteBlocksQueries {
 
   getLinkedBlocksOfNoteId(id: string) {
     return this.table.where({ linkedNoteIds: id }).toArray();
+  }
+
+  getLinkedBlocksOfNoteIds(ids: string[]) {
+    return this.table.where('linkedNoteIds').anyOf(ids).toArray();
+  }
+
+  async getByNoteIds(ids: string[]): Promise<NoteBlockDocType[]> {
+    return this.table.where('noteId').anyOf(ids).toArray();
   }
 }
 
@@ -96,12 +112,12 @@ class NotesQueries {
     }
   }
 
-  async getByIds(ids: string[]) {
-    return this.table.where('id').anyOf(ids).toArray();
+  async getByIds(ids: string[]): Promise<NoteDocType[]> {
+    return (await this.table.bulkGet(ids)).filter((v) => !!v) as NoteDocType[];
   }
 
   async getById(id: string) {
-    return this.table.where('id').equals(id).first();
+    return this.table.get({ id });
   }
 
   async getByTitles(titles: string[]) {

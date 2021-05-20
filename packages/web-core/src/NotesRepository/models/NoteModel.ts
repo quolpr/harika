@@ -27,7 +27,13 @@ export const noteRef = customRef<NoteModel>('harika/NoteRef', {
   resolve(ref) {
     const vault = findParent<VaultModel>(this, isVault);
 
-    if (!vault) return undefined;
+    console.log(this);
+
+    if (!vault) {
+      console.error('Vault not found for noteRef');
+
+      return undefined;
+    }
 
     return vault.notesMap[ref.id];
   },
@@ -126,19 +132,16 @@ export class NoteModel extends Model({
       this.areChildrenLoaded = true;
     }
 
-    if (attrs.title && attrs.title !== this.title) {
-      this.title = attrs.title;
-    }
+    this.title = attrs.title;
+    this.dailyNoteDate = attrs.dailyNoteDate;
+    this.createdAt = attrs.createdAt;
+    this.rootBlockRef = attrs.rootBlockRef;
 
-    if (attrs.dailyNoteDate && attrs.dailyNoteDate !== this.dailyNoteDate) {
-      this.dailyNoteDate = attrs.dailyNoteDate;
-    }
-
-    if (attrs.createdAt && attrs.createdAt !== this.createdAt) {
-      this.createdAt = attrs.createdAt;
-    }
-
-    if (attrs.isDeleted && attrs.isDeleted !== this.isDeleted) {
+    if (
+      attrs.isDeleted !== undefined &&
+      attrs.isDeleted !== null &&
+      attrs.isDeleted !== this.isDeleted
+    ) {
       this.isDeleted = attrs.isDeleted;
     }
   }

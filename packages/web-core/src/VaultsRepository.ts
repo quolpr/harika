@@ -9,6 +9,7 @@ import { toMobxSync } from './NotesRepository/dexieDb/toMobxSync';
 import { UserDexieDatabase } from './UserDexieDb';
 import './dexieHelpers/dexieDbSyncProtocol';
 import { liveSwitch } from './dexieHelpers/onDexieChange';
+import { ConflictsResolver } from './NotesRepository/dexieDb/ConflictsResolver';
 
 export class VaultsRepository {
   // TODO: finde better naming(instead of conatiner)
@@ -52,6 +53,7 @@ export class VaultsRepository {
         'websocket',
         `${this.config.wsUrl}/api/user`,
         {
+          type: 'user',
           scopeId: this.dbId,
           gatewayName: 'user',
         },
@@ -99,10 +101,16 @@ export class VaultsRepository {
     await this.dexieVaultDbs[id].open();
 
     if (this.sync) {
+      ConflictsResolver.addDb(id, this.dexieVaultDbs[id]);
+
       this.dexieVaultDbs[id].syncable.connect(
         'websocket',
         `${this.config.wsUrl}/api/vault`,
-        { scopeId: vaultDoc.id, gatewayName: 'vault' },
+        {
+          type: 'vault',
+          scopeId: id,
+          gatewayName: 'vault',
+        },
       );
     }
 
@@ -114,15 +122,6 @@ export class VaultsRepository {
     );
 
     toMobxSync(this.dexieVaultDbs[id], this.noteRepo, vault);
-
-    // // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    // if ((window as any).__REDUX_DEVTOOLS_EXTENSION__) {
-    //   const connection = remotedev.connectViaExtension({
-    //     name: `Vault ${vault.name}`,
-    //   });
-
-    //   connectReduxDevTools(remotedev, connection, vault);
-    // }
 
     return vault;
   }

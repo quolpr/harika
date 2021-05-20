@@ -4,8 +4,9 @@ import 'dexie-syncable';
 import io from 'socket.io-client';
 import { v4 } from 'uuid';
 import { generateId } from '@harika/common';
-import { RxSyncer } from './RxSyncer';
+import { IConflictsResolver, RxSyncer } from './RxSyncer';
 import type { IDatabaseChange } from '@harika/common';
+import { ConflictsResolver } from '../NotesRepository/dexieDb/ConflictsResolver';
 
 Dexie.Observable.createUUID = generateId;
 
@@ -16,7 +17,11 @@ Dexie.Syncable.registerSyncProtocol('websocket', {
   sync: async (
     context,
     url,
-    options: { scopeId: string; gatewayName: string },
+    options: {
+      scopeId: string;
+      gatewayName: string;
+      type: 'vault' | 'user';
+    },
     baseRevision,
     syncedRevision,
     changes,
@@ -34,12 +39,14 @@ Dexie.Syncable.registerSyncProtocol('websocket', {
     }
 
     const socket = io(url, { transports: ['websocket'] });
+
     const rxSyncer = new RxSyncer(
       options.gatewayName,
       socket,
       options.scopeId,
       context.identity,
       syncedRevision,
+      options.type === 'vault' ? new ConflictsResolver() : undefined,
     );
 
     rxSyncer.initialize(
