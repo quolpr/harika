@@ -24,6 +24,9 @@ import { useMedia } from 'react-use';
 import type { Ref } from 'mobx-keystone';
 import { BlockContentModel } from '@harika/web-core';
 import { CurrentBlockInputRefContext } from '../../contexts';
+import { useNoteRepository } from '../../contexts/CurrentNoteRepositoryContext';
+import { filter, timeout, timeoutWith } from 'rxjs/operators';
+import { EMPTY } from 'rxjs';
 
 export interface IFocusBlockState {
   focusOnBlockId: string;
@@ -155,6 +158,7 @@ const NoteBody = observer(({ note }: { note: NoteModel }) => {
   const vaultUiState = useCurrentVaultUiState();
   const history = useHistory<IFocusBlockState>();
   const focusOnBlockId = (history.location.state || {}).focusOnBlockId;
+  const noteRepo = useNoteRepository();
 
   const handleChange = useCallback(
     (e: ChangeEvent<HTMLTextAreaElement>) => {
@@ -185,6 +189,25 @@ const NoteBody = observer(({ note }: { note: NoteModel }) => {
       console.log('create block');
     }
   }, [note]);
+
+  // Handling note removing
+  useEffect(() => {
+    if (note.isDeleted) {
+      // In case conflict resolving. We wait for n seconds for new id of note title to appear
+      const flow = noteRepo
+        .getNoteIdByTitle$(vault, note.title)
+        .pipe(
+          timeout({ each: 500, with: () => EMPTY }),
+          filter((v) => !!v && v !== note.$modelId),
+        )
+        .subscribe({
+          next(newId: string) {},
+          complete() {},
+        });
+
+      return () => flow.unsubscribe();
+    }
+  }, []);
 
   return (
     <div className="note">

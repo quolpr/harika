@@ -32,6 +32,8 @@ export class ConflictsResolver implements IConflictsResolver<IConflict[]> {
         ids: objects.map(([, id]) => id),
       }));
 
+    console.log('checkConflicts', conflicts);
+
     if (conflicts.length === 0) {
       return false;
     } else {
@@ -90,7 +92,7 @@ export class ConflictsResolver implements IConflictsResolver<IConflict[]> {
             notesWithoutOldestIds,
           );
 
-        db.transaction('rw', [db.notes, db.noteBlocks], async () => {
+        await db.transaction('rw', [db.notes, db.noteBlocks], async () => {
           // updating to correct parentBlockId and note id
           await Promise.all(
             // could be done with bulPut or bulkUpdate when released

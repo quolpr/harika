@@ -15,16 +15,21 @@ import {
   Subject,
 } from 'rxjs';
 import {
+  bufferToggle,
   catchError,
   concatMap,
+  delay,
+  distinctUntilChanged,
   filter,
   first,
+  flatMap,
   map,
   mapTo,
   mergeMap,
   retry,
   shareReplay,
   switchMap,
+  take,
   takeUntil,
   tap,
   timeout,
@@ -68,6 +73,7 @@ export class RxSyncer {
     new BehaviorSubject<boolean>(false);
   private isConnectedAndInitialized$: Observable<boolean>;
   private isMaster$: Observable<boolean>;
+  private isLocked$ = new BehaviorSubject<boolean>(false);
 
   constructor(
     private gatewayName: string,
@@ -135,6 +141,48 @@ export class RxSyncer {
       console.log(isMaster ? 'Master' : 'Not master');
     });
 
+    const isStaleAndMaster$ = merge(
+      this.changesFromServer$,
+      this.clientCommandsSubject,
+      this.isConnectedAndInitialized$,
+      this.isMaster$,
+    ).pipe(
+      mapTo(false),
+
+      switchMap(() => {
+        return of(false).pipe(
+          delay(500),
+          withLatestFrom(this.isConnectedAndInitialized$, this.isMaster$),
+          map(([_, isConnected, isMaster]) => isConnected && isMaster),
+        );
+      }),
+      filter((v) => v),
+    );
+
+    isStaleAndMaster$
+      .pipe(
+        filter(() => this.isLocked$.value),
+        tap(() => this.isLocked$.next(true)),
+        switchMap(
+          async () =>
+            await this.conflictsResolver?.checkConflicts(this.scopeId),
+        ),
+        switchMap(
+          async (conflicts) =>
+            conflicts &&
+            (await this.conflictsResolver?.resolveConflicts(
+              this.scopeId,
+              conflicts,
+            )),
+        ),
+        catchError((err) => {
+          console.error(err);
+          return of(null);
+        }),
+        tap(() => this.isLocked$.next(false)),
+      )
+      .subscribe();
+
     this.startCommandFlow();
   }
 
@@ -151,34 +199,12 @@ export class RxSyncer {
     let isFirstRound = true;
     let wasFirstChangesSent = false;
 
-    // TODO: debounce?
-    const resolveConflictPipe = pipe(
-      switchMap(async (changesDescription) => ({
-        changesDescription,
-        conflicts: await this.conflictsResolver?.checkConflicts(this.scopeId),
-      })),
-      switchMap(({ conflicts, changesDescription }) => {
-        if (conflicts) {
-          return of(null).pipe(
-            switchMap(async () =>
-              this.conflictsResolver?.resolveConflicts(this.scopeId, conflicts),
-            ),
-            // We still need to release lock
-            catchError((err) => {
-              console.error('Error happened while resolving conflicts', err);
-
-              return of(null);
-            }),
-            mapTo(changesDescription),
-          );
-        } else {
-          return of(changesDescription);
-        }
-      }),
-    );
-
     this.changesFromServer$
       .pipe(
+        // bufferToggle(this.isLocked$.pipe(filter((v) => !!v)), () =>
+        //   this.isLocked$.pipe(filter((v) => !v)),
+        // ),
+        // mergeMap((v) => v),
         concatMap(async (changesDescription) => {
           const { currentRevision, partial, changes } = changesDescription;
           await applyRemoteChanges(
@@ -190,14 +216,6 @@ export class RxSyncer {
           this.syncedRevision = currentRevision;
 
           return changesDescription;
-        }),
-        withLatestFrom(this.isMaster$),
-        switchMap(([changesDescription, isMaster]) => {
-          if (isMaster) {
-            return of(changesDescription).pipe(resolveConflictPipe);
-          } else {
-            return of(changesDescription);
-          }
         }),
       )
       .subscribe(() => {
@@ -273,12 +291,12 @@ export class RxSyncer {
     partial: boolean,
     onChangesAccepted: () => void,
   ) => {
-    console.log('handleNewClientChanges', { changes });
-
-    this.isConnectedAndInitialized$
+    combineLatest([this.isConnectedAndInitialized$, this.isLocked$])
       .pipe(
-        switchMap((isConnected) =>
-          isConnected
+        map(([isConnected, isLocked]) => isConnected && !isLocked),
+        distinctUntilChanged(),
+        switchMap((isGoodToSendChanges) => {
+          return isGoodToSendChanges
             ? of(null).pipe(
                 this.sendCommand({
                   type: CommandTypesFromClient.ApplyNewChanges,
@@ -287,11 +305,20 @@ export class RxSyncer {
                   baseRevision: baseRevision,
                 }),
               )
-            : of(),
-        ),
+            : of();
+        }),
         first(),
       )
-      .subscribe(() => onChangesAccepted());
+      .subscribe({
+        next() {
+          console.log('Changes are sent to server', changes);
+
+          onChangesAccepted();
+        },
+        complete() {
+          console.log('completed');
+        },
+      });
   };
 
   private sendCommand(

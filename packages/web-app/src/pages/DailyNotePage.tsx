@@ -1,12 +1,11 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import dayjs from 'dayjs';
 import { useHistory } from 'react-router-dom';
 import { useNoteRepository } from '../contexts/CurrentNoteRepositoryContext';
 import { useCurrentVault } from '../hooks/useCurrentVault';
 import { useCurrentVaultUiState } from '../contexts/CurrentVaultUiStateContext';
-import { useCurrentNote } from '../hooks/useCurrentNote';
-import { Note } from '../components/Note/Note';
 import { observer } from 'mobx-react-lite';
+import { paths } from '../paths';
 
 export const DailyNotePage = observer(() => {
   const vault = useCurrentVault();
@@ -20,15 +19,20 @@ export const DailyNotePage = observer(() => {
 
       if (result.status === 'ok') {
         vaultUiState.setCurrentNoteId(result.data.$modelId);
+
+        history.replace(
+          paths.vaultNotePath({
+            vaultId: vault.$modelId,
+            noteId: result.data.$modelId,
+          }),
+        );
       }
     };
 
     toExecute();
   }, [history, vault, noteRepo, vaultUiState]);
 
-  const note = useCurrentNote();
-
-  return note ? <Note note={note} /> : null;
+  return null;
 });
 
 export default DailyNotePage;

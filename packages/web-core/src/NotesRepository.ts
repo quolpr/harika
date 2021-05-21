@@ -11,6 +11,8 @@ import { loadNoteDocToModelAttrs } from './NotesRepository/dexieDb/convertDocToM
 import { liveSwitch } from './dexieHelpers/onDexieChange';
 import { filterAst } from './blockParser/astHelpers';
 import type { RefToken } from './blockParser/types';
+import { map } from 'lodash-es';
+import { distinctUntilChanged, switchMap } from 'rxjs/operators';
 
 export { NoteModel } from './NotesRepository/models/NoteModel';
 export { VaultModel } from './NotesRepository/models/VaultModel';
@@ -96,8 +98,6 @@ export class NotesRepository {
     if (vault.notesMap[id]) {
       const noteInStore = vault.notesMap[id];
 
-      if (vault.notesMap[id].isDeleted) return;
-
       if (
         !(preloadChildren && !noteInStore.areChildrenLoaded) &&
         !(preloadLinks && !noteInStore.areLinksLoaded)
@@ -106,6 +106,17 @@ export class NotesRepository {
     }
 
     return this.preloadNote(vault, id, preloadChildren, preloadLinks);
+  }
+
+  getNoteIdByTitle$(vault: VaultModel, title: string) {
+    const db = this.getDbByVaultId(vault.$modelId);
+
+    return db.notesChange$.pipe(
+      liveSwitch(async () => {
+        return (await db.notesQueries.getByTitles([title]))[0]?.id;
+      }),
+      distinctUntilChanged(),
+    );
   }
 
   async updateNoteBlockLinks(vault: VaultModel, noteBlock: NoteBlockModel) {
