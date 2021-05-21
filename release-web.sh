@@ -26,7 +26,6 @@ yarn sentry-cli releases files "$SNOWPACK_PUBLIC_PACKAGE_VERSION" upload-sourcem
 yarn sentry-cli releases finalize "$SNOWPACK_PUBLIC_PACKAGE_VERSION"
 
 rm -Rf packages/web-app/build/dist
-rm -Rf packages/web-app/build/css
 rm -Rf packages/web-app/build/_snowpack
 rm -Rf packages/web-app/build/@harika
 rm -Rf packages/web-app/build/**/*.map
