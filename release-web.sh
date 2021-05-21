@@ -18,7 +18,7 @@ yarn sentry-cli releases set-commits "$SNOWPACK_PUBLIC_PACKAGE_VERSION" --auto
 
 echo "Building release:" $SNOWPACK_PUBLIC_PACKAGE_VERSION
 
-NODE_ENV=production yarn web-app build
+NODE_ENV=production yarn web-app build --polyfill-node
 
 yarn sentry-cli releases files "$SNOWPACK_PUBLIC_PACKAGE_VERSION" upload-sourcemaps packages/web-app/build/js \
     --url-prefix '~/js'
