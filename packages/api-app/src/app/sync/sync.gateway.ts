@@ -28,6 +28,9 @@ import {
   ApplyNewChangesFromClient,
   InitializeClient,
   SubscribeClientToChanges,
+  StartClientLock,
+  ChangesFromClientsHandlingLocked,
+  FinishClientLock,
 } from '@harika/common';
 import { v4 } from 'uuid';
 
@@ -59,6 +62,9 @@ export abstract class SyncGateway
         currentUserId: string;
       }
   >();
+
+  private locks: Record<string, string> = {};
+  private masters: Record<string, string> = {};
 
   @UseFilters(new AllExceptionsFilter())
   @SubscribeMessage(CommandTypesFromClient.InitializeClient)
@@ -92,6 +98,23 @@ export abstract class SyncGateway
       subscriptionState: { subscribed: false },
       currentUserId: state.currentUserId,
     });
+
+    if (!this.masters[command.scopeId]) {
+    }
+
+    if (
+      this.locks[command.scopeId] &&
+      this.locks[command.scopeId] !== command.identity
+    ) {
+      const event: ChangesFromClientsHandlingLocked = {
+        id: v4(),
+        messageType: MessageType.Event,
+        type: EventTypesFromServer.ChangesHandlingLocked,
+        identity: this.locks[command.scopeId],
+      };
+
+      client.emit(EventTypesFromServer.ChangesHandlingLocked, event);
+    }
 
     client.emit(EventTypesFromServer.CommandHandled, {
       status: 'ok',
@@ -138,6 +161,84 @@ export abstract class SyncGateway
   }
 
   @UseFilters(new AllExceptionsFilter())
+  @SubscribeMessage(CommandTypesFromClient.StartLock)
+  async handleStartLock(client: Socket, command: StartClientLock) {
+    const state = this.getSocketState(client);
+
+    console.log('lock!');
+
+    if (state.type === 'notInitialized') {
+      throw new Error('Not initialized');
+    }
+
+    const { scopeId, clientIdentity } = state;
+
+    if (this.locks[scopeId] && this.locks[scopeId] !== clientIdentity) {
+      throw new WsException(
+        `${scopeId} is already locked by ${clientIdentity}`,
+      );
+    }
+
+    this.locks[scopeId] = clientIdentity;
+
+    Array.from(this.socketIOLocals.entries()).map(
+      ([subscriber, subscriberState]) => {
+        if (
+          subscriberState.type === 'initialized' &&
+          subscriberState.scopeId === state.scopeId &&
+          subscriberState.subscriptionState.subscribed &&
+          subscriberState.clientIdentity !== clientIdentity
+        ) {
+          const event: ChangesFromClientsHandlingLocked = {
+            id: v4(),
+            messageType: MessageType.Event,
+            type: EventTypesFromServer.ChangesHandlingLocked,
+            identity: clientIdentity,
+          };
+
+          subscriber.emit(EventTypesFromServer.ChangesHandlingLocked, event);
+        }
+      },
+    );
+
+    client.emit(EventTypesFromServer.CommandHandled, {
+      messageType: MessageType.Event,
+      type: EventTypesFromServer.CommandHandled,
+
+      status: 'ok',
+      handledId: command.id,
+    } as CommandFromClientHandled);
+  }
+
+  @UseFilters(new AllExceptionsFilter())
+  @SubscribeMessage(CommandTypesFromClient.FinishLock)
+  handleFinishLock(client: Socket, command: FinishClientLock) {
+    const state = this.getSocketState(client);
+
+    if (state.type === 'notInitialized') {
+      throw new Error('Not initialized');
+    }
+
+    const { scopeId, clientIdentity } = state;
+
+    if (this.locks[scopeId] && this.locks[scopeId] !== clientIdentity) {
+      throw new WsException(
+        "can't unlock - no lock present or locked by another client",
+      );
+    }
+
+    this.unlock(scopeId, clientIdentity);
+
+    client.emit(EventTypesFromServer.CommandHandled, {
+      messageType: MessageType.Event,
+      type: EventTypesFromServer.CommandHandled,
+
+      status: 'ok',
+      handledId: command.id,
+    } as CommandFromClientHandled);
+  }
+
+  @UseFilters(new AllExceptionsFilter())
   @SubscribeMessage(CommandTypesFromClient.ApplyNewChanges)
   async applyNewChanges(client: Socket, command: ApplyNewChangesFromClient) {
     try {
@@ -146,6 +247,13 @@ export abstract class SyncGateway
       console.log({ state });
       if (state.type === 'notInitialized') {
         throw new Error('Not initialized');
+      }
+
+      if (
+        this.locks[state.scopeId] &&
+        this.locks[state.scopeId] !== state.clientIdentity
+      ) {
+        throw new Error(`Locked by ${state.clientIdentity}`);
       }
 
       this.logger.debug(
@@ -237,7 +345,39 @@ export abstract class SyncGateway
   }
 
   handleDisconnect(client: Socket) {
+    const state = this.getSocketState(client);
+
     this.socketIOLocals.delete(client);
+
+    if (state.type === 'initialized') {
+      if (this.locks[state.scopeId] === state.clientIdentity) {
+        this.unlock(state.scopeId, state.clientIdentity);
+      }
+    }
+  }
+
+  private unlock(scopeId: string, clientIdentity: string) {
+    delete this.locks[scopeId];
+
+    Array.from(this.socketIOLocals.entries()).map(
+      ([subscriber, subscriberState]) => {
+        if (
+          subscriberState.type === 'initialized' &&
+          subscriberState.scopeId === scopeId &&
+          subscriberState.subscriptionState.subscribed &&
+          subscriberState.clientIdentity !== clientIdentity
+        ) {
+          const event: ChangesFromClientsHandlingLocked = {
+            id: v4(),
+            messageType: MessageType.Event,
+            type: EventTypesFromServer.ChangesHandlingUnlocked,
+            identity: clientIdentity,
+          };
+
+          subscriber.emit(EventTypesFromServer.ChangesHandlingUnlocked, event);
+        }
+      },
+    );
   }
 
   private getSocketState(client: Socket) {

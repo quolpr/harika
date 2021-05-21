@@ -93,7 +93,7 @@ export class ConflictsResolver implements IConflictsResolver<IConflict[]> {
         db.transaction('rw', [db.notes, db.noteBlocks], async () => {
           // updating to correct parentBlockId and note id
           await Promise.all(
-            // could be done with bulPut or bulckUpdate when released
+            // could be done with bulPut or bulkUpdate when released
             noteBlocksExceptOldest.map(async (block) => {
               await db.noteBlocks.update(block.id, {
                 ...block,

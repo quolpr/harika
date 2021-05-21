@@ -11,6 +11,7 @@ import {
   merge,
   Observable,
   of,
+  pipe,
   Subject,
 } from 'rxjs';
 import {
@@ -27,6 +28,7 @@ import {
   takeUntil,
   tap,
   timeout,
+  withLatestFrom,
 } from 'rxjs/operators';
 import { v4 } from 'uuid';
 import {
@@ -157,6 +159,7 @@ export class RxSyncer {
     let isFirstRound = true;
     let wasFirstChangesSent = false;
 
+    // TODO: debounce?
     const sendFirstChanges = () => {
       if (wasFirstChangesSent) {
         return of(null);
@@ -187,15 +190,42 @@ export class RxSyncer {
       }
     };
 
+    const resolveConflictPipe = pipe(
+      switchMap(async (changesDescription) => ({
+        changesDescription,
+        conflicts: await this.conflictsResolver?.checkConflicts(this.scopeId),
+      })),
+      switchMap(({ conflicts, changesDescription }) => {
+        if (conflicts) {
+          return of(null).pipe(
+            this.sendCommand({
+              type: CommandTypesFromClient.StartLock,
+            }),
+
+            switchMap(async () =>
+              this.conflictsResolver?.resolveConflicts(this.scopeId, conflicts),
+            ),
+            // We still need to release lock
+            catchError((err) => {
+              console.error('Error happened while resolving conflicts', err);
+
+              return of(null);
+            }),
+            this.sendCommand({
+              type: CommandTypesFromClient.FinishLock,
+            }),
+            mapTo(changesDescription),
+          );
+        } else {
+          return of(changesDescription);
+        }
+      }),
+    );
+
     this.changesFromServer$
       .pipe(
-        concatMap(async ({ currentRevision, partial, changes }) => {
-          console.log(`[${this.gatewayName}] New changes from server`, {
-            currentRevision,
-            partial,
-            changes,
-          });
-
+        concatMap(async (changesDescription) => {
+          const { currentRevision, partial, changes } = changesDescription;
           await applyRemoteChanges(
             changes as unknown as DexieDatabaseChange[],
             currentRevision,
@@ -204,34 +234,30 @@ export class RxSyncer {
 
           this.syncedRevision = currentRevision;
 
-          const conflicts = await this.conflictsResolver?.checkConflicts(
-            this.scopeId,
-          );
-
-          if (conflicts) {
-            // start lock
-            await this.conflictsResolver?.resolveConflicts(
-              this.scopeId,
-              conflicts,
-            );
-            // finally end lock
-          }
-
-          if (isFirstRound && !partial) {
-            isFirstRound = false;
-
-            console.log('onSuccess');
-            onSuccess({
-              react: this.handleNewClientChanges,
-              disconnect: () => {
-                this.stop$.next();
-                this.socket.close();
-              },
-            });
+          return changesDescription;
+        }),
+        withLatestFrom(this.isLocked$),
+        switchMap(([changesDescription, isLocked]) => {
+          if (isLocked) {
+            return of(changesDescription);
+          } else {
+            return of(changesDescription).pipe(resolveConflictPipe);
           }
         }),
       )
-      .subscribe();
+      .subscribe(() => {
+        if (isFirstRound && !partial) {
+          isFirstRound = false;
+          console.log('onSuccess');
+          onSuccess({
+            react: this.handleNewClientChanges,
+            disconnect: () => {
+              this.stop$.next();
+              this.socket.close();
+            },
+          });
+        }
+      });
 
     this.isConnected$
       .pipe(

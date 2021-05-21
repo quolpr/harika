@@ -17,7 +17,7 @@ export enum CommandTypesFromClient {
   // Locking is needed to perform notes merginf with the same title - the conflicts resolution
   // If lock happened - nobody will be able to send changes except the one who made the lock
   StartLock = 'startLock',
-  EndLock = 'endLock',
+  FinishLock = 'finishLock',
 }
 
 export interface BaseMessage {
@@ -55,10 +55,10 @@ export interface StartClientLock extends BaseMessage {
   type: CommandTypesFromClient.StartLock;
 }
 
-export interface EndClientLock extends BaseMessage {
+export interface FinishClientLock extends BaseMessage {
   messageType: MessageType.Command;
 
-  type: CommandTypesFromClient.EndLock;
+  type: CommandTypesFromClient.FinishLock;
 }
 
 export type CommandsFromClient =
@@ -66,7 +66,7 @@ export type CommandsFromClient =
   | SubscribeClientToChanges
   | InitializeClient
   | StartClientLock
-  | EndClientLock;
+  | FinishClientLock;
 
 export type MessagesFromClient = CommandsFromClient;
 
@@ -76,6 +76,7 @@ export enum EventTypesFromServer {
   CommandHandled = 'commandHandled',
   ChangesHandlingLocked = 'changesHandlingLocked',
   ChangesHandlingUnlocked = 'changesHandlingLocked',
+  MasterWasSet = 'masterWasSet',
 }
 
 export interface CommandFromClientHandled extends BaseMessage {
@@ -101,10 +102,18 @@ export interface ChangesFromClientsHandlingUnlocked extends BaseMessage {
   identity: string;
 }
 
+export interface MasterClientWasSet extends BaseMessage {
+  messageType: MessageType.Event;
+  type: EventTypesFromServer.MasterWasSet;
+
+  identity: string;
+}
+
 export type EventsFromServer =
   | CommandFromClientHandled
   | ChangesFromClientsHandlingUnlocked
-  | ChangesFromClientsHandlingLocked;
+  | ChangesFromClientsHandlingLocked
+  | MasterClientWasSet;
 
 export enum CommandTypesFromServer {
   ApplyNewChanges = 'applyNewChanges',
