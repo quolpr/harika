@@ -57,3 +57,7 @@ declare module '*.png' {
 }
 
 /* CUSTOM: ADD YOUR OWN HERE */
+
+declare module 'remotedev' {
+  export const connectViaExtension = (args: any) => any;
+}

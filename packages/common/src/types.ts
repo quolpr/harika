@@ -74,8 +74,6 @@ export type MessagesFromClient = CommandsFromClient;
 
 export enum EventTypesFromServer {
   CommandHandled = 'commandHandled',
-  ChangesHandlingLocked = 'changesHandlingLocked',
-  ChangesHandlingUnlocked = 'changesHandlingLocked',
   MasterWasSet = 'masterWasSet',
 }
 
@@ -88,20 +86,6 @@ export interface CommandFromClientHandled extends BaseMessage {
   handledId: string;
 }
 
-export interface ChangesFromClientsHandlingLocked extends BaseMessage {
-  messageType: MessageType.Event;
-  type: EventTypesFromServer.ChangesHandlingLocked;
-
-  identity: string;
-}
-
-export interface ChangesFromClientsHandlingUnlocked extends BaseMessage {
-  messageType: MessageType.Event;
-  type: EventTypesFromServer.ChangesHandlingUnlocked;
-
-  identity: string;
-}
-
 export interface MasterClientWasSet extends BaseMessage {
   messageType: MessageType.Event;
   type: EventTypesFromServer.MasterWasSet;
@@ -109,11 +93,7 @@ export interface MasterClientWasSet extends BaseMessage {
   identity: string;
 }
 
-export type EventsFromServer =
-  | CommandFromClientHandled
-  | ChangesFromClientsHandlingUnlocked
-  | ChangesFromClientsHandlingLocked
-  | MasterClientWasSet;
+export type EventsFromServer = CommandFromClientHandled | MasterClientWasSet;
 
 export enum CommandTypesFromServer {
   ApplyNewChanges = 'applyNewChanges',
