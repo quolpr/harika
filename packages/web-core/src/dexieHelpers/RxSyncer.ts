@@ -161,7 +161,7 @@ export class RxSyncer {
 
     isStaleAndMaster$
       .pipe(
-        filter(() => this.isLocked$.value),
+        filter(() => !this.isLocked$.value),
         tap(() => this.isLocked$.next(true)),
         switchMap(
           async () =>
