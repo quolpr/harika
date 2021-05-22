@@ -1,7 +1,7 @@
 import { ExpirationPlugin } from 'workbox-expiration';
-import { registerRoute } from 'workbox-routing';
+import { registerRoute, setCatchHandler } from 'workbox-routing';
 import { StaleWhileRevalidate } from 'workbox-strategies';
-import { precacheAndRoute } from 'workbox-precaching';
+import { matchPrecache, precacheAndRoute } from 'workbox-precaching';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
@@ -19,3 +19,13 @@ registerRoute(
     plugins: [new ExpirationPlugin({ maxEntries: 20 })],
   }),
 );
+
+// Catch routing errors, like if the user is offline
+setCatchHandler(async ({ event }): Promise<any> => {
+  // Return the precached offline page if a document is being requested
+  if (event.request.destination === 'document') {
+    return matchPrecache('/index.html');
+  }
+
+  return Response.error();
+});
