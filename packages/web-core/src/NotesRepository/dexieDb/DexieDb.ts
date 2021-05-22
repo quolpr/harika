@@ -16,7 +16,7 @@ export class VaultDexieDatabase extends Dexie {
   notesChange$: Observable<void>;
   noteBlocksChange$: Observable<void>;
 
-  constructor(id: string) {
+  constructor(public id: string) {
     super(`harika_vault_${id}`);
 
     this.version(1).stores({
@@ -66,6 +66,10 @@ class NoteBlocksQueries {
     return (await this.table.bulkGet(ids)).filter(
       (v) => !!v,
     ) as NoteBlockDocType[];
+  }
+
+  getByParentIds(ids: string[]) {
+    return this.table.where('parentBlockId').anyOf(ids).toArray();
   }
 
   getByNoteId(id: string) {

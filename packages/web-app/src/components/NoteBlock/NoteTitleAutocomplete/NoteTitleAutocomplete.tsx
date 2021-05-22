@@ -21,7 +21,6 @@ export const NoteTitleAutocomplete = React.memo(
     value: string | undefined;
     onSelect: (res: SearchedNote) => void;
   }) => {
-    const vault = useCurrentVault();
     const noteRepo = useNoteRepository();
 
     const [wasFirstSearchHappened, setWasFirstSearchHappened] = useState(false);
@@ -32,7 +31,7 @@ export const NoteTitleAutocomplete = React.memo(
 
     const subject = useMemo(
       () => new BehaviorSubject<string | undefined>(undefined),
-      []
+      [],
     );
 
     const itemsRef = useRef<Array<HTMLElement | null>>([]);
@@ -45,19 +44,19 @@ export const NoteTitleAutocomplete = React.memo(
       const sub = combineLatest([
         subject.pipe(
           distinctUntilChanged(),
-          debounce(() => timer(100))
+          debounce(() => timer(100)),
         ),
-        noteRepo.getAllNotesTuples$(vault.$modelId),
+        noteRepo.getAllNotesTuples$(),
       ])
         .pipe(
           filter(([val]) => val !== undefined),
           map((res) => res as [string, SearchedNote[]]),
           map(([val, tuples]) =>
             tuples.filter(({ title }) =>
-              title.toLowerCase().includes(val.toLowerCase())
-            )
+              title.toLowerCase().includes(val.toLowerCase()),
+            ),
           ),
-          distinctUntilChanged(isEqual)
+          distinctUntilChanged(isEqual),
         )
         .subscribe((res) => {
           setSearchResult(res);
@@ -65,7 +64,7 @@ export const NoteTitleAutocomplete = React.memo(
         });
 
       return () => sub.unsubscribe();
-    }, [noteRepo, subject, vault.$modelId]);
+    }, [noteRepo, subject]);
 
     useEffect(() => {
       subject.next(value);
@@ -170,5 +169,5 @@ export const NoteTitleAutocomplete = React.memo(
         )}
       </div>
     );
-  }
+  },
 );

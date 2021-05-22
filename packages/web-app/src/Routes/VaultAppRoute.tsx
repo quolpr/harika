@@ -41,8 +41,6 @@ export const VaultAppRoute = () => {
     };
   }, [userId, isOffline]);
 
-  console.log({ vaultRepository });
-
   return (
     <>
       <Route path={VAULT_PREFIX}>

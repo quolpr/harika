@@ -17,9 +17,9 @@ const RefRenderer = observer(
         e.stopPropagation();
 
         noteBlock.content.toggleTodo(token.id);
-        noteRepo.updateNoteBlockLinks(vault, noteBlock);
+        noteRepo.updateNoteBlockLinks(noteBlock);
       },
-      [noteBlock, noteRepo, token.id, vault],
+      [noteBlock, noteRepo, token.id],
     );
 
     const noteRef = linkedNotes.find((note) => {

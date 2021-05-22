@@ -99,8 +99,6 @@ export class VaultModel extends Model({
       $modelId: string;
     })[],
   ) {
-    console.log({ noteAttrs, blocksAttrs });
-
     const notes = noteAttrs.map((note) => {
       if (this.notesMap[note.$modelId]) {
         this.notesMap[note.$modelId].updateAttrs(note);

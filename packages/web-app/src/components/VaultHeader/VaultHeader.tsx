@@ -61,7 +61,7 @@ export const VaultHeader = observer(
       async (date: Date | Date[]) => {
         if (Array.isArray(date)) return;
 
-        const result = await noteRepo.getOrCreateDailyNote(vault, dayjs(date));
+        const result = await noteRepo.getOrCreateDailyNote(dayjs(date));
 
         if (result.status === 'ok') {
           history.replace(
@@ -72,7 +72,7 @@ export const VaultHeader = observer(
           );
         }
       },
-      [vault, history, noteRepo],
+      [vault.$modelId, history, noteRepo],
     );
 
     return (

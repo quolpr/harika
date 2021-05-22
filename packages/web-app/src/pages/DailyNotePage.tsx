@@ -15,7 +15,7 @@ export const DailyNotePage = observer(() => {
 
   useEffect(() => {
     const toExecute = async () => {
-      const result = await noteRepo.getOrCreateDailyNote(vault, dayjs());
+      const result = await noteRepo.getOrCreateDailyNote(dayjs());
 
       if (result.status === 'ok') {
         vaultUiState.setCurrentNoteId(result.data.$modelId);
@@ -30,7 +30,7 @@ export const DailyNotePage = observer(() => {
     };
 
     toExecute();
-  }, [history, vault, noteRepo, vaultUiState]);
+  }, [history, vault.$modelId, noteRepo, vaultUiState]);
 
   return null;
 });

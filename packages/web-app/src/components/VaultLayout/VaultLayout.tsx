@@ -1,4 +1,9 @@
-import { VaultsRepository, VaultModel, VaultUiState } from '@harika/web-core';
+import {
+  VaultsRepository,
+  VaultModel,
+  VaultUiState,
+  NotesRepository,
+} from '@harika/web-core';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useHistory, useLocation, useParams } from 'react-router-dom';
 import { useClickAway, useMedia } from 'react-use';
@@ -84,7 +89,7 @@ export const VaultLayout: React.FC<{
   const history = useHistory();
   const { vaultId } = useParams<{ vaultId: string }>();
   const isWide = useMedia('(min-width: 768px)');
-  const [vault, setVault] = useState<VaultModel | undefined>();
+  const [notesRepo, setNotesRepo] = useState<NotesRepository | undefined>();
   const [isSidebarOpened, setIsSidebarOpened] = useState(isWide);
 
   const togglerRef = useRef<HTMLDivElement>(null);
@@ -96,28 +101,35 @@ export const VaultLayout: React.FC<{
   }, [isSidebarOpened]);
 
   useEffect(() => {
-    const cb = async () => {
-      const vault = await vaultRepository.getVault(vaultId);
+    let destroy = () => {};
 
-      if (!vault) {
+    const cb = async () => {
+      const repo = await vaultRepository.getNotesRepo(vaultId);
+
+      if (!repo) {
         writeStorage('lastVaultId', undefined);
 
         history.replace('/');
+
         return;
       } else {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         if ((window as any).__REDUX_DEVTOOLS_EXTENSION__) {
           (await import('../../connectReduxDevtool')).connect(
-            vault,
-            `Vault ${vault.name}`,
+            repo.vault,
+            `Vault ${repo.vault.name}`,
           );
         }
       }
 
-      setVault(vault);
+      destroy = repo.destroy;
+
+      setNotesRepo(repo);
     };
 
     cb();
+
+    return () => destroy();
   }, [vaultRepository, vaultId, history]);
 
   const [vaultUiState] = useState(new VaultUiState({}));
@@ -152,14 +164,12 @@ export const VaultLayout: React.FC<{
 
   const { mainRef, handleScroll } = useKeepScroll();
 
-  if (!vault) return null;
+  if (!notesRepo) return null;
 
   return (
     <CurrentVaultUiStateContext.Provider value={vaultUiState}>
-      <CurrentVaultContext.Provider value={vault}>
-        <NoteRepositoryContext.Provider
-          value={vaultRepository.getNoteRepository()}
-        >
+      <CurrentVaultContext.Provider value={notesRepo.vault}>
+        <NoteRepositoryContext.Provider value={notesRepo}>
           <FooterRefContext.Provider value={footerRef}>
             <div className={layoutClass()}>
               <VaultSidebar

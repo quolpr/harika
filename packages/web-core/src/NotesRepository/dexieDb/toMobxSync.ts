@@ -31,11 +31,7 @@ const bufferDebounce: BufferDebounce = (debounce) => (source) =>
     }),
   );
 
-export const toMobxSync = (
-  db: VaultDexieDatabase,
-  noteRepository: NotesRepository,
-  vault: VaultModel,
-) => {
+export const toMobxSync = (db: VaultDexieDatabase, vault: VaultModel) => {
   const db$ = new Observable<IChangeEvent>((observer) => {
     const subscriber = (chs: IChangeEvent[]) => {
       chs.forEach((ch) => {

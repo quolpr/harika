@@ -5,7 +5,7 @@ import { observer } from 'mobx-react-lite';
 import { useHistory, useParams } from 'react-router-dom';
 import { useUnmount } from 'react-use';
 import { EMPTY } from 'rxjs';
-import { timeout, filter, tap } from 'rxjs/operators';
+import { timeout, filter } from 'rxjs/operators';
 import { useNoteRepository } from '../contexts/CurrentNoteRepositoryContext';
 import { useCurrentVaultUiState } from '../contexts/CurrentVaultUiStateContext';
 import { useCurrentNote } from '../hooks/useCurrentNote';
@@ -23,7 +23,7 @@ const useFindNote = (noteId: string) => {
 
   useEffect(() => {
     const callback = async () => {
-      const note = await noteRepo.findNote(vault, noteId);
+      const note = await noteRepo.findNote(noteId);
       if (!note) {
         setIsLoading(false);
       } else {
@@ -36,7 +36,7 @@ const useFindNote = (noteId: string) => {
     };
 
     callback();
-  }, [vault, noteId, noteRepo, vaultUiState]);
+  }, [noteId, noteRepo, vaultUiState]);
 
   const noteTitle = note?.title;
   const isDeleted = note?.isDeleted;
@@ -46,10 +46,9 @@ const useFindNote = (noteId: string) => {
     if (isDeleted) {
       // In case conflict resolving. We wait for n seconds for new id of note title to appear
       const flow = noteRepo
-        .getNoteIdByTitle$(vault, noteTitle)
+        .getNoteIdByTitle$(noteTitle)
         .pipe(
-          tap((v) => console.log({ v })),
-          timeout({ each: 500, with: () => EMPTY }),
+          timeout({ each: 2000, with: () => EMPTY }),
           filter((v) => !!v && v !== noteId),
         )
         .subscribe({
@@ -67,7 +66,15 @@ const useFindNote = (noteId: string) => {
 
       return () => flow.unsubscribe();
     }
-  }, [history, isDeleted, noteId, noteRepo, noteTitle, vault, vaultUiState]);
+  }, [
+    history,
+    isDeleted,
+    noteId,
+    noteRepo,
+    noteTitle,
+    vault.$modelId,
+    vaultUiState,
+  ]);
 
   useUnmount(() => {
     vaultUiState.setCurrentNoteId(undefined);

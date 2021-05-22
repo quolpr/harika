@@ -102,7 +102,7 @@ export const CommandPaletteModal = ({
 
           // TODO: to RxJS
           const notes = await firstValueFrom(
-            noteRepo.searchNotesTuples$(vault.$modelId, toFind),
+            noteRepo.searchNotesTuples$(toFind),
           );
 
           const createNoteAction: IAction = {
@@ -162,7 +162,7 @@ export const CommandPaletteModal = ({
     };
 
     cb();
-  }, [inputCommandValue, vault, noteRepo, startView]);
+  }, [inputCommandValue, vault.$modelId, noteRepo, startView]);
 
   const performAction = useCallback(
     async (action: IAction) => {
@@ -173,7 +173,7 @@ export const CommandPaletteModal = ({
           onClose();
           break;
         case 'createNote': {
-          const result = await noteRepo.createNote(vault, {
+          const result = await noteRepo.createNote({
             title: action.noteName,
           });
 

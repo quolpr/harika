@@ -11,8 +11,9 @@ import { loadNoteDocToModelAttrs } from './NotesRepository/dexieDb/convertDocToM
 import { liveSwitch } from './dexieHelpers/onDexieChange';
 import { filterAst } from './blockParser/astHelpers';
 import type { RefToken } from './blockParser/types';
-import { map } from 'lodash-es';
-import { distinctUntilChanged, switchMap } from 'rxjs/operators';
+import { distinctUntilChanged } from 'rxjs/operators';
+import { RxSyncer } from './dexieHelpers/RxSyncer';
+import { ConflictsResolver } from './NotesRepository/dexieDb/ConflictsResolver';
 
 export { NoteModel } from './NotesRepository/models/NoteModel';
 export { VaultModel } from './NotesRepository/models/VaultModel';
@@ -28,10 +29,19 @@ export { BlockContentModel } from './NotesRepository/models/BlockContentModel';
 // Tuple = plain object data, used for fast data getting
 
 export class NotesRepository {
-  constructor(private vaultDexieDbs: Record<string, VaultDexieDatabase>) {}
+  constructor(private db: VaultDexieDatabase, public vault: VaultModel) {}
+
+  initSync(wsUrl: string) {
+    new RxSyncer(
+      this.db,
+      'vault',
+      this.db.id,
+      `${wsUrl}/api/vault`,
+      new ConflictsResolver(this.db),
+    );
+  }
 
   async createNote(
-    vault: VaultModel,
     attrs: Required<
       Optional<
         ModelCreationData<NoteModel>,
@@ -47,11 +57,7 @@ export class NotesRepository {
       } as ICreationResult<NoteModel>;
     }
 
-    if (
-      await this.getDbByVaultId(vault.$modelId).notesQueries.getIsNoteExists(
-        attrs.title,
-      )
-    ) {
+    if (await this.db.notesQueries.getIsNoteExists(attrs.title)) {
       return {
         status: 'error',
         errors: { title: ['Already exists'] },
@@ -60,43 +66,32 @@ export class NotesRepository {
 
     return {
       status: 'ok',
-      data: vault.newNote(attrs),
+      data: this.vault.newNote(attrs),
     } as ICreationResult<NoteModel>;
   }
 
-  async getOrCreateDailyNote(
-    this: NotesRepository,
-    vault: VaultModel,
-    date: Dayjs,
-  ) {
-    const noteRow = await this.getDbByVaultId(
-      vault.$modelId,
-    ).notesQueries.getDailyNote(date);
+  async getOrCreateDailyNote(this: NotesRepository, date: Dayjs) {
+    const noteRow = await this.db.notesQueries.getDailyNote(date);
 
     if (noteRow) {
       return {
         status: 'ok',
-        data: await this.findNote(vault, noteRow.id),
+        data: await this.findNote(noteRow.id),
       } as ICreationResult<NoteModel>;
     }
 
     const title = date.format('D MMM YYYY');
     const startOfDate = date.startOf('day');
 
-    return await this.createNote(vault, {
+    return await this.createNote({
       title,
       dailyNoteDate: startOfDate.toDate().getTime(),
     });
   }
 
-  async findNote(
-    vault: VaultModel,
-    id: string,
-    preloadChildren = true,
-    preloadLinks = true,
-  ) {
-    if (vault.notesMap[id]) {
-      const noteInStore = vault.notesMap[id];
+  async findNote(id: string, preloadChildren = true, preloadLinks = true) {
+    if (this.vault.notesMap[id]) {
+      const noteInStore = this.vault.notesMap[id];
 
       if (
         !(preloadChildren && !noteInStore.areChildrenLoaded) &&
@@ -105,27 +100,23 @@ export class NotesRepository {
         return noteInStore;
     }
 
-    return this.preloadNote(vault, id, preloadChildren, preloadLinks);
+    return this.preloadNote(id, preloadChildren, preloadLinks);
   }
 
-  getNoteIdByTitle$(vault: VaultModel, title: string) {
-    const db = this.getDbByVaultId(vault.$modelId);
-
-    return db.notesChange$.pipe(
+  getNoteIdByTitle$(title: string) {
+    return this.db.notesChange$.pipe(
       liveSwitch(async () => {
-        return (await db.notesQueries.getByTitles([title]))[0]?.id;
+        return (await this.db.notesQueries.getByTitles([title]))[0]?.id;
       }),
       distinctUntilChanged(),
     );
   }
 
-  async updateNoteBlockLinks(vault: VaultModel, noteBlock: NoteBlockModel) {
-    return this.getDbByVaultId(vault.$modelId).transaction(
+  async updateNoteBlockLinks(noteBlock: NoteBlockModel) {
+    return this.db.transaction(
       'r',
-
-      this.getDbByVaultId(vault.$modelId).notes,
-      this.getDbByVaultId(vault.$modelId).noteBlocks,
-
+      this.db.notes,
+      this.db.noteBlocks,
       async () => {
         console.log('updating links');
 
@@ -137,18 +128,17 @@ export class NotesRepository {
         ).map((t: RefToken) => t.content);
 
         const existingNotesIndexed = Object.fromEntries(
-          (
-            await this.getDbByVaultId(vault.$modelId).notesQueries.getByTitles(
-              titles,
-            )
-          ).map((n) => [n.title, n]),
+          (await this.db.notesQueries.getByTitles(titles)).map((n) => [
+            n.title,
+            n,
+          ]),
         );
 
         const allNotes = (
           await Promise.all(
             titles.map(async (name) => {
               if (!existingNotesIndexed[name]) {
-                const result = await this.createNote(vault, { title: name });
+                const result = await this.createNote({ title: name });
 
                 if (result.status === 'ok') {
                   return result.data;
@@ -158,7 +148,7 @@ export class NotesRepository {
               } else {
                 const existing = existingNotesIndexed[name];
 
-                return this.findNote(vault, existing.id, false, false);
+                return this.findNote(existing.id, false, false);
               }
             }),
           )
@@ -174,39 +164,32 @@ export class NotesRepository {
 
         allNotes.forEach((note) => {
           if (!existingLinkedNotesIndexed[note.$modelId]) {
-            vault.createLink(note, noteBlock);
+            this.vault.createLink(note, noteBlock);
           }
         });
 
         Object.values(existingLinkedNotesIndexed).forEach((note) => {
           if (!allNotesIndexed[note.$modelId]) {
-            vault.unlink(note, noteBlock);
+            this.vault.unlink(note, noteBlock);
           }
         });
       },
     );
   }
 
-  async preloadNote(
-    vault: VaultModel,
-    id: string,
-    preloadChildren = true,
-    preloadLinks = true,
-  ) {
-    const row = await this.getDbByVaultId(vault.$modelId).notesQueries.getById(
-      id,
-    );
+  async preloadNote(id: string, preloadChildren = true, preloadLinks = true) {
+    const row = await this.db.notesQueries.getById(id);
 
     if (!row) return;
 
     const data = await loadNoteDocToModelAttrs(
-      this.getDbByVaultId(vault.$modelId),
+      this.db,
       row,
       preloadChildren,
       preloadLinks,
     );
 
-    vault.createOrUpdateEntitiesFromAttrs(
+    this.vault.createOrUpdateEntitiesFromAttrs(
       [data.note, ...data.linkedNotes.map(({ note }) => note)],
       [
         ...data.noteBlocks,
@@ -214,16 +197,14 @@ export class NotesRepository {
       ],
     );
 
-    return vault.notesMap[row.id];
+    return this.vault.notesMap[row.id];
   }
 
   // TODO: better Rx way, put title to pipe
-  searchNotesTuples$(vaultId: string, title: string) {
-    return this.getDbByVaultId(vaultId).notesChange$.pipe(
+  searchNotesTuples$(title: string) {
+    return this.db.notesChange$.pipe(
       liveSwitch(async () =>
-        (
-          await this.getDbByVaultId(vaultId).notesQueries.searchNotes(title)
-        ).map((row) => ({
+        (await this.db.notesQueries.searchNotes(title)).map((row) => ({
           id: row.id,
           title: row.title,
         })),
@@ -231,10 +212,10 @@ export class NotesRepository {
     );
   }
 
-  getAllNotesTuples$(vaultId: string) {
-    return this.getDbByVaultId(vaultId).notesChange$.pipe(
+  getAllNotesTuples$() {
+    return this.db.notesChange$.pipe(
       liveSwitch(async () =>
-        (await this.getDbByVaultId(vaultId).notesQueries.all()).map((row) => ({
+        (await this.db.notesQueries.all()).map((row) => ({
           id: row.id,
           title: row.title,
           createdAt: new Date(row.createdAt),
@@ -243,10 +224,9 @@ export class NotesRepository {
     );
   }
 
-  private getDbByVaultId(vaultId: string) {
-    if (!this.vaultDexieDbs[vaultId])
-      throw new Error('NotesRepository vaultDb was not initialized!');
+  destroy = () => {
+    console.log(`Vault ${this.vault.$modelId} is closed`);
 
-    return this.vaultDexieDbs[vaultId];
-  }
+    this.db.close();
+  };
 }

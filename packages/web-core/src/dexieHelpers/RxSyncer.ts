@@ -1,5 +1,10 @@
+import Dexie from 'dexie';
+import 'dexie-observable';
+import 'dexie-syncable';
 import type {
   ApplyRemoteChangesFunction,
+  IPersistedContext,
+  ISyncProtocol,
   ReactiveContinuation,
 } from 'dexie-syncable/api';
 import type { IDatabaseChange as DexieDatabaseChange } from 'dexie-observable/api';
@@ -47,19 +52,19 @@ import {
   MasterClientWasSet,
   MessageType,
 } from '@harika/common';
+import io from 'socket.io-client';
 
 type DistributiveOmit<T, K extends keyof any> = T extends any
   ? Omit<T, K>
   : never;
 
-export interface IConflictsResolver<T extends any = unknown> {
-  checkConflicts(dbId: string): Promise<T | false>;
-  resolveConflicts(dbId: string, conflicts: T): Promise<void>;
+export interface IConflictsResolver {
+  resolveConflicts(
+    changes: Array<{ table: string; key: string }>,
+  ): Promise<void>;
 }
 
 export class RxSyncer {
-  private socket$: Observable<SocketIOClient.Socket>;
-
   private clientCommandsSubject: Subject<CommandsFromClient> = new Subject();
 
   private successCommandHandled$: Subject<CommandFromClientHandled> =
@@ -74,21 +79,19 @@ export class RxSyncer {
   private isConnectedAndInitialized$: Observable<boolean>;
   private isMaster$: Observable<boolean>;
   private isLocked$ = new BehaviorSubject<boolean>(false);
+  private lastChangesFromServer: Array<{ table: string; key: string }> = [];
+  private socketSubject = new Subject<SocketIOClient.Socket>();
+  private socket$ = this.socketSubject.pipe(shareReplay(1));
+  private syncedRevision: number | null = null;
+  private identity!: string;
 
   constructor(
+    private db: Dexie,
     private gatewayName: string,
-    private socket: SocketIOClient.Socket,
     private scopeId: string,
-    private identity: string,
-    private syncedRevision: number,
+    url: string,
     private conflictsResolver?: IConflictsResolver,
   ) {
-    this.socket$ = of(socket);
-
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    window[gatewayName] = socket;
-
     const connect$ = this.socket$.pipe(
       takeUntil(this.stop$),
       switchMap((socket) => fromEvent(socket, 'connect')),
@@ -111,8 +114,11 @@ export class RxSyncer {
       map(([isConnected, isInitialized]) => isConnected && isInitialized),
     );
 
-    this.changesFromServer$ = this.isConnected$.pipe(
-      switchMap((isConnected) =>
+    this.changesFromServer$ = combineLatest([
+      this.isConnected$,
+      this.socket$,
+    ]).pipe(
+      switchMap(([isConnected, socket]) =>
         isConnected
           ? fromEvent<ApplyNewChangesFromServer>(
               socket,
@@ -122,8 +128,8 @@ export class RxSyncer {
       ),
     );
 
-    this.isMaster$ = this.isConnected$.pipe(
-      switchMap((isConnected) => {
+    this.isMaster$ = combineLatest([this.isConnected$, this.socket$]).pipe(
+      switchMap(([isConnected, socket]) => {
         return isConnected
           ? merge(
               fromEvent<MasterClientWasSet>(
@@ -141,7 +147,7 @@ export class RxSyncer {
       console.log(isMaster ? 'Master' : 'Not master');
     });
 
-    const isStaleAndMaster$ = merge(
+    const resolveConflict$ = merge(
       this.changesFromServer$,
       this.clientCommandsSubject,
       this.isConnectedAndInitialized$,
@@ -159,22 +165,17 @@ export class RxSyncer {
       filter((v) => v),
     );
 
-    isStaleAndMaster$
+    resolveConflict$
       .pipe(
         filter(() => !this.isLocked$.value),
         tap(() => this.isLocked$.next(true)),
-        switchMap(
-          async () =>
-            await this.conflictsResolver?.checkConflicts(this.scopeId),
-        ),
-        switchMap(
-          async (conflicts) =>
-            conflicts &&
-            (await this.conflictsResolver?.resolveConflicts(
-              this.scopeId,
-              conflicts,
-            )),
-        ),
+        switchMap(async () => {
+          const lastChangesFromServer = [...this.lastChangesFromServer];
+
+          this.lastChangesFromServer = [];
+
+          await this.conflictsResolver?.resolveConflicts(lastChangesFromServer);
+        }),
         catchError((err) => {
           console.error(err);
           return of(null);
@@ -184,18 +185,40 @@ export class RxSyncer {
       .subscribe();
 
     this.startCommandFlow();
+
+    const protocolName = `${scopeId}-${gatewayName}`;
+
+    Dexie.Syncable.registerSyncProtocol(protocolName, {
+      sync: this.initialize as unknown as ISyncProtocol['sync'],
+    });
+
+    db.syncable.connect(protocolName, url);
   }
 
-  initialize(
-    // First time sync
-    changes: IDatabaseChange[],
+  initialize = async (
+    context: IPersistedContext,
+    url: string,
+    _options: any,
     baseRevision: number,
+    syncedRevision: number,
+    changes: IDatabaseChange[],
     partial: boolean,
-    onChangesAccepted: () => void,
-
     applyRemoteChanges: ApplyRemoteChangesFunction,
+    onChangesAccepted: () => void,
     onSuccess: (continuation: ReactiveContinuation) => void,
-  ) {
+    _onError: (error: any, again?: number) => void,
+  ) => {
+    this.syncedRevision = syncedRevision;
+
+    if (!context.identity) {
+      context.identity = v4();
+      await context.save();
+    }
+
+    this.identity = context.identity;
+
+    this.socketSubject.next(io(url, { transports: ['websocket'] }));
+
     let isFirstRound = true;
     let wasFirstChangesSent = false;
 
@@ -207,26 +230,33 @@ export class RxSyncer {
         // mergeMap((v) => v),
         concatMap(async (changesDescription) => {
           const { currentRevision, partial, changes } = changesDescription;
+
+          console.log('new changes from server', changesDescription);
+
           await applyRemoteChanges(
             changes as unknown as DexieDatabaseChange[],
             currentRevision,
             partial,
           );
 
+          this.lastChangesFromServer.push(
+            ...changes.map((ch) => ({ key: ch.key, table: ch.table })),
+          );
+
           this.syncedRevision = currentRevision;
 
           return changesDescription;
         }),
+        switchMap(() => this.socket$),
       )
-      .subscribe(() => {
+      .subscribe((socket) => {
         if (isFirstRound && !partial) {
           isFirstRound = false;
-          console.log('onSuccess');
           onSuccess({
             react: this.handleNewClientChanges,
             disconnect: () => {
               this.stop$.next();
-              this.socket.close();
+              socket.close();
             },
           });
         }
@@ -283,7 +313,7 @@ export class RxSyncer {
         }),
       )
       .subscribe((isInitialized) => this.isInitialized$.next(isInitialized));
-  }
+  };
 
   private handleNewClientChanges = (
     changes: DexieDatabaseChange[],
@@ -364,10 +394,13 @@ export class RxSyncer {
                 command,
               );
 
-              this.socket.disconnect();
-              this.socket.connect();
-
-              return EMPTY;
+              return this.socket$.pipe(
+                tap((socket) => {
+                  socket.disconnect();
+                  socket.connect();
+                }),
+                first(),
+              );
             }),
           ),
         ),
@@ -376,20 +409,26 @@ export class RxSyncer {
   }
 
   private startCommandFlow() {
-    const onRequestHandled$ = this.isConnected$.pipe(
-      switchMap((isConnected) =>
+    const onRequestHandled$ = combineLatest([
+      this.isConnected$,
+      this.socket$,
+    ]).pipe(
+      switchMap(([isConnected, socket]) =>
         isConnected
           ? fromEvent<CommandFromClientHandled>(
-              this.socket,
+              socket,
               EventTypesFromServer.CommandHandled,
             )
           : EMPTY,
       ),
     );
 
-    const clientCommandsHandler$ = this.clientCommandsSubject.pipe(
-      concatMap((command) => {
-        this.socket.emit(command.type, command);
+    const clientCommandsHandler$ = combineLatest([
+      this.clientCommandsSubject,
+      this.socket$,
+    ]).pipe(
+      concatMap(([command, socket]) => {
+        socket.emit(command.type, command);
 
         return onRequestHandled$.pipe(
           filter(

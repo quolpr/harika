@@ -27,11 +27,7 @@ export const noteRef = customRef<NoteModel>('harika/NoteRef', {
   resolve(ref) {
     const vault = findParent<VaultModel>(this, isVault);
 
-    console.log(this);
-
     if (!vault) {
-      console.error('Vault not found for noteRef');
-
       return undefined;
     }
 
@@ -122,7 +118,6 @@ export class NoteModel extends Model({
     }
   }
 
-  @modelAction
   updateAttrs(attrs: ModelCreationData<NoteModel>) {
     if (!this.areLinksLoaded && attrs.areLinksLoaded) {
       this.areLinksLoaded = true;

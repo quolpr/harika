@@ -1,72 +1,52 @@
-import { NotesRepository } from './NotesRepository';
 import { VaultModel } from './NotesRepository/models/VaultModel';
 import { syncMiddleware } from './NotesRepository/models/syncable';
-// import * as remotedev from 'remotedev';
-import { connectReduxDevTools } from 'mobx-keystone';
 import { VaultDexieDatabase } from './NotesRepository/dexieDb/DexieDb';
 import { ChangesHandler } from './NotesRepository/dexieDb/ChangesHandler';
 import { toMobxSync } from './NotesRepository/dexieDb/toMobxSync';
 import { UserDexieDatabase } from './UserDexieDb';
-import './dexieHelpers/dexieDbSyncProtocol';
 import { liveSwitch } from './dexieHelpers/onDexieChange';
-import { ConflictsResolver } from './NotesRepository/dexieDb/ConflictsResolver';
+import { NotesRepository } from './NotesRepository';
+import { RxSyncer } from './dexieHelpers/RxSyncer';
 
 export class VaultsRepository {
-  // TODO: finde better naming(instead of conatiner)
-  private vaultContainers: Record<string, VaultModel | undefined> = {};
-
-  private dexieVaultDbs: Record<string, VaultDexieDatabase> = {};
-  private noteRepo = new NotesRepository(this.dexieVaultDbs);
+  private notesRepositories: Record<string, NotesRepository | undefined> = {};
 
   database!: UserDexieDatabase;
+  syncer?: RxSyncer;
 
   constructor(
     private dbId: string,
     private sync: boolean,
     private config: { wsUrl: string },
-  ) {
-    // TODO: should be called in destroy
-    // and destroy should be called by react app
-    window.onunload = () => {
-      console.log('db are closed');
-
-      if (this.database) this.database.close();
-
-      Object.values(this.dexieVaultDbs).forEach((db) => db.close());
-
-      return null;
-    };
-  }
-
-  getNoteRepository() {
-    return this.noteRepo;
-  }
+  ) {}
 
   async init() {
     this.database = new UserDexieDatabase(this.dbId);
 
     await this.database.open();
+
     console.log('init vaults');
 
     if (this.sync) {
-      this.database.syncable.connect(
-        'websocket',
+      this.syncer = new RxSyncer(
+        this.database,
+        'user',
+        this.dbId,
         `${this.config.wsUrl}/api/user`,
-        {
-          type: 'user',
-          scopeId: this.dbId,
-          gatewayName: 'user',
-        },
       );
     }
   }
 
   async getVault(vaultId: string) {
-    if (this.vaultContainers[vaultId]) return this.vaultContainers[vaultId];
+    return (await this.getNotesRepo(vaultId))?.vault;
+  }
 
-    this.vaultContainers[vaultId] = await this.initializeVaultAndRepo(vaultId);
+  async getNotesRepo(vaultId: string) {
+    if (this.notesRepositories[vaultId]) return this.notesRepositories[vaultId];
 
-    return this.vaultContainers[vaultId];
+    this.notesRepositories[vaultId] = await this.initializeNotesRepo(vaultId);
+
+    return this.notesRepositories[vaultId];
   }
 
   getAllVaultTuples$() {
@@ -91,42 +71,29 @@ export class VaultsRepository {
     return this.getVault(dbId);
   }
 
-  private async initializeVaultAndRepo(id: string) {
+  private async initializeNotesRepo(id: string) {
     const vaultDoc = await this.database.vaults.where('id').equals(id).first();
 
     if (!vaultDoc) return;
 
-    this.dexieVaultDbs[id] = new VaultDexieDatabase(id);
-
-    await this.dexieVaultDbs[id].open();
-
-    if (this.sync) {
-      ConflictsResolver.addDb(id, this.dexieVaultDbs[id]);
-
-      this.dexieVaultDbs[id].syncable.connect(
-        'websocket',
-        `${this.config.wsUrl}/api/vault`,
-        {
-          type: 'vault',
-          scopeId: id,
-          gatewayName: 'vault',
-        },
-      );
-    }
+    const db = new VaultDexieDatabase(id);
+    await db.open();
 
     const vault = new VaultModel({ name: vaultDoc.name, $modelId: id });
 
-    syncMiddleware(
-      vault,
-      new ChangesHandler(this.dexieVaultDbs[id], vault).handlePatch,
-    );
+    syncMiddleware(vault, new ChangesHandler(db, vault).handlePatch);
+    toMobxSync(db, vault);
 
-    toMobxSync(this.dexieVaultDbs[id], this.noteRepo, vault);
+    const repo = new NotesRepository(db, vault);
 
-    return vault;
+    if (this.sync) {
+      repo.initSync(this.config.wsUrl);
+    }
+
+    return repo;
   }
 
   destroy = () => {
-    // TODO: implement
+    this.database.close();
   };
 }

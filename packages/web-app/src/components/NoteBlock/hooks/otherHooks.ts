@@ -26,23 +26,22 @@ export const useUpdateBlockLinks = (
   noteBlock: NoteBlockModel,
   editState: EditState,
 ) => {
-  const vault = useCurrentVault();
   const noteRepo = useNoteRepository();
 
   const wasEditing = usePrevious(editState.isEditing);
 
   useEffect(() => {
     if (!editState.isEditing && wasEditing) {
-      noteRepo.updateNoteBlockLinks(vault, noteBlock);
+      noteRepo.updateNoteBlockLinks(noteBlock);
     }
-  }, [editState.isEditing, noteBlock, noteRepo, vault, wasEditing]);
+  }, [editState.isEditing, noteBlock, noteRepo, wasEditing]);
 
   // on demount
   useEffect(() => {
     return () => {
       if (wasEditing) {
-        noteRepo.updateNoteBlockLinks(vault, noteBlock);
+        noteRepo.updateNoteBlockLinks(noteBlock);
       }
     };
-  }, [noteBlock, noteRepo, vault, wasEditing]);
+  }, [noteBlock, noteRepo, wasEditing]);
 };

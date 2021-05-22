@@ -20,9 +20,9 @@ const NoteRow = observer(({ note }: { note: NoteTuple }) => {
   const noteRepo = useNoteRepository();
 
   const handleDelete = useCallback(async () => {
-    const noteModel = await noteRepo.findNote(vault, note.id);
+    const noteModel = await noteRepo.findNote(note.id);
     noteModel?.delete();
-  }, [note.id, noteRepo, vault]);
+  }, [note.id, noteRepo]);
 
   return (
     <tr>
@@ -46,12 +46,9 @@ const NoteRow = observer(({ note }: { note: NoteTuple }) => {
 });
 
 export const NotesPage = () => {
-  const vault = useCurrentVault();
   const noteRepo = useNoteRepository();
 
-  const input$ = useObservable(() =>
-    noteRepo.getAllNotesTuples$(vault.$modelId),
-  );
+  const input$ = useObservable(() => noteRepo.getAllNotesTuples$());
 
   const observedNotes = useObservableState(input$) || [];
 

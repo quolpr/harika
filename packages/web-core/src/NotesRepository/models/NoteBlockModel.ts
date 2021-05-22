@@ -2,12 +2,16 @@ import {
   customRef,
   detach,
   findParent,
+  getParent,
+  getParentPath,
+  isTreeNode,
   model,
   Model,
   modelAction,
   ModelCreationData,
   prop,
   Ref,
+  rootRef,
   tProp,
   types,
 } from 'mobx-keystone';
@@ -19,31 +23,7 @@ import { isVault } from './utils';
 import { isEqual } from 'lodash-es';
 import { BlockContentModel } from './BlockContentModel';
 
-export const noteBlockRef = customRef<NoteBlockModel>('harika/NoteBlockRef', {
-  // this works, but we will use getRefId() from the Todo class instead
-  // getId(maybeTodo) {
-  //   return maybeTodo instanceof Todo ? maybeTodo.id : undefined
-  // },
-
-  resolve(ref) {
-    const vault = findParent<VaultModel>(this, isVault);
-
-    if (!vault) {
-      console.error('Vault not found for noteBlockRef', ref.$modelId);
-
-      return undefined;
-    }
-
-    return vault.blocksMap[ref.id];
-  },
-  onResolvedValueChange(ref, newTodo, oldTodo) {
-    if (oldTodo && !newTodo) {
-      // if the todo value we were referencing disappeared then remove the reference
-      // from its parent
-      detach(ref);
-    }
-  },
-});
+export const noteBlockRef = rootRef<NoteBlockModel>('harika/NoteBlockRef');
 
 @model('harika/NoteBlockModel')
 export class NoteBlockModel extends Model({
@@ -344,7 +324,6 @@ export class NoteBlockModel extends Model({
     this.move(parentOfParentRef?.current, parentRef.current.orderPosition + 1);
   }
 
-  @modelAction
   updateAttrs(data: ModelCreationData<NoteBlockModel>) {
     if (
       data.content !== undefined &&
@@ -373,6 +352,10 @@ export class NoteBlockModel extends Model({
         this.noteBlockIds,
       )
     ) {
+      if (isTreeNode(data.noteBlockRefs)) {
+        console.log(getParent(data.noteBlockRefs));
+      }
+
       this.noteBlockRefs = data.noteBlockRefs;
     }
 
