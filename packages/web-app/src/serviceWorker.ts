@@ -19,13 +19,3 @@ registerRoute(
     plugins: [new ExpirationPlugin({ maxEntries: 20 })],
   }),
 );
-
-// Catch routing errors, like if the user is offline
-setCatchHandler(async ({ event }): Promise<any> => {
-  // Return the precached offline page if a document is being requested
-  if (event.request.destination === 'document') {
-    return matchPrecache('index.html');
-  }
-
-  return Response.error();
-});
