@@ -94,10 +94,13 @@ export class NotesRepository {
       const noteInStore = this.vault.notesMap[id];
 
       if (
-        !(preloadChildren && !noteInStore.areChildrenLoaded) &&
-        !(preloadLinks && !noteInStore.areLinksLoaded)
-      )
+        (preloadChildren && !noteInStore.areChildrenLoaded) ||
+        (preloadLinks && !noteInStore.areLinksLoaded)
+      ) {
+        return this.preloadNote(id, preloadChildren, preloadLinks);
+      } else {
         return noteInStore;
+      }
     }
 
     return this.preloadNote(id, preloadChildren, preloadLinks);

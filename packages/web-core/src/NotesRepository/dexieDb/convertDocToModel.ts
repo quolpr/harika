@@ -79,7 +79,9 @@ const loadNoteDocToModelAttrsWithoutTx = async (
       ...(await Promise.all(
         (
           await notesQueries.getLinkedNotesOfNoteId(noteDoc.id)
-        ).map((doc) => loadNoteDocToModelAttrs(db, doc, true, true, false)),
+        ).map((doc) =>
+          loadNoteDocToModelAttrsWithoutTx(db, doc, true, true, false),
+        ),
       )),
     );
   }
@@ -95,7 +97,9 @@ const loadNoteDocToModelAttrsWithoutTx = async (
       ...(await Promise.all(
         (
           await notesQueries.getByIds(noteIds)
-        ).map((doc) => loadNoteDocToModelAttrs(db, doc, false, false, false)),
+        ).map((doc) =>
+          loadNoteDocToModelAttrsWithoutTx(db, doc, false, false, false),
+        ),
       )),
     );
   }

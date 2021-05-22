@@ -30,12 +30,9 @@ export const useUpdateBlockLinks = (
 
   const wasEditing = usePrevious(editState.isEditing);
 
-  // on demount
   useEffect(() => {
-    return () => {
-      if (wasEditing) {
-        noteRepo.updateNoteBlockLinks(noteBlock);
-      }
-    };
-  }, [noteBlock, noteRepo, wasEditing]);
+    if (!editState.isEditing && wasEditing) {
+      noteRepo.updateNoteBlockLinks(noteBlock);
+    }
+  }, [editState.isEditing, noteBlock, noteRepo, wasEditing]);
 };
