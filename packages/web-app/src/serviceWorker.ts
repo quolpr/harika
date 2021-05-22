@@ -1,7 +1,7 @@
 import { ExpirationPlugin } from 'workbox-expiration';
-import { registerRoute, setCatchHandler } from 'workbox-routing';
-import { StaleWhileRevalidate } from 'workbox-strategies';
-import { matchPrecache, precacheAndRoute } from 'workbox-precaching';
+import { registerRoute } from 'workbox-routing';
+import { NetworkOnly, StaleWhileRevalidate } from 'workbox-strategies';
+import { precacheAndRoute, PrecacheFallbackPlugin } from 'workbox-precaching';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
@@ -17,5 +17,16 @@ registerRoute(
   new StaleWhileRevalidate({
     cacheName: 'google-fonts',
     plugins: [new ExpirationPlugin({ maxEntries: 20 })],
+  }),
+);
+
+registerRoute(
+  ({ request }) => request.mode === 'navigate',
+  new NetworkOnly({
+    plugins: [
+      new PrecacheFallbackPlugin({
+        fallbackURL: '/index.html',
+      }),
+    ],
   }),
 );

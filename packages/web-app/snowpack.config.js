@@ -42,7 +42,6 @@ module.exports = {
               additionalManifestEntries: additionalManifestEntries,
               swSrc: './dist/serviceWorker.js',
               swDest: process.env.SNOWPACK_PUBLIC_SERVICE_WORKER,
-              navigateFallback: '/index.html',
             }),
           );
 
