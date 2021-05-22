@@ -30,7 +30,7 @@ module.exports = {
           const { InjectManifest } = require('workbox-webpack-plugin');
 
           const additionalManifestEntries = [
-            ...glob.sync('*.{png,html,json,txt}', { cwd: './build' }),
+            ...glob.sync('*.{png,html,json,txt,css}', { cwd: './build' }),
           ].map((e) => ({
             url: e,
             revision: process.env.SNOWPACK_PUBLIC_PACKAGE_VERSION,
