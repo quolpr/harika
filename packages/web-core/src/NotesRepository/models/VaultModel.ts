@@ -65,20 +65,6 @@ export class VaultModel extends Model({
     return note;
   }
 
-  // TODO: maybe move link to block model?
-  @modelAction
-  createLink(note: NoteModel, noteBlock: NoteBlockModel) {
-    noteBlock.linkedNoteRefs.push(noteRef(note));
-  }
-
-  @modelAction
-  unlink(note: NoteModel, noteBlock: NoteBlockModel) {
-    noteBlock.linkedNoteRefs.splice(
-      noteBlock.linkedNoteRefs.findIndex(({ id }) => note.$modelId === id),
-      1,
-    );
-  }
-
   @modelAction
   getOrCreateViewByModel(model: { $modelId: string; $modelType: string }) {
     const key = `${model.$modelType}-${model.$modelId}`;

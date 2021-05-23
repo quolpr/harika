@@ -16,7 +16,7 @@ import {
   types,
 } from 'mobx-keystone';
 import { comparer, computed } from 'mobx';
-import type { NoteModel } from './NoteModel';
+import { NoteModel, noteRef } from './NoteModel';
 import type { BlocksViewModel } from './BlocksViewModel';
 import type { VaultModel } from './VaultModel';
 import { isVault } from './utils';
@@ -352,10 +352,6 @@ export class NoteBlockModel extends Model({
         this.noteBlockIds,
       )
     ) {
-      if (isTreeNode(data.noteBlockRefs)) {
-        console.log(getParent(data.noteBlockRefs));
-      }
-
       this.noteBlockRefs = data.noteBlockRefs;
     }
 
@@ -383,5 +379,23 @@ export class NoteBlockModel extends Model({
     }
 
     this.isDeleted = true;
+  }
+
+  @modelAction
+  updateLinks(allNoteIds: string[]) {
+    this.linkedNoteRefs.forEach((ref, index) => {
+      const note = ref.maybeCurrent;
+
+      if (!note || !allNoteIds.includes(ref.id)) {
+        this.linkedNoteRefs.splice(index, 1);
+      }
+    });
+
+    const currentLinkedNoteIds = this.linkedNoteRefs.map(({ id }) => id);
+    allNoteIds.forEach((noteId) => {
+      if (!currentLinkedNoteIds.includes(noteId)) {
+        this.linkedNoteRefs.push(noteRef(noteId));
+      }
+    });
   }
 }

@@ -85,7 +85,7 @@ export class ChangesHandler {
 
     this.patchesSubject
       .pipe(
-        buffer(this.patchesSubject.pipe(debounceTime(500))),
+        buffer(this.patchesSubject.pipe(debounceTime(100))),
         concatMap((patches) => this.applyPatches(patches)),
         tap(() => onPatchesApplied?.()),
       )

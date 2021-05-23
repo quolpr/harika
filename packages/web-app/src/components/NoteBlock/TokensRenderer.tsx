@@ -23,13 +23,7 @@ const RefRenderer = observer(
     );
 
     const noteRef = linkedNotes.find((note) => {
-      try {
-        return note.current.title === token.content;
-      } catch {
-        console.error('ref is invalid');
-
-        return false;
-      }
+      return note.maybeCurrent?.title === token.content;
     });
 
     if (token.content === 'TODO' || token.content === 'DONE') {

@@ -14,7 +14,7 @@ import type { RefToken } from './blockParser/types';
 import { distinctUntilChanged } from 'rxjs/operators';
 import { RxSyncer } from './dexieHelpers/RxSyncer';
 import { ConflictsResolver } from './NotesRepository/dexieDb/ConflictsResolver';
-import { uniqBy } from 'lodash-es';
+import { uniq, uniqBy } from 'lodash-es';
 
 export { NoteModel } from './NotesRepository/models/NoteModel';
 export { VaultModel } from './NotesRepository/models/VaultModel';
@@ -140,12 +140,14 @@ export class NotesRepository {
       async () => {
         console.log('updating links');
 
-        const titles = (
-          filterAst(
-            noteBlock.content.ast,
-            (t) => t.type === 'ref',
-          ) as RefToken[]
-        ).map((t: RefToken) => t.content);
+        const titles = uniq(
+          (
+            filterAst(
+              noteBlock.content.ast,
+              (t) => t.type === 'ref',
+            ) as RefToken[]
+          ).map((t: RefToken) => t.content),
+        );
 
         const existingNotesIndexed = Object.fromEntries(
           (await this.db.notesQueries.getByTitles(titles)).map((n) => [
@@ -154,7 +156,7 @@ export class NotesRepository {
           ]),
         );
 
-        const allNotes = (
+        const allParsedLinkedNotes = (
           await Promise.all(
             titles.map(async (name) => {
               if (!existingNotesIndexed[name]) {
@@ -174,25 +176,9 @@ export class NotesRepository {
           )
         ).flatMap((n) => (n ? [n] : []));
 
-        const allNotesIndexed = Object.fromEntries(
-          allNotes.map((n) => [n.$modelId, n]),
+        noteBlock.updateLinks(
+          allParsedLinkedNotes.map(({ $modelId }) => $modelId),
         );
-
-        const existingLinkedNotesIndexed = Object.fromEntries(
-          noteBlock.linkedNoteRefs.map((ref) => [ref.id, ref.current]),
-        );
-
-        allNotes.forEach((note) => {
-          if (!existingLinkedNotesIndexed[note.$modelId]) {
-            this.vault.createLink(note, noteBlock);
-          }
-        });
-
-        Object.values(existingLinkedNotesIndexed).forEach((note) => {
-          if (!allNotesIndexed[note.$modelId]) {
-            this.vault.unlink(note, noteBlock);
-          }
-        });
       },
     );
   }
