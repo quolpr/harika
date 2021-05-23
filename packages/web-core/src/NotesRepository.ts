@@ -15,6 +15,7 @@ import { distinctUntilChanged } from 'rxjs/operators';
 import { RxSyncer } from './dexieHelpers/RxSyncer';
 import { ConflictsResolver } from './NotesRepository/dexieDb/ConflictsResolver';
 import { uniqBy } from 'lodash-es';
+import { firstValueFrom } from 'rxjs';
 
 export { NoteModel } from './NotesRepository/models/NoteModel';
 export { VaultModel } from './NotesRepository/models/VaultModel';
@@ -218,6 +219,15 @@ export class NotesRepository {
     this.vault.createOrUpdateEntitiesFromAttrs(data.notes, data.noteBlocks);
 
     return this.vault.notesMap[row.id];
+  }
+
+  async isNoteExists(title: string) {
+    if (Object.values(this.vault.notesMap).find((note) => note.title === title))
+      return true;
+
+    if (await this.db.notes.get({ title })) return true;
+
+    return false;
   }
 
   // TODO: better Rx way, put title to pipe

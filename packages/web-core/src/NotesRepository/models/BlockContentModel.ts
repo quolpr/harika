@@ -81,7 +81,7 @@ export class BlockContentModel extends Model({
 
   @modelAction
   updateTitle(title: string, newTitle: string) {
-    this.value.split(`[[${title}]]`).join(`[[${newTitle}]]`);
+    this.value = this.value.split(`[[${title}]]`).join(`[[${newTitle}]]`);
   }
 
   @modelAction

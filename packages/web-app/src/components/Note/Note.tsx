@@ -23,6 +23,8 @@ import { Toolbar } from './Toolbar';
 import { useMedia } from 'react-use';
 import type { Ref } from 'mobx-keystone';
 import { CurrentBlockInputRefContext } from '../../contexts';
+import { useNoteRepository } from '../../contexts/CurrentNoteRepositoryContext';
+import { firstValueFrom } from 'rxjs';
 
 export interface IFocusBlockState {
   focusOnBlockId: string;
@@ -152,15 +154,44 @@ const NoteBlocks = observer(
 const NoteBody = observer(({ note }: { note: NoteModel }) => {
   const vault = useCurrentVault();
   const vaultUiState = useCurrentVaultUiState();
+  const noteRepo = useNoteRepository();
   const history = useHistory<IFocusBlockState>();
   const focusOnBlockId = (history.location.state || {}).focusOnBlockId;
 
-  const handleChange = useCallback(
-    (e: ChangeEvent<HTMLTextAreaElement>) => {
-      note.updateTitle(e.target.value);
+  const [noteTitle, setNoteTitle] = useState(note.title);
+
+  useEffect(() => {
+    setNoteTitle(note.title);
+  }, [note.title]);
+
+  const changeTitle = useCallback(async () => {
+    if (note.title === noteTitle) return;
+
+    const exists = await noteRepo.isNoteExists(noteTitle);
+
+    if (exists) {
+      alert(
+        `Can't change note title to ${noteTitle} - such note already exists`,
+      );
+
+      setNoteTitle(note.title);
+    } else {
+      note.updateTitle(noteTitle);
+    }
+  }, [note, noteRepo, noteTitle]);
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === 'Enter') {
+        e.currentTarget.blur();
+      }
     },
-    [note],
+    [],
   );
+
+  const handleChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+    setNoteTitle(e.currentTarget.value);
+  }, []);
 
   useEffect(() => {
     if (focusOnBlockId) {
@@ -173,10 +204,12 @@ const NoteBody = observer(({ note }: { note: NoteModel }) => {
   return (
     <div className="note">
       <h2 className="note__header">
-        <TextareaAutosize
+        <input
           className="note__input"
-          value={note.title}
+          value={noteTitle}
+          onBlur={changeTitle}
           onChange={handleChange}
+          onKeyDown={handleKeyDown}
         />
       </h2>
 
