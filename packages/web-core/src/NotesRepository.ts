@@ -14,6 +14,7 @@ import type { RefToken } from './blockParser/types';
 import { distinctUntilChanged } from 'rxjs/operators';
 import { RxSyncer } from './dexieHelpers/RxSyncer';
 import { ConflictsResolver } from './NotesRepository/dexieDb/ConflictsResolver';
+import { uniqBy } from 'lodash-es';
 
 export { NoteModel } from './NotesRepository/models/NoteModel';
 export { VaultModel } from './NotesRepository/models/VaultModel';
@@ -24,7 +25,7 @@ export {
 } from './NotesRepository/models/NoteBlockModel';
 export { BlockContentModel } from './NotesRepository/models/BlockContentModel';
 
-// Document = RxDb doc
+// Document = Dexie doc
 // Model = DDD model
 // Tuple = plain object data, used for fast data getting
 
@@ -167,7 +168,7 @@ export class NotesRepository {
               } else {
                 const existing = existingNotesIndexed[name];
 
-                return this.findNote(existing.id, false, false);
+                return this.findNote(existing.id, false, false, false);
               }
             }),
           )
@@ -240,6 +241,46 @@ export class NotesRepository {
           createdAt: new Date(row.createdAt),
         })),
       ),
+    );
+  }
+
+  async deleteNote(id: string) {
+    return this.db.transaction(
+      'rw',
+      [this.db.noteBlocks, this.db.notes],
+      async () => {
+        let [linkedBlocks, blocks, note] = await Promise.all([
+          this.db.noteBlocksQueries.getLinkedBlocksOfNoteId(id),
+          this.db.noteBlocksQueries.getByNoteId(id),
+          this.db.notesQueries.getById(id),
+        ]);
+
+        const noteBlockIds = blocks.map(({ id }) => id);
+        linkedBlocks = uniqBy(linkedBlocks, ({ id }) => id).filter(
+          // cause they will be already removed
+          ({ id }) => !noteBlockIds.includes(id),
+        );
+
+        if (!note) {
+          console.error(`Note with id ${id} not deleted - not found`);
+
+          return;
+        }
+
+        await Promise.all([
+          await this.db.notes.delete(note.id),
+          await this.db.noteBlocks.bulkDelete(noteBlockIds),
+          await Promise.all(
+            linkedBlocks.map(async (block) => {
+              await this.db.noteBlocks.update(block.id, {
+                linkedNoteIds: block.linkedNoteIds.filter(
+                  (linkedId) => id !== linkedId,
+                ),
+              });
+            }),
+          ),
+        ]);
+      },
     );
   }
 

@@ -26,6 +26,8 @@ const RefRenderer = observer(
       try {
         return note.current.title === token.content;
       } catch {
+        console.error('ref is invalid');
+
         return false;
       }
     });

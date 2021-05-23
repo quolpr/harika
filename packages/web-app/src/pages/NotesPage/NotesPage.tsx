@@ -20,8 +20,7 @@ const NoteRow = observer(({ note }: { note: NoteTuple }) => {
   const noteRepo = useNoteRepository();
 
   const handleDelete = useCallback(async () => {
-    const noteModel = await noteRepo.findNote(note.id);
-    noteModel?.delete();
+    noteRepo.deleteNote(note.id);
   }, [note.id, noteRepo]);
 
   return (
