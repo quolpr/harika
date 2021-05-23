@@ -89,13 +89,19 @@ export class NotesRepository {
     });
   }
 
-  async findNote(id: string, preloadChildren = true, preloadLinks = true) {
+  async findNote(
+    id: string,
+    preloadChildren = true,
+    preloadLinks = true,
+    preloadBacklinks = true,
+  ) {
     if (this.vault.notesMap[id]) {
       const noteInStore = this.vault.notesMap[id];
 
       if (
         (preloadChildren && !noteInStore.areChildrenLoaded) ||
-        (preloadLinks && !noteInStore.areLinksLoaded)
+        (preloadLinks && !noteInStore.areLinksLoaded) ||
+        (preloadBacklinks && !noteInStore.areBacklinksLoaded)
       ) {
         return this.preloadNote(id, preloadChildren, preloadLinks);
       } else {
@@ -180,7 +186,12 @@ export class NotesRepository {
     );
   }
 
-  async preloadNote(id: string, preloadChildren = true, preloadLinks = true) {
+  async preloadNote(
+    id: string,
+    preloadChildren = true,
+    preloadLinks = true,
+    preloadBacklinks = true,
+  ) {
     const row = await this.db.notesQueries.getById(id);
 
     if (!row) return;
@@ -190,15 +201,10 @@ export class NotesRepository {
       row,
       preloadChildren,
       preloadLinks,
+      preloadBacklinks,
     );
 
-    this.vault.createOrUpdateEntitiesFromAttrs(
-      [data.note, ...data.linkedNotes.map(({ note }) => note)],
-      [
-        ...data.noteBlocks,
-        ...data.linkedNotes.flatMap(({ noteBlocks }) => noteBlocks),
-      ],
-    );
+    this.vault.createOrUpdateEntitiesFromAttrs(data.notes, data.noteBlocks);
 
     return this.vault.notesMap[row.id];
   }

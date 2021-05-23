@@ -14,12 +14,6 @@ export type NoteBlockData = ModelCreationData<NoteBlockModel> & {
   $modelId: string;
 };
 
-interface IConvertResult {
-  note: NoteData;
-  noteBlocks: NoteBlockData[];
-  linkedNotes: IConvertResult[];
-}
-
 export const convertNoteBlockDocToModelAttrs = (
   doc: NoteBlockDocType,
 ): NoteBlockData => {
@@ -41,6 +35,7 @@ export const convertNoteDocToModelAttrs = (
   doc: NoteDocType,
   areChildrenLoaded: boolean,
   areLinksLoaded: boolean,
+  areBacklinksLoaded: boolean,
 ): NoteData => {
   return {
     $modelId: doc.id,
@@ -49,6 +44,7 @@ export const convertNoteDocToModelAttrs = (
     createdAt: doc.createdAt,
     areChildrenLoaded: areChildrenLoaded,
     areLinksLoaded: areLinksLoaded,
+    areBacklinksLoaded: areBacklinksLoaded,
     rootBlockRef: noteBlockRef(doc.rootBlockId),
   };
 };
@@ -60,6 +56,8 @@ const loadNoteDocToModelAttrsWithoutTx = async (
   preloadChildren = true,
   preloadBlockLinks = true,
   preloadNoteBacklinks = true,
+  notes: NoteData[] = [],
+  noteBlocks: NoteBlockData[] = [],
 ) => {
   const noteBlocksQueries = db.noteBlocksQueries;
   const notesQueries = db.notesQueries;
@@ -72,17 +70,21 @@ const loadNoteDocToModelAttrsWithoutTx = async (
       )
     : [];
 
-  const linkedNotes: IConvertResult[] = [];
-
   if (preloadNoteBacklinks) {
-    linkedNotes.push(
-      ...(await Promise.all(
-        (
-          await notesQueries.getLinkedNotesOfNoteId(noteDoc.id)
-        ).map((doc) =>
-          loadNoteDocToModelAttrsWithoutTx(db, doc, true, true, false),
+    await Promise.all(
+      (
+        await notesQueries.getLinkedNotesOfNoteId(noteDoc.id)
+      ).map((doc) =>
+        loadNoteDocToModelAttrsWithoutTx(
+          db,
+          doc,
+          true,
+          true,
+          false,
+          notes,
+          noteBlocks,
         ),
-      )),
+      ),
     );
   }
 
@@ -93,27 +95,36 @@ const loadNoteDocToModelAttrsWithoutTx = async (
       ),
     );
 
-    linkedNotes.push(
-      ...(await Promise.all(
-        (
-          await notesQueries.getByIds(noteIds)
-        ).map((doc) =>
-          loadNoteDocToModelAttrsWithoutTx(db, doc, false, false, false),
+    await Promise.all(
+      (
+        await notesQueries.getByIds(noteIds)
+      ).map((doc) =>
+        loadNoteDocToModelAttrsWithoutTx(
+          db,
+          doc,
+          false,
+          false,
+          false,
+          notes,
+          noteBlocks,
         ),
-      )),
+      ),
     );
   }
 
-  const noteModel = convertNoteDocToModelAttrs(
-    noteDoc,
-    preloadChildren,
-    preloadBlockLinks,
+  noteBlocks.push(...noteBlockAttrs);
+  notes.push(
+    convertNoteDocToModelAttrs(
+      noteDoc,
+      preloadChildren,
+      preloadBlockLinks,
+      preloadNoteBacklinks,
+    ),
   );
 
   return {
-    note: noteModel,
-    noteBlocks: noteBlockAttrs,
-    linkedNotes: linkedNotes,
+    notes,
+    noteBlocks,
   };
 };
 

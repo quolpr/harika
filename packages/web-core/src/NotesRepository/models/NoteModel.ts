@@ -56,6 +56,7 @@ export class NoteModel extends Model({
   createdAt: tProp(types.dateTimestamp),
   areChildrenLoaded: prop<boolean>(false),
   areLinksLoaded: prop<boolean>(false),
+  areBacklinksLoaded: prop<boolean>(false),
   isDeleted: prop<boolean>(false),
   rootBlockRef: prop<Ref<NoteBlockModel>>(),
 }) {

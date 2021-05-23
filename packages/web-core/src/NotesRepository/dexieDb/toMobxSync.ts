@@ -81,6 +81,7 @@ export const toMobxSync = (db: VaultDexieDatabase, vault: VaultModel) => {
                 ev.oldObj,
                 Boolean(note?.areChildrenLoaded),
                 Boolean(note?.areLinksLoaded),
+                Boolean(note?.areBacklinksLoaded),
               ),
               isDeleted: true,
             };
@@ -91,6 +92,7 @@ export const toMobxSync = (db: VaultDexieDatabase, vault: VaultModel) => {
               ev.obj,
               Boolean(note?.areChildrenLoaded),
               Boolean(note?.areLinksLoaded),
+              Boolean(note?.areBacklinksLoaded),
             );
           }
         });
