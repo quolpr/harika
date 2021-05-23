@@ -15,7 +15,6 @@ import { distinctUntilChanged } from 'rxjs/operators';
 import { RxSyncer } from './dexieHelpers/RxSyncer';
 import { ConflictsResolver } from './NotesRepository/dexieDb/ConflictsResolver';
 import { uniqBy } from 'lodash-es';
-import { firstValueFrom } from 'rxjs';
 
 export { NoteModel } from './NotesRepository/models/NoteModel';
 export { VaultModel } from './NotesRepository/models/VaultModel';
@@ -294,7 +293,7 @@ export class NotesRepository {
     );
   }
 
-  destroy = () => {
+  close = () => {
     console.log(`Vault ${this.vault.$modelId} is closed`);
 
     this.db.close();

@@ -101,7 +101,7 @@ export const VaultLayout: React.FC<{
   }, [isSidebarOpened]);
 
   useEffect(() => {
-    let destroy = () => {};
+    let closeDevtool = () => {};
 
     const cb = async () => {
       const repo = await vaultRepository.getNotesRepo(vaultId);
@@ -115,21 +115,23 @@ export const VaultLayout: React.FC<{
       } else {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         if ((window as any).__REDUX_DEVTOOLS_EXTENSION__) {
-          (await import('../../connectReduxDevtool')).connect(
-            repo.vault,
-            `Vault ${repo.vault.name}`,
-          );
+          closeDevtool = await (
+            await import('../../connectReduxDevtool')
+          ).connect(repo.vault, `Vault ${repo.vault.name}`);
         }
       }
-
-      destroy = repo.destroy;
 
       setNotesRepo(repo);
     };
 
     cb();
 
-    return () => destroy();
+    return () => {
+      vaultRepository.closeNotesRepo(vaultId);
+      closeDevtool();
+
+      setNotesRepo(undefined);
+    };
   }, [vaultRepository, vaultId, history]);
 
   const [vaultUiState] = useState(new VaultUiState({}));

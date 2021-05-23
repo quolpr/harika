@@ -36,7 +36,7 @@ export const VaultAppRoute = () => {
     cb();
 
     return () => {
-      repo?.destroy();
+      repo?.close();
       setVaultRepository(undefined);
     };
   }, [userId, isOffline]);

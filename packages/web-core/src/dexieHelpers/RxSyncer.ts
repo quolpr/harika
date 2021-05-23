@@ -16,25 +16,21 @@ import {
   merge,
   Observable,
   of,
-  pipe,
   Subject,
 } from 'rxjs';
 import {
-  bufferToggle,
   catchError,
   concatMap,
   delay,
   distinctUntilChanged,
   filter,
   first,
-  flatMap,
   map,
   mapTo,
   mergeMap,
   retry,
   shareReplay,
   switchMap,
-  take,
   takeUntil,
   tap,
   timeout,
@@ -93,19 +89,17 @@ export class RxSyncer {
     private conflictsResolver?: IConflictsResolver,
   ) {
     const connect$ = this.socket$.pipe(
-      takeUntil(this.stop$),
       switchMap((socket) => fromEvent(socket, 'connect')),
     );
 
     const disconnect$ = this.socket$.pipe(
-      takeUntil(this.stop$),
       mergeMap((socket) => fromEvent(socket, 'disconnect')),
     );
 
     this.isConnected$ = merge(
       connect$.pipe(mapTo(true)),
       disconnect$.pipe(mapTo(false)),
-    ).pipe(shareReplay());
+    ).pipe(takeUntil(this.stop$), shareReplay());
 
     this.isConnectedAndInitialized$ = combineLatest([
       this.isConnected$,
@@ -140,6 +134,7 @@ export class RxSyncer {
             )
           : of(false);
       }),
+      takeUntil(this.stop$),
       shareReplay(1),
     );
 
@@ -181,6 +176,7 @@ export class RxSyncer {
           return of(null);
         }),
         tap(() => this.isLocked$.next(false)),
+        takeUntil(this.stop$),
       )
       .subscribe();
 
@@ -248,6 +244,7 @@ export class RxSyncer {
           return changesDescription;
         }),
         switchMap(() => this.socket$),
+        takeUntil(this.stop$),
       )
       .subscribe((socket) => {
         if (isFirstRound && !partial) {
@@ -311,6 +308,7 @@ export class RxSyncer {
               )
             : of(false);
         }),
+        takeUntil(this.stop$),
       )
       .subscribe((isInitialized) => this.isInitialized$.next(isInitialized));
   };
@@ -338,6 +336,7 @@ export class RxSyncer {
             : of();
         }),
         first(),
+        takeUntil(this.stop$),
       )
       .subscribe({
         next() {
@@ -445,6 +444,7 @@ export class RxSyncer {
         switchMap((isConnected) => {
           return isConnected ? clientCommandsHandler$ : EMPTY;
         }),
+        takeUntil(this.stop$),
       )
       .subscribe((ev) => this.successCommandHandled$.next(ev));
   }

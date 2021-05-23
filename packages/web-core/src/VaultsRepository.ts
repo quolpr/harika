@@ -23,8 +23,6 @@ export class VaultsRepository {
   async init() {
     this.database = new UserDexieDatabase(this.dbId);
 
-    await this.database.open();
-
     console.log('init vaults');
 
     if (this.sync) {
@@ -42,6 +40,8 @@ export class VaultsRepository {
   }
 
   async getNotesRepo(vaultId: string) {
+    console.log({ repo: this.notesRepositories[vaultId] });
+
     if (this.notesRepositories[vaultId]) return this.notesRepositories[vaultId];
 
     this.notesRepositories[vaultId] = await this.initializeNotesRepo(vaultId);
@@ -77,7 +77,6 @@ export class VaultsRepository {
     if (!vaultDoc) return;
 
     const db = new VaultDexieDatabase(id);
-    await db.open();
 
     const vault = new VaultModel({ name: vaultDoc.name, $modelId: id });
 
@@ -93,7 +92,17 @@ export class VaultsRepository {
     return repo;
   }
 
-  destroy = () => {
+  close = () => {
     this.database.close();
+  };
+
+  closeNotesRepo = (id: string) => {
+    const repo = this.notesRepositories[id];
+
+    if (!repo) return;
+
+    repo.close();
+
+    this.notesRepositories[id] = undefined;
   };
 }
