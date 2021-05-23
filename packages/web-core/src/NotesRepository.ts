@@ -103,13 +103,23 @@ export class NotesRepository {
         (preloadLinks && !noteInStore.areLinksLoaded) ||
         (preloadBacklinks && !noteInStore.areBacklinksLoaded)
       ) {
-        return this.preloadNote(id, preloadChildren, preloadLinks);
+        return this.preloadNote(
+          id,
+          preloadChildren,
+          preloadLinks,
+          preloadBacklinks,
+        );
       } else {
         return noteInStore;
       }
     }
 
-    return this.preloadNote(id, preloadChildren, preloadLinks);
+    return this.preloadNote(
+      id,
+      preloadChildren,
+      preloadLinks,
+      preloadBacklinks,
+    );
   }
 
   getNoteIdByTitle$(title: string) {
