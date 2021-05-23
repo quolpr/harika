@@ -128,24 +128,12 @@ export const VaultLayout: React.FC<{
 
     return () => {
       vaultRepository.closeNotesRepo(vaultId);
-      closeDevtool();
 
       setNotesRepo(undefined);
     };
   }, [vaultRepository, vaultId, history]);
 
   const [vaultUiState] = useState(new VaultUiState({}));
-
-  /* useEffect(() => { */
-  /*   // eslint-disable-next-line @typescript-eslint/no-explicit-any */
-  /*   if ((window as any).__REDUX_DEVTOOLS_EXTENSION__) { */
-  /*     const connection = remotedev.connectViaExtension({ */
-  /*       name: `Vault UI`, */
-  /*     }); */
-
-  /*     connectReduxDevTools(remotedev, connection, vaultUiState); */
-  /*   } */
-  /* }, [vaultUiState]); */
 
   // TODO: reset focused block on page change
 

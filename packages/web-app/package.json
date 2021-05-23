@@ -20,7 +20,7 @@
     "@sentry/react": "^6.4.0",
     "@sentry/tracing": "^6.4.0",
     "@snowpack/plugin-postcss": "^1.2.2",
-    "Buffer": "^0.0.0",
+    "buffer": "^6.0.3",
     "bufferutil": "^4.0.3",
     "clsx": "^1.1.1",
     "mobx-react-lite": "^3.2.0",
