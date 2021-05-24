@@ -70,6 +70,7 @@ module.exports = {
     treeshake: true,
   },
   packageOptions: {
+    polyfillNode: true,
     knownEntrypoints: ['@welldone-software/why-did-you-render'],
     /* ... */
   },

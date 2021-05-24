@@ -12,6 +12,7 @@ module.exports = {
     ],
   ],
   packageOptions: {
+    polyfillNode: true,
     external: ['react'],
     /* ... */
   },

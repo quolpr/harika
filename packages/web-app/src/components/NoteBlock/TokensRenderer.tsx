@@ -113,6 +113,18 @@ const TokenRenderer = observer(
         return <pre>{token.content}</pre>;
       case 'codeBlock':
         return <pre>{token.content}</pre>;
+      case 'link':
+        return (
+          <a
+            href={token.href}
+            className="link"
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {token.content}
+          </a>
+        );
       case 'str':
         return (
           <span

@@ -1,3 +1,5 @@
+import type { LinkEntityType } from 'linkifyjs';
+
 interface BaseToken {
   offsetStart: number;
   offsetEnd: number;
@@ -58,6 +60,14 @@ interface StringToken extends BaseToken {
   content: string;
 }
 
+interface LinkToken extends BaseToken {
+  id: string;
+  type: 'link';
+  content: string;
+  href: string;
+  linkType: LinkEntityType;
+}
+
 export type Token =
   | RefToken
   | TagToken
@@ -67,4 +77,5 @@ export type Token =
   | HeadToken
   | InlineCodeToken
   | CodeBlockToken
-  | StringToken;
+  | StringToken
+  | LinkToken;

@@ -1,8 +1,8 @@
 import { computed } from 'mobx';
 import { model, Model, modelAction, prop } from 'mobx-keystone';
+import { mapTokens } from '../../blockParser/astHelpers';
 import { parse } from '../../blockParser/blockParser';
 import type { Token } from '../../blockParser/types';
-import produce from 'immer';
 
 const findById = (
   ast: Token[],
@@ -58,6 +58,9 @@ const astToString = (ast: Token[]): string => {
         case 'str':
           return t.content;
 
+        case 'link':
+          return t.content;
+
         default:
           assertUnreachable(t);
       }
@@ -86,10 +89,14 @@ export class BlockContentModel extends Model({
 
   @modelAction
   toggleTodo(id: string) {
-    const newAst = produce(this.ast, (ast) => {
-      findById(ast, id, (t) => {
-        t.content = t.content === 'TODO' ? 'DONE' : 'TODO';
-      });
+    const newAst = mapTokens(this.ast, (token) => {
+      if (token.id === id && token.type === 'ref') {
+        return {
+          ...token,
+          content: token.content === 'TODO' ? 'DONE' : 'TODO',
+        };
+      }
+      return token;
     });
 
     this.update(astToString(newAst));
