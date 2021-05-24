@@ -1,6 +1,6 @@
 import { computed } from 'mobx';
 import { model, Model, modelAction, prop } from 'mobx-keystone';
-import { mapTokens } from '../../blockParser/astHelpers';
+import { findFirst, mapTokens } from '../../blockParser/astHelpers';
 import { parse } from '../../blockParser/blockParser';
 import type { Token } from '../../blockParser/types';
 
@@ -100,5 +100,15 @@ export class BlockContentModel extends Model({
     });
 
     this.update(astToString(newAst));
+  }
+
+  get hasTodo() {
+    return Boolean(
+      findFirst(
+        this.ast,
+        (t) =>
+          t.type === 'ref' && (t.content === 'TODO' || t.content === 'DONE'),
+      ),
+    );
   }
 }

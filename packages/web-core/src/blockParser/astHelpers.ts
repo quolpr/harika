@@ -11,11 +11,28 @@ export const filterAst = (
     }
 
     if (Array.isArray(t.content)) {
-      filterAst(tokens, filter, result);
+      filterAst(t.content, filter, result);
     }
   });
 
   return result;
+};
+
+export const findFirst = (
+  tokens: Token[],
+  finder: (t: Token) => boolean,
+): Token | undefined => {
+  for (const token of tokens) {
+    if (finder(token)) return token;
+
+    if (Array.isArray(token.content)) {
+      const nestedFindResult = findFirst(token.content, finder);
+
+      if (nestedFindResult) return nestedFindResult;
+    }
+  }
+
+  return undefined;
 };
 
 export const mapTokens = (

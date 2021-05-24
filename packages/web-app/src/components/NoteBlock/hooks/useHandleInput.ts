@@ -36,23 +36,18 @@ export const useHandleInput = (
 
         const content = noteBlock.content.value;
 
-        if (start === end) {
-          const firstToken = getTokensAtCursor(start, noteBlock.content.ast)[0];
-
-          if (firstToken?.type === 'ref' && start !== firstToken.offsetEnd) {
-            e.currentTarget.selectionStart = firstToken.offsetEnd;
-            e.currentTarget.selectionEnd = firstToken.offsetEnd;
-
-            return;
-          }
-        }
-
         let newContent = '';
+        let startAt = 0;
 
         if (start === end && start !== content.length) {
           newContent = content.slice(start, content.length);
 
           noteBlock.content.update(content.slice(0, start));
+        }
+
+        if (noteBlock.content.hasTodo && newContent.length === 0) {
+          newContent = '[[TODO]] ';
+          startAt = newContent.length;
         }
 
         const newBlock = noteBlock.injectNewRightBlock(newContent, view);
@@ -71,7 +66,7 @@ export const useHandleInput = (
           viewId: view.$modelId,
           blockId: newBlock.$modelId,
           isEditing: true,
-          startAt: 0,
+          startAt,
         });
       }
     },
