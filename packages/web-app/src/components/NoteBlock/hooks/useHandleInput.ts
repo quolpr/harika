@@ -13,7 +13,7 @@ export const useHandleInput = (
   insertFakeInput: (el?: HTMLElement) => void,
   releaseFakeInput: () => void,
 ) => {
-  const [, setEditState] = useCurrentFocusedBlockState(
+  const [editState, setEditState] = useCurrentFocusedBlockState(
     view.$modelId,
     noteBlock.$modelId,
   );
@@ -129,11 +129,23 @@ export const useHandleInput = (
         e.preventDefault();
 
         if (!isSearching) {
+          setEditState({
+            viewId: view.$modelId,
+            blockId: noteBlock.$modelId,
+            startAt: start,
+            isEditing: true,
+          });
           noteBlock.tryMoveUp();
         }
       } else if (e.key === 'Tab' && e.shiftKey) {
         e.preventDefault();
 
+        setEditState({
+          viewId: view.$modelId,
+          blockId: noteBlock.$modelId,
+          startAt: start,
+          isEditing: true,
+        });
         noteBlock.tryMoveDown();
       } else if (e.key === 'ArrowUp' && e.shiftKey) {
         e.preventDefault();
@@ -147,33 +159,51 @@ export const useHandleInput = (
         e.preventDefault();
 
         insertText(e.currentTarget, '[]', 1);
-      } else if (e.key === 'ArrowDown') {
-        e.preventDefault();
-
-        if (!isSearching) {
-          const [, right] = noteBlock.leftAndRight;
-
-          if (right) {
-            setEditState({
-              viewId: view.$modelId,
-              blockId: right.$modelId,
-              isEditing: true,
-            });
-          }
-        }
       } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
+        const target = e.currentTarget;
 
         if (!isSearching) {
-          const [left] = noteBlock.leftAndRight;
+          requestAnimationFrame(() => {
+            const newStart = target.selectionStart;
 
-          if (left) {
-            setEditState({
-              viewId: view.$modelId,
-              blockId: left.$modelId,
-              isEditing: true,
-            });
-          }
+            // When cursor moved to the start of the string - it means there is now any rows upper
+            if (newStart === 0) {
+              const [left] = noteBlock.leftAndRight;
+
+              if (left) {
+                setEditState({
+                  viewId: view.$modelId,
+                  blockId: left.$modelId,
+                  isEditing: true,
+                  startAt: start,
+                });
+              }
+            }
+          });
+        }
+      } else if (e.key === 'ArrowDown') {
+        const target = e.currentTarget;
+
+        if (!isSearching) {
+          requestAnimationFrame(() => {
+            const newStart = target.selectionStart;
+
+            if (newStart === noteBlock.content.value.length) {
+              const [, right] = noteBlock.leftAndRight;
+
+              if (right) {
+                setEditState({
+                  viewId: view.$modelId,
+                  blockId: right.$modelId,
+                  isEditing: true,
+                  startAt:
+                    start === noteBlock.content.value.length
+                      ? right.content.value.length
+                      : start,
+                });
+              }
+            }
+          });
         }
       } else if (e.key === 'Escape') {
         e.preventDefault();
