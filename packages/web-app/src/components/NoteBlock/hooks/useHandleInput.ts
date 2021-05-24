@@ -30,6 +30,8 @@ export const useHandleInput = (
 
       // on ios sometime shiftKey === caps lock
       if (e.key === 'Enter' && (isIOS || !e.shiftKey)) {
+        if (isSearching) return;
+
         e.preventDefault();
 
         const content = noteBlock.content.value;
@@ -74,6 +76,7 @@ export const useHandleInput = (
       }
     },
     [
+      isSearching,
       noteBlock,
       view,
       noteBlockElRef,
@@ -130,7 +133,9 @@ export const useHandleInput = (
       } else if (e.key === 'Tab' && !e.shiftKey) {
         e.preventDefault();
 
-        noteBlock.tryMoveUp();
+        if (!isSearching) {
+          noteBlock.tryMoveUp();
+        }
       } else if (e.key === 'Tab' && e.shiftKey) {
         e.preventDefault();
 
@@ -237,7 +242,7 @@ export const useHandleInput = (
       const firstToken = getTokensAtCursor(start, noteBlock.content.ast)[0];
 
       if (firstToken?.type === 'ref') {
-        const toInsert = `[[${res.title}]]`;
+        const toInsert = `[[${res.title}]] `;
 
         insertText(input, toInsert, toInsert.length, {
           start: firstToken.offsetStart,

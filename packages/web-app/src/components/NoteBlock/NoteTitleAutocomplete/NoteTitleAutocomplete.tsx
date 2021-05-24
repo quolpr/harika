@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { BehaviorSubject, combineLatest, timer } from 'rxjs';
 import { debounce, distinctUntilChanged, filter, map } from 'rxjs/operators';
 import { useNoteRepository } from '../../../contexts/CurrentNoteRepositoryContext';
-import { useCurrentVault } from '../../../hooks/useCurrentVault';
 import { cn } from '../../../utils';
 import scrollIntoView from 'scroll-into-view-if-needed';
 import './styles.css';
@@ -82,7 +81,7 @@ export const NoteTitleAutocomplete = React.memo(
         const currentIdIndex =
           focusedId === undefined ? -1 : ids.indexOf(focusedId);
 
-        if (currentIdIndex === -1 || ids.length === 0) return;
+        const isSearchPresent = currentIdIndex !== -1 && ids.length !== 0;
 
         const handleNewIndexSet = (newIndex: number) => {
           setFocusedId(ids[newIndex]);
@@ -96,27 +95,35 @@ export const NoteTitleAutocomplete = React.memo(
           }
         };
 
-        if (e.key === 'ArrowDown') {
-          e.preventDefault();
+        if (isSearchPresent) {
+          if (e.key === 'ArrowDown') {
+            e.preventDefault();
 
-          const newIndex =
-            ids[currentIdIndex + 1] !== undefined ? currentIdIndex + 1 : 0;
+            const newIndex =
+              ids[currentIdIndex + 1] !== undefined ? currentIdIndex + 1 : 0;
 
-          handleNewIndexSet(newIndex);
-        } else if (e.key === 'ArrowUp') {
-          e.preventDefault();
+            handleNewIndexSet(newIndex);
+          } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
 
-          const newIndex =
-            ids[currentIdIndex - 1] !== undefined
-              ? currentIdIndex - 1
-              : ids.length - 1;
+            const newIndex =
+              ids[currentIdIndex - 1] !== undefined
+                ? currentIdIndex - 1
+                : ids.length - 1;
 
-          handleNewIndexSet(newIndex);
-        } else if (e.key === 'Enter') {
+            handleNewIndexSet(newIndex);
+          }
+        }
+
+        if (e.key === 'Enter' || e.key === 'Tab') {
           if (value !== undefined) {
             e.preventDefault();
 
-            onSelect(searchResults[currentIdIndex]);
+            if (isSearchPresent) {
+              onSelect(searchResults[currentIdIndex]);
+            } else {
+              onSelect({ id: '123', title: value });
+            }
           }
         }
       };
@@ -129,7 +136,6 @@ export const NoteTitleAutocomplete = React.memo(
     }, [focusedId, onSelect, searchResults, value]);
 
     return (
-      // eslint-disable-next-line react/jsx-no-useless-fragment
       <div style={{ position: 'relative' }}>
         {value && (
           <div className={noteAutocompleteClass()}>
