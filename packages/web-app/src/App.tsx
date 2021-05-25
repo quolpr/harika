@@ -8,6 +8,7 @@ import { useAuthState } from './hooks/useAuthState';
 import { Redirect, Route, Router, Switch } from 'react-router-dom';
 import { createBrowserHistory } from 'history';
 import { useLocalStorage } from '@rehooks/local-storage';
+import { Workbox } from 'workbox-window';
 
 const SignupPage = React.lazy(() => import('./pages/SignupPage/SignupPage'));
 const LoginPage = React.lazy(() => import('./pages/LoginPage/LoginPage'));
@@ -41,13 +42,6 @@ const importSentry = async () => {
 
 importSentry();
 
-if (import.meta.env.MODE === 'production' && 'serviceWorker' in navigator) {
-  // Use the window load event to keep the page load performant
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js');
-  });
-}
-
 Modal.setAppElement('body');
 
 const queryClient = new QueryClient();
@@ -56,6 +50,22 @@ export const App = () => {
   const [authInfo] = useAuthState();
 
   const [lastVaultId] = useLocalStorage<string | undefined>('lastVaultId');
+
+  useEffect(() => {
+    if (import.meta.env.MODE === 'production' && 'serviceWorker' in navigator) {
+      const wb = new Workbox('/sw.js');
+
+      wb.addEventListener('waiting', () => {
+        if (window.confirm('New version available. Update?')) {
+          wb.addEventListener('controlling', () => {
+            window.location.reload();
+          });
+
+          wb.messageSkipWaiting();
+        }
+      });
+    }
+  }, []);
 
   useEffect(() => {
     function handleResize() {

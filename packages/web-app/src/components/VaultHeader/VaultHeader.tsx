@@ -24,7 +24,7 @@ export const VaultHeader = observer(
     togglerRef,
   }: {
     className?: string;
-    onTogglerClick: (e: React.MouseEvent) => void;
+    onTogglerClick: () => void;
     isTogglerToggled: boolean;
     togglerRef: React.Ref<HTMLDivElement>;
   }) => {
@@ -81,7 +81,11 @@ export const VaultHeader = observer(
           className={vaultHeaderClass('sidebar-toggler', {
             toggled: isTogglerToggled,
           })}
-          onClick={onTogglerClick}
+          onMouseUp={(e) => {
+            console.log('mouse down!');
+
+            onTogglerClick();
+          }}
           ref={togglerRef}
         >
           <svg

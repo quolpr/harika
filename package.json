@@ -5,8 +5,8 @@
   "private": true,
   "scripts": {
     "web-app": "yarn workspace @harika/web-app",
-    "start-web": "yarn workspace @harika/web-app start",
-    "start-api": "yarn workspace @harika/api-app start",
+    "start:web": "yarn workspace @harika/web-app start",
+    "start:api": "yarn workspace @harika/api-app start",
     "postinstall": "patch-package"
   },
   "workspaces": [
