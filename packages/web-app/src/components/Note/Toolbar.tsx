@@ -1,5 +1,5 @@
 import { observer } from 'mobx-react-lite';
-import React, { useCallback, useContext, useEffect, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useRef } from 'react';
 import { useCurrentVaultUiState } from '../../contexts/CurrentVaultUiStateContext';
 import { useCurrentVault } from '../../hooks/useCurrentVault';
 import { cn, insertText } from '../../utils';
@@ -23,10 +23,13 @@ const toolbarClass = cn('toolbar');
 
 export const Toolbar = observer(({ view }: { view: BlocksViewModel }) => {
   const footerRef = useContext(FooterRefContext);
+
   const vaultUiState = useCurrentVaultUiState();
   const vault = useCurrentVault();
 
   const currentBlockInputRef = useContext(CurrentBlockInputRefContext);
+
+  const elRef = useRef<HTMLDivElement | null>(null);
 
   const scrollToInput = useCallback(() => {
     setTimeout(() => {
@@ -37,8 +40,6 @@ export const Toolbar = observer(({ view }: { view: BlocksViewModel }) => {
       }
     }, 0);
   }, [currentBlockInputRef]);
-
-  const [bottomPos, setBottomPos] = useState(0);
 
   const currentBlock = vaultUiState.focusedBlock?.blockId
     ? vault.blocksMap[vaultUiState.focusedBlock?.blockId]
@@ -121,21 +122,36 @@ export const Toolbar = observer(({ view }: { view: BlocksViewModel }) => {
   useEffect(() => {
     if (!window.visualViewport) return;
 
-    const viewportHandler = () => {
-      setBottomPos(window.innerHeight - window.visualViewport.height);
+    const viewportHandler = (e: Event) => {
+      if (elRef.current) {
+        const bottomPos = window.innerHeight - window.visualViewport.height;
+
+        // Instead for useState, for faster updates
+        elRef.current.style.transform = `translate3d(0px, ${-bottomPos}px, 0px)`;
+      }
     };
 
     window.visualViewport.addEventListener('scroll', viewportHandler);
     window.visualViewport.addEventListener('resize', viewportHandler);
+    window.addEventListener('resize', viewportHandler);
+    window.addEventListener('scroll', viewportHandler);
+
+    // setInterval(() => {
+    //   console.log({ height: window.visualViewport.height });
+    // }, 500);
 
     return () => {
       window.visualViewport.removeEventListener('scroll', viewportHandler);
       window.visualViewport.removeEventListener('resize', viewportHandler);
+
+      window.removeEventListener('resize', viewportHandler);
+      window.removeEventListener('scroll', viewportHandler);
     };
   });
 
-  const { ref, height: toolbarHeight = 0 } =
-    useResizeObserver<HTMLDivElement>();
+  const { height: toolbarHeight = 0 } = useResizeObserver<HTMLDivElement>({
+    ref: elRef,
+  });
 
   useEffect(() => {
     document.documentElement.style.setProperty(
@@ -151,11 +167,7 @@ export const Toolbar = observer(({ view }: { view: BlocksViewModel }) => {
   return (
     (footerRef?.current &&
       ReactDOM.createPortal(
-        <div
-          className={toolbarClass()}
-          style={{ transform: `translate3d(0px, ${-bottomPos}px, 0px)` }}
-          ref={ref}
-        >
+        <div className={toolbarClass()} ref={elRef}>
           <div className={toolbarClass('content')}>
             <button
               onMouseDown={handleMoveDownPress}
