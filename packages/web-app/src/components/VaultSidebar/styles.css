@@ -25,11 +25,13 @@
     display: flex;
     flex-direction: column;
 
-    @apply mt-5 ml-5;
+    @apply mt-5 ml-5 mr-5;
   }
 
   &__link {
     @apply mb-3;
+
+    text-align: left;
 
     &:last-child {
       @apply mb-0;

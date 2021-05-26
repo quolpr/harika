@@ -15,6 +15,7 @@ import { distinctUntilChanged } from 'rxjs/operators';
 import { RxSyncer } from './dexieHelpers/RxSyncer';
 import { ConflictsResolver } from './NotesRepository/dexieDb/ConflictsResolver';
 import { uniq, uniqBy } from 'lodash-es';
+import { exportDB } from 'dexie-export-import';
 
 export { NoteModel } from './NotesRepository/models/NoteModel';
 export { VaultModel } from './NotesRepository/models/VaultModel';
@@ -277,6 +278,12 @@ export class NotesRepository {
         ]);
       },
     );
+  }
+
+  async export() {
+    return exportDB(this.db, {
+      filter: (t) => ['notes', 'noteBlocks'].includes(t),
+    });
   }
 
   close = () => {

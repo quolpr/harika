@@ -5,6 +5,10 @@ import { paths } from '../../paths';
 import { useCurrentVault } from '../../hooks/useCurrentVault';
 import { cn } from '../../utils';
 import { Brand } from '../Brand/Brand';
+import { useCallback } from 'react';
+import { useNoteRepository } from '../../contexts/CurrentNoteRepositoryContext';
+import dayjs from 'dayjs';
+import download from 'downloadjs';
 
 const sidebarClass = cn('sidebar');
 
@@ -17,6 +21,19 @@ type IProps = {
 export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
   ({ className, isOpened, onNavClick }: IProps, ref) => {
     const vault = useCurrentVault();
+    const notesRepository = useNoteRepository();
+
+    const handleDownloadClick = useCallback(async () => {
+      const blob = await notesRepository.export();
+
+      download(
+        blob,
+        `${vault.name
+          .replace(/[^a-z0-9]/gi, '_')
+          .toLowerCase()}-${dayjs().format('DD-MM-YYYY')}.json`,
+        'application/json',
+      );
+    }, []);
 
     return (
       <div
@@ -47,6 +64,13 @@ export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
           >
             Vaults
           </Link>
+
+          <button
+            className={sidebarClass('link')}
+            onClick={handleDownloadClick}
+          >
+            Download db
+          </button>
         </div>
 
         <Brand className={sidebarClass('brand')} onClick={onNavClick} />
