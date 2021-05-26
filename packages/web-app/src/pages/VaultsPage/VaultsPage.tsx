@@ -11,6 +11,7 @@ import { useAuthState } from '../../hooks/useAuthState';
 import { Brand } from '../../components/Brand/Brand';
 import { generateId } from '@harika/common';
 import { deleteFromStorage } from '@rehooks/local-storage';
+import DeleteIcon from '@material-ui/icons/Delete';
 
 const vaultsClass = cn('vaults');
 const vaultsNavbarClass = cn('vaults-navbar');
@@ -70,7 +71,22 @@ export const VaultsPage = ({ vaults }: { vaults: VaultsRepository }) => {
               className={vaultsClass('box')}
               to={paths.vaultDailyPath({ vaultId: vault.id })}
             >
-              <div className={vaultsClass('vault-name')}>{vault.name}</div>
+              <div className={vaultsClass('vault-name')}>
+                <button
+                  className={vaultsClass('trash')}
+                  onClick={(e) => {
+                    e.preventDefault();
+
+                    if (confirm('Are you sure?')) {
+                      vaults.dropVault(vault.id);
+                    }
+                  }}
+                >
+                  <DeleteIcon />
+                </button>
+
+                {vault.name}
+              </div>
             </Link>
           ))}
 

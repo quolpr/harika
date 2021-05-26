@@ -86,6 +86,16 @@
     margin-left: auto;
     border-radius: 100%;
   }
+
+  &__trash {
+    @apply top-2 right-2 text-gray-500;
+
+    position: absolute;
+
+    svg {
+      @apply w-6 h-6;
+    }
+  }
 }
 
 .vault-form-modal {

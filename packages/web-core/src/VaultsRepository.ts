@@ -40,13 +40,20 @@ export class VaultsRepository {
   }
 
   async getNotesRepo(vaultId: string) {
-    console.log({ repo: this.notesRepositories[vaultId] });
-
     if (this.notesRepositories[vaultId]) return this.notesRepositories[vaultId];
 
     this.notesRepositories[vaultId] = await this.initializeNotesRepo(vaultId);
 
     return this.notesRepositories[vaultId];
+  }
+
+  // TODO: also clean on server
+  async dropVault(vaultId: string) {
+    const db = new VaultDexieDatabase(vaultId);
+
+    await this.database.vaults.delete(vaultId);
+
+    await db.delete();
   }
 
   getAllVaultTuples$() {
