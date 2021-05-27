@@ -11,10 +11,51 @@ import { useAuthState } from '../../hooks/useAuthState';
 import { Brand } from '../../components/Brand/Brand';
 import { generateId } from '@harika/common';
 import { deleteFromStorage } from '@rehooks/local-storage';
-import DeleteIcon from '@material-ui/icons/Delete';
+import SettingsIcon from '@material-ui/icons/Settings';
+import { SettingsModal } from './SettingsModal';
 
 const vaultsClass = cn('vaults');
 const vaultsNavbarClass = cn('vaults-navbar');
+
+const VaultBlock = ({
+  vault,
+  vaults,
+}: {
+  vault: { id: string; name: string };
+  vaults: VaultsRepository;
+}) => {
+  const [isOpened, setIsOpened] = useState(false);
+
+  return (
+    <>
+      <Link
+        key={vault.id}
+        className={vaultsClass('box')}
+        to={paths.vaultDailyPath({ vaultId: vault.id })}
+      >
+        <div className={vaultsClass('vault-name')}>
+          <button
+            className={vaultsClass('settings')}
+            onClick={(e) => {
+              e.preventDefault();
+              setIsOpened(true);
+            }}
+          >
+            <SettingsIcon />
+          </button>
+
+          {vault.name}
+        </div>
+      </Link>
+      <SettingsModal
+        isOpened={isOpened}
+        setIsOpened={setIsOpened}
+        vaults={vaults}
+        vault={vault}
+      />
+    </>
+  );
+};
 
 export const VaultsPage = ({ vaults }: { vaults: VaultsRepository }) => {
   const history = useHistory();
@@ -66,28 +107,7 @@ export const VaultsPage = ({ vaults }: { vaults: VaultsRepository }) => {
       <div className="vaults-container">
         <div className={vaultsClass()}>
           {allVaults.map((vault) => (
-            <Link
-              key={vault.id}
-              className={vaultsClass('box')}
-              to={paths.vaultDailyPath({ vaultId: vault.id })}
-            >
-              <div className={vaultsClass('vault-name')}>
-                <button
-                  className={vaultsClass('trash')}
-                  onClick={(e) => {
-                    e.preventDefault();
-
-                    if (confirm('Are you sure?')) {
-                      vaults.dropVault(vault.id);
-                    }
-                  }}
-                >
-                  <DeleteIcon />
-                </button>
-
-                {vault.name}
-              </div>
-            </Link>
+            <VaultBlock key={vault.id} vault={vault} vaults={vaults} />
           ))}
 
           <div

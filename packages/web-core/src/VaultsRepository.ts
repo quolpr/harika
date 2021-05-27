@@ -78,6 +78,12 @@ export class VaultsRepository {
     return this.getVault(dbId);
   }
 
+  async renameVault(dbId: string, name: string) {
+    const res = await this.database.vaults.update(dbId, { name });
+
+    return res === 1 ? true : false;
+  }
+
   private async initializeNotesRepo(id: string) {
     const vaultDoc = await this.database.vaults.where('id').equals(id).first();
 

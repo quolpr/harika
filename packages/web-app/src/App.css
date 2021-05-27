@@ -94,6 +94,10 @@ input[type='search']::-webkit-search-results-decoration {
 
     &--loading {
     }
+
+    &--dangerous {
+      @apply bg-red-600 mt-5;
+    }
   }
 }
 
@@ -102,7 +106,7 @@ input[type='search']::-webkit-search-results-decoration {
 }
 
 .checkbox {
-  @apply bg-white border-2 rounded border-gray-400 w-5 h-5 inline-flex flex-shrink-0 justify-center items-center mr-1 focus-within:border-pink-500;
+  @apply bg-white rounded border-2 border-pink-600 w-5 h-5 inline-flex flex-shrink-0 justify-center items-center mr-1 focus-within:border-pink-800 bg-pink-600;
 
   -webkit-tap-highlight-color: transparent;
 
@@ -112,9 +116,13 @@ input[type='search']::-webkit-search-results-decoration {
 }
 
 .checkbox__tick {
-  @apply fill-current hidden w-3 h-3 text-pink-500 pointer-events-none;
+  @apply fill-current hidden w-3 h-3 pointer-events-none;
+
+  color: #fff;
 }
 
 .checkbox input:checked + .checkbox__tick {
   display: block;
+
+  @apply bg-pink-600;
 }

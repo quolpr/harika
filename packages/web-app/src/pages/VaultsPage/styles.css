@@ -87,13 +87,13 @@
     border-radius: 100%;
   }
 
-  &__trash {
-    @apply top-2 right-2 text-gray-500;
+  &__settings {
+    @apply transition top-2 right-2 text-gray-500 hover:text-gray-600;
 
     position: absolute;
 
     svg {
-      @apply w-6 h-6;
+      @apply transition w-6 h-6;
     }
   }
 }
