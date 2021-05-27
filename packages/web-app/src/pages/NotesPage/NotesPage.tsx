@@ -1,5 +1,5 @@
 import { observer } from 'mobx-react-lite';
-import React, { useCallback } from 'react';
+import React, { useCallback, useContext, useEffect } from 'react';
 import './styles.css';
 import { Link } from 'react-router-dom';
 import TimeAgo from 'react-timeago';
@@ -8,6 +8,7 @@ import { useNoteRepository } from '../../contexts/CurrentNoteRepositoryContext';
 import { useCurrentVault } from '../../hooks/useCurrentVault';
 import { TrashIcon } from '@heroicons/react/solid';
 import { useObservable, useObservableState } from 'observable-hooks';
+import { LoadingDoneSubjectContext } from '../../contexts';
 
 type NoteTuple = {
   id: string;
@@ -46,10 +47,17 @@ const NoteRow = observer(({ note }: { note: NoteTuple }) => {
 
 export const NotesPage = () => {
   const noteRepo = useNoteRepository();
+  const loadingDoneSubject = useContext(LoadingDoneSubjectContext);
 
   const input$ = useObservable(() => noteRepo.getAllNotesTuples$());
 
-  const observedNotes = useObservableState(input$) || [];
+  const observedNotes = useObservableState(input$);
+
+  useEffect(() => {
+    if (Array.isArray(observedNotes)) {
+      loadingDoneSubject.next();
+    }
+  }, [observedNotes]);
 
   return (
     <div className="notes-table">
@@ -62,7 +70,7 @@ export const NotesPage = () => {
           </tr>
         </thead>
         <tbody>
-          {observedNotes
+          {(observedNotes || [])
             .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
             .map((note) => (
               <NoteRow note={note} key={note.id} />

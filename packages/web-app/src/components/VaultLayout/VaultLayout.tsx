@@ -1,10 +1,15 @@
 import {
   VaultsRepository,
-  VaultModel,
   VaultUiState,
   NotesRepository,
 } from '@harika/web-core';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import { useHistory, useLocation, useParams } from 'react-router-dom';
 import { useClickAway, useMedia } from 'react-use';
 import { NoteRepositoryContext } from '../../contexts/CurrentNoteRepositoryContext';
@@ -17,6 +22,16 @@ import { VaultSidebar } from '../VaultSidebar/VaultSidebar';
 import './styles.css';
 import { writeStorage } from '@rehooks/local-storage';
 import { FooterRefContext } from '../../contexts/FooterRefContext';
+import { LoadingDoneSubjectContext } from '../../contexts';
+import { Observable, race } from 'rxjs';
+import {
+  filter,
+  mapTo,
+  switchMap,
+  take,
+  tap,
+  withLatestFrom,
+} from 'rxjs/operators';
 
 const layoutClass = cn('vault-layout');
 
@@ -41,6 +56,7 @@ const layoutClass = cn('vault-layout');
 const useKeepScroll = () => {
   const history = useHistory();
   const location = useLocation();
+  const loadingDoneSubject = useContext(LoadingDoneSubjectContext);
 
   const mainRef = useRef<HTMLDivElement>(null);
   const scrollHistory = useRef<Record<string, number>>({});
@@ -48,26 +64,41 @@ const useKeepScroll = () => {
   const listenScroll = useRef(true);
 
   useEffect(() => {
-    return history.listen((ev, act) => {
-      listenScroll.current = false;
-      setTimeout(() => {
-        const top = (() => {
-          if (ev.key && scrollHistory.current[ev.key] && act === 'POP') {
-            return scrollHistory.current[ev.key];
-          } else {
-            return 0;
-          }
-        })();
-
-        mainRef.current?.scrollTo({
-          top,
-          // https://github.com/Microsoft/TypeScript/issues/28755
-          behavior: 'instant' as 'auto',
-        });
-
-        listenScroll.current = true;
-      }, 0);
+    const scrollPosHistory$ = new Observable<number>((observer) => {
+      return history.listen((ev, act) => {
+        observer.next(
+          (() => {
+            if (ev.key && scrollHistory.current[ev.key] && act === 'POP') {
+              return scrollHistory.current[ev.key];
+            } else {
+              return 0;
+            }
+          })(),
+        );
+      });
     });
+
+    loadingDoneSubject.subscribe(() => {
+      console.log('loading done!');
+    });
+
+    const pipe = scrollPosHistory$
+      .pipe(
+        filter((val) => val !== 0),
+        tap(() => (listenScroll.current = false)),
+        switchMap((val) => loadingDoneSubject.pipe(take(1), mapTo(val))),
+        tap((val) => {
+          mainRef.current?.scrollTo({
+            top: val,
+            // https://github.com/Microsoft/TypeScript/issues/28755
+            behavior: 'instant' as 'auto',
+          });
+        }),
+        tap(() => (listenScroll.current = true)),
+      )
+      .subscribe();
+
+    return () => pipe.unsubscribe();
   }, [history]);
 
   const handleScroll = useCallback(
@@ -130,6 +161,7 @@ export const VaultLayout: React.FC<{
       vaultRepository.closeNotesRepo(vaultId);
 
       setNotesRepo(undefined);
+      closeDevtool();
     };
   }, [vaultRepository, vaultId, history]);
 
