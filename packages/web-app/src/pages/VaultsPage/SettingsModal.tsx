@@ -88,15 +88,17 @@ export const SettingsModal = ({
         )}
 
         <input type="submit" className={formClass('submit-btn')} />
-
-        <button
-          onClick={handleDelete}
-          className={`${formClass('submit-btn', { dangerous: true })} mt-2`}
-        >
-          <DeleteIcon className="mb-1 mr-1.5" />
-          Delete
-        </button>
       </form>
+
+      <button
+        onClick={handleDelete}
+        className={`${formClass('submit-btn', {
+          dangerous: true,
+        })} mt-2 rounded-none`}
+      >
+        <DeleteIcon className="mb-1 mr-1.5" />
+        Delete
+      </button>
     </Modal>
   );
 };
