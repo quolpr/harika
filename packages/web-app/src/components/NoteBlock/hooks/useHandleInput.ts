@@ -44,8 +44,12 @@ export const useHandleInput = (
 
           noteBlock.content.update(content.slice(0, start));
         }
-
-        if (noteBlock.content.hasTodo && newContent.length === 0) {
+        if (
+          (noteBlock.content.hasTodo ||
+            (noteBlock.noteBlockRefs.length > 0 &&
+              noteBlock.noteBlockRefs[0].current.content.hasTodo)) &&
+          newContent.length === 0
+        ) {
           newContent = '[[TODO]] ';
           startAt = newContent.length;
         }
