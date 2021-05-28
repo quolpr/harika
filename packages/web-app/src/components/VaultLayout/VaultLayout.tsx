@@ -80,7 +80,6 @@ const useKeepScroll = () => {
 
     const pipe = scrollPosHistory$
       .pipe(
-        filter((val) => val !== 0),
         tap(() => (listenScroll.current = false)),
         switchMap((val) => loadingDoneSubject.pipe(take(1), mapTo(val))),
         tap((val) => {
