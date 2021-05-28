@@ -216,7 +216,13 @@ export class NoteBlockModel extends Model({
       ch.current.parentBlockRef = noteBlockRef(left);
     });
 
-    this.delete();
+    left.noteBlockRefs.push(
+      ...this.noteBlockRefs.map((r) => noteBlockRef(r.id)),
+    );
+
+    left.linkedNoteRefs.push(...this.linkedNoteRefs.map((r) => noteRef(r.id)));
+
+    this.delete(false, false);
 
     return left;
   }
