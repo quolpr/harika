@@ -27,7 +27,12 @@ export class VaultModel extends Model({
     attrs: Required<
       Optional<
         ModelCreationData<NoteModel>,
-        'createdAt' | 'dailyNoteDate' | 'rootBlockRef'
+        | 'areLinksLoaded'
+        | 'areChildrenLoaded'
+        | 'areBacklinksLoaded'
+        | 'createdAt'
+        | 'dailyNoteDate'
+        | 'rootBlockRef'
       >,
       'title'
     >,
@@ -49,6 +54,7 @@ export class VaultModel extends Model({
       dailyNoteDate: new Date().getTime(),
       areLinksLoaded: true,
       areChildrenLoaded: true,
+      areBacklinksLoaded: true,
       rootBlockRef: noteBlockRef(rootBlock),
       ...attrs,
     });
@@ -85,6 +91,32 @@ export class VaultModel extends Model({
       $modelId: string;
     })[],
   ) {
+    console.debug(
+      'createOrUpdateEntitiesFromAttrs, notes: ',
+      JSON.stringify(
+        {
+          noteAttrs: noteAttrs.map(
+            ({
+              $modelId,
+              title,
+              areBacklinksLoaded,
+              areChildrenLoaded,
+              areLinksLoaded,
+            }) => ({
+              $modelId,
+              title,
+              areBacklinksLoaded,
+              areChildrenLoaded,
+              areLinksLoaded,
+            }),
+          ),
+          blocksAttrs: blocksAttrs,
+        },
+        null,
+        2,
+      ),
+    );
+
     const notes = noteAttrs.map((note) => {
       if (this.notesMap[note.$modelId]) {
         this.notesMap[note.$modelId].updateAttrs(note);
@@ -120,15 +152,11 @@ export class VaultModel extends Model({
         console.error(
           'removing noteblock ref cause noteblock was not found',
           ref.id,
-          model.noteBlockRefs.indexOf(ref),
+          JSON.stringify(model.noteBlockRefs.indexOf(ref)),
         );
 
         model.noteBlockRefs.splice(model.noteBlockRefs.indexOf(ref), 1);
       });
-
-      if (toRemoveRefs.length) {
-        console.log(model.noteBlockRefs);
-      }
     });
 
     return { notes, blocks };

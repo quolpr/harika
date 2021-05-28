@@ -12,7 +12,5 @@ export const connect = async (toConnect: any, name: string) => {
 
   connectReduxDevTools(remotedev, connection, toConnect);
 
-  console.log({ unsub: connection.unsubscribe });
-
   return connection.unsubscribe;
 };

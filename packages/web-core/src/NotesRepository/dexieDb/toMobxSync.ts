@@ -54,6 +54,8 @@ export const toMobxSync = (db: VaultDexieDatabase, vault: VaultModel) => {
       bufferDebounce(1000),
     )
     .subscribe((evs) => {
+      // TODO refactor notes and noteblocks to one method
+
       const notes = (() => {
         const noteEvents = evs.filter(
           (ev) => ev.table === 'notes',
@@ -71,33 +73,26 @@ export const toMobxSync = (db: VaultDexieDatabase, vault: VaultModel) => {
           const note = vault.notesMap[ev.key];
 
           if (ev.type === DatabaseChangeType.Delete) {
-            if (!ev.oldObj) {
-              console.error('FIXME ev.oldObj is null', ev);
-              return undefined;
+            if (note) {
+              return { ...note.$, isDeleted: true };
             }
-
-            return {
-              ...convertNoteDocToModelAttrs(
-                ev.oldObj,
-                Boolean(note?.areChildrenLoaded),
-                Boolean(note?.areLinksLoaded),
-                Boolean(note?.areBacklinksLoaded),
-              ),
-              isDeleted: true,
-            };
           } else {
             if (!ev.obj) throw new Error('obj should be present');
 
-            return convertNoteDocToModelAttrs(
-              ev.obj,
-              Boolean(note?.areChildrenLoaded),
-              Boolean(note?.areLinksLoaded),
-              Boolean(note?.areBacklinksLoaded),
-            );
+            if (note) {
+              // Any changes we will load to mobx cause they may have refs
+              return convertNoteDocToModelAttrs(
+                ev.obj,
+                Boolean(note?.areChildrenLoaded),
+                Boolean(note?.areLinksLoaded),
+                Boolean(note?.areBacklinksLoaded),
+              );
+            }
           }
         });
       })();
 
+      // TODO: better ref resolving logic - check that all needed ref of noteBlock are loaded
       const blocks = (() => {
         const blockEvents = evs.filter(
           (ev) => ev.table === 'noteBlocks',
@@ -112,19 +107,19 @@ export const toMobxSync = (db: VaultDexieDatabase, vault: VaultModel) => {
         });
 
         return Object.values(latestDedupedEvents).map((ev) => {
-          if (ev.type === DatabaseChangeType.Delete) {
-            if (!ev.oldObj) {
-              console.error('FIXME ev.oldObj is null', ev);
-              return undefined;
-            }
+          const noteBlock = vault.blocksMap[ev.key];
 
-            return {
-              ...convertNoteBlockDocToModelAttrs(ev.oldObj),
-              isDeleted: true,
-            };
+          if (ev.type === DatabaseChangeType.Delete) {
+            if (noteBlock) {
+              return {
+                ...noteBlock.$,
+                isDeleted: true,
+              };
+            }
           } else {
             if (!ev.obj) throw new Error('obj should be present');
 
+            // Any changes we will load to mobx cause they may have refs
             return convertNoteBlockDocToModelAttrs(ev.obj);
           }
         });

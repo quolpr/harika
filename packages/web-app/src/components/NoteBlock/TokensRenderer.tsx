@@ -31,7 +31,7 @@ const RefRenderer = observer(
         <label
           className="checkbox"
           onClick={(e) => e.stopPropagation()}
-          style={{ verticalAlign: 'middle', marginBottom: 3 }}
+          style={{ verticalAlign: 'middle' }}
         >
           <input
             type="checkbox"

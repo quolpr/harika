@@ -47,7 +47,12 @@ export class NotesRepository {
     attrs: Required<
       Optional<
         ModelCreationData<NoteModel>,
-        'createdAt' | 'dailyNoteDate' | 'rootBlockRef'
+        | 'createdAt'
+        | 'dailyNoteDate'
+        | 'rootBlockRef'
+        | 'areLinksLoaded'
+        | 'areBacklinksLoaded'
+        | 'areChildrenLoaded'
       >,
       'title'
     >,
@@ -68,7 +73,12 @@ export class NotesRepository {
 
     return {
       status: 'ok',
-      data: this.vault.newNote(attrs),
+      data: this.vault.newNote({
+        ...attrs,
+        areChildrenLoaded: true,
+        areLinksLoaded: true,
+        areBacklinksLoaded: true,
+      }),
     } as ICreationResult<NoteModel>;
   }
 
@@ -88,6 +98,9 @@ export class NotesRepository {
     return await this.createNote({
       title,
       dailyNoteDate: startOfDate.toDate().getTime(),
+      areChildrenLoaded: true,
+      areLinksLoaded: true,
+      areBacklinksLoaded: true,
     });
   }
 
@@ -101,10 +114,14 @@ export class NotesRepository {
       const noteInStore = this.vault.notesMap[id];
 
       if (
-        (preloadChildren && !noteInStore.areChildrenLoaded) ||
-        (preloadLinks && !noteInStore.areLinksLoaded) ||
-        (preloadBacklinks && !noteInStore.areBacklinksLoaded)
+        !noteInStore.areNeededDataLoaded(
+          preloadChildren,
+          preloadLinks,
+          preloadBacklinks,
+        )
       ) {
+        console.debug(`Loading Note#${id} from dexie`);
+
         return this.preloadNote(
           id,
           preloadChildren,
@@ -112,6 +129,8 @@ export class NotesRepository {
           preloadBacklinks,
         );
       } else {
+        console.debug(`Note${id} already loaded`);
+
         return noteInStore;
       }
     }
@@ -139,7 +158,7 @@ export class NotesRepository {
       this.db.notes,
       this.db.noteBlocks,
       async () => {
-        console.log('updating links');
+        console.debug('Updating links');
 
         const titles = uniq(
           (
@@ -186,9 +205,9 @@ export class NotesRepository {
 
   async preloadNote(
     id: string,
-    preloadChildren = true,
-    preloadLinks = true,
-    preloadBacklinks = true,
+    preloadChildren: boolean,
+    preloadLinks: boolean,
+    preloadBacklinks: boolean,
   ) {
     const row = await this.db.notesQueries.getById(id);
 
@@ -287,7 +306,7 @@ export class NotesRepository {
   }
 
   close = () => {
-    console.log(`Vault ${this.vault.$modelId} is closed`);
+    console.debug(`Vault ${this.vault.$modelId} is closed`);
 
     this.db.close();
   };

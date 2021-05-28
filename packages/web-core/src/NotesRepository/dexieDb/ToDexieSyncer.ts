@@ -73,7 +73,7 @@ const mapNote = (model: NoteModel): NoteDocType => {
   };
 };
 
-export class ChangesHandler {
+export class ToDexieSyncer {
   patchesSubject: Subject<Patch>;
 
   constructor(
@@ -85,7 +85,7 @@ export class ChangesHandler {
 
     this.patchesSubject
       .pipe(
-        buffer(this.patchesSubject.pipe(debounceTime(100))),
+        buffer(this.patchesSubject.pipe(debounceTime(400))),
         concatMap((patches) => this.applyPatches(patches)),
         tap(() => onPatchesApplied?.()),
       )
@@ -129,6 +129,11 @@ export class ChangesHandler {
   private applyPatches = async (patches: Patch[]) => {
     const blocksResult = zipPatches('blocksMap', patches);
     const noteResult = zipPatches('notesMap', patches);
+
+    console.debug(
+      'Applying patches from mobx',
+      JSON.stringify({ blocksResult, noteResult }, null, 2),
+    );
 
     this.database.transaction(
       'rw',

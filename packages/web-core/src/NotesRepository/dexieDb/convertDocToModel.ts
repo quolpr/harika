@@ -1,7 +1,7 @@
 import { uniq } from 'lodash-es';
 import type { ModelCreationData } from 'mobx-keystone';
 import { NoteBlockModel, noteBlockRef } from '../models/NoteBlockModel';
-import type { NoteModel } from '../models/NoteModel';
+import { areNeededNoteDataLoaded, NoteModel } from '../models/NoteModel';
 import { BlockContentModel } from '../models/BlockContentModel';
 import { noteRef } from '../models/NoteModel';
 import type { VaultDexieDatabase } from './DexieDb';
@@ -53,14 +53,40 @@ export const convertNoteDocToModelAttrs = (
 const loadNoteDocToModelAttrsWithoutTx = async (
   db: VaultDexieDatabase,
   noteDoc: NoteDocType,
-  preloadChildren = true,
-  preloadBlockLinks = true,
-  preloadNoteBacklinks = true,
+  preloadChildren: boolean,
+  preloadBlockLinks: boolean,
+  preloadNoteBacklinks: boolean,
   notes: NoteData[] = [],
   noteBlocks: NoteBlockData[] = [],
 ) => {
   const noteBlocksQueries = db.noteBlocksQueries;
   const notesQueries = db.notesQueries;
+
+  const alreadyLoadedNote = notes.find(
+    ({ $modelId }) => $modelId === noteDoc.id,
+  );
+
+  if (alreadyLoadedNote) {
+    if (
+      areNeededNoteDataLoaded(
+        alreadyLoadedNote,
+        preloadChildren,
+        preloadBlockLinks,
+        preloadNoteBacklinks,
+      )
+    ) {
+      return { notes, noteBlocks };
+    }
+  }
+
+  notes.push(
+    convertNoteDocToModelAttrs(
+      noteDoc,
+      preloadChildren,
+      preloadBlockLinks,
+      preloadNoteBacklinks,
+    ),
+  );
 
   const noteBlockAttrs = preloadChildren
     ? await Promise.all(
@@ -69,6 +95,8 @@ const loadNoteDocToModelAttrsWithoutTx = async (
         ).map((m) => convertNoteBlockDocToModelAttrs(m)),
       )
     : [];
+
+  noteBlocks.push(...noteBlockAttrs);
 
   if (preloadNoteBacklinks) {
     await Promise.all(
@@ -112,16 +140,6 @@ const loadNoteDocToModelAttrsWithoutTx = async (
     );
   }
 
-  noteBlocks.push(...noteBlockAttrs);
-  notes.push(
-    convertNoteDocToModelAttrs(
-      noteDoc,
-      preloadChildren,
-      preloadBlockLinks,
-      preloadNoteBacklinks,
-    ),
-  );
-
   return {
     notes,
     noteBlocks,
@@ -131,9 +149,9 @@ const loadNoteDocToModelAttrsWithoutTx = async (
 export const loadNoteDocToModelAttrs = async (
   db: VaultDexieDatabase,
   noteDoc: NoteDocType,
-  preloadChildren = true,
-  preloadBlockLinks = true,
-  preloadNoteBacklinks = true,
+  preloadChildren: boolean,
+  preloadBlockLinks: boolean,
+  preloadNoteBacklinks: boolean,
 ) => {
   return db.transaction(
     'r',

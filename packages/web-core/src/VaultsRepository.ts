@@ -1,7 +1,7 @@
 import { VaultModel } from './NotesRepository/models/VaultModel';
 import { syncMiddleware } from './NotesRepository/models/syncable';
 import { VaultDexieDatabase } from './NotesRepository/dexieDb/DexieDb';
-import { ChangesHandler } from './NotesRepository/dexieDb/ChangesHandler';
+import { ToDexieSyncer } from './NotesRepository/dexieDb/ToDexieSyncer';
 import { toMobxSync } from './NotesRepository/dexieDb/toMobxSync';
 import { UserDexieDatabase } from './UserDexieDb';
 import { liveSwitch } from './dexieHelpers/onDexieChange';
@@ -23,7 +23,7 @@ export class VaultsRepository {
   async init() {
     this.database = new UserDexieDatabase(this.dbId);
 
-    console.log('init vaults');
+    console.debug(`Init vaults for dbId ${this.dbId}`);
 
     if (this.sync) {
       this.syncer = new RxSyncer(
@@ -93,7 +93,7 @@ export class VaultsRepository {
 
     const vault = new VaultModel({ name: vaultDoc.name, $modelId: id });
 
-    syncMiddleware(vault, new ChangesHandler(db, vault).handlePatch);
+    syncMiddleware(vault, new ToDexieSyncer(db, vault).handlePatch);
     toMobxSync(db, vault);
 
     const repo = new NotesRepository(db, vault);

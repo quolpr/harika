@@ -14,7 +14,7 @@ export class ConflictsResolver implements IConflictsResolver {
     const conflicts = await this.getConflicts();
 
     if (conflicts.length === 0 && entitiesToCheck.length === 0) {
-      console.log('No conflicts');
+      console.debug('No conflicts');
       return;
     }
 
@@ -24,10 +24,13 @@ export class ConflictsResolver implements IConflictsResolver {
         .map(({ key }) => key),
     );
 
-    console.log('Resolving conflicts', {
-      changedBlockIds: blockIdsToCheck,
-      conflicts,
-    });
+    console.debug(
+      'Resolving conflicts',
+      JSON.stringify({
+        changedBlockIds: blockIdsToCheck,
+        conflicts,
+      }),
+    );
 
     await db.transaction('rw', [db.notes, db.noteBlocks], async () => {
       await Promise.all(
@@ -160,8 +163,6 @@ export class ConflictsResolver implements IConflictsResolver {
         name,
         ids: objects.map(([, id]) => id),
       }));
-
-    console.log('checkConflicts', conflicts);
 
     return conflicts;
   }

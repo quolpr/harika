@@ -54,9 +54,9 @@ export class NoteModel extends Model({
   title: prop<string>(),
   dailyNoteDate: tProp(types.dateTimestamp),
   createdAt: tProp(types.dateTimestamp),
-  areChildrenLoaded: prop<boolean>(false),
-  areLinksLoaded: prop<boolean>(false),
-  areBacklinksLoaded: prop<boolean>(false),
+  areChildrenLoaded: prop<boolean>(),
+  areLinksLoaded: prop<boolean>(),
+  areBacklinksLoaded: prop<boolean>(),
   isDeleted: prop<boolean>(false),
   rootBlockRef: prop<Ref<NoteBlockModel>>(),
 }) {
@@ -70,7 +70,8 @@ export class NoteModel extends Model({
     // TODO: optimize
     return Object.values(this.vault.blocksMap).filter((block) => {
       return Boolean(
-        block.linkedNoteRefs.find((ref) => ref.id === this.$modelId),
+        !block.isDeleted &&
+          block.linkedNoteRefs.find((ref) => ref.id === this.$modelId),
       );
     });
   }
@@ -128,6 +129,10 @@ export class NoteModel extends Model({
       this.areChildrenLoaded = true;
     }
 
+    if (!this.areBacklinksLoaded && attrs.areBacklinksLoaded) {
+      this.areBacklinksLoaded = true;
+    }
+
     this.title = attrs.title;
     this.dailyNoteDate = attrs.dailyNoteDate;
     this.createdAt = attrs.createdAt;
@@ -141,4 +146,34 @@ export class NoteModel extends Model({
       this.isDeleted = attrs.isDeleted;
     }
   }
+
+  areNeededDataLoaded(
+    preloadChildren: boolean,
+    preloadBacklinks: boolean,
+    preloadBlockLinks: boolean,
+  ) {
+    return areNeededNoteDataLoaded(
+      this,
+      preloadChildren,
+      preloadBacklinks,
+      preloadBlockLinks,
+    );
+  }
+}
+
+export function areNeededNoteDataLoaded(
+  data: {
+    areChildrenLoaded: boolean | undefined;
+    areLinksLoaded: boolean | undefined;
+    areBacklinksLoaded: boolean | undefined;
+  },
+  preloadChildren: boolean,
+  preloadBacklinks: boolean,
+  preloadBlockLinks: boolean,
+) {
+  return (
+    !(preloadChildren === true && data.areChildrenLoaded === false) &&
+    !(preloadBlockLinks === true && data.areLinksLoaded === false) &&
+    !(preloadBacklinks === true && data.areBacklinksLoaded === false)
+  );
 }

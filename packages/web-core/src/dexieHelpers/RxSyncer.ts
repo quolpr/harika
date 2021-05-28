@@ -139,7 +139,7 @@ export class RxSyncer {
     );
 
     this.isMaster$.subscribe((isMaster) => {
-      console.log(isMaster ? 'Master' : 'Not master');
+      this.log(isMaster ? 'Master' : 'Not master');
     });
 
     const resolveConflict$ = merge(
@@ -172,7 +172,6 @@ export class RxSyncer {
           await this.conflictsResolver?.resolveConflicts(lastChangesFromServer);
         }),
         catchError((err) => {
-          console.error(err);
           return of(null);
         }),
         tap(() => this.isLocked$.next(false)),
@@ -227,7 +226,9 @@ export class RxSyncer {
         concatMap(async (changesDescription) => {
           const { currentRevision, partial, changes } = changesDescription;
 
-          console.log('new changes from server', changesDescription);
+          this.log(
+            `New changes from server: ${JSON.stringify(changesDescription)}`,
+          );
 
           await applyRemoteChanges(
             changes as unknown as DexieDatabaseChange[],
@@ -266,7 +267,7 @@ export class RxSyncer {
         if (changes.length === 0) {
           return of(null).pipe(
             tap(() => {
-              console.log('On changes accepted');
+              this.log('On changes accepted');
               onChangesAccepted();
               wasFirstChangesSent = true;
             }),
@@ -281,7 +282,7 @@ export class RxSyncer {
             baseRevision: baseRevision,
           }),
           tap(() => {
-            console.log('On changes accepted');
+            this.log('On changes accepted');
             onChangesAccepted();
             wasFirstChangesSent = true;
           }),
@@ -339,13 +340,10 @@ export class RxSyncer {
         takeUntil(this.stop$),
       )
       .subscribe({
-        next() {
-          console.log('Changes are sent to server', changes);
+        next: () => {
+          this.log(`Changes are sent to server: ${JSON.stringify(changes)}`);
 
           onChangesAccepted();
-        },
-        complete() {
-          console.log('completed');
         },
       });
   };
@@ -366,10 +364,7 @@ export class RxSyncer {
                 messageType: MessageType.Command,
               });
 
-              console.log(
-                `[${this.gatewayName}] New command to server!`,
-                command,
-              );
+              this.log(`New command to server: ${JSON.stringify(command)}`);
 
               return messageId;
             }),
@@ -378,9 +373,8 @@ export class RxSyncer {
                 filter((res) => res.handledId === messageId),
                 first(),
                 tap(() => {
-                  console.log(
-                    `[${this.gatewayName}] Command handled by server!`,
-                    command,
+                  this.log(
+                    `Command handled by server: ${JSON.stringify(command)}`,
                   );
                 }),
               ),
@@ -388,9 +382,10 @@ export class RxSyncer {
             timeout(5000),
             retry(3),
             catchError(() => {
-              console.error(
-                `[${this.gatewayName}] Failed to send command. Reconnecting`,
-                command,
+              this.log(
+                `Failed to send command: ${JSON.stringify(
+                  command,
+                )}. Reconnecting`,
               );
 
               return this.socket$.pipe(
@@ -447,5 +442,9 @@ export class RxSyncer {
         takeUntil(this.stop$),
       )
       .subscribe((ev) => this.successCommandHandled$.next(ev));
+  }
+
+  private log(msg: string) {
+    console.debug(`[${this.gatewayName}][${this.scopeId}] ${msg}`);
   }
 }

@@ -78,10 +78,6 @@ const useKeepScroll = () => {
       });
     });
 
-    loadingDoneSubject.subscribe(() => {
-      console.log('loading done!');
-    });
-
     const pipe = scrollPosHistory$
       .pipe(
         filter((val) => val !== 0),
