@@ -91,19 +91,19 @@ const TokenRenderer = observer(
         return (() => {
           if (token.depth === 3) {
             return (
-              <h3>
+              <h3 className="text-xl">
                 <TokensRenderer noteBlock={noteBlock} tokens={token.content} />
               </h3>
             );
           } else if (token.depth === 2) {
             return (
-              <h2>
+              <h2 className="text-2xl">
                 <TokensRenderer noteBlock={noteBlock} tokens={token.content} />
               </h2>
             );
           } else {
             return (
-              <h1>
+              <h1 className="text-3xl">
                 <TokensRenderer noteBlock={noteBlock} tokens={token.content} />
               </h1>
             );
