@@ -54,7 +54,7 @@ export class ConflictsResolver implements IConflictsResolver {
           );
 
           const nonOldestRootBlocks = rootBlocks.filter(
-            (b) => b.id != oldestRootBlock?.id,
+            (b) => b.id !== oldestRootBlock?.id,
           );
 
           if (!oldestRootBlock)

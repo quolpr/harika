@@ -22,7 +22,7 @@ const bufferDebounce: BufferDebounce = (debounce) => (source) =>
       next(x) {
         observer.next(x);
       },
-      error(err) {
+      error(err: unknown) {
         observer.error(err);
       },
       complete() {

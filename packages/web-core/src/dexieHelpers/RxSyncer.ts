@@ -171,7 +171,7 @@ export class RxSyncer {
 
           await this.conflictsResolver?.resolveConflicts(lastChangesFromServer);
         }),
-        catchError((err) => {
+        catchError((err: unknown) => {
           return of(null);
         }),
         tap(() => this.isLocked$.next(false)),

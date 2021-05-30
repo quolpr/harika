@@ -1,6 +1,6 @@
-const rootDir = process.cwd().includes('packages/web-core')
+const rootDir = process.cwd().includes('packages/common')
   ? './'
-  : './packages/web-core';
+  : './packages/common';
 
 module.exports = {
   env: {
@@ -23,6 +23,6 @@ module.exports = {
     tsconfigRootDir: rootDir,
     project: './tsconfig.json',
   },
-  plugins: ['@typescript-eslint', 'react', 'jsx-a11y', 'rxjs'],
+  plugins: ['react', 'jsx-a11y', 'rxjs'],
   rules: {},
 };

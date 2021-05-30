@@ -1,3 +1,7 @@
+const rootDir = process.cwd().includes('packages/web-app')
+  ? './'
+  : './packages/web-app';
+
 module.exports = {
   env: {
     browser: true,
@@ -16,6 +20,8 @@ module.exports = {
     },
     ecmaVersion: 12,
     sourceType: 'module',
+    tsconfigRootDir: rootDir,
+    project: './tsconfig.json',
   },
   plugins: ['react', 'jsx-a11y', 'rxjs'],
   rules: {},

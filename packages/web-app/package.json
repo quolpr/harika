@@ -6,9 +6,9 @@
   "scripts": {
     "start": "snowpack dev",
     "build": "snowpack build",
-    "test": "web-test-runner \"src/**/*.test.tsx\"",
+    "test": "web-test-runner \"src/**/*.test.{tsx,ts}\"",
     "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx}\"",
-    "lint": "eslint \"src/**/*.tsx\""
+    "lint": "eslint \"src/**/*.{tsx,ts}\""
   },
   "dependencies": {
     "@bem-react/classname": "^1.5.10",
