@@ -144,6 +144,8 @@ export const useFocusHandler = (
       let startAt = contentLength;
 
       if (e.target instanceof HTMLElement) {
+        if (e.target.dataset.notEditable) return;
+
         // TODO: no FF support
         const range = document.caretRangeFromPoint(e.clientX, e.clientY);
 

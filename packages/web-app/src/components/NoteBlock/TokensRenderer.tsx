@@ -30,8 +30,8 @@ const RefRenderer = observer(
       return (
         <label
           className="checkbox"
-          onClick={(e) => e.stopPropagation()}
           style={{ verticalAlign: 'middle' }}
+          data-not-editable
         >
           <input
             type="checkbox"
@@ -54,7 +54,7 @@ const RefRenderer = observer(
           noteId: noteRef?.id,
         })}
         className="link"
-        onClick={(e) => e.stopPropagation()}
+        data-not-editable
       >
         [[{token.content}]]
       </Link>
@@ -120,7 +120,7 @@ const TokenRenderer = observer(
             className="link"
             target="_blank"
             rel="noopener noreferrer"
-            onClick={(e) => e.stopPropagation()}
+            data-not-editable
           >
             {token.content}
           </a>
