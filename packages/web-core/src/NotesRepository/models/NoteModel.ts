@@ -52,7 +52,7 @@ export const isNoteModel = (model: any): model is NoteModel =>
 @model(modelType)
 export class NoteModel extends Model({
   title: prop<string>(),
-  dailyNoteDate: tProp(types.dateTimestamp),
+  dailyNoteDate: tProp(types.maybe(types.dateTimestamp)),
   createdAt: tProp(types.dateTimestamp),
   areChildrenLoaded: prop<boolean>(),
   areLinksLoaded: prop<boolean>(),

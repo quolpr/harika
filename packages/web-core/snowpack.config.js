@@ -1,5 +1,10 @@
 /** @type {import("snowpack").SnowpackUserConfig } */
 module.exports = {
+  mount: {
+    public: { url: '/', static: true },
+    src: { url: '/dist' },
+    '../common': '/@harika/common',
+  },
   plugins: [
     '@snowpack/plugin-react-refresh',
     '@snowpack/plugin-dotenv',
@@ -15,5 +20,8 @@ module.exports = {
     polyfillNode: true,
     external: ['react'],
     /* ... */
+  },
+  alias: {
+    '@harika/common': '../common',
   },
 };

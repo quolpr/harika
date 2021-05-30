@@ -117,7 +117,7 @@ export type MessagesFromServer = CommandsFromServer | EventsFromServer;
 export type NoteDocType = {
   id: string;
   title: string;
-  dailyNoteDate: number;
+  dailyNoteDate: number | undefined;
   rootBlockId: string;
   createdAt: number;
   updatedAt?: number;

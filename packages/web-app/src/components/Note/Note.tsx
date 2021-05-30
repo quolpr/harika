@@ -1,16 +1,10 @@
 import React, { ChangeEvent, useCallback, useRef } from 'react';
-import TextareaAutosize from 'react-textarea-autosize';
 import { NoteBlock } from '../NoteBlock/NoteBlock';
 import './styles.css';
 import { useEffect } from 'react';
 import { useState } from 'react';
 import { observer } from 'mobx-react-lite';
-import {
-  NoteBlockModel,
-  NoteModel,
-  BlocksViewModel,
-  FocusedBlockState,
-} from '@harika/web-core';
+import { NoteBlockModel, NoteModel, FocusedBlockState } from '@harika/web-core';
 import { Link, useHistory } from 'react-router-dom';
 import { LinkIcon } from '@heroicons/react/solid';
 import { groupBy } from 'lodash-es';
@@ -19,12 +13,9 @@ import { Arrow } from '../Arrow/Arrow';
 import { paths } from '../../paths';
 import { useCurrentVault } from '../../hooks/useCurrentVault';
 import { useCurrentVaultUiState } from '../../contexts/CurrentVaultUiStateContext';
-import { Toolbar } from './Toolbar';
-import { useMedia } from 'react-use';
-import type { Ref } from 'mobx-keystone';
 import { CurrentBlockInputRefContext } from '../../contexts';
 import { useNoteRepository } from '../../contexts/CurrentNoteRepositoryContext';
-import { firstValueFrom } from 'rxjs';
+import { NoteBlocks } from './NoteBlocks';
 
 export interface IFocusBlockState {
   focusOnBlockId: string;
@@ -118,33 +109,6 @@ const Backlinks = observer(
             <BacklinkedNote key={note.$modelId} note={note} blocks={blocks} />
           );
         })}
-      </>
-    );
-  },
-);
-
-const NoteBlocks = observer(
-  ({
-    childBlocks,
-    view,
-  }: {
-    childBlocks: Ref<NoteBlockModel>[];
-    view: BlocksViewModel;
-  }) => {
-    const isWide = useMedia('(min-width: 768px)');
-
-    return (
-      <>
-        <div className="note__body">
-          {childBlocks.map((noteBlock) => (
-            <NoteBlock
-              key={noteBlock.current.$modelId}
-              noteBlock={noteBlock.current}
-              view={view}
-            />
-          ))}
-        </div>
-        {!isWide && <Toolbar view={view} />}
       </>
     );
   },

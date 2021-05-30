@@ -120,7 +120,7 @@ const NoteBlockBody = observer(
         )}
         {!isEditing && (
           <span
-            onClick={handleContentClick}
+            onMouseDown={handleContentClick}
             className={clsx('note-block__content', {})}
           >
             <TokensRenderer

@@ -2,10 +2,16 @@ import { mapTokens } from './astHelpers';
 import { parse as pegParse } from './pegParser';
 import { find, FindResultHash } from 'linkifyjs';
 import type { Token } from './types';
-import { generateId } from '@harika/common';
 
-export const parse = (data: string): Token[] => {
-  return mapTokens(pegParse(data), (t) => {
+const generateNewId = function () {
+  // Math.random should be unique because of its seeding algorithm.
+  // Convert it to base 36 (numbers + letters), and grab the first 9 characters
+  // after the decimal.
+  return '_' + Math.random().toString(36).substr(2, 9);
+};
+
+export const parse = (data: string, generateId = generateNewId): Token[] => {
+  return mapTokens(pegParse(data, { generateId }), (t) => {
     if (t.type === 'str') {
       const links = find(t.content);
 
