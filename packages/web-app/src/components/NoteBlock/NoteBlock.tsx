@@ -82,6 +82,8 @@ const NoteBlockBody = observer(
       view.toggleExpand(noteBlock.$modelId);
     }, [noteBlock.$modelId, view]);
 
+    const inputId = `${view.$modelId}-${noteBlock.$modelId}`;
+
     return (
       <div className="note-block__body" ref={noteBlockBodyElRef}>
         {noteBlock.noteBlockRefs.length !== 0 && (
@@ -104,7 +106,12 @@ const NoteBlockBody = observer(
         {/* > */}
         {isEditing && (
           <div className="note-block__input-container">
+            <label htmlFor={inputId} className="hidden-label">
+              Note block content
+            </label>
+
             <TextareaAutosize
+              id={inputId}
               ref={inputRef}
               className={clsx('note-block__content', {
                 'note-block__content--hidden': !isEditing,
