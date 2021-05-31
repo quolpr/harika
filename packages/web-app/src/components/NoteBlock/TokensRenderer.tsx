@@ -33,6 +33,8 @@ const RefRenderer = observer(
           style={{ verticalAlign: 'middle' }}
           data-not-editable
         >
+          <span className="hidden-label">Todo</span>
+
           <input
             type="checkbox"
             onKeyPress={(e) => {

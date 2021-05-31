@@ -102,7 +102,7 @@ input[type='search']::-webkit-search-results-decoration {
 }
 
 .link {
-  @apply text-pink-500 hover:underline;
+  @apply text-pink-600 hover:underline;
 }
 
 .checkbox {
