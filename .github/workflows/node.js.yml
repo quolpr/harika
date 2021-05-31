@@ -29,7 +29,6 @@ jobs:
     - run: yarn lint:web-core
     - run: yarn lint:web-app
     - run: yarn lint:api-app
-    - run: yarn test:common
     - run: yarn test:web-core
     - run: yarn test:web-app
     - run: yarn test:api-app
