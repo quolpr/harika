@@ -12,13 +12,14 @@ export const Arrow = ({
   className?: string;
 }) => {
   return (
-    <div
+    <button
       className={clsx(className, 'arrow', {
         'arrow--expanded': isExpanded,
       })}
       onClick={() => {
         onToggle();
       }}
+      aria-expanded={isExpanded}
     />
   );
 };

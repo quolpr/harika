@@ -1,5 +1,5 @@
 .arrow {
-  @apply cursor-pointer duration-300;
+  @apply cursor-pointer duration-300 outline-none focus:outline-none focus:border-pink-600;
 
   &:before {
     @apply border-gray-500;
@@ -19,7 +19,8 @@
     transform: rotate(-45deg);
   }
 
-  &:hover:before {
+  &:hover:before,
+  &:focus:before {
     @apply border-pink-600;
   }
 

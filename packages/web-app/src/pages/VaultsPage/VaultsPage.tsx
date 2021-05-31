@@ -110,7 +110,7 @@ export const VaultsPage = ({ vaults }: { vaults: VaultsRepository }) => {
             <VaultBlock key={vault.id} vault={vault} vaults={vaults} />
           ))}
 
-          <div
+          <button
             className={`${vaultsClass('box')} ${vaultsClass('create-box')}`}
             onClick={() => setIsCreateModalOpened(true)}
           >
@@ -121,7 +121,7 @@ export const VaultsPage = ({ vaults }: { vaults: VaultsRepository }) => {
             <div className={vaultsClass('add-icon')}>
               <PlusIcon style={{ width: 20 }} />
             </div>
-          </div>
+          </button>
 
           <CreateVaultModal
             isOpened={isCreateModalOpened}

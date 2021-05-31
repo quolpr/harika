@@ -176,11 +176,23 @@ export const useFocusHandler = (
     ],
   );
 
+  const handleContentKeyPress = (e: React.KeyboardEvent<HTMLSpanElement>) => {
+    if (e.key === 'Enter' && e.target === e.currentTarget) {
+      setEditState({
+        viewId: view.$modelId,
+        blockId: noteBlock.$modelId,
+        isEditing: true,
+        startAt: 0,
+      });
+    }
+  };
+
   const handleInputBlur = useHandleDoneIosButton(view, noteBlock);
 
   return {
     handleInputBlur,
     handleContentClick,
+    handleContentKeyPress,
     insertFakeInput,
     releaseFakeInput,
     fakeInputRef,

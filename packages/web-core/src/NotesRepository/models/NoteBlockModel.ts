@@ -1,10 +1,5 @@
 import {
-  customRef,
-  detach,
   findParent,
-  getParent,
-  getParentPath,
-  isTreeNode,
   model,
   Model,
   modelAction,
@@ -126,7 +121,8 @@ export class NoteBlockModel extends Model({
 
   @computed
   get nearestRightToParent(): NoteBlockModel | undefined {
-    if (!this.parentBlockRef || this.parentBlockRef.current.isRoot) return;
+    if (!this.parentBlockRef || this.parentBlockRef.current.isRoot)
+      return undefined;
 
     const [, right] = this.parentBlockRef.current.leftAndRightSibling;
 

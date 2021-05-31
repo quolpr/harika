@@ -139,7 +139,7 @@ export const NoteTitleAutocomplete = React.memo(
       <div style={{ position: 'relative' }}>
         {value && (
           <div className={noteAutocompleteClass()}>
-            <ul className={noteAutocompleteClass('content')}>
+            <ul className={noteAutocompleteClass('content')} role="menu">
               {!wasFirstSearchHappened && (
                 <li className={noteAutocompleteClass('item')}>Loading...</li>
               )}
@@ -149,7 +149,10 @@ export const NoteTitleAutocomplete = React.memo(
                 </li>
               )}
               {searchResults.map((res, i) => (
+                // Already handling
+                // eslint-disable-next-line jsx-a11y/click-events-have-key-events
                 <li
+                  role="menuitem"
                   key={res.id}
                   className={noteAutocompleteClass('item', {
                     focused: focusedId === res.id,

@@ -26,7 +26,7 @@ export const VaultHeader = observer(
     className?: string;
     onTogglerClick: () => void;
     isTogglerToggled: boolean;
-    togglerRef: React.Ref<HTMLDivElement>;
+    togglerRef: React.Ref<HTMLElement>;
   }) => {
     const vault = useCurrentVault();
     const noteRepo = useNoteRepository();
@@ -77,16 +77,19 @@ export const VaultHeader = observer(
 
     return (
       <div className={clsx(vaultHeaderClass(), className)}>
-        <div
+        <button
           className={vaultHeaderClass('sidebar-toggler', {
             toggled: isTogglerToggled,
           })}
-          onMouseUp={(e) => {
-            console.log('mouse down!');
-
+          onMouseUp={() => {
             onTogglerClick();
           }}
-          ref={togglerRef}
+          onKeyPress={(e) => {
+            if (e.key === 'Enter') {
+              onTogglerClick();
+            }
+          }}
+          ref={togglerRef as React.Ref<HTMLButtonElement>}
         >
           <svg
             stroke="currentColor"
@@ -103,7 +106,7 @@ export const VaultHeader = observer(
             <line x1="3" y1="6" x2="21" y2="6"></line>
             <line x1="3" y1="18" x2="21" y2="18"></line>
           </svg>
-        </div>
+        </button>
 
         <button
           onClick={() => {

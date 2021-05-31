@@ -49,7 +49,6 @@
 
   &__command-palette {
     @apply text-gray-500;
-    @apply focus:outline-none;
   }
 
   &__command-palette-hotkey {

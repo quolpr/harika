@@ -57,7 +57,7 @@ export const NotesPage = () => {
     if (Array.isArray(observedNotes)) {
       loadingDoneSubject.next();
     }
-  }, [observedNotes]);
+  }, [loadingDoneSubject, observedNotes]);
 
   return (
     <div className="notes-table">

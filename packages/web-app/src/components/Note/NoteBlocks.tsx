@@ -51,12 +51,12 @@ export const NoteBlocks = observer(
           console.log({ fromId, toId: el.dataset.id });
         }
       },
-      [],
+      [fromId],
     );
 
     return (
       <>
-        <div
+        <div // eslint-disable-line jsx-a11y/no-static-element-interactions
           className="note__body"
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}

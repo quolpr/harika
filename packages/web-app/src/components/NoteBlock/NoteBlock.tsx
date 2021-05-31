@@ -58,7 +58,7 @@ const NoteBlockBody = observer(
       view.$modelId,
       noteBlock.$modelId,
     );
-    const { isFocused, isEditing } = editState;
+    const { isEditing } = editState;
     useProvideInputToContext(inputRef, isEditing);
     useUpdateBlockLinks(noteBlock, editState);
     const {
@@ -66,6 +66,7 @@ const NoteBlockBody = observer(
       insertFakeInput,
       releaseFakeInput,
       handleContentClick,
+      handleContentKeyPress,
     } = useFocusHandler(view, noteBlock, inputRef, noteBlockBodyElRef);
     const { textareaHandlers, noteTitleToSearch, handleSearchSelect } =
       useHandleInput(
@@ -122,6 +123,9 @@ const NoteBlockBody = observer(
           <span
             onMouseDown={handleContentClick}
             className={clsx('note-block__content', {})}
+            role="textbox"
+            tabIndex={0}
+            onKeyPress={handleContentKeyPress}
           >
             <TokensRenderer
               noteBlock={noteBlock}

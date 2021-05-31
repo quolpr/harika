@@ -35,6 +35,11 @@ const RefRenderer = observer(
         >
           <input
             type="checkbox"
+            onKeyPress={(e) => {
+              if (e.key === 'Enter') {
+                handleTodoToggle(e);
+              }
+            }}
             checked={token.content === 'DONE'}
             onChange={handleTodoToggle}
             data-not-editable
@@ -67,7 +72,7 @@ const TokenRenderer = observer(
   ({ noteBlock, token }: { noteBlock: NoteBlockModel; token: Token }) => {
     switch (token.type) {
       case 'tag':
-        return <a href="#">#[[{token.content}]]</a>;
+        return <div>#[[{token.content}]]</div>;
       case 'ref':
         return <RefRenderer token={token} noteBlock={noteBlock} />;
       case 'bold':

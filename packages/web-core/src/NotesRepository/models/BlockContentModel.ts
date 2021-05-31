@@ -17,6 +17,7 @@ const findById = (
     }
 
     if (Array.isArray(t.content)) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       return findById(t.content, id, func);
     }
 
@@ -29,43 +30,46 @@ function assertUnreachable(x: never): never {
 }
 
 const astToString = (ast: Token[]): string => {
-  return ast
-    .map((t): string => {
-      switch (t.type) {
-        case 'ref':
-          return `[[${t.content}]]`;
+  return (
+    ast
+      // eslint-disable-next-line array-callback-return
+      .map((t): string => {
+        switch (t.type) {
+          case 'ref':
+            return `[[${t.content}]]`;
 
-        case 'tag':
-          return `#[[${t.content}]]`;
+          case 'tag':
+            return `#[[${t.content}]]`;
 
-        case 'bold':
-          return `**${astToString(t.content)}**`;
+          case 'bold':
+            return `**${astToString(t.content)}**`;
 
-        case 'italic':
-          return `__${astToString(t.content)}__`;
+          case 'italic':
+            return `__${astToString(t.content)}__`;
 
-        case 'highlight':
-          return `^^${astToString(t.content)}^^`;
+          case 'highlight':
+            return `^^${astToString(t.content)}^^`;
 
-        case 'head':
-          return `${'#'.repeat(t.depth)}${astToString(t.content)}`;
+          case 'head':
+            return `${'#'.repeat(t.depth)}${astToString(t.content)}`;
 
-        case 'inlineCode':
-          return `\`${t.content}\``;
-        case 'codeBlock':
-          return `\`\`\`${t.content}\`\`\``;
+          case 'inlineCode':
+            return `\`${t.content}\``;
+          case 'codeBlock':
+            return `\`\`\`${t.content}\`\`\``;
 
-        case 'str':
-          return t.content;
+          case 'str':
+            return t.content;
 
-        case 'link':
-          return t.content;
+          case 'link':
+            return t.content;
 
-        default:
-          assertUnreachable(t);
-      }
-    })
-    .join('');
+          default:
+            assertUnreachable(t);
+        }
+      })
+      .join('')
+  );
 };
 
 @model('harika/ContentManagerModel')

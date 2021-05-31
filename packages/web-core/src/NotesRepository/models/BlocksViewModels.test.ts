@@ -1,7 +1,7 @@
 import { VaultModel } from './VaultModel';
 
 const parseToBlocksTree = (str: string) => {
-  const regex = /^(\s*)\-(.*?)\[#(.*?)\]$/gm;
+  const regex = /^(\s*)-(.*?)\[#(.*?)\]$/gm;
 
   let baseIndent = 0;
 
@@ -25,7 +25,7 @@ const parseToBlocksTree = (str: string) => {
 
     return { indent, name, id };
   });
-  console.log(tokens);
+  console.log(tokens, note);
 };
 
 describe('BlocksViewModel', () => {

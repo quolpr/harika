@@ -33,7 +33,7 @@ export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
           .toLowerCase()}-${dayjs().format('DD-MM-YYYY')}.json`,
         'application/json',
       );
-    }, []);
+    }, [notesRepository, vault.name]);
 
     return (
       <div

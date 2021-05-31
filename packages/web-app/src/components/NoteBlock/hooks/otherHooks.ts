@@ -3,7 +3,6 @@ import { CurrentBlockInputRefContext } from '../../../contexts';
 import type { EditState, NoteBlockModel } from '@harika/web-core';
 import { useNoteRepository } from '../../../contexts/CurrentNoteRepositoryContext';
 import { usePrevious } from 'react-use';
-import { useCurrentVault } from '../../../hooks/useCurrentVault';
 
 export const useProvideInputToContext = (
   inputRef: MutableRefObject<HTMLTextAreaElement | null>,

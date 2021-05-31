@@ -31,29 +31,32 @@ export const LoginPage = () => {
 
   const { ref: refEmail, ...restEmail } = register('email', { required: true });
 
-  const onSubmit = useCallback(async (data: IFormData) => {
-    try {
-      const res = await login.mutateAsync(data);
+  const onSubmit = useCallback(
+    async (data: IFormData) => {
+      try {
+        const res = await login.mutateAsync(data);
 
-      if (!res.login.authed || !res.login.user) throw new Error('auth error');
+        if (!res.login.authed || !res.login.user) throw new Error('auth error');
 
-      const { id: userId } = res.login.user;
+        const { id: userId } = res.login.user;
 
-      setAuthInfo({ userId, isOffline: false });
+        setAuthInfo({ userId, isOffline: false });
 
-      history.push(paths.vaultIndexPath());
-    } catch {
-      setError('email', {
-        type: 'server',
-        message: 'Email or password is wrong',
-      });
-    }
-  }, []);
+        history.push(paths.vaultIndexPath());
+      } catch {
+        setError('email', {
+          type: 'server',
+          message: 'Email or password is wrong',
+        });
+      }
+    },
+    [history, login, setAuthInfo, setError],
+  );
 
   const handleWorkOffline = useCallback(() => {
-    const token = 'not-set';
+    // const token = 'not-set';
 
-    const { userId, dbId } = (() => {
+    const { userId } = (() => {
       if (offlineAccounts.accounts.length > 0) {
         return {
           userId: offlineAccounts.accounts[0].id,

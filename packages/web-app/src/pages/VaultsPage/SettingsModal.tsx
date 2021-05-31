@@ -1,7 +1,6 @@
 import type { VaultsRepository } from '@harika/web-core';
 import React, { useCallback } from 'react';
 import { useForm } from 'react-hook-form';
-import { useHistory } from 'react-router-dom';
 import { Modal, modalClass } from '../../components/Modal/Modal';
 import { cn } from '../../utils';
 import DeleteIcon from '@material-ui/icons/Delete';
@@ -24,11 +23,9 @@ export const SettingsModal = ({
   isOpened: boolean;
   setIsOpened: (t: boolean) => void;
 }) => {
-  const history = useHistory();
-
   const handleClose = useCallback(() => {
     setIsOpened(false);
-  }, []);
+  }, [setIsOpened]);
 
   const {
     register,
@@ -46,14 +43,14 @@ export const SettingsModal = ({
 
       setIsOpened(false);
     },
-    [vaults, history],
+    [vaults, vault.id, setIsOpened],
   );
 
   const handleDelete = useCallback(() => {
-    if (confirm('Are you sure?')) {
+    if (window.confirm('Are you sure?')) {
       vaults.dropVault(vault.id);
     }
-  }, []);
+  }, [vault.id, vaults]);
 
   return (
     <Modal isOpened={isOpened} onClose={handleClose}>

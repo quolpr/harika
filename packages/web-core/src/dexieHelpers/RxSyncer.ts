@@ -77,7 +77,12 @@ export class RxSyncer {
   private isLocked$ = new BehaviorSubject<boolean>(false);
   private lastChangesFromServer: Array<{ table: string; key: string }> = [];
   private socketSubject = new Subject<SocketIOClient.Socket>();
-  private socket$ = this.socketSubject.pipe(shareReplay(1));
+  private socket$ = this.socketSubject.pipe(
+    shareReplay({
+      bufferSize: 1,
+      refCount: true,
+    }),
+  );
   private syncedRevision: number | null = null;
   private identity!: string;
 
@@ -99,7 +104,12 @@ export class RxSyncer {
     this.isConnected$ = merge(
       connect$.pipe(mapTo(true)),
       disconnect$.pipe(mapTo(false)),
-    ).pipe(takeUntil(this.stop$), shareReplay());
+    ).pipe(
+      takeUntil(this.stop$),
+      shareReplay({
+        refCount: true,
+      }),
+    );
 
     this.isConnectedAndInitialized$ = combineLatest([
       this.isConnected$,
@@ -135,7 +145,9 @@ export class RxSyncer {
           : of(false);
       }),
       takeUntil(this.stop$),
-      shareReplay(1),
+      shareReplay({
+        refCount: true,
+      }),
     );
 
     this.isMaster$.subscribe((isMaster) => {

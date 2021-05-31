@@ -8,7 +8,7 @@ import {
 
 export function syncMiddleware(
   subtreeRoot: object,
-  applyPatches: (patches: Patch[]) => void
+  applyPatches: (patches: Patch[]) => void,
 ) {
   interface PatchRecorderData {
     recorder: PatchRecorder;
@@ -33,7 +33,8 @@ export function syncMiddleware(
   }
 
   // TODO: dispose
-  // TODO: make custom decorator insted of hardcoding of method name
+  // TODO: make custom decorator instead of hardcoding of method name
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const middlewareDisposer = actionTrackingMiddleware(subtreeRoot, {
     onStart(ctx) {
       if (ctx.rootContext.actionName === 'createOrUpdateEntitiesFromAttrs')

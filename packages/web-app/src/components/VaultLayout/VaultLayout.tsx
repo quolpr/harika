@@ -23,15 +23,8 @@ import './styles.css';
 import { writeStorage } from '@rehooks/local-storage';
 import { FooterRefContext } from '../../contexts/FooterRefContext';
 import { LoadingDoneSubjectContext } from '../../contexts';
-import { Observable, race } from 'rxjs';
-import {
-  filter,
-  mapTo,
-  switchMap,
-  take,
-  tap,
-  withLatestFrom,
-} from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { mapTo, switchMap, take, tap } from 'rxjs/operators';
 
 const layoutClass = cn('vault-layout');
 
@@ -94,7 +87,7 @@ const useKeepScroll = () => {
       .subscribe();
 
     return () => pipe.unsubscribe();
-  }, [history]);
+  }, [history, loadingDoneSubject]);
 
   const handleScroll = useCallback(
     (e: React.UIEvent<HTMLDivElement>) => {

@@ -13,7 +13,7 @@ export const useHandleInput = (
   insertFakeInput: (el?: HTMLElement) => void,
   releaseFakeInput: () => void,
 ) => {
-  const [editState, setEditState] = useCurrentFocusedBlockState(
+  const [, setEditState] = useCurrentFocusedBlockState(
     view.$modelId,
     noteBlock.$modelId,
   );

@@ -21,7 +21,6 @@ export const SignupPage = () => {
   const {
     register,
     handleSubmit,
-    setError,
 
     formState: { errors },
   } = useForm<IFormData>();

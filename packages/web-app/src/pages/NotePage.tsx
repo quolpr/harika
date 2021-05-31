@@ -41,7 +41,7 @@ const useFindNote = (noteId: string) => {
     };
 
     callback();
-  }, [noteId, noteRepo, vaultUiState]);
+  }, [loadingDoneSubject, noteId, noteRepo, vaultUiState]);
 
   const noteTitle = note?.title;
   const isDeleted = note?.isDeleted;
