@@ -20,6 +20,7 @@ export const Arrow = ({
         onToggle();
       }}
       aria-expanded={isExpanded}
+      aria-label="Expand block"
     />
   );
 };

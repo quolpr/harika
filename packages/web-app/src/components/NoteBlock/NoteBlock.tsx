@@ -124,6 +124,7 @@ const NoteBlockBody = observer(
             onMouseDown={handleContentClick}
             className={clsx('note-block__content', {})}
             role="textbox"
+            aria-label="Note block content"
             tabIndex={0}
             onKeyPress={handleContentKeyPress}
           >

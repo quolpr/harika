@@ -90,6 +90,9 @@ export const VaultHeader = observer(
             }
           }}
           ref={togglerRef as React.Ref<HTMLButtonElement>}
+          role="switch"
+          aria-label="Toggle menu"
+          aria-checked={isTogglerToggled}
         >
           <svg
             stroke="currentColor"
@@ -136,7 +139,7 @@ export const VaultHeader = observer(
             ref={calendarRef}
             className={vaultHeaderClass('calendar-wrapper')}
           >
-            <button onClick={handleOnCalendarClick}>
+            <button onClick={handleOnCalendarClick} aria-label="Calendar">
               <CalendarIcon
                 className={vaultHeaderClass('calendar-icon')}
                 style={{ width: 26 }}

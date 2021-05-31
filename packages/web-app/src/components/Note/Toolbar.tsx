@@ -172,24 +172,28 @@ export const Toolbar = observer(({ view }: { view: BlocksViewModel }) => {
             <button
               onMouseDown={handleMoveDownPress}
               className={toolbarClass('button')}
+              aria-label="Increase indent"
             >
               <FormatIndentDecrease />
             </button>
             <button
               onMouseDown={handleMoveUpPress}
               className={toolbarClass('button')}
+              aria-label="Decrease indent"
             >
               <FormatIndentIncrease />
             </button>
             <button
               onMouseDown={handleMoveRight}
               className={toolbarClass('button')}
+              aria-label="Move down"
             >
               <ArrowDropDown />
             </button>
             <button
               onMouseDown={handleMoveLeft}
               className={toolbarClass('button')}
+              aria-label="Move up"
             >
               <ArrowDropUp />
             </button>
@@ -197,6 +201,7 @@ export const Toolbar = observer(({ view }: { view: BlocksViewModel }) => {
             <button
               className={toolbarClass('button')}
               onMouseDown={handleBracketPress}
+              aria-label="Add note ref"
             >
               [[
             </button>
@@ -204,11 +209,16 @@ export const Toolbar = observer(({ view }: { view: BlocksViewModel }) => {
             <button
               className={toolbarClass('button')}
               onMouseDown={handleTodoPress}
+              aria-label="Add TODO"
             >
               <CheckBox />
             </button>
 
-            <button className={toolbarClass('button')} data-defocus>
+            <button
+              className={toolbarClass('button')}
+              data-defocus
+              aria-label="Hide keyboard"
+            >
               <KeyboardHide />
             </button>
           </div>

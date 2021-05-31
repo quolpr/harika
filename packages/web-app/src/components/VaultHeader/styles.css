@@ -48,7 +48,7 @@
   }
 
   &__command-palette {
-    @apply text-gray-500;
+    @apply text-gray-400;
   }
 
   &__command-palette-hotkey {

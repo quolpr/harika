@@ -165,10 +165,16 @@ const NoteBody = observer(({ note }: { note: NoteModel }) => {
     }
   }, [focusOnBlockId, note.$modelId, vaultUiState]);
 
+  const inputId = `note-title-input-${note.$modelId}`;
+
   return (
     <div className="note">
       <h2 className="note__header">
+        <label htmlFor={inputId} className="hidden-label">
+          Note title
+        </label>
         <input
+          id={inputId}
           className="note__input"
           value={noteTitle}
           onBlur={changeTitle}
