@@ -19,9 +19,8 @@ export class VaultModel extends Model({
   name: prop<string>(),
   notesMap: prop<Record<string, NoteModel>>(() => ({})),
   blocksMap: prop<Record<string, NoteBlockModel>>(() => ({})),
+  blocksViewsMap: prop<Record<string, BlocksViewModel>>(() => ({})),
 }) {
-  blocksViewsMap: Record<string, BlocksViewModel> = {};
-
   @modelAction
   newNote(
     attrs: Required<
@@ -36,7 +35,10 @@ export class VaultModel extends Model({
       >,
       'title'
     >,
+    options?: { addEmptyBlock?: boolean },
   ) {
+    options = { addEmptyBlock: true, ...options };
+
     const noteId = generateId();
 
     const rootBlock = new NoteBlockModel({
@@ -62,22 +64,30 @@ export class VaultModel extends Model({
     this.notesMap[note.$modelId] = note;
     this.blocksMap[rootBlock.$modelId] = rootBlock;
 
-    note.createBlock(
-      { content: new BlockContentModel({ value: '' }) },
-      rootBlock,
-      0,
-    );
+    if (options.addEmptyBlock) {
+      note.createBlock(
+        { content: new BlockContentModel({ value: '' }) },
+        rootBlock,
+        0,
+      );
+    }
 
     return note;
   }
 
   @modelAction
-  getOrCreateViewByModel(model: { $modelId: string; $modelType: string }) {
+  getOrCreateViewByModel(
+    note: NoteModel,
+    model: { $modelId: string; $modelType: string },
+  ) {
     const key = `${model.$modelType}-${model.$modelId}`;
 
     if (this.blocksViewsMap[key]) return this.blocksViewsMap[key];
 
-    this.blocksViewsMap[key] = new BlocksViewModel({ $modelId: key });
+    this.blocksViewsMap[key] = new BlocksViewModel({
+      $modelId: key,
+      noteRef: noteRef(note),
+    });
 
     return this.blocksViewsMap[key];
   }

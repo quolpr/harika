@@ -23,6 +23,9 @@
   "devDependencies": {
     "@sentry/cli": "^1.64.2"
   },
+  "resolutions": {
+    "react-refresh": "0.10.0"
+  },
   "dependencies": {
     "patch-package": "^6.4.7",
     "postinstall-postinstall": "^2.1.0"

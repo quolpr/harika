@@ -85,7 +85,7 @@ const BacklinkedNote = observer(
                 )}
                 <NoteBlock
                   noteBlock={noteBlock}
-                  view={vault.getOrCreateViewByModel(noteBlock)}
+                  view={vault.getOrCreateViewByModel(note, noteBlock)}
                 />
               </div>
             );
@@ -184,7 +184,7 @@ const NoteBody = observer(({ note }: { note: NoteModel }) => {
       </h2>
 
       <NoteBlocks
-        view={vault.getOrCreateViewByModel(note)}
+        view={vault.getOrCreateViewByModel(note, note)}
         childBlocks={note.rootBlockRef.current.noteBlockRefs}
       />
 

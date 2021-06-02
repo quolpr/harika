@@ -31,6 +31,23 @@ export class NoteBlockModel extends Model({
   isDeleted: prop<boolean>(false),
 }) {
   @computed
+  get flattenTree(): NoteBlockModel[] {
+    const blocks: NoteBlockModel[] = [];
+
+    this.noteBlockRefs.forEach((block) => {
+      blocks.push(block.current);
+      blocks.push(...block.current.flattenTree);
+    });
+
+    return blocks;
+  }
+
+  @computed
+  get indent() {
+    return this.path.length;
+  }
+
+  @computed
   get isRoot() {
     return this.parentBlockRef === undefined;
   }
@@ -70,8 +87,6 @@ export class NoteBlockModel extends Model({
     const path: NoteBlockModel[] = [];
 
     while (current) {
-      if (current.isRoot) break;
-
       path.unshift(current);
       current = current.parentBlockRef?.current;
     }
@@ -171,6 +186,23 @@ export class NoteBlockModel extends Model({
     return siblings.slice(index + 1);
   }
 
+  getStringTree(includeId = false, indent = this.isRoot ? -1 : 0): string {
+    let str = this.isRoot
+      ? ''
+      : `${'  '.repeat(indent)}- ${this.content.value}${
+          includeId ? ` [#${this.$modelId}]` : ''
+        }\n`;
+
+    this.noteBlockRefs.forEach((blockRef) => {
+      str += blockRef.current.getStringTree(
+        includeId,
+        this.isRoot ? 0 : indent + 1,
+      );
+    });
+
+    return str;
+  }
+
   @modelAction
   move(parent: NoteBlockModel, pos: number | 'start' | 'end') {
     if (!this.parentBlockRef) {
@@ -221,6 +253,21 @@ export class NoteBlockModel extends Model({
     this.delete(false, false);
 
     return left;
+  }
+
+  @modelAction
+  appendChildBlock(data: { content: string; id?: string }) {
+    const parentRef = noteBlockRef(this);
+
+    return this.noteRef.current.createBlock(
+      {
+        parentBlockRef: parentRef,
+        content: new BlockContentModel({ value: data.content }),
+        ...(data.id ? { $modelId: data.id } : {}),
+      },
+      this,
+      this.noteBlockRefs.length,
+    );
   }
 
   @modelAction

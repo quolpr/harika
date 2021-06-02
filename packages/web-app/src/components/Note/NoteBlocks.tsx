@@ -16,6 +16,7 @@ export const NoteBlocks = observer(
   }) => {
     const isWide = useMedia('(min-width: 768px)');
     const [fromId, setFromId] = useState<undefined | string>();
+    const [toId, setToId] = useState<undefined | string>();
 
     useEffect(() => {
       const listener = () => {
@@ -25,6 +26,12 @@ export const NoteBlocks = observer(
 
       return () => document.removeEventListener('mouseup', listener);
     });
+
+    useEffect(() => {
+      if (fromId && toId) {
+        view.selectInterval(fromId, toId);
+      }
+    }, [fromId, toId, view]);
 
     const handleMouseDown = useCallback(
       (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
@@ -48,7 +55,7 @@ export const NoteBlocks = observer(
         );
 
         if (el && el.dataset.id) {
-          console.log({ fromId, toId: el.dataset.id });
+          setToId(el.dataset.id);
         }
       },
       [fromId],

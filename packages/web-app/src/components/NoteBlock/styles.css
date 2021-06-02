@@ -7,6 +7,10 @@
 
   &__body {
     @apply flex relative;
+
+    &--selected {
+      background-color: red;
+    }
   }
 
   &__dot {

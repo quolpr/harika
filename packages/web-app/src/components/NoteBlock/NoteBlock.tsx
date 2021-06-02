@@ -85,7 +85,14 @@ const NoteBlockBody = observer(
     const inputId = `${view.$modelId}-${noteBlock.$modelId}`;
 
     return (
-      <div className="note-block__body" ref={noteBlockBodyElRef}>
+      <div
+        className={clsx('note-block__body', {
+          'note-block__body--selected': view.selectedIds.includes(
+            noteBlock.$modelId,
+          ),
+        })}
+        ref={noteBlockBodyElRef}
+      >
         {noteBlock.noteBlockRefs.length !== 0 && (
           <Arrow
             className="note-block__arrow"

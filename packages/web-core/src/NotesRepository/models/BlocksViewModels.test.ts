@@ -1,42 +1,38 @@
-import { VaultModel } from './VaultModel';
-
-const parseToBlocksTree = (str: string) => {
-  const regex = /^(\s*)-(.*?)\[#(.*?)\]$/gm;
-
-  let baseIndent = 0;
-
-  const vault = new VaultModel({
-    name: 'Vault',
-  });
-  const note = vault.newNote({ title: 'Note' });
-
-  const tokens = [...str.matchAll(regex)].map((group, i) => {
-    let [, spaces, name, id] = group;
-
-    spaces = spaces.replace(/[\n\r]+/g, '');
-    name = name.trim();
-    id = id.trim();
-
-    if (i === 0) {
-      baseIndent = spaces.length;
-    }
-
-    const indent = spaces.length - baseIndent;
-
-    return { indent, name, id };
-  });
-  console.log(tokens, note);
-};
+import { expect } from '@esm-bundle/chai';
+import { parseToBlocksTree } from '../../tests/blockUtils';
+import { BlocksViewModel } from './BlocksViewModel';
+import { noteRef } from './NoteModel';
 
 describe('BlocksViewModel', () => {
-  describe('getSelectedIds', () => {
-    it('returns correct selection', () => {
-      const tree = parseToBlocksTree(`
+  describe('selectInterval', () => {
+    it('works', () => {
+      const { note, vault } = parseToBlocksTree(`
         - block1 [#1]
           - block2 [#2]
-        - block3 [#3]
+            - block3 [#3]
+            - block4 [#4]
+          - block5 [#5]
+        - block6 [#6]
+          - block7 [#7]
+          - block8 [#8]
       `);
-      console.log(tree);
+
+      const viewModel = vault.getOrCreateViewByModel(note, {
+        $modelId: '123',
+        $modelType: '345',
+      });
+
+      viewModel.selectInterval('2', '8');
+
+      expect(viewModel.selectedIds).to.deep.eq([
+        '2',
+        '3',
+        '4',
+        '5',
+        '6',
+        '7',
+        '8',
+      ]);
     });
   });
 });
