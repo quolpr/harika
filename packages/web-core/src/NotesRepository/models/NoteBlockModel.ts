@@ -401,7 +401,13 @@ export class NoteBlockModel extends Model({
         this.noteBlockIds,
       )
     ) {
-      this.noteBlockRefs = data.noteBlockRefs;
+      const currentRefs = Object.fromEntries(
+        this.noteBlockRefs.map((ref) => [ref.id, ref]),
+      );
+
+      this.noteBlockRefs = data.noteBlockRefs.map((ref) =>
+        currentRefs[ref.id] ? currentRefs[ref.id] : ref,
+      );
     }
 
     if (
@@ -411,7 +417,13 @@ export class NoteBlockModel extends Model({
         this.linkedNoteRefs,
       )
     ) {
-      this.linkedNoteRefs = data.linkedNoteRefs;
+      const currentRefs = Object.fromEntries(
+        this.linkedNoteRefs.map((ref) => [ref.id, ref]),
+      );
+
+      this.linkedNoteRefs = data.linkedNoteRefs.map((ref) =>
+        currentRefs[ref.id] ? currentRefs[ref.id] : ref,
+      );
     }
   }
 

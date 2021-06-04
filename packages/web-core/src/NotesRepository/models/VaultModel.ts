@@ -5,6 +5,7 @@ import {
   ModelCreationData,
   prop,
   Ref,
+  transaction,
 } from 'mobx-keystone';
 import { NoteModel, noteRef } from './NoteModel';
 import type { Optional, Required } from 'utility-types';
@@ -13,6 +14,7 @@ import { vaultModelType } from './consts';
 import { generateId } from '@harika/common';
 import { BlockContentModel } from './NoteBlockModel/BlockContentModel';
 import { VaultUiState } from './VaultUiState';
+import { merge } from 'lodash-es';
 
 @model(vaultModelType)
 export class VaultModel extends Model({
@@ -76,6 +78,7 @@ export class VaultModel extends Model({
   }
 
   @modelAction
+  @transaction
   createOrUpdateEntitiesFromAttrs(
     noteAttrs: (ModelCreationData<NoteModel> & {
       $modelId: string;
@@ -110,48 +113,66 @@ export class VaultModel extends Model({
       ),
     );
 
-    const notes = noteAttrs.map((note) => {
-      if (this.notesMap[note.$modelId]) {
-        this.notesMap[note.$modelId].updateAttrs(note);
-      } else {
-        this.notesMap[note.$modelId] = new NoteModel(note);
-      }
+    // NOTE
 
-      return this.notesMap[note.$modelId];
+    const toUpdateNotes = noteAttrs.filter(
+      (note) => this.notesMap[note.$modelId],
+    );
+
+    // Let's create new blocks at first
+    this.notesMap = {
+      ...this.notesMap,
+      ...Object.fromEntries(
+        noteAttrs
+          .filter((note) => !this.notesMap[note.$modelId])
+          .map((note) => [note.$modelId, new NoteModel(note)]),
+      ),
+    };
+
+    toUpdateNotes.forEach((note) => {
+      this.notesMap[note.$modelId].updateAttrs(note);
     });
 
-    const blocks = blocksAttrs.map((block) => {
-      if (this.blocksMap[block.$modelId]) {
-        this.blocksMap[block.$modelId].updateAttrs(block);
-      } else {
-        this.blocksMap[block.$modelId] = new NoteBlockModel(block);
-      }
+    // BLOCK
 
-      return this.blocksMap[block.$modelId];
+    const toUpdateBlocks = blocksAttrs.filter(
+      (block) => this.blocksMap[block.$modelId],
+    );
+
+    // Let's create new blocks at first
+    this.blocksMap = {
+      ...this.blocksMap,
+      ...Object.fromEntries(
+        blocksAttrs
+          .filter((block) => !this.blocksMap[block.$modelId])
+          .map((block) => [block.$modelId, new NoteBlockModel(block)]),
+      ),
+    };
+
+    toUpdateBlocks.forEach((block) => {
+      this.blocksMap[block.$modelId].updateAttrs(block);
     });
 
-    blocks.forEach((model) => {
-      const toRemoveRefs = model.noteBlockRefs
-        .map((ref, i) => {
-          if (!this.blocksMap[ref.id]) {
-            return ref;
-          }
+    // blocks.forEach((model) => {
+    //   const toRemoveRefs = model.noteBlockRefs
+    //     .map((ref, i) => {
+    //       if (!this.blocksMap[ref.id]) {
+    //         return ref;
+    //       }
 
-          return false;
-        })
-        .filter(Boolean) as Ref<NoteBlockModel>[];
+    //       return false;
+    //     })
+    //     .filter(Boolean) as Ref<NoteBlockModel>[];
 
-      toRemoveRefs.forEach((ref) => {
-        console.error(
-          'removing noteblock ref cause noteblock was not found',
-          ref.id,
-          JSON.stringify(model.noteBlockRefs.indexOf(ref)),
-        );
+    //   toRemoveRefs.forEach((ref) => {
+    //     console.error(
+    //       'removing noteblock ref cause noteblock was not found',
+    //       ref.id,
+    //       JSON.stringify(model.noteBlockRefs.indexOf(ref)),
+    //     );
 
-        model.noteBlockRefs.splice(model.noteBlockRefs.indexOf(ref), 1);
-      });
-    });
-
-    return { notes, blocks };
+    //     model.noteBlockRefs.splice(model.noteBlockRefs.indexOf(ref), 1);
+    //   });
+    // });
   }
 }

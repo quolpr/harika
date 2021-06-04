@@ -72,22 +72,22 @@ export const toMobxSync = (db: VaultDexieDatabase, vault: VaultModel) => {
         return Object.values(latestDedupedEvents).map((ev) => {
           const note = vault.notesMap[ev.key];
 
-          if (note) {
-            if (ev.type === DatabaseChangeType.Delete) {
+          if (ev.type === DatabaseChangeType.Delete) {
+            if (note) {
               return { ...note.$, isDeleted: true };
             } else {
-              if (!ev.obj) throw new Error('obj should be present');
-
-              // Any changes we will load to mobx cause they may have refs
-              return convertNoteDocToModelAttrs(
-                ev.obj,
-                Boolean(note?.areChildrenLoaded),
-                Boolean(note?.areLinksLoaded),
-                Boolean(note?.areBacklinksLoaded),
-              );
+              return undefined;
             }
           } else {
-            return undefined;
+            if (!ev.obj) throw new Error('obj should be present');
+
+            // Any changes we will load to mobx cause they may have refs
+            return convertNoteDocToModelAttrs(
+              ev.obj,
+              Boolean(note?.areChildrenLoaded),
+              Boolean(note?.areLinksLoaded),
+              Boolean(note?.areBacklinksLoaded),
+            );
           }
         });
       })();
@@ -109,20 +109,20 @@ export const toMobxSync = (db: VaultDexieDatabase, vault: VaultModel) => {
         return Object.values(latestDedupedEvents).map((ev) => {
           const noteBlock = vault.blocksMap[ev.key];
 
-          if (noteBlock) {
-            if (ev.type === DatabaseChangeType.Delete) {
+          if (ev.type === DatabaseChangeType.Delete) {
+            if (noteBlock) {
               return {
                 ...noteBlock.$,
                 isDeleted: true,
               };
             } else {
-              if (!ev.obj) throw new Error('obj should be present');
-
-              // Any changes we will load to mobx cause they may have refs
-              return convertNoteBlockDocToModelAttrs(ev.obj);
+              return undefined;
             }
           } else {
-            return undefined;
+            if (!ev.obj) throw new Error('obj should be present');
+
+            // Any changes we will load to mobx cause they may have refs
+            return convertNoteBlockDocToModelAttrs(ev.obj);
           }
         });
       })();
