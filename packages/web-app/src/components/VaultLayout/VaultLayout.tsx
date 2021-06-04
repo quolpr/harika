@@ -14,7 +14,6 @@ import { useHistory, useLocation, useParams } from 'react-router-dom';
 import { useClickAway, useMedia } from 'react-use';
 import { NoteRepositoryContext } from '../../contexts/CurrentNoteRepositoryContext';
 import { CurrentVaultContext } from '../../contexts/CurrentVaultContext';
-import { CurrentVaultUiStateContext } from '../../contexts/CurrentVaultUiStateContext';
 import { cn } from '../../utils';
 import { VaultHeader } from '../VaultHeader/VaultHeader';
 import { VaultSidebar } from '../VaultSidebar/VaultSidebar';
@@ -177,58 +176,56 @@ export const VaultLayout: React.FC<{
   if (!notesRepo) return null;
 
   return (
-    <CurrentVaultUiStateContext.Provider value={vaultUiState}>
-      <CurrentVaultContext.Provider value={notesRepo.vault}>
-        <NoteRepositoryContext.Provider value={notesRepo}>
-          <FooterRefContext.Provider value={footerRef}>
-            <div className={layoutClass()}>
-              <VaultSidebar
-                ref={sidebarRef}
-                className={layoutClass('sidebar', {
-                  closed: !isSidebarOpened,
-                })}
-                isOpened={isSidebarOpened}
-                onNavClick={closeSidebar}
-              />
+    <CurrentVaultContext.Provider value={notesRepo.vault}>
+      <NoteRepositoryContext.Provider value={notesRepo}>
+        <FooterRefContext.Provider value={footerRef}>
+          <div className={layoutClass()}>
+            <VaultSidebar
+              ref={sidebarRef}
+              className={layoutClass('sidebar', {
+                closed: !isSidebarOpened,
+              })}
+              isOpened={isSidebarOpened}
+              onNavClick={closeSidebar}
+            />
+
+            <div
+              className={layoutClass('container', {
+                'with-padding': isSidebarOpened,
+              })}
+            >
+              <div className={layoutClass('header-wrapper')}>
+                <VaultHeader
+                  className={layoutClass('header')}
+                  onTogglerClick={handleTogglerClick}
+                  isTogglerToggled={isSidebarOpened}
+                  togglerRef={togglerRef}
+                />
+              </div>
 
               <div
-                className={layoutClass('container', {
-                  'with-padding': isSidebarOpened,
-                })}
+                className={layoutClass('main-wrapper')}
+                onScroll={handleScroll}
+                ref={mainRef}
               >
-                <div className={layoutClass('header-wrapper')}>
-                  <VaultHeader
-                    className={layoutClass('header')}
-                    onTogglerClick={handleTogglerClick}
-                    isTogglerToggled={isSidebarOpened}
-                    togglerRef={togglerRef}
-                  />
-                </div>
-
-                <div
-                  className={layoutClass('main-wrapper')}
-                  onScroll={handleScroll}
-                  ref={mainRef}
+                <section
+                  className={layoutClass('main', {
+                    'sidebar-opened': isSidebarOpened,
+                  })}
                 >
-                  <section
-                    className={layoutClass('main', {
-                      'sidebar-opened': isSidebarOpened,
-                    })}
-                  >
-                    {children}
-                  </section>
-                </div>
-
-                <div
-                  className={layoutClass('footer-wrapper')}
-                  ref={footerRef}
-                ></div>
+                  {children}
+                </section>
               </div>
+
+              <div
+                className={layoutClass('footer-wrapper')}
+                ref={footerRef}
+              ></div>
             </div>
-          </FooterRefContext.Provider>
-        </NoteRepositoryContext.Provider>
-      </CurrentVaultContext.Provider>
-    </CurrentVaultUiStateContext.Provider>
+          </div>
+        </FooterRefContext.Provider>
+      </NoteRepositoryContext.Provider>
+    </CurrentVaultContext.Provider>
   );
 };
 

@@ -1,6 +1,5 @@
 import { observer } from 'mobx-react-lite';
 import React, { useCallback, useContext, useEffect, useRef } from 'react';
-import { useCurrentVaultUiState } from '../../contexts/CurrentVaultUiStateContext';
 import { useCurrentVault } from '../../hooks/useCurrentVault';
 import { cn, insertText } from '../../utils';
 import type { BlocksViewModel } from '@harika/web-core';
@@ -24,7 +23,6 @@ const toolbarClass = cn('toolbar');
 export const Toolbar = observer(({ view }: { view: BlocksViewModel }) => {
   const footerRef = useContext(FooterRefContext);
 
-  const vaultUiState = useCurrentVaultUiState();
   const vault = useCurrentVault();
 
   const currentBlockInputRef = useContext(CurrentBlockInputRefContext);
@@ -41,8 +39,8 @@ export const Toolbar = observer(({ view }: { view: BlocksViewModel }) => {
     }, 0);
   }, [currentBlockInputRef]);
 
-  const currentBlock = vaultUiState.focusedBlock?.blockId
-    ? vault.blocksMap[vaultUiState.focusedBlock?.blockId]
+  const currentBlock = vault.ui.focusedBlock?.blockId
+    ? vault.blocksMap[vault.ui.focusedBlock?.blockId]
     : undefined;
 
   const handleTodoPress = useCallback(

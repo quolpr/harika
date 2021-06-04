@@ -2,10 +2,10 @@ import { uniq } from 'lodash-es';
 import type { ModelCreationData } from 'mobx-keystone';
 import { NoteBlockModel, noteBlockRef } from '../models/NoteBlockModel';
 import { areNeededNoteDataLoaded, NoteModel } from '../models/NoteModel';
-import { BlockContentModel } from '../models/BlockContentModel';
 import { noteRef } from '../models/NoteModel';
 import type { VaultDexieDatabase } from './DexieDb';
 import type { NoteDocType, NoteBlockDocType } from '@harika/common';
+import { BlockContentModel } from '../models/NoteBlockModel/BlockContentModel';
 
 export type NoteData = ModelCreationData<NoteModel> & {
   $modelId: string;

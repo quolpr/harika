@@ -6,7 +6,6 @@ import { observer } from 'mobx-react-lite';
 import type { BlocksViewModel, NoteBlockModel } from '@harika/web-core';
 import { Arrow } from '../Arrow/Arrow';
 import { computed } from 'mobx';
-import { useCurrentFocusedBlockState } from '../../hooks/useFocusedBlockState';
 import type { Ref } from 'mobx-keystone';
 import { TokensRenderer } from './TokensRenderer';
 import {
@@ -16,6 +15,7 @@ import {
 import { useFocusHandler } from './hooks/useFocusHandler';
 import { useHandleInput } from './hooks/useHandleInput';
 import { NoteTitleAutocomplete } from './NoteTitleAutocomplete/NoteTitleAutocomplete';
+import { useCurrentFocusedBlockState } from '../../hooks/useFocusedBlockState';
 
 const NoteBlockChildren = observer(
   ({
@@ -111,43 +111,46 @@ const NoteBlockBody = observer(
         {/*     'note-block__outline--show': isFocused, */}
         {/*   })} */}
         {/* > */}
-        {isEditing && (
-          <div className="note-block__input-container">
-            <label htmlFor={inputId} className="hidden-label">
-              Note block content
-            </label>
+        <div
+          className={clsx('note-block__input-container', {
+            'note-block__input-container--hidden': !isEditing,
+          })}
+        >
+          <label htmlFor={inputId} className="hidden-label">
+            Note block content
+          </label>
 
-            <TextareaAutosize
-              id={inputId}
-              ref={inputRef}
-              className={clsx('note-block__content', {
-                'note-block__content--hidden': !isEditing,
-              })}
-              value={noteBlock.content.value}
-              onBlur={handleInputBlur}
-              {...textareaHandlers}
-            />
-            <NoteTitleAutocomplete
-              value={noteTitleToSearch}
-              onSelect={handleSearchSelect}
-            />
-          </div>
-        )}
-        {!isEditing && (
-          <span
-            onMouseDown={handleContentClick}
-            className={clsx('note-block__content', {})}
-            role="textbox"
-            aria-label="Note block content"
-            tabIndex={0}
-            onKeyPress={handleContentKeyPress}
-          >
-            <TokensRenderer
-              noteBlock={noteBlock}
-              tokens={noteBlock.content.ast}
-            />
-          </span>
-        )}
+          <TextareaAutosize
+            id={inputId}
+            ref={inputRef}
+            className={clsx('note-block__content', {
+              'note-block__content--hidden': !isEditing,
+            })}
+            value={noteBlock.content.value}
+            onBlur={handleInputBlur}
+            {...textareaHandlers}
+          />
+          <NoteTitleAutocomplete
+            value={noteTitleToSearch}
+            onSelect={handleSearchSelect}
+          />
+        </div>
+
+        <span
+          onMouseDown={handleContentClick}
+          className={clsx('note-block__content', {
+            'note-block__content--hidden': isEditing,
+          })}
+          role="textbox"
+          aria-label="Note block content"
+          tabIndex={0}
+          onKeyPress={handleContentKeyPress}
+        >
+          <TokensRenderer
+            noteBlock={noteBlock}
+            tokens={noteBlock.content.ast}
+          />
+        </span>
         {/* </div> */}
       </div>
     );
@@ -169,6 +172,7 @@ export const NoteBlock = observer(
     return (
       <div
         className="note-block"
+        data-view-id={view.$modelId}
         data-id={noteBlock.$modelId}
         data-order={noteBlock.orderPosition}
         data-type="note-block"

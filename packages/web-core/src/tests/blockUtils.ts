@@ -1,5 +1,5 @@
 import { NoteBlockModel, VaultModel } from '../NotesRepository';
-import { parseStringToTree } from '../NotesRepository/models/parseStringToTree';
+import { parseStringToTree } from '../NotesRepository/models/NoteBlockModel/parseStringToTree';
 
 export const normalizeBlockTree = (str: string) => {
   const parsed = parseStringToTree(str);
@@ -24,6 +24,7 @@ export const parseToBlocksTree = (str: string) => {
   const vault = new VaultModel({
     name: 'Vault',
   });
+
   const note = vault.newNote({ title: 'Note' }, { addEmptyBlock: false });
 
   let previousBlock: undefined | NoteBlockModel = undefined;

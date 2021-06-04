@@ -1,7 +1,7 @@
 import { EditState, FocusedBlockState } from '@harika/web-core';
 import { comparer, computed } from 'mobx';
 import { useCallback } from 'react';
-import { useCurrentVaultUiState } from '../contexts/CurrentVaultUiStateContext';
+import { useCurrentVault } from './useCurrentVault';
 
 export const useCurrentFocusedBlockState = (
   viewId: string,
@@ -19,7 +19,7 @@ export const useCurrentFocusedBlockState = (
       | undefined,
   ) => void,
 ] => {
-  const vaultUiState = useCurrentVaultUiState();
+  const vaultUiState = useCurrentVault().ui;
 
   const focusState = computed(
     () => vaultUiState.getBlockFocusState(viewId, blockId),

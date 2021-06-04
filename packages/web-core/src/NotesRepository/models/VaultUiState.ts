@@ -1,4 +1,6 @@
 import { model, Model, modelAction, prop } from 'mobx-keystone';
+import { NoteModel, noteRef } from './NoteModel';
+import { BlocksViewModel } from './VaultUiState/BlocksViewModel';
 
 export interface EditState {
   isFocused: boolean;
@@ -18,7 +20,7 @@ export class FocusedBlockState extends Model({
     viewId: string,
     blockId: string,
     isEditing?: boolean,
-    startAt?: number
+    startAt?: number,
   ) {
     return new FocusedBlockState({
       viewId,
@@ -29,12 +31,11 @@ export class FocusedBlockState extends Model({
   }
 }
 
-// TODO: move views here
-// TODO: maybe big RootState?
 @model('VaultUiState')
 export class VaultUiState extends Model({
   focusedBlock: prop<FocusedBlockState | undefined>(),
   currentNoteId: prop<string | undefined>(),
+  blocksViewsMap: prop<Record<string, BlocksViewModel>>(() => ({})),
 }) {
   @modelAction
   setCurrentNoteId(id: string | undefined) {
@@ -44,6 +45,23 @@ export class VaultUiState extends Model({
   @modelAction
   setFocusedBlock(block: FocusedBlockState | undefined) {
     this.focusedBlock = block;
+  }
+
+  @modelAction
+  getOrCreateViewByModel(
+    note: NoteModel,
+    model: { $modelId: string; $modelType: string },
+  ) {
+    const key = `${model.$modelType}-${model.$modelId}`;
+
+    if (this.blocksViewsMap[key]) return this.blocksViewsMap[key];
+
+    this.blocksViewsMap[key] = new BlocksViewModel({
+      $modelId: key,
+      noteRef: noteRef(note),
+    });
+
+    return this.blocksViewsMap[key];
   }
 
   getBlockFocusState(viewId: string, blockId: string): EditState {

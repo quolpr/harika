@@ -127,6 +127,12 @@ export class ToDexieSyncer {
   };
 
   private applyPatches = async (patches: Patch[]) => {
+    patches = patches.filter(({ path }) =>
+      ['blocksMap', 'notesMap'].includes(path[0] as string),
+    );
+
+    if (patches.length === 0) return;
+
     const blocksResult = zipPatches('blocksMap', patches);
     const noteResult = zipPatches('notesMap', patches);
 

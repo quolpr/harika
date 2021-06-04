@@ -9,17 +9,17 @@ import {
 import { NoteModel, noteRef } from './NoteModel';
 import type { Optional, Required } from 'utility-types';
 import { NoteBlockModel, noteBlockRef } from './NoteBlockModel';
-import { BlocksViewModel } from './BlocksViewModel';
 import { vaultModelType } from './consts';
 import { generateId } from '@harika/common';
-import { BlockContentModel } from './BlockContentModel';
+import { BlockContentModel } from './NoteBlockModel/BlockContentModel';
+import { VaultUiState } from './VaultUiState';
 
 @model(vaultModelType)
 export class VaultModel extends Model({
   name: prop<string>(),
   notesMap: prop<Record<string, NoteModel>>(() => ({})),
   blocksMap: prop<Record<string, NoteBlockModel>>(() => ({})),
-  blocksViewsMap: prop<Record<string, BlocksViewModel>>(() => ({})),
+  ui: prop<VaultUiState>(() => new VaultUiState({})),
 }) {
   @modelAction
   newNote(
@@ -73,23 +73,6 @@ export class VaultModel extends Model({
     }
 
     return note;
-  }
-
-  @modelAction
-  getOrCreateViewByModel(
-    note: NoteModel,
-    model: { $modelId: string; $modelType: string },
-  ) {
-    const key = `${model.$modelType}-${model.$modelId}`;
-
-    if (this.blocksViewsMap[key]) return this.blocksViewsMap[key];
-
-    this.blocksViewsMap[key] = new BlocksViewModel({
-      $modelId: key,
-      noteRef: noteRef(note),
-    });
-
-    return this.blocksViewsMap[key];
   }
 
   @modelAction

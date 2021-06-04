@@ -1,12 +1,10 @@
 .note-block {
-  @apply flex flex-col pb-1 text-base;
-
-  &:last-child {
-    @apply pb-0;
-  }
+  @apply flex flex-col text-base;
 
   &__body {
-    @apply flex relative;
+    @apply flex relative py-1;
+
+    user-select: none;
 
     &--selected {
       background-color: red;
@@ -54,7 +52,7 @@
   }
 
   &__child-blocks {
-    @apply relative box-border ml-4 pl-3 pt-1;
+    @apply relative box-border ml-4 pl-3;
 
     &::before {
       @apply absolute bg-gray-800;
@@ -71,6 +69,10 @@
     display: flex;
     width: 100%;
     flex-direction: column;
+
+    &--hidden {
+      display: none;
+    }
   }
 
   &__content {

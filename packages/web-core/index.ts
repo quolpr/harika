@@ -1,4 +1,8 @@
 export * from './src/NotesRepository';
 export * from './src/VaultsRepository';
-export * from './src/VaultUiState';
-export type { Token, RefToken } from './src/blockParser/types';
+export * from './src/NotesRepository/models/VaultUiState';
+export * from './src/NotesRepository/models/VaultUiState/BlocksViewModel';
+export type {
+  Token,
+  RefToken,
+} from './src/NotesRepository/models/NoteBlockModel/blockParser/types';

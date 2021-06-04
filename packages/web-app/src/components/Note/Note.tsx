@@ -12,7 +12,6 @@ import clsx from 'clsx';
 import { Arrow } from '../Arrow/Arrow';
 import { paths } from '../../paths';
 import { useCurrentVault } from '../../hooks/useCurrentVault';
-import { useCurrentVaultUiState } from '../../contexts/CurrentVaultUiStateContext';
 import { CurrentBlockInputRefContext } from '../../contexts';
 import { useNoteRepository } from '../../contexts/CurrentNoteRepositoryContext';
 import { NoteBlocks } from './NoteBlocks';
@@ -85,7 +84,7 @@ const BacklinkedNote = observer(
                 )}
                 <NoteBlock
                   noteBlock={noteBlock}
-                  view={vault.getOrCreateViewByModel(note, noteBlock)}
+                  view={vault.ui.getOrCreateViewByModel(note, noteBlock)}
                 />
               </div>
             );
@@ -117,7 +116,6 @@ const Backlinks = observer(
 // TODO: on NoteBlock change it still rerenders. Why?
 const NoteBody = observer(({ note }: { note: NoteModel }) => {
   const vault = useCurrentVault();
-  const vaultUiState = useCurrentVaultUiState();
   const noteRepo = useNoteRepository();
   const history = useHistory<IFocusBlockState>();
   const focusOnBlockId = (history.location.state || {}).focusOnBlockId;
@@ -159,11 +157,11 @@ const NoteBody = observer(({ note }: { note: NoteModel }) => {
 
   useEffect(() => {
     if (focusOnBlockId) {
-      vaultUiState.setFocusedBlock(
+      vault.ui.setFocusedBlock(
         FocusedBlockState.create(note.$modelId, focusOnBlockId),
       );
     }
-  }, [focusOnBlockId, note.$modelId, vaultUiState]);
+  }, [focusOnBlockId, note.$modelId, vault.ui]);
 
   const inputId = `note-title-input-${note.$modelId}`;
 
@@ -184,7 +182,7 @@ const NoteBody = observer(({ note }: { note: NoteModel }) => {
       </h2>
 
       <NoteBlocks
-        view={vault.getOrCreateViewByModel(note, note)}
+        view={vault.ui.getOrCreateViewByModel(note, note)}
         childBlocks={note.rootBlockRef.current.noteBlockRefs}
       />
 

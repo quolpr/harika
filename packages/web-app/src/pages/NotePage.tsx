@@ -7,7 +7,6 @@ import { useUnmount } from 'react-use';
 import { NEVER, of, race } from 'rxjs';
 import { timeout, map } from 'rxjs/operators';
 import { useNoteRepository } from '../contexts/CurrentNoteRepositoryContext';
-import { useCurrentVaultUiState } from '../contexts/CurrentVaultUiStateContext';
 import { useCurrentNote } from '../hooks/useCurrentNote';
 import { useCurrentVault } from '../hooks/useCurrentVault';
 import { paths } from '../paths';
@@ -18,7 +17,6 @@ type IPipeResult = { status: 'found'; id: string } | { status: 'not_found' };
 const useFindNote = (noteId: string) => {
   const vault = useCurrentVault();
   const noteRepo = useNoteRepository();
-  const vaultUiState = useCurrentVaultUiState();
   const history = useHistory();
   const note = useCurrentNote();
   const loadingDoneSubject = useContext(LoadingDoneSubjectContext);
@@ -31,7 +29,7 @@ const useFindNote = (noteId: string) => {
       if (!note) {
         setIsLoading(false);
       } else {
-        vaultUiState.setCurrentNoteId(note.$modelId);
+        vault.ui.setCurrentNoteId(note.$modelId);
 
         if (!note.isDeleted) {
           setIsLoading(false);
@@ -41,7 +39,7 @@ const useFindNote = (noteId: string) => {
     };
 
     callback();
-  }, [loadingDoneSubject, noteId, noteRepo, vaultUiState]);
+  }, [loadingDoneSubject, noteId, noteRepo, vault.ui]);
 
   const noteTitle = note?.title;
   const isDeleted = note?.isDeleted;
@@ -79,18 +77,10 @@ const useFindNote = (noteId: string) => {
 
       return () => flow.unsubscribe();
     }
-  }, [
-    history,
-    isDeleted,
-    noteId,
-    noteRepo,
-    noteTitle,
-    vault.$modelId,
-    vaultUiState,
-  ]);
+  }, [history, isDeleted, noteId, noteRepo, noteTitle, vault.$modelId]);
 
   useUnmount(() => {
-    vaultUiState.setCurrentNoteId(undefined);
+    vault.ui.setCurrentNoteId(undefined);
   });
 
   return { note, isLoading };

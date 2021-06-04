@@ -91,7 +91,10 @@ export class VaultsRepository {
 
     const db = new VaultDexieDatabase(id);
 
-    const vault = new VaultModel({ name: vaultDoc.name, $modelId: id });
+    const vault = new VaultModel({
+      name: vaultDoc.name,
+      $modelId: id,
+    });
 
     syncMiddleware(vault, new ToDexieSyncer(db, vault).handlePatch);
     toMobxSync(db, vault);

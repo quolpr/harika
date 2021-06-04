@@ -9,22 +9,20 @@ import type { VaultModel } from './NotesRepository/models/VaultModel';
 import type { VaultDexieDatabase } from './NotesRepository/dexieDb/DexieDb';
 import { loadNoteDocToModelAttrs } from './NotesRepository/dexieDb/convertDocToModel';
 import { liveSwitch } from './dexieHelpers/onDexieChange';
-import { filterAst } from './blockParser/astHelpers';
-import type { RefToken } from './blockParser/types';
 import { distinctUntilChanged } from 'rxjs/operators';
 import { RxSyncer } from './dexieHelpers/RxSyncer';
 import { ConflictsResolver } from './NotesRepository/dexieDb/ConflictsResolver';
 import { uniq, uniqBy } from 'lodash-es';
 import { exportDB } from 'dexie-export-import';
+import { filterAst } from './NotesRepository/models/NoteBlockModel/blockParser/astHelpers';
+import type { RefToken } from './NotesRepository/models/NoteBlockModel/blockParser/types';
 
 export { NoteModel } from './NotesRepository/models/NoteModel';
 export { VaultModel } from './NotesRepository/models/VaultModel';
-export { BlocksViewModel } from './NotesRepository/models/BlocksViewModel';
 export {
   NoteBlockModel,
   noteBlockRef,
 } from './NotesRepository/models/NoteBlockModel';
-export { BlockContentModel } from './NotesRepository/models/BlockContentModel';
 
 // Document = Dexie doc
 // Model = DDD model

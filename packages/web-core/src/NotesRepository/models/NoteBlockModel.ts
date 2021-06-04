@@ -12,11 +12,11 @@ import {
 } from 'mobx-keystone';
 import { comparer, computed } from 'mobx';
 import { NoteModel, noteRef } from './NoteModel';
-import type { BlocksViewModel } from './BlocksViewModel';
 import type { VaultModel } from './VaultModel';
 import { isVault } from './utils';
 import { isEqual } from 'lodash-es';
-import { BlockContentModel } from './BlockContentModel';
+import { BlockContentModel } from './NoteBlockModel/BlockContentModel';
+import type { BlocksViewModel } from './VaultUiState/BlocksViewModel';
 
 export const noteBlockRef = rootRef<NoteBlockModel>('harika/NoteBlockRef');
 
@@ -52,12 +52,12 @@ export class NoteBlockModel extends Model({
     return this.parentBlockRef === undefined;
   }
 
-  @computed
+  @computed({ equals: comparer.shallow })
   get noteBlockIds() {
     return this.noteBlockRefs.map(({ id }) => id);
   }
 
-  @computed
+  @computed({ equals: comparer.shallow })
   // performance optimization
   get orderHash() {
     const obj: Record<string, number> = {};

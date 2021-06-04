@@ -159,12 +159,15 @@ export const useFocusHandler = (
         }
       }
 
+      // Without setTimeout resetSelection will not permit to focus block
+      // setTimeout(() => {
       setEditState({
         viewId: view.$modelId,
         blockId: noteBlock.$modelId,
         isEditing: true,
         startAt,
       });
+      // }, 0);
     },
     [
       contentLength,
@@ -188,6 +191,18 @@ export const useFocusHandler = (
   };
 
   const handleInputBlur = useHandleDoneIosButton(view, noteBlock);
+
+  const isSelecting = view.selectedIds.length > 0;
+
+  // useEffect(() => {
+  //   if (isSelecting && isEditing) {
+  //     setEditState({
+  //       viewId: view.$modelId,
+  //       blockId: noteBlock.$modelId,
+  //       isEditing: false,
+  //     });
+  //   }
+  // }, [isEditing, isSelecting, noteBlock.$modelId, setEditState, view.$modelId]);
 
   return {
     handleInputBlur,
