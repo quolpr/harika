@@ -18,12 +18,12 @@ const getViewModel = () => {
     $modelType: '345',
   });
 
-  return viewModel;
+  return { viewModel, note, vault };
 };
 describe('BlocksViewModel', () => {
   describe('selectInterval', () => {
     it('works', () => {
-      const viewModel = getViewModel();
+      const { viewModel } = getViewModel();
 
       viewModel.setSelectionInterval('2', '8');
 
@@ -39,7 +39,7 @@ describe('BlocksViewModel', () => {
     });
 
     it('resets expand on set', () => {
-      const viewModel = getViewModel();
+      const { viewModel } = getViewModel();
 
       viewModel.setSelectionInterval('2', '4');
       viewModel.expandSelection('1');
@@ -53,7 +53,7 @@ describe('BlocksViewModel', () => {
   });
   describe('expandSelection', () => {
     it('works', () => {
-      const viewModel = getViewModel();
+      const { viewModel } = getViewModel();
 
       viewModel.setSelectionInterval('2', '5');
 
@@ -79,7 +79,7 @@ describe('BlocksViewModel', () => {
 
   describe('resetSelection', () => {
     it('resets bots selection &addableSelectionId', () => {
-      const viewModel = getViewModel();
+      const { viewModel } = getViewModel();
 
       viewModel.setSelectionInterval('2', '3');
 
@@ -97,5 +97,29 @@ describe('BlocksViewModel', () => {
 
       expect(viewModel.selectedIds).to.deep.eq(['2', '3']);
     });
+  });
+
+  describe('areChildrenAndParentSelected', () => {
+    const { viewModel, vault } = getViewModel();
+
+    viewModel.setSelectionInterval('2', '4');
+
+    expect(viewModel.areChildrenAndParentSelected(vault.blocksMap['2'])).to.eq(
+      true,
+    );
+
+    expect(viewModel.areChildrenAndParentSelected(vault.blocksMap['5'])).to.eq(
+      false,
+    );
+
+    expect(viewModel.areChildrenAndParentSelected(vault.blocksMap['3'])).to.eq(
+      false,
+    );
+
+    viewModel.setSelectionInterval('3', '4');
+
+    expect(viewModel.areChildrenAndParentSelected(vault.blocksMap['2'])).to.eq(
+      false,
+    );
   });
 });

@@ -1,5 +1,6 @@
 import { computed } from 'mobx';
 import { model, Model, modelAction, prop, Ref } from 'mobx-keystone';
+import type { NoteBlockModel } from '../NoteBlockModel';
 import type { NoteModel } from '../NoteModel';
 
 @model('harika/BlocksViewModel')
@@ -68,6 +69,19 @@ export class BlocksViewModel extends Model({
     return flattenTree
       .slice(sliceFrom, sliceTo + 1)
       .map(({ $modelId }) => $modelId);
+  }
+
+  areChildrenAndParentSelected(noteBlock: NoteBlockModel) {
+    const selectedIds = this.selectedIds;
+
+    if (selectedIds.length === 0) return false;
+    if (!selectedIds.includes(noteBlock.$modelId)) return false;
+
+    const childBlockIds = noteBlock.flattenTree.map(({ $modelId }) => $modelId);
+
+    if (childBlockIds.length === 0) return false;
+
+    return childBlockIds.every((id) => selectedIds.includes(id));
   }
 
   @modelAction

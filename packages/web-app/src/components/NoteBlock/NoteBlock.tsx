@@ -170,18 +170,9 @@ export const NoteBlock = observer(
       view.isExpanded(noteBlock.$modelId),
     ).get();
 
-    const areChildrenAndParentSelected = computed(() => {
-      const childBlockIds = noteBlock.flattenTree.map(
-        ({ $modelId }) => $modelId,
-      );
-      const selectedIds = view.selectedIds;
-
-      if (childBlockIds.length === 0) return false;
-
-      return [noteBlock.$modelId, ...childBlockIds].every((id) =>
-        selectedIds.includes(id),
-      );
-    }).get();
+    const areChildrenAndParentSelected = computed(() =>
+      view.areChildrenAndParentSelected(noteBlock),
+    ).get();
 
     return (
       <div
