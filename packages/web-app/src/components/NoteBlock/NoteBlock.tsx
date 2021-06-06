@@ -16,7 +16,6 @@ import { useFocusHandler } from './hooks/useFocusHandler';
 import { useHandleInput } from './hooks/useHandleInput';
 import { NoteTitleAutocomplete } from './NoteTitleAutocomplete/NoteTitleAutocomplete';
 import { useCurrentFocusedBlockState } from '../../hooks/useFocusedBlockState';
-import { xor } from 'lodash-es';
 
 const NoteBlockChildren = observer(
   ({

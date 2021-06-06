@@ -6,7 +6,7 @@ interface ParsedTreeToken {
   id?: string;
 }
 
-interface TreeToken {
+export interface TreeToken {
   indent: number;
   content: string;
   id?: string;

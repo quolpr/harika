@@ -6,3 +6,4 @@ export type {
   Token,
   RefToken,
 } from './src/NotesRepository/models/NoteBlockModel/blockParser/types';
+export * from './src/NotesRepository/models/NoteBlockModel/parseStringToTree';

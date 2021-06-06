@@ -10,6 +10,7 @@ import {
   prop,
   Ref,
   tProp,
+  transaction,
   types,
 } from 'mobx-keystone';
 import type { Optional } from 'utility-types';
@@ -17,6 +18,7 @@ import { generateId } from '@harika/common';
 import { NoteBlockModel, noteBlockRef } from './NoteBlockModel';
 import { isVault } from './utils';
 import type { VaultModel } from './VaultModel';
+import { BlockContentModel } from './NoteBlockModel/BlockContentModel';
 
 export const noteRef = customRef<NoteModel>('harika/NoteRef', {
   // this works, but we will use getRefId() from the Todo class instead
@@ -63,6 +65,22 @@ export class NoteModel extends Model({
   @computed
   get vault() {
     return findParent<VaultModel>(this, isVault)!;
+  }
+
+  @modelAction
+  @transaction
+  deleteNoteBlockIds(ids: string[]) {
+    ids.forEach((id) => {
+      this.vault.blocksMap[id].delete(false, true);
+    });
+
+    if (!this.rootBlockRef.current.hasChildren) {
+      this.createBlock(
+        { content: new BlockContentModel({ value: '' }) },
+        this.rootBlockRef.current,
+        0,
+      );
+    }
   }
 
   @computed({ equals: comparer.shallow })

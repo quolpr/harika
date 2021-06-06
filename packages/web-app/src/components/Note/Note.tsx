@@ -182,6 +182,7 @@ const NoteBody = observer(({ note }: { note: NoteModel }) => {
       </h2>
 
       <NoteBlocks
+        note={note}
         view={vault.ui.getOrCreateViewByModel(note, note)}
         childBlocks={note.rootBlockRef.current.noteBlockRefs}
       />

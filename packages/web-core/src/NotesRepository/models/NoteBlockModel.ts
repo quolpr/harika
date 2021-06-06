@@ -17,6 +17,7 @@ import { isVault } from './utils';
 import { isEqual } from 'lodash-es';
 import { BlockContentModel } from './NoteBlockModel/BlockContentModel';
 import type { BlocksViewModel } from './VaultUiState/BlocksViewModel';
+import type { TreeToken } from './NoteBlockModel/parseStringToTree';
 
 export const noteBlockRef = rootRef<NoteBlockModel>('harika/NoteBlockRef');
 
@@ -269,6 +270,9 @@ export class NoteBlockModel extends Model({
       this.noteBlockRefs.length,
     );
   }
+
+  @modelAction
+  injectNewTreeTokens(tokens: TreeToken[]) {}
 
   @modelAction
   injectNewRightBlock(content: string, view: BlocksViewModel) {

@@ -1,4 +1,8 @@
-import type { BlocksViewModel, NoteBlockModel } from '@harika/web-core';
+import {
+  BlocksViewModel,
+  NoteBlockModel,
+  parseStringToTree,
+} from '@harika/web-core';
 import { RefObject, useCallback, useState } from 'react';
 import { useCurrentFocusedBlockState } from '../../../hooks/useFocusedBlockState';
 import { isIOS, insertText } from '../../../utils';
@@ -241,6 +245,26 @@ export const useHandleInput = (
     [noteBlock.content.ast],
   );
 
+  const handlePaste = useCallback(
+    (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+      handleCaretChange(e);
+      const data = e.clipboardData.getData('Text');
+
+      if (data.length === 0) return;
+
+      const parsedToTree = parseStringToTree(data);
+
+      if (parsedToTree.length === 0) return;
+
+      e.preventDefault();
+
+      noteBlock.injectNewTreeTokens(parsedToTree);
+
+      console.log(parsedToTree);
+    },
+    [handleCaretChange, noteBlock],
+  );
+
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
       noteBlock.content.update(e.target.value);
@@ -291,7 +315,7 @@ export const useHandleInput = (
       onMouseMove: handleCaretChange,
       onTouchStart: handleCaretChange,
       onInput: handleCaretChange,
-      onPaste: handleCaretChange,
+      onPaste: handlePaste,
       onCut: handleCaretChange,
       onSelect: handleCaretChange,
 

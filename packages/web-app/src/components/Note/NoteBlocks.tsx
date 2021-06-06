@@ -1,4 +1,8 @@
-import type { NoteBlockModel, BlocksViewModel } from '@harika/web-core';
+import type {
+  NoteBlockModel,
+  BlocksViewModel,
+  NoteModel,
+} from '@harika/web-core';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
 import { useMedia } from 'react-use';
@@ -22,9 +26,11 @@ export const NoteBlocks = observer(
   ({
     childBlocks,
     view,
+    note,
   }: {
     childBlocks: Ref<NoteBlockModel>[];
     view: BlocksViewModel;
+    note: NoteModel;
   }) => {
     const vault = useCurrentVault();
     const isWide = useMedia('(min-width: 768px)');
@@ -151,16 +157,44 @@ export const NoteBlocks = observer(
     const isSelecting = view.selectionInterval !== undefined;
 
     useEffect(() => {
-      if (isSelecting) {
-        const handler = () => {
-          navigator.clipboard.writeText(view.getStringTreeToCopy());
-        };
+      if (!isSelecting) return;
+      const handler = () => {
+        navigator.clipboard.writeText(view.getStringTreeToCopy());
+      };
 
-        document.addEventListener('copy', handler);
+      document.addEventListener('copy', handler);
 
-        return () => document.removeEventListener('copy', handler);
-      }
+      return () => document.removeEventListener('copy', handler);
     }, [isSelecting, view]);
+
+    useEffect(() => {
+      if (!isSelecting) return;
+      const handler = () => {
+        const selectedIds = view.selectedIds;
+
+        navigator.clipboard.writeText(view.getStringTreeToCopy());
+
+        note.deleteNoteBlockIds(selectedIds);
+      };
+
+      document.addEventListener('cut', handler);
+
+      return () => document.removeEventListener('cut', handler);
+    }, [isSelecting, note, vault, view]);
+
+    useEffect(() => {
+      if (!isSelecting) return;
+
+      const handler = (e: KeyboardEvent) => {
+        if (e.key === 'Backspace') {
+          note.deleteNoteBlockIds(view.selectedIds);
+        }
+      };
+
+      document.addEventListener('keydown', handler);
+
+      return () => document.removeEventListener('keydown', handler);
+    }, [isSelecting, note, view]);
 
     return (
       <>
