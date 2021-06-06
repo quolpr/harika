@@ -5,7 +5,7 @@ import { useMedia } from 'react-use';
 import { NoteBlock } from '../NoteBlock/NoteBlock';
 import type { Ref } from 'mobx-keystone';
 import { Toolbar } from './Toolbar';
-import { EMPTY, fromEvent, OperatorFunction } from 'rxjs';
+import { EMPTY, fromEvent, merge, OperatorFunction } from 'rxjs';
 import {
   distinctUntilChanged,
   filter,
@@ -35,9 +35,6 @@ export const NoteBlocks = observer(
       const mouseDown$ = fromEvent<MouseEvent>(document, 'mousedown');
 
       const idOnMouseMove$ = mouseMove$.pipe(
-        tap(() => {
-          window.getSelection()?.removeAllRanges();
-        }),
         map((e) => {
           const el2 = (e.target as HTMLElement).closest<HTMLDivElement>(
             `[data-type="note-block"][data-view-id="${view.$modelId}"]`,
@@ -72,6 +69,15 @@ export const NoteBlocks = observer(
 
             const focusedBlockState = vault.ui.focusedBlock.state;
 
+            const resetAnySelection$ = mouseMove$.pipe(
+              tap(() => {
+                if (view.selectionInterval !== undefined) {
+                  window.getSelection()?.removeAllRanges();
+                }
+              }),
+              takeUntil(mouseUp$),
+            );
+
             // shift+click handling
             if (
               focusedBlockState &&
@@ -89,40 +95,48 @@ export const NoteBlocks = observer(
             if (view.selectionInterval !== undefined && shiftKey) {
               view.expandSelection(fromBlockId);
 
-              return idOnMouseMove$.pipe(
-                tap((toId) => {
-                  view.expandSelection(toId);
-                }),
-                takeUntil(mouseUp$),
+              return merge(
+                idOnMouseMove$.pipe(
+                  tap((toId) => {
+                    view.expandSelection(toId);
+                  }),
+                  takeUntil(mouseUp$),
+                ),
+                resetAnySelection$,
               );
             } else {
               let wasAnyIdSelected = false;
 
-              return idOnMouseMove$.pipe(
-                // If just click happened, so selection will happen only if mouse will be moved to the different block
-                filter((toId) => !(fromBlockId === toId && !wasAnyIdSelected)),
-                tap((toId) => {
-                  if (
-                    view.selectionInterval &&
-                    isEqual(
-                      [...view.selectionInterval].sort(),
-                      [fromBlockId, toId].sort(),
-                    )
-                  ) {
-                    return;
-                  }
+              return merge(
+                idOnMouseMove$.pipe(
+                  // If just click happened, so selection will happen only if mouse will be moved to the different block
+                  filter(
+                    (toId) => !(fromBlockId === toId && !wasAnyIdSelected),
+                  ),
+                  tap((toId) => {
+                    if (
+                      view.selectionInterval &&
+                      isEqual(
+                        [...view.selectionInterval].sort(),
+                        [fromBlockId, toId].sort(),
+                      )
+                    ) {
+                      return;
+                    }
 
-                  view.setSelectionInterval(fromBlockId, toId);
-                  vault.ui.focusedBlock.setState(undefined);
+                    view.setSelectionInterval(fromBlockId, toId);
+                    vault.ui.focusedBlock.setState(undefined);
 
-                  wasAnyIdSelected = true;
-                }),
-                finalize(() => {
-                  if (!wasAnyIdSelected) {
-                    view.resetSelection();
-                  }
-                }),
-                takeUntil(mouseUp$),
+                    wasAnyIdSelected = true;
+                  }),
+                  finalize(() => {
+                    if (!wasAnyIdSelected) {
+                      view.resetSelection();
+                    }
+                  }),
+                  takeUntil(mouseUp$),
+                ),
+                resetAnySelection$,
               );
             }
           }),
