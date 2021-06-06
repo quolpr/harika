@@ -35,6 +35,9 @@ export const NoteBlocks = observer(
       const mouseDown$ = fromEvent<MouseEvent>(document, 'mousedown');
 
       const idOnMouseMove$ = mouseMove$.pipe(
+        tap(() => {
+          window.getSelection()?.removeAllRanges();
+        }),
         map((e) => {
           const el2 = (e.target as HTMLElement).closest<HTMLDivElement>(
             `[data-type="note-block"][data-view-id="${view.$modelId}"]`,
@@ -109,7 +112,6 @@ export const NoteBlocks = observer(
                     return;
                   }
 
-                  window.getSelection()?.removeAllRanges();
                   view.setSelectionInterval(fromBlockId, toId);
                   vault.ui.focusedBlock.setState(undefined);
 
