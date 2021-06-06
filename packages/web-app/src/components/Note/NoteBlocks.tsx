@@ -77,8 +77,8 @@ export const NoteBlocks = observer(
               view.selectionInterval === undefined &&
               shiftKey
             ) {
-              vault.ui.focusedBlock.setState(undefined);
               view.setSelectionInterval(focusedBlockState.blockId, fromBlockId);
+              vault.ui.focusedBlock.setState(undefined);
 
               return EMPTY;
             }
@@ -109,8 +109,9 @@ export const NoteBlocks = observer(
                     return;
                   }
 
-                  vault.ui.focusedBlock.setState(undefined);
+                  window.getSelection()?.removeAllRanges();
                   view.setSelectionInterval(fromBlockId, toId);
+                  vault.ui.focusedBlock.setState(undefined);
 
                   wasAnyIdSelected = true;
                 }),

@@ -1,7 +1,7 @@
 import { useRef, useCallback, useEffect, useState, RefObject } from 'react';
 import { useCurrentFocusedBlockState } from '../../../hooks/useFocusedBlockState';
 import type { BlocksViewModel, NoteBlockModel } from '@harika/web-core';
-import { useClickAway, usePrevious } from 'react-use';
+import { useClickAway } from 'react-use';
 
 // https://stackoverflow.com/a/55652503/3872807
 const useFakeInput = () => {
@@ -61,11 +61,11 @@ const useHandleDoneIosButton = (
   // When `Done` button clicked on iOS keybaord
   useEffect(() => {
     if (wasBlurred && isEditing) {
-      setEditState({
-        viewId: view.$modelId,
-        blockId: noteBlock.$modelId,
-        isEditing: false,
-      });
+      // setEditState({
+      //   viewId: view.$modelId,
+      //   blockId: noteBlock.$modelId,
+      //   isEditing: false,
+      // });
     }
     setWasBlurred(false);
   }, [wasBlurred, isEditing, setEditState, view.$modelId, noteBlock.$modelId]);

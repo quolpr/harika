@@ -3,8 +3,6 @@
   flex-direction: column;
   clear: both;
 
-  user-select: none;
-
   @apply pb-5 pt-5;
 
   &__header {

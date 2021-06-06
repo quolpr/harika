@@ -4,8 +4,6 @@
   &__body {
     @apply flex relative py-1 pl-2;
 
-    user-select: none;
-
     &--selected {
       @apply bg-coolGray-800;
     }
@@ -47,8 +45,6 @@
 
   &__arrow {
     position: absolute;
-
-    transform: translateY(-0.15rem) translateX(0.1rem);
   }
 
   &__child-blocks {
