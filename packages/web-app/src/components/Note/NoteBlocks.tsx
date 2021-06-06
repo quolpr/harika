@@ -1,8 +1,4 @@
-import type {
-  NoteBlockModel,
-  BlocksViewModel,
-  FocusedBlockState,
-} from '@harika/web-core';
+import type { NoteBlockModel, BlocksViewModel } from '@harika/web-core';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
 import { useMedia } from 'react-use';
@@ -33,126 +29,105 @@ export const NoteBlocks = observer(
     const vault = useCurrentVault();
     const isWide = useMedia('(min-width: 768px)');
 
-    // TODO: what is the better way to handle both mouse move and shift click?
     useEffect(() => {
       const mouseMove$ = fromEvent<MouseEvent>(document, 'mousemove');
       const mouseUp$ = fromEvent<MouseEvent>(document, 'mouseup');
       const mouseDown$ = fromEvent<MouseEvent>(document, 'mousedown');
 
+      const idOnMouseMove$ = mouseMove$.pipe(
+        map((e) => {
+          const el2 = (e.target as HTMLElement).closest<HTMLDivElement>(
+            `[data-type="note-block"][data-view-id="${view.$modelId}"]`,
+          );
+
+          return el2?.dataset?.id;
+        }),
+        filter((id) => Boolean(id)) as OperatorFunction<
+          string | undefined,
+          string
+        >,
+        distinctUntilChanged(),
+      );
+
       const mouseMoveHandler = mouseDown$
         .pipe(
-          switchMap((e) => {
+          map((e) => {
             const el = (e.target as HTMLElement).closest<HTMLDivElement>(
               `[data-type="note-block"][data-view-id="${view.$modelId}"]`,
             );
-            const fromBlockId = el?.dataset?.id;
 
-            let shouldExpand = false;
-            let wasAnyIdSelected = false;
-
-            if (view.selectionInterval !== undefined) {
-              if (
-                (!fromBlockId || !view.selectedIds.includes(fromBlockId)) &&
-                !e.shiftKey
-              ) {
+            return { fromBlockId: el?.dataset?.id, shiftKey: e.shiftKey };
+          }),
+          switchMap(({ fromBlockId, shiftKey }) => {
+            if (!fromBlockId) {
+              if (view.selectionInterval !== undefined) {
                 view.resetSelection();
               }
 
-              if (e.shiftKey && fromBlockId) {
-                view.expandSelection(fromBlockId);
-
-                wasAnyIdSelected = true;
-                shouldExpand = true;
-              }
+              return EMPTY;
             }
 
-            let wasDifferentBlockIdSelected =
-              view.selectionInterval !== undefined;
+            const focusedBlockState = vault.ui.focusedBlock.state;
 
-            if (fromBlockId) {
-              return mouseMove$.pipe(
-                map((e) => {
-                  const el2 = (e.target as HTMLElement).closest<HTMLDivElement>(
-                    `[data-type="note-block"][data-view-id="${view.$modelId}"]`,
-                  );
+            // shift+click handling
+            if (
+              focusedBlockState &&
+              focusedBlockState.viewId === view.$modelId &&
+              focusedBlockState.isEditing === true &&
+              view.selectionInterval === undefined &&
+              shiftKey
+            ) {
+              vault.ui.focusedBlock.setState(undefined);
+              view.setSelectionInterval(focusedBlockState.blockId, fromBlockId);
 
-                  return el2?.dataset?.id;
-                }),
-                filter((id) => Boolean(id)) as OperatorFunction<
-                  string | undefined,
-                  string
-                >,
-                distinctUntilChanged(),
-                filter(
-                  (toId) =>
-                    !(toId === fromBlockId && !wasDifferentBlockIdSelected),
-                ),
+              return EMPTY;
+            }
+
+            if (view.selectionInterval !== undefined && shiftKey) {
+              view.expandSelection(fromBlockId);
+
+              return idOnMouseMove$.pipe(
                 tap((toId) => {
-                  if (shouldExpand) {
-                    view.expandSelection(toId);
-                  } else {
-                    view.setSelectionInterval(fromBlockId, toId);
+                  view.expandSelection(toId);
+                }),
+                takeUntil(mouseUp$),
+              );
+            } else {
+              let wasAnyIdSelected = false;
 
-                    wasDifferentBlockIdSelected = true;
+              return idOnMouseMove$.pipe(
+                // If just click happened, so selection will happen only if mouse will be moved to the different block
+                filter((toId) => !(fromBlockId === toId && !wasAnyIdSelected)),
+                tap((toId) => {
+                  if (
+                    view.selectionInterval &&
+                    isEqual(
+                      [...view.selectionInterval].sort(),
+                      [fromBlockId, toId].sort(),
+                    )
+                  ) {
+                    return;
                   }
+
+                  vault.ui.focusedBlock.setState(undefined);
+                  view.setSelectionInterval(fromBlockId, toId);
 
                   wasAnyIdSelected = true;
                 }),
                 finalize(() => {
-                  if (
-                    !wasAnyIdSelected &&
-                    view.selectionInterval !== undefined
-                  ) {
+                  if (!wasAnyIdSelected) {
                     view.resetSelection();
                   }
                 }),
                 takeUntil(mouseUp$),
               );
-            } else {
-              return EMPTY;
             }
           }),
         )
         .subscribe();
 
-      const shiftClickHandler = mouseDown$
-        .pipe(
-          map((e): [MouseEvent, FocusedBlockState | undefined] => [
-            e,
-            vault.ui.focusedBlock,
-          ]),
-          filter(([, focusedBlock]) => focusedBlock?.viewId === view.$modelId),
-          filter(([e]) => e.shiftKey),
-          map(([e, focusedBlock]): [string | undefined, FocusedBlockState] => {
-            const el = (e.target as HTMLElement).closest<HTMLDivElement>(
-              `[data-type="note-block"][data-view-id="${view.$modelId}"]`,
-            );
-            return [el?.dataset?.id, focusedBlock as FocusedBlockState];
-          }),
-        )
-        .subscribe(([id, focusedBlock]) => {
-          if (!id) {
-            return;
-          }
-
-          if (
-            view.selectionInterval &&
-            isEqual(
-              [...view.selectionInterval].sort(),
-              [id, focusedBlock.blockId].sort(),
-            )
-          ) {
-            return;
-          }
-
-          setTimeout(() => {
-            view.setSelectionInterval(focusedBlock.blockId, id);
-          }, 0);
-        });
-
       return () => {
         mouseMoveHandler.unsubscribe();
-        shiftClickHandler.unsubscribe();
       };
     }, [vault.ui.focusedBlock, view]);
 

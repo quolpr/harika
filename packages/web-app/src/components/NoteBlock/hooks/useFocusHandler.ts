@@ -1,7 +1,7 @@
 import { useRef, useCallback, useEffect, useState, RefObject } from 'react';
 import { useCurrentFocusedBlockState } from '../../../hooks/useFocusedBlockState';
 import type { BlocksViewModel, NoteBlockModel } from '@harika/web-core';
-import { useClickAway } from 'react-use';
+import { useClickAway, usePrevious } from 'react-use';
 
 // https://stackoverflow.com/a/55652503/3872807
 const useFakeInput = () => {
@@ -141,6 +141,10 @@ export const useFocusHandler = (
 
   const handleContentClick = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
+      e.preventDefault();
+
+      if (e.shiftKey) return;
+
       let startAt = contentLength;
 
       if (e.target instanceof HTMLElement) {
@@ -159,15 +163,12 @@ export const useFocusHandler = (
         }
       }
 
-      // Without setTimeout resetSelection will not permit to focus block
-      // setTimeout(() => {
       setEditState({
         viewId: view.$modelId,
         blockId: noteBlock.$modelId,
         isEditing: true,
         startAt,
       });
-      // }, 0);
     },
     [
       contentLength,
@@ -175,7 +176,7 @@ export const useFocusHandler = (
       noteBlock.$modelId,
       noteBlockElRef,
       setEditState,
-      view.$modelId,
+      view,
     ],
   );
 
@@ -191,18 +192,6 @@ export const useFocusHandler = (
   };
 
   const handleInputBlur = useHandleDoneIosButton(view, noteBlock);
-
-  const isSelecting = view.selectedIds.length > 0;
-
-  // useEffect(() => {
-  //   if (isSelecting && isEditing) {
-  //     setEditState({
-  //       viewId: view.$modelId,
-  //       blockId: noteBlock.$modelId,
-  //       isEditing: false,
-  //     });
-  //   }
-  // }, [isEditing, isSelecting, noteBlock.$modelId, setEditState, view.$modelId]);
 
   return {
     handleInputBlur,

@@ -16,6 +16,7 @@ import { useFocusHandler } from './hooks/useFocusHandler';
 import { useHandleInput } from './hooks/useHandleInput';
 import { NoteTitleAutocomplete } from './NoteTitleAutocomplete/NoteTitleAutocomplete';
 import { useCurrentFocusedBlockState } from '../../hooks/useFocusedBlockState';
+import { xor } from 'lodash-es';
 
 const NoteBlockChildren = observer(
   ({
@@ -26,7 +27,7 @@ const NoteBlockChildren = observer(
     view: BlocksViewModel;
   }) => {
     return childBlocks.length !== 0 ? (
-      <div className="note-block__child-blocks">
+      <>
         {childBlocks.map((childNoteBlock) => (
           <NoteBlock
             key={childNoteBlock.current.$modelId}
@@ -34,7 +35,7 @@ const NoteBlockChildren = observer(
             view={view}
           />
         ))}
-      </div>
+      </>
     ) : null;
   },
 );
@@ -84,12 +85,14 @@ const NoteBlockBody = observer(
 
     const inputId = `${view.$modelId}-${noteBlock.$modelId}`;
 
+    const isSelected = computed(() =>
+      view.selectedIds.includes(noteBlock.$modelId),
+    ).get();
+
     return (
       <div
         className={clsx('note-block__body', {
-          'note-block__body--selected': view.selectedIds.includes(
-            noteBlock.$modelId,
-          ),
+          'note-block__body--selected': isSelected,
         })}
         ref={noteBlockBodyElRef}
       >
@@ -123,9 +126,7 @@ const NoteBlockBody = observer(
           <TextareaAutosize
             id={inputId}
             ref={inputRef}
-            className={clsx('note-block__content', {
-              'note-block__content--hidden': !isEditing,
-            })}
+            className={clsx('note-block__content', {})}
             value={noteBlock.content.value}
             onBlur={handleInputBlur}
             {...textareaHandlers}
@@ -169,6 +170,19 @@ export const NoteBlock = observer(
       view.isExpanded(noteBlock.$modelId),
     ).get();
 
+    const areChildrenAndParentSelected = computed(() => {
+      const childBlockIds = noteBlock.flattenTree.map(
+        ({ $modelId }) => $modelId,
+      );
+      const selectedIds = view.selectedIds;
+
+      if (childBlockIds.length === 0) return false;
+
+      return [noteBlock.$modelId, ...childBlockIds].every((id) =>
+        selectedIds.includes(id),
+      );
+    }).get();
+
     return (
       <div
         className="note-block"
@@ -183,11 +197,18 @@ export const NoteBlock = observer(
           isExpanded={isExpanded}
         />
 
-        {isExpanded && (
-          <NoteBlockChildren
-            childBlocks={noteBlock.noteBlockRefs}
-            view={view}
-          />
+        {isExpanded && noteBlock.noteBlockRefs.length !== 0 && (
+          <div
+            className={clsx('note-block__child-blocks', {
+              'note-block__child-blocks--selected':
+                areChildrenAndParentSelected,
+            })}
+          >
+            <NoteBlockChildren
+              childBlocks={noteBlock.noteBlockRefs}
+              view={view}
+            />
+          </div>
         )}
       </div>
     );

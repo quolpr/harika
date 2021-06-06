@@ -19,10 +19,10 @@ export const useCurrentFocusedBlockState = (
       | undefined,
   ) => void,
 ] => {
-  const vaultUiState = useCurrentVault().ui;
+  const vault = useCurrentVault();
 
   const focusState = computed(
-    () => vaultUiState.getBlockFocusState(viewId, blockId),
+    () => vault.ui.focusedBlock.getFocusState(viewId, blockId),
     { equals: comparer.shallow },
   ).get();
 
@@ -38,7 +38,7 @@ export const useCurrentFocusedBlockState = (
         | undefined,
     ) => {
       if (block) {
-        vaultUiState.setFocusedBlock(
+        vault.ui.focusedBlock.setState(
           FocusedBlockState.create(
             block.viewId,
             block.blockId,
@@ -47,10 +47,10 @@ export const useCurrentFocusedBlockState = (
           ),
         );
       } else {
-        vaultUiState.setFocusedBlock(undefined);
+        vault.ui.focusedBlock.setState(undefined);
       }
     },
-    [vaultUiState],
+    [vault.ui.focusedBlock],
   );
 
   return [focusState, setState];

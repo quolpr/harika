@@ -7,6 +7,7 @@ export class BlocksViewModel extends Model({
   expandedIds: prop<Record<string, boolean>>(() => ({})),
   noteRef: prop<Ref<NoteModel>>(),
   selectionInterval: prop<[string, string] | undefined>(),
+  prevSelectionInterval: prop<[string, string] | undefined>(),
   // Is needed to handle when shift+click pressed
   addableSelectionId: prop<string | undefined>(),
 }) {
@@ -24,6 +25,11 @@ export class BlocksViewModel extends Model({
     } else {
       this.expandedIds[noteBlockId] = false;
     }
+  }
+
+  @computed
+  get isSelecting() {
+    return this.selectionInterval !== undefined;
   }
 
   @computed
@@ -67,6 +73,7 @@ export class BlocksViewModel extends Model({
   @modelAction
   setSelectionInterval(fromId: string, toId: string) {
     this.selectionInterval = [fromId, toId];
+    this.addableSelectionId = undefined;
   }
 
   @modelAction

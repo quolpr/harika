@@ -37,6 +37,19 @@ describe('BlocksViewModel', () => {
         '8',
       ]);
     });
+
+    it('resets expand on set', () => {
+      const viewModel = getViewModel();
+
+      viewModel.setSelectionInterval('2', '4');
+      viewModel.expandSelection('1');
+
+      expect(viewModel.selectedIds).to.deep.eq(['1', '2', '3', '4']);
+
+      viewModel.setSelectionInterval('3', '5');
+
+      expect(viewModel.selectedIds).to.deep.eq(['3', '4', '5']);
+    });
   });
   describe('expandSelection', () => {
     it('works', () => {

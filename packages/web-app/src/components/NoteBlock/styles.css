@@ -2,12 +2,12 @@
   @apply flex flex-col text-base;
 
   &__body {
-    @apply flex relative py-1;
+    @apply flex relative py-1 pl-2;
 
     user-select: none;
 
     &--selected {
-      background-color: red;
+      @apply bg-coolGray-800;
     }
   }
 
@@ -48,18 +48,21 @@
   &__arrow {
     position: absolute;
 
-    transform: translateY(-1.5px) translateX(-1px);
+    transform: translateY(-0.15rem) translateX(0.1rem);
   }
 
   &__child-blocks {
-    @apply relative box-border ml-4 pl-3;
+    @apply relative box-border pl-7;
+
+    &--selected {
+      @apply bg-coolGray-800;
+    }
 
     &::before {
       @apply absolute bg-gray-800;
 
       content: '';
       width: 1px;
-      left: 2.5px;
       top: 5px;
       height: calc(100% - 5px);
     }
@@ -76,7 +79,7 @@
   }
 
   &__content {
-    @apply focus:outline-none focus:ring-2 rounded-sm text-warmGray-300;
+    @apply focus:outline-none rounded-sm text-warmGray-300;
 
     display: inline;
 

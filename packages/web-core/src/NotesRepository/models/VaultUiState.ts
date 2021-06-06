@@ -31,20 +31,42 @@ export class FocusedBlockState extends Model({
   }
 }
 
+// React/mobx has weird bug(and I am not sure that issue exists in github?)
+// That when state is set in `ui`, then it seems it triggers rerender of all components
+// and event in event handler stops bubbling. WTF?
+// Thats why we need to decouple FocusedBlockState from VaultUiState storing
+@model('FocusedBlock')
+export class FocusedBlock extends Model({
+  state: prop<FocusedBlockState | undefined>(),
+}) {
+  getFocusState(viewId: string, blockId: string): EditState {
+    const isFocused =
+      this.state?.viewId === viewId && this.state?.blockId === blockId;
+
+    return isFocused
+      ? {
+          isFocused: true,
+          startAt: this.state?.startAt,
+          isEditing: Boolean(this.state?.isEditing),
+        }
+      : { isFocused: false, isEditing: false };
+  }
+
+  @modelAction
+  setState(state: FocusedBlockState | undefined) {
+    this.state = state;
+  }
+}
+
 @model('VaultUiState')
 export class VaultUiState extends Model({
-  focusedBlock: prop<FocusedBlockState | undefined>(),
+  focusedBlock: prop<FocusedBlock>(() => new FocusedBlock({})),
   currentNoteId: prop<string | undefined>(),
   blocksViewsMap: prop<Record<string, BlocksViewModel>>(() => ({})),
 }) {
   @modelAction
   setCurrentNoteId(id: string | undefined) {
     this.currentNoteId = id;
-  }
-
-  @modelAction
-  setFocusedBlock(block: FocusedBlockState | undefined) {
-    this.focusedBlock = block;
   }
 
   @modelAction
@@ -62,19 +84,5 @@ export class VaultUiState extends Model({
     });
 
     return this.blocksViewsMap[key];
-  }
-
-  getBlockFocusState(viewId: string, blockId: string): EditState {
-    const isFocused =
-      this.focusedBlock?.viewId === viewId &&
-      this.focusedBlock?.blockId === blockId;
-
-    return isFocused
-      ? {
-          isFocused: true,
-          startAt: this.focusedBlock?.startAt,
-          isEditing: Boolean(this.focusedBlock?.isEditing),
-        }
-      : { isFocused: false, isEditing: false };
   }
 }

@@ -157,7 +157,7 @@ const NoteBody = observer(({ note }: { note: NoteModel }) => {
 
   useEffect(() => {
     if (focusOnBlockId) {
-      vault.ui.setFocusedBlock(
+      vault.ui.setFocusedBlockState(
         FocusedBlockState.create(note.$modelId, focusOnBlockId),
       );
     }
