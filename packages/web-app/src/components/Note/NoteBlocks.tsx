@@ -148,6 +148,20 @@ export const NoteBlocks = observer(
       };
     }, [vault.ui.focusedBlock, view]);
 
+    const isSelecting = view.selectionInterval !== undefined;
+
+    useEffect(() => {
+      if (isSelecting) {
+        const handler = () => {
+          navigator.clipboard.writeText(view.getStringTreeToCopy());
+        };
+
+        document.addEventListener('copy', handler);
+
+        return () => document.removeEventListener('copy', handler);
+      }
+    }, [isSelecting, view]);
+
     return (
       <>
         <div className="note__body">

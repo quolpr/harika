@@ -1,7 +1,18 @@
+import { uniq } from 'lodash-es';
 import { computed } from 'mobx';
-import { model, Model, modelAction, prop, Ref } from 'mobx-keystone';
+import {
+  findParent,
+  model,
+  Model,
+  modelAction,
+  prop,
+  Ref,
+} from 'mobx-keystone';
+import { normalizeBlockTree } from '../../../tests/blockUtils';
 import type { NoteBlockModel } from '../NoteBlockModel';
 import type { NoteModel } from '../NoteModel';
+import { isVault } from '../utils';
+import type { VaultModel } from '../VaultModel';
 
 @model('harika/BlocksViewModel')
 export class BlocksViewModel extends Model({
@@ -12,11 +23,28 @@ export class BlocksViewModel extends Model({
   // Is needed to handle when shift+click pressed
   addableSelectionId: prop<string | undefined>(),
 }) {
+  @computed
+  get vault() {
+    return findParent<VaultModel>(this, isVault)!;
+  }
+
   isExpanded(noteBlockId: string) {
     if (this.expandedIds[noteBlockId] !== undefined)
       return this.expandedIds[noteBlockId];
 
     return true;
+  }
+
+  getStringTreeToCopy() {
+    let str = '';
+
+    this.selectedIds.forEach((id) => {
+      const block = this.vault.blocksMap[id];
+
+      str += `${'  '.repeat(block.indent - 1)}- ${block.content.value}\n`;
+    });
+
+    return normalizeBlockTree(str);
   }
 
   @modelAction
@@ -66,9 +94,18 @@ export class BlocksViewModel extends Model({
       }
     }
 
-    return flattenTree
-      .slice(sliceFrom, sliceTo + 1)
-      .map(({ $modelId }) => $modelId);
+    return uniq(
+      flattenTree.slice(sliceFrom, sliceTo + 1).flatMap((block) => {
+        if (block.hasChildren) {
+          return [
+            block.$modelId,
+            ...block.flattenTree.map(({ $modelId }) => $modelId),
+          ];
+        }
+
+        return block.$modelId;
+      }),
+    );
   }
 
   areChildrenAndParentSelected(noteBlock: NoteBlockModel) {
@@ -94,15 +131,6 @@ export class BlocksViewModel extends Model({
   resetSelection() {
     this.selectionInterval = undefined;
     this.addableSelectionId = undefined;
-  }
-
-  @modelAction
-  fixSelection() {
-    const selected = this.selectedIds;
-
-    if (selected.length > 0) {
-      this.selectionInterval = [selected[0], selected[selected.length - 1]];
-    }
   }
 
   @modelAction

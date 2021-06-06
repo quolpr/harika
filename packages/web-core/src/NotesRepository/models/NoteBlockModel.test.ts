@@ -12,7 +12,7 @@ describe('NoteBlockModel', () => {
 
       const { note } = parseToBlocksTree(normalizedTree);
 
-      expect(note.rootBlockRef.current.getStringTree(true)).to.equal(
+      expect(note.rootBlockRef.current.getStringTree(true).trim()).to.equal(
         normalizedTree,
       );
     });
@@ -28,7 +28,7 @@ describe('NoteBlockModel', () => {
 
       const { note } = parseToBlocksTree(normalizedTree);
 
-      expect(note.rootBlockRef.current.getStringTree(true)).to.equal(
+      expect(note.rootBlockRef.current.getStringTree(true).trim()).to.equal(
         normalizedTree,
       );
     });

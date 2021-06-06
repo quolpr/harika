@@ -12,7 +12,7 @@ export const normalizeBlockTree = (str: string) => {
     }\n`;
   });
 
-  return normalized;
+  return normalized.trim();
 };
 
 export const parseToBlocksTree = (str: string) => {

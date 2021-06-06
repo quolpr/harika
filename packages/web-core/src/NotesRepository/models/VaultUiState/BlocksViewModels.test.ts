@@ -1,5 +1,8 @@
 import { expect } from '@esm-bundle/chai';
-import { parseToBlocksTree } from '../../../tests/blockUtils';
+import {
+  normalizeBlockTree,
+  parseToBlocksTree,
+} from '../../../tests/blockUtils';
 
 const getViewModel = () => {
   const { note, vault } = parseToBlocksTree(`
@@ -10,8 +13,10 @@ const getViewModel = () => {
           - block5 [#5]
         - block6 [#6]
           - block7 [#7]
-          - block8 [#8]
-      `);
+            - block8 [#8]
+          - block9 [#9]
+        - block10 [#10]
+  `);
 
   const viewModel = vault.ui.getOrCreateViewByModel(note, {
     $modelId: '123',
@@ -35,6 +40,7 @@ describe('BlocksViewModel', () => {
         '6',
         '7',
         '8',
+        '9',
       ]);
     });
 
@@ -44,7 +50,7 @@ describe('BlocksViewModel', () => {
       viewModel.setSelectionInterval('2', '4');
       viewModel.expandSelection('1');
 
-      expect(viewModel.selectedIds).to.deep.eq(['1', '2', '3', '4']);
+      expect(viewModel.selectedIds).to.deep.eq(['1', '2', '3', '4', '5']);
 
       viewModel.setSelectionInterval('3', '5');
 
@@ -55,7 +61,7 @@ describe('BlocksViewModel', () => {
     it('works', () => {
       const { viewModel } = getViewModel();
 
-      viewModel.setSelectionInterval('2', '5');
+      viewModel.setSelectionInterval('2', '4');
 
       viewModel.expandSelection('1');
 
@@ -63,27 +69,30 @@ describe('BlocksViewModel', () => {
 
       viewModel.expandSelection('7');
 
-      expect(viewModel.selectedIds).to.deep.eq(['2', '3', '4', '5', '6', '7']);
+      expect(viewModel.selectedIds).to.deep.eq([
+        '2',
+        '3',
+        '4',
+        '5',
+        '6',
+        '7',
+        '8',
+        '9',
+      ]);
 
       viewModel.expandSelection('3');
 
-      expect(viewModel.selectedIds).to.deep.eq(['2', '3']);
-
-      viewModel.fixSelection();
-
-      viewModel.expandSelection('1');
-
-      expect(viewModel.selectedIds).to.deep.eq(['1', '2', '3']);
+      expect(viewModel.selectedIds).to.deep.eq(['2', '3', '4']);
     });
   });
 
   describe('resetSelection', () => {
-    it('resets bots selection &addableSelectionId', () => {
+    it('resets both selection & addableSelectionId', () => {
       const { viewModel } = getViewModel();
 
       viewModel.setSelectionInterval('2', '3');
 
-      expect(viewModel.selectedIds).to.deep.eq(['2', '3']);
+      expect(viewModel.selectedIds).to.deep.eq(['2', '3', '4']);
 
       viewModel.expandSelection('5');
 
@@ -95,7 +104,7 @@ describe('BlocksViewModel', () => {
 
       viewModel.setSelectionInterval('2', '3');
 
-      expect(viewModel.selectedIds).to.deep.eq(['2', '3']);
+      expect(viewModel.selectedIds).to.deep.eq(['2', '3', '4']);
     });
   });
 
@@ -121,5 +130,49 @@ describe('BlocksViewModel', () => {
     expect(viewModel.areChildrenAndParentSelected(vault.blocksMap['2'])).to.eq(
       false,
     );
+
+    viewModel.setSelectionInterval('2', '4');
+
+    viewModel.resetSelection();
+
+    expect(viewModel.areChildrenAndParentSelected(vault.blocksMap['2'])).to.eq(
+      false,
+    );
+  });
+
+  describe('stringTreeToCopy', () => {
+    it('works', () => {
+      const { viewModel } = getViewModel();
+
+      const normalizedTree = normalizeBlockTree(`
+        - block3
+        - block4
+        - block5
+        - block6
+          - block7
+            - block8
+          - block9
+        - block10
+      `);
+
+      viewModel.setSelectionInterval('3', '10');
+
+      expect(viewModel.getStringTreeToCopy()).to.eq(normalizedTree);
+    });
+
+    it('works#2', () => {
+      const { viewModel } = getViewModel();
+
+      const normalizedTree = normalizeBlockTree(`
+        - block2
+          - block3
+          - block4
+        - block5
+      `);
+
+      viewModel.setSelectionInterval('2', '5');
+
+      expect(viewModel.getStringTreeToCopy()).to.eq(normalizedTree);
+    });
   });
 });
