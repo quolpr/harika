@@ -4,6 +4,8 @@ import {
   parseStringToTree,
 } from '@harika/web-core';
 import { RefObject, useCallback, useState } from 'react';
+import { useKeyPress } from 'react-use';
+import { useNoteRepository } from '../../../contexts/CurrentNoteRepositoryContext';
 import { useCurrentFocusedBlockState } from '../../../hooks/useFocusedBlockState';
 import { isIOS, insertText } from '../../../utils';
 import type { SearchedNote } from '../NoteTitleAutocomplete/NoteTitleAutocomplete';
@@ -26,6 +28,8 @@ export const useHandleInput = (
     useState<string | undefined>(undefined);
 
   const isSearching = Boolean(noteTitleToSearch);
+
+  const noteRepo = useNoteRepository();
 
   const handleKeyPress = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -245,9 +249,14 @@ export const useHandleInput = (
     [noteBlock.content.ast],
   );
 
+  const [isShiftPressed] = useKeyPress((e) => e.shiftKey);
+
   const handlePaste = useCallback(
     (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
       handleCaretChange(e);
+
+      if (isShiftPressed) return;
+
       const data = e.clipboardData.getData('Text');
 
       if (data.length === 0) return;
@@ -258,11 +267,11 @@ export const useHandleInput = (
 
       e.preventDefault();
 
-      noteBlock.injectNewTreeTokens(parsedToTree);
-
-      console.log(parsedToTree);
+      noteBlock.injectNewTreeTokens(parsedToTree).forEach((block) => {
+        noteRepo.updateNoteBlockLinks(block);
+      });
     },
-    [handleCaretChange, noteBlock],
+    [handleCaretChange, isShiftPressed, noteBlock, noteRepo],
   );
 
   const handleChange = useCallback(

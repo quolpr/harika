@@ -19,6 +19,7 @@ import { NoteBlockModel, noteBlockRef } from './NoteBlockModel';
 import { isVault } from './utils';
 import type { VaultModel } from './VaultModel';
 import { BlockContentModel } from './NoteBlockModel/BlockContentModel';
+import { omit } from 'lodash-es';
 
 export const noteRef = customRef<NoteModel>('harika/NoteRef', {
   // this works, but we will use getRefId() from the Todo class instead
@@ -104,13 +105,13 @@ export class NoteModel extends Model({
     pos: number,
   ) {
     const newNoteBlock = new NoteBlockModel({
-      $modelId: generateId(),
+      $modelId: attrs.$modelId ? attrs.$modelId : generateId(),
       createdAt: new Date().getTime(),
       noteRef: noteRef(this),
       noteBlockRefs: [],
       parentBlockRef: noteBlockRef(parent),
       linkedNoteRefs: [],
-      ...attrs,
+      ...omit(attrs, '$modelId'),
     });
 
     this.vault.blocksMap[newNoteBlock.$modelId] = newNoteBlock;
