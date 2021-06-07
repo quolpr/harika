@@ -108,38 +108,6 @@ describe('BlocksViewModel', () => {
     });
   });
 
-  describe('areChildrenAndParentSelected', () => {
-    const { viewModel, vault } = getViewModel();
-
-    viewModel.setSelectionInterval('2', '4');
-
-    expect(viewModel.areChildrenAndParentSelected(vault.blocksMap['2'])).to.eq(
-      true,
-    );
-
-    expect(viewModel.areChildrenAndParentSelected(vault.blocksMap['5'])).to.eq(
-      false,
-    );
-
-    expect(viewModel.areChildrenAndParentSelected(vault.blocksMap['3'])).to.eq(
-      false,
-    );
-
-    viewModel.setSelectionInterval('3', '4');
-
-    expect(viewModel.areChildrenAndParentSelected(vault.blocksMap['2'])).to.eq(
-      false,
-    );
-
-    viewModel.setSelectionInterval('2', '4');
-
-    viewModel.resetSelection();
-
-    expect(viewModel.areChildrenAndParentSelected(vault.blocksMap['2'])).to.eq(
-      false,
-    );
-  });
-
   describe('stringTreeToCopy', () => {
     it('works', () => {
       const { viewModel } = getViewModel();

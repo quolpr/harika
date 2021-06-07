@@ -267,11 +267,28 @@ export const useHandleInput = (
 
       e.preventDefault();
 
-      noteBlock.injectNewTreeTokens(parsedToTree).forEach((block) => {
+      const injectedBlocks = noteBlock.injectNewTreeTokens(parsedToTree);
+
+      injectedBlocks.forEach((block) => {
         noteRepo.updateNoteBlockLinks(block);
       });
+
+      if (injectedBlocks[0]) {
+        setEditState({
+          viewId: view.$modelId,
+          blockId: injectedBlocks[0].$modelId,
+          isEditing: true,
+        });
+      }
     },
-    [handleCaretChange, isShiftPressed, noteBlock, noteRepo],
+    [
+      handleCaretChange,
+      isShiftPressed,
+      noteBlock,
+      noteRepo,
+      setEditState,
+      view.$modelId,
+    ],
   );
 
   const handleChange = useCallback(

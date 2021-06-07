@@ -36,6 +36,16 @@ describe('NoteBlockModel', () => {
   });
 
   describe('injectNewTreeTokens', () => {
+    const toInsert = () => {
+      return parseStringToTree(`
+          - block6
+          - block7
+            - block8
+              - block9
+              - block10
+        - block11
+     `);
+    };
     it('injects new tree to existent tree', () => {
       const { vault, note } = parseToBlocksTree(`
         - block0
@@ -46,16 +56,7 @@ describe('NoteBlockModel', () => {
         - block5
       `);
 
-      const treeTokens = parseStringToTree(`
-          - block6
-          - block7
-            - block8
-              - block9
-              - block10
-        - block11
-     `);
-
-      vault.blocksMap['4'].injectNewTreeTokens(treeTokens);
+      vault.blocksMap['4'].injectNewTreeTokens(toInsert());
 
       expect(note.rootBlockRef.current.getStringTree().trim()).to.equal(
         normalizeBlockTree(`
@@ -71,6 +72,30 @@ describe('NoteBlockModel', () => {
                 - block10
             - block11
           - block5
+        `),
+      );
+    });
+
+    it('handles paste to first child', () => {
+      const { vault, note } = parseToBlocksTree(`
+        - block0 [#0]
+        - block1
+        - block2 
+      `);
+
+      vault.blocksMap['0'].injectNewTreeTokens(toInsert());
+
+      expect(note.rootBlockRef.current.getStringTree().trim()).to.equal(
+        normalizeBlockTree(`
+          - block0
+          - block6
+          - block7
+            - block8
+              - block9
+              - block10
+          - block11
+          - block1
+          - block2
         `),
       );
     });

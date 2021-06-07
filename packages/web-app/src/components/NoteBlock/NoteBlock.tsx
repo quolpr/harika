@@ -46,10 +46,12 @@ const NoteBlockBody = observer(
     noteBlock,
     view,
     isExpanded,
+    isSelected,
   }: {
     noteBlock: NoteBlockModel;
     view: BlocksViewModel;
     isExpanded: boolean;
+    isSelected: boolean;
   }) => {
     const noteBlockBodyElRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLTextAreaElement | null>(null);
@@ -83,10 +85,6 @@ const NoteBlockBody = observer(
     }, [noteBlock.$modelId, view]);
 
     const inputId = `${view.$modelId}-${noteBlock.$modelId}`;
-
-    const isSelected = computed(() =>
-      view.selectedIds.includes(noteBlock.$modelId),
-    ).get();
 
     return (
       <div
@@ -169,9 +167,9 @@ export const NoteBlock = observer(
       view.isExpanded(noteBlock.$modelId),
     ).get();
 
-    const areChildrenAndParentSelected = computed(() =>
-      view.areChildrenAndParentSelected(noteBlock),
-    ).get();
+    const isSelected = computed(() => {
+      return view.selectedIds.includes(noteBlock.$modelId);
+    }).get();
 
     return (
       <div
@@ -185,13 +183,13 @@ export const NoteBlock = observer(
           noteBlock={noteBlock}
           view={view}
           isExpanded={isExpanded}
+          isSelected={isSelected}
         />
 
         {isExpanded && noteBlock.noteBlockRefs.length !== 0 && (
           <div
             className={clsx('note-block__child-blocks', {
-              'note-block__child-blocks--selected':
-                areChildrenAndParentSelected,
+              'note-block__child-blocks--selected': isSelected,
             })}
           >
             <NoteBlockChildren

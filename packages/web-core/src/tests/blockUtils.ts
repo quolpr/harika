@@ -45,14 +45,14 @@ export const addTokensToNoteBlock = (
       return {
         previousBlock,
         currentPath: [noteBlock],
-        insertTo: 1,
+        insertTo: 0,
         baseIndent: 1,
       };
     } else {
       return {
         previousBlock: noteBlock,
         currentPath: [noteBlock.parentBlockRef!.current],
-        insertTo: noteBlock.orderPosition + 1,
+        insertTo: noteBlock.orderPosition,
         baseIndent: noteBlock.indent,
       };
     }

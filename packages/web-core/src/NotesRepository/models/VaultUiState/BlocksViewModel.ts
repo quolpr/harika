@@ -1,5 +1,5 @@
 import { uniq } from 'lodash-es';
-import { computed } from 'mobx';
+import { comparer, computed } from 'mobx';
 import {
   findParent,
   model,
@@ -61,7 +61,7 @@ export class BlocksViewModel extends Model({
     return this.selectionInterval !== undefined;
   }
 
-  @computed
+  @computed({ equals: comparer.shallow })
   get selectedIds() {
     if (!this.selectionInterval) return [];
 
@@ -94,31 +94,18 @@ export class BlocksViewModel extends Model({
       }
     }
 
-    return uniq(
-      flattenTree.slice(sliceFrom, sliceTo + 1).flatMap((block) => {
-        if (block.hasChildren) {
-          return [
-            block.$modelId,
-            ...block.flattenTree.map(({ $modelId }) => $modelId),
-          ];
-        }
+    const ids = new Set<string>();
 
-        return block.$modelId;
-      }),
-    );
-  }
+    flattenTree.slice(sliceFrom, sliceTo + 1).forEach((block) => {
+      ids.add(block.$modelId);
+      if (block.hasChildren) {
+        block.flattenTree.forEach((child) => {
+          ids.add(child.$modelId);
+        });
+      }
+    });
 
-  areChildrenAndParentSelected(noteBlock: NoteBlockModel) {
-    const selectedIds = this.selectedIds;
-
-    if (selectedIds.length === 0) return false;
-    if (!selectedIds.includes(noteBlock.$modelId)) return false;
-
-    const childBlockIds = noteBlock.flattenTree.map(({ $modelId }) => $modelId);
-
-    if (childBlockIds.length === 0) return false;
-
-    return childBlockIds.every((id) => selectedIds.includes(id));
+    return Array.from(ids);
   }
 
   @modelAction

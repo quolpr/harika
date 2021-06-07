@@ -32,8 +32,9 @@ export class NoteBlockModel extends Model({
   createdAt: tProp(types.dateTimestamp),
   isDeleted: prop<boolean>(false),
 }) {
-  @computed
+  @computed({ equals: comparer.shallow })
   get flattenTree(): NoteBlockModel[] {
+    // optimization required here, but how?
     const blocks: NoteBlockModel[] = [];
 
     this.noteBlockRefs.forEach((block) => {
