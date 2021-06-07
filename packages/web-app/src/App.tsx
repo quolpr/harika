@@ -1,4 +1,10 @@
-import React, { Suspense, useEffect } from 'react';
+import React, {
+  MutableRefObject,
+  RefObject,
+  Suspense,
+  useEffect,
+  useRef,
+} from 'react';
 import './App.css';
 import './variables.css';
 import Modal from 'react-modal';
@@ -9,6 +15,7 @@ import { Redirect, Route, Router, Switch } from 'react-router-dom';
 import { createBrowserHistory } from 'history';
 import { useLocalStorage } from '@rehooks/local-storage';
 import { Workbox } from 'workbox-window';
+import { ShiftPressedContext } from './contexts/ShiftPressedContext';
 
 const SignupPage = React.lazy(() => import('./pages/SignupPage/SignupPage'));
 const LoginPage = React.lazy(() => import('./pages/LoginPage/LoginPage'));
@@ -45,6 +52,32 @@ importSentry();
 Modal.setAppElement('body');
 
 const queryClient = new QueryClient();
+
+const ShiftPressedTracker = ({
+  shiftRef,
+}: {
+  shiftRef: MutableRefObject<boolean>;
+}) => {
+  useEffect(() => {
+    const keyUpHandler = (e: KeyboardEvent) => {
+      shiftRef.current = e.shiftKey;
+    };
+
+    const keyDownHandler = () => {
+      shiftRef.current = false;
+    };
+
+    document.addEventListener('keyup', keyUpHandler);
+    document.addEventListener('keydown', keyDownHandler);
+
+    return () => {
+      document.removeEventListener('keyup', keyUpHandler);
+      document.removeEventListener('keydown', keyDownHandler);
+    };
+  }, [shiftRef]);
+
+  return null;
+};
 
 export const App = () => {
   const [authInfo] = useAuthState();
@@ -106,49 +139,55 @@ export const App = () => {
     };
   }, []);
 
+  const isShiftPressedRef = useRef(false);
+
   return (
     <React.StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Switch>
-            <Route path={[VAULT_PREFIX, PATHS.VAULT_INDEX_PATH]}>
-              <Suspense fallback={<div></div>}>
-                <VaultAppRoute />
-              </Suspense>
-            </Route>
+      <ShiftPressedContext.Provider value={isShiftPressedRef}>
+        <ShiftPressedTracker shiftRef={isShiftPressedRef} />
 
-            <Route exact path={PATHS.SIGNUP_PATH}>
-              <Suspense fallback={<div></div>}>
-                <SignupPage />
-              </Suspense>
-            </Route>
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Switch>
+              <Route path={[VAULT_PREFIX, PATHS.VAULT_INDEX_PATH]}>
+                <Suspense fallback={<div></div>}>
+                  <VaultAppRoute />
+                </Suspense>
+              </Route>
 
-            <Route exact path={PATHS.LOGIN_PATH}>
-              <Suspense fallback={<div></div>}>
-                <LoginPage />
-              </Suspense>
-            </Route>
+              <Route exact path={PATHS.SIGNUP_PATH}>
+                <Suspense fallback={<div></div>}>
+                  <SignupPage />
+                </Suspense>
+              </Route>
 
-            <Route exact strict path="/">
-              {() => {
-                if (lastVaultId && authInfo) {
-                  return (
-                    <Redirect
-                      to={paths.vaultDailyPath({ vaultId: lastVaultId })}
-                    />
-                  );
-                } else {
-                  return authInfo ? (
-                    <Redirect to={PATHS.DEFAULT_PATH} />
-                  ) : (
-                    <Redirect to={PATHS.LOGIN_PATH} />
-                  );
-                }
-              }}
-            </Route>
-          </Switch>
-        </Router>
-      </QueryClientProvider>
+              <Route exact path={PATHS.LOGIN_PATH}>
+                <Suspense fallback={<div></div>}>
+                  <LoginPage />
+                </Suspense>
+              </Route>
+
+              <Route exact strict path="/">
+                {() => {
+                  if (lastVaultId && authInfo) {
+                    return (
+                      <Redirect
+                        to={paths.vaultDailyPath({ vaultId: lastVaultId })}
+                      />
+                    );
+                  } else {
+                    return authInfo ? (
+                      <Redirect to={PATHS.DEFAULT_PATH} />
+                    ) : (
+                      <Redirect to={PATHS.LOGIN_PATH} />
+                    );
+                  }
+                }}
+              </Route>
+            </Switch>
+          </Router>
+        </QueryClientProvider>
+      </ShiftPressedContext.Provider>
     </React.StrictMode>
   );
 };

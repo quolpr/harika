@@ -3,9 +3,17 @@ import {
   NoteBlockModel,
   parseStringToTree,
 } from '@harika/web-core';
-import { RefObject, useCallback, useState } from 'react';
+import {
+  RefObject,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import { useKeyPress } from 'react-use';
 import { useNoteRepository } from '../../../contexts/CurrentNoteRepositoryContext';
+import { ShiftPressedContext } from '../../../contexts/ShiftPressedContext';
 import { useCurrentFocusedBlockState } from '../../../hooks/useFocusedBlockState';
 import { isIOS, insertText } from '../../../utils';
 import type { SearchedNote } from '../NoteTitleAutocomplete/NoteTitleAutocomplete';
@@ -249,13 +257,15 @@ export const useHandleInput = (
     [noteBlock.content.ast],
   );
 
-  const [isShiftPressed] = useKeyPress((e) => e.shiftKey);
+  // const [isShiftPressed] = useKeyPress((e) => e.shiftKey);
+
+  const isShiftPressedRef = useContext(ShiftPressedContext);
 
   const handlePaste = useCallback(
     (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
       handleCaretChange(e);
 
-      if (isShiftPressed) return;
+      if (isShiftPressedRef.current) return;
 
       const data = e.clipboardData.getData('Text');
 
@@ -283,7 +293,7 @@ export const useHandleInput = (
     },
     [
       handleCaretChange,
-      isShiftPressed,
+      isShiftPressedRef,
       noteBlock,
       noteRepo,
       setEditState,

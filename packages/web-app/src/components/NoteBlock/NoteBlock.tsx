@@ -17,6 +17,8 @@ import { useHandleInput } from './hooks/useHandleInput';
 import { NoteTitleAutocomplete } from './NoteTitleAutocomplete/NoteTitleAutocomplete';
 import { useCurrentFocusedBlockState } from '../../hooks/useFocusedBlockState';
 
+// IMPORTANT: don't use any global handlers in <NoteBlock /> (document.addEventListener) cause it is slow down note blocks tree a lot
+
 const NoteBlockChildren = observer(
   ({
     childBlocks,
@@ -128,10 +130,12 @@ const NoteBlockBody = observer(
             onBlur={handleInputBlur}
             {...textareaHandlers}
           />
-          <NoteTitleAutocomplete
-            value={noteTitleToSearch}
-            onSelect={handleSearchSelect}
-          />
+          {noteTitleToSearch && (
+            <NoteTitleAutocomplete
+              value={noteTitleToSearch}
+              onSelect={handleSearchSelect}
+            />
+          )}
         </div>
 
         <span

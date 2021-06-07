@@ -112,7 +112,6 @@ export class NoteBlockModel extends Model({
     return this.parentBlockRef.current.noteBlockRefs;
   }
 
-  @computed({ equals: comparer.shallow })
   get leftAndRightSibling(): [
     left: NoteBlockModel | undefined,
     right: NoteBlockModel | undefined,

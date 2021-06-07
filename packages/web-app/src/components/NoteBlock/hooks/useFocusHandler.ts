@@ -117,27 +117,27 @@ export const useFocusHandler = (
     inputRef,
   ]);
 
-  useClickAway(inputRef, (e) => {
-    if (
-      isEditing &&
-      !(
-        e.target instanceof Element &&
-        (e.target.closest('.toolbar') ||
-          e.target.closest('.note-autocomplete')) &&
-        !e.target.closest('[data-defocus]')
-      ) &&
-      !(
-        e.target instanceof Element &&
-        e.target.closest('[data-type="note-block"]')
-      )
-    ) {
-      setEditState({
-        viewId: view.$modelId,
-        blockId: noteBlock.$modelId,
-        isEditing: false,
-      });
-    }
-  });
+  // useClickAway(inputRef, (e) => {
+  //   if (
+  //     isEditing &&
+  //     !(
+  //       e.target instanceof Element &&
+  //       (e.target.closest('.toolbar') ||
+  //         e.target.closest('.note-autocomplete')) &&
+  //       !e.target.closest('[data-defocus]')
+  //     ) &&
+  //     !(
+  //       e.target instanceof Element &&
+  //       e.target.closest('[data-type="note-block"]')
+  //     )
+  //   ) {
+  //     setEditState({
+  //       viewId: view.$modelId,
+  //       blockId: noteBlock.$modelId,
+  //       isEditing: false,
+  //     });
+  //   }
+  // });
 
   const handleContentClick = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
