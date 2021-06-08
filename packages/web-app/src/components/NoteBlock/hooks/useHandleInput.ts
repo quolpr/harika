@@ -99,7 +99,13 @@ export const useHandleInput = (
       const start = e.currentTarget.selectionStart;
       const end = e.currentTarget.selectionEnd;
 
-      if (e.key === 'Backspace') {
+      if (e.key === 'Escape') {
+        setEditState({
+          viewId: view.$modelId,
+          blockId: noteBlock.$modelId,
+          isEditing: false,
+        });
+      } else if (e.key === 'Backspace') {
         const isOnStart = start === end && start === 0;
 
         if (start === end) {

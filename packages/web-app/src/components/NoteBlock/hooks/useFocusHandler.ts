@@ -1,4 +1,4 @@
-import { useRef, useCallback, useEffect, useState, RefObject } from 'react';
+import { useRef, useCallback, useEffect, RefObject } from 'react';
 import { useCurrentFocusedBlockState } from '../../../hooks/useFocusedBlockState';
 import type { BlocksViewModel, NoteBlockModel } from '@harika/web-core';
 
@@ -40,37 +40,37 @@ const useFakeInput = () => {
 };
 
 // Handle iOS DONE button on keyboard
-const useHandleDoneIosButton = (
-  view: BlocksViewModel,
-  noteBlock: NoteBlockModel,
-) => {
-  const [wasBlurred, setWasBlurred] = useState(false);
+// const useHandleDoneIosButton = (
+//   view: BlocksViewModel,
+//   noteBlock: NoteBlockModel,
+// ) => {
+//   const [wasBlurred, setWasBlurred] = useState(false);
 
-  const [editState, setEditState] = useCurrentFocusedBlockState(
-    view.$modelId,
-    noteBlock.$modelId,
-  );
+//   const [editState, setEditState] = useCurrentFocusedBlockState(
+//     view.$modelId,
+//     noteBlock.$modelId,
+//   );
 
-  const { isEditing } = editState;
+//   const { isEditing } = editState;
 
-  const handleBlur = useCallback((e) => {
-    setWasBlurred(true);
-  }, []);
+//   const handleBlur = useCallback((e) => {
+//     setWasBlurred(true);
+//   }, []);
 
-  // When `Done` button clicked on iOS keybaord
-  useEffect(() => {
-    if (wasBlurred && isEditing) {
-      // setEditState({
-      //   viewId: view.$modelId,
-      //   blockId: noteBlock.$modelId,
-      //   isEditing: false,
-      // });
-    }
-    setWasBlurred(false);
-  }, [wasBlurred, isEditing, setEditState, view.$modelId, noteBlock.$modelId]);
+//   // When `Done` button clicked on iOS keybaord
+//   useEffect(() => {
+//     if (wasBlurred && isEditing) {
+//       // setEditState({
+//       //   viewId: view.$modelId,
+//       //   blockId: noteBlock.$modelId,
+//       //   isEditing: false,
+//       // });
+//     }
+//     setWasBlurred(false);
+//   }, [wasBlurred, isEditing, setEditState, view.$modelId, noteBlock.$modelId]);
 
-  return handleBlur;
-};
+//   return handleBlur;
+// };
 
 export const useFocusHandler = (
   view: BlocksViewModel,
@@ -115,28 +115,6 @@ export const useFocusHandler = (
     releaseFakeInput,
     inputRef,
   ]);
-
-  // useClickAway(inputRef, (e) => {
-  //   if (
-  //     isEditing &&
-  //     !(
-  //       e.target instanceof Element &&
-  //       (e.target.closest('.toolbar') ||
-  //         e.target.closest('.note-autocomplete')) &&
-  //       !e.target.closest('[data-defocus]')
-  //     ) &&
-  //     !(
-  //       e.target instanceof Element &&
-  //       e.target.closest('[data-type="note-block"]')
-  //     )
-  //   ) {
-  //     setEditState({
-  //       viewId: view.$modelId,
-  //       blockId: noteBlock.$modelId,
-  //       isEditing: false,
-  //     });
-  //   }
-  // });
 
   const handleContentClick = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
@@ -190,7 +168,7 @@ export const useFocusHandler = (
     }
   };
 
-  const handleInputBlur = useHandleDoneIosButton(view, noteBlock);
+  const handleInputBlur = useCallback(() => {}, []);
 
   return {
     handleInputBlur,
