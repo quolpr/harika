@@ -122,6 +122,25 @@ export class NoteModel extends Model({
   }
 
   @modelAction
+  buildBlock(
+    attrs: Optional<
+      ModelCreationData<NoteBlockModel>,
+      'createdAt' | 'noteRef' | 'noteBlockRefs' | 'linkedNoteRefs'
+    >,
+    parent: NoteBlockModel,
+  ) {
+    return new NoteBlockModel({
+      $modelId: attrs.$modelId ? attrs.$modelId : generateId(),
+      createdAt: new Date().getTime(),
+      noteRef: noteRef(this),
+      noteBlockRefs: [],
+      parentBlockRef: noteBlockRef(parent),
+      linkedNoteRefs: [],
+      ...omit(attrs, '$modelId'),
+    });
+  }
+
+  @modelAction
   updateTitle(newTitle: string) {
     this.linkedBlocks.forEach((block) => {
       block.content.updateTitle(this.title, newTitle);

@@ -98,6 +98,7 @@ export class BlocksViewModel extends Model({
 
     flattenTree.slice(sliceFrom, sliceTo + 1).forEach((block) => {
       ids.add(block.$modelId);
+
       if (block.hasChildren) {
         block.flattenTree.forEach((child) => {
           ids.add(child.$modelId);

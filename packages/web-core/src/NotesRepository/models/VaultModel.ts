@@ -78,6 +78,14 @@ export class VaultModel extends Model({
   }
 
   @modelAction
+  addBlocks(blocks: NoteBlockModel[]) {
+    this.blocksMap = {
+      ...this.blocksMap,
+      ...Object.fromEntries(blocks.map((block) => [block.$modelId, block])),
+    };
+  }
+
+  @modelAction
   @transaction
   createOrUpdateEntitiesFromAttrs(
     noteAttrs: (ModelCreationData<NoteModel> & {

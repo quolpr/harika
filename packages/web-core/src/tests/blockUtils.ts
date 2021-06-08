@@ -1,10 +1,12 @@
+import { generateId } from '@harika/common';
 import { NoteBlockModel, VaultModel } from '../NotesRepository';
+import { noteBlockRef } from '../NotesRepository/models/NoteBlockModel';
 import { BlockContentModel } from '../NotesRepository/models/NoteBlockModel/BlockContentModel';
 import {
   parseStringToTree,
   TreeToken,
 } from '../NotesRepository/models/NoteBlockModel/parseStringToTree';
-import type { NoteModel } from '../NotesRepository/models/NoteModel';
+import { NoteModel, noteRef } from '../NotesRepository/models/NoteModel';
 
 export const normalizeBlockTree = (str: string) => {
   const parsed = parseStringToTree(str);
@@ -27,68 +29,56 @@ export const addTokensToNoteBlock = (
 ): NoteBlockModel[] => {
   const addedModels: NoteBlockModel[] = [];
 
-  let { previousBlock, currentPath, insertTo, baseIndent } = (() => {
-    if (noteBlock.isRoot) {
-      const token = tokens.shift()!;
+  const virtualRootBlock = new NoteBlockModel({
+    createdAt: new Date().getTime(),
+    noteRef: noteRef(note),
+    noteBlockRefs: [],
+    parentBlockRef: undefined,
+    linkedNoteRefs: [],
+    content: new BlockContentModel({ value: '' }),
+  });
 
-      const previousBlock = note.createBlock(
-        {
-          $modelId: token.id,
-          content: new BlockContentModel({ value: token.content }),
-        },
-        noteBlock,
-        0,
-      );
+  tokens = tokens.map((token) => ({ ...token, indent: token.indent + 1 }));
 
-      addedModels.push(previousBlock);
-
-      return {
-        previousBlock,
-        currentPath: [noteBlock],
-        insertTo: 0,
-        baseIndent: 1,
-      };
-    } else {
-      return {
-        previousBlock: noteBlock,
-        currentPath: [noteBlock.parentBlockRef!.current],
-        insertTo: noteBlock.orderPosition,
-        baseIndent: noteBlock.indent,
-      };
-    }
-  })();
+  let previousBlock: { model: NoteBlockModel; indent: number } | undefined =
+    undefined;
+  let currentPath: { model: NoteBlockModel; indent: number }[] = [
+    { model: virtualRootBlock, indent: 0 },
+  ];
 
   tokens.forEach((token) => {
     if (previousBlock) {
-      if (token.indent > previousBlock.indent - baseIndent) {
+      if (token.indent > previousBlock.indent) {
         currentPath.push(previousBlock);
-        insertTo = 0;
-      } else if (token.indent < previousBlock.indent - baseIndent) {
-        const newPath = currentPath.filter(
-          (block) => block.indent - baseIndent < token.indent,
+      } else if (token.indent < previousBlock.indent) {
+        currentPath = currentPath.filter(
+          (block) => block.indent < token.indent,
         );
-
-        insertTo = currentPath[newPath.length].orderPosition + 1;
-
-        currentPath = newPath;
-      } else {
-        insertTo++;
       }
     }
 
     const parentBlock = currentPath[currentPath.length - 1];
 
-    previousBlock = note.createBlock(
-      {
-        $modelId: token.id,
-        content: new BlockContentModel({ value: token.content }),
-      },
-      parentBlock,
-      insertTo,
-    );
+    const newBlock = new NoteBlockModel({
+      $modelId: token.id ? token.id : generateId(),
+      createdAt: new Date().getTime(),
+      noteRef: noteRef(note),
+      noteBlockRefs: [],
+      parentBlockRef: noteBlockRef(parentBlock.model),
+      linkedNoteRefs: [],
+      content: new BlockContentModel({ value: token.content }),
+    });
 
-    addedModels.push(previousBlock);
+    parentBlock.model.appendChildBlock(newBlock);
+
+    previousBlock = { model: newBlock, indent: currentPath.length };
+
+    addedModels.push(previousBlock.model);
   });
+
+  note.vault.addBlocks(addedModels);
+
+  noteBlock.merge(virtualRootBlock);
 
   return addedModels;
 };

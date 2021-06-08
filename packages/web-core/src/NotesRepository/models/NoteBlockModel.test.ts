@@ -80,7 +80,7 @@ describe('NoteBlockModel', () => {
       const { vault, note } = parseToBlocksTree(`
         - block0 [#0]
         - block1
-        - block2 
+        - block2
       `);
 
       vault.blocksMap['0'].injectNewTreeTokens(toInsert());

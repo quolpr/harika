@@ -1,4 +1,6 @@
 import {
+  customRef,
+  detach,
   findParent,
   model,
   Model,
@@ -6,7 +8,6 @@ import {
   ModelCreationData,
   prop,
   Ref,
-  rootRef,
   tProp,
   types,
 } from 'mobx-keystone';
@@ -20,7 +21,30 @@ import type { BlocksViewModel } from './VaultUiState/BlocksViewModel';
 import type { TreeToken } from './NoteBlockModel/parseStringToTree';
 import { addTokensToNoteBlock } from '../../tests/blockUtils';
 
-export const noteBlockRef = rootRef<NoteBlockModel>('harika/NoteBlockRef');
+export const noteBlockRef = customRef<NoteBlockModel>('harika/NoteBlockRef', {
+  // this works, but we will use getRefId() from the Todo class instead
+  // getId(maybeTodo) {
+  //   return maybeTodo instanceof Todo ? maybeTodo.id : undefined
+  // },
+
+  resolve(ref) {
+    const vault = findParent<VaultModel>(this, isVault);
+
+    if (!vault) {
+      return undefined;
+    }
+
+    return vault.blocksMap[ref.id];
+  },
+
+  onResolvedValueChange(ref, newTodo, oldTodo) {
+    if (oldTodo && !newTodo) {
+      // if the todo value we were referencing disappeared then remove the reference
+      // from its parent
+      detach(ref);
+    }
+  },
+});
 
 @model('harika/NoteBlockModel')
 export class NoteBlockModel extends Model({
@@ -112,6 +136,7 @@ export class NoteBlockModel extends Model({
     return this.parentBlockRef.current.noteBlockRefs;
   }
 
+  @computed({ equals: comparer.shallow })
   get leftAndRightSibling(): [
     left: NoteBlockModel | undefined,
     right: NoteBlockModel | undefined,
@@ -258,7 +283,32 @@ export class NoteBlockModel extends Model({
   }
 
   @modelAction
-  appendChildBlock(data: { content: string; id?: string }) {
+  appendChildBlock(block: NoteBlockModel) {
+    this.noteBlockRefs.push(noteBlockRef(block));
+  }
+
+  @modelAction
+  merge(rootBlock: NoteBlockModel) {
+    const noteBlockRefs = rootBlock.noteBlockRefs;
+    rootBlock.noteBlockRefs = [];
+
+    if (this.isRoot) {
+      this.noteBlockRefs.splice(0, 0, ...noteBlockRefs);
+    } else {
+      this.parentBlockRef!.current.noteBlockRefs.splice(
+        this.orderPosition + 1,
+        0,
+        ...noteBlockRefs,
+      );
+    }
+
+    noteBlockRefs.forEach((ref) => {
+      ref.current.parentBlockRef = noteBlockRef(this);
+    });
+  }
+
+  @modelAction
+  createAndAppendChildBlock(data: { content: string; id?: string }) {
     const parentRef = noteBlockRef(this);
 
     return this.noteRef.current.createBlock(
