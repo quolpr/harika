@@ -145,6 +145,12 @@ const TokenRenderer = observer(
             {token.content}
           </span>
         );
+      case 'quote':
+        return (
+          <blockquote className="quote">
+            <TokensRenderer noteBlock={noteBlock} tokens={token.content} />
+          </blockquote>
+        );
       default:
         return <span></span>;
     }

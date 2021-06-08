@@ -110,3 +110,7 @@
     resize: none; /*remove the resize handle on the bottom right*/
   }
 }
+
+.quote {
+  @apply border-l-4 border-coolGray-600 text-coolGray-500 pl-4;
+}

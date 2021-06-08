@@ -51,7 +51,9 @@ const astToString = (ast: Token[]): string => {
             return `^^${astToString(t.content)}^^`;
 
           case 'head':
-            return `${'#'.repeat(t.depth)}${astToString(t.content)}`;
+            return `${'#'.repeat(t.depth)}${astToString(t.content)}${
+              t.withTrailingEOL ? `\n` : ''
+            }`;
 
           case 'inlineCode':
             return `\`${t.content}\``;
@@ -63,6 +65,11 @@ const astToString = (ast: Token[]): string => {
 
           case 'link':
             return t.content;
+
+          case 'quote':
+            return `> ${astToString(t.content)}${
+              t.withTrailingEOL ? `\n` : ''
+            }`;
 
           default:
             assertUnreachable(t);

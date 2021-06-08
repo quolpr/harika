@@ -33,8 +33,8 @@
 }
 
 Expression
-  = result:(Head? Data) { 
-    return result[0] ? [result[0], ...result[1]] : result[1]
+  = result:((OneLineTokens)? Data) { 
+    return result[0] ? [...result[0], ...result[1]] : result[1]
   }
  
 Data
@@ -45,7 +45,7 @@ Data
   }
   
 Token
-  = EolHead / Bold / Italic / Highlight / CodeBlock / InlineCode / Tag / Ref 
+  = EOLOneLineTokens / Bold / Italic / Highlight / CodeBlock / InlineCode / Tag / Ref 
  
 Ref
   = '[[' content:([^^'\]\]']+) ']]' { 
@@ -82,14 +82,31 @@ Highlight
     return {id: options.generateId(), type: 'highlight', content: joinChars(content, loc.start.offset + 2), offsetStart: loc.start.offset, offsetEnd: loc.end.offset}
   }
   
-EolHead
-  = result:(EOL Head) { return ["\n", result[1]] }
+
+OneLineTokens
+  = result:((Quote EOL?) / (Head EOL?))+ {
+    return result.map(([token, hasEnd]) => {
+      return {...token, withTrailingEOL: hasEnd !== null, offsetEnd: hasEnd !== null ? token.offsetEnd + 1 : token.offsetEnd};
+    })
+  }
+
+EOLOneLineTokens
+  = EOL result:(OneLineTokens) {
+    return ["\n", ...result] 
+  }
+
+Quote
+  = '> ' content:(!EOL (Token/.))+  {
+    const loc = location();
+ 
+    return {id: options.generateId(), type: 'quote', offsetStart: loc.start.offset, offsetEnd: loc.end.offset, content: joinChars(content.map(([, val]) => val), loc.start.offset + 2) }
+  }
 
 Head
   = depth:('###' / '##' / '#') content:(!EOL (Token/.))+ {
     const loc = location();
 
-    return {id: options.generateId(), type: 'head', depth: depth.length, offsetStart: loc.start.offset, offsetEnd: loc.end.offset, content: joinChars(content.map(([, val]) => val), loc.start.offset + depth.length)}
+    return {id: options.generateId(), type: 'head', depth: depth.length, offsetStart: loc.start.offset, offsetEnd: loc.end.offset, content: joinChars(content.map(([, val]) => val), loc.start.offset + depth.length) }
   }
 
 InlineCode
@@ -112,4 +129,3 @@ EOL "end of line"
   / "\r"
   / "\u2028" // line spearator
   / "\u2029" // paragraph separator
-

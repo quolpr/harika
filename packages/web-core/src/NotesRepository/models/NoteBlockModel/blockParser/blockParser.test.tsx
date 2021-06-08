@@ -36,6 +36,7 @@ describe('Parser', () => {
           depth: 1,
           offsetStart: 0,
           offsetEnd: 5,
+          withTrailingEOL: false,
           content: [
             {
               id: '123',
@@ -45,6 +46,37 @@ describe('Parser', () => {
               offsetEnd: 5,
             },
           ],
+        },
+      ]);
+    });
+
+    it('parses trailing EOL', () => {
+      const parsedData = parse('#test\nhey!', () => '123');
+
+      expect(parsedData).to.deep.eq([
+        {
+          id: '123',
+          type: 'head',
+          depth: 1,
+          offsetStart: 0,
+          offsetEnd: 6,
+          withTrailingEOL: true,
+          content: [
+            {
+              id: '123',
+              type: 'str',
+              content: 'test',
+              offsetStart: 1,
+              offsetEnd: 5,
+            },
+          ],
+        },
+        {
+          content: 'hey!',
+          id: '123',
+          offsetEnd: 10,
+          offsetStart: 6,
+          type: 'str',
         },
       ]);
     });
@@ -66,6 +98,7 @@ describe('Parser', () => {
           depth: 1,
           offsetStart: 4,
           offsetEnd: 9,
+          withTrailingEOL: false,
           content: [
             {
               id: '123',
@@ -204,6 +237,211 @@ describe('Parser', () => {
           content: ' heyy2',
           offsetStart: 23,
           offsetEnd: 29,
+        },
+      ]);
+    });
+  });
+
+  describe('quote parser', () => {
+    it('parses quotes', () => {
+      const parsedData = parse('> hee! [[world]]', () => '123');
+
+      expect(parsedData).to.deep.eq([
+        {
+          id: '123',
+          type: 'quote',
+          offsetStart: 0,
+          offsetEnd: 16,
+          withTrailingEOL: false,
+          content: [
+            {
+              id: '123',
+              type: 'str',
+              content: 'hee! ',
+              offsetStart: 2,
+              offsetEnd: 7,
+            },
+            {
+              id: '123',
+              type: 'ref',
+              content: 'world',
+              offsetStart: 7,
+              offsetEnd: 16,
+            },
+          ],
+        },
+      ]);
+    });
+
+    it('parses only one line quote', () => {
+      const parsedData = parse('hey!\n> hee! [[world]]\nyep!', () => '123');
+
+      expect(parsedData).to.deep.eq([
+        {
+          id: '123',
+          type: 'str',
+          content: 'hey!\n',
+          offsetStart: 0,
+          offsetEnd: 5,
+        },
+        {
+          id: '123',
+          type: 'quote',
+          offsetStart: 5,
+          offsetEnd: 22,
+          withTrailingEOL: true,
+          content: [
+            {
+              id: '123',
+              type: 'str',
+              content: 'hee! ',
+              offsetStart: 7,
+              offsetEnd: 12,
+            },
+            {
+              id: '123',
+              type: 'ref',
+              content: 'world',
+              offsetStart: 12,
+              offsetEnd: 21,
+            },
+          ],
+        },
+        {
+          id: '123',
+          type: 'str',
+          content: 'yep!',
+          offsetStart: 22,
+          offsetEnd: 26,
+        },
+      ]);
+    });
+
+    it('parses only from start line', () => {
+      const parsedData = parse(
+        'hey!\n test > hee! [[world]]\nyep!',
+        () => '123',
+      );
+
+      expect(parsedData).to.deep.eq([
+        {
+          id: '123',
+          type: 'str',
+          content: 'hey!\n test > hee! ',
+          offsetStart: 0,
+          offsetEnd: 18,
+        },
+        {
+          id: '123',
+          type: 'ref',
+          content: 'world',
+          offsetStart: 18,
+          offsetEnd: 27,
+        },
+        {
+          id: '123',
+          type: 'str',
+          content: '\nyep!',
+          offsetStart: 27,
+          offsetEnd: 32,
+        },
+      ]);
+    });
+
+    it('parses multiline quote', () => {
+      const parsedData = parse('> hee!\n> test\nyes', () => '123');
+
+      expect(parsedData).to.deep.eq([
+        {
+          id: '123',
+          type: 'quote',
+          offsetStart: 0,
+          offsetEnd: 7,
+          content: [
+            {
+              id: '123',
+              type: 'str',
+              content: 'hee!',
+              offsetStart: 2,
+              offsetEnd: 6,
+            },
+          ],
+          withTrailingEOL: true,
+        },
+        {
+          id: '123',
+          type: 'quote',
+          offsetStart: 7,
+          offsetEnd: 14,
+          content: [
+            {
+              id: '123',
+              type: 'str',
+              content: 'test',
+              offsetStart: 9,
+              offsetEnd: 13,
+            },
+          ],
+          withTrailingEOL: true,
+        },
+        {
+          id: '123',
+          type: 'str',
+          content: 'yes',
+          offsetStart: 14,
+          offsetEnd: 17,
+        },
+      ]);
+    });
+    it('parses multiline quote not form start line', () => {
+      const parsedData = parse('data \n> hee!\n> test\nyes', () => '123');
+
+      expect(parsedData).to.deep.eq([
+        {
+          id: '123',
+          type: 'str',
+          content: 'data \n',
+          offsetStart: 0,
+          offsetEnd: 6,
+        },
+        {
+          id: '123',
+          type: 'quote',
+          offsetStart: 6,
+          offsetEnd: 13,
+          content: [
+            {
+              id: '123',
+              type: 'str',
+              content: 'hee!',
+              offsetStart: 8,
+              offsetEnd: 12,
+            },
+          ],
+          withTrailingEOL: true,
+        },
+        {
+          id: '123',
+          type: 'quote',
+          offsetStart: 13,
+          offsetEnd: 20,
+          content: [
+            {
+              id: '123',
+              type: 'str',
+              content: 'test',
+              offsetStart: 15,
+              offsetEnd: 19,
+            },
+          ],
+          withTrailingEOL: true,
+        },
+        {
+          id: '123',
+          type: 'str',
+          content: 'yes',
+          offsetStart: 20,
+          offsetEnd: 23,
         },
       ]);
     });

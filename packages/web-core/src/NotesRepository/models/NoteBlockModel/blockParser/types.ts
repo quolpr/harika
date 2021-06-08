@@ -23,6 +23,13 @@ interface BoldToken extends BaseToken {
   content: Token[];
 }
 
+interface QuoteToken extends BaseToken {
+  id: string;
+  type: 'quote';
+  content: Token[];
+  withTrailingEOL: boolean;
+}
+
 interface ItalicToken extends BaseToken {
   id: string;
   type: 'italic';
@@ -40,6 +47,7 @@ interface HeadToken extends BaseToken {
   type: 'head';
   depth: number;
   content: Token[];
+  withTrailingEOL: boolean;
 }
 
 interface InlineCodeToken extends BaseToken {
@@ -78,4 +86,5 @@ export type Token =
   | InlineCodeToken
   | CodeBlockToken
   | StringToken
-  | LinkToken;
+  | LinkToken
+  | QuoteToken;
