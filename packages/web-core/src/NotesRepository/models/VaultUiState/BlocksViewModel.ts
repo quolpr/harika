@@ -1,4 +1,3 @@
-import { uniq } from 'lodash-es';
 import { comparer, computed } from 'mobx';
 import {
   findParent,
@@ -9,7 +8,6 @@ import {
   Ref,
 } from 'mobx-keystone';
 import { normalizeBlockTree } from '../../../tests/blockUtils';
-import type { NoteBlockModel } from '../NoteBlockModel';
 import type { NoteModel } from '../NoteModel';
 import { isVault } from '../utils';
 import type { VaultModel } from '../VaultModel';

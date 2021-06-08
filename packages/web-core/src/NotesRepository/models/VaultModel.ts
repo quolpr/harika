@@ -4,7 +4,6 @@ import {
   modelAction,
   ModelCreationData,
   prop,
-  Ref,
   transaction,
 } from 'mobx-keystone';
 import { NoteModel, noteRef } from './NoteModel';
@@ -14,7 +13,6 @@ import { vaultModelType } from './consts';
 import { generateId } from '@harika/common';
 import { BlockContentModel } from './NoteBlockModel/BlockContentModel';
 import { VaultUiState } from './VaultUiState';
-import { merge } from 'lodash-es';
 
 @model(vaultModelType)
 export class VaultModel extends Model({

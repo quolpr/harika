@@ -1,8 +1,4 @@
-import {
-  VaultsRepository,
-  VaultUiState,
-  NotesRepository,
-} from '@harika/web-core';
+import type { VaultsRepository, NotesRepository } from '@harika/web-core';
 import React, {
   useCallback,
   useContext,
@@ -151,8 +147,6 @@ export const VaultLayout: React.FC<{
       closeDevtool();
     };
   }, [vaultRepository, vaultId, history]);
-
-  const [vaultUiState] = useState(new VaultUiState({}));
 
   // TODO: reset focused block on page change
 

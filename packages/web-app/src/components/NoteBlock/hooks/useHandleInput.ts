@@ -3,15 +3,7 @@ import {
   NoteBlockModel,
   parseStringToTree,
 } from '@harika/web-core';
-import {
-  RefObject,
-  useCallback,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
-import { useKeyPress } from 'react-use';
+import { RefObject, useCallback, useContext, useState } from 'react';
 import { useNoteRepository } from '../../../contexts/CurrentNoteRepositoryContext';
 import { ShiftPressedContext } from '../../../contexts/ShiftPressedContext';
 import { useCurrentFocusedBlockState } from '../../../hooks/useFocusedBlockState';

@@ -1,10 +1,4 @@
-import React, {
-  MutableRefObject,
-  RefObject,
-  Suspense,
-  useEffect,
-  useRef,
-} from 'react';
+import React, { MutableRefObject, Suspense, useEffect, useRef } from 'react';
 import './App.css';
 import './variables.css';
 import Modal from 'react-modal';
