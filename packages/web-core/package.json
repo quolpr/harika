@@ -13,8 +13,9 @@
   },
   "dependencies": {
     "@harika/common": "*",
+    "broadcast-channel": "^3.6.0",
     "dayjs": "^1.10.4",
-    "dexie": "^3.0.3",
+    "dexie": "3.1.0-beta.13",
     "dexie-export-import": "^1.0.0",
     "dexie-observable": "^3.0.0-beta.10",
     "dexie-syncable": "^3.0.0-beta.10",
@@ -28,6 +29,9 @@
     "rxjs": "^7.0.1",
     "socket.io-client": "2",
     "utility-types": "^3.10.0"
+  },
+  "resolutions": {
+    "dexie": "3.1.0-beta.13"
   },
   "devDependencies": {
     "@esm-bundle/chai": "^4.3.4",

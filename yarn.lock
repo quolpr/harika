@@ -4476,6 +4476,19 @@ broadcast-channel@^3.4.1:
     rimraf "3.0.2"
     unload "2.2.0"
 
+broadcast-channel@^3.6.0:
+  version "3.6.0"
+  resolved "https://registry.yarnpkg.com/broadcast-channel/-/broadcast-channel-3.6.0.tgz#7843ffd86529be300dd1d03668a35301626ed03f"
+  integrity sha512-0x87tKJULniTOfECZP/LCsqWyMEbz0Oa+4yJ4i5dosOMxWUjx6mZ6nt9QmD2ox0r3MaCPojHrTQ2dj4ASZupeA==
+  dependencies:
+    "@babel/runtime" "^7.7.2"
+    detect-node "^2.1.0"
+    js-sha3 "0.8.0"
+    microseconds "0.2.0"
+    nano-time "1.0.0"
+    rimraf "3.0.2"
+    unload "2.2.0"
+
 brorand@^1.0.1, brorand@^1.1.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/brorand/-/brorand-1.1.0.tgz#12c25efe40a45e3c323eb8675a0a0ce57b22371f"
@@ -6084,7 +6097,7 @@ detect-newline@^3.0.0:
   resolved "https://registry.yarnpkg.com/detect-newline/-/detect-newline-3.1.0.tgz#576f5dfc63ae1a192ff192d8ad3af6308991b651"
   integrity sha512-TLz+x/vEXm/Y7P7wn1EJFNLxYpUD4TgMosxY6fAVJUnJMbupHBOncxyWUG9OpTaH9EBD7uFI5LfEgmMOc54DsA==
 
-detect-node@^2.0.4:
+detect-node@^2.0.4, detect-node@^2.1.0:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/detect-node/-/detect-node-2.1.0.tgz#c9c70775a49c3d03bc2c06d9a73be550f978f8b1"
   integrity sha512-T0NIuQpnTvFDATNuHN5roPwSBG83rFsuO+MXXH9/3N1eFbn4wcPjttvjMLEPWJ0RGUYgQE7cGgS3tNxbqCGM7g==
@@ -6111,16 +6124,21 @@ dexie-export-import@^1.0.0:
     dexie "^3.0.0-alpha.5 || ^2.0.4"
 
 dexie-observable@^3.0.0-beta.10:
-  version "3.0.0-beta.10"
-  resolved "https://registry.yarnpkg.com/dexie-observable/-/dexie-observable-3.0.0-beta.10.tgz#ad7a7e136defbb62f9eab9198a5cb9e10bce1c87"
-  integrity sha512-GMPwQMLh1nYqM1MYsOZudsIwSMqDMrAOBxNuw+Y2ijsrQTBPi3nRF2CinY02IdlmffkaU7DsDfnlgdaMEaiHTQ==
+  version "3.0.0-beta.11"
+  resolved "https://registry.yarnpkg.com/dexie-observable/-/dexie-observable-3.0.0-beta.11.tgz#2ab39e81f0fd2a8a040e014279d07b4c13c9100f"
+  integrity sha512-mKwSYy54Kj73Njp3Rs+GoldLxyDJK1LF7niBkZxSenGAlBCXB5RxafH2Mg6Ay0B1pLlDYvJCWH31s88/Uz0WSg==
 
 dexie-syncable@^3.0.0-beta.10:
   version "3.0.0-beta.10"
   resolved "https://registry.yarnpkg.com/dexie-syncable/-/dexie-syncable-3.0.0-beta.10.tgz#ecd1405ffd1dbe1cfc750c0c1ad1d719dda54bfe"
   integrity sha512-Gx7GF4uNFLVYye/qLqzMcH1rzdy2D55YqzH6rGDwthIPNLJW9DYYbLWGUJZ6Oa58zahDrbCnaM0nZdf4M8Ph/g==
 
-"dexie@^3.0.0-alpha.5 || ^2.0.4", dexie@^3.0.3:
+dexie@3.1.0-beta.13:
+  version "3.1.0-beta.13"
+  resolved "https://registry.yarnpkg.com/dexie/-/dexie-3.1.0-beta.13.tgz#54b3438e2aca3b60f87a823a535ce1b4313056ec"
+  integrity sha512-pUcX9YyX1VDjF1oMqiOys6N2zoXIA/CeTghB3P4Ee77U8n9q0qa2pmNYoHyyYPKLU58+gzsMJuOc6HLPJDQrQQ==
+
+"dexie@^3.0.0-alpha.5 || ^2.0.4":
   version "3.0.3"
   resolved "https://registry.yarnpkg.com/dexie/-/dexie-3.0.3.tgz#ede63849dfe5f07e13e99bb72a040e8ac1d29dab"
   integrity sha512-BSFhGpngnCl1DOr+8YNwBDobRMH0ziJs2vts69VilwetHYOtEDcLqo7d/XiIphM0tJZ2rPPyAGd31lgH2Ln3nw==

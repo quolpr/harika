@@ -29,6 +29,7 @@ import {
   InitializeClient,
   SubscribeClientToChanges,
   MasterClientWasSet,
+  RevisionWasChanged,
 } from '@harika/common';
 import { v4 } from 'uuid';
 
@@ -104,6 +105,13 @@ export abstract class SyncGateway
       status: 'ok',
       handledId: command.id,
     } as CommandFromClientHandled);
+
+    // client.emit(EventTypesFromServer.RevisionWasChanged, {
+    //   newRevision: await this.syncEntities.getLastRev(
+    //     command.scopeId,
+    //     command.identity,
+    //   ),
+    // } as RevisionWasChanged);
   }
 
   @UseFilters(new AllExceptionsFilter())

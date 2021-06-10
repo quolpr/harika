@@ -75,6 +75,7 @@ export type MessagesFromClient = CommandsFromClient;
 export enum EventTypesFromServer {
   CommandHandled = 'commandHandled',
   MasterWasSet = 'masterWasSet',
+  RevisionWasChanged = 'revisionWasChanged',
 }
 
 export interface CommandFromClientHandled extends BaseMessage {
@@ -93,7 +94,17 @@ export interface MasterClientWasSet extends BaseMessage {
   identity: string;
 }
 
-export type EventsFromServer = CommandFromClientHandled | MasterClientWasSet;
+export interface RevisionWasChanged extends BaseMessage {
+  messageType: MessageType.Event;
+  type: EventTypesFromServer.RevisionWasChanged;
+
+  newRevision: number;
+}
+
+export type EventsFromServer =
+  | CommandFromClientHandled
+  | MasterClientWasSet
+  | RevisionWasChanged;
 
 export enum CommandTypesFromServer {
   ApplyNewChanges = 'applyNewChanges',
@@ -155,9 +166,9 @@ export interface IUpdateChange<
   table: TableName;
   key: string;
   mods: { [keyPath: string]: any };
-  obj?: Obj;
+  obj?: Obj | null | undefined;
   // undefined on backend
-  oldObj?: Obj;
+  oldObj?: Obj | null | undefined;
   source: string;
 }
 
@@ -169,7 +180,7 @@ export interface IDeleteChange<
   table: TableName;
   key: string;
   // undefined on backend
-  oldObj?: Obj;
+  oldObj?: Obj | null | undefined;
   source: string;
 }
 

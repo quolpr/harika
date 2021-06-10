@@ -31,6 +31,11 @@ export class VaultDexieDatabase extends Dexie {
         '$$id, rootBlockId, title, dailyNoteDate, createdAt, updatedAt, [title+id]',
     });
 
+    this.version(3).stores({
+      _syncStatus: '',
+      _changesToSend: '++rev',
+    });
+
     this.noteBlocks = this.table('noteBlocks');
     this.notes = this.table('notes');
 

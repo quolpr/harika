@@ -15,6 +15,8 @@ export interface SyncEntitiesService {
     ownerId: string,
     clientIdentity: string,
   ): Promise<void>;
+
+  getLastRev(scopeId: string, ownerId: string): Promise<number>;
 }
 
 export interface EntitySchema {

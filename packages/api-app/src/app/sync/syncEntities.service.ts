@@ -18,6 +18,17 @@ export abstract class BaseSyncEntitiesService implements SyncEntitiesService {
     private entityChangesRepo: Repository<EntityChangeSchema>,
   ) {}
 
+  async getLastRev(scopeId: string, ownerId: string): Promise<number> {
+    return (
+      await this.entityChangesRepo
+        .createQueryBuilder('changes')
+        .select(['MAX(changes.rev)'])
+        .where('changes.scopeId = :scopeId', { scopeId })
+        .andWhere('changes.ownerId = :ownerId', { ownerId })
+        .getRawOne()
+    ).max as number;
+  }
+
   async getChangesFromRev(
     scopeId: string,
     ownerId: string,
@@ -33,15 +44,7 @@ export abstract class BaseSyncEntitiesService implements SyncEntitiesService {
       .orderBy('changes.rev', 'ASC')
       .getMany();
 
-    // Todo: merge to query above, race condition may happen
-    const lastRev = (
-      await this.entityChangesRepo
-        .createQueryBuilder('changes')
-        .select(['MAX(changes.rev)'])
-        .where('changes.scopeId = :scopeId', { scopeId })
-        .andWhere('changes.ownerId = :ownerId', { ownerId })
-        .getRawOne()
-    ).max as number;
+    const lastRev = await this.getLastRev(scopeId, ownerId);
 
     return {
       changes: changes.map((ch) => ch.toChange()),

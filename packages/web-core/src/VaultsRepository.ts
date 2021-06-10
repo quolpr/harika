@@ -7,6 +7,7 @@ import { UserDexieDatabase } from './UserDexieDb';
 import { liveSwitch } from './dexieHelpers/onDexieChange';
 import { NotesRepository } from './NotesRepository';
 import { RxSyncer } from './dexieHelpers/RxSyncer';
+import { setupServerSync } from './dexieHelpers/setupSync';
 
 export class VaultsRepository {
   private notesRepositories: Record<string, NotesRepository | undefined> = {};
@@ -98,11 +99,12 @@ export class VaultsRepository {
 
     syncMiddleware(vault, new ToDexieSyncer(db, vault).handlePatch);
     toMobxSync(db, vault);
+    setupServerSync(db, this.config.wsUrl);
 
     const repo = new NotesRepository(db, vault);
 
     if (this.sync) {
-      repo.initSync(this.config.wsUrl);
+      // repo.initSync(this.config.wsUrl);
     }
 
     return repo;
