@@ -6,14 +6,12 @@ import { toMobxSync } from './NotesRepository/dexieDb/toMobxSync';
 import { UserDexieDatabase } from './UserDexieDb';
 import { liveSwitch } from './dexieHelpers/onDexieChange';
 import { NotesRepository } from './NotesRepository';
-import { RxSyncer } from './dexieHelpers/RxSyncer';
-import { setupServerSync } from './dexieHelpers/setupSync';
+import { initSync } from './dexie-sync/init';
 
 export class VaultsRepository {
   private notesRepositories: Record<string, NotesRepository | undefined> = {};
 
   database!: UserDexieDatabase;
-  syncer?: RxSyncer;
 
   constructor(
     private dbId: string,
@@ -27,12 +25,6 @@ export class VaultsRepository {
     console.debug(`Init vaults for dbId ${this.dbId}`);
 
     if (this.sync) {
-      this.syncer = new RxSyncer(
-        this.database,
-        'user',
-        this.dbId,
-        `${this.config.wsUrl}/api/user`,
-      );
     }
   }
 
@@ -99,13 +91,12 @@ export class VaultsRepository {
 
     syncMiddleware(vault, new ToDexieSyncer(db, vault).handlePatch);
     toMobxSync(db, vault);
-    setupServerSync(db, this.config.wsUrl);
 
     const repo = new NotesRepository(db, vault);
 
-    if (this.sync) {
-      // repo.initSync(this.config.wsUrl);
-    }
+    initSync(db, db.id, `${this.config.wsUrl}/api/vault`);
+    // if (this.sync) {
+    // }
 
     return repo;
   }

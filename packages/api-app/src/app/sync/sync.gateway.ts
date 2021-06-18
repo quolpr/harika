@@ -29,7 +29,8 @@ import {
   InitializeClient,
   SubscribeClientToChanges,
   MasterClientWasSet,
-  RevisionWasChanged,
+  GetChanges,
+  NewChangesReceived,
 } from '@harika/common';
 import { v4 } from 'uuid';
 
@@ -112,6 +113,63 @@ export abstract class SyncGateway
     //     command.identity,
     //   ),
     // } as RevisionWasChanged);
+  }
+
+  @UseFilters(new AllExceptionsFilter())
+  @SubscribeMessage(CommandTypesFromClient.GetChanges)
+  async handleGetChanges(client: Socket, command: GetChanges) {
+    const state = this.getSocketState(client);
+
+    if (state.type !== 'initialized')
+      throw "Can't send changes to uninitialized client";
+
+    // Get all changes after syncedRevision that was not performed by the client we're talkin' to.
+    const { changes, lastRev } = await this.syncEntities.getChangesFromRev(
+      state.scopeId,
+      state.currentUserId,
+      command.lastReceivedRemoteRevision === null
+        ? 0
+        : command.lastReceivedRemoteRevision,
+      state.clientIdentity,
+    );
+
+    // Compact changes so that multiple changes on same object is merged into a single change.
+    const reducedSet = reduceChanges(changes);
+
+    console.log(inspect({ changes, reducedSet }, false, 10));
+
+    // Convert the reduced set into an array again.
+    const reducedArray = Object.keys(reducedSet).map(function (key) {
+      return reducedSet[key];
+    });
+    // Notice the current revision of the database. We want to send it to client so it knows what to ask for next time.
+
+    const toSend: CommandFromClientHandled = {
+      id: v4(),
+      messageType: MessageType.Event,
+      type: EventTypesFromServer.CommandHandled,
+      status: 'ok',
+      handledId: command.id,
+      data: {
+        type: 'newChanges',
+        changes: reducedArray,
+        currentRevision: lastRev,
+      },
+    };
+
+    client.emit(EventTypesFromServer.CommandHandled, toSend);
+
+    this.logger.debug(
+      `[${state.scopeId}] [${
+        state.clientIdentity
+      }] changesToClientSent - ${inspect(
+        toSend,
+        false,
+        6,
+      )}, new rev set - ${lastRev}, prev rev - ${
+        command.lastReceivedRemoteRevision
+      }`,
+    );
   }
 
   @UseFilters(new AllExceptionsFilter())
@@ -205,6 +263,24 @@ export abstract class SyncGateway
       await Promise.all(
         Array.from(this.socketIOLocals.entries()).map(
           ([subscriber, subscriberState]) => {
+            if (
+              subscriberState.type === 'initialized' &&
+              subscriberState.scopeId === state.scopeId
+            ) {
+              const newChangesReceived: NewChangesReceived = {
+                id: v4(),
+                messageType: MessageType.Event,
+                type: EventTypesFromServer.NewChangesReceived,
+              };
+
+              console.log({ newChangesReceived });
+
+              subscriber.emit(
+                EventTypesFromServer.NewChangesReceived,
+                newChangesReceived,
+              );
+            }
+
             if (
               subscriberState.type === 'initialized' &&
               subscriberState.scopeId === state.scopeId &&

@@ -10,10 +10,7 @@ import type { VaultDexieDatabase } from './NotesRepository/dexieDb/DexieDb';
 import { loadNoteDocToModelAttrs } from './NotesRepository/dexieDb/convertDocToModel';
 import { liveSwitch } from './dexieHelpers/onDexieChange';
 import { distinctUntilChanged } from 'rxjs/operators';
-import { RxSyncer } from './dexieHelpers/RxSyncer';
-import { ConflictsResolver } from './NotesRepository/dexieDb/ConflictsResolver';
 import { uniq, uniqBy } from 'lodash-es';
-import { exportDB } from 'dexie-export-import';
 import { filterAst } from './NotesRepository/models/NoteBlockModel/blockParser/astHelpers';
 import type { RefToken } from './NotesRepository/models/NoteBlockModel/blockParser/types';
 
@@ -32,13 +29,13 @@ export class NotesRepository {
   constructor(private db: VaultDexieDatabase, public vault: VaultModel) {}
 
   initSync(wsUrl: string) {
-    new RxSyncer(
-      this.db,
-      'vault',
-      this.db.id,
-      `${wsUrl}/api/vault`,
-      new ConflictsResolver(this.db),
-    );
+    // new RxSyncer(
+    //   this.db,
+    //   'vault',
+    //   this.db.id,
+    //   `${wsUrl}/api/vault`,
+    //   new ConflictsResolver(this.db),
+    // );
   }
 
   async createNote(
@@ -298,9 +295,9 @@ export class NotesRepository {
   }
 
   async export() {
-    return exportDB(this.db, {
-      filter: (t) => ['notes', 'noteBlocks'].includes(t),
-    });
+    // return exportDB(this.db, {
+    //   filter: (t) => ['notes', 'noteBlocks'].includes(t),
+    // });
   }
 
   close = () => {

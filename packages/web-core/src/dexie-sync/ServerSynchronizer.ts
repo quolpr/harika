@@ -13,10 +13,7 @@ import {
   EMPTY,
 } from 'rxjs';
 import {
-  buffer,
   catchError,
-  concatMap,
-  debounceTime,
   exhaustMap,
   filter,
   first,
@@ -31,7 +28,6 @@ import {
   timeout,
 } from 'rxjs/operators';
 import { BroadcastChannel, createLeaderElection } from 'broadcast-channel';
-import type { VaultDexieDatabase } from '../NotesRepository/dexieDb/DexieDb';
 import {
   CommandsFromClient,
   MessageType,
@@ -45,7 +41,7 @@ import {
   ICreateChange,
   IUpdateChange,
 } from '@harika/common';
-import { isEqual, maxBy, omit } from 'lodash-es';
+import { isEqual, maxBy } from 'lodash-es';
 
 // table _syncStatus
 interface ISyncStatus {
@@ -66,165 +62,11 @@ interface IServerChangesRow {
   receivedAtRevisionOfServer: number;
 }
 
-function bulkUpdate(table: Table, changes: IUpdateChange[]) {
-  let keys = changes.map((c) => c.key);
-  let map: Record<string, any> = {};
-  // Retrieve current object of each change to update and map each
-  // found object's primary key to the existing object:
-  return table
-    .where(':id')
-    .anyOf(keys)
-    .raw()
-    .each((obj, cursor) => {
-      map[cursor.primaryKey + ''] = obj;
-    })
-    .then(() => {
-      // Filter away changes whose key wasn't found in the local database
-      // (we can't update them if we do not know the existing values)
-      let updatesThatApply = changes.filter((c) =>
-        map.hasOwnProperty(c.key + ''),
-      );
-      // Apply modifications onto each existing object (in memory)
-      // and generate array of resulting objects to put using bulkPut():
-      let objsToPut = updatesThatApply.map((c) => {
-        let curr = map[c.key + ''];
-        Object.keys(c.mods).forEach((keyPath) => {
-          Dexie.setByKeyPath(curr, keyPath, c.mods[keyPath]);
-        });
-        return curr;
-      });
-
-      return table.bulkPut(objsToPut);
-    });
-}
-
-const trackAndLogChanges = (db: Dexie) => {
-  const changesSubject = new Subject<IChangeRow>();
-
-  db.use({
-    stack: 'dbcore', // The only stack supported so far.
-    name: 'SyncMiddleware', // Optional name of your middleware
-    create(downlevelDatabase) {
-      // Return your own implementation of DBCore:
-      return {
-        // Copy default implementation.
-        ...downlevelDatabase,
-        // Override table method
-        table(tableName) {
-          // Call default table method
-          const downlevelTable = downlevelDatabase.table(tableName);
-          // Derive your own table from it:
-          return {
-            // Copy default table implementation:
-            ...downlevelTable,
-            // Override the mutate method:
-            mutate: async (req) => {
-              let oldObjects: Record<string, object> = {};
-              const source = (Dexie.currentTransaction as any).source;
-
-              if (source !== 'serverChanges') {
-                if (tableName[0] !== '_' && req.type === 'put') {
-                  (
-                    await db
-                      .table(tableName)
-                      .bulkGet(req.values.map(({ id }) => id))
-                  ).forEach((obj) => {
-                    if (obj) {
-                      oldObjects[obj.id] = obj;
-                    }
-                  });
-                }
-              }
-
-              const res = await downlevelTable.mutate(req);
-
-              if (source !== 'serverChanges') {
-                if (tableName[0] !== '_') {
-                  if (req.type === 'add') {
-                    req.values.forEach((val) => {
-                      changesSubject.next({
-                        type: DatabaseChangeType.Create,
-                        table: tableName,
-                        key: val.id,
-                        obj: val,
-                      });
-                    });
-                  }
-
-                  if (req.type === 'delete') {
-                    req.keys.forEach((id) => {
-                      changesSubject.next({
-                        table: tableName,
-                        type: DatabaseChangeType.Delete,
-                        key: id,
-                      });
-                    });
-                  }
-
-                  if (req.type === 'put') {
-                    req.values.forEach((obj) => {
-                      if (oldObjects[obj.id]) {
-                        changesSubject.next({
-                          table: tableName,
-                          type: DatabaseChangeType.Update,
-                          obj,
-                          oldObj: oldObjects[obj.id] as Record<string, unknown>,
-                          mods: {},
-                          key: obj.id,
-                        });
-                      } else {
-                        changesSubject.next({
-                          table: tableName,
-                          type: DatabaseChangeType.Create,
-                          obj: obj,
-                          key: obj.id,
-                        });
-                      }
-                    });
-                  }
-                }
-              }
-
-              return res;
-            },
-          };
-        },
-      };
-    },
-  });
-
-  changesSubject
-    .pipe(
-      buffer(changesSubject.pipe(debounceTime(100))),
-      concatMap(async (rawChanges) => {
-        let changes = rawChanges.map((change): DistributiveOmit<
-          IDatabaseChange,
-          'source'
-        > => {
-          if (change.type === DatabaseChangeType.Update) {
-            return omit(
-              {
-                ...change,
-                mods: (Dexie as any).getObjectDiff(change.oldObj, change.obj),
-              },
-              ['oldObj', 'obj'],
-            );
-          }
-
-          return change;
-        });
-
-        await db.table('_changesToSend').bulkAdd(changes);
-      }),
-    )
-    .subscribe();
-};
-
 type DistributiveOmit<T, K extends keyof any> = T extends any
   ? Omit<T, K>
   : never;
 
-class ServerSync {
+export class ServerSynchronizer {
   private clientCommandsSubject: Subject<CommandsFromClient> = new Subject();
   private successCommandHandled$: Subject<CommandFromClientHandled> =
     new Subject();
@@ -362,11 +204,11 @@ class ServerSync {
     // TODO: what to do with leader duplication?
     const elector = createLeaderElection(channel);
 
-    elector
-      .awaitLeadership()
-      .then(() =>
-        this.socketSubject.next(io(this.url, { transports: ['websocket'] })),
-      );
+    elector.awaitLeadership().then(() => {
+      const socket = io(this.url, { transports: ['websocket'] });
+
+      this.socketSubject.next(socket);
+    });
   }
 
   private changesSenderPipe() {
@@ -415,75 +257,7 @@ class ServerSync {
       >,
     ]).pipe(
       filter(([count, changeRows]) => count === 0 && changeRows.length !== 0),
-      exhaustMap(([, changeRows]) => {
-        let collectedChanges: Record<
-          string,
-          {
-            [DatabaseChangeType.Create]: ICreateChange[];
-            [DatabaseChangeType.Delete]: IDeleteChange[];
-            [DatabaseChangeType.Update]: IUpdateChange[];
-          }
-        > = {};
-
-        changeRows.forEach((row) => {
-          if (!collectedChanges.hasOwnProperty(row.change.table)) {
-            collectedChanges[row.change.table] = {
-              [DatabaseChangeType.Create]: [],
-              [DatabaseChangeType.Delete]: [],
-              [DatabaseChangeType.Update]: [],
-            };
-          }
-          collectedChanges[row.change.table][row.change.type].push(
-            row.change as any,
-          );
-        });
-
-        let table_names = Object.keys(collectedChanges);
-        let tables = table_names.map((table) => this.db.table(table));
-
-        const maxRevision = maxBy(
-          changeRows,
-          ({ receivedAtRevisionOfServer }) => receivedAtRevisionOfServer,
-        )?.receivedAtRevisionOfServer;
-
-        if (maxRevision === undefined)
-          throw new Error('Max revision could not be undefined');
-
-        return this.db.transaction(
-          'rw',
-          [...tables, this.db.table('_syncStatus')],
-          () => {
-            table_names.forEach((table_name) => {
-              // @ts-ignore
-              Dexie.currentTransaction.source = 'serverChanges';
-
-              const table = this.db.table(table_name);
-              const specifyKeys = !table.schema.primKey.keyPath;
-              const createChangesToApply =
-                collectedChanges[table_name][DatabaseChangeType.Create];
-              const deleteChangesToApply =
-                collectedChanges[table_name][DatabaseChangeType.Delete];
-              const updateChangesToApply =
-                collectedChanges[table_name][DatabaseChangeType.Update];
-              if (createChangesToApply.length > 0)
-                table.bulkPut(
-                  createChangesToApply.map((c) => c.obj),
-                  specifyKeys
-                    ? createChangesToApply.map((c) => c.key)
-                    : undefined,
-                );
-              if (updateChangesToApply.length > 0)
-                bulkUpdate(table, updateChangesToApply);
-              if (deleteChangesToApply.length > 0)
-                table.bulkDelete(deleteChangesToApply.map((c) => c.key));
-            });
-
-            this.db.table<ISyncStatus>('_syncStatus').update(1, {
-              lastAppliedRemoteRevision: maxRevision,
-            });
-          },
-        );
-      }),
+      exhaustMap(([, changeRows]) => applyChanges(this.db, changeRows)),
     );
   }
 
@@ -533,8 +307,17 @@ class ServerSync {
 
         this.db.transaction('rw', ['_syncStatus', '_changesFromServer'], () => {
           console.log({ currentRevision: data.currentRevision });
+
+          // If changes === 0 means such changes are already applied by client
+          // And we are in sync with server
+          const lastAppliedRemoteRevision =
+            data.changes.length === 0
+              ? data.currentRevision
+              : this.syncStatusSubject.value.lastAppliedRemoteRevision;
+
           this.db.table<ISyncStatus>('_syncStatus').update(1, {
             lastReceivedRemoteRevision: data.currentRevision,
+            lastAppliedRemoteRevision,
           });
 
           if (data.changes.length !== 0) {
@@ -681,10 +464,106 @@ class ServerSync {
   }
 }
 
-export const setupServerSync = (db: VaultDexieDatabase, url: string) => {
-  trackAndLogChanges(db);
+async function bulkUpdate(table: Table, changes: IUpdateChange[]) {
+  let keys = changes.map((c) => c.key);
+  let map: Record<string, any> = {};
+  // Retrieve current object of each change to update and map each
+  // found object's primary key to the existing object:
+  await table
+    .where(':id')
+    .anyOf(keys)
+    .raw()
+    .each((obj, cursor) => {
+      map[cursor.primaryKey + ''] = obj;
+    });
+  // Filter away changes whose key wasn't found in the local database
+  // (we can't update them if we do not know the existing values)
+  let updatesThatApply = changes.filter((c_1) =>
+    map.hasOwnProperty(c_1.key + ''),
+  );
+  // Apply modifications onto each existing object (in memory)
+  // and generate array of resulting objects to put using bulkPut():
+  let objsToPut = updatesThatApply.map((c_2) => {
+    let curr = map[c_2.key + ''];
+    Object.keys(c_2.mods).forEach((keyPath) => {
+      Dexie.setByKeyPath(curr, keyPath, c_2.mods[keyPath]);
+    });
+    return curr;
+  });
+  return await table.bulkPut(objsToPut);
+}
 
-  const syncer = new ServerSync(db, 'vault', db.id, `${url}/api/vault`);
+function applyChanges(db: Dexie, changeRows: IServerChangesRow[]) {
+  let collectedChanges: Record<
+    string,
+    {
+      [DatabaseChangeType.Create]: ICreateChange[];
+      [DatabaseChangeType.Delete]: IDeleteChange[];
+      [DatabaseChangeType.Update]: IUpdateChange[];
+    }
+  > = {};
 
-  syncer.initialize();
-};
+  changeRows.forEach((row) => {
+    if (!collectedChanges.hasOwnProperty(row.change.table)) {
+      collectedChanges[row.change.table] = {
+        [DatabaseChangeType.Create]: [],
+        [DatabaseChangeType.Delete]: [],
+        [DatabaseChangeType.Update]: [],
+      };
+    }
+    collectedChanges[row.change.table][row.change.type].push(row.change as any);
+  });
+
+  let tableNames = Object.keys(collectedChanges);
+  let tables = tableNames.map((table) => db.table(table));
+
+  const maxRevision = maxBy(
+    changeRows,
+    ({ receivedAtRevisionOfServer }) => receivedAtRevisionOfServer,
+  )?.receivedAtRevisionOfServer;
+
+  console.log({ maxRevision });
+
+  if (maxRevision === undefined)
+    throw new Error('Max revision could not be undefined');
+
+  return db.transaction(
+    'rw',
+    [...tables, db.table('_syncStatus'), db.table('_changesFromServer')],
+    async () => {
+      await Promise.all(
+        tableNames.map(async (table_name) => {
+          // @ts-ignore
+          Dexie.currentTransaction.source = 'serverChanges';
+
+          const table = db.table(table_name);
+          const specifyKeys = !table.schema.primKey.keyPath;
+          const createChangesToApply =
+            collectedChanges[table_name][DatabaseChangeType.Create];
+          const deleteChangesToApply =
+            collectedChanges[table_name][DatabaseChangeType.Delete];
+          const updateChangesToApply =
+            collectedChanges[table_name][DatabaseChangeType.Update];
+
+          if (createChangesToApply.length > 0)
+            await table.bulkPut(
+              createChangesToApply.map((c) => c.obj),
+              specifyKeys ? createChangesToApply.map((c) => c.key) : undefined,
+            );
+          if (updateChangesToApply.length > 0)
+            await bulkUpdate(table, updateChangesToApply);
+          if (deleteChangesToApply.length > 0)
+            await table.bulkDelete(deleteChangesToApply.map((c) => c.key));
+        }),
+      );
+
+      await db
+        .table('_changesFromServer')
+        .bulkDelete(changeRows.map(({ id }) => id));
+
+      await db.table<ISyncStatus>('_syncStatus').update(1, {
+        lastAppliedRemoteRevision: maxRevision,
+      });
+    },
+  );
+}

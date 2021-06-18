@@ -1,7 +1,5 @@
 import type { Dayjs } from 'dayjs';
 import Dexie from 'dexie';
-import 'dexie-observable';
-import 'dexie-syncable';
 import { generateId } from '@harika/common';
 import type { Observable } from 'rxjs';
 import { onDexieChange } from '../../dexieHelpers/onDexieChange';
@@ -32,8 +30,9 @@ export class VaultDexieDatabase extends Dexie {
     });
 
     this.version(3).stores({
-      _syncStatus: '',
+      _syncStatus: 'id',
       _changesToSend: '++rev',
+      _changesFromServer: '$$id',
     });
 
     this.noteBlocks = this.table('noteBlocks');

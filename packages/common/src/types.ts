@@ -18,6 +18,7 @@ export enum CommandTypesFromClient {
   // If lock happened - nobody will be able to send changes except the one who made the lock
   StartLock = 'startLock',
   FinishLock = 'finishLock',
+  GetChanges = 'getChanges',
 }
 
 export interface BaseMessage {
@@ -61,12 +62,19 @@ export interface FinishClientLock extends BaseMessage {
   type: CommandTypesFromClient.FinishLock;
 }
 
+export interface GetChanges extends BaseMessage {
+  messageType: MessageType.Command;
+  type: CommandTypesFromClient.GetChanges;
+  lastReceivedRemoteRevision: null | number;
+}
+
 export type CommandsFromClient =
   | ApplyNewChangesFromClient
   | SubscribeClientToChanges
   | InitializeClient
   | StartClientLock
-  | FinishClientLock;
+  | FinishClientLock
+  | GetChanges;
 
 export type MessagesFromClient = CommandsFromClient;
 
@@ -76,6 +84,7 @@ export enum EventTypesFromServer {
   CommandHandled = 'commandHandled',
   MasterWasSet = 'masterWasSet',
   RevisionWasChanged = 'revisionWasChanged',
+  NewChangesReceived = 'newChangesReceived',
 }
 
 export interface CommandFromClientHandled extends BaseMessage {
@@ -85,6 +94,13 @@ export interface CommandFromClientHandled extends BaseMessage {
   status: 'ok' | 'error';
 
   handledId: string;
+
+  // TODO: refactor typing system
+  data?: {
+    type: 'newChanges';
+    changes: IDatabaseChange[];
+    currentRevision: number;
+  };
 }
 
 export interface MasterClientWasSet extends BaseMessage {
@@ -99,6 +115,11 @@ export interface RevisionWasChanged extends BaseMessage {
   type: EventTypesFromServer.RevisionWasChanged;
 
   newRevision: number;
+}
+
+export interface NewChangesReceived extends BaseMessage {
+  messageType: MessageType.Event;
+  type: EventTypesFromServer.NewChangesReceived;
 }
 
 export type EventsFromServer =

@@ -6116,32 +6116,10 @@ devtools-protocol@0.0.854822:
   resolved "https://registry.yarnpkg.com/devtools-protocol/-/devtools-protocol-0.0.854822.tgz#eac3a5260a6b3b4e729a09fdc0c77b0d322e777b"
   integrity sha512-xd4D8kHQtB0KtWW0c9xBZD5LVtm9chkMOfs/3Yn01RhT/sFIsVtzTtypfKoFfWBaL+7xCYLxjOLkhwPXaX/Kcg==
 
-dexie-export-import@^1.0.0:
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/dexie-export-import/-/dexie-export-import-1.0.0.tgz#2e2cc375a416f540c89d2a39f623d297077221a4"
-  integrity sha512-mqtREaI+/tSEfpwOZeYNyX+FfCxTYt0RB4BIevX4wFGMQL1mQ0cWfIGXBpoRGEnHdiHbf3QNK2+0Ras3dNJfIQ==
-  dependencies:
-    dexie "^3.0.0-alpha.5 || ^2.0.4"
-
-dexie-observable@^3.0.0-beta.10:
-  version "3.0.0-beta.11"
-  resolved "https://registry.yarnpkg.com/dexie-observable/-/dexie-observable-3.0.0-beta.11.tgz#2ab39e81f0fd2a8a040e014279d07b4c13c9100f"
-  integrity sha512-mKwSYy54Kj73Njp3Rs+GoldLxyDJK1LF7niBkZxSenGAlBCXB5RxafH2Mg6Ay0B1pLlDYvJCWH31s88/Uz0WSg==
-
-dexie-syncable@^3.0.0-beta.10:
-  version "3.0.0-beta.10"
-  resolved "https://registry.yarnpkg.com/dexie-syncable/-/dexie-syncable-3.0.0-beta.10.tgz#ecd1405ffd1dbe1cfc750c0c1ad1d719dda54bfe"
-  integrity sha512-Gx7GF4uNFLVYye/qLqzMcH1rzdy2D55YqzH6rGDwthIPNLJW9DYYbLWGUJZ6Oa58zahDrbCnaM0nZdf4M8Ph/g==
-
 dexie@3.1.0-beta.13:
   version "3.1.0-beta.13"
   resolved "https://registry.yarnpkg.com/dexie/-/dexie-3.1.0-beta.13.tgz#54b3438e2aca3b60f87a823a535ce1b4313056ec"
   integrity sha512-pUcX9YyX1VDjF1oMqiOys6N2zoXIA/CeTghB3P4Ee77U8n9q0qa2pmNYoHyyYPKLU58+gzsMJuOc6HLPJDQrQQ==
-
-"dexie@^3.0.0-alpha.5 || ^2.0.4":
-  version "3.0.3"
-  resolved "https://registry.yarnpkg.com/dexie/-/dexie-3.0.3.tgz#ede63849dfe5f07e13e99bb72a040e8ac1d29dab"
-  integrity sha512-BSFhGpngnCl1DOr+8YNwBDobRMH0ziJs2vts69VilwetHYOtEDcLqo7d/XiIphM0tJZ2rPPyAGd31lgH2Ln3nw==
 
 dicer@0.2.5:
   version "0.2.5"
