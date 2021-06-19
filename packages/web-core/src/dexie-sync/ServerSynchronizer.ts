@@ -200,7 +200,7 @@ export class ServerSynchronizer {
   }
 
   private connectWhenElected() {
-    const channel = new BroadcastChannel('dexieSync');
+    const channel = new BroadcastChannel(`dexieSync-${this.db.name}`);
     // TODO: what to do with leader duplication?
     const elector = createLeaderElection(channel);
 
@@ -235,8 +235,8 @@ export class ServerSynchronizer {
               baseRevision: syncStatus.lastAppliedRemoteRevision,
             };
           }),
-          switchMap(async () => {
-            await this.db.transaction('rw', [changesTable], () =>
+          switchMap(() => {
+            return this.db.transaction('rw', [changesTable], () =>
               changesTable.bulkDelete(mutations.map(({ rev }) => rev)),
             );
           }),
@@ -257,7 +257,9 @@ export class ServerSynchronizer {
       >,
     ]).pipe(
       filter(([count, changeRows]) => count === 0 && changeRows.length !== 0),
-      exhaustMap(([, changeRows]) => applyChanges(this.db, changeRows)),
+      exhaustMap(async ([, changeRows]) => {
+        await applyChanges(this.db, changeRows);
+      }),
     );
   }
 

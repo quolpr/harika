@@ -1,25 +1,18 @@
 import { useMutation, UseMutationOptions } from 'react-query';
 export type Maybe<T> = T | null;
-export type Exact<T extends { [key: string]: unknown }> = {
-  [K in keyof T]: T[K];
-};
-export type MakeOptional<T, K extends keyof T> = Omit<T, K> &
-  { [SubKey in K]?: Maybe<T[SubKey]> };
-export type MakeMaybe<T, K extends keyof T> = Omit<T, K> &
-  { [SubKey in K]: Maybe<T[SubKey]> };
+export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
+export type MakeOptional<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]?: Maybe<T[SubKey]> };
+export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]: Maybe<T[SubKey]> };
 
 function fetcher<TData, TVariables>(query: string, variables?: TVariables) {
   return async (): Promise<TData> => {
-    const res = await fetch(
-      `${import.meta.env.SNOWPACK_PUBLIC_API_URL}/api/graphql` as string,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ query, variables }),
-      },
-    );
-
+    const res = await fetch(`${import.meta.env.SNOWPACK_PUBLIC_API_URL}/api/graphql` as string, {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      credentials: "include",
+      body: JSON.stringify({ query, variables }),
+    });
+    
     const json = await res.json();
 
     if (json.errors) {
@@ -29,7 +22,7 @@ function fetcher<TData, TVariables>(query: string, variables?: TVariables) {
     }
 
     return json.data;
-  };
+  }
 }
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
@@ -40,10 +33,14 @@ export type Scalars = {
   Float: number;
 };
 
-export type UserType = {
-  __typename?: 'UserType';
-  id: Scalars['ID'];
+export type CreateUserInput = {
   email: Scalars['String'];
+  password: Scalars['String'];
+};
+
+export type LoginInput = {
+  email: Scalars['String'];
+  password: Scalars['String'];
 };
 
 export type LoginResultType = {
@@ -52,10 +49,20 @@ export type LoginResultType = {
   user?: Maybe<UserType>;
 };
 
-export type VaultType = {
-  __typename?: 'VaultType';
-  id: Scalars['String'];
-  name: Scalars['String'];
+export type Mutation = {
+  __typename?: 'Mutation';
+  createUser: UserType;
+  login: LoginResultType;
+};
+
+
+export type MutationCreateUserArgs = {
+  payload: CreateUserInput;
+};
+
+
+export type MutationLoginArgs = {
+  payload: LoginInput;
 };
 
 export type Query = {
@@ -63,34 +70,10 @@ export type Query = {
   viewer: UserType;
 };
 
-export type Mutation = {
-  __typename?: 'Mutation';
-  createUser: UserType;
-  login: LoginResultType;
-  createVault: VaultType;
-};
-
-export type MutationCreateUserArgs = {
-  payload: CreateUserInput;
-};
-
-export type MutationLoginArgs = {
-  payload: LoginInput;
-};
-
-export type MutationCreateVaultArgs = {
-  name: Scalars['String'];
-  id: Scalars['String'];
-};
-
-export type CreateUserInput = {
+export type UserType = {
+  __typename?: 'UserType';
+  id: Scalars['ID'];
   email: Scalars['String'];
-  password?: Maybe<Scalars['String']>;
-};
-
-export type LoginInput = {
-  email: Scalars['String'];
-  password: Scalars['String'];
 };
 
 export type LoginMutationVariables = Exact<{
@@ -98,21 +81,33 @@ export type LoginMutationVariables = Exact<{
   password: Scalars['String'];
 }>;
 
-export type LoginMutation = { __typename?: 'Mutation' } & {
-  login: { __typename?: 'LoginResultType' } & Pick<
-    LoginResultType,
-    'authed'
-  > & { user?: Maybe<{ __typename?: 'UserType' } & Pick<UserType, 'id'>> };
-};
+
+export type LoginMutation = (
+  { __typename?: 'Mutation' }
+  & { login: (
+    { __typename?: 'LoginResultType' }
+    & Pick<LoginResultType, 'authed'>
+    & { user?: Maybe<(
+      { __typename?: 'UserType' }
+      & Pick<UserType, 'id'>
+    )> }
+  ) }
+);
 
 export type SignupMutationVariables = Exact<{
   email: Scalars['String'];
   password: Scalars['String'];
 }>;
 
-export type SignupMutation = { __typename?: 'Mutation' } & {
-  createUser: { __typename?: 'UserType' } & Pick<UserType, 'id'>;
-};
+
+export type SignupMutation = (
+  { __typename?: 'Mutation' }
+  & { createUser: (
+    { __typename?: 'UserType' }
+    & Pick<UserType, 'id'>
+  ) }
+);
+
 
 export const LoginDocument = `
     mutation login($email: String!, $password: String!) {
@@ -124,22 +119,14 @@ export const LoginDocument = `
   }
 }
     `;
-export const useLoginMutation = <TError = unknown, TContext = unknown>(
-  options?: UseMutationOptions<
-    LoginMutation,
-    TError,
-    LoginMutationVariables,
-    TContext
-  >,
-) =>
-  useMutation<LoginMutation, TError, LoginMutationVariables, TContext>(
-    (variables?: LoginMutationVariables) =>
-      fetcher<LoginMutation, LoginMutationVariables>(
-        LoginDocument,
-        variables,
-      )(),
-    options,
-  );
+export const useLoginMutation = <
+      TError = unknown,
+      TContext = unknown
+    >(options?: UseMutationOptions<LoginMutation, TError, LoginMutationVariables, TContext>) => 
+    useMutation<LoginMutation, TError, LoginMutationVariables, TContext>(
+      (variables?: LoginMutationVariables) => fetcher<LoginMutation, LoginMutationVariables>(LoginDocument, variables)(),
+      options
+    );
 export const SignupDocument = `
     mutation signup($email: String!, $password: String!) {
   createUser(payload: {email: $email, password: $password}) {
@@ -147,20 +134,11 @@ export const SignupDocument = `
   }
 }
     `;
-export const useSignupMutation = <TError = unknown, TContext = unknown>(
-  options?: UseMutationOptions<
-    SignupMutation,
-    TError,
-    SignupMutationVariables,
-    TContext
-  >,
-) =>
-  useMutation<SignupMutation, TError, SignupMutationVariables, TContext>(
-    (variables?: SignupMutationVariables) =>
-      fetcher<SignupMutation, SignupMutationVariables>(
-        SignupDocument,
-        variables,
-      )(),
-    options,
-  );
-
+export const useSignupMutation = <
+      TError = unknown,
+      TContext = unknown
+    >(options?: UseMutationOptions<SignupMutation, TError, SignupMutationVariables, TContext>) => 
+    useMutation<SignupMutation, TError, SignupMutationVariables, TContext>(
+      (variables?: SignupMutationVariables) => fetcher<SignupMutation, SignupMutationVariables>(SignupDocument, variables)(),
+      options
+    );

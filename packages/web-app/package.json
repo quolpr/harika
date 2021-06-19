@@ -8,7 +8,8 @@
     "build": "snowpack build",
     "test": "web-test-runner \"src/**/*.test.{tsx,ts}\"",
     "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx}\"",
-    "lint": "eslint \"src/**/*.{tsx,ts}\""
+    "lint": "eslint \"src/**/*.{tsx,ts}\"",
+    "generate": "graphql-codegen"
   },
   "dependencies": {
     "@bem-react/classname": "^1.5.10",
@@ -24,6 +25,7 @@
     "bufferutil": "^4.0.3",
     "clsx": "^1.1.1",
     "downloadjs": "^1.4.7",
+    "graphql": "^15.5.0",
     "immer": "^9.0.2",
     "linkifyjs": "^3.0.0-beta.3",
     "mobx-react-lite": "^3.2.0",
@@ -52,6 +54,10 @@
     "workbox-window": "^6.1.5"
   },
   "devDependencies": {
+    "@graphql-codegen/cli": "^1.21.5",
+    "@graphql-codegen/typescript": "^1.22.1",
+    "@graphql-codegen/typescript-operations": "^1.18.0",
+    "@graphql-codegen/typescript-react-query": "^1.3.1",
     "@snowpack/plugin-dotenv": "^2.1.0",
     "@snowpack/plugin-postcss": "^1.2.2",
     "@snowpack/plugin-react-refresh": "^2.5.0",

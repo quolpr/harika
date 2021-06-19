@@ -8,11 +8,13 @@ import type { ICreationResult } from './NotesRepository/types';
 import type { VaultModel } from './NotesRepository/models/VaultModel';
 import type { VaultDexieDatabase } from './NotesRepository/dexieDb/DexieDb';
 import { loadNoteDocToModelAttrs } from './NotesRepository/dexieDb/convertDocToModel';
-import { liveSwitch } from './dexieHelpers/onDexieChange';
-import { distinctUntilChanged } from 'rxjs/operators';
+import { distinctUntilChanged, map } from 'rxjs/operators';
 import { uniq, uniqBy } from 'lodash-es';
 import { filterAst } from './NotesRepository/models/NoteBlockModel/blockParser/astHelpers';
 import type { RefToken } from './NotesRepository/models/NoteBlockModel/blockParser/types';
+import { from, Observable } from 'rxjs';
+import type { NoteDocType } from '@harika/common';
+import { liveQuery } from 'dexie';
 
 export { NoteModel } from './NotesRepository/models/NoteModel';
 export { VaultModel } from './NotesRepository/models/VaultModel';
@@ -139,10 +141,12 @@ export class NotesRepository {
   }
 
   getNoteIdByTitle$(title: string) {
-    return this.db.notesChange$.pipe(
-      liveSwitch(async () => {
-        return (await this.db.notesQueries.getByTitles([title]))[0]?.id;
-      }),
+    return from(
+      liveQuery(() => this.db.notesQueries.getByTitles([title])) as Observable<
+        NoteDocType[]
+      >,
+    ).pipe(
+      map((docs) => docs[0]?.id),
       distinctUntilChanged(),
     );
   }
@@ -232,9 +236,13 @@ export class NotesRepository {
 
   // TODO: better Rx way, put title to pipe
   searchNotesTuples$(title: string) {
-    return this.db.notesChange$.pipe(
-      liveSwitch(async () =>
-        (await this.db.notesQueries.searchNotes(title)).map((row) => ({
+    return from(
+      liveQuery(() => this.db.notesQueries.searchNotes(title)) as Observable<
+        NoteDocType[]
+      >,
+    ).pipe(
+      map((rows) =>
+        rows.map((row) => ({
           id: row.id,
           title: row.title,
         })),
@@ -243,9 +251,11 @@ export class NotesRepository {
   }
 
   getAllNotesTuples$() {
-    return this.db.notesChange$.pipe(
-      liveSwitch(async () =>
-        (await this.db.notesQueries.all()).map((row) => ({
+    return from(
+      liveQuery(() => this.db.notesQueries.all()) as Observable<NoteDocType[]>,
+    ).pipe(
+      map((rows) =>
+        rows.map((row) => ({
           id: row.id,
           title: row.title,
           createdAt: new Date(row.createdAt),

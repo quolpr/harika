@@ -21,13 +21,10 @@ import {
   IDatabaseChange,
   ICreateChange,
   IUpdateChange,
-  CommandTypesFromServer,
-  ApplyNewChangesFromServer,
   MessageType,
   DatabaseChangeType,
   ApplyNewChangesFromClient,
   InitializeClient,
-  SubscribeClientToChanges,
   MasterClientWasSet,
   GetChanges,
   NewChangesReceived,
@@ -173,44 +170,6 @@ export abstract class SyncGateway
   }
 
   @UseFilters(new AllExceptionsFilter())
-  @SubscribeMessage(CommandTypesFromClient.SubscribeClientToChanges)
-  async handleSubscribeToChanges(
-    client: Socket,
-    command: SubscribeClientToChanges,
-  ) {
-    try {
-      const state = this.getSocketState(client);
-
-      if (state.type !== 'initialized')
-        throw "Can't send changes to uninitialized client";
-
-      this.logger.debug(
-        `[${state.scopeId}] [${
-          state.clientIdentity
-        }] subscribeToChanges - ${inspect(command, false, 6)}`,
-      );
-
-      this.socketIOLocals.set(client, {
-        ...state,
-        subscriptionState: {
-          subscribed: true,
-          currentRev:
-            command.syncedRevision === null ? 0 : command.syncedRevision,
-        },
-      });
-
-      await this.sendAnyChanges(client);
-
-      client.emit(EventTypesFromServer.CommandHandled, {
-        status: 'ok',
-        handledId: command.id,
-      } as CommandFromClientHandled);
-    } catch (e) {
-      throw new WsException('error happened: ' + e.message);
-    }
-  }
-
-  @UseFilters(new AllExceptionsFilter())
   @SubscribeMessage(CommandTypesFromClient.ApplyNewChanges)
   async applyNewChanges(client: Socket, command: ApplyNewChangesFromClient) {
     try {
@@ -273,20 +232,10 @@ export abstract class SyncGateway
                 type: EventTypesFromServer.NewChangesReceived,
               };
 
-              console.log({ newChangesReceived });
-
               subscriber.emit(
                 EventTypesFromServer.NewChangesReceived,
                 newChangesReceived,
               );
-            }
-
-            if (
-              subscriberState.type === 'initialized' &&
-              subscriberState.scopeId === state.scopeId &&
-              subscriberState.subscriptionState.subscribed
-            ) {
-              return this.sendAnyChanges(subscriber);
             }
           },
         ),
@@ -379,60 +328,6 @@ export abstract class SyncGateway
     if (!state) throw new Error('Client state was not set!');
 
     return state;
-  }
-
-  // TODO: redis lock here on clientIdentity
-  private async sendAnyChanges(client: Socket) {
-    const state = this.getSocketState(client);
-
-    if (state.type !== 'initialized')
-      throw "Can't send changes to uninitialized client";
-
-    if (!state.subscriptionState.subscribed) throw 'not subscribed!';
-
-    const currentClientRev = state.subscriptionState.currentRev;
-
-    // Get all changes after syncedRevision that was not performed by the client we're talkin' to.
-    const { changes, lastRev } = await this.syncEntities.getChangesFromRev(
-      state.scopeId,
-      state.currentUserId,
-      currentClientRev === null ? 0 : currentClientRev,
-      state.clientIdentity,
-    );
-
-    // Compact changes so that multiple changes on same object is merged into a single change.
-    const reducedSet = reduceChanges(changes);
-
-    console.log(inspect({ changes, reducedSet }, false, 10));
-
-    // Convert the reduced set into an array again.
-    const reducedArray = Object.keys(reducedSet).map(function (key) {
-      return reducedSet[key];
-    });
-    // Notice the current revision of the database. We want to send it to client so it knows what to ask for next time.
-
-    const toSend: ApplyNewChangesFromServer = {
-      id: v4(),
-      messageType: MessageType.Command,
-      type: CommandTypesFromServer.ApplyNewChanges,
-      changes: reducedArray,
-      currentRevision: lastRev,
-      partial: false,
-    };
-
-    client.emit(CommandTypesFromServer.ApplyNewChanges, toSend);
-
-    state.subscriptionState.currentRev = lastRev;
-
-    this.logger.debug(
-      `[${state.scopeId}] [${
-        state.clientIdentity
-      }] changesToClientSent - ${inspect(
-        toSend,
-        false,
-        6,
-      )}, new rev set - ${lastRev}, prev rev - ${currentClientRev}`,
-    );
   }
 
   protected abstract auth(

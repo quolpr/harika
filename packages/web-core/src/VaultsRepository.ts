@@ -3,10 +3,12 @@ import { syncMiddleware } from './NotesRepository/models/syncable';
 import { VaultDexieDatabase } from './NotesRepository/dexieDb/DexieDb';
 import { ToDexieSyncer } from './NotesRepository/dexieDb/ToDexieSyncer';
 import { toMobxSync } from './NotesRepository/dexieDb/toMobxSync';
-import { UserDexieDatabase } from './UserDexieDb';
-import { liveSwitch } from './dexieHelpers/onDexieChange';
+import { UserDexieDatabase, VaultDocType } from './UserDexieDb';
 import { NotesRepository } from './NotesRepository';
 import { initSync } from './dexie-sync/init';
+import { liveQuery } from 'dexie';
+import { from, Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 export class VaultsRepository {
   private notesRepositories: Record<string, NotesRepository | undefined> = {};
@@ -24,7 +26,9 @@ export class VaultsRepository {
 
     console.debug(`Init vaults for dbId ${this.dbId}`);
 
+    console.log(this.dbId);
     if (this.sync) {
+      initSync(this.database, this.dbId, `${this.config.wsUrl}/api/user`);
     }
   }
 
@@ -50,9 +54,13 @@ export class VaultsRepository {
   }
 
   getAllVaultTuples$() {
-    return this.database.vaultsChange$.pipe(
-      liveSwitch(async () =>
-        (await this.database.vaults.toArray()).map((v) => ({
+    return from(
+      liveQuery(() => this.database.vaults.toArray()) as Observable<
+        VaultDocType[]
+      >,
+    ).pipe(
+      map((vaults) =>
+        vaults.map((v) => ({
           id: v.id,
           name: v.name,
           createAd: v.createdAt,
@@ -94,9 +102,9 @@ export class VaultsRepository {
 
     const repo = new NotesRepository(db, vault);
 
-    initSync(db, db.id, `${this.config.wsUrl}/api/vault`);
-    // if (this.sync) {
-    // }
+    if (this.sync) {
+      initSync(db, db.id, `${this.config.wsUrl}/api/vault`);
+    }
 
     return repo;
   }

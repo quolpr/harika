@@ -13,7 +13,6 @@ export enum MessageType {
 export enum CommandTypesFromClient {
   ApplyNewChanges = 'applyNewChanges',
   InitializeClient = 'initializeClient',
-  SubscribeClientToChanges = 'subscribeClientToChanges',
   // Locking is needed to perform notes merginf with the same title - the conflicts resolution
   // If lock happened - nobody will be able to send changes except the one who made the lock
   StartLock = 'startLock',
@@ -33,13 +32,6 @@ export interface ApplyNewChangesFromClient extends BaseMessage {
   changes: IDatabaseChange[];
   partial: boolean;
   baseRevision: number | null;
-}
-
-export interface SubscribeClientToChanges extends BaseMessage {
-  messageType: MessageType.Command;
-
-  type: CommandTypesFromClient.SubscribeClientToChanges;
-  syncedRevision: number | null;
 }
 
 export interface InitializeClient extends BaseMessage {
@@ -70,7 +62,6 @@ export interface GetChanges extends BaseMessage {
 
 export type CommandsFromClient =
   | ApplyNewChangesFromClient
-  | SubscribeClientToChanges
   | InitializeClient
   | StartClientLock
   | FinishClientLock

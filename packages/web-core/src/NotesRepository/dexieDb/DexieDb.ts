@@ -1,8 +1,6 @@
 import type { Dayjs } from 'dayjs';
 import Dexie from 'dexie';
 import { generateId } from '@harika/common';
-import type { Observable } from 'rxjs';
-import { onDexieChange } from '../../dexieHelpers/onDexieChange';
 import type { NoteDocType, NoteBlockDocType } from '@harika/common';
 
 const windowId = generateId();
@@ -11,35 +9,29 @@ export class VaultDexieDatabase extends Dexie {
   notes: Dexie.Table<NoteDocType, string>;
   noteBlocks: Dexie.Table<NoteBlockDocType, string>;
 
-  notesChange$: Observable<void>;
-  noteBlocksChange$: Observable<void>;
-
   constructor(public id: string) {
     super(`harika_vault_${id}`);
 
     this.version(1).stores({
       noteBlocks:
-        '$$id, parentBlockId, noteId, *noteBlockIds, *linkedNoteIds, content, createdAt, updatedAt',
-      notes: '$$id, rootBlockId, title, dailyNoteDate, createdAt, updatedAt',
+        'id, parentBlockId, noteId, *noteBlockIds, *linkedNoteIds, content, createdAt, updatedAt',
+      notes: 'id, rootBlockId, title, dailyNoteDate, createdAt, updatedAt',
     });
     this.version(2).stores({
       noteBlocks:
-        '$$id, parentBlockId, noteId, *noteBlockIds, *linkedNoteIds, content, createdAt, updatedAt',
+        'id, parentBlockId, noteId, *noteBlockIds, *linkedNoteIds, content, createdAt, updatedAt',
       notes:
-        '$$id, rootBlockId, title, dailyNoteDate, createdAt, updatedAt, [title+id]',
+        'id, rootBlockId, title, dailyNoteDate, createdAt, updatedAt, [title+id]',
     });
 
     this.version(3).stores({
       _syncStatus: 'id',
       _changesToSend: '++rev',
-      _changesFromServer: '$$id',
+      _changesFromServer: 'id',
     });
 
     this.noteBlocks = this.table('noteBlocks');
     this.notes = this.table('notes');
-
-    this.notesChange$ = onDexieChange(this, 'notes');
-    this.noteBlocksChange$ = onDexieChange(this, 'noteBlocks');
   }
 
   get noteBlocksQueries() {
