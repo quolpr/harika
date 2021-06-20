@@ -316,7 +316,7 @@ export class NotesRepository {
     return this.db.transaction('rw', tables, async () => {
       return Promise.all(
         data.map(async ({ tableName, rows }) => {
-          await this.db.table(tableName).bulkPut(rows);
+          await this.db.table(tableName).bulkAdd(rows);
         }),
       );
     });

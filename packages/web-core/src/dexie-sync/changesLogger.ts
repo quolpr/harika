@@ -10,7 +10,175 @@ type DistributiveOmit<T, K extends keyof any> = T extends any
 
 export type IChangeRow = DistributiveOmit<IDatabaseChange, 'source'>;
 
-export const startChangeLog = (db: Dexie, windowId: string) => {
+// export const startChangeLog = (db: Dexie, windowId: string) => {
+//   db.use({
+//     stack: 'dbcore', // The only stack supported so far.
+//     name: 'SyncMiddleware', // Optional name of your middleware
+//     level: 1,
+//     create(downlevelDatabase) {
+//       // Return your own implementation of DBCore:
+//       return {
+//         // Copy default implementation.
+//         ...downlevelDatabase,
+//         transaction: (req) => {
+//           console.log('transaction!!!');
+
+//           console.log({ req });
+
+//           return downlevelDatabase.transaction(req);
+//         },
+//         // Override table method
+//         // transaction: (tables, mode) => {
+//         //   let tx: DBCoreTransaction & IDBTransaction & TXExpandos;
+//         //   if (mode === 'readwrite') {
+//         //     const mutationTables = tables
+//         //       .filter((tbl) => db.cloud.schema?.[tbl]?.synced)
+//         //       .map((tbl) => getMutationTable(tbl));
+//         //     tx = core.transaction(
+//         //       [...tables, ...mutationTables],
+//         //       mode,
+//         //     ) as DBCoreTransaction & IDBTransaction & TXExpandos;
+//         //   } else {
+//         //     tx = core.transaction(tables, mode) as DBCoreTransaction &
+//         //       IDBTransaction &
+//         //       TXExpandos;
+//         //   }
+
+//         //   if (mode === 'readwrite') {
+//         //     // Give each transaction a globally unique id.
+//         //     tx.txid = randomString(16);
+//         //     // Introduce the concept of current user that lasts through the entire transaction.
+//         //     // This is important because the tracked mutations must be connected to the user.
+//         //     tx.currentUser = currentUserObservable.value;
+//         //     outstandingTransactions.value.add(tx);
+//         //     outstandingTransactions.next(outstandingTransactions.value);
+//         //     const removeTransaction = () => {
+//         //       tx.removeEventListener('complete', txComplete);
+//         //       tx.removeEventListener('error', removeTransaction);
+//         //       tx.removeEventListener('abort', removeTransaction);
+//         //       outstandingTransactions.value.delete(tx);
+//         //       outstandingTransactions.next(outstandingTransactions.value);
+//         //     };
+//         //     const txComplete = () => {
+//         //       if (tx.mutationsAdded && db.cloud.options?.databaseUrl) {
+//         //         if (db.cloud.options?.usingServiceWorker) {
+//         //           console.debug('registering sync event');
+//         //           registerSyncEvent(db);
+//         //         } else {
+//         //           db.localSyncEvent.next({});
+//         //         }
+//         //       }
+//         //       removeTransaction();
+//         //     };
+//         //     tx.addEventListener('complete', txComplete);
+//         //     tx.addEventListener('error', removeTransaction);
+//         //     tx.addEventListener('abort', removeTransaction);
+//         //   }
+//         //   return tx;
+//         // },
+//         table(tableName) {
+//           // Call default table method
+//           const downlevelTable = downlevelDatabase.table(tableName);
+//           // Derive your own table from it:
+//           return {
+//             // Copy default table implementation:
+//             ...downlevelTable,
+//             // Override the mutate method:
+//             mutate: async (req) => {
+//               const txSource = (Dexie.currentTransaction as any).source;
+//               let oldObjects: Record<string, object> = {};
+
+//               if (tableName[0] !== '_' && req.type === 'put') {
+//                 (
+//                   await db
+//                     .table(tableName)
+//                     .bulkGet(req.values.map(({ id }) => id))
+//                 ).forEach((obj) => {
+//                   if (obj) {
+//                     oldObjects[obj.id] = obj;
+//                   }
+//                 });
+//               }
+
+//               const res = await downlevelTable.mutate(req);
+
+//               if (tableName[0] !== '_') {
+//                 const changes = ((): DistributiveOmit<
+//                   IDatabaseChange,
+//                   'source'
+//                 >[] => {
+//                   if (req.type === 'add') {
+//                     return req.values.map((val) => {
+//                       return {
+//                         type: DatabaseChangeType.Create,
+//                         table: tableName,
+//                         key: val.id,
+//                         obj: val,
+//                       };
+//                     });
+//                   } else if (req.type === 'delete') {
+//                     return req.keys.map((id) => {
+//                       return {
+//                         table: tableName,
+//                         type: DatabaseChangeType.Delete,
+//                         key: id,
+//                       };
+//                     });
+//                   } else if (req.type === 'put') {
+//                     return req.values.map((obj) => {
+//                       if (oldObjects[obj.id]) {
+//                         return {
+//                           table: tableName,
+//                           type: DatabaseChangeType.Update,
+//                           obj,
+//                           oldObj: oldObjects[obj.id] as Record<string, unknown>,
+//                           // TODO: Maybe don't make objectDiff here for faster transaction?
+//                           mods: (Dexie as any).getObjectDiff(
+//                             oldObjects[obj.id],
+//                             obj,
+//                           ),
+//                           key: obj.id,
+//                         };
+//                       } else {
+//                         return {
+//                           table: tableName,
+//                           type: DatabaseChangeType.Create,
+//                           obj: obj,
+//                           key: obj.id,
+//                         };
+//                       }
+//                     });
+//                   } else {
+//                     return [];
+//                   }
+//                 })();
+
+//                 if (txSource !== 'serverChanges' && changes.length > 0) {
+//                   await db.table('_changesToSend').bulkAdd(changes);
+//                 }
+
+//                 if (changes.length > 0) {
+//                   globalChangesSubject.next(
+//                     changes.map((ch) => ({
+//                       ...ch,
+//                       source: txSource,
+//                       fromServer: txSource === 'serverChanges',
+//                       windowId: windowId,
+//                     })),
+//                   );
+//                 }
+//               }
+
+//               return res;
+//             },
+//           };
+//         },
+//       };
+//     },
+//   });
+// };
+
+export const startChangeLog = (db: Dexie & { windowId: string }) => {
   const changesSubject = new Subject<
     IChangeRow & { transactionSource: string }
   >();
@@ -139,7 +307,7 @@ export const startChangeLog = (db: Dexie, windowId: string) => {
             source: ch.transactionSource,
             fromServer: ch.transactionSource === 'serverChanges',
 
-            windowId: windowId,
+            windowId: db.windowId,
           })),
         );
       }),
