@@ -9,6 +9,9 @@ import { initSync } from './dexie-sync/init';
 import { liveQuery } from 'dexie';
 import { from, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { generateId } from '@harika/common';
+
+const windowId = generateId();
 
 export class VaultsRepository {
   private notesRepositories: Record<string, NotesRepository | undefined> = {};
@@ -28,7 +31,12 @@ export class VaultsRepository {
 
     console.log(this.dbId);
     if (this.sync) {
-      initSync(this.database, this.dbId, `${this.config.wsUrl}/api/user`);
+      initSync(
+        this.database,
+        this.dbId,
+        windowId,
+        `${this.config.wsUrl}/api/user`,
+      );
     }
   }
 
@@ -98,12 +106,12 @@ export class VaultsRepository {
     });
 
     syncMiddleware(vault, new ToDexieSyncer(db, vault).handlePatch);
-    toMobxSync(db, vault);
+    toMobxSync(db, vault, windowId);
 
     const repo = new NotesRepository(db, vault);
 
     if (this.sync) {
-      initSync(db, db.id, `${this.config.wsUrl}/api/vault`);
+      initSync(db, db.id, windowId, `${this.config.wsUrl}/api/vault`);
     }
 
     return repo;

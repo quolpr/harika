@@ -15,6 +15,7 @@ import type { RefToken } from './NotesRepository/models/NoteBlockModel/blockPars
 import { from, Observable } from 'rxjs';
 import type { NoteDocType } from '@harika/common';
 import { liveQuery } from 'dexie';
+import { exportDB } from 'dexie-export-import';
 
 export { NoteModel } from './NotesRepository/models/NoteModel';
 export { VaultModel } from './NotesRepository/models/VaultModel';
@@ -304,10 +305,27 @@ export class NotesRepository {
     );
   }
 
+  async import(importData: {
+    data: { data: { tableName: string; rows: any[] }[] };
+  }) {
+    const data = importData.data.data.filter(
+      ({ tableName }) => tableName[0] !== '_',
+    );
+    const tables = data.map(({ tableName }) => tableName);
+
+    return this.db.transaction('rw', tables, async () => {
+      return Promise.all(
+        data.map(async ({ tableName, rows }) => {
+          await this.db.table(tableName).bulkPut(rows);
+        }),
+      );
+    });
+  }
+
   async export() {
-    // return exportDB(this.db, {
-    //   filter: (t) => ['notes', 'noteBlocks'].includes(t),
-    // });
+    return exportDB(this.db, {
+      filter: (t) => ['notes', 'noteBlocks'].includes(t),
+    });
   }
 
   close = () => {

@@ -3,6 +3,13 @@ import { parse as pegParse } from './pegParser';
 import { find, FindResultHash } from 'linkifyjs';
 import type { Token } from './types';
 
+declare module 'linkifyjs' {
+  interface FindResultHash {
+    end: number;
+    start: number;
+  }
+}
+
 const generateNewId = function () {
   // Math.random should be unique because of its seeding algorithm.
   // Convert it to base 36 (numbers + letters), and grab the first 9 characters

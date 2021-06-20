@@ -16,6 +16,7 @@
     "broadcast-channel": "^3.6.0",
     "dayjs": "^1.10.4",
     "dexie": "3.1.0-beta.13",
+    "dexie-export-import": "^1.0.0",
     "downloadjs": "^1.4.7",
     "lodash-es": "^4.17.21",
     "mobx": "^6.3.1",

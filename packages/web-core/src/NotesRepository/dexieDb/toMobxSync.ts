@@ -32,7 +32,11 @@ import { changes$ } from '../../dexie-sync/changesChannel';
 //     }),
 //   );
 
-export const toMobxSync = (db: VaultDexieDatabase, vault: VaultModel) => {
+export const toMobxSync = (
+  db: VaultDexieDatabase,
+  vault: VaultModel,
+  currentWindowId: string,
+) => {
   //const db$ = new Observable<IChangeEvent>((observer) => {
   //  const subscriber = (chs: IChangeEvent[]) => {
   //    chs.forEach((ch) => {
@@ -53,7 +57,7 @@ export const toMobxSync = (db: VaultDexieDatabase, vault: VaultModel) => {
     // TODO refactor notes and noteblocks to one method
 
     evs = evs.filter(
-      ({ fromServer, windowId }) => fromServer || windowId !== db.windowId,
+      ({ fromServer, windowId }) => fromServer || windowId !== currentWindowId,
     );
     console.log('new changes', evs);
 

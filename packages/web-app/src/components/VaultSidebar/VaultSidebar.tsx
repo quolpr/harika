@@ -35,6 +35,27 @@ export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
       );
     }, [notesRepository, vault.name]);
 
+    const handleImport = useCallback(
+      (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files) return;
+
+        const reader = new FileReader();
+        reader.onload = (eReader) => {
+          if (!eReader?.target?.result) return;
+
+          try {
+            const result = JSON.parse(eReader.target.result.toString());
+
+            notesRepository.import(result);
+          } catch (e) {
+            alert('Failed to import db');
+          }
+        };
+        reader.readAsText(e.target.files[0]);
+      },
+      [notesRepository],
+    );
+
     return (
       <div
         ref={ref}
@@ -71,6 +92,16 @@ export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
           >
             Download db
           </button>
+
+          <label className={sidebarClass('link')}>
+            <input
+              id="upload"
+              type="file"
+              style={{ display: 'none' }}
+              onChange={handleImport}
+            />
+            Import DB
+          </label>
         </div>
 
         <Brand className={sidebarClass('brand')} onClick={onNavClick} />

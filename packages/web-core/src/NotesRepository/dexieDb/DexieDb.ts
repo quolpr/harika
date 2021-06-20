@@ -1,9 +1,6 @@
 import type { Dayjs } from 'dayjs';
 import Dexie from 'dexie';
-import { generateId } from '@harika/common';
 import type { NoteDocType, NoteBlockDocType } from '@harika/common';
-
-const windowId = generateId();
 
 export class VaultDexieDatabase extends Dexie {
   notes: Dexie.Table<NoteDocType, string>;
@@ -40,10 +37,6 @@ export class VaultDexieDatabase extends Dexie {
 
   get notesQueries() {
     return new NotesQueries(this);
-  }
-
-  get windowId() {
-    return windowId;
   }
 }
 
