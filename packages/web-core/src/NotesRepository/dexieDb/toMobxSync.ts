@@ -1,5 +1,3 @@
-import { fromEvent, Observable, OperatorFunction } from 'rxjs';
-import { buffer, debounceTime, filter } from 'rxjs/operators';
 import type { VaultModel } from '../../NotesRepository';
 import {
   convertNoteBlockDocToModelAttrs,
@@ -9,7 +7,6 @@ import {
 } from './convertDocToModel';
 import type { VaultDexieDatabase } from './DexieDb';
 import {
-  IChangeEvent,
   INoteChangeEvent,
   DatabaseChangeType,
   INoteBlockChangeEvent,

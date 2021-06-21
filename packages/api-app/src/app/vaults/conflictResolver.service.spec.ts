@@ -51,25 +51,24 @@ describe('ConflictsResolverService', () => {
       });
 
       it('resolves block content conflict', () => {
-        const clientChanges: IDatabaseChange[] = [
-          {
-            type: DatabaseChangeType.Update,
-            table: 'noteBlocks',
-            key: '1URGz9q1xhYld9MVaBhy',
-            mods: { content: 'kek' },
-            source: '123',
-          },
-        ];
-
-        const serverChanges: Record<string, IDatabaseChange> = {
-          hQn4Rzd2XNgDGvVBC9qf: {
-            type: DatabaseChangeType.Update,
-            table: 'noteBlocks',
-            key: '1URGz9q1xhYld9MVaBhy',
-            mods: { context: 'puk' },
-            source: '234',
-          },
-        };
+        // const clientChanges: IDatabaseChange[] = [
+        //   {
+        //     type: DatabaseChangeType.Update,
+        //     table: 'noteBlocks',
+        //     key: '1URGz9q1xhYld9MVaBhy',
+        //     mods: { content: 'kek' },
+        //     source: '123',
+        //   },
+        // ];
+        // const serverChanges: Record<string, IDatabaseChange> = {
+        //   hQn4Rzd2XNgDGvVBC9qf: {
+        //     type: DatabaseChangeType.Update,
+        //     table: 'noteBlocks',
+        //     key: '1URGz9q1xhYld9MVaBhy',
+        //     mods: { context: 'puk' },
+        //     source: '234',
+        //   },
+        // };
       });
     });
   });
