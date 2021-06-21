@@ -323,7 +323,8 @@ export class NotesRepository {
   }
 
   async export() {
-    return exportDB(this.db, {
+    // Fails to compile on build time, so I put any here
+    return exportDB(this.db as any, {
       filter: (t) => ['notes', 'noteBlocks'].includes(t),
     });
   }
