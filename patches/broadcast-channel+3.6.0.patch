@@ -1,0 +1,47 @@
+diff --git a/node_modules/broadcast-channel/dist/es/method-chooser.js b/node_modules/broadcast-channel/dist/es/method-chooser.js
+index 3e34b00..2a40e4e 100644
+--- a/node_modules/broadcast-channel/dist/es/method-chooser.js
++++ b/node_modules/broadcast-channel/dist/es/method-chooser.js
+@@ -11,25 +11,25 @@ IndexeDbMethod, LocalstorageMethod];
+  * so it will not get bundled in browser-builds
+  */
+ 
+-if (isNode) {
+-  /**
+-   * we use the non-transpiled code for nodejs
+-   * because it runs faster
+-   */
+-  var NodeMethod = require('../../src/methods/' + // use this hack so that browserify and others
+-  // do not import the node-method by default
+-  // when bundling.
+-  'node.js');
+-  /**
+-   * this will be false for webpackbuilds
+-   * which will shim the node-method with an empty object {}
+-   */
++// if (isNode) {
++//   /**
++//    * we use the non-transpiled code for nodejs
++//    * because it runs faster
++//    */
++//   var NodeMethod = require('../../src/methods/' + // use this hack so that browserify and others
++//   // do not import the node-method by default
++//   // when bundling.
++//   'node.js');
++//   /**
++//    * this will be false for webpackbuilds
++//    * which will shim the node-method with an empty object {}
++//    */
+ 
+ 
+-  if (typeof NodeMethod.canBeUsed === 'function') {
+-    METHODS.push(NodeMethod);
+-  }
+-}
++//   if (typeof NodeMethod.canBeUsed === 'function') {
++//     METHODS.push(NodeMethod);
++//   }
++// }
+ 
+ export function chooseMethod(options) {
+   var chooseMethods = [].concat(options.methods, METHODS).filter(Boolean); // directly chosen

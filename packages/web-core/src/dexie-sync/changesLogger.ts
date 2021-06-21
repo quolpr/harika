@@ -178,7 +178,7 @@ export type IChangeRow = DistributiveOmit<IDatabaseChange, 'source'>;
 //   });
 // };
 
-export const startChangeLog = (db: Dexie & { windowId: string }) => {
+export const startChangeLog = (db: Dexie, windowId: string) => {
   const changesSubject = new Subject<
     IChangeRow & { transactionSource: string }
   >();
@@ -307,7 +307,7 @@ export const startChangeLog = (db: Dexie & { windowId: string }) => {
             source: ch.transactionSource,
             fromServer: ch.transactionSource === 'serverChanges',
 
-            windowId: db.windowId,
+            windowId: windowId,
           })),
         );
       }),
