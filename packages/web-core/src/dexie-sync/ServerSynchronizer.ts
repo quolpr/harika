@@ -1,4 +1,4 @@
-import { Dexie, liveQuery, Table } from 'dexie';
+import { Dexie, liveQuery } from 'dexie';
 import io from 'socket.io-client';
 import { v4 } from 'uuid';
 import {
@@ -10,41 +10,31 @@ import {
   Subject,
   Observable,
   of,
-  EMPTY,
 } from 'rxjs';
 import {
-  catchError,
   exhaustMap,
   filter,
-  first,
   map,
   mapTo,
   mergeMap,
-  retry,
   shareReplay,
   switchMap,
   takeUntil,
   tap,
-  timeout,
 } from 'rxjs/operators';
 import { BroadcastChannel, createLeaderElection } from 'broadcast-channel';
 import {
-  CommandsFromClient,
-  MessageType,
-  CommandFromClientHandled,
   EventTypesFromServer,
   CommandTypesFromClient,
   IDatabaseChange,
-  DatabaseChangeType,
   NewChangesReceived,
-  IDeleteChange,
-  ICreateChange,
-  IUpdateChange,
 } from '@harika/common';
-import { isEqual, maxBy } from 'lodash-es';
+import { isEqual } from 'lodash-es';
+import { CommandsExecuter } from './CommandsExecuter';
+import { applyChanges } from './applyChanges';
 
 // table _syncStatus
-interface ISyncStatus {
+export interface ISyncStatus {
   id: 1;
   lastReceivedRemoteRevision: number | null;
   lastAppliedRemoteRevision: number | null;
@@ -56,7 +46,7 @@ type IChangeRowWithRev = IChangeRow & {
   rev: string;
 };
 
-interface IServerChangesRow {
+export interface IServerChangesRow {
   id: string;
   change: IDatabaseChange;
   receivedAtRevisionOfServer: number;
@@ -67,11 +57,7 @@ type DistributiveOmit<T, K extends keyof any> = T extends any
   : never;
 
 export class ServerSynchronizer {
-  private clientCommandsSubject: Subject<CommandsFromClient> = new Subject();
-  private successCommandHandled$: Subject<CommandFromClientHandled> =
-    new Subject();
   private isConnectedAndInitialized$: Observable<boolean>;
-  private isSyncLeader$ = new BehaviorSubject(false);
   private socketSubject = new Subject<SocketIOClient.Socket>();
   private socket$ = this.socketSubject.pipe(
     shareReplay({
@@ -84,6 +70,7 @@ export class ServerSynchronizer {
   private isInitialized$: BehaviorSubject<boolean> =
     new BehaviorSubject<boolean>(false);
   private syncStatusSubject!: BehaviorSubject<ISyncStatus>;
+  private commandExecuter: CommandsExecuter;
 
   constructor(
     private db: Dexie,
@@ -121,11 +108,16 @@ export class ServerSynchronizer {
     ]).pipe(
       map(([isConnected, isInitialized]) => isConnected && isInitialized),
     );
+
+    this.commandExecuter = new CommandsExecuter(
+      this.log,
+      this.socket$,
+      this.isConnected$,
+      this.stop$,
+    );
   }
 
   async initialize() {
-    this.startCommandFlow();
-
     this.syncStatusSubject = new BehaviorSubject(
       await this.db.transaction('rw', '_syncStatus', async () => {
         const syncStatusTable = this.db.table<ISyncStatus>('_syncStatus');
@@ -184,7 +176,7 @@ export class ServerSynchronizer {
       switchMap((isConnected) => {
         if (isConnected) {
           return of(null).pipe(
-            this.sendCommand(() => ({
+            this.commandExecuter.send(() => ({
               type: CommandTypesFromClient.InitializeClient,
               identity: this.syncStatusSubject.value.source,
               scopeId: this.scopeId,
@@ -222,7 +214,7 @@ export class ServerSynchronizer {
       filter((changes) => changes.length > 0),
       exhaustMap((mutations) => {
         return of(null).pipe(
-          this.sendCommand(() => {
+          this.commandExecuter.send(() => {
             const syncStatus = this.syncStatusSubject.value;
 
             return {
@@ -294,7 +286,7 @@ export class ServerSynchronizer {
         ),
       ),
     ).pipe(
-      this.sendCommand(() => ({
+      this.commandExecuter.send(() => ({
         type: CommandTypesFromClient.GetChanges,
         lastReceivedRemoteRevision:
           this.syncStatusSubject.value.lastReceivedRemoteRevision,
@@ -356,216 +348,7 @@ export class ServerSynchronizer {
     // );
   }
 
-  private sendCommand<T>(
-    commandFunction: (
-      val: T,
-    ) => DistributiveOmit<CommandsFromClient, 'id' | 'messageType'>,
-  ) {
-    return (source: Observable<T>) => {
-      return source.pipe(
-        switchMap((val) => {
-          const command = commandFunction(val);
-
-          return of(val).pipe(
-            map(() => {
-              const messageId = v4();
-
-              this.clientCommandsSubject.next({
-                ...command,
-                id: messageId,
-                messageType: MessageType.Command,
-              });
-
-              this.log(
-                `New command to server: ${JSON.stringify(
-                  command,
-                )} ${messageId}`,
-              );
-
-              return messageId;
-            }),
-            switchMap((messageId) =>
-              this.successCommandHandled$.pipe(
-                filter((res) => res.handledId === messageId),
-                first(),
-                tap(() => {
-                  this.log(
-                    `Command handled by server: ${JSON.stringify(command)}`,
-                  );
-                }),
-              ),
-            ),
-            timeout(5000),
-            retry(3),
-            catchError(() => {
-              this.log(
-                `Failed to send command: ${JSON.stringify(
-                  command,
-                )}. Reconnecting`,
-              );
-
-              return this.socket$.pipe(
-                tap((socket) => {
-                  socket.disconnect();
-                  socket.connect();
-                }),
-                first(),
-                mapTo(val),
-              );
-            }),
-          );
-        }),
-      );
-    };
-  }
-
-  private startCommandFlow() {
-    const onRequestHandled$ = combineLatest([
-      this.isConnected$,
-      this.socket$,
-    ]).pipe(
-      switchMap(([isConnected, socket]) =>
-        isConnected
-          ? fromEvent<CommandFromClientHandled>(
-              socket,
-              EventTypesFromServer.CommandHandled,
-            )
-          : EMPTY,
-      ),
-    );
-
-    const clientCommandsHandler$ = combineLatest([
-      this.clientCommandsSubject,
-      this.socket$,
-    ]).pipe(
-      mergeMap(([command, socket]) => {
-        socket.emit(command.type, command);
-
-        return onRequestHandled$.pipe(
-          filter(
-            (response) =>
-              command.id === response.handledId && response.status === 'ok',
-          ),
-          first(),
-        );
-      }),
-    );
-
-    this.isConnected$
-      .pipe(
-        switchMap((isConnected) => {
-          return isConnected ? clientCommandsHandler$ : EMPTY;
-        }),
-        takeUntil(this.stop$),
-      )
-      .subscribe((ev) => this.successCommandHandled$.next(ev));
-  }
-
-  private log(msg: string) {
+  private log = (msg: string) => {
     console.debug(`[${this.gatewayName}][${this.scopeId}] ${msg}`);
-  }
-}
-
-async function bulkUpdate(table: Table, changes: IUpdateChange[]) {
-  let keys = changes.map((c) => c.key);
-  let map: Record<string, any> = {};
-  // Retrieve current object of each change to update and map each
-  // found object's primary key to the existing object:
-  await table
-    .where(':id')
-    .anyOf(keys)
-    .raw()
-    .each((obj, cursor) => {
-      map[cursor.primaryKey + ''] = obj;
-    });
-  // Filter away changes whose key wasn't found in the local database
-  // (we can't update them if we do not know the existing values)
-  let updatesThatApply = changes.filter((c_1) =>
-    map.hasOwnProperty(c_1.key + ''),
-  );
-  // Apply modifications onto each existing object (in memory)
-  // and generate array of resulting objects to put using bulkPut():
-  let objsToPut = updatesThatApply.map((c_2) => {
-    let curr = map[c_2.key + ''];
-    Object.keys(c_2.mods).forEach((keyPath) => {
-      Dexie.setByKeyPath(curr, keyPath, c_2.mods[keyPath]);
-    });
-    return curr;
-  });
-  return await table.bulkPut(objsToPut);
-}
-
-function applyChanges(db: Dexie, changeRows: IServerChangesRow[]) {
-  let collectedChanges: Record<
-    string,
-    {
-      [DatabaseChangeType.Create]: ICreateChange[];
-      [DatabaseChangeType.Delete]: IDeleteChange[];
-      [DatabaseChangeType.Update]: IUpdateChange[];
-    }
-  > = {};
-
-  changeRows.forEach((row) => {
-    if (!collectedChanges.hasOwnProperty(row.change.table)) {
-      collectedChanges[row.change.table] = {
-        [DatabaseChangeType.Create]: [],
-        [DatabaseChangeType.Delete]: [],
-        [DatabaseChangeType.Update]: [],
-      };
-    }
-    collectedChanges[row.change.table][row.change.type].push(row.change as any);
-  });
-
-  let tableNames = Object.keys(collectedChanges);
-  let tables = tableNames.map((table) => db.table(table));
-
-  const maxRevision = maxBy(
-    changeRows,
-    ({ receivedAtRevisionOfServer }) => receivedAtRevisionOfServer,
-  )?.receivedAtRevisionOfServer;
-
-  console.log({ maxRevision });
-
-  if (maxRevision === undefined)
-    throw new Error('Max revision could not be undefined');
-
-  return db.transaction(
-    'rw',
-    [...tables, db.table('_syncStatus'), db.table('_changesFromServer')],
-    async () => {
-      await Promise.all(
-        tableNames.map(async (table_name) => {
-          // @ts-ignore
-          Dexie.currentTransaction.source = 'serverChanges';
-
-          const table = db.table(table_name);
-          const specifyKeys = !table.schema.primKey.keyPath;
-          const createChangesToApply =
-            collectedChanges[table_name][DatabaseChangeType.Create];
-          const deleteChangesToApply =
-            collectedChanges[table_name][DatabaseChangeType.Delete];
-          const updateChangesToApply =
-            collectedChanges[table_name][DatabaseChangeType.Update];
-
-          if (createChangesToApply.length > 0)
-            await table.bulkPut(
-              createChangesToApply.map((c) => c.obj),
-              specifyKeys ? createChangesToApply.map((c) => c.key) : undefined,
-            );
-          if (updateChangesToApply.length > 0)
-            await bulkUpdate(table, updateChangesToApply);
-          if (deleteChangesToApply.length > 0)
-            await table.bulkDelete(deleteChangesToApply.map((c) => c.key));
-        }),
-      );
-
-      await db
-        .table('_changesFromServer')
-        .bulkDelete(changeRows.map(({ id }) => id));
-
-      await db.table<ISyncStatus>('_syncStatus').update(1, {
-        lastAppliedRemoteRevision: maxRevision,
-      });
-    },
-  );
+  };
 }
