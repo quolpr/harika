@@ -1,5 +1,13 @@
 import { v4 } from 'uuid';
-import { combineLatest, fromEvent, Subject, Observable, of, EMPTY } from 'rxjs';
+import {
+  combineLatest,
+  fromEvent,
+  Subject,
+  Observable,
+  of,
+  EMPTY,
+  merge,
+} from 'rxjs';
 import {
   catchError,
   filter,
@@ -14,10 +22,13 @@ import {
   timeout,
 } from 'rxjs/operators';
 import {
-  CommandsFromClient,
   MessageType,
-  CommandFromClientHandled,
-  EventTypesFromServer,
+  BaseCommandRequest,
+  BaseCommandResponse,
+  ClientCommandRequests,
+  ClientCommandResponses,
+  CommandTypesFromClient,
+  ClientCommands,
 } from '@harika/common';
 
 type DistributiveOmit<T, K extends keyof any> = T extends any
@@ -25,9 +36,8 @@ type DistributiveOmit<T, K extends keyof any> = T extends any
   : never;
 
 export class CommandsExecuter {
-  private clientCommandsSubject: Subject<CommandsFromClient> = new Subject();
-  private successCommandHandled$: Subject<CommandFromClientHandled> =
-    new Subject();
+  private clientCommandsSubject: Subject<ClientCommandRequests> = new Subject();
+  private commandHandled$: Subject<ClientCommandResponses> = new Subject();
 
   constructor(
     private log: (str: string) => void,
@@ -36,12 +46,12 @@ export class CommandsExecuter {
     private stop$: Subject<void>,
   ) {}
 
-  send<T>(
+  send<T extends ClientCommands, K extends unknown = unknown>(
     commandFunction: (
-      val: T,
-    ) => DistributiveOmit<CommandsFromClient, 'id' | 'messageType'>,
+      val: K,
+    ) => DistributiveOmit<T['request'], 'messageId' | 'messageType'>,
   ) {
-    return (source: Observable<T>) => {
+    return (source: Observable<K>) => {
       return source.pipe(
         switchMap((val) => {
           const command = commandFunction(val);
@@ -52,8 +62,8 @@ export class CommandsExecuter {
 
               this.clientCommandsSubject.next({
                 ...command,
-                id: messageId,
-                messageType: MessageType.Command,
+                messageId: messageId,
+                messageType: MessageType.CommandRequest,
               });
 
               this.log(
@@ -65,8 +75,9 @@ export class CommandsExecuter {
               return messageId;
             }),
             switchMap((messageId) =>
-              this.successCommandHandled$.pipe(
-                filter((res) => res.handledId === messageId),
+              this.commandHandled$.pipe(
+                filter((res) => res.requestedMessageId === messageId),
+                map((res) => res as T['response']),
                 first(),
                 tap(() => {
                   this.log(
@@ -90,7 +101,7 @@ export class CommandsExecuter {
                   socket.connect();
                 }),
                 first(),
-                mapTo(val),
+                mapTo(null),
               );
             }),
           );
@@ -106,9 +117,19 @@ export class CommandsExecuter {
     ]).pipe(
       switchMap(([isConnected, socket]) =>
         isConnected
-          ? fromEvent<CommandFromClientHandled>(
-              socket,
-              EventTypesFromServer.CommandHandled,
+          ? merge(
+              fromEvent<ClientCommandResponses>(
+                socket,
+                CommandTypesFromClient.GetChanges,
+              ),
+              fromEvent<ClientCommandResponses>(
+                socket,
+                CommandTypesFromClient.InitializeClient,
+              ),
+              fromEvent<ClientCommandResponses>(
+                socket,
+                CommandTypesFromClient.ApplyNewChanges,
+              ),
             )
           : EMPTY,
       ),
@@ -123,8 +144,7 @@ export class CommandsExecuter {
 
         return onRequestHandled$.pipe(
           filter(
-            (response) =>
-              command.id === response.handledId && response.status === 'ok',
+            (response) => command.messageId === response.requestedMessageId,
           ),
           first(),
         );
@@ -138,6 +158,6 @@ export class CommandsExecuter {
         }),
         takeUntil(this.stop$),
       )
-      .subscribe((ev) => this.successCommandHandled$.next(ev));
+      .subscribe((ev) => this.commandHandled$.next(ev));
   }
 }

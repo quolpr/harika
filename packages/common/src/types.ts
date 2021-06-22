@@ -1,142 +1,144 @@
+export enum MessageType {
+  Event = 'event',
+  CommandRequest = 'commandRequest',
+  CommandResponse = 'commandResponse',
+}
+
+export interface BaseMessage {
+  messageId: string;
+  messageType: MessageType;
+}
+
+export interface BaseCommandRequest extends BaseMessage {
+  messageType: MessageType.CommandRequest;
+}
+
+export interface BaseCommandResponse extends BaseMessage {
+  messageType: MessageType.CommandResponse;
+  requestedMessageId: string;
+}
+
+export interface BaseEvent {
+  messageType: MessageType.Event;
+}
+
+//// Client:
+
+export enum CommandTypesFromClient {
+  ApplyNewChanges = 'applyNewChanges',
+  InitializeClient = 'initializeClient',
+  GetChanges = 'getChanges',
+}
+
+export type ApplyNewChangesFromClientCommand = {
+  request: ApplyNewChangesFromClientRequest;
+  response: ApplyNewChangesFromClientResponse;
+};
+
+export interface ApplyNewChangesFromClientRequest extends BaseCommandRequest {
+  type: CommandTypesFromClient.ApplyNewChanges;
+
+  data: {
+    changes: IDatabaseChange[];
+    partial: boolean;
+    baseRevision: number | null;
+  };
+}
+
+export interface ApplyNewChangesFromClientResponse extends BaseCommandResponse {
+  type: CommandTypesFromClient.ApplyNewChanges;
+
+  data: {
+    status: 'success' | 'staleChanges' | 'error';
+  };
+}
+
+export type InitializeClientCommand = {
+  request: InitializeClientRequest;
+  response: InitializeClientResponse;
+};
+
+export interface InitializeClientRequest extends BaseCommandRequest {
+  type: CommandTypesFromClient.InitializeClient;
+
+  data: {
+    identity: string;
+    scopeId: string;
+  };
+}
+
+export interface InitializeClientResponse extends BaseCommandResponse {
+  type: CommandTypesFromClient.InitializeClient;
+
+  data: {
+    status: 'success' | 'error';
+  };
+}
+
+export type GetChangesClientCommand = {
+  request: GetChangesRequest;
+  response: GetChangesResponse;
+};
+
+export interface GetChangesRequest extends BaseCommandRequest {
+  type: CommandTypesFromClient.GetChanges;
+
+  data: {
+    lastReceivedRemoteRevision: null | number;
+  };
+}
+
+export interface GetChangesResponse extends BaseCommandResponse {
+  type: CommandTypesFromClient.GetChanges;
+
+  data:
+    | {
+        status: 'error';
+      }
+    | {
+        status: 'success';
+
+        changes: IDatabaseChange[];
+        currentRevision: number;
+      };
+}
+
+export type ClientCommands =
+  | GetChangesClientCommand
+  | InitializeClientCommand
+  | ApplyNewChangesFromClientCommand;
+
+export type ClientCommandRequests =
+  | GetChangesRequest
+  | InitializeClientRequest
+  | ApplyNewChangesFromClientRequest;
+
+export type ClientCommandResponses =
+  | GetChangesResponse
+  | InitializeClientResponse
+  | ApplyNewChangesFromClientResponse;
+
+// Server:
+
+export enum EventTypesFromServer {
+  RevisionWasChanged = 'revisionWasChanged',
+}
+
+export interface RevisionWasChangedEvent extends BaseEvent {
+  eventType: EventTypesFromServer.RevisionWasChanged;
+
+  data: {
+    newRevision: number;
+  };
+}
+
+// DatabaseChange
+
 export enum DatabaseChangeType {
   Create = 1,
   Update = 2,
   Delete = 3,
 }
-
-export enum MessageType {
-  Event = 'event',
-  Command = 'command',
-}
-
-// Client
-export enum CommandTypesFromClient {
-  ApplyNewChanges = 'applyNewChanges',
-  InitializeClient = 'initializeClient',
-  // Locking is needed to perform notes merginf with the same title - the conflicts resolution
-  // If lock happened - nobody will be able to send changes except the one who made the lock
-  StartLock = 'startLock',
-  FinishLock = 'finishLock',
-  GetChanges = 'getChanges',
-}
-
-export interface BaseMessage {
-  id: string;
-  messageType: MessageType;
-}
-
-export interface ApplyNewChangesFromClient extends BaseMessage {
-  messageType: MessageType.Command;
-
-  type: CommandTypesFromClient.ApplyNewChanges;
-  changes: IDatabaseChange[];
-  partial: boolean;
-  baseRevision: number | null;
-}
-
-export interface InitializeClient extends BaseMessage {
-  messageType: MessageType.Command;
-
-  type: CommandTypesFromClient.InitializeClient;
-  identity: string;
-  scopeId: string;
-}
-
-export interface StartClientLock extends BaseMessage {
-  messageType: MessageType.Command;
-
-  type: CommandTypesFromClient.StartLock;
-}
-
-export interface FinishClientLock extends BaseMessage {
-  messageType: MessageType.Command;
-
-  type: CommandTypesFromClient.FinishLock;
-}
-
-export interface GetChanges extends BaseMessage {
-  messageType: MessageType.Command;
-  type: CommandTypesFromClient.GetChanges;
-  lastReceivedRemoteRevision: null | number;
-}
-
-export type CommandsFromClient =
-  | ApplyNewChangesFromClient
-  | InitializeClient
-  | StartClientLock
-  | FinishClientLock
-  | GetChanges;
-
-export type MessagesFromClient = CommandsFromClient;
-
-// Server
-
-export enum EventTypesFromServer {
-  CommandHandled = 'commandHandled',
-  MasterWasSet = 'masterWasSet',
-  RevisionWasChanged = 'revisionWasChanged',
-  NewChangesReceived = 'newChangesReceived',
-}
-
-export interface CommandFromClientHandled extends BaseMessage {
-  messageType: MessageType.Event;
-  type: EventTypesFromServer.CommandHandled;
-
-  status: 'ok' | 'error';
-
-  handledId: string;
-
-  // TODO: refactor typing system
-  data?: {
-    type: 'newChanges';
-    changes: IDatabaseChange[];
-    currentRevision: number;
-  };
-}
-
-export interface MasterClientWasSet extends BaseMessage {
-  messageType: MessageType.Event;
-  type: EventTypesFromServer.MasterWasSet;
-
-  identity: string;
-}
-
-export interface RevisionWasChanged extends BaseMessage {
-  messageType: MessageType.Event;
-  type: EventTypesFromServer.RevisionWasChanged;
-
-  newRevision: number;
-}
-
-export interface NewChangesReceived extends BaseMessage {
-  messageType: MessageType.Event;
-  type: EventTypesFromServer.NewChangesReceived;
-}
-
-export type EventsFromServer =
-  | CommandFromClientHandled
-  | MasterClientWasSet
-  | RevisionWasChanged;
-
-export enum CommandTypesFromServer {
-  ApplyNewChanges = 'applyNewChanges',
-}
-
-export interface ApplyNewChangesFromServer extends BaseMessage {
-  messageType: MessageType.Command;
-
-  type: CommandTypesFromServer.ApplyNewChanges;
-  changes: IDatabaseChange[];
-  partial: boolean;
-  currentRevision: number;
-}
-
-export type CommandsFromServer = ApplyNewChangesFromServer;
-
-export type MessagesFromServer = CommandsFromServer | EventsFromServer;
-
-// Database types
-
 export type NoteDocType = {
   id: string;
   title: string;
@@ -156,8 +158,6 @@ export type NoteBlockDocType = {
   createdAt: number;
   updatedAt?: number;
 };
-
-// DatabaseChange
 
 export interface ICreateChange<
   TableName extends string = string,
