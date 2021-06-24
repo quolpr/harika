@@ -15,7 +15,6 @@ import { parse } from 'cookie';
 import * as jwt from 'jsonwebtoken';
 import { AllExceptionsFilter } from '../core/AllExceptionsFilter';
 import {
-  CommandFromClientHandled,
   CommandTypesFromClient,
   EventTypesFromServer,
   IDatabaseChange,
@@ -23,11 +22,13 @@ import {
   IUpdateChange,
   MessageType,
   DatabaseChangeType,
-  ApplyNewChangesFromClient,
-  InitializeClient,
-  MasterClientWasSet,
-  GetChanges,
-  NewChangesReceived,
+  InitializeClientRequest,
+  InitializeClientResponse,
+  GetChangesRequest,
+  GetChangesResponse,
+  ApplyNewChangesFromClientRequest,
+  ApplyNewChangesFromClientResponse,
+  RevisionWasChangedEvent,
 } from '@harika/common';
 import { v4 } from 'uuid';
 
@@ -66,7 +67,9 @@ export abstract class SyncGateway
 
   @UseFilters(new AllExceptionsFilter())
   @SubscribeMessage(CommandTypesFromClient.InitializeClient)
-  async handleInitialize(client: Socket, command: InitializeClient) {
+  async handleInitialize(client: Socket, command: InitializeClientRequest) {
+    console.log(command);
+
     const state = this.socketIOLocals.get(client);
     if (!state) {
       throw new WsException('no state set');
@@ -78,43 +81,39 @@ export abstract class SyncGateway
 
     // TODO maybe set clientIdentity on server? To avoid possible secure issues
     this.logger.debug(
-      `[${command.scopeId}] [${command.identity}] handleInitialize - ${inspect(
-        command,
-        false,
-        6,
-      )}`,
+      `[${command.data.scopeId}] [${
+        command.data.identity
+      }] handleInitialize - ${inspect(command, false, 6)}`,
     );
 
-    if (!(await this.auth(command.scopeId, state.currentUserId))) {
+    if (!(await this.auth(command.data.scopeId, state.currentUserId))) {
       throw new WsException('not authed!');
     }
 
     this.socketIOLocals.set(client, {
-      clientIdentity: command.identity,
-      scopeId: command.scopeId,
+      clientIdentity: command.data.identity,
+      scopeId: command.data.scopeId,
       type: 'initialized',
       subscriptionState: { subscribed: false },
       currentUserId: state.currentUserId,
     });
 
-    this.selectNewMasterIfNeeded(command.scopeId);
+    const response: InitializeClientResponse = {
+      messageId: v4(),
+      type: CommandTypesFromClient.InitializeClient,
+      messageType: MessageType.CommandResponse,
+      requestedMessageId: command.messageId,
+      data: {
+        status: 'success',
+      },
+    };
 
-    client.emit(EventTypesFromServer.CommandHandled, {
-      status: 'ok',
-      handledId: command.id,
-    } as CommandFromClientHandled);
-
-    // client.emit(EventTypesFromServer.RevisionWasChanged, {
-    //   newRevision: await this.syncEntities.getLastRev(
-    //     command.scopeId,
-    //     command.identity,
-    //   ),
-    // } as RevisionWasChanged);
+    client.emit(CommandTypesFromClient.InitializeClient, response);
   }
 
   @UseFilters(new AllExceptionsFilter())
   @SubscribeMessage(CommandTypesFromClient.GetChanges)
-  async handleGetChanges(client: Socket, command: GetChanges) {
+  async handleGetChanges(client: Socket, command: GetChangesRequest) {
     const state = this.getSocketState(client);
 
     if (state.type !== 'initialized')
@@ -124,16 +123,12 @@ export abstract class SyncGateway
     const { changes, lastRev } = await this.syncEntities.getChangesFromRev(
       state.scopeId,
       state.currentUserId,
-      command.lastReceivedRemoteRevision === null
-        ? 0
-        : command.lastReceivedRemoteRevision,
+      command.data.fromRevision === null ? 0 : command.data.fromRevision,
       state.clientIdentity,
     );
 
     // Compact changes so that multiple changes on same object is merged into a single change.
     const reducedSet = reduceChanges(changes);
-
-    console.log(inspect({ changes, reducedSet }, false, 10));
 
     // Convert the reduced set into an array again.
     const reducedArray = Object.keys(reducedSet).map(function (key) {
@@ -141,20 +136,19 @@ export abstract class SyncGateway
     });
     // Notice the current revision of the database. We want to send it to client so it knows what to ask for next time.
 
-    const toSend: CommandFromClientHandled = {
-      id: v4(),
-      messageType: MessageType.Event,
-      type: EventTypesFromServer.CommandHandled,
-      status: 'ok',
-      handledId: command.id,
+    const toSend: GetChangesResponse = {
+      messageId: v4(),
+      type: CommandTypesFromClient.GetChanges,
+      messageType: MessageType.CommandResponse,
+      requestedMessageId: command.messageId,
       data: {
-        type: 'newChanges',
+        status: 'success',
         changes: reducedArray,
         currentRevision: lastRev,
       },
     };
 
-    client.emit(EventTypesFromServer.CommandHandled, toSend);
+    client.emit(CommandTypesFromClient.GetChanges, toSend);
 
     this.logger.debug(
       `[${state.scopeId}] [${
@@ -163,19 +157,19 @@ export abstract class SyncGateway
         toSend,
         false,
         6,
-      )}, new rev set - ${lastRev}, prev rev - ${
-        command.lastReceivedRemoteRevision
-      }`,
+      )}, new rev set - ${lastRev}, prev rev - ${command.data.fromRevision}`,
     );
   }
 
   @UseFilters(new AllExceptionsFilter())
   @SubscribeMessage(CommandTypesFromClient.ApplyNewChanges)
-  async applyNewChanges(client: Socket, command: ApplyNewChangesFromClient) {
+  async applyNewChanges(
+    client: Socket,
+    request: ApplyNewChangesFromClientRequest,
+  ) {
     try {
       const state = this.getSocketState(client);
 
-      console.log({ state });
       if (state.type === 'notInitialized') {
         throw new Error('Not initialized');
       }
@@ -183,41 +177,48 @@ export abstract class SyncGateway
       this.logger.debug(
         `[${state.scopeId}] [${
           state.clientIdentity
-        }] receivedChangesFromClient - ${inspect(command, false, 6)}`,
+        }] receivedChangesFromClient - ${inspect(request, false, 6)}`,
       );
 
-      const baseRevision = command.baseRevision || 0;
-      const serverChanges = (
-        await this.syncEntities.getChangesFromRev(
-          state.scopeId,
-          state.currentUserId,
-          baseRevision,
-          state.clientIdentity,
-        )
-      ).changes;
+      // TODO: lock should start here
+      if (
+        request.data.lastAppliedRemoteRevision !==
+        (await this.syncEntities.getLastRev(state.scopeId, state.currentUserId))
+      ) {
+        const response: ApplyNewChangesFromClientResponse = {
+          messageId: v4(),
+          type: CommandTypesFromClient.ApplyNewChanges,
+          messageType: MessageType.CommandResponse,
+          requestedMessageId: request.messageId,
+          data: {
+            status: 'staleChanges',
+          },
+        };
 
-      const reducedServerChangeSet = reduceChanges(serverChanges);
+        client.emit(CommandTypesFromClient.ApplyNewChanges, response);
 
-      console.log(
-        inspect({ serverChanges, reducedServerChangeSet }, false, 10),
-      );
+        return;
+      }
 
-      const resolved = resolveConflicts(
-        command.changes,
-        reducedServerChangeSet,
-      );
-
-      await this.syncEntities.applyChanges(
-        resolved,
+      const newRev = await this.syncEntities.applyChanges(
+        request.data.changes,
         state.scopeId,
         state.currentUserId,
         state.clientIdentity,
       );
 
-      client.emit(EventTypesFromServer.CommandHandled, {
-        status: 'ok',
-        handledId: command.id,
-      } as CommandFromClientHandled);
+      const response: ApplyNewChangesFromClientResponse = {
+        messageId: v4(),
+        type: CommandTypesFromClient.ApplyNewChanges,
+        messageType: MessageType.CommandResponse,
+        requestedMessageId: request.messageId,
+        data: {
+          status: 'success',
+          newRevision: newRev,
+        },
+      };
+
+      client.emit(CommandTypesFromClient.ApplyNewChanges, response);
 
       await Promise.all(
         Array.from(this.socketIOLocals.entries()).map(
@@ -226,25 +227,35 @@ export abstract class SyncGateway
               subscriberState.type === 'initialized' &&
               subscriberState.scopeId === state.scopeId
             ) {
-              const newChangesReceived: NewChangesReceived = {
-                id: v4(),
+              const revisionWasChanged: RevisionWasChangedEvent = {
+                messageId: v4(),
                 messageType: MessageType.Event,
-                type: EventTypesFromServer.NewChangesReceived,
+                eventType: EventTypesFromServer.RevisionWasChanged,
+                data: {
+                  newRevision: newRev,
+                },
               };
 
               subscriber.emit(
-                EventTypesFromServer.NewChangesReceived,
-                newChangesReceived,
+                EventTypesFromServer.RevisionWasChanged,
+                revisionWasChanged,
               );
             }
           },
         ),
       );
     } catch (e) {
-      client.emit(EventTypesFromServer.CommandHandled, {
-        status: 'error',
-        handledId: command.id,
-      } as CommandFromClientHandled);
+      const response: ApplyNewChangesFromClientResponse = {
+        messageId: v4(),
+        type: CommandTypesFromClient.ApplyNewChanges,
+        messageType: MessageType.CommandResponse,
+        requestedMessageId: request.messageId,
+        data: {
+          status: 'error',
+        },
+      };
+
+      client.emit(CommandTypesFromClient.ApplyNewChanges, response);
 
       console.error(e);
     }
@@ -277,49 +288,7 @@ export abstract class SyncGateway
   }
 
   handleDisconnect(client: Socket) {
-    const state = this.getSocketState(client);
-
     this.socketIOLocals.delete(client);
-
-    if (state.type === 'initialized') {
-      this.selectNewMasterIfNeeded(state.scopeId);
-    }
-  }
-
-  private selectNewMasterIfNeeded(scopeId: string) {
-    // if no clients = then just client this.masters
-
-    const currentScopeConnections = Array.from(
-      this.socketIOLocals.entries(),
-    ).filter(
-      ([, state]) => state.type === 'initialized' && state.scopeId === scopeId,
-    ) as [Socket, InitializedClientState][];
-
-    const currentMaster =
-      this.masters[scopeId] &&
-      currentScopeConnections.find(
-        ([, state]) => state.clientIdentity === this.masters[scopeId],
-      );
-
-    if (!currentMaster) {
-      if (currentScopeConnections.length > 0) {
-        this.masters[scopeId] = currentScopeConnections[0][1].clientIdentity;
-
-        const event: MasterClientWasSet = {
-          id: v4(),
-          messageType: MessageType.Event,
-          type: EventTypesFromServer.MasterWasSet,
-          identity: this.masters[scopeId],
-        };
-
-        currentScopeConnections[0][0].emit(
-          EventTypesFromServer.MasterWasSet,
-          event,
-        );
-      } else {
-        delete this.masters[scopeId];
-      }
-    }
   }
 
   private getSocketState(client: Socket) {

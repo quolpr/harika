@@ -18,7 +18,7 @@ export interface BaseCommandResponse extends BaseMessage {
   requestedMessageId: string;
 }
 
-export interface BaseEvent {
+export interface BaseEvent extends BaseMessage {
   messageType: MessageType.Event;
 }
 
@@ -41,16 +41,21 @@ export interface ApplyNewChangesFromClientRequest extends BaseCommandRequest {
   data: {
     changes: IDatabaseChange[];
     partial: boolean;
-    baseRevision: number | null;
+    lastAppliedRemoteRevision: number | null;
   };
 }
 
 export interface ApplyNewChangesFromClientResponse extends BaseCommandResponse {
   type: CommandTypesFromClient.ApplyNewChanges;
 
-  data: {
-    status: 'success' | 'staleChanges' | 'error';
-  };
+  data:
+    | {
+        status: 'success';
+        newRevision: number;
+      }
+    | {
+        status: 'staleChanges' | 'error';
+      };
 }
 
 export type InitializeClientCommand = {
@@ -84,7 +89,8 @@ export interface GetChangesRequest extends BaseCommandRequest {
   type: CommandTypesFromClient.GetChanges;
 
   data: {
-    lastReceivedRemoteRevision: null | number;
+    fromRevision: null | number;
+    includeSelf: false;
   };
 }
 
@@ -161,7 +167,7 @@ export type NoteBlockDocType = {
 
 export interface ICreateChange<
   TableName extends string = string,
-  Obj extends Record<string, unknown> = Record<string, unknown>,
+  Obj extends object = object,
 > {
   type: DatabaseChangeType.Create;
   table: TableName;
@@ -170,38 +176,31 @@ export interface ICreateChange<
   source: string;
 }
 
-export interface IUpdateChange<
-  TableName extends string = string,
-  Obj extends Record<string, unknown> = Record<string, unknown>,
-> {
+export interface IUpdateChange<TableName extends string = string> {
   type: DatabaseChangeType.Update;
   table: TableName;
   key: string;
   mods: { [keyPath: string]: any };
-  obj?: Obj | null | undefined;
-  // undefined on backend
-  oldObj?: Obj | null | undefined;
   source: string;
 }
 
 export interface IDeleteChange<
   TableName extends string = string,
-  Obj extends Record<string, unknown> = Record<string, unknown>,
+  Obj extends object = object,
 > {
   type: DatabaseChangeType.Delete;
   table: TableName;
   key: string;
-  // undefined on backend
-  oldObj?: Obj | null | undefined;
+  oldObj: Obj;
   source: string;
 }
 
 export type IDatabaseChange<
   TableName extends string = string,
-  Obj extends Record<string, unknown> = Record<string, unknown>,
+  Obj extends object = object,
 > =
   | ICreateChange<TableName, Obj>
-  | IUpdateChange<TableName, Obj>
+  | IUpdateChange<TableName>
   | IDeleteChange<TableName, Obj>;
 
 export type INoteChangeEvent = IDatabaseChange<'notes', NoteDocType>;

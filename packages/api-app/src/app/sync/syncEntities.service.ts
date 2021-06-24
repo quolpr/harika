@@ -58,43 +58,53 @@ export abstract class BaseSyncEntitiesService implements SyncEntitiesService {
     ownerId: string,
     clientIdentity: string,
   ) {
-    await this.connection.transaction(async (manager) => {
+    return await this.connection.transaction(async (manager) => {
+      const revs: number[] = [];
+
       for (const change of changes) {
         switch (change.type) {
           case DatabaseChangeType.Create:
-            await this.createEntity(
-              scopeId,
-              ownerId,
-              change.table,
-              change.key,
-              change.obj,
-              clientIdentity,
-              manager,
+            revs.push(
+              await this.createEntity(
+                scopeId,
+                ownerId,
+                change.table,
+                change.key,
+                change.obj,
+                clientIdentity,
+                manager,
+              ),
             );
             break;
           case DatabaseChangeType.Update:
-            await this.updateEntity(
-              scopeId,
-              ownerId,
-              change.table,
-              change.key,
-              change.mods,
-              clientIdentity,
-              manager,
+            revs.push(
+              await this.updateEntity(
+                scopeId,
+                ownerId,
+                change.table,
+                change.key,
+                change.mods,
+                clientIdentity,
+                manager,
+              ),
             );
             break;
           case DatabaseChangeType.Delete:
-            await this.delete(
-              scopeId,
-              ownerId,
-              change.table,
-              change.key,
-              clientIdentity,
-              manager,
+            revs.push(
+              await this.delete(
+                scopeId,
+                ownerId,
+                change.table,
+                change.key,
+                clientIdentity,
+                manager,
+              ),
             );
             break;
         }
       }
+
+      return Math.max(...revs);
     });
   }
 

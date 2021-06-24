@@ -1,8 +1,7 @@
 import { difference, groupBy, uniq } from 'lodash-es';
-import type { IConflictsResolver } from '../../dexieHelpers/RxSyncer';
 import type { VaultDexieDatabase } from './DexieDb';
 
-export class ConflictsResolver implements IConflictsResolver {
+export class ConflictsResolver {
   constructor(private db: VaultDexieDatabase) {}
 
   // TODO: could be optimized to bulkAdd/bulkDelete/bulkUpdate

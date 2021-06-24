@@ -216,6 +216,14 @@ export const startChangeLog = (db: Dexie, windowId: string) => {
                 });
               }
 
+              if (tableName[0] !== '_' && req.type === 'delete') {
+                (await db.table(tableName).bulkGet(req.keys)).forEach((obj) => {
+                  if (obj) {
+                    oldObjects[obj.id] = obj;
+                  }
+                });
+              }
+
               const res = await downlevelTable.mutate(req);
 
               if (tableName[0] !== '_') {
@@ -238,6 +246,7 @@ export const startChangeLog = (db: Dexie, windowId: string) => {
                       type: DatabaseChangeType.Delete,
                       key: id,
                       transactionSource: source,
+                      oldObj: oldObjects[id] as Record<string, unknown>,
                     });
                   });
                 }

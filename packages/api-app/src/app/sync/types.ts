@@ -14,7 +14,7 @@ export interface SyncEntitiesService {
     scopeId: string,
     ownerId: string,
     clientIdentity: string,
-  ): Promise<void>;
+  ): Promise<number>;
 
   getLastRev(scopeId: string, ownerId: string): Promise<number>;
 }

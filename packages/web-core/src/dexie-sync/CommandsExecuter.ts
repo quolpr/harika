@@ -40,9 +40,9 @@ export class CommandsExecuter {
   private commandHandled$: Subject<ClientCommandResponses> = new Subject();
 
   constructor(
-    private log: (str: string) => void,
     private socket$: Observable<SocketIOClient.Socket>,
     private isConnected$: Observable<boolean>,
+    private log: (str: string) => void,
     private stop$: Subject<void>,
   ) {}
 
@@ -64,7 +64,7 @@ export class CommandsExecuter {
                 ...command,
                 messageId: messageId,
                 messageType: MessageType.CommandRequest,
-              });
+              } as unknown as T['request']); // TODO: not sure why it doesn't work. Should be fixed
 
               this.log(
                 `New command to server: ${JSON.stringify(

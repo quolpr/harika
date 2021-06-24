@@ -6,7 +6,8 @@ import {
   IUpdateChange,
 } from '@harika/common';
 import { maxBy } from 'lodash-es';
-import type { IServerChangesRow, ISyncStatus } from './ServerSynchronizer';
+import type { IServerChangesRow } from './ServerSynchronizer';
+import type { ISyncStatus } from './SyncStatusService';
 
 async function bulkUpdate(table: Table, changes: IUpdateChange[]) {
   let keys = changes.map((c) => c.key);
