@@ -22,9 +22,12 @@ export const convertNoteBlockDocToModelAttrs = (
     content: new BlockContentModel({ value: doc.content }),
     createdAt: doc.createdAt,
     noteRef: noteRef(doc.noteId),
-    // null == undefined for dexieDB modifications
-    noteBlockRefs: doc.noteBlockIds.map((id) => noteBlockRef(id)),
-    linkedNoteRefs: doc.linkedNoteIds.map((id) => noteRef(id)),
+    noteBlockRefs: doc.noteBlockIds
+      .filter((v) => Boolean(v))
+      .map((id) => noteBlockRef(id)),
+    linkedNoteRefs: doc.linkedNoteIds
+      .filter((v) => Boolean(v))
+      .map((id) => noteRef(id)),
   };
 };
 
