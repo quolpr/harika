@@ -85,7 +85,8 @@ export abstract class BaseSyncEntitiesService implements SyncEntitiesService {
                 ownerId,
                 change.table,
                 change.key,
-                change.mods,
+                change.from,
+                change.to,
                 clientIdentity,
                 manager,
               ),
@@ -153,7 +154,8 @@ export abstract class BaseSyncEntitiesService implements SyncEntitiesService {
     ownerId: string,
     table: string,
     key: string,
-    modifications: IUpdateChange['mods'],
+    from: IUpdateChange['from'],
+    to: IUpdateChange['to'],
     clientIdentity: string,
     manager: EntityManager,
   ) {
@@ -174,7 +176,8 @@ export abstract class BaseSyncEntitiesService implements SyncEntitiesService {
       table: table,
       scopeId: scopeId,
       ownerId,
-      mods: modifications,
+      from,
+      to,
     });
 
     return (await this.saveChangeWithIncrement(manager, change)).rev;
@@ -238,7 +241,7 @@ export abstract class BaseSyncEntitiesService implements SyncEntitiesService {
 
 function applyModifications(
   obj: Record<string, unknown>,
-  modifications: IUpdateChange['mods'],
+  modifications: IUpdateChange['to'],
 ) {
   Object.keys(modifications).forEach(function (keyPath) {
     set(obj, keyPath, modifications[keyPath]);

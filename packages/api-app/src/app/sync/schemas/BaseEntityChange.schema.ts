@@ -18,6 +18,12 @@ export abstract class BaseEntityChangeSchema implements EntityChangeSchema {
   @Index()
   rev!: number;
 
+  @Column('json', { nullable: true })
+  from!: Record<string, any>;
+
+  @Column('json', { nullable: true })
+  to!: Record<string, any>;
+
   @Column()
   @Index()
   scopeId!: string;
@@ -51,21 +57,25 @@ export abstract class BaseEntityChangeSchema implements EntityChangeSchema {
 
   toChange(): IDatabaseChange {
     if (this.type === DatabaseChangeType.Delete) {
+      if (this.obj === undefined) throw new Error('No obj!');
+
       return {
         type: DatabaseChangeType.Delete,
         table: this.table,
         key: this.key,
         source: this.source,
-        obj: this.obj!,
+        obj: this.obj,
       };
     } else if (this.type === DatabaseChangeType.Update) {
-      if (!this.mods) throw new Error('No mods!');
+      if (this.from === undefined || this.to === undefined)
+        throw new Error('No from or to!');
 
       return {
         type: DatabaseChangeType.Update,
         table: this.table,
         key: this.key,
-        mods: this.mods,
+        from: this.from,
+        to: this.to,
         source: this.source,
       };
     } else {

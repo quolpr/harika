@@ -3,13 +3,18 @@ import type {
   IDatabaseChange,
   NoteBlockDocType,
 } from '@harika/common';
-import type Dexie from 'dexie';
 import { applyChanges } from '../../../dexie-sync/applyChanges';
 import type { IConflictsResolver } from '../../../dexie-sync/ServerSynchronizer';
+import { ConsistencyResolver } from '../ConsistencyResolver/ConsistencyResolver';
+import type { VaultDexieDatabase } from '../DexieDb';
 import { NoteblocksChangesConflictResolver } from './NoteblocksChangesConflictResolver';
 
 export class ConflictsResolver implements IConflictsResolver {
-  constructor(private db: Dexie) {}
+  private consistencyResolver: ConsistencyResolver;
+
+  constructor(private db: VaultDexieDatabase) {
+    this.consistencyResolver = new ConsistencyResolver(db);
+  }
 
   async resolveChanges(
     clientChanges: IDatabaseChange[],
@@ -38,9 +43,9 @@ export class ConflictsResolver implements IConflictsResolver {
       ...serverChanges.filter(notesFilter),
     ];
 
-    console.log({ clientChanges, serverChanges, allChanges });
-
     await applyChanges(this.db, allChanges);
+
+    await this.consistencyResolver.resolve(allChanges);
   }
 
   tables() {

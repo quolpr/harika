@@ -294,10 +294,7 @@ export class NotesRepository {
           await Promise.all(
             linkedBlocks.map(async (block) => {
               await this.db.noteBlocks.update(block.id, {
-                linkedNoteIds: omitBy(
-                  block.linkedNoteIdsMap,
-                  (_val, key) => key === id,
-                ),
+                linkedNoteIds: block.linkedNoteIds.filter((key) => key !== id),
               });
             }),
           ),

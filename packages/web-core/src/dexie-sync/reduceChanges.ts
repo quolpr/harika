@@ -61,11 +61,11 @@ function combineCreateAndUpdate(
   nextChange: IUpdateChange,
 ) {
   const clonedChange = cloneDeep(prevChange); // Clone object before modifying since the earlier change in db.changes[] would otherwise be altered.
-  applyModifications(clonedChange.obj, nextChange.mods); // Apply modifications to existing object.
+  applyModifications(clonedChange.obj, nextChange.to); // Apply modifications to existing object.
   return clonedChange;
 }
 
-function applyModifications(obj: Object, modifications: IUpdateChange['mods']) {
+function applyModifications(obj: Object, modifications: IUpdateChange['to']) {
   Object.keys(modifications).forEach(function (keyPath) {
     set(obj, keyPath, modifications[keyPath]);
   });
@@ -76,33 +76,33 @@ function combineUpdateAndUpdate(
   nextChange: IUpdateChange,
 ) {
   const clonedChange = cloneDeep(prevChange); // Clone object before modifying since the earlier change in db.changes[] would otherwise be altered.
-  Object.keys(nextChange.mods).forEach(function (keyPath) {
+  Object.keys(nextChange.to).forEach(function (keyPath) {
     // If prev-change was changing a parent path of this keyPath, we must update the parent path rather than adding this keyPath
     let hadParentPath = false;
-    Object.keys(prevChange.mods)
+    Object.keys(prevChange.to)
       .filter(function (parentPath) {
         return keyPath.indexOf(parentPath + '.') === 0;
       })
       .forEach(function (parentPath) {
         set(
-          clonedChange.mods[parentPath],
+          clonedChange.to[parentPath],
           keyPath.substr(parentPath.length + 1),
-          nextChange.mods[keyPath],
+          nextChange.to[keyPath],
         );
         hadParentPath = true;
       });
     if (!hadParentPath) {
       // Add or replace this keyPath and its new value
-      clonedChange.mods[keyPath] = nextChange.mods[keyPath];
+      clonedChange.to[keyPath] = nextChange.to[keyPath];
     }
     // In case prevChange contained sub-paths to the new keyPath, we must make sure that those sub-paths are removed since
     // we must mimic what would happen if applying the two changes after each other:
-    Object.keys(prevChange.mods)
+    Object.keys(prevChange.to)
       .filter(function (subPath) {
         return subPath.indexOf(keyPath + '.') === 0;
       })
       .forEach(function (subPath) {
-        delete clonedChange.mods[subPath];
+        delete clonedChange.to[subPath];
       });
   });
   return clonedChange;

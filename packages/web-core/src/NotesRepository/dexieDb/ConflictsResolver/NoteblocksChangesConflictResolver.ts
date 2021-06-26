@@ -7,7 +7,7 @@ import {
   NoteBlockDocType,
 } from '@harika/common';
 import { cloneDeep } from 'lodash';
-import { pickBy, set } from 'lodash-es';
+import { difference, set, uniq } from 'lodash-es';
 import { reduceChanges } from '../../../dexie-sync/reduceChanges';
 
 export class NoteblocksChangesConflictResolver {
@@ -107,23 +107,26 @@ export class NoteblocksChangesConflictResolver {
     const noteBlockIdsSelector = (_v: any, k: string) =>
       k.startsWith('noteBlockIdsMap');
 
-    const linkedNoteIdsSelector = (_v: any, k: string) =>
-      k.startsWith('linkedNoteIdsMap');
+    const noteBlockIds = this.resolveIds(
+      change1.from.noteBlockIds || change2.from.noteBlockIds,
+      change1.to.noteBlockIds,
+      change2.to.noteBlockIds,
+    );
+
+    const linkedNoteIds = this.resolveIds(
+      change1.from.linkedNoteIds || change2.from.linkedNoteIds,
+      change1.to.linkedNoteIds,
+      change2.to.linkedNoteIds,
+    );
 
     finalMods = {
       ...finalMods,
-      ...this.resolveIds(
-        pickBy(change1.mods, noteBlockIdsSelector),
-        pickBy(change2.mods, noteBlockIdsSelector),
-      ),
-      ...this.resolveIds(
-        pickBy(change1.mods, linkedNoteIdsSelector),
-        pickBy(change2.mods, linkedNoteIdsSelector),
-      ),
-      ...this.resolveContent(change1.mods.content, change2.mods.content),
+      ...(linkedNoteIds === undefined ? {} : { linkedNoteIds }),
+      ...(noteBlockIds === undefined ? {} : { noteBlockIds }),
+      ...this.resolveContent(change1.to.content, change2.to.content),
     };
 
-    return { ...change2, mods: finalMods };
+    return { ...change2, to: finalMods };
   }
 
   private resolveContent(
@@ -137,19 +140,20 @@ export class NoteblocksChangesConflictResolver {
     return { content: `${content1}\n===\n${content2}` };
   }
 
-  private resolveIds(mods1: Record<string, any>, mods2: Record<string, any>) {
-    if (Object.values(mods1).length === 0) return mods2;
-    if (Object.values(mods2).length === 0) return mods1;
+  private resolveIds(
+    startIds: string[] | undefined,
+    ids1: string[] | undefined,
+    ids2: string[] | undefined,
+  ) {
+    if (startIds === undefined) return;
+    if (ids1 === undefined && ids2 === undefined) return;
+    if (ids1 === undefined) return ids2;
+    if (ids2 === undefined) return ids1;
 
-    const baseMods = cloneDeep(mods1);
+    const removedIds = difference(startIds, ids1);
+    removedIds.push(...difference(startIds, ids2));
 
-    Object.entries(mods2).forEach(([k, v]: [string, number | null]) => {
-      if (baseMods[k] && baseMods[k] === null) return;
-
-      baseMods[k] = v;
-    });
-
-    return baseMods;
+    return uniq(ids1.concat(ids2).filter((id) => !removedIds.includes(id)));
   }
 
   private resolveUpdateDelete(
@@ -158,7 +162,7 @@ export class NoteblocksChangesConflictResolver {
   ): ICreateChange<'noteBlocks', NoteBlockDocType> {
     const obj = cloneDeep(change2.obj);
 
-    Object.entries(change1.mods).forEach(function ([keyPath, val]) {
+    Object.entries(change1.to).forEach(function ([keyPath, val]) {
       set(obj, keyPath, val);
     });
 

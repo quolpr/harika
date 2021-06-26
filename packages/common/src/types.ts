@@ -158,13 +158,8 @@ export type NoteBlockDocType = {
   id: string;
   noteId: string;
 
-  // Map are used to easy track changes
-  noteBlockIdsMap: Record<string, number | null>;
-  linkedNoteIdsMap: Record<string, true | null>;
-
-  // This only used for indexing and are calculated in hooks
-  noteBlockIds?: string[];
-  linkedNoteIds?: string[];
+  noteBlockIds: string[];
+  linkedNoteIds: string[];
 
   content: string;
   createdAt: number;
@@ -173,7 +168,7 @@ export type NoteBlockDocType = {
 
 export interface ICreateChange<
   TableName extends string = string,
-  Obj extends object = object,
+  Obj extends Record<string, any> = Record<string, any>,
 > {
   type: DatabaseChangeType.Create;
   table: TableName;
@@ -184,19 +179,20 @@ export interface ICreateChange<
 
 export interface IUpdateChange<
   TableName extends string = string,
-  Obj extends object = object,
+  Obj extends Record<string, any> = Record<string, any>,
 > {
   type: DatabaseChangeType.Update;
   table: TableName;
   key: string;
   obj?: Obj; // new object
-  mods: { [keyPath: string]: any };
+  from: Partial<Obj>;
+  to: Partial<Obj>;
   source: string;
 }
 
 export interface IDeleteChange<
   TableName extends string = string,
-  Obj extends object = object,
+  Obj extends Record<string, any> = Record<string, any>,
 > {
   type: DatabaseChangeType.Delete;
   table: TableName;
@@ -207,7 +203,7 @@ export interface IDeleteChange<
 
 export type IDatabaseChange<
   TableName extends string = string,
-  Obj extends object = object,
+  Obj extends Record<string, any> = Record<string, any>,
 > =
   | ICreateChange<TableName, Obj>
   | IUpdateChange<TableName, Obj>

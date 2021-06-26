@@ -3,7 +3,7 @@ import { Subject } from 'rxjs';
 import { buffer, concatMap, debounceTime } from 'rxjs/operators';
 import { IDatabaseChange, DatabaseChangeType } from '@harika/common';
 import { globalChangesSubject } from './changesChannel';
-import { mapValues } from 'lodash-es';
+import { mapValues, pickBy } from 'lodash-es';
 
 type DistributiveOmit<T, K extends keyof any> = T extends any
   ? Omit<T, K>
@@ -260,12 +260,17 @@ export const startChangeLog = (db: Dexie, windowId: string) => {
                         (val) => (val === undefined ? null : val),
                       );
 
+                      const modsKeys = Object.keys(mods);
+
                       if (Object.values(mods).length !== 0) {
                         changesSubject.next({
                           table: tableName,
                           type: DatabaseChangeType.Update,
                           obj,
-                          mods: mods,
+                          from: pickBy(oldObjects[obj.id], (_v, k) =>
+                            modsKeys.includes(k),
+                          ),
+                          to: mods,
                           key: obj.id,
                           transactionSource: source,
                         });

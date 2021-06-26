@@ -36,8 +36,9 @@ export interface EntityChangeSchema {
   source: string;
   type: DatabaseChangeType;
   table: string;
-  obj?: Record<string, unknown>;
-  mods?: Record<string, unknown>;
+  obj?: Record<string, any>;
+  from?: Record<string, any>;
+  to?: Record<string, any>;
 
   ownerId: string;
   owner: User;

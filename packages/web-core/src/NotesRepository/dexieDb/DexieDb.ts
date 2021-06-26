@@ -1,7 +1,6 @@
 import type { Dayjs } from 'dayjs';
 import Dexie from 'dexie';
 import type { NoteDocType, NoteBlockDocType } from '@harika/common';
-import { pickBy } from 'lodash';
 import { set } from 'lodash-es';
 
 export class VaultDexieDatabase extends Dexie {
@@ -23,38 +22,6 @@ export class VaultDexieDatabase extends Dexie {
 
     this.noteBlocks = this.table('noteBlocks');
     this.notes = this.table('notes');
-
-    this.noteBlocks.hook('creating', (_key, obj) => {
-      obj.noteBlockIds = Object.keys(obj.noteBlockIdsMap);
-      obj.linkedNoteIds = Object.keys(obj.linkedNoteIdsMap);
-    });
-
-    this.noteBlocks.hook(
-      'updating',
-      (mods: Partial<NoteBlockDocType>, _key, obj) => {
-        const partialMods = pickBy(
-          mods,
-          (_v, k) =>
-            k.startsWith('linkedNoteIdsMap') || k.startsWith('noteBlockIdsMap'),
-        );
-
-        const partialObj = {
-          noteBlockIdsMap: { ...obj.noteBlockIdsMap },
-          linkedNoteIdsMap: { ...obj.linkedNoteIdsMap },
-        };
-
-        applyModifications(partialObj, partialMods);
-
-        const newLinkedNoteIds = Object.keys(partialObj.linkedNoteIdsMap);
-        const newNoteBlockIds = Object.keys(partialObj.noteBlockIdsMap);
-
-        mods.noteBlockIds = newNoteBlockIds.length > 0 ? newNoteBlockIds : [];
-        mods.linkedNoteIds =
-          newLinkedNoteIds.length > 0 ? newLinkedNoteIds : [];
-
-        return mods;
-      },
-    );
   }
 
   get noteBlocksQueries() {

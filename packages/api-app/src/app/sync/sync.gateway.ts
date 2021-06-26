@@ -360,66 +360,17 @@ function reduceChanges(changes: IDatabaseChange[]) {
     return set;
   }, {} as Record<string, IDatabaseChange>);
 }
-function resolveConflicts(
-  clientChanges: IDatabaseChange[],
-  serverChangeSet: Record<string, IDatabaseChange>,
-) {
-  const resolved: IDatabaseChange[] = [];
-
-  console.log(inspect({ clientChanges, serverChangeSet }, false, 6));
-
-  clientChanges.forEach(function (clientChange) {
-    const id = clientChange.table + ':' + clientChange.key;
-    const serverChange = serverChangeSet[id];
-    if (!serverChange) {
-      // No server change on same object. Totally conflict free!
-      resolved.push(clientChange);
-    } else if (serverChange.type == DatabaseChangeType.Update) {
-      // Server change overlaps. Only if server change is not CREATE or DELETE, we should consider merging in the client change.
-      switch (clientChange.type) {
-        case DatabaseChangeType.Create:
-          // Server has updated an object with same key as client has recreated. Let the client recreation go through, but also apply server modifications.
-          applyModifications(clientChange.obj, serverChange.mods); // No need to clone clientChange.obj beofre applying modifications since noone else refers to clientChanges (it was retrieved from the socket connection in current request)
-          resolved.push(clientChange);
-          break;
-        case DatabaseChangeType.Update:
-          // Server and client has updated the same obejct. Just remove any overlapping keyPaths and only apply non-conflicting parts.
-          Object.keys(serverChange.mods).forEach(function (keyPath) {
-            // Remote this property from the client change
-            delete clientChange.mods[keyPath];
-            // Also, remote all changes to nestled objects under this keyPath from the client change:
-            Object.keys(clientChange.mods).forEach(function (clientKeyPath) {
-              if (clientKeyPath.indexOf(keyPath + '.') == 0) {
-                delete clientChange.mods[clientKeyPath];
-              }
-            });
-          });
-          // Did we delete all keyPaths in the modification set of the clientChange?
-          if (Object.keys(clientChange.mods).length > 0) {
-            // No, there were some still there. Let this wing-clipped change be applied:
-            resolved.push(clientChange);
-          }
-          break;
-        case DatabaseChangeType.Delete:
-          // Delete always win over update. Even client over a server
-          resolved.push(clientChange);
-          break;
-      }
-    } // else if serverChange.type is CREATE or DELETE, dont push anything to resolved, because the client change is not of any interest (CREATE or DELETE would eliminate any client change with same key!)
-  });
-  return resolved;
-}
 
 function combineCreateAndUpdate(
   prevChange: ICreateChange,
   nextChange: IUpdateChange,
 ) {
   const clonedChange = cloneDeep(prevChange); // Clone object before modifying since the earlier change in db.changes[] would otherwise be altered.
-  applyModifications(clonedChange.obj, nextChange.mods); // Apply modifications to existing object.
+  applyModifications(clonedChange.obj, nextChange.to); // Apply modifications to existing object.
   return clonedChange;
 }
 
-function applyModifications(obj: object, modifications: IUpdateChange['mods']) {
+function applyModifications(obj: object, modifications: IUpdateChange['to']) {
   Object.keys(modifications).forEach(function (keyPath) {
     set(obj, keyPath, modifications[keyPath]);
   });
@@ -430,33 +381,33 @@ function combineUpdateAndUpdate(
   nextChange: IUpdateChange,
 ) {
   const clonedChange = cloneDeep(prevChange); // Clone object before modifying since the earlier change in db.changes[] would otherwise be altered.
-  Object.keys(nextChange.mods).forEach(function (keyPath) {
+  Object.keys(nextChange.to).forEach(function (keyPath) {
     // If prev-change was changing a parent path of this keyPath, we must update the parent path rather than adding this keyPath
     let hadParentPath = false;
-    Object.keys(prevChange.mods)
+    Object.keys(prevChange.to)
       .filter(function (parentPath) {
         return keyPath.indexOf(parentPath + '.') === 0;
       })
       .forEach(function (parentPath) {
         set(
-          clonedChange.mods[parentPath],
+          clonedChange.to[parentPath],
           keyPath.substr(parentPath.length + 1),
-          nextChange.mods[keyPath],
+          nextChange.to[keyPath],
         );
         hadParentPath = true;
       });
     if (!hadParentPath) {
       // Add or replace this keyPath and its new value
-      clonedChange.mods[keyPath] = nextChange.mods[keyPath];
+      clonedChange.to[keyPath] = nextChange.to[keyPath];
     }
     // In case prevChange contained sub-paths to the new keyPath, we must make sure that those sub-paths are removed since
     // we must mimic what would happen if applying the two changes after each other:
-    Object.keys(prevChange.mods)
+    Object.keys(prevChange.to)
       .filter(function (subPath) {
         return subPath.indexOf(keyPath + '.') === 0;
       })
       .forEach(function (subPath) {
-        delete clonedChange.mods[subPath];
+        delete clonedChange.to[subPath];
       });
   });
   return clonedChange;

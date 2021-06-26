@@ -6,11 +6,16 @@ import {
 } from '@harika/common';
 import { NoteblocksChangesConflictResolver } from './NoteblocksChangesConflictResolver';
 
-const updateChange = (key: string, mods: object): INoteBlockChangeEvent => {
+const updateChange = (
+  key: string,
+  from: object,
+  to: object,
+): INoteBlockChangeEvent => {
   return {
     table: 'noteBlocks',
     type: DatabaseChangeType.Update,
-    mods: mods,
+    from,
+    to,
     key,
     source: 'source',
   };
@@ -51,54 +56,82 @@ describe('NoteblocksChangesConflictResolver', () => {
         context('when noteBlockIds conflicted', () => {
           it('merge them', () => {
             const clientChanges: INoteBlockChangeEvent[] = [
-              updateChange('111', {
-                'noteBlockIds.333': 0,
-                'noteBlockIds.444': 1,
-              }),
+              updateChange(
+                '111',
+                {
+                  noteBlockIds: [],
+                },
+                {
+                  noteBlockIds: ['333', '444'],
+                },
+              ),
             ];
 
             const serverChanges: INoteBlockChangeEvent[] = [
-              updateChange('111', {
-                'noteBlockIds.555': 1,
-              }),
+              updateChange(
+                '111',
+
+                {
+                  noteBlockIds: [],
+                },
+                {
+                  noteBlockIds: ['555'],
+                },
+              ),
             ];
 
             expect(
               resolver.resolveConflicts(clientChanges, serverChanges).changes,
             ).to.deep.eq([
-              updateChange('111', {
-                'noteBlockIds.333': 0,
-                'noteBlockIds.444': 1,
-                'noteBlockIds.555': 1,
-              }),
+              updateChange(
+                '111',
+                {
+                  noteBlockIds: [],
+                },
+                {
+                  noteBlockIds: ['333', '444', '555'],
+                },
+              ),
             ]);
           });
 
           it('merge delete them', () => {
             const clientChanges: INoteBlockChangeEvent[] = [
-              updateChange('111', {
-                'noteBlockIds.333': 0,
-                'noteBlockIds.444': null,
-                'noteBlockIds.555': 1,
-              }),
+              updateChange(
+                '111',
+                {
+                  noteBlockIds: ['333', '444', '555'],
+                },
+                {
+                  noteBlockIds: ['333', '777'],
+                },
+              ),
             ];
 
             const serverChanges: INoteBlockChangeEvent[] = [
-              updateChange('111', {
-                'noteBlockIds.333': null,
-                'noteBlockIds.666': null,
-              }),
+              updateChange(
+                '111',
+                {
+                  noteBlockIds: ['333', '444', '555'],
+                },
+                {
+                  noteBlockIds: [],
+                },
+              ),
             ];
 
             expect(
               resolver.resolveConflicts(clientChanges, serverChanges).changes,
             ).to.deep.eq([
-              updateChange('111', {
-                'noteBlockIds.333': null,
-                'noteBlockIds.444': null,
-                'noteBlockIds.555': 1,
-                'noteBlockIds.666': null,
-              }),
+              updateChange(
+                '111',
+                {
+                  noteBlockIds: ['333', '444', '555'],
+                },
+                {
+                  noteBlockIds: ['777'],
+                },
+              ),
             ]);
           });
         });
@@ -106,27 +139,41 @@ describe('NoteblocksChangesConflictResolver', () => {
         context('when linkedNoteIds conflicted', () => {
           it('uniq merge them', () => {
             const clientChanges: INoteBlockChangeEvent[] = [
-              updateChange('123', {
-                'linkedNoteIds.111': true,
-                'linkedNoteIds.345': null,
-              }),
+              updateChange(
+                '123',
+                {
+                  noteBlockIds: [],
+                },
+                {
+                  noteBlockIds: ['111', '345'],
+                },
+              ),
             ];
             const serverChanges: INoteBlockChangeEvent[] = [
-              updateChange('123', {
-                'linkedNoteIds.111': true,
-                'linkedNoteIds.345': true,
-                'linkedNoteIds.567': true,
-              }),
+              updateChange(
+                '123',
+
+                {
+                  noteBlockIds: [],
+                },
+                {
+                  noteBlockIds: ['111', '345', '567'],
+                },
+              ),
             ];
 
             expect(
               resolver.resolveConflicts(clientChanges, serverChanges).changes,
             ).to.deep.eq([
-              updateChange('123', {
-                'linkedNoteIds.111': true,
-                'linkedNoteIds.345': true,
-                'linkedNoteIds.567': true,
-              }),
+              updateChange(
+                '123',
+                {
+                  noteBlockIds: [],
+                },
+                {
+                  noteBlockIds: ['111', '345', '567'],
+                },
+              ),
             ]);
           });
         });
@@ -134,22 +181,34 @@ describe('NoteblocksChangesConflictResolver', () => {
         context('when content conflicted', () => {
           it('merges them', () => {
             const clientChanges: INoteBlockChangeEvent[] = [
-              updateChange('123', {
-                content: '123',
-              }),
+              updateChange(
+                '123',
+                { content: '' },
+                {
+                  content: '123',
+                },
+              ),
             ];
             const serverChanges: INoteBlockChangeEvent[] = [
-              updateChange('123', {
-                content: '456',
-              }),
+              updateChange(
+                '123',
+                { content: '' },
+                {
+                  content: '456',
+                },
+              ),
             ];
 
             expect(
               resolver.resolveConflicts(clientChanges, serverChanges).changes,
             ).to.deep.eq([
-              updateChange('123', {
-                content: '123\n===\n456',
-              }),
+              updateChange(
+                '123',
+                { content: '' },
+                {
+                  content: '123\n===\n456',
+                },
+              ),
             ]);
           });
         });
@@ -173,16 +232,20 @@ describe('NoteblocksChangesConflictResolver', () => {
           deleteChange('123', {
             id: '123',
             noteId: '555',
-            noteBlockIdsMap: { '111': 0 },
-            linkedNoteIdsMap: { '222': true },
+            noteBlockIds: ['111'],
+            linkedNoteIds: ['222'],
             content: 'test',
             createdAt: 0,
           }),
         ];
         const serverChanges: INoteBlockChangeEvent[] = [
-          updateChange('123', {
-            content: 'test2',
-          }),
+          updateChange(
+            '123',
+            { content: '' },
+            {
+              content: 'test2',
+            },
+          ),
         ];
 
         expect(
@@ -191,8 +254,8 @@ describe('NoteblocksChangesConflictResolver', () => {
           createChange('123', {
             id: '123',
             noteId: '555',
-            noteBlockIdsMap: { '111': 0 },
-            linkedNoteIdsMap: { '222': true },
+            noteBlockIds: ['111'],
+            linkedNoteIds: ['222'],
             content: 'test2',
             createdAt: 0,
           }),
@@ -245,8 +308,8 @@ describe('NoteblocksChangesConflictResolver', () => {
         deleteChange('123', {
           id: '123',
           noteId: '555',
-          noteBlockIdsMap: { '111': 0 },
-          linkedNoteIdsMap: { '222': true },
+          noteBlockIds: ['111'],
+          linkedNoteIds: ['222'],
           content: 'test',
           createdAt: 0,
         }),
@@ -255,8 +318,8 @@ describe('NoteblocksChangesConflictResolver', () => {
         deleteChange('123', {
           id: '123',
           noteId: '555',
-          noteBlockIdsMap: { '111': 0 },
-          linkedNoteIdsMap: { '222': true },
+          noteBlockIds: ['111'],
+          linkedNoteIds: ['222'],
           content: 'test',
           createdAt: 0,
         }),

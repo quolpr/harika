@@ -28,8 +28,8 @@ async function bulkUpdate(table: Table, changes: IUpdateChange[]) {
   // and generate array of resulting objects to put using bulkPut():
   let objsToPut = updatesThatApply.map((c_2) => {
     let curr = map[c_2.key + ''];
-    Object.keys(c_2.mods).forEach((keyPath) => {
-      Dexie.setByKeyPath(curr, keyPath, c_2.mods[keyPath]);
+    Object.keys(c_2.to).forEach((keyPath) => {
+      Dexie.setByKeyPath(curr, keyPath, c_2.to[keyPath]);
     });
     return curr;
   });

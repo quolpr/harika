@@ -1,4 +1,4 @@
-import { difference, groupBy, uniq } from 'lodash-es';
+import { groupBy, uniq } from 'lodash-es';
 import type { VaultDexieDatabase } from './DexieDb';
 
 export class ConflictsResolver {
@@ -62,39 +62,16 @@ export class ConflictsResolver {
           rootBlocks.forEach((noteBlock) => {
             if (noteBlock.id === oldestRootBlock.id) return;
 
-            oldestRootBlock.noteBlockIdsMap = [
-              ...oldestRootBlock.noteBlockIdsMap,
-              ...noteBlock.noteBlockIdsMap,
+            oldestRootBlock.noteBlockIds = [
+              ...oldestRootBlock.noteBlockIds,
+              ...noteBlock.noteBlockIds,
             ];
           });
-
-          const noteBlocksExceptOldest =
-            await db.noteBlocksQueries.getByNoteIds(
-              notesWithoutOldest.map(({ id }) => id),
-            );
 
           const linkedBlocks =
             await db.noteBlocksQueries.getLinkedBlocksOfNoteIds(
               notesWithoutOldestIds,
             );
-
-          // updating to correct parentBlockId and note id
-          await Promise.all(
-            // could be done with bulPut or bulkUpdate when released
-            noteBlocksExceptOldest.map(async (block) => {
-              await db.noteBlocks.update(block.id, {
-                ...block,
-                noteId: oldestNote.id,
-                parentBlockId:
-                  block.parentBlockId &&
-                  nonOldestRootBlocks
-                    .map(({ id }) => id)
-                    .includes(block.parentBlockId)
-                    ? oldestRootBlock.id
-                    : block.parentBlockId,
-              });
-            }),
-          );
 
           // updating all old note refs from other noteBlocks
           await Promise.all(
@@ -102,7 +79,7 @@ export class ConflictsResolver {
               await db.noteBlocks.update(block.id, {
                 ...block,
                 linkedNoteIds: uniq(
-                  block.linkedNoteIdsMap.map((id) =>
+                  block.linkedNoteIds.map((id) =>
                     notesWithoutOldestIds.includes(id) ? oldestNote.id : id,
                   ),
                 ),
@@ -115,41 +92,9 @@ export class ConflictsResolver {
             nonOldestRootBlocks.map(({ id }) => id),
           );
           await db.notes.bulkDelete(notesWithoutOldestIds);
-
-          await this.resolveHiddenNoteBlock(blockIdsToCheck);
         }),
       );
     });
-  }
-
-  // Hidden noteblicks could be when noteBlock.noteBlockIds have not all
-  // noteblocks cause of merge conflict resolving
-  private async resolveHiddenNoteBlock(ids: string[]) {
-    const noteBlocks = await this.db.noteBlocksQueries.getByIds(ids);
-
-    const noteBlocksByParents = await this.db.noteBlocksQueries.getByParentIds(
-      noteBlocks.map(({ id }) => id),
-    );
-
-    await Promise.all(
-      noteBlocks.map(async (noteBlock) => {
-        const childrenByParentIds = noteBlocksByParents
-          .filter((b) => b.parentBlockId === noteBlock.id)
-          .map(({ id }) => id);
-
-        const missedIds = difference(
-          childrenByParentIds,
-          noteBlock.noteBlockIdsMap,
-        );
-
-        noteBlock.noteBlockIdsMap = [
-          ...noteBlock.noteBlockIdsMap,
-          ...missedIds,
-        ];
-
-        await this.db.noteBlocks.update(noteBlock.id, noteBlock);
-      }),
-    );
   }
 
   private async getConflicts() {
