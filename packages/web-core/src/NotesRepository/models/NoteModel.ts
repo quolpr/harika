@@ -48,6 +48,10 @@ export const noteRef = customRef<NoteModel>('harika/NoteRef', {
 
 const modelType = 'harika/NoteModel';
 
+export const generateRootBlockId = (noteId: string) => `${noteId}-rootBlock`;
+export const generateConflictedRootBlockId = (noteId: string) =>
+  `${noteId}-conflictedRootBlock`;
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const isNoteModel = (model: any): model is NoteModel =>
   '$modelType' in model && model.$modelType === modelType;
@@ -63,6 +67,21 @@ export class NoteModel extends Model({
   isDeleted: prop<boolean>(false),
   rootBlockRef: prop<Ref<NoteBlockModel>>(),
 }) {
+  @computed
+  get childParentRelations() {
+    const relations: Record<string, string> = {};
+
+    Object.values(this.vault.blocksMap).forEach((block) => {
+      if (block.noteRef.id === this.$modelId) {
+        block.noteBlockRefs.forEach((childRef) => {
+          relations[childRef.id] = block.$modelId;
+        });
+      }
+    });
+
+    return relations;
+  }
+
   @computed
   get vault() {
     return findParent<VaultModel>(this, isVault)!;
@@ -109,7 +128,6 @@ export class NoteModel extends Model({
       createdAt: new Date().getTime(),
       noteRef: noteRef(this),
       noteBlockRefs: [],
-      parentBlockRef: noteBlockRef(parent),
       linkedNoteRefs: [],
       ...omit(attrs, '$modelId'),
     });
@@ -127,14 +145,12 @@ export class NoteModel extends Model({
       ModelCreationData<NoteBlockModel>,
       'createdAt' | 'noteRef' | 'noteBlockRefs' | 'linkedNoteRefs'
     >,
-    parent: NoteBlockModel,
   ) {
     return new NoteBlockModel({
       $modelId: attrs.$modelId ? attrs.$modelId : generateId(),
       createdAt: new Date().getTime(),
       noteRef: noteRef(this),
       noteBlockRefs: [],
-      parentBlockRef: noteBlockRef(parent),
       linkedNoteRefs: [],
       ...omit(attrs, '$modelId'),
     });

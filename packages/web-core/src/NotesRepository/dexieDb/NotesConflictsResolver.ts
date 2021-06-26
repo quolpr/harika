@@ -62,9 +62,9 @@ export class ConflictsResolver {
           rootBlocks.forEach((noteBlock) => {
             if (noteBlock.id === oldestRootBlock.id) return;
 
-            oldestRootBlock.noteBlockIds = [
-              ...oldestRootBlock.noteBlockIds,
-              ...noteBlock.noteBlockIds,
+            oldestRootBlock.noteBlockIdsMap = [
+              ...oldestRootBlock.noteBlockIdsMap,
+              ...noteBlock.noteBlockIdsMap,
             ];
           });
 
@@ -102,7 +102,7 @@ export class ConflictsResolver {
               await db.noteBlocks.update(block.id, {
                 ...block,
                 linkedNoteIds: uniq(
-                  block.linkedNoteIds.map((id) =>
+                  block.linkedNoteIdsMap.map((id) =>
                     notesWithoutOldestIds.includes(id) ? oldestNote.id : id,
                   ),
                 ),
@@ -139,10 +139,13 @@ export class ConflictsResolver {
 
         const missedIds = difference(
           childrenByParentIds,
-          noteBlock.noteBlockIds,
+          noteBlock.noteBlockIdsMap,
         );
 
-        noteBlock.noteBlockIds = [...noteBlock.noteBlockIds, ...missedIds];
+        noteBlock.noteBlockIdsMap = [
+          ...noteBlock.noteBlockIdsMap,
+          ...missedIds,
+        ];
 
         await this.db.noteBlocks.update(noteBlock.id, noteBlock);
       }),

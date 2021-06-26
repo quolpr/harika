@@ -4,7 +4,7 @@ import { startChangeLog } from './changesLogger';
 import { CommandsExecuter } from './CommandsExecuter';
 import { ConnectionInitializer } from './connection/ConnectionInitializer';
 import { ServerConnector } from './connection/ServerConnector';
-import { ServerSynchronizer } from './ServerSynchronizer';
+import { IConflictsResolver, ServerSynchronizer } from './ServerSynchronizer';
 import { SyncStatusService } from './SyncStatusService';
 
 export const initSync = (
@@ -12,6 +12,7 @@ export const initSync = (
   dbId: string,
   windowId: string,
   url: string,
+  conflictResolver: IConflictsResolver,
 ) => {
   startChangeLog(db, windowId);
 
@@ -43,6 +44,7 @@ export const initSync = (
     commandExecuter,
     serverConnector,
     connectionInitializer,
+    conflictResolver,
     stop$,
   );
 

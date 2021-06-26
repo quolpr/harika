@@ -19,14 +19,16 @@ export abstract class BaseSyncEntitiesService implements SyncEntitiesService {
   ) {}
 
   async getLastRev(scopeId: string, ownerId: string): Promise<number> {
-    return (
+    const result = (
       await this.entityChangesRepo
         .createQueryBuilder('changes')
         .select(['MAX(changes.rev)'])
         .where('changes.scopeId = :scopeId', { scopeId })
         .andWhere('changes.ownerId = :ownerId', { ownerId })
         .getRawOne()
-    ).max as number;
+    ).max as number | number;
+
+    return result === null ? 0 : result;
   }
 
   async getChangesFromRev(
@@ -97,6 +99,7 @@ export abstract class BaseSyncEntitiesService implements SyncEntitiesService {
                 change.table,
                 change.key,
                 clientIdentity,
+                change.obj,
                 manager,
               ),
             );
@@ -113,24 +116,24 @@ export abstract class BaseSyncEntitiesService implements SyncEntitiesService {
     ownerId: string,
     table: string,
     key: string,
-    obj: Record<string, unknown>,
+    obj: object,
     clientIdentity: string,
     manager: EntityManager,
   ) {
-    await this.vaultEntitiesRepo
-      .createQueryBuilder()
-      .insert()
-      .values({
-        scopeId,
-        ownerId,
-        key,
-        // eslint-disable-next-line @typescript-eslint/ban-types
-        obj: obj as object,
-      })
-      .onConflict(
-        '("ownerId", "scopeId", "key") DO UPDATE SET "obj" = excluded."obj"',
-      )
-      .execute();
+    // await this.vaultEntitiesRepo
+    //   .createQueryBuilder()
+    //   .insert()
+    //   .values({
+    //     scopeId,
+    //     ownerId,
+    //     key,
+    //     // eslint-disable-next-line @typescript-eslint/ban-types
+    //     obj: obj as object,
+    //   })
+    //   .onConflict(
+    //     '("ownerId", "scopeId", "key") DO UPDATE SET "obj" = excluded."obj"',
+    //   )
+    //   .execute();
 
     const change = this.entityChangesRepo.create({
       key,
@@ -154,15 +157,15 @@ export abstract class BaseSyncEntitiesService implements SyncEntitiesService {
     clientIdentity: string,
     manager: EntityManager,
   ) {
-    const entity = await this.vaultEntitiesRepo.findOne({ key });
+    // const entity = await this.vaultEntitiesRepo.findOne({ key });
 
-    if (!entity) {
-      throw new Error(`entity not found with key ${key}`);
-    }
+    // if (!entity) {
+    //   throw new Error(`entity not found with key ${key}`);
+    // }
 
-    applyModifications(entity.obj, modifications);
+    // applyModifications(entity.obj, modifications);
 
-    await manager.save(entity);
+    // await manager.save(entity);
 
     const change = this.entityChangesRepo.create({
       key: key,
@@ -183,13 +186,14 @@ export abstract class BaseSyncEntitiesService implements SyncEntitiesService {
     table: string,
     key: string,
     clientIdentity: string,
+    obj: object,
     manager: EntityManager,
   ) {
-    try {
-      await this.vaultEntitiesRepo.delete({ key });
-    } catch (e) {
-      console.error(`Failed to remove entity with key ${key}`);
-    }
+    // try {
+    //   await this.vaultEntitiesRepo.delete({ key });
+    // } catch (e) {
+    //   console.error(`Failed to remove entity with key ${key}`);
+    // }
 
     const change = this.entityChangesRepo.create({
       key: key,
@@ -198,6 +202,7 @@ export abstract class BaseSyncEntitiesService implements SyncEntitiesService {
       table: table,
       scopeId: scopeId,
       ownerId,
+      obj,
     });
 
     return (await this.saveChangeWithIncrement(manager, change)).rev;

@@ -5,6 +5,7 @@ import { fromEvent, merge, Subject } from 'rxjs';
 export type ITransmittedChange = IDatabaseChange & {
   fromServer: boolean;
   windowId: string;
+  transactionSource: string;
 };
 
 export const globalChangesSubject = new Subject<ITransmittedChange[]>();

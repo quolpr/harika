@@ -9,7 +9,7 @@ import type { VaultModel } from './NotesRepository/models/VaultModel';
 import type { VaultDexieDatabase } from './NotesRepository/dexieDb/DexieDb';
 import { loadNoteDocToModelAttrs } from './NotesRepository/dexieDb/convertDocToModel';
 import { distinctUntilChanged, map } from 'rxjs/operators';
-import { uniq, uniqBy } from 'lodash-es';
+import { omitBy, uniq, uniqBy } from 'lodash-es';
 import { filterAst } from './NotesRepository/models/NoteBlockModel/blockParser/astHelpers';
 import type { RefToken } from './NotesRepository/models/NoteBlockModel/blockParser/types';
 import { from, Observable } from 'rxjs';
@@ -294,8 +294,9 @@ export class NotesRepository {
           await Promise.all(
             linkedBlocks.map(async (block) => {
               await this.db.noteBlocks.update(block.id, {
-                linkedNoteIds: block.linkedNoteIds.filter(
-                  (linkedId) => id !== linkedId,
+                linkedNoteIds: omitBy(
+                  block.linkedNoteIdsMap,
+                  (_val, key) => key === id,
                 ),
               });
             }),

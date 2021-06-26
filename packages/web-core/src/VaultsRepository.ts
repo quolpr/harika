@@ -10,6 +10,8 @@ import { liveQuery } from 'dexie';
 import { from, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { generateId } from '@harika/common';
+import { ConflictsResolver } from './NotesRepository/dexieDb/ConflictsResolver/ConflictsResolver';
+import { UserDbConflictsResolver } from './UserDbConflictResolver';
 
 const windowId = generateId();
 
@@ -36,6 +38,7 @@ export class VaultsRepository {
         this.dbId,
         windowId,
         `${this.config.wsUrl}/api/user`,
+        new UserDbConflictsResolver(this.database),
       );
     }
   }
@@ -111,7 +114,13 @@ export class VaultsRepository {
     const repo = new NotesRepository(db, vault);
 
     if (this.sync) {
-      initSync(db, db.id, windowId, `${this.config.wsUrl}/api/vault`);
+      initSync(
+        db,
+        db.id,
+        windowId,
+        `${this.config.wsUrl}/api/vault`,
+        new ConflictsResolver(db),
+      );
     }
 
     return repo;

@@ -33,7 +33,6 @@ export const addTokensToNoteBlock = (
     createdAt: new Date().getTime(),
     noteRef: noteRef(note),
     noteBlockRefs: [],
-    parentBlockRef: undefined,
     linkedNoteRefs: [],
     content: new BlockContentModel({ value: '' }),
   });
@@ -64,7 +63,6 @@ export const addTokensToNoteBlock = (
       createdAt: new Date().getTime(),
       noteRef: noteRef(note),
       noteBlockRefs: [],
-      parentBlockRef: noteBlockRef(parentBlock.model),
       linkedNoteRefs: [],
       content: new BlockContentModel({ value: token.content }),
     });

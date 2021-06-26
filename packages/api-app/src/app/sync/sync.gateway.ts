@@ -116,6 +116,7 @@ export abstract class SyncGateway
   async handleGetChanges(client: Socket, command: GetChangesRequest) {
     const state = this.getSocketState(client);
 
+    console.log('get changes!');
     if (state.type !== 'initialized')
       throw "Can't send changes to uninitialized client";
 
@@ -178,6 +179,11 @@ export abstract class SyncGateway
         `[${state.scopeId}] [${
           state.clientIdentity
         }] receivedChangesFromClient - ${inspect(request, false, 6)}`,
+      );
+
+      console.log(
+        request.data.lastAppliedRemoteRevision,
+        await this.syncEntities.getLastRev(state.scopeId, state.currentUserId),
       );
 
       // TODO: lock should start here
@@ -413,10 +419,7 @@ function combineCreateAndUpdate(
   return clonedChange;
 }
 
-function applyModifications(
-  obj: Record<string, unknown>,
-  modifications: IUpdateChange['mods'],
-) {
+function applyModifications(obj: object, modifications: IUpdateChange['mods']) {
   Object.keys(modifications).forEach(function (keyPath) {
     set(obj, keyPath, modifications[keyPath]);
   });

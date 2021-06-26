@@ -21,13 +21,18 @@ export const convertNoteBlockDocToModelAttrs = (
     $modelId: doc.id,
     content: new BlockContentModel({ value: doc.content }),
     createdAt: doc.createdAt,
-    parentBlockRef: doc.parentBlockId
-      ? noteBlockRef(doc.parentBlockId)
-      : undefined,
     noteRef: noteRef(doc.noteId),
     // null == undefined for dexieDB modifications
-    noteBlockRefs: doc.noteBlockIds.filter(Boolean).map((b) => noteBlockRef(b)),
-    linkedNoteRefs: doc.linkedNoteIds.filter(Boolean).map((n) => noteRef(n)),
+    noteBlockRefs: (
+      Object.entries(doc.noteBlockIdsMap).filter(
+        ([, order]) => order !== null,
+      ) as [string, number][]
+    )
+      .sort(([, order1], [, order2]) => order1 - order2)
+      .map(([id]) => noteBlockRef(id)),
+    linkedNoteRefs: Object.entries(doc.linkedNoteIdsMap)
+      .filter(([, v]) => v !== null)
+      .map(([k]) => noteRef(k)),
   };
 };
 

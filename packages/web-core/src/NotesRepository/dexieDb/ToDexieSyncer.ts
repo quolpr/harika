@@ -55,11 +55,14 @@ const mapNoteBlock = (model: NoteBlockModel): NoteBlockDocType => {
   return {
     id: model.$modelId,
     noteId: model.noteRef.id,
-    parentBlockId: model.parentBlockRef?.id,
     content: model.content.value,
     createdAt: model.createdAt,
-    noteBlockIds: model.noteBlockRefs.map(({ id }) => id),
-    linkedNoteIds: model.linkedNoteRefs.map(({ id }) => id),
+    noteBlockIdsMap: Object.fromEntries(
+      model.noteBlockRefs.map(({ id }, i) => [id, i]),
+    ),
+    linkedNoteIdsMap: Object.fromEntries(
+      model.linkedNoteRefs.map(({ id }) => [id, true]),
+    ),
   };
 };
 

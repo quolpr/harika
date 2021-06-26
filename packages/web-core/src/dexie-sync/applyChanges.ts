@@ -4,10 +4,8 @@ import {
   IDeleteChange,
   ICreateChange,
   IUpdateChange,
+  IDatabaseChange,
 } from '@harika/common';
-import { maxBy } from 'lodash-es';
-import type { IServerChangesRow } from './ServerSynchronizer';
-import type { ISyncStatus } from './SyncStatusService';
 
 async function bulkUpdate(table: Table, changes: IUpdateChange[]) {
   let keys = changes.map((c) => c.key);
@@ -38,7 +36,7 @@ async function bulkUpdate(table: Table, changes: IUpdateChange[]) {
   return await table.bulkPut(objsToPut);
 }
 
-export function applyChanges(db: Dexie, changeRows: IServerChangesRow[]) {
+export function applyChanges(db: Dexie, changes: IDatabaseChange[]) {
   let collectedChanges: Record<
     string,
     {
@@ -48,67 +46,56 @@ export function applyChanges(db: Dexie, changeRows: IServerChangesRow[]) {
     }
   > = {};
 
-  changeRows.forEach((row) => {
-    if (!collectedChanges.hasOwnProperty(row.change.table)) {
-      collectedChanges[row.change.table] = {
+  changes.forEach((change) => {
+    if (!collectedChanges.hasOwnProperty(change.table)) {
+      collectedChanges[change.table] = {
         [DatabaseChangeType.Create]: [],
         [DatabaseChangeType.Delete]: [],
         [DatabaseChangeType.Update]: [],
       };
     }
-    collectedChanges[row.change.table][row.change.type].push(row.change as any);
+    collectedChanges[change.table][change.type].push(change as any);
   });
 
   let tableNames = Object.keys(collectedChanges);
-  let tables = tableNames.map((table) => db.table(table));
 
-  const maxRevision = maxBy(
-    changeRows,
-    ({ receivedAtRevisionOfServer }) => receivedAtRevisionOfServer,
-  )?.receivedAtRevisionOfServer;
+  // const maxRevision = maxBy(
+  //   changeRows,
+  //   ({ receivedAtRevisionOfServer }) => receivedAtRevisionOfServer,
+  // )?.receivedAtRevisionOfServer;
 
-  console.log({ maxRevision });
+  // console.log({ maxRevision });
 
-  if (maxRevision === undefined)
-    throw new Error('Max revision could not be undefined');
+  // if (maxRevision === undefined)
+  //   throw new Error('Max revision could not be undefined');
+  return Promise.all(
+    tableNames.map(async (table_name) => {
+      const table = db.table(table_name);
+      const specifyKeys = !table.schema.primKey.keyPath;
+      const createChangesToApply =
+        collectedChanges[table_name][DatabaseChangeType.Create];
+      const deleteChangesToApply =
+        collectedChanges[table_name][DatabaseChangeType.Delete];
+      const updateChangesToApply =
+        collectedChanges[table_name][DatabaseChangeType.Update];
 
-  return db.transaction(
-    'rw',
-    [...tables, db.table('_syncStatus'), db.table('_changesFromServer')],
-    async () => {
-      await Promise.all(
-        tableNames.map(async (table_name) => {
-          // @ts-ignore
-          Dexie.currentTransaction.source = 'serverChanges';
-
-          const table = db.table(table_name);
-          const specifyKeys = !table.schema.primKey.keyPath;
-          const createChangesToApply =
-            collectedChanges[table_name][DatabaseChangeType.Create];
-          const deleteChangesToApply =
-            collectedChanges[table_name][DatabaseChangeType.Delete];
-          const updateChangesToApply =
-            collectedChanges[table_name][DatabaseChangeType.Update];
-
-          if (createChangesToApply.length > 0)
-            await table.bulkPut(
-              createChangesToApply.map((c) => c.obj),
-              specifyKeys ? createChangesToApply.map((c) => c.key) : undefined,
-            );
-          if (updateChangesToApply.length > 0)
-            await bulkUpdate(table, updateChangesToApply);
-          if (deleteChangesToApply.length > 0)
-            await table.bulkDelete(deleteChangesToApply.map((c) => c.key));
-        }),
-      );
-
-      await db
-        .table('_changesFromServer')
-        .bulkDelete(changeRows.map(({ id }) => id));
-
-      await db.table<ISyncStatus>('_syncStatus').update(1, {
-        lastAppliedRemoteRevision: maxRevision,
-      });
-    },
+      if (createChangesToApply.length > 0)
+        await table.bulkPut(
+          createChangesToApply.map((c) => c.obj),
+          specifyKeys ? createChangesToApply.map((c) => c.key) : undefined,
+        );
+      if (updateChangesToApply.length > 0)
+        await bulkUpdate(table, updateChangesToApply);
+      if (deleteChangesToApply.length > 0)
+        await table.bulkDelete(deleteChangesToApply.map((c) => c.key));
+    }),
   );
+
+  // await db
+  //   .table('_changesFromServer')
+  //   .bulkDelete(changeRows.map(({ id }) => id));
+
+  // await db.table<ISyncStatus>('_syncStatus').update(1, {
+  //   lastAppliedRemoteRevision: maxRevision,
+  // });
 }

@@ -1,5 +1,10 @@
-import { DatabaseChangeType, ICreateChange, IDatabaseChange, IUpdateChange } from '@harika/common';
-import {cloneDeep, set} from 'lodash-es';
+import {
+  DatabaseChangeType,
+  ICreateChange,
+  IDatabaseChange,
+  IUpdateChange,
+} from '@harika/common';
+import { cloneDeep, set } from 'lodash-es';
 
 export function reduceChanges(changes: IDatabaseChange[]) {
   // Converts an Array of change objects to a set of change objects based on its unique combination of (table ":" key).
@@ -19,7 +24,7 @@ export function reduceChanges(changes: IDatabaseChange[]) {
               case DatabaseChangeType.Create:
                 return nextChange; // Another CREATE replaces previous CREATE.
               case DatabaseChangeType.Update:
-                return {...prevChange, obj: nextChange.obj}; 
+                return combineCreateAndUpdate(prevChange, nextChange); // Apply nextChange.mods into prevChange.obj
               case DatabaseChangeType.Delete:
                 return nextChange; // Object created and then deleted. If it wasnt for that we MUST handle resent changes, we would skip entire change here. But what if the CREATE was sent earlier, and then CREATE/DELETE at later stage? It would become a ghost object in DB. Therefore, we MUST keep the delete change! If object doesnt exist, it wont harm!
             }
@@ -55,11 +60,9 @@ function combineCreateAndUpdate(
   prevChange: ICreateChange,
   nextChange: IUpdateChange,
 ) {
-  const clonedPrevChange = cloneDeep(prevChange); // Clone object before modifying since the earlier change in db.changes[] would otherwise be altered.
-  const clonedNextChange = cloneDeep(nextChange); // Clone object before modifying since the earlier change in db.changes[] would otherwise be altered.
-
-  applyModifications(clonedPrevChange.obj, nextChange.mods); // Apply modifications to existing object.
-  return {...prevChange, obj: nextCj;
+  const clonedChange = cloneDeep(prevChange); // Clone object before modifying since the earlier change in db.changes[] would otherwise be altered.
+  applyModifications(clonedChange.obj, nextChange.mods); // Apply modifications to existing object.
+  return clonedChange;
 }
 
 function applyModifications(obj: Object, modifications: IUpdateChange['mods']) {

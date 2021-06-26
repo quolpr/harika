@@ -51,10 +51,15 @@ export const toMobxSync = (
   //});
 
   changes$.subscribe((evs) => {
+    console.log('toMobxSync', { evs });
+
     // TODO refactor notes and noteblocks to one method
 
     evs = evs.filter(
-      ({ fromServer, windowId }) => fromServer || windowId !== currentWindowId,
+      ({ fromServer, windowId, transactionSource }) =>
+        fromServer ||
+        windowId !== currentWindowId ||
+        transactionSource === 'conflictsResolution',
     );
     console.log('new changes', evs);
 

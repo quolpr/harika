@@ -48,7 +48,6 @@ export const noteBlockRef = customRef<NoteBlockModel>('harika/NoteBlockRef', {
 
 @model('harika/NoteBlockModel')
 export class NoteBlockModel extends Model({
-  parentBlockRef: prop<Ref<NoteBlockModel> | undefined>(),
   noteRef: prop<Ref<NoteModel>>(),
   content: prop<BlockContentModel>(),
   noteBlockRefs: prop<Ref<NoteBlockModel>[]>(),
@@ -56,6 +55,12 @@ export class NoteBlockModel extends Model({
   createdAt: tProp(types.dateTimestamp),
   isDeleted: prop<boolean>(false),
 }) {
+  get parentBlock() {
+    const id = this.noteRef.current.childParentRelations[this.$modelId];
+
+    return id === undefined ? undefined : this.vault.blocksMap[id];
+  }
+
   @computed({ equals: comparer.shallow })
   get flattenTree(): NoteBlockModel[] {
     // optimization required here, but how?
@@ -76,7 +81,7 @@ export class NoteBlockModel extends Model({
 
   @computed
   get isRoot() {
-    return this.parentBlockRef === undefined;
+    return this.parentBlock === undefined;
   }
 
   @computed({ equals: comparer.shallow })
@@ -98,9 +103,7 @@ export class NoteBlockModel extends Model({
 
   @computed
   get orderPosition() {
-    return this.parentBlockRef
-      ? this.parentBlockRef.current.orderHash[this.$modelId]
-      : 0;
+    return this.parentBlock ? this.parentBlock.orderHash[this.$modelId] : 0;
   }
 
   @computed
@@ -110,12 +113,12 @@ export class NoteBlockModel extends Model({
 
   @computed({ equals: comparer.shallow })
   get path() {
-    let current: NoteBlockModel | undefined = this.parentBlockRef?.current;
+    let current: NoteBlockModel | undefined = this.parentBlock;
     const path: NoteBlockModel[] = [];
 
     while (current) {
       path.unshift(current);
-      current = current.parentBlockRef?.current;
+      current = current.parentBlock;
     }
 
     return path;
@@ -129,11 +132,11 @@ export class NoteBlockModel extends Model({
 
   @computed({ equals: comparer.shallow })
   get siblings() {
-    if (!this.parentBlockRef) {
+    if (!this.parentBlock) {
       throw new Error("You can't get sibling of root noteblock");
     }
 
-    return this.parentBlockRef.current.noteBlockRefs;
+    return this.parentBlock.noteBlockRefs;
   }
 
   @computed({ equals: comparer.shallow })
@@ -163,14 +166,13 @@ export class NoteBlockModel extends Model({
 
   @computed
   get nearestRightToParent(): NoteBlockModel | undefined {
-    if (!this.parentBlockRef || this.parentBlockRef.current.isRoot)
-      return undefined;
+    if (!this.parentBlock || this.parentBlock.isRoot) return undefined;
 
-    const [, right] = this.parentBlockRef.current.leftAndRightSibling;
+    const [, right] = this.parentBlock.leftAndRightSibling;
 
     if (right) return right;
 
-    return this.parentBlockRef.current.nearestRightToParent;
+    return this.parentBlock.nearestRightToParent;
   }
 
   @computed({ equals: comparer.shallow })
@@ -184,12 +186,8 @@ export class NoteBlockModel extends Model({
       left = left.deepLastRightChild;
     }
 
-    if (
-      !left &&
-      this.parentBlockRef !== undefined &&
-      !this.parentBlockRef.current.isRoot
-    ) {
-      left = this.parentBlockRef.current;
+    if (!left && this.parentBlock !== undefined && !this.parentBlock.isRoot) {
+      left = this.parentBlock;
     }
 
     const children = this.noteBlockRefs;
@@ -232,31 +230,23 @@ export class NoteBlockModel extends Model({
 
   @modelAction
   move(parent: NoteBlockModel, pos: number | 'start' | 'end') {
-    if (!this.parentBlockRef) {
+    if (!this.parentBlock) {
       throw new Error("Can't move root block");
     }
 
-    this.parentBlockRef.current.noteBlockRefs.splice(this.orderPosition, 1);
-
-    if (parent !== this.parentBlockRef.current) {
-      this.parentBlockRef = noteBlockRef(parent);
-    }
+    this.parentBlock.noteBlockRefs.splice(this.orderPosition, 1);
 
     const newPos = (() => {
       if (pos === 'start') {
         return 0;
       } else if (pos === 'end') {
-        return this.parentBlockRef.current.noteBlockRefs.length;
+        return parent.noteBlockRefs.length;
       } else {
         return pos;
       }
     })();
 
-    this.parentBlockRef.current.noteBlockRefs.splice(
-      newPos,
-      0,
-      noteBlockRef(this),
-    );
+    parent.noteBlockRefs.splice(newPos, 0, noteBlockRef(this));
   }
 
   @modelAction
@@ -266,10 +256,6 @@ export class NoteBlockModel extends Model({
     if (!left) return;
 
     left.content.update(left.content.value + this.content.value);
-
-    this.noteBlockRefs.forEach((ch) => {
-      ch.current.parentBlockRef = noteBlockRef(left);
-    });
 
     left.noteBlockRefs.push(
       ...this.noteBlockRefs.map((r) => noteBlockRef(r.id)),
@@ -295,25 +281,18 @@ export class NoteBlockModel extends Model({
     if (this.isRoot) {
       this.noteBlockRefs.splice(0, 0, ...noteBlockRefs);
     } else {
-      this.parentBlockRef!.current.noteBlockRefs.splice(
+      this.parentBlock!.noteBlockRefs.splice(
         this.orderPosition + 1,
         0,
         ...noteBlockRefs,
       );
     }
-
-    noteBlockRefs.forEach((ref) => {
-      ref.current.parentBlockRef = noteBlockRef(this);
-    });
   }
 
   @modelAction
   createAndAppendChildBlock(data: { content: string; id?: string }) {
-    const parentRef = noteBlockRef(this);
-
     return this.noteRef.current.createBlock(
       {
-        parentBlockRef: parentRef,
         content: new BlockContentModel({ value: data.content }),
         ...(data.id ? { $modelId: data.id } : {}),
       },
@@ -329,29 +308,26 @@ export class NoteBlockModel extends Model({
 
   @modelAction
   injectNewRightBlock(content: string, view: BlocksViewModel) {
-    if (!this.parentBlockRef) {
+    if (!this.parentBlock) {
       throw new Error("Can't inject from root block");
     }
 
-    const { injectTo, parentRef, parent } = (() => {
+    const { injectTo, parent } = (() => {
       if (this.noteBlockRefs.length && view.isExpanded(this.$modelId)) {
         return {
           injectTo: 0,
           parent: this,
-          parentRef: noteBlockRef(this),
         };
       } else {
         return {
           injectTo: this.orderPosition + 1,
-          parent: this.parentBlockRef.current,
-          parentRef: noteBlockRef(this.parentBlockRef.current),
+          parent: this.parentBlock,
         };
       }
     })();
 
     const newNoteBlock = this.noteRef.current.createBlock(
       {
-        parentBlockRef: parentRef,
         content: new BlockContentModel({ value: content }),
       },
       parent,
@@ -363,7 +339,7 @@ export class NoteBlockModel extends Model({
 
   @modelAction
   tryMoveLeft() {
-    if (!this.parentBlockRef) {
+    if (!this.parentBlock) {
       throw new Error("Can't move root block");
     }
 
@@ -371,22 +347,22 @@ export class NoteBlockModel extends Model({
 
     if (!left) return;
 
-    if (!left.parentBlockRef) {
+    if (!left.parentBlock) {
       throw new Error("Left couldn't be root block");
     }
 
-    if (left === this.parentBlockRef?.current) {
+    if (left === this.parentBlock) {
       // If left block is parent
 
-      this.move(left.parentBlockRef?.current, left.orderPosition);
-    } else if (left.parentBlockRef?.current !== this.parentBlockRef?.current) {
+      this.move(left.parentBlock, left.orderPosition);
+    } else if (left.parentBlock !== this.parentBlock) {
       // If left is child of child of child...
 
-      this.move(left.parentBlockRef?.current, left.orderPosition + 1);
+      this.move(left.parentBlock, left.orderPosition + 1);
     } else {
       // if same level
 
-      this.move(this.parentBlockRef?.current, left.orderPosition);
+      this.move(this.parentBlock, left.orderPosition);
     }
   }
 
@@ -400,14 +376,14 @@ export class NoteBlockModel extends Model({
 
     if (!right) return;
 
-    if (!right.parentBlockRef) {
+    if (!right.parentBlock) {
       throw new Error("Right couldn't be root block");
     }
 
     if (right.noteBlockRefs.length) {
       this.move(right, 'start');
     } else {
-      this.move(right.parentBlockRef?.current, right.orderPosition);
+      this.move(right.parentBlock, right.orderPosition);
     }
   }
 
@@ -422,12 +398,12 @@ export class NoteBlockModel extends Model({
 
   @modelAction
   tryMoveDown() {
-    const parentRef = this.parentBlockRef;
-    const parentOfParentRef = parentRef?.current?.parentBlockRef;
+    const parentRef = this.parentBlock;
+    const parentOfParent = parentRef?.parentBlock;
 
-    if (!parentRef || !parentOfParentRef) return;
+    if (!parentRef || !parentOfParent) return;
 
-    this.move(parentOfParentRef?.current, parentRef.current.orderPosition + 1);
+    this.move(parentOfParent, parentRef.orderPosition + 1);
   }
 
   updateAttrs(data: ModelCreationData<NoteBlockModel>) {
@@ -445,10 +421,6 @@ export class NoteBlockModel extends Model({
 
     if (data.createdAt && data.createdAt !== this.createdAt) {
       this.createdAt = data.createdAt;
-    }
-
-    if (data.parentBlockRef?.id !== this.parentBlockRef?.id) {
-      this.parentBlockRef = data.parentBlockRef;
     }
 
     if (
@@ -490,10 +462,8 @@ export class NoteBlockModel extends Model({
       this.noteBlockRefs.forEach((block) => block.current.delete(true, links));
     }
 
-    if (this.parentBlockRef) {
-      this.parentBlockRef.current.noteBlockRefs.splice(this.orderPosition, 1);
-
-      this.parentBlockRef = undefined;
+    if (this.parentBlock) {
+      this.parentBlock.noteBlockRefs.splice(this.orderPosition, 1);
     }
 
     this.isDeleted = true;

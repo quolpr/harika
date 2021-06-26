@@ -3,6 +3,7 @@ import { Subject } from 'rxjs';
 import { buffer, concatMap, debounceTime } from 'rxjs/operators';
 import { IDatabaseChange, DatabaseChangeType } from '@harika/common';
 import { globalChangesSubject } from './changesChannel';
+import { mapValues } from 'lodash-es';
 
 type DistributiveOmit<T, K extends keyof any> = T extends any
   ? Omit<T, K>
@@ -246,7 +247,7 @@ export const startChangeLog = (db: Dexie, windowId: string) => {
                       type: DatabaseChangeType.Delete,
                       key: id,
                       transactionSource: source,
-                      oldObj: oldObjects[id] as Record<string, unknown>,
+                      obj: oldObjects[id] as Record<string, unknown>,
                     });
                   });
                 }
@@ -254,15 +255,21 @@ export const startChangeLog = (db: Dexie, windowId: string) => {
                 if (req.type === 'put') {
                   req.values.forEach((obj) => {
                     if (oldObjects[obj.id]) {
-                      changesSubject.next({
-                        table: tableName,
-                        type: DatabaseChangeType.Update,
-                        obj,
-                        oldObj: oldObjects[obj.id] as Record<string, unknown>,
-                        mods: {},
-                        key: obj.id,
-                        transactionSource: source,
-                      });
+                      const mods = mapValues(
+                        (Dexie as any).getObjectDiff(oldObjects[obj.id], obj),
+                        (val) => (val === undefined ? null : val),
+                      );
+
+                      if (Object.values(mods).length !== 0) {
+                        changesSubject.next({
+                          table: tableName,
+                          type: DatabaseChangeType.Update,
+                          obj,
+                          mods: mods,
+                          key: obj.id,
+                          transactionSource: source,
+                        });
+                      }
                     } else {
                       changesSubject.next({
                         table: tableName,
@@ -287,21 +294,7 @@ export const startChangeLog = (db: Dexie, windowId: string) => {
   changesSubject
     .pipe(
       buffer(changesSubject.pipe(debounceTime(100))),
-      concatMap(async (rawChanges) => {
-        let changes = rawChanges.map((change): DistributiveOmit<
-          IDatabaseChange,
-          'source'
-        > & { transactionSource: string } => {
-          if (change.type === DatabaseChangeType.Update) {
-            return {
-              ...change,
-              mods: (Dexie as any).getObjectDiff(change.oldObj, change.obj),
-            };
-          }
-
-          return change;
-        });
-
+      concatMap(async (changes) => {
         const filteredChanges = changes.filter(
           ({ transactionSource }) => transactionSource !== 'serverChanges',
         );

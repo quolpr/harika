@@ -1,7 +1,16 @@
 import { Dexie, liveQuery } from 'dexie';
 import { v4 } from 'uuid';
-import { fromEvent, merge, Subject, Observable, of, combineLatest } from 'rxjs';
-import { concatMap, map, switchMap } from 'rxjs/operators';
+import {
+  fromEvent,
+  merge,
+  Subject,
+  Observable,
+  of,
+  combineLatest,
+  pipe,
+  from,
+} from 'rxjs';
+import { concatMap, filter, map, mapTo, switchMap } from 'rxjs/operators';
 import {
   EventTypesFromServer,
   CommandTypesFromClient,
@@ -9,15 +18,12 @@ import {
   RevisionWasChangedEvent,
   GetChangesClientCommand,
   DatabaseChangeType,
-  ICreateChange,
-  IUpdateChange,
 } from '@harika/common';
 import type { CommandsExecuter } from './CommandsExecuter';
-import { applyChanges } from './applyChanges';
 import type { SyncStatusService } from './SyncStatusService';
 import type { ConnectionInitializer } from './connection/ConnectionInitializer';
 import type { ServerConnector } from './connection/ServerConnector';
-import { cloneDeep, set } from 'lodash-es';
+import { maxBy, omit } from 'lodash-es';
 
 type IChangeRow = DistributiveOmit<IDatabaseChange, 'source'>;
 type IChangeRowWithRev = IChangeRow & {
@@ -28,6 +34,15 @@ export interface IServerChangesRow {
   id: string;
   change: IDatabaseChange;
   receivedAtRevisionOfServer: number;
+}
+
+export interface IConflictsResolver {
+  resolveChanges(
+    clientChanges: IDatabaseChange[],
+    serverChanges: IDatabaseChange[],
+  ): Promise<void>;
+
+  tables(): Dexie.Table[];
 }
 
 type DistributiveOmit<T, K extends keyof any> = T extends any
@@ -44,6 +59,7 @@ export class ServerSynchronizer {
     private commandExecuter: CommandsExecuter,
     private serverConnector: ServerConnector,
     private connectionInitializer: ConnectionInitializer,
+    private conflictResolver: IConflictsResolver,
     private stop$: Subject<void> = new Subject(),
   ) {
     this.isConnectedAndInitialized$ = combineLatest([
@@ -60,14 +76,28 @@ export class ServerSynchronizer {
     await this.serverConnector.initialize();
     this.connectionInitializer.initialize();
 
-    this.receiveServerChangesPipe().subscribe();
-    this.syncPipe().subscribe();
-
     this.isConnectedAndInitialized$
       .pipe(
         switchMap((isConnectedAndInitialized) => {
           if (isConnectedAndInitialized) {
-            return merge(this.receiveServerChangesPipe(), this.syncPipe());
+            const { emitter: changesEmitter, pipe: changesPipe } =
+              this.receiveServerChanges();
+
+            const { emitter: syncEmitter, pipe: syncPipe } = this.sync();
+
+            // Only one command at once
+            return merge(
+              changesEmitter.pipe(mapTo('getChanges' as const)),
+              syncEmitter.pipe(mapTo('syncChanges' as const)),
+            ).pipe(
+              concatMap((command) => {
+                if (command === 'getChanges') {
+                  return of(null).pipe(changesPipe);
+                } else {
+                  return of(null).pipe(syncPipe);
+                }
+              }),
+            );
           } else {
             return of(null);
           }
@@ -76,19 +106,8 @@ export class ServerSynchronizer {
       .subscribe();
   }
 
-  private receiveServerChangesPipe() {
-    return merge(
-      of(null),
-      this.serverConnector.socket$.pipe(
-        switchMap((socket) =>
-          fromEvent<RevisionWasChangedEvent>(
-            socket,
-            EventTypesFromServer.RevisionWasChanged,
-          ),
-        ),
-      ),
-      this.triggerGetChangesSubject,
-    ).pipe(
+  private receiveServerChanges() {
+    const changesPipe = pipe(
       this.commandExecuter.send<GetChangesClientCommand>(() => ({
         type: CommandTypesFromClient.GetChanges,
         data: {
@@ -108,13 +127,16 @@ export class ServerSynchronizer {
         await this.db.transaction(
           'rw',
           [this.syncStatus.tableName, '_changesFromServer'],
-          () => {
+          async () => {
             console.log({ currentRevision: data.currentRevision });
+            const currentChangesCount = await this.db
+              .table<IServerChangesRow>('_changesFromServer')
+              .count();
 
             // If changes === 0 means such changes are already applied by client
             // And we are in sync with server
             const lastAppliedRemoteRevision =
-              data.changes.length === 0
+              data.changes.length === 0 && currentChangesCount === 0
                 ? data.currentRevision
                 : this.syncStatus.value.lastAppliedRemoteRevision;
 
@@ -136,87 +158,154 @@ export class ServerSynchronizer {
         );
       }),
     );
+
+    return {
+      emitter: merge(
+        of(null),
+        this.serverConnector.socket$.pipe(
+          switchMap((socket) =>
+            fromEvent<RevisionWasChangedEvent>(
+              socket,
+              EventTypesFromServer.RevisionWasChanged,
+            ),
+          ),
+        ),
+        this.triggerGetChangesSubject,
+      ),
+      pipe: changesPipe,
+    };
   }
 
-  syncPipe() {
+  sync() {
     const changesToSendTable =
       this.db.table<IChangeRowWithRev>('_changesToSend');
     const serverChangesToApplyTable =
       this.db.table<IServerChangesRow>('_changesFromServer');
 
-    return merge(
-      liveQuery(() => changesToSendTable.count()) as Observable<number>,
-      liveQuery(() => serverChangesToApplyTable.count()) as Observable<number>,
-    ).pipe(
-      concatMap(() => {
+    const emitter = merge(
+      from(
+        liveQuery(() => changesToSendTable.count()) as Observable<number>,
+      ).pipe(filter((c) => c > 0)),
+      from(
+        liveQuery(() =>
+          serverChangesToApplyTable.count(),
+        ) as Observable<number>,
+      ).pipe(filter((c) => c > 0)),
+    );
+
+    const syncPipe = pipe(
+      switchMap(() => this.resolveConflicts()),
+      switchMap(({ clientChanges, syncStatus }) => {
+        if (clientChanges.length === 0) return of(null);
+
         return of(null).pipe(
-          switchMap(async () => {
-            const serverChanges = await serverChangesToApplyTable.toArray();
+          this.commandExecuter.send(() => {
+            console.log('sending!');
+            return {
+              type: CommandTypesFromClient.ApplyNewChanges,
+              data: {
+                changes: clientChanges.map((change) => ({
+                  ...(change.type === DatabaseChangeType.Update
+                    ? omit(change, 'obj')
+                    : change),
+                  source: syncStatus.source,
+                })),
+                partial: false,
+                lastAppliedRemoteRevision: syncStatus.lastAppliedRemoteRevision,
+              },
+            };
+          }),
+          switchMap((res) => {
+            if (res === null || res.data.status === 'error') {
+              console.error('Failed to send changes');
 
-            if (serverChanges.length > 0) {
-              await applyChanges(this.db, serverChanges);
-
-              const clientChanges = await changesToSendTable.toArray();
-
-              if (clientChanges.length !== 0 && serverChanges.length !== 0) {
-                // TODO: transaction
-                console.log(
-                  'TODO: resolve conflicts!',
-                  clientChanges,
-                  serverChanges,
-                );
-              }
+              return of(null);
             }
 
-            const clientChanges = await changesToSendTable.toArray();
-            const syncStatus = this.syncStatus.value;
+            if (res?.data.status === 'staleChanges') {
+              // Maybe server has newer changes. Let's await for new server changes and try to send again
 
-            return { clientChanges, syncStatus };
-          }),
-          switchMap(({ clientChanges, syncStatus }) => {
-            if (clientChanges.length === 0) return of(null);
+              console.log('staled changes');
+              this.triggerGetChangesSubject.next(null);
 
-            return of(null).pipe(
-              this.commandExecuter.send(() => {
-                console.log('sending!');
-                return {
-                  type: CommandTypesFromClient.ApplyNewChanges,
-                  data: {
-                    changes: clientChanges.map((change) => ({
-                      ...change,
-                      source: syncStatus.source,
-                    })),
-                    partial: false,
-                    lastAppliedRemoteRevision:
-                      syncStatus.lastAppliedRemoteRevision,
-                  },
-                };
-              }),
-              switchMap((res) => {
-                if (res === null || res.data.status === 'error') {
-                  console.error('Failed to send changes');
+              return of(null);
+            }
 
-                  return of(null);
-                }
-
-                if (res?.data.status === 'staleChanges') {
-                  // Maybe server has newer changes. Let's await for new server changes and try to send again
-
-                  this.triggerGetChangesSubject.next(null);
-
-                  return of(null);
-                }
-
-                return this.db.transaction('rw', [changesToSendTable], () =>
-                  changesToSendTable.bulkDelete(
-                    clientChanges.map(({ rev }) => rev),
-                  ),
-                );
-              }),
+            return this.db.transaction('rw', [changesToSendTable], () =>
+              changesToSendTable.bulkDelete(
+                clientChanges.map(({ rev }) => rev),
+              ),
             );
           }),
         );
       }),
     );
+
+    return { emitter, pipe: syncPipe };
   }
+
+  private resolveConflicts = async () => {
+    const changesToSendTable =
+      this.db.table<IChangeRowWithRev>('_changesToSend');
+    const serverChangesToApplyTable =
+      this.db.table<IServerChangesRow>('_changesFromServer');
+
+    const serverChanges = await serverChangesToApplyTable.toArray();
+
+    if (serverChanges.length > 0) {
+      const clientChanges = await changesToSendTable.toArray();
+
+      await this.db.transaction(
+        'rw',
+        [
+          ...this.db.tables,
+          this.db.table('_changesFromServer'),
+          this.db.table('_syncStatus'),
+        ],
+        async () => {
+          if (clientChanges.length === 0) {
+            // @ts-ignore
+            Dexie.currentTransaction.source = 'serverChanges';
+          } else {
+            // @ts-ignore
+            Dexie.currentTransaction.source = 'conflictsResolution';
+          }
+
+          await this.conflictResolver.resolveChanges(
+            clientChanges.map((change) => ({
+              ...change,
+              source: this.syncStatus.value.source,
+            })),
+            serverChanges.map(({ change }) => change),
+          );
+
+          const maxRevision = maxBy(
+            serverChanges,
+            ({ receivedAtRevisionOfServer }) => receivedAtRevisionOfServer,
+          )?.receivedAtRevisionOfServer;
+
+          if (maxRevision === undefined)
+            throw new Error('Max revision could not be undefined');
+
+          await serverChangesToApplyTable.bulkDelete(
+            serverChanges.map(({ id }) => id),
+          );
+
+          const lastAppliedRemoteRevision =
+            (await serverChangesToApplyTable.count()) === 0
+              ? this.syncStatus.value.lastReceivedRemoteRevision
+              : maxRevision;
+
+          await this.syncStatus.update({
+            lastAppliedRemoteRevision,
+          });
+        },
+      );
+    }
+
+    const clientChanges = await changesToSendTable.toArray();
+    const syncStatus = this.syncStatus.value;
+
+    return { clientChanges, syncStatus };
+  };
 }

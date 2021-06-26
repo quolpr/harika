@@ -69,6 +69,8 @@ export class CommandsExecuter {
               this.log(
                 `New command to server: ${JSON.stringify(
                   command,
+                  null,
+                  2,
                 )} ${messageId}`,
               );
 
@@ -79,9 +81,13 @@ export class CommandsExecuter {
                 filter((res) => res.requestedMessageId === messageId),
                 map((res) => res as T['response']),
                 first(),
-                tap(() => {
+                tap((res) => {
                   this.log(
-                    `Command handled by server: ${JSON.stringify(command)}`,
+                    `Command handled by server: ${JSON.stringify(
+                      command,
+                      null,
+                      2,
+                    )}\nres:${JSON.stringify(res, null, 2)}`,
                   );
                 }),
               ),

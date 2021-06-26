@@ -56,6 +56,7 @@ export abstract class BaseEntityChangeSchema implements EntityChangeSchema {
         table: this.table,
         key: this.key,
         source: this.source,
+        obj: this.obj!,
       };
     } else if (this.type === DatabaseChangeType.Update) {
       if (!this.mods) throw new Error('No mods!');
@@ -66,7 +67,6 @@ export abstract class BaseEntityChangeSchema implements EntityChangeSchema {
         key: this.key,
         mods: this.mods,
         source: this.source,
-        obj: this.obj,
       };
     } else {
       if (!this.obj) throw new Error('No obj!');

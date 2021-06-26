@@ -1,6 +1,8 @@
 import type { Dayjs } from 'dayjs';
 import Dexie from 'dexie';
 import type { NoteDocType, NoteBlockDocType } from '@harika/common';
+import { pickBy } from 'lodash';
+import { set } from 'lodash-es';
 
 export class VaultDexieDatabase extends Dexie {
   notes: Dexie.Table<NoteDocType, string>;
@@ -12,16 +14,8 @@ export class VaultDexieDatabase extends Dexie {
     this.version(1).stores({
       noteBlocks:
         'id, parentBlockId, noteId, *noteBlockIds, *linkedNoteIds, content, createdAt, updatedAt',
-      notes: 'id, rootBlockId, title, dailyNoteDate, createdAt, updatedAt',
-    });
-    this.version(2).stores({
-      noteBlocks:
-        'id, parentBlockId, noteId, *noteBlockIds, *linkedNoteIds, content, createdAt, updatedAt',
       notes:
         'id, rootBlockId, title, dailyNoteDate, createdAt, updatedAt, [title+id]',
-    });
-
-    this.version(3).stores({
       _syncStatus: 'id',
       _changesToSend: '++rev',
       _changesFromServer: 'id',
@@ -29,6 +23,38 @@ export class VaultDexieDatabase extends Dexie {
 
     this.noteBlocks = this.table('noteBlocks');
     this.notes = this.table('notes');
+
+    this.noteBlocks.hook('creating', (_key, obj) => {
+      obj.noteBlockIds = Object.keys(obj.noteBlockIdsMap);
+      obj.linkedNoteIds = Object.keys(obj.linkedNoteIdsMap);
+    });
+
+    this.noteBlocks.hook(
+      'updating',
+      (mods: Partial<NoteBlockDocType>, _key, obj) => {
+        const partialMods = pickBy(
+          mods,
+          (_v, k) =>
+            k.startsWith('linkedNoteIdsMap') || k.startsWith('noteBlockIdsMap'),
+        );
+
+        const partialObj = {
+          noteBlockIdsMap: { ...obj.noteBlockIdsMap },
+          linkedNoteIdsMap: { ...obj.linkedNoteIdsMap },
+        };
+
+        applyModifications(partialObj, partialMods);
+
+        const newLinkedNoteIds = Object.keys(partialObj.linkedNoteIdsMap);
+        const newNoteBlockIds = Object.keys(partialObj.noteBlockIdsMap);
+
+        mods.noteBlockIds = newNoteBlockIds.length > 0 ? newNoteBlockIds : [];
+        mods.linkedNoteIds =
+          newLinkedNoteIds.length > 0 ? newLinkedNoteIds : [];
+
+        return mods;
+      },
+    );
   }
 
   get noteBlocksQueries() {
@@ -55,10 +81,6 @@ class NoteBlocksQueries {
     return (await this.table.bulkGet(ids)).filter(
       (v) => !!v,
     ) as NoteBlockDocType[];
-  }
-
-  getByParentIds(ids: string[]) {
-    return this.table.where('parentBlockId').anyOf(ids).toArray();
   }
 
   getByNoteId(id: string) {
@@ -146,4 +168,13 @@ class NotesQueries {
       ),
     );
   }
+}
+
+function applyModifications(
+  obj: object,
+  modifications: Record<string, unknown>,
+) {
+  Object.keys(modifications).forEach(function (keyPath) {
+    set(obj, keyPath, modifications[keyPath]);
+  });
 }
