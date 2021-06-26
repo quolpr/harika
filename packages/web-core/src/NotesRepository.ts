@@ -314,7 +314,9 @@ export class NotesRepository {
     return this.db.transaction('rw', tables, async () => {
       return Promise.all(
         data.map(async ({ tableName, rows }) => {
-          await this.db.table(tableName).bulkAdd(rows);
+          await this.db
+            .table(tableName)
+            .bulkAdd(rows.filter(({ id }) => Boolean(id))); // some rows could be broken, we check that at least id present
         }),
       );
     });
