@@ -1,4 +1,4 @@
-import type { Token } from './types';
+import type { RefToken, TodoRefToken, Token } from './types';
 
 export const filterAst = (
   tokens: Token[],
@@ -56,4 +56,8 @@ export const mapTokens = (
 
     return mapped;
   });
+};
+
+export const isTodo = (token: Token): token is TodoRefToken => {
+  return token.type === 'ref' && ['TODO', 'DONE'].includes(token.content);
 };

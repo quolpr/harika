@@ -10,14 +10,20 @@ declare module 'linkifyjs' {
   }
 }
 
-const generateNewId = function () {
-  // Math.random should be unique because of its seeding algorithm.
-  // Convert it to base 36 (numbers + letters), and grab the first 9 characters
-  // after the decimal.
-  return '_' + Math.random().toString(36).substr(2, 9);
+const newIdGenerator = () => {
+  let id = 0;
+
+  return function () {
+    // Math.random should be unique because of its seeding algorithm.
+    // Convert it to base 36 (numbers + letters), and grab the first 9 characters
+    // after the decimal.
+    return (id++).toString();
+  };
 };
 
-export const parse = (data: string, generateId = generateNewId): Token[] => {
+export const parse = (data: string, idGenerator = newIdGenerator): Token[] => {
+  const generateId = idGenerator();
+
   return mapTokens(pegParse(data, { generateId }), (t) => {
     if (t.type === 'str') {
       const links = find(t.content);

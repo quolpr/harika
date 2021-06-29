@@ -4,7 +4,7 @@ import { parse } from './blockParser';
 describe('Parser', () => {
   describe('ref parser', () => {
     it('parses ref', () => {
-      const parsedData = parse('hee! [[world]]', () => '123');
+      const parsedData = parse('hee! [[world]]', () => () => '123');
 
       expect(parsedData).to.deep.eq([
         {
@@ -27,7 +27,7 @@ describe('Parser', () => {
 
   describe('head parser', () => {
     it('parses when it on first line', () => {
-      const parsedData = parse('#test', () => '123');
+      const parsedData = parse('#test', () => () => '123');
 
       expect(parsedData).to.deep.eq([
         {
@@ -51,7 +51,7 @@ describe('Parser', () => {
     });
 
     it('parses trailing EOL', () => {
-      const parsedData = parse('#test\nhey!', () => '123');
+      const parsedData = parse('#test\nhey!', () => () => '123');
 
       expect(parsedData).to.deep.eq([
         {
@@ -82,7 +82,7 @@ describe('Parser', () => {
     });
 
     it('parses when it is on new line', () => {
-      const parsedData = parse('kek\n#test', () => '123');
+      const parsedData = parse('kek\n#test', () => () => '123');
 
       expect(parsedData).to.deep.eq([
         {
@@ -113,7 +113,7 @@ describe('Parser', () => {
     });
 
     it("doesn't parse not on new line", () => {
-      const parsedData = parse('kek\n kek #test', () => '123');
+      const parsedData = parse('kek\n kek #test', () => () => '123');
 
       expect(parsedData).to.deep.eq([
         {
@@ -129,7 +129,7 @@ describe('Parser', () => {
 
   describe('link parser', () => {
     it('works with tags in url correctly', () => {
-      const parsedData = parse('http://google.com#test', () => '123');
+      const parsedData = parse('http://google.com#test', () => () => '123');
 
       expect(parsedData).to.deep.eq([
         {
@@ -145,7 +145,7 @@ describe('Parser', () => {
     });
 
     it('parses links without trailing empty str tokens', () => {
-      const parsedData = parse('google.com', () => '123');
+      const parsedData = parse('google.com', () => () => '123');
 
       expect(parsedData).to.deep.eq([
         {
@@ -163,7 +163,7 @@ describe('Parser', () => {
     it('parses just domains as links', () => {
       const parsedData = parse(
         'google.com test@test.com eee test.ru',
-        () => '123',
+        () => () => '123',
       );
 
       expect(parsedData).to.deep.eq([
@@ -212,7 +212,10 @@ describe('Parser', () => {
     });
 
     it('parses links', () => {
-      const parsedData = parse('heyy! http://google.com heyy2', () => '123');
+      const parsedData = parse(
+        'heyy! http://google.com heyy2',
+        () => () => '123',
+      );
 
       expect(parsedData).to.deep.eq([
         {
@@ -244,7 +247,7 @@ describe('Parser', () => {
 
   describe('quote parser', () => {
     it('parses quotes', () => {
-      const parsedData = parse('> hee! [[world]]', () => '123');
+      const parsedData = parse('> hee! [[world]]', () => () => '123');
 
       expect(parsedData).to.deep.eq([
         {
@@ -274,7 +277,10 @@ describe('Parser', () => {
     });
 
     it('parses only one line quote', () => {
-      const parsedData = parse('hey!\n> hee! [[world]]\nyep!', () => '123');
+      const parsedData = parse(
+        'hey!\n> hee! [[world]]\nyep!',
+        () => () => '123',
+      );
 
       expect(parsedData).to.deep.eq([
         {
@@ -320,7 +326,7 @@ describe('Parser', () => {
     it('parses only from start line', () => {
       const parsedData = parse(
         'hey!\n test > hee! [[world]]\nyep!',
-        () => '123',
+        () => () => '123',
       );
 
       expect(parsedData).to.deep.eq([
@@ -349,7 +355,7 @@ describe('Parser', () => {
     });
 
     it('parses multiline quote', () => {
-      const parsedData = parse('> hee!\n> test\nyes', () => '123');
+      const parsedData = parse('> hee!\n> test\nyes', () => () => '123');
 
       expect(parsedData).to.deep.eq([
         {
@@ -394,7 +400,7 @@ describe('Parser', () => {
       ]);
     });
     it('parses multiline quote not form start line', () => {
-      const parsedData = parse('data \n> hee!\n> test\nyes', () => '123');
+      const parsedData = parse('data \n> hee!\n> test\nyes', () => () => '123');
 
       expect(parsedData).to.deep.eq([
         {
@@ -449,7 +455,7 @@ describe('Parser', () => {
 
   describe('Code block parser', () => {
     it('parses codeblock', () => {
-      const parsedData = parse('fwfwe ```aa(```', () => '123');
+      const parsedData = parse('fwfwe ```aa(```', () => () => '123');
 
       expect(parsedData).to.deep.eq([
         {
@@ -471,7 +477,7 @@ describe('Parser', () => {
     });
 
     it('parses with "`" inside', () => {
-      const parsedData = parse('fwfwe ```a`a`a```', () => '123');
+      const parsedData = parse('fwfwe ```a`a`a```', () => () => '123');
 
       expect(parsedData).to.deep.eq([
         {
@@ -493,7 +499,7 @@ describe('Parser', () => {
     });
 
     it('eats ending EOL', () => {
-      const parsedData = parse('```data```\ntest', () => '123');
+      const parsedData = parse('```data```\ntest', () => () => '123');
 
       expect(parsedData).to.deep.eq([
         {

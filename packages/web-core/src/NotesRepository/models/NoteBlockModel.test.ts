@@ -100,4 +100,69 @@ describe('NoteBlockModel', () => {
       );
     });
   });
+
+  describe('toggleTodo', () => {
+    context('has first todo and children', () => {
+      it('toggles self and children which has first TODO', () => {
+        const { vault, note } = parseToBlocksTree(`
+        - [[TODO]] block0 [#0]
+          - [[DONE]] block1
+          - block2
+            - [[TODO]] block3
+          - [[TODO]] block4 [#1]
+            - [[TODO]] block5 [#2]
+        `);
+        const block = vault.blocksMap['0'];
+
+        expect(block.toggleTodo(block.content.ast[0].id)).to.have.members([
+          '0',
+          '1',
+          '2',
+        ]);
+
+        expect(note.rootBlockRef.current.getStringTree().trim()).to.equal(
+          normalizeBlockTree(`
+            - [[DONE]] block0
+              - [[DONE]] block1
+              - block2
+                - [[TODO]] block3
+              - [[DONE]] block4
+                - [[DONE]] block5
+          `),
+        );
+      });
+    });
+
+    context('has first done and children', () => {
+      it('toggles self and children which has first DONE', () => {
+        const { vault, note } = parseToBlocksTree(`
+        - [[DONE]] block0 [#0]
+          - [[DONE]] block1 [#1]
+          - block2
+            - [[DONE]] block3
+          - [[DONE]] block4 [#2]
+            - [[DONE]] block5 [#3]
+        `);
+        const block = vault.blocksMap['0'];
+
+        expect(block.toggleTodo(block.content.ast[0].id)).to.have.members([
+          '0',
+          '1',
+          '2',
+          '3',
+        ]);
+
+        expect(note.rootBlockRef.current.getStringTree().trim()).to.equal(
+          normalizeBlockTree(`
+          - [[TODO]] block0
+            - [[TODO]] block1
+            - block2
+              - [[DONE]] block3
+            - [[TODO]] block4
+              - [[TODO]] block5
+          `),
+        );
+      });
+    });
+  });
 });

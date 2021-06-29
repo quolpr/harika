@@ -1,29 +1,13 @@
 import { computed } from 'mobx';
 import { model, Model, modelAction, prop } from 'mobx-keystone';
-import { findFirst, mapTokens } from './blockParser/astHelpers';
+import {
+  filterAst,
+  findFirst,
+  isTodo,
+  mapTokens,
+} from './blockParser/astHelpers';
 import { parse } from './blockParser/blockParser';
 import type { Token } from './blockParser/types';
-
-const findById = (
-  ast: Token[],
-  id: string,
-  func: (t: Token) => void,
-): boolean => {
-  return ast.some((t) => {
-    if (t.id === id) {
-      func(t);
-
-      return true;
-    }
-
-    if (Array.isArray(t.content)) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      return findById(t.content, id, func);
-    }
-
-    return false;
-  });
-};
 
 function assertUnreachable(x: never): never {
   throw new Error("Didn't expect to get here");
@@ -86,6 +70,26 @@ export class BlockContentModel extends Model({
   @computed
   get ast() {
     return parse(this.value);
+  }
+
+  @computed
+  get firstTodoToken() {
+    const firstToken = this.ast[0];
+    const secondToken = this.ast[1];
+
+    if (isTodo(firstToken)) return firstToken;
+    if (
+      firstToken.type === 'str' &&
+      firstToken.content.trim().length === 0 &&
+      isTodo(secondToken)
+    )
+      return firstToken;
+
+    return undefined;
+  }
+
+  getTokenById(tokenId: string) {
+    return findFirst(this.ast, ({ id }) => tokenId === id);
   }
 
   @modelAction

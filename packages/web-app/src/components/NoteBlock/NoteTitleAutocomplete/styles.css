@@ -8,7 +8,7 @@
 
   &__content {
     max-height: calc(1.75rem * 4);
-    width: 10rem;
+    width: 15rem;
 
     overflow-y: auto;
     overflow-x: hidden;
@@ -40,5 +40,6 @@
   &__item-content {
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }

@@ -16,8 +16,7 @@ const RefRenderer = observer(
       (e: React.SyntheticEvent) => {
         e.stopPropagation();
 
-        noteBlock.content.toggleTodo(token.id);
-        noteRepo.updateNoteBlockLinks(noteBlock);
+        noteRepo.updateNoteBlockLinks(noteBlock.toggleTodo(token.id));
       },
       [noteBlock, noteRepo, token.id],
     );

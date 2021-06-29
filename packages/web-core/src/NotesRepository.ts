@@ -152,52 +152,58 @@ export class NotesRepository {
     );
   }
 
-  async updateNoteBlockLinks(noteBlock: NoteBlockModel) {
+  async updateNoteBlockLinks(noteBlockIds: string[]) {
     return this.db.transaction(
       'r',
       this.db.notes,
       this.db.noteBlocks,
       async () => {
-        console.debug('Updating links');
+        return Promise.all(
+          noteBlockIds.map(async (id) => {
+            const noteBlock = this.vault.blocksMap[id];
 
-        const titles = uniq(
-          (
-            filterAst(
-              noteBlock.content.ast,
-              (t) => t.type === 'ref',
-            ) as RefToken[]
-          ).map((t: RefToken) => t.content),
-        );
+            console.debug('Updating links');
 
-        const existingNotesIndexed = Object.fromEntries(
-          (await this.db.notesQueries.getByTitles(titles)).map((n) => [
-            n.title,
-            n,
-          ]),
-        );
+            const titles = uniq(
+              (
+                filterAst(
+                  noteBlock.content.ast,
+                  (t) => t.type === 'ref',
+                ) as RefToken[]
+              ).map((t: RefToken) => t.content),
+            );
 
-        const allParsedLinkedNotes = (
-          await Promise.all(
-            titles.map(async (name) => {
-              if (!existingNotesIndexed[name]) {
-                const result = await this.createNote({ title: name });
+            const existingNotesIndexed = Object.fromEntries(
+              (await this.db.notesQueries.getByTitles(titles)).map((n) => [
+                n.title,
+                n,
+              ]),
+            );
 
-                if (result.status === 'ok') {
-                  return result.data;
-                } else {
-                  alert(JSON.stringify(result.errors));
-                }
-              } else {
-                const existing = existingNotesIndexed[name];
+            const allParsedLinkedNotes = (
+              await Promise.all(
+                titles.map(async (name) => {
+                  if (!existingNotesIndexed[name]) {
+                    const result = await this.createNote({ title: name });
 
-                return this.findNote(existing.id, false, false, false);
-              }
-            }),
-          )
-        ).flatMap((n) => (n ? [n] : []));
+                    if (result.status === 'ok') {
+                      return result.data;
+                    } else {
+                      alert(JSON.stringify(result.errors));
+                    }
+                  } else {
+                    const existing = existingNotesIndexed[name];
 
-        noteBlock.updateLinks(
-          allParsedLinkedNotes.map(({ $modelId }) => $modelId),
+                    return this.findNote(existing.id, false, false, false);
+                  }
+                }),
+              )
+            ).flatMap((n) => (n ? [n] : []));
+
+            noteBlock.updateLinks(
+              allParsedLinkedNotes.map(({ $modelId }) => $modelId),
+            );
+          }),
         );
       },
     );

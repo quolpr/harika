@@ -11,6 +11,12 @@ export interface RefToken extends BaseToken {
   content: string;
 }
 
+export interface TodoRefToken extends BaseToken {
+  id: string;
+  type: 'ref';
+  content: 'TODO' | 'DONE';
+}
+
 interface TagToken extends BaseToken {
   id: string;
   type: 'tag';

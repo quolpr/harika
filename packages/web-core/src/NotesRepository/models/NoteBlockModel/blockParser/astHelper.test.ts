@@ -4,7 +4,7 @@ import { parse } from './blockParser';
 
 describe('filterAst', () => {
   it('works', () => {
-    const parsedData = parse('google.com [[my link]]', () => '123');
+    const parsedData = parse('google.com [[my link]]', () => () => '123');
 
     expect(filterAst(parsedData, (t) => t.type === 'ref')).to.deep.eq([
       {
@@ -20,7 +20,7 @@ describe('filterAst', () => {
   it('works with nested tokens', () => {
     const parsedData = parse(
       'google.com __**[[wow]]**__ test@test.com eee test.ru',
-      () => '123',
+      () => () => '123',
     );
 
     expect(filterAst(parsedData, (t) => t.type === 'ref')).to.deep.eq([
@@ -36,7 +36,10 @@ describe('filterAst', () => {
 });
 
 describe('findFirst', () => {
-  const parsedData = parse('google.com **[[my link]]** [[wow2]]', () => '123');
+  const parsedData = parse(
+    'google.com **[[my link]]** [[wow2]]',
+    () => () => '123',
+  );
 
   it('works', () => {
     expect(findFirst(parsedData, (t) => t.type === 'ref')).to.deep.eq({
@@ -54,7 +57,10 @@ describe('findFirst', () => {
 });
 
 describe('mapTokens', () => {
-  const parsedData = parse('google.com **[[my link]]** [[wow2]]', () => '123');
+  const parsedData = parse(
+    'google.com **[[my link]]** [[wow2]]',
+    () => () => '123',
+  );
 
   it('works', () => {
     expect(mapTokens(parsedData, (t) => ({ ...t, id: '123' }))).to.deep.eq([

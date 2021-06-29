@@ -20,6 +20,7 @@ import { BlockContentModel } from './NoteBlockModel/BlockContentModel';
 import type { BlocksViewModel } from './VaultUiState/BlocksViewModel';
 import type { TreeToken } from './NoteBlockModel/parseStringToTree';
 import { addTokensToNoteBlock } from '../../tests/blockUtils';
+import { isTodo } from './NoteBlockModel/blockParser/astHelpers';
 
 export const noteBlockRef = customRef<NoteBlockModel>('harika/NoteBlockRef', {
   // this works, but we will use getRefId() from the Todo class instead
@@ -454,6 +455,28 @@ export class NoteBlockModel extends Model({
         currentRefs[ref.id] ? currentRefs[ref.id] : ref,
       );
     }
+  }
+
+  @modelAction
+  toggleTodo(id: string, toggledIds: string[] = []): string[] {
+    const token = this.content.getTokenById(id);
+
+    if (!token || !isTodo(token)) return [];
+
+    if (this.content.firstTodoToken) {
+      this.noteBlockRefs.forEach((blockRef) => {
+        const firstTodo = blockRef.current.content.firstTodoToken;
+
+        if (firstTodo && firstTodo.content === token.content)
+          blockRef.current.toggleTodo(firstTodo.id, toggledIds);
+      });
+    }
+
+    this.content.toggleTodo(id);
+
+    toggledIds.push(this.$modelId);
+
+    return toggledIds;
   }
 
   @modelAction
