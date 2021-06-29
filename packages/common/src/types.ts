@@ -54,7 +54,7 @@ export interface ApplyNewChangesFromClientResponse extends BaseCommandResponse {
         newRevision: number;
       }
     | {
-        status: 'staleChanges' | 'error';
+        status: 'staleChanges' | 'error' | 'locked';
       };
 }
 

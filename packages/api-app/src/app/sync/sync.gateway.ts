@@ -162,6 +162,8 @@ export abstract class SyncGateway
     );
   }
 
+  private lockedChanges: Record<string, true> = {};
+
   @UseFilters(new AllExceptionsFilter())
   @SubscribeMessage(CommandTypesFromClient.ApplyNewChanges)
   async applyNewChanges(
@@ -181,12 +183,6 @@ export abstract class SyncGateway
         }] receivedChangesFromClient - ${inspect(request, false, 6)}`,
       );
 
-      console.log(
-        request.data.lastAppliedRemoteRevision,
-        await this.syncEntities.getLastRev(state.scopeId, state.currentUserId),
-      );
-
-      // TODO: lock should start here
       if (
         request.data.lastAppliedRemoteRevision !==
         (await this.syncEntities.getLastRev(state.scopeId, state.currentUserId))
@@ -206,50 +202,72 @@ export abstract class SyncGateway
         return;
       }
 
-      const newRev = await this.syncEntities.applyChanges(
-        request.data.changes,
-        state.scopeId,
-        state.currentUserId,
-        state.clientIdentity,
-      );
-
-      const response: ApplyNewChangesFromClientResponse = {
-        messageId: v4(),
-        type: CommandTypesFromClient.ApplyNewChanges,
-        messageType: MessageType.CommandResponse,
-        requestedMessageId: request.messageId,
-        data: {
-          status: 'success',
-          newRevision: newRev,
-        },
-      };
-
-      client.emit(CommandTypesFromClient.ApplyNewChanges, response);
-
-      await Promise.all(
-        Array.from(this.socketIOLocals.entries()).map(
-          ([subscriber, subscriberState]) => {
-            if (
-              subscriberState.type === 'initialized' &&
-              subscriberState.scopeId === state.scopeId
-            ) {
-              const revisionWasChanged: RevisionWasChangedEvent = {
-                messageId: v4(),
-                messageType: MessageType.Event,
-                eventType: EventTypesFromServer.RevisionWasChanged,
-                data: {
-                  newRevision: newRev,
-                },
-              };
-
-              subscriber.emit(
-                EventTypesFromServer.RevisionWasChanged,
-                revisionWasChanged,
-              );
-            }
+      if (this.lockedChanges[state.clientIdentity + state.scopeId]) {
+        const response: ApplyNewChangesFromClientResponse = {
+          messageId: v4(),
+          type: CommandTypesFromClient.ApplyNewChanges,
+          messageType: MessageType.CommandResponse,
+          requestedMessageId: request.messageId,
+          data: {
+            status: 'locked',
           },
-        ),
-      );
+        };
+
+        client.emit(CommandTypesFromClient.ApplyNewChanges, response);
+
+        return;
+      }
+
+      this.lockedChanges[state.clientIdentity + state.scopeId] = true;
+
+      try {
+        const newRev = await this.syncEntities.applyChanges(
+          request.data.changes,
+          state.scopeId,
+          state.currentUserId,
+          state.clientIdentity,
+        );
+
+        const response: ApplyNewChangesFromClientResponse = {
+          messageId: v4(),
+          type: CommandTypesFromClient.ApplyNewChanges,
+          messageType: MessageType.CommandResponse,
+          requestedMessageId: request.messageId,
+          data: {
+            status: 'success',
+            newRevision: newRev,
+          },
+        };
+
+        client.emit(CommandTypesFromClient.ApplyNewChanges, response);
+
+        await Promise.all(
+          Array.from(this.socketIOLocals.entries()).map(
+            ([subscriber, subscriberState]) => {
+              if (
+                subscriberState.type === 'initialized' &&
+                subscriberState.scopeId === state.scopeId
+              ) {
+                const revisionWasChanged: RevisionWasChangedEvent = {
+                  messageId: v4(),
+                  messageType: MessageType.Event,
+                  eventType: EventTypesFromServer.RevisionWasChanged,
+                  data: {
+                    newRevision: newRev,
+                  },
+                };
+
+                subscriber.emit(
+                  EventTypesFromServer.RevisionWasChanged,
+                  revisionWasChanged,
+                );
+              }
+            },
+          ),
+        );
+      } finally {
+        delete this.lockedChanges[state.clientIdentity + state.scopeId];
+      }
     } catch (e) {
       const response: ApplyNewChangesFromClientResponse = {
         messageId: v4(),

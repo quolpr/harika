@@ -222,6 +222,12 @@ export class ServerSynchronizer {
               return of(null);
             }
 
+            if (res.data.status === 'locked') {
+              console.log('Locked. Just waiting for new changes');
+
+              return of(null);
+            }
+
             if (res?.data.status === 'staleChanges') {
               // Maybe server has newer changes. Let's await for new server changes and try to send again
 
