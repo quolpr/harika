@@ -463,7 +463,7 @@ export class NoteBlockModel extends Model({
 
     if (!token || !isTodo(token)) return [];
 
-    if (this.content.firstTodoToken) {
+    if (this.content.firstTodoToken?.id === id) {
       this.noteBlockRefs.forEach((blockRef) => {
         const firstTodo = blockRef.current.content.firstTodoToken;
 

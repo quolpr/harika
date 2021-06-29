@@ -62,9 +62,9 @@ const BacklinkedNote = observer(
                 key={noteBlock.$modelId}
                 className="backlinked-note__noteblock-root"
               >
-                {path.length > 0 && (
+                {path.length > 1 && (
                   <div className="backlinked-note__noteblock-path">
-                    {path.map((n, i) => (
+                    {path.slice(1).map((n, i) => (
                       <div
                         className={clsx(
                           'backlinked-note__noteblock-path-step',
