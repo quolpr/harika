@@ -66,6 +66,7 @@
 
   &__input-container {
     display: flex;
+
     width: 100%;
     flex-direction: column;
 
@@ -78,6 +79,8 @@
     @apply focus:outline-none rounded-sm text-warmGray-300;
 
     display: inline;
+
+    overflow: hidden;
 
     width: 100%;
     background: transparent;
@@ -102,7 +105,7 @@
     background-color: transparent;
 
     border: none;
-    overflow: auto;
+    overflow: scroll;
     outline: none;
 
     box-shadow: none;
@@ -113,4 +116,31 @@
 
 .quote {
   @apply border-l-4 border-coolGray-600 text-coolGray-500 pl-4;
+}
+
+.content {
+  &__inline-code {
+    @apply bg-gray-500 bg-opacity-40 px-0.5 py-0.5;
+
+    margin-bottom: 0.01rem;
+
+    display: inline;
+    border-radius: 6px;
+    font-size: 85%;
+
+    white-space: pre-wrap;
+    word-break: break-word;
+
+    vertical-align: baseline;
+  }
+
+  &__code {
+    @apply bg-gray-500 bg-opacity-30 my-1 px-2.5 py-1;
+
+    display: block;
+
+    overflow: scroll;
+    border-radius: 6px;
+    font-size: 85%;
+  }
 }

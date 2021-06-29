@@ -446,4 +446,72 @@ describe('Parser', () => {
       ]);
     });
   });
+
+  describe('Code block parser', () => {
+    it('parses codeblock', () => {
+      const parsedData = parse('fwfwe ```aa(```', () => '123');
+
+      expect(parsedData).to.deep.eq([
+        {
+          id: '123',
+          type: 'str',
+          content: 'fwfwe ',
+          offsetStart: 0,
+          offsetEnd: 6,
+        },
+        {
+          id: '123',
+          type: 'codeBlock',
+          content: 'aa(',
+          offsetStart: 6,
+          offsetEnd: 15,
+          withTrailingEOL: false,
+        },
+      ]);
+    });
+
+    it('parses with "`" inside', () => {
+      const parsedData = parse('fwfwe ```a`a`a```', () => '123');
+
+      expect(parsedData).to.deep.eq([
+        {
+          id: '123',
+          type: 'str',
+          content: 'fwfwe ',
+          offsetStart: 0,
+          offsetEnd: 6,
+        },
+        {
+          id: '123',
+          type: 'codeBlock',
+          content: 'a`a`a',
+          offsetStart: 6,
+          offsetEnd: 17,
+          withTrailingEOL: false,
+        },
+      ]);
+    });
+
+    it('eats ending EOL', () => {
+      const parsedData = parse('```data```\ntest', () => '123');
+
+      expect(parsedData).to.deep.eq([
+        {
+          id: '123',
+          type: 'codeBlock',
+          content: 'data',
+          offsetStart: 0,
+          offsetEnd: 11,
+          withTrailingEOL: true,
+        },
+        {
+          id: '123',
+          type: 'str',
+          content: 'test',
+          offsetStart: 11,
+          offsetEnd: 15,
+        },
+      ]);
+    });
+  });
 });

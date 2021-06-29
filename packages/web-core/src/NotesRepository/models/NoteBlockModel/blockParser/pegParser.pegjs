@@ -117,10 +117,10 @@ InlineCode
   }
 
 CodeBlock
-  = '```' content:[^(```)]* '```' { 
+  = '```' content:(!'```' .)* ending:(('```' EOL)/'```') { 
     const loc = location();
 
-    return {id: options.generateId(), type: 'codeBlock', content: content.join(''), offsetStart: loc.start.offset, offsetEnd: loc.end.offset}
+    return {id: options.generateId(), type: 'codeBlock', content: content.map(([, v]) => v).join(''), offsetStart: loc.start.offset, offsetEnd: loc.end.offset, withTrailingEOL: ending.length === 2}
   }
 
 EOL "end of line"

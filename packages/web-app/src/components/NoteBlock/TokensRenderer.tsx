@@ -118,9 +118,31 @@ const TokenRenderer = observer(
           }
         })();
       case 'inlineCode':
-        return <pre>{token.content}</pre>;
+        return (
+          <pre
+            data-offset-start={token.offsetStart + 1}
+            data-offset-end={token.offsetEnd - 1}
+            className="content__inline-code"
+          >
+            {token.content}
+          </pre>
+        );
       case 'codeBlock':
-        return <pre>{token.content}</pre>;
+        const trimmedStart = token.content.trimStart();
+
+        return (
+          <pre
+            className="content__code"
+            data-offset-start={
+              token.offsetStart +
+              3 +
+              (token.content.length - trimmedStart.length)
+            }
+            data-offset-end={token.offsetEnd - 3}
+          >
+            {trimmedStart}
+          </pre>
+        );
       case 'link':
         return (
           <a

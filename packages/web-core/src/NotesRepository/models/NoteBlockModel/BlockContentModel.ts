@@ -58,7 +58,7 @@ const astToString = (ast: Token[]): string => {
           case 'inlineCode':
             return `\`${t.content}\``;
           case 'codeBlock':
-            return `\`\`\`${t.content}\`\`\``;
+            return `\`\`\`${t.content}\`\`\`${t.withTrailingEOL ? `\n` : ''}`;
 
           case 'str':
             return t.content;

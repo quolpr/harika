@@ -60,6 +60,7 @@ interface CodeBlockToken extends BaseToken {
   id: string;
   type: 'codeBlock';
   content: string;
+  withTrailingEOL: boolean;
 }
 
 interface StringToken extends BaseToken {
