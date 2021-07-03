@@ -1,4 +1,4 @@
-import type { RefToken, TodoRefToken, Token } from './types';
+import type { TodoRefToken, Token } from './types';
 
 export const filterAst = (
   tokens: Token[],

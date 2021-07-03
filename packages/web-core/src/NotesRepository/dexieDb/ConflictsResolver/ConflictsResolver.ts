@@ -1,10 +1,8 @@
 import { Dexie } from 'dexie';
 import type {
-  ICreateChange,
   IDatabaseChange,
   INoteBlockChangeEvent,
   INoteChangeEvent,
-  NoteBlockDocType,
 } from '@harika/common';
 import { applyChanges } from '../../../dexie-sync/applyChanges';
 import type { IConflictsResolver } from '../../../dexie-sync/ServerSynchronizer';

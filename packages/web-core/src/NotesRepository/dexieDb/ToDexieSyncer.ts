@@ -26,21 +26,31 @@ const zipPatches = (rootKey: string, patches: Patch[]) => {
 
   const toCreateIds = uniq(
     scopedPatches
-      .filter(
-        (p) =>
-          p.op === 'add' &&
-          p.path[0] === rootKey &&
-          p.path.length === 2 &&
-          !toDeleteIds.includes(p.path[1] as string),
-      )
-      .map((p) => p.path[1] as string),
-  );
+      .flatMap((p) => {
+        if (p.op === 'add' && p.path.length === 2) {
+          return p.path[1] as string;
+        } else if (
+          p.op === 'replace' &&
+          p.path.length === 1 &&
+          typeof p.value === 'object'
+        ) {
+          return Object.keys(p.value) as string[];
+        } else {
+          return undefined;
+        }
+      })
+      .filter((key) => key !== undefined && !toDeleteIds.includes(key)),
+  ) as string[];
 
   const toDeleteAndCreateIds = [...toDeleteIds, ...toCreateIds];
 
   const toUpdateIds = uniq(
     scopedPatches
-      .filter((p) => !toDeleteAndCreateIds.includes(p.path[1] as string))
+      .filter(
+        (p) =>
+          p.path[1] !== undefined &&
+          !toDeleteAndCreateIds.includes(p.path[1] as string),
+      )
       .map((p) => p.path[1] as string),
   );
 
@@ -109,7 +119,7 @@ export class ToDexieSyncer {
     return Promise.all([
       (async () => {
         if (result.toCreateIds.length > 0) {
-          await table.bulkAdd(result.toCreateIds.map(mapper));
+          await table.bulkPut(result.toCreateIds.map(mapper));
         }
       })(),
       (async () => {

@@ -1,5 +1,5 @@
-import { BehaviorSubject, combineLatest, merge, Observable, of } from 'rxjs';
-import { map, mapTo, switchMap, takeUntil } from 'rxjs/operators';
+import { BehaviorSubject, Observable, of } from 'rxjs';
+import { mapTo, switchMap, takeUntil } from 'rxjs/operators';
 import { CommandTypesFromClient } from '@harika/common';
 import type { SyncStatusService } from '../SyncStatusService';
 import type { CommandsExecuter } from '../CommandsExecuter';

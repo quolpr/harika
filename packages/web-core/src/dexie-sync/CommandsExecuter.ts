@@ -23,8 +23,6 @@ import {
 } from 'rxjs/operators';
 import {
   MessageType,
-  BaseCommandRequest,
-  BaseCommandResponse,
   ClientCommandRequests,
   ClientCommandResponses,
   CommandTypesFromClient,

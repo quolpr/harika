@@ -1,11 +1,6 @@
 import { computed } from 'mobx';
 import { model, Model, modelAction, prop } from 'mobx-keystone';
-import {
-  filterAst,
-  findFirst,
-  isTodo,
-  mapTokens,
-} from './blockParser/astHelpers';
+import { findFirst, isTodo, mapTokens } from './blockParser/astHelpers';
 import { parse } from './blockParser/blockParser';
 import type { Token } from './blockParser/types';
 

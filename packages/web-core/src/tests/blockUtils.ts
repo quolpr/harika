@@ -1,6 +1,5 @@
 import { generateId } from '@harika/common';
 import { NoteBlockModel, VaultModel } from '../NotesRepository';
-import { noteBlockRef } from '../NotesRepository/models/NoteBlockModel';
 import { BlockContentModel } from '../NotesRepository/models/NoteBlockModel/BlockContentModel';
 import {
   parseStringToTree,

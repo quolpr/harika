@@ -1,4 +1,3 @@
-import { set } from 'lodash';
 import type { Connection, EntityManager, Repository } from 'typeorm';
 import type {
   EntityChangeSchema,
@@ -237,13 +236,4 @@ export abstract class BaseSyncEntitiesService implements SyncEntitiesService {
 
     return this.entityChangesRepo.create(result.generatedMaps[0]);
   }
-}
-
-function applyModifications(
-  obj: Record<string, unknown>,
-  modifications: IUpdateChange['to'],
-) {
-  Object.keys(modifications).forEach(function (keyPath) {
-    set(obj, keyPath, modifications[keyPath]);
-  });
 }

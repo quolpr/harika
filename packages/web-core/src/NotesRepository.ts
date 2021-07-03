@@ -1,6 +1,5 @@
 import type { ModelCreationData } from 'mobx-keystone';
 import type { Dayjs } from 'dayjs';
-import type { NoteBlockModel } from './NotesRepository/models/NoteBlockModel';
 import type { NoteModel } from './NotesRepository/models/NoteModel';
 import type { Optional } from 'utility-types';
 import type { Required } from 'utility-types';
@@ -9,7 +8,7 @@ import type { VaultModel } from './NotesRepository/models/VaultModel';
 import type { VaultDexieDatabase } from './NotesRepository/dexieDb/DexieDb';
 import { loadNoteDocToModelAttrs } from './NotesRepository/dexieDb/convertDocToModel';
 import { distinctUntilChanged, map } from 'rxjs/operators';
-import { omitBy, uniq, uniqBy } from 'lodash-es';
+import { uniq, uniqBy } from 'lodash-es';
 import { filterAst } from './NotesRepository/models/NoteBlockModel/blockParser/astHelpers';
 import type { RefToken } from './NotesRepository/models/NoteBlockModel/blockParser/types';
 import { from, Observable } from 'rxjs';

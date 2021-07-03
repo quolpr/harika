@@ -1,7 +1,6 @@
 import type { Dayjs } from 'dayjs';
 import Dexie from 'dexie';
 import type { NoteDocType, NoteBlockDocType } from '@harika/common';
-import { set } from 'lodash-es';
 
 export class VaultDexieDatabase extends Dexie {
   notes: Dexie.Table<NoteDocType, string>;
@@ -135,13 +134,4 @@ class NotesQueries {
       ),
     );
   }
-}
-
-function applyModifications(
-  obj: object,
-  modifications: Record<string, unknown>,
-) {
-  Object.keys(modifications).forEach(function (keyPath) {
-    set(obj, keyPath, modifications[keyPath]);
-  });
 }
