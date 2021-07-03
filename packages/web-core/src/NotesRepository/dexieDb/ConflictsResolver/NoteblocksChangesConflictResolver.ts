@@ -2,110 +2,22 @@ import {
   DatabaseChangeType,
   ICreateChange,
   IDeleteChange,
-  INoteBlockChangeEvent,
   IUpdateChange,
   NoteBlockDocType,
 } from '@harika/common';
 import { cloneDeep } from 'lodash';
 import { difference, set, uniq } from 'lodash-es';
-import { reduceChanges } from '../../../dexie-sync/reduceChanges';
+import { BaseConflictResolver } from './BaseConflictResolver';
 
-export class NoteblocksChangesConflictResolver {
-  resolveConflicts(
-    clientChanges: INoteBlockChangeEvent[],
-    serverChanges: INoteBlockChangeEvent[],
-  ) {
-    const reducedClientChanges = reduceChanges(clientChanges) as Record<
-      string,
-      INoteBlockChangeEvent
-    >;
-    const reducedServerChanges = reduceChanges(serverChanges) as Record<
-      string,
-      INoteBlockChangeEvent
-    >;
-
-    const mergedChanges: Record<string, INoteBlockChangeEvent> = {};
-
-    Object.entries(reducedClientChanges).forEach(([key, clientChange]) => {
-      if (!reducedServerChanges[key]) {
-        mergedChanges[key] = clientChange;
-
-        return;
-      }
-
-      mergedChanges[key] = this.resolveConflictedChanges(
-        clientChange,
-        reducedServerChanges[key],
-      );
-    });
-
-    Object.entries(reducedServerChanges).forEach(([key, serverChange]) => {
-      if (!mergedChanges[key]) {
-        mergedChanges[key] = serverChange;
-      }
-    });
-
-    const changesArray = Object.values(mergedChanges);
-
-    return {
-      changes: changesArray,
-      touchedIds: changesArray.map((ch) => ch.key),
-    };
-  }
-
-  private resolveConflictedChanges(
-    clientChange: INoteBlockChangeEvent,
-    serverChange: INoteBlockChangeEvent,
-  ): INoteBlockChangeEvent {
-    switch (clientChange.type) {
-      case DatabaseChangeType.Create: {
-        return clientChange;
-      }
-
-      case DatabaseChangeType.Update: {
-        switch (serverChange.type) {
-          case DatabaseChangeType.Create: {
-            return serverChange;
-          }
-
-          case DatabaseChangeType.Update: {
-            return this.resolveUpdateUpdate(clientChange, serverChange);
-          }
-
-          case DatabaseChangeType.Delete: {
-            return this.resolveUpdateDelete(clientChange, serverChange);
-          }
-        }
-
-        break;
-      }
-
-      case DatabaseChangeType.Delete: {
-        switch (serverChange.type) {
-          case DatabaseChangeType.Create: {
-            return clientChange;
-          }
-
-          case DatabaseChangeType.Update: {
-            return this.resolveUpdateDelete(serverChange, clientChange);
-          }
-
-          case DatabaseChangeType.Delete: {
-            return clientChange;
-          }
-        }
-      }
-    }
-  }
-
-  private resolveUpdateUpdate(
+export class NoteblocksChangesConflictResolver extends BaseConflictResolver<
+  'noteBlocks',
+  NoteBlockDocType
+> {
+  resolveUpdateUpdate(
     change1: IUpdateChange<'noteBlocks', NoteBlockDocType>,
     change2: IUpdateChange<'noteBlocks', NoteBlockDocType>,
   ): IUpdateChange<'noteBlocks', NoteBlockDocType> {
     let finalMods = {};
-
-    const noteBlockIdsSelector = (_v: any, k: string) =>
-      k.startsWith('noteBlockIdsMap');
 
     const noteBlockIds = this.resolveIds(
       change1.from.noteBlockIds || change2.from.noteBlockIds,
@@ -156,7 +68,7 @@ export class NoteblocksChangesConflictResolver {
     return uniq(ids1.concat(ids2).filter((id) => !removedIds.includes(id)));
   }
 
-  private resolveUpdateDelete(
+  resolveUpdateDelete(
     change1: IUpdateChange<'noteBlocks', NoteBlockDocType>,
     change2: IDeleteChange<'noteBlocks', NoteBlockDocType>,
   ): ICreateChange<'noteBlocks', NoteBlockDocType> {

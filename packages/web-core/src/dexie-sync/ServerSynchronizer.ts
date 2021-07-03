@@ -269,14 +269,6 @@ export class ServerSynchronizer {
           this.db.table('_syncStatus'),
         ],
         async () => {
-          if (clientChanges.length === 0) {
-            // @ts-ignore
-            Dexie.currentTransaction.source = 'serverChanges';
-          } else {
-            // @ts-ignore
-            Dexie.currentTransaction.source = 'conflictsResolution';
-          }
-
           await this.conflictResolver.resolveChanges(
             clientChanges.map((change) => ({
               ...change,

@@ -1,6 +1,9 @@
+import { Dexie } from 'dexie';
 import type {
   ICreateChange,
   IDatabaseChange,
+  INoteBlockChangeEvent,
+  INoteChangeEvent,
   NoteBlockDocType,
 } from '@harika/common';
 import { applyChanges } from '../../../dexie-sync/applyChanges';
@@ -8,6 +11,7 @@ import type { IConflictsResolver } from '../../../dexie-sync/ServerSynchronizer'
 import { ConsistencyResolver } from '../ConsistencyResolver/ConsistencyResolver';
 import type { VaultDexieDatabase } from '../DexieDb';
 import { NoteblocksChangesConflictResolver } from './NoteblocksChangesConflictResolver';
+import { NotesChangesConflictResolver } from './NotesChangesConflictResolver';
 
 export class ConflictsResolver implements IConflictsResolver {
   private consistencyResolver: ConsistencyResolver;
@@ -20,32 +24,53 @@ export class ConflictsResolver implements IConflictsResolver {
     clientChanges: IDatabaseChange[],
     serverChanges: IDatabaseChange[],
   ) {
-    const noteblocksResolver = new NoteblocksChangesConflictResolver();
+    await this.db.transaction('rw', this.tables(), async () => {
+      const appliedChanges = await (async () => {
+        if (clientChanges.length === 0) {
+          // @ts-ignore
+          Dexie.currentTransaction.source = 'serverChanges';
 
-    const noteBlocksFilter = ({ table }: { table: string }) =>
-      table === 'noteBlocks';
+          await applyChanges(this.db, serverChanges);
 
-    const notesFilter = ({ table }: { table: string }) => table === 'notes';
+          return serverChanges;
+        } else {
+          // @ts-ignore
+          Dexie.currentTransaction.source = 'conflictsResolution';
 
-    const newChanges = noteblocksResolver.resolveConflicts(
-      clientChanges.filter(noteBlocksFilter) as ICreateChange<
-        'noteBlocks',
-        NoteBlockDocType
-      >[],
-      serverChanges.filter(noteBlocksFilter) as ICreateChange<
-        'noteBlocks',
-        NoteBlockDocType
-      >[],
-    );
+          const noteblocksResolver = new NoteblocksChangesConflictResolver();
+          const notesResolver = new NotesChangesConflictResolver();
 
-    const allChanges = [
-      ...newChanges.changes,
-      ...serverChanges.filter(notesFilter),
-    ];
+          const noteBlocksFilter = ({ table }: { table: string }) =>
+            table === 'noteBlocks';
+          const newBlocksChanges = noteblocksResolver.resolveConflicts(
+            clientChanges.filter(noteBlocksFilter) as INoteBlockChangeEvent[],
+            serverChanges.filter(noteBlocksFilter) as INoteBlockChangeEvent[],
+          );
 
-    await applyChanges(this.db, allChanges);
+          const notesFilter = ({ table }: { table: string }) =>
+            table === 'notes';
+          const notesChanges = notesResolver.resolveConflicts(
+            clientChanges.filter(notesFilter) as INoteChangeEvent[],
+            serverChanges.filter(notesFilter) as INoteChangeEvent[],
+          );
 
-    await this.consistencyResolver.resolve(allChanges);
+          const allChanges = [
+            ...notesChanges.changes,
+            ...newBlocksChanges.changes,
+          ];
+
+          await applyChanges(this.db, allChanges);
+
+          return allChanges;
+        }
+      })();
+
+      await this.db.transaction('rw', this.tables(), async () => {
+        // @ts-ignore
+        Dexie.currentTransaction.source = 'conflictsResolution';
+        await this.consistencyResolver.resolve(appliedChanges);
+      });
+    });
   }
 
   tables() {
