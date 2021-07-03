@@ -101,9 +101,9 @@ export const CommandPaletteModal = ({
             .trim();
 
           // TODO: to RxJS
-          const notes = await firstValueFrom(
-            noteRepo.searchNotesTuples$(toFind),
-          );
+          const notes = (
+            await firstValueFrom(noteRepo.getAllNotesTuples$())
+          ).filter(({ title }) => title.toLowerCase().includes(toFind));
 
           const createNoteAction: IAction = {
             id: uuidv4(),
