@@ -14,7 +14,7 @@ export const Modal: React.FC<{
   return (
     <ReactModal
       isOpen={isOpened}
-      style={{ overlay: { zIndex: 110 }, content: {} }}
+      style={{ overlay: { zIndex: 100000 }, content: {} }}
       overlayClassName={modalClass('overlay')}
       className={modalClass('content', { 'full-height': fullHeight })}
       shouldCloseOnOverlayClick={true}

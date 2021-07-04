@@ -1,20 +1,17 @@
 import { observer } from 'mobx-react-lite';
 import React, { useCallback } from 'react';
-import { Link, useHistory, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import type { RefToken, NoteBlockModel, Token } from '@harika/web-core';
 import { useNoteRepository } from '../../contexts/CurrentNoteRepositoryContext';
 import { useCurrentVault } from '../../hooks/useCurrentVault';
-import { paths } from '../../paths';
-import queryString from 'query-string';
 import { useCurrentNote } from '../../hooks/useCurrentNote';
+import { useNotePath } from '../../hooks/useNoteClick';
 
 const RefRenderer = observer(
   ({ token, noteBlock }: { token: RefToken; noteBlock: NoteBlockModel }) => {
     const vault = useCurrentVault();
     const noteRepo = useNoteRepository();
     const linkedNotes = noteBlock.linkedNoteRefs;
-    const history = useHistory();
-    const location = useLocation();
     const currentNote = useCurrentNote();
 
     const handleTodoToggle = useCallback(
@@ -30,36 +27,7 @@ const RefRenderer = observer(
       return note.maybeCurrent?.title === token.content;
     });
 
-    const handleClick = useCallback(
-      (e: React.MouseEvent) => {
-        if (!noteRef) return;
-        if (!currentNote) return;
-
-        e.preventDefault();
-
-        const path = paths.vaultNotePath({
-          vaultId: vault.$modelId,
-          noteId: noteRef.id,
-        });
-
-        const parsedCurrentQuery = queryString.parse(location.search);
-
-        const newQuery = {
-          stackedIds: [
-            ...(parsedCurrentQuery.stackedIds
-              ? [parsedCurrentQuery.stackedIds]
-              : []
-            )
-              .flat()
-              .filter((id) => id !== currentNote.$modelId),
-            currentNote.$modelId,
-          ].filter((id) => id !== noteRef.id),
-        };
-
-        history.push(`${path}?${queryString.stringify(newQuery)}`);
-      },
-      [currentNote, history, location.search, noteRef, vault.$modelId],
-    );
+    const notePath = useNotePath(vault, currentNote?.$modelId, noteRef?.id);
 
     if (token.content === 'TODO' || token.content === 'DONE') {
       return (
@@ -91,15 +59,7 @@ const RefRenderer = observer(
     if (!noteRef) return <>[[{token.content}]]</>;
 
     return (
-      <Link
-        to={paths.vaultNotePath({
-          vaultId: vault.$modelId,
-          noteId: noteRef?.id,
-        })}
-        className="link"
-        data-not-editable
-        onClick={handleClick}
-      >
+      <Link to={notePath} className="link" data-not-editable>
         [[{token.content}]]
       </Link>
     );

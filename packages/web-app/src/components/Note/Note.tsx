@@ -22,6 +22,7 @@ import { CurrentBlockInputRefContext } from '../../contexts';
 import { useNoteRepository } from '../../contexts/CurrentNoteRepositoryContext';
 import { NoteBlocks } from './NoteBlocks';
 import { useCurrentNote } from '../../hooks/useCurrentNote';
+import { useNotePath } from '../../hooks/useNoteClick';
 
 export interface IFocusBlockState {
   focusOnBlockId: string;
@@ -71,6 +72,9 @@ const BacklinkedNote = observer(
   ({ note, blocks }: { note: NoteModel; blocks: NoteBlockModel[] }) => {
     const vault = useCurrentVault();
     const [isExpanded, setIsExpanded] = useState(true);
+    const currentNote = useCurrentNote();
+
+    const notePath = useNotePath(vault, currentNote?.$modelId, note.$modelId);
 
     return (
       <div className="backlinked-note">
@@ -86,14 +90,7 @@ const BacklinkedNote = observer(
               setIsExpanded(!isExpanded);
             }}
           />
-          <Link
-            to={paths.vaultNotePath({
-              vaultId: vault.$modelId,
-              noteId: note.$modelId,
-            })}
-          >
-            {note.title}
-          </Link>
+          <Link to={notePath}>{note.title}</Link>
         </div>
 
         <div

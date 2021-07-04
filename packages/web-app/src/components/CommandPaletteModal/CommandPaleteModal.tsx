@@ -1,17 +1,26 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import './styles.css';
 import { ChevronRightIcon, ReplyIcon } from '@heroicons/react/solid';
 import Highlighter from 'react-highlight-words';
-import { Link, useHistory } from 'react-router-dom';
+import { Link, useHistory, useLocation, useParams } from 'react-router-dom';
 import { cn } from '../../utils';
 import { useKey } from 'react-use';
 import { v4 as uuidv4 } from 'uuid';
 import type { IFocusBlockState } from '../Note/Note';
-import { paths } from '../../paths';
+import { PATHS, paths } from '../../paths';
 import { useNoteRepository } from '../../contexts/CurrentNoteRepositoryContext';
 import { useCurrentVault } from '../../hooks/useCurrentVault';
 import { Modal, modalClass } from '../Modal/Modal';
 import { firstValueFrom } from 'rxjs';
+import { useCurrentNote } from '../../hooks/useCurrentNote';
+import { generateStackedNotePath } from '../../hooks/useNoteClick';
+import pathToRegexp from 'path-to-regexp';
 
 // Command executes on each user type and as result gives list of actions
 // Commands are start with `!`. If no `!` present - then search happen between all start view actions names
@@ -55,6 +64,13 @@ export const CommandPaletteModal = ({
   isOpened: boolean;
   onClose: () => void;
 }) => {
+  const location = useLocation();
+
+  const currentNoteId = useMemo(
+    () => pathToRegexp(PATHS.VAULT_NOTE_PATH).exec(location.pathname)?.[2],
+    [location.pathname],
+  );
+
   const history = useHistory();
   const vault = useCurrentVault();
   const noteRepo = useNoteRepository();
@@ -67,6 +83,7 @@ export const CommandPaletteModal = ({
           id: uuidv4(),
           name: 'Daily note',
           type: 'goToPage',
+
           href: paths.vaultDailyPath({ vaultId: vault.$modelId }),
         },
         {
@@ -119,10 +136,18 @@ export const CommandPaletteModal = ({
                   id,
                   name: title,
                   type: 'goToPage',
-                  href: paths.vaultNotePath({
-                    vaultId: vault.$modelId,
-                    noteId: id,
-                  }),
+                  href: currentNoteId
+                    ? generateStackedNotePath(
+                        location.search,
+                        vault.$modelId,
+                        currentNoteId,
+                        id,
+                      )
+                    : paths.vaultNotePath({
+                        vaultId: vault.$modelId,
+                        noteId: id,
+                      }),
+
                   highlight: toFind,
                 }),
               ),
@@ -162,7 +187,14 @@ export const CommandPaletteModal = ({
     };
 
     cb();
-  }, [inputCommandValue, vault.$modelId, noteRepo, startView]);
+  }, [
+    inputCommandValue,
+    vault.$modelId,
+    noteRepo,
+    startView,
+    location.search,
+    currentNoteId,
+  ]);
 
   const performAction = useCallback(
     async (action: IAction) => {

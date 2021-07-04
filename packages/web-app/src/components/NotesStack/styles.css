@@ -6,7 +6,10 @@
   overflow: auto;
 
   &__row {
-    @apply px-5;
+    @apply px-5 max-w-screen-lg;
+
+    width: 100%;
+    margin: 0 auto;
     position: relative;
 
     overflow: auto;
