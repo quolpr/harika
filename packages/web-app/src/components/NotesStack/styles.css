@@ -1,0 +1,22 @@
+.notes-stack {
+  display: flex;
+
+  height: 100%;
+  width: 100%;
+  overflow: auto;
+
+  &__row {
+    @apply px-5;
+    position: relative;
+
+    overflow: auto;
+    min-width: calc(max(100% / 2, 350px));
+  }
+
+  &__close-btn {
+    position: absolute;
+
+    right: 10px;
+    top: 5px;
+  }
+}

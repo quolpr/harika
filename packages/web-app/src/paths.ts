@@ -17,9 +17,9 @@ export const PATHS = {
   DEFAULT_PATH: VAULT_INDEX_PATH,
 } as const;
 
-export const paths = (Object.fromEntries(
-  Object.entries(PATHS).map(([key, value]) => [camelCase(key), compile(value)])
-) as unknown) as {
+export const paths = Object.fromEntries(
+  Object.entries(PATHS).map(([key, value]) => [camelCase(key), compile(value)]),
+) as unknown as {
   vaultIndexPath(): string;
   vaultDailyPath(params: { vaultId: string }): string;
   vaultNoteIndexPath(params: { vaultId: string }): string;

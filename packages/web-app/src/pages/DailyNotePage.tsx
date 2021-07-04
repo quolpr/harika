@@ -16,8 +16,6 @@ export const DailyNotePage = observer(() => {
       const result = await noteRepo.getOrCreateDailyNote(dayjs());
 
       if (result.status === 'ok') {
-        vault.ui.setCurrentNoteId(result.data.$modelId);
-
         history.replace(
           paths.vaultNotePath({
             vaultId: vault.$modelId,

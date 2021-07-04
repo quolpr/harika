@@ -9,6 +9,7 @@ body,
   @apply bg-gray-900 text-gray-300;
   min-width: 320px;
   -webkit-overflow-scrolling: auto;
+  overscroll-behavior-x: none;
 }
 
 body {
@@ -130,6 +131,6 @@ input[type='search']::-webkit-search-results-decoration {
 .hidden-label {
   /* https://github.com/GoogleChrome/lighthouse/issues/8435 */
   position: absolute;
-  top: -1000px;
-  left: -1000px;
+  top: -1000000px;
+  left: -1000000px;
 }

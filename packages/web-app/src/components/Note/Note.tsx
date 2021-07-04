@@ -4,7 +4,13 @@ import './styles.css';
 import { useEffect } from 'react';
 import { useState } from 'react';
 import { observer } from 'mobx-react-lite';
-import { NoteBlockModel, NoteModel, FocusedBlockState } from '@harika/web-core';
+import {
+  NoteBlockModel,
+  NoteModel,
+  FocusedBlockState,
+  BlocksViewModel,
+} from '@harika/web-core';
+import { computed } from 'mobx';
 import { Link, useHistory } from 'react-router-dom';
 import { LinkIcon } from '@heroicons/react/solid';
 import { groupBy } from 'lodash-es';
@@ -15,10 +21,51 @@ import { useCurrentVault } from '../../hooks/useCurrentVault';
 import { CurrentBlockInputRefContext } from '../../contexts';
 import { useNoteRepository } from '../../contexts/CurrentNoteRepositoryContext';
 import { NoteBlocks } from './NoteBlocks';
+import { useCurrentNote } from '../../hooks/useCurrentNote';
 
 export interface IFocusBlockState {
   focusOnBlockId: string;
 }
+
+const LinkedBlock = observer(({ noteBlock }: { noteBlock: NoteBlockModel }) => {
+  const vault = useCurrentVault();
+  const path = noteBlock.path;
+  const note = useCurrentNote()!;
+
+  const view = computed(() => {
+    return vault.ui.getView(note, noteBlock);
+  }).get();
+
+  useEffect(() => {
+    if (!view) {
+      vault.ui.createViewByModel(note, noteBlock);
+    }
+  });
+
+  return (
+    <div key={noteBlock.$modelId} className="backlinked-note__noteblock-root">
+      {path.length > 1 && (
+        <div className="backlinked-note__noteblock-path">
+          {path.slice(1).map((n, i) => (
+            <div
+              className={clsx('backlinked-note__noteblock-path-step', {
+                'backlinked-note__noteblock-path-step--last':
+                  i === path.length - 1,
+              })}
+              key={n.$modelId}
+            >
+              {n.content.value.trim().length === 0
+                ? '[blank]'
+                : n.content.value}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {view && <NoteBlock noteBlock={noteBlock} view={view} />}
+    </div>
+  );
+});
 
 const BacklinkedNote = observer(
   ({ note, blocks }: { note: NoteModel; blocks: NoteBlockModel[] }) => {
@@ -54,41 +101,9 @@ const BacklinkedNote = observer(
             'backlinked-note__noteblocks--expanded': isExpanded,
           })}
         >
-          {blocks.map((noteBlock) => {
-            const path = noteBlock.path;
-
-            return (
-              <div
-                key={noteBlock.$modelId}
-                className="backlinked-note__noteblock-root"
-              >
-                {path.length > 1 && (
-                  <div className="backlinked-note__noteblock-path">
-                    {path.slice(1).map((n, i) => (
-                      <div
-                        className={clsx(
-                          'backlinked-note__noteblock-path-step',
-                          {
-                            'backlinked-note__noteblock-path-step--last':
-                              i === path.length - 1,
-                          },
-                        )}
-                        key={n.$modelId}
-                      >
-                        {n.content.value.trim().length === 0
-                          ? '[blank]'
-                          : n.content.value}
-                      </div>
-                    ))}
-                  </div>
-                )}
-                <NoteBlock
-                  noteBlock={noteBlock}
-                  view={vault.ui.getOrCreateViewByModel(note, noteBlock)}
-                />
-              </div>
-            );
-          })}
+          {blocks.map((noteBlock) => (
+            <LinkedBlock key={noteBlock.$modelId} noteBlock={noteBlock} />
+          ))}
         </div>
       </div>
     );
@@ -165,6 +180,16 @@ const NoteBody = observer(({ note }: { note: NoteModel }) => {
 
   const inputId = `note-title-input-${note.$modelId}`;
 
+  const view = computed(() => {
+    return vault.ui.getView(note, note);
+  }).get();
+
+  useEffect(() => {
+    if (!view) {
+      vault.ui.createViewByModel(note, note);
+    }
+  });
+
   return (
     <div className="note">
       <h2 className="note__header">
@@ -181,11 +206,13 @@ const NoteBody = observer(({ note }: { note: NoteModel }) => {
         />
       </h2>
 
-      <NoteBlocks
-        note={note}
-        view={vault.ui.getOrCreateViewByModel(note, note)}
-        childBlocks={note.rootBlockRef.current.noteBlockRefs}
-      />
+      {view && (
+        <NoteBlocks
+          note={note}
+          view={view}
+          childBlocks={note.rootBlockRef.current.noteBlockRefs}
+        />
+      )}
 
       <div className="note__linked-references">
         <LinkIcon className="note__link-icon" style={{ width: 16 }} />

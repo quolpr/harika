@@ -61,22 +61,24 @@ export class FocusedBlock extends Model({
 @model('VaultUiState')
 export class VaultUiState extends Model({
   focusedBlock: prop<FocusedBlock>(() => new FocusedBlock({})),
-  currentNoteId: prop<string | undefined>(),
   blocksViewsMap: prop<Record<string, BlocksViewModel>>(() => ({})),
 }) {
-  @modelAction
-  setCurrentNoteId(id: string | undefined) {
-    this.currentNoteId = id;
+  getView(note: NoteModel, model: { $modelId: string; $modelType: string }) {
+    const key = `${note.$modelId}-${model.$modelType}-${model.$modelId}`;
+
+    if (!this.blocksViewsMap[key]) return undefined;
+
+    return this.blocksViewsMap[key];
   }
 
   @modelAction
-  getOrCreateViewByModel(
+  createViewByModel(
     note: NoteModel,
     model: { $modelId: string; $modelType: string },
   ) {
-    const key = `${model.$modelType}-${model.$modelId}`;
+    const key = `${note.$modelId}-${model.$modelType}-${model.$modelId}`;
 
-    if (this.blocksViewsMap[key]) return this.blocksViewsMap[key];
+    if (this.blocksViewsMap[key]) return;
 
     this.blocksViewsMap[key] = new BlocksViewModel({
       $modelId: key,

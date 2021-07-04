@@ -18,7 +18,7 @@ const getViewModel = () => {
         - block10 [#10]
   `);
 
-  const viewModel = vault.ui.getOrCreateViewByModel(note, {
+  const viewModel = vault.ui.createViewByModel(note, {
     $modelId: '123',
     $modelType: '345',
   });

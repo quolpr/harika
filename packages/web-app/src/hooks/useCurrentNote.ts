@@ -1,10 +1,10 @@
 import type { NoteModel } from '@harika/web-core';
-import { useCurrentVault } from './useCurrentVault';
+import { createContext, useContext } from 'react';
+
+export const CurrentNoteContext = createContext<NoteModel>(
+  null as unknown as NoteModel,
+);
 
 export const useCurrentNote = (): NoteModel | undefined => {
-  const currentVault = useCurrentVault();
-
-  return currentVault.ui.currentNoteId
-    ? currentVault.notesMap[currentVault.ui.currentNoteId]
-    : undefined;
+  return useContext(CurrentNoteContext);
 };
