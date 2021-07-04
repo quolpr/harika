@@ -407,16 +407,17 @@ export class NoteBlockModel extends Model({
     this.move(parentOfParent, parentRef.orderPosition + 1);
   }
 
+  @modelAction
   updateAttrs(data: ModelCreationData<NoteBlockModel>) {
     if (
       data.content !== undefined &&
       data.content !== null &&
-      data.content.value !== this.$.content.value
+      data.content.value !== this.content.value
     ) {
       this.content = data.content;
     }
 
-    if (data.noteRef && data.noteRef.id !== this.$.noteRef.id) {
+    if (data.noteRef && data.noteRef.id !== this.noteRef.id) {
       this.noteRef = data.noteRef;
     }
 
@@ -432,7 +433,11 @@ export class NoteBlockModel extends Model({
       )
     ) {
       const currentRefs = Object.fromEntries(
-        this.noteBlockRefs.map((ref) => [ref.id, ref]),
+        this.noteBlockRefs.map((ref) => {
+          detach(ref);
+
+          return [ref.id, ref];
+        }),
       );
 
       this.noteBlockRefs = data.noteBlockRefs.map((ref) =>
@@ -444,16 +449,10 @@ export class NoteBlockModel extends Model({
       data.linkedNoteRefs &&
       !isEqual(
         data.linkedNoteRefs.map(({ id }) => id),
-        this.linkedNoteRefs,
+        this.linkedNoteRefs.map(({ id }) => id),
       )
     ) {
-      const currentRefs = Object.fromEntries(
-        this.linkedNoteRefs.map((ref) => [ref.id, ref]),
-      );
-
-      this.linkedNoteRefs = data.linkedNoteRefs.map((ref) =>
-        currentRefs[ref.id] ? currentRefs[ref.id] : ref,
-      );
+      this.linkedNoteRefs = data.linkedNoteRefs;
     }
   }
 

@@ -118,45 +118,24 @@ export class VaultModel extends Model({
         2,
       ),
     );
+    // BLOCK
+
+    blocksAttrs.forEach((attr) => {
+      if (!this.blocksMap[attr.$modelId]) {
+        this.blocksMap[attr.$modelId] = new NoteBlockModel(attr);
+      } else {
+        this.blocksMap[attr.$modelId].updateAttrs(attr);
+      }
+    });
 
     // NOTE
 
-    const toUpdateNotes = noteAttrs.filter(
-      (note) => this.notesMap[note.$modelId],
-    );
-
-    // Let's create new blocks at first
-    this.notesMap = {
-      ...this.notesMap,
-      ...Object.fromEntries(
-        noteAttrs
-          .filter((note) => !this.notesMap[note.$modelId])
-          .map((note) => [note.$modelId, new NoteModel(note)]),
-      ),
-    };
-
-    toUpdateNotes.forEach((note) => {
-      this.notesMap[note.$modelId].updateAttrs(note);
-    });
-
-    // BLOCK
-
-    const toUpdateBlocks = blocksAttrs.filter(
-      (block) => this.blocksMap[block.$modelId],
-    );
-
-    // Let's create new blocks at first
-    this.blocksMap = {
-      ...this.blocksMap,
-      ...Object.fromEntries(
-        blocksAttrs
-          .filter((block) => !this.blocksMap[block.$modelId])
-          .map((block) => [block.$modelId, new NoteBlockModel(block)]),
-      ),
-    };
-
-    toUpdateBlocks.forEach((block) => {
-      this.blocksMap[block.$modelId].updateAttrs(block);
+    noteAttrs.forEach((attr) => {
+      if (!this.notesMap[attr.$modelId]) {
+        this.notesMap[attr.$modelId] = new NoteModel(attr);
+      } else {
+        this.notesMap[attr.$modelId].updateAttrs(attr);
+      }
     });
 
     // blocks.forEach((model) => {

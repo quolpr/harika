@@ -10,6 +10,8 @@ import './styles.css';
 
 import { useFindNote } from './useFindNote';
 import { useHistory, useLocation } from 'react-router-dom';
+import { paths } from '../../paths';
+import { useCurrentVault } from '../../hooks/useCurrentVault';
 
 const notesStackClass = cn('notes-stack');
 
@@ -34,13 +36,16 @@ const NoteStack = observer(
     noteId,
     isLast,
     parentRef,
+    isSingle,
   }: {
     noteId: string;
     isLast: boolean;
     parentRef: React.RefObject<HTMLDivElement>;
+    isSingle: boolean;
   }) => {
     const location = useLocation();
     const history = useHistory();
+    const vaultId = useCurrentVault().$modelId;
     const { note, isLoading } = useFindNote(noteId);
 
     useEffect(() => {
@@ -53,22 +58,35 @@ const NoteStack = observer(
 
     const handleClose = useCallback(() => {
       const parsedCurrentQuery = queryString.parse(location.search);
+      const currentIds = (
+        parsedCurrentQuery.stackedIds ? [parsedCurrentQuery.stackedIds] : []
+      ).flat();
 
-      const newQuery = {
-        stackedIds: (parsedCurrentQuery.stackedIds
-          ? [parsedCurrentQuery.stackedIds]
-          : []
-        )
-          .flat()
-          .filter((id) => id !== noteId),
-      };
+      const newLocation = (() => {
+        if (isLast) {
+          return {
+            query: { stackedIds: currentIds.slice(0, -1) },
+            path: paths.vaultNotePath({
+              vaultId,
+              noteId: currentIds[currentIds.length - 1],
+            }),
+          };
+        } else {
+          return {
+            query: { stackedIds: currentIds.filter((id) => id !== noteId) },
+            path: location.pathname,
+          };
+        }
+      })();
 
-      history.push(`${location.pathname}?${queryString.stringify(newQuery)}`);
-    }, [history, location.pathname, location.search, noteId]);
+      history.push(
+        `${newLocation.path}?${queryString.stringify(newLocation.query)}`,
+      );
+    }, [history, isLast, location.pathname, location.search, noteId, vaultId]);
 
     return (
       <div className={notesStackClass('row')}>
-        {!isLast && (
+        {!isSingle && (
           <button
             className={notesStackClass('close-btn')}
             onClick={handleClose}
@@ -99,6 +117,7 @@ export const NotesStack = ({ ids }: { ids: string[] }) => {
         <NoteStack
           key={id}
           noteId={id}
+          isSingle={ids.length === 1}
           isLast={i === ids.length - 1}
           parentRef={parentRef}
         />

@@ -174,6 +174,7 @@ export class NoteModel extends Model({
     }
   }
 
+  @modelAction
   updateAttrs(attrs: ModelCreationData<NoteModel>) {
     if (!this.areLinksLoaded && attrs.areLinksLoaded) {
       this.areLinksLoaded = true;
@@ -190,7 +191,10 @@ export class NoteModel extends Model({
     this.title = attrs.title;
     this.dailyNoteDate = attrs.dailyNoteDate;
     this.createdAt = attrs.createdAt;
-    this.rootBlockRef = attrs.rootBlockRef;
+
+    if (this.rootBlockRef.id !== attrs.rootBlockRef.id) {
+      this.rootBlockRef = attrs.rootBlockRef;
+    }
 
     if (
       attrs.isDeleted !== undefined &&
