@@ -15,8 +15,4 @@ defmodule Harika.Accounts.User do
   def changeset(user_or_changeset, attrs) do
     pow_changeset(user_or_changeset, attrs)
   end
-
-  def set_db_id(ch = %Ecto.Chageset{}) do
-
-  end
 end
