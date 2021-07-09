@@ -1,9 +1,5 @@
 import type { Connection, EntityManager, Repository } from 'typeorm';
-import type {
-  EntityChangeSchema,
-  EntitySchema,
-  SyncEntitiesService,
-} from './types';
+import type { EntityChangeSchema, SyncEntitiesService } from './types';
 import {
   IDatabaseChange,
   IUpdateChange,
@@ -13,7 +9,6 @@ import {
 export abstract class BaseSyncEntitiesService implements SyncEntitiesService {
   constructor(
     private connection: Connection,
-    private vaultEntitiesRepo: Repository<EntitySchema>,
     private entityChangesRepo: Repository<EntityChangeSchema>,
   ) {}
 
@@ -45,10 +40,13 @@ export abstract class BaseSyncEntitiesService implements SyncEntitiesService {
       .orderBy('changes.rev', 'ASC')
       .getMany();
 
+    // TODO: race condition may happen here
     const lastRev = await this.getLastRev(scopeId, ownerId);
 
     return {
-      changes: changes.map((ch) => ch.toChange()),
+      changes: changes
+        .filter((ch) => ch.source !== clientIdentity)
+        .map((ch) => ch.toChange()),
       lastRev: lastRev !== undefined && lastRev !== null ? lastRev : 0,
     };
   }
@@ -120,21 +118,6 @@ export abstract class BaseSyncEntitiesService implements SyncEntitiesService {
     clientIdentity: string,
     manager: EntityManager,
   ) {
-    // await this.vaultEntitiesRepo
-    //   .createQueryBuilder()
-    //   .insert()
-    //   .values({
-    //     scopeId,
-    //     ownerId,
-    //     key,
-    //     // eslint-disable-next-line @typescript-eslint/ban-types
-    //     obj: obj as object,
-    //   })
-    //   .onConflict(
-    //     '("ownerId", "scopeId", "key") DO UPDATE SET "obj" = excluded."obj"',
-    //   )
-    //   .execute();
-
     const change = this.entityChangesRepo.create({
       key,
       source: clientIdentity,
@@ -158,16 +141,6 @@ export abstract class BaseSyncEntitiesService implements SyncEntitiesService {
     clientIdentity: string,
     manager: EntityManager,
   ) {
-    // const entity = await this.vaultEntitiesRepo.findOne({ key });
-
-    // if (!entity) {
-    //   throw new Error(`entity not found with key ${key}`);
-    // }
-
-    // applyModifications(entity.obj, modifications);
-
-    // await manager.save(entity);
-
     const change = this.entityChangesRepo.create({
       key: key,
       source: clientIdentity,
@@ -191,12 +164,6 @@ export abstract class BaseSyncEntitiesService implements SyncEntitiesService {
     obj: object,
     manager: EntityManager,
   ) {
-    // try {
-    //   await this.vaultEntitiesRepo.delete({ key });
-    // } catch (e) {
-    //   console.error(`Failed to remove entity with key ${key}`);
-    // }
-
     const change = this.entityChangesRepo.create({
       key: key,
       source: clientIdentity,

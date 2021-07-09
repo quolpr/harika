@@ -19,15 +19,6 @@ export interface SyncEntitiesService {
   getLastRev(scopeId: string, ownerId: string): Promise<number>;
 }
 
-export interface EntitySchema {
-  id: string;
-  key: string;
-  scopeId: string;
-  obj: Record<string, unknown>;
-  ownerId: string;
-  owner: User;
-}
-
 export interface EntityChangeSchema {
   id: string;
   key: string;

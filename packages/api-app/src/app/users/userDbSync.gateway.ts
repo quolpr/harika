@@ -5,7 +5,6 @@ import {
   OnGatewayDisconnect,
 } from '@nestjs/websockets';
 import { TransientLogger } from '../core/TransientLogger';
-import { ClientIdentityService } from '../sync/clientIdentity.service';
 import { SyncGateway } from '../sync/sync.gateway';
 import { UserDbSyncEntitiesService } from './userDbSyncEntities.service';
 
@@ -13,14 +12,14 @@ import { UserDbSyncEntitiesService } from './userDbSyncEntities.service';
 @WebSocketGateway({ namespace: '/api/user' })
 export class UserDbSyncGateway
   extends SyncGateway
-  implements OnGatewayConnection, OnGatewayDisconnect {
+  implements OnGatewayConnection, OnGatewayDisconnect
+{
   constructor(
     entitiesService: UserDbSyncEntitiesService,
     logger: TransientLogger,
-    identityService: ClientIdentityService
   ) {
     logger.setContext('UserDBSyncGateway');
-    super(entitiesService, logger, identityService);
+    super(entitiesService, logger);
   }
 
   protected async auth(scopeId: string, userId: string) {
