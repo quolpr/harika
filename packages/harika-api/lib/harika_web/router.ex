@@ -3,37 +3,16 @@ defmodule HarikaWeb.Router do
   use Pow.Phoenix.Router
 
   pipeline :api do
-    # plug :put_secure_browser_headers
+    plug :put_secure_browser_headers
 
     plug :accepts, ["json"]
-
-    plug HarikaWeb.AuthContext
   end
 
   scope "/api" do
     pipe_through :api
 
-    forward "/graphql", Absinthe.Plug,
-      schema: HarikaWeb.Schema,
-      json_codec: Jason,
-      before_send: {__MODULE__, :absinthe_before_send}
-
-    forward "/graphiql", Absinthe.Plug.GraphiQL,
-      schema: HarikaWeb.Schema,
-      interface: :playground,
-      before_send: {__MODULE__, :absinthe_before_send}
-  end
-
-  def absinthe_before_send(conn, %Absinthe.Blueprint{} = blueprint) do
-    if user_id = blueprint.execution.context[:set_current_user_id] do
-      put_session(conn, :current_user_id, user_id)
-    else
-      conn
-    end
-  end
-
-  def absinthe_before_send(conn, _) do
-    conn
+    forward "/graphql", Absinthe.Plug, schema: HarikaWeb.Schema, json_codec: Jason
+    forward "/graphiql", Absinthe.Plug.GraphiQL, schema: HarikaWeb.Schema, interface: :playground
   end
 
   # Enables LiveDashboard only for development

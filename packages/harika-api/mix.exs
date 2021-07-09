@@ -47,8 +47,7 @@ defmodule Harika.MixProject do
       {:absinthe, "~> 1.6.0"},
       {:absinthe_plug, "~> 1.5"},
       {:absinthe_error_payload, "~> 1.0"},
-      {:nanoid, "~> 2.0.5"},
-      {:tesla, "~> 1.4.0"}
+      {:nanoid, "~> 2.0.5"}
     ]
   end
 

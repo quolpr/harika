@@ -5,12 +5,9 @@ defmodule HarikaWeb.Endpoint do
   # this means its contents can be read but not tampered with.
   # Set :encryption_salt if you would also like to encrypt it.
   @session_options [
-    path: "/",
     store: :cookie,
     key: "_harika_key",
-    signing_salt: "9Shec/FL",
-    same_site: "None",
-    secure: true
+    signing_salt: "9Shec/FL"
   ]
 
   socket "/socket", HarikaWeb.UserSocket,
@@ -51,31 +48,7 @@ defmodule HarikaWeb.Endpoint do
   plug Plug.MethodOverride
   plug Plug.Head
   plug Plug.Session, @session_options
-
-  plug CORSPlug,
-    origin: [
-      "http://localhost:4200",
-      "http://192.168.1.41:4200",
-      "ionic://localhost",
-      "http://localhost",
-      "capacitor://localhost"
-    ],
-    headers: [
-      "Authorization",
-      "Content-Type",
-      "Accept",
-      "Origin",
-      "User-Agent",
-      "DNT",
-      "Cache-Control",
-      "X-Mx-ReqToken",
-      "Keep-Alive",
-      "X-Requested-With",
-      "If-Modified-Since",
-      "X-CSRF-Token",
-      "Cookie"
-    ]
-
+  plug CORSPlug, origin: ["http://localhost:4200", "http://192.168.1.41:4200"]
   plug Pow.Plug.Session, otp_app: :harika
   plug HarikaWeb.Router
 end

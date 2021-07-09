@@ -1,12 +1,14 @@
 defmodule HarikaWeb.Schema.AccountsResolver do
   alias Harika.Accounts
+  alias HarikaWeb.Authentication
+  alias HarikaWeb.Authentication.AuthInfo
 
   alias Harika.Accounts.User
 
   def login(_, %{email: email, password: password}, _) do
     case Accounts.authenticate(email, password) do
       %User{} = user ->
-        {:ok, %{user: user, db_auth_token: Accounts.get_couchdb_token(user)}}
+        {:ok, %{token: create_token(user.id), user: user}}
 
       _ ->
         {:error, "Incorrect email or password"}
@@ -18,17 +20,15 @@ defmodule HarikaWeb.Schema.AccountsResolver do
     params = Map.put(params, :confirm_password, password)
 
     with {:ok, user} <- Accounts.create_user(params) do
-      {:ok, %{user: user, db_auth_token: Accounts.get_couchdb_token(user)}}
+      {:ok, %{token: create_token(user.id), user: user}}
     else
       err -> err
     end
   end
 
-  def create_vault_db(
-        _parent,
-        %{db_id: db_id},
-        %{context: %{current_user: current_user}}
-      ) do
-    {:ok, Accounts.create_user_vault_db(db_id, current_user) === :ok}
+  defp create_token(user_id) do
+    Authentication.encode_token(%AuthInfo{
+      user_id: user_id
+    })
   end
 end

@@ -1,9 +1,12 @@
 defmodule HarikaWeb.UserSocket do
   use Phoenix.Socket
 
+  alias HarikaWeb.Authentication
+  alias HarikaWeb.Authentication.AuthInfo
+
   ## Channels
-  # channel "vaults:*", HarikaWeb.VaultChannel
-  # channel "user-vaults:*", HarikaWeb.VaultsChannel
+  channel "vaults:*", HarikaWeb.VaultChannel
+  channel "user-vaults:*", HarikaWeb.VaultsChannel
 
   # Socket params are passed from the client and can
   # be used to verify and authenticate a user. After
@@ -16,10 +19,15 @@ defmodule HarikaWeb.UserSocket do
   #
   # See `Phoenix.Token` documentation for examples in
   # performing token verification on connect.
-  # @impl true
-  # def connect(%{"token" => token}, socket, _connect_info) do
-  #   {:ok, socket}
-  # end
+  @impl true
+  def connect(%{"token" => token}, socket, _connect_info) do
+    with {:ok, %AuthInfo{user_id: user_id}} <- Authentication.decode_token(token) do
+      {:ok, assign(socket, :user_id, user_id)}
+    else
+      _err ->
+        :error
+    end
+  end
 
   # Socket id's are topics that allow you to identify all sockets for a given user:
   #

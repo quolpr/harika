@@ -1,4 +1,4 @@
-defmodule HarikaWeb.Schema.AuthenticationMiddleware do
+defmodule HarikaWeb.AuthenticationMiddleware do
   @behaviour Absinthe.Middleware
 
   alias Harika.Accounts.User
