@@ -10,6 +10,7 @@ defmodule HarikaWeb.DbChangesChannel do
       |> assign(:client_id, client_id)
 
     # TODO: auth db_name here
+    # TODO: create db if not exists, with lock
 
     {:ok, socket}
   end
@@ -31,14 +32,23 @@ defmodule HarikaWeb.DbChangesChannel do
       ) do
     %{db_name: db_name, client_id: client_id, user_id: user_id} = socket.assigns
 
-    if last_applied_remote_revision !== Sync.get_max_rev(user_id, db_name) do
-      {:reply, {:ok, %{status: "stale_changes"}}}
-    else
-      newRev = Sync.apply_changes(changes, user_id, client_id, db_name)
+    res =
+      Sync.apply_changes_with_lock(
+        changes,
+        last_applied_remote_revision,
+        user_id,
+        client_id,
+        db_name
+      )
 
-      broadcast(socket, "revision_was_changed", %{newRev: newRev})
+    case res do
+      {:ok, %{new_rev: new_rev}} ->
+        broadcast(socket, "revision_was_changed", %{new_rev: new_rev})
 
-      {:reply, {:ok, %{status: "success", newRev: newRev}}, socket}
+      _ ->
+        nil
     end
+
+    {:reply, res, socket}
   end
 end

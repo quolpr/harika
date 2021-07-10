@@ -11,6 +11,9 @@ config :harika,
   ecto_repos: [Harika.Repo],
   generators: [binary_id: true]
 
+config :ex_lock,
+  repo: Harika.Repo
+
 # Configures the endpoint
 config :harika, HarikaWeb.Endpoint,
   url: [host: "localhost"],

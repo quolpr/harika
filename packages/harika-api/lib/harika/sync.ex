@@ -47,8 +47,30 @@ defmodule Harika.Sync do
     |> Repo.one(prefix: prefix)
   end
 
+  # Not very performant solution. It will be resolved when conflict resolution will be moved to server
+  def apply_changes_with_lock(changes, last_applied_remote_revision, user_id, client_id, db_name) do
+    ExLock.execute("db_changes_#{db_name}_applying", [], fn ->
+      if last_applied_remote_revision < get_max_rev(user_id, db_name) do
+        {:error, %{name: "stale_changes"}}
+      else
+        new_rev = apply_changes(changes, user_id, client_id, db_name)
+
+        {:ok, %{new_rev: new_rev}}
+      end
+    end)
+    |> case do
+      {:ok, res} ->
+        res
+
+      {:error, %ExLock.Error{message: "lock could not be acquired"}} ->
+        {:error, %{name: "locked"}}
+
+      _ ->
+        {:error, %{name: "unknown"}}
+    end
+  end
+
   def apply_changes(changes, user_id, client_id, db_name) do
-    # TODO: lock on changes
     prefix = DbManager.get_prefix_for_user_id(user_id)
 
     changes =
@@ -59,7 +81,7 @@ defmodule Harika.Sync do
 
     ids = Enum.map(changes, & &1[:id])
 
-    Repo.insert_all(changes, prefix: prefix)
+    Repo.insert_all(DbChange, changes, prefix: prefix)
 
     from(m in DbChange,
       select: fragment("MAX(?)", m.rev),
