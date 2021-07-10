@@ -1,22 +1,25 @@
 defmodule Harika.Sync.DbChange do
   use Ecto.Schema
 
+  alias Harika.Sync.Schemas.CreateSchema
+  alias Harika.Sync.Schemas.UpdateSchema
+  alias Harika.Sync.Schemas.DeleteSchema
+
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
   schema "sync_db_changes" do
-    alias Harika.Accounts.User
-
+    field :db_name, :string
+    field :table, :string
+    field :key, Ecto.UUID
+    field :type, Ecto.Enum, values: [:create, :update, :delete]
     field :rev, :integer
+    field :recieved_from_client_id, Ecto.UUID
 
+    # on update
     field :from, :map
     field :to, :map
 
-    field :scope_id, :binary_id
-    field :db_name, :string
-    field :source, :string
-    field :type, Ecto.Enum, values: [:create, :update, :delete]
-    field :table, :string
-    field :key, :binary_id
+    # on change
     field :obj, :map
 
     field :created_at, :utc_datetime_usec
@@ -24,10 +27,6 @@ defmodule Harika.Sync.DbChange do
   end
 
   def to_schema(%__MODULE__{} = change) do
-    alias Harika.Sync.Schemas.CreateSchema
-    alias Harika.Sync.Schemas.UpdateSchema
-    alias Harika.Sync.Schemas.DeleteSchema
-
     case change.type do
       :create ->
         %CreateSchema{

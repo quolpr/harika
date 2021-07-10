@@ -9,12 +9,12 @@ defmodule Harika.Syncher.Migrations.CreateChangesTable do
 
     create table(:sync_db_changes, primary_key: false) do
       add(:id, :binary_id, primary_key: true)
-      add(:db_name, :string)
-      add(:table, :string)
-      add(:key, :binary_id)
-      add(:type, :change_type)
+      add(:db_name, :string, null: false)
+      add(:table, :string, null: false)
+      add(:key, :binary_id, null: false)
+      add(:type, :change_type, null: false)
       add(:rev, :bigint, null: false)
-      add(:recieved_from_client_id, :binary_id)
+      add(:recieved_from_client_id, :binary_id, null: false)
 
       # on update
       add(:from, :map)
@@ -23,8 +23,8 @@ defmodule Harika.Syncher.Migrations.CreateChangesTable do
       # on change
       add(:obj, :map)
 
-      add(:created_at, :utc_datetime_usec)
-      add(:updated_at, :utc_datetime_usec)
+      add(:created_at, :utc_datetime_usec, null: false)
+      add(:updated_at, :utc_datetime_usec, null: false)
     end
 
     create(index("sync_db_changes", [:recieved_from_client_id]))

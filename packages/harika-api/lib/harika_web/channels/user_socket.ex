@@ -4,9 +4,7 @@ defmodule HarikaWeb.UserSocket do
   alias HarikaWeb.Authentication
   alias HarikaWeb.Authentication.AuthInfo
 
-  ## Channels
-  channel "vaults:*", HarikaWeb.VaultChannel
-  channel "user-vaults:*", HarikaWeb.VaultsChannel
+  channel "db_changes:*", HarikaWeb.VaultChannel
 
   # Socket params are passed from the client and can
   # be used to verify and authenticate a user. After

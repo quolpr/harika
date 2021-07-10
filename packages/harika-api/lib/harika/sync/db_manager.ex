@@ -17,7 +17,7 @@ defmodule Harika.Sync.DbManager do
       |> Keyword.put(:prefix, prefix)
       |> Keyword.delete(:pool)
 
-    ## TODO: span new process
+    ## TODO: spawn new process
     {:ok, pid} = Harika.Repo.start_link(config)
     Harika.Repo.put_dynamic_repo(pid)
 
@@ -35,6 +35,16 @@ defmodule Harika.Sync.DbManager do
 
     Harika.Repo.stop(1000)
     Harika.Repo.put_dynamic_repo(Harika.Repo)
+  end
+
+  def drop_user_database_schema(user_id) do
+    prefix = get_prefix_for_user_id(user_id)
+
+    query = """
+    DROP SCHEMA IF EXISTS "#{prefix}"
+    """
+
+    Harika.Repo.query(query)
   end
 
   def migrate_repo(options \\ []) do
