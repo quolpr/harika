@@ -1,8 +1,8 @@
 mutation login($email: String!, $password: String!) {
-  login(payload: {email: $email, password: $password}) {
-    authed
+  login(email: $email, password: $password) {
     user {
       id
+      email
     }
   }
 }

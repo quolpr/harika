@@ -33,47 +33,105 @@ export type Scalars = {
   Float: number;
 };
 
-export type CreateUserInput = {
+export type CreateUserParams = {
   email: Scalars['String'];
   password: Scalars['String'];
 };
 
-export type LoginInput = {
+export type RootMutationType = {
+  __typename?: 'RootMutationType';
+  createUser: SessionPayload;
+  login: Session;
+};
+
+
+export type RootMutationTypeCreateUserArgs = {
+  params: CreateUserParams;
+};
+
+
+export type RootMutationTypeLoginArgs = {
   email: Scalars['String'];
   password: Scalars['String'];
 };
 
-export type LoginResultType = {
-  __typename?: 'LoginResultType';
-  authed: Scalars['Boolean'];
-  user?: Maybe<UserType>;
+export type RootQueryType = {
+  __typename?: 'RootQueryType';
+  currentUser?: Maybe<User>;
 };
 
-export type Mutation = {
-  __typename?: 'Mutation';
-  createUser: UserType;
-  login: LoginResultType;
+export type Session = {
+  __typename?: 'Session';
+  user: User;
 };
 
-
-export type MutationCreateUserArgs = {
-  payload: CreateUserInput;
+export type SessionPayload = {
+  __typename?: 'SessionPayload';
+  /** A list of failed validations. May be blank or null if mutation succeeded. */
+  messages: Array<ValidationMessage>;
+  /** The object created/updated/deleted by the mutation. May be null if mutation failed. */
+  result?: Maybe<Session>;
+  /** Indicates if the mutation completed successfully or not. */
+  successful: Scalars['Boolean'];
 };
 
-
-export type MutationLoginArgs = {
-  payload: LoginInput;
-};
-
-export type Query = {
-  __typename?: 'Query';
-  viewer: UserType;
-};
-
-export type UserType = {
-  __typename?: 'UserType';
+export type User = {
+  __typename?: 'User';
+  email: Scalars['String'];
   id: Scalars['ID'];
-  email: Scalars['String'];
+};
+
+/**
+ * Validation messages are returned when mutation input does not meet the requirements.
+ *   While client-side validation is highly recommended to provide the best User Experience,
+ *   All inputs will always be validated server-side.
+ *   Some examples of validations are:
+ *   * Username must be at least 10 characters
+ *   * Email field does not contain an email address
+ *   * Birth Date is required
+ *   While GraphQL has support for required values, mutation data fields are always
+ *   set to optional in our API. This allows 'required field' messages
+ *   to be returned in the same manner as other validations. The only exceptions
+ *   are id fields, which may be required to perform updates or deletes.
+ */
+export type ValidationMessage = {
+  __typename?: 'ValidationMessage';
+  /** A unique error code for the type of validation used. */
+  code: Scalars['String'];
+  /**
+   * The input field that the error applies to. The field can be used to
+   * identify which field the error message should be displayed next to in the
+   * presentation layer.
+   * If there are multiple errors to display for a field, multiple validation
+   * messages will be in the result.
+   * This field may be null in cases where an error cannot be applied to a specific field.
+   */
+  field: Scalars['String'];
+  /**
+   * A friendly error message, appropriate for display to the end user.
+   * The message is interpolated to include the appropriate variables.
+   * Example: `Username must be at least 10 characters`
+   * This message may change without notice, so we do not recommend you match against the text.
+   * Instead, use the *code* field for matching.
+   */
+  message: Scalars['String'];
+  /** A list of substitutions to be applied to a validation message template */
+  options?: Maybe<Array<Maybe<ValidationOption>>>;
+  /**
+   * A template used to generate the error message, with placeholders for option substiution.
+   * Example: `Username must be at least {count} characters`
+   * This message may change without notice, so we do not recommend you match against the text.
+   * Instead, use the *code* field for matching.
+   */
+  template?: Maybe<Scalars['String']>;
+};
+
+export type ValidationOption = {
+  __typename?: 'ValidationOption';
+  /** The name of a variable to be subsituted in a validation message template */
+  key: Scalars['String'];
+  /** The value of a variable to be substituted in a validation message template */
+  value: Scalars['String'];
 };
 
 export type LoginMutationVariables = Exact<{
@@ -83,14 +141,13 @@ export type LoginMutationVariables = Exact<{
 
 
 export type LoginMutation = (
-  { __typename?: 'Mutation' }
+  { __typename?: 'RootMutationType' }
   & { login: (
-    { __typename?: 'LoginResultType' }
-    & Pick<LoginResultType, 'authed'>
-    & { user?: Maybe<(
-      { __typename?: 'UserType' }
-      & Pick<UserType, 'id'>
-    )> }
+    { __typename?: 'Session' }
+    & { user: (
+      { __typename?: 'User' }
+      & Pick<User, 'id' | 'email'>
+    ) }
   ) }
 );
 
@@ -101,20 +158,29 @@ export type SignupMutationVariables = Exact<{
 
 
 export type SignupMutation = (
-  { __typename?: 'Mutation' }
+  { __typename?: 'RootMutationType' }
   & { createUser: (
-    { __typename?: 'UserType' }
-    & Pick<UserType, 'id'>
+    { __typename?: 'SessionPayload' }
+    & { messages: Array<(
+      { __typename?: 'ValidationMessage' }
+      & Pick<ValidationMessage, 'field' | 'message' | 'template'>
+    )>, result?: Maybe<(
+      { __typename?: 'Session' }
+      & { user: (
+        { __typename?: 'User' }
+        & Pick<User, 'id'>
+      ) }
+    )> }
   ) }
 );
 
 
 export const LoginDocument = `
     mutation login($email: String!, $password: String!) {
-  login(payload: {email: $email, password: $password}) {
-    authed
+  login(email: $email, password: $password) {
     user {
       id
+      email
     }
   }
 }
@@ -129,8 +195,17 @@ export const useLoginMutation = <
     );
 export const SignupDocument = `
     mutation signup($email: String!, $password: String!) {
-  createUser(payload: {email: $email, password: $password}) {
-    id
+  createUser(params: {email: $email, password: $password}) {
+    messages {
+      field
+      message
+      template
+    }
+    result {
+      user {
+        id
+      }
+    }
   }
 }
     `;

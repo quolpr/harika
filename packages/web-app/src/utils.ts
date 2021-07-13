@@ -1,4 +1,6 @@
 import { withNaming } from '@bem-react/classname';
+import type { ErrorOption } from 'react-hook-form';
+import type { ValidationMessage } from './generated/graphql';
 
 export const cn = withNaming({ n: '', e: '__', m: '--', v: '_' });
 
@@ -12,12 +14,12 @@ export const insertText = (
   el: HTMLTextAreaElement,
   text: string,
   cursorPos = text.length,
-  insertPos?: { start: number; end: number }
+  insertPos?: { start: number; end: number },
 ) => {
   // https://stackoverflow.com/questions/23892547/what-is-the-best-way-to-trigger-onchange-event-in-react-js
   const nativeInputValueSetter = Object?.getOwnPropertyDescriptor(
     window?.HTMLTextAreaElement?.prototype,
-    'value'
+    'value',
   )?.set;
 
   const set = (text: string) => nativeInputValueSetter?.call(el, text);
@@ -29,7 +31,7 @@ export const insertText = (
     set(
       el.value.substring(0, startPos) +
         text +
-        el.value.substring(endPos, el.value.length)
+        el.value.substring(endPos, el.value.length),
     );
 
     el.selectionStart = startPos + cursorPos;
@@ -41,3 +43,12 @@ export const insertText = (
   const ev = new Event('input', { bubbles: true });
   el.dispatchEvent(ev);
 };
+
+export function setServerErrors<T>(
+  errors: Pick<ValidationMessage, 'field' | 'message'>[],
+  setError: (fieldName: keyof T, error: ErrorOption) => void,
+) {
+  errors.forEach(({ field, message }) => {
+    setError(field as keyof T, { type: 'server', message });
+  });
+}

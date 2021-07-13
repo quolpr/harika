@@ -1,6 +1,15 @@
 mutation signup($email: String!, $password: String!) {
-  createUser(payload: {email: $email, password: $password}) {
-    id
+  createUser(params: {email: $email, password: $password}) {
+    messages {
+      field
+      message
+      template
+    }
+    result {
+      user {
+        id
+      }
+    }
   }
 }
 

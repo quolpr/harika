@@ -36,7 +36,7 @@ export const LoginPage = () => {
       try {
         const res = await login.mutateAsync(data);
 
-        if (!res.login.authed || !res.login.user) throw new Error('auth error');
+        if (!res.login || !res.login.user) throw new Error('auth error');
 
         const { id: userId } = res.login.user;
 

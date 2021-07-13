@@ -48,7 +48,7 @@ defmodule HarikaWeb.Endpoint do
   plug Plug.MethodOverride
   plug Plug.Head
   plug Plug.Session, @session_options
-  plug CORSPlug, origin: ["http://localhost:4200", "http://192.168.1.41:4200"]
+  plug CORSPlug, origin: ["http://localhost:8080", "http://192.168.1.41:4200"]
   plug Pow.Plug.Session, otp_app: :harika
   plug HarikaWeb.Router
 end

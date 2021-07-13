@@ -4,7 +4,7 @@ import { useHistory } from 'react-router-dom';
 import { useSignupMutation } from '../../generated/graphql';
 import { useAuthState } from '../../hooks/useAuthState';
 import { paths } from '../../paths';
-import { cn } from '../../utils';
+import { cn, setServerErrors } from '../../utils';
 
 const formClass = cn('form');
 
@@ -21,21 +21,21 @@ export const SignupPage = () => {
   const {
     register,
     handleSubmit,
-
     formState: { errors },
+    setError,
   } = useForm<IFormData>();
 
   const onSubmit = async (data: IFormData) => {
     const res = await signup.mutateAsync({ ...data });
 
-    if (res.createUser) {
-      const { id: userId } = res.createUser;
+    if (res.createUser.result?.user) {
+      const { id: userId } = res.createUser.result.user;
 
       setAuthInfo({ userId, isOffline: false });
 
       history.push(paths.vaultIndexPath());
     } else {
-      /* setServerErrors(res.createUser.messages, setError); */
+      setServerErrors(res.createUser.messages, setError);
     }
   };
 
