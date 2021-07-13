@@ -1,5 +1,6 @@
 defmodule Harika.Sync do
   import Ecto.Query
+  alias Ecto.Multi
   alias Harika.Repo
   alias Harika.Sync.DbChange
   alias Harika.Sync.DbManager
@@ -26,6 +27,8 @@ defmodule Harika.Sync do
       )
       |> Repo.one(prefix: prefix)
 
+    ids = Enum.map(ids, &Ecto.UUID.load!(&1))
+
     changes =
       from(m in DbChange,
         where: m.id in ^ids,
@@ -47,46 +50,60 @@ defmodule Harika.Sync do
     |> Repo.one(prefix: prefix)
   end
 
-  # Not very performant solution. It will be resolved when conflict resolution will be moved to server
+  # Not very performant solution. We should move conflict resolution to server
   def apply_changes_with_lock(changes, last_applied_remote_revision, user_id, client_id, db_name) do
-    ExLock.execute("db_changes_#{db_name}_applying", [], fn ->
-      if last_applied_remote_revision < get_max_rev(user_id, db_name) do
-        {:error, %{name: "stale_changes"}}
-      else
-        new_rev = apply_changes(changes, user_id, client_id, db_name)
+    resource = "db_changes_#{db_name}_applying"
+    lock_exp_sec = 10
 
-        {:ok, %{new_rev: new_rev}}
-      end
-    end)
-    |> case do
+    case Redlock.transaction(resource, lock_exp_sec, fn ->
+           max_rev = get_max_rev(user_id, db_name)
+
+           if (max_rev !== nil && last_applied_remote_revision < get_max_rev(user_id, db_name)) ||
+                (last_applied_remote_revision === nil && max_rev !== nil) do
+             {:error, %{name: "stale_changes"}}
+           else
+             new_rev = apply_changes(changes, user_id, client_id, db_name)
+
+             {:ok, %{new_rev: new_rev}}
+           end
+         end) do
       {:ok, res} ->
-        res
+        {:ok, res}
 
-      {:error, %ExLock.Error{message: "lock could not be acquired"}} ->
+      {:error, :lock_failure} ->
         {:error, %{name: "locked"}}
 
-      _ ->
-        {:error, %{name: "unknown"}}
+      other ->
+        other
     end
   end
 
-  def apply_changes(changes, user_id, client_id, db_name) do
+  defp apply_changes(changes, user_id, client_id, db_name) do
     prefix = DbManager.get_prefix_for_user_id(user_id)
 
     changes =
       Enum.map(
         changes,
-        &Map.merge(&1, %{"id" => Ecto.UUID.generate(), "recieved_from_client_id" => client_id})
+        &DbChange.to_model!(
+          Map.merge(&1, %{
+            "id" => Ecto.UUID.generate(),
+            "recieved_from_client_id" => client_id,
+            "db_name" => db_name
+          })
+        )
       )
 
-    ids = Enum.map(changes, & &1[:id])
+    ids = Enum.map(changes, & &1.id)
 
-    Repo.insert_all(DbChange, changes, prefix: prefix)
+    Enum.reduce(changes, Multi.new(), fn entry, multi ->
+      Multi.insert(multi, entry.id, entry, prefix: prefix)
+    end)
+    |> Repo.transaction()
 
     from(m in DbChange,
       select: fragment("MAX(?)", m.rev),
       where: m.db_name == ^db_name,
-      where: m.id == ^ids
+      where: m.id in ^ids
     )
     |> Repo.one(prefix: prefix)
   end

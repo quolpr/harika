@@ -47,8 +47,9 @@ defmodule Harika.MixProject do
       {:absinthe, "~> 1.6.0"},
       {:absinthe_plug, "~> 1.5"},
       {:absinthe_error_payload, "~> 1.0"},
-      {:ex_lock, "~> 0.1.1"},
-      {:nanoid, "~> 2.0.5"}
+      {:nanoid, "~> 2.0.5"},
+      {:redlock, "~> 1.0.12"},
+      {:mix_test_watch, "~> 1.0", only: :dev, runtime: false}
     ]
   end
 

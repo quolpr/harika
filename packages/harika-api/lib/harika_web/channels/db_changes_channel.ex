@@ -9,9 +9,6 @@ defmodule HarikaWeb.DbChangesChannel do
       |> assign(:db_name, db_name)
       |> assign(:client_id, client_id)
 
-    # TODO: auth db_name here
-    # TODO: create db if not exists, with lock
-
     {:ok, socket}
   end
 

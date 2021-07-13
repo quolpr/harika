@@ -7,8 +7,6 @@ defmodule Harika.Accounts.User do
   schema "users" do
     pow_user_fields()
 
-    field :vaults_db_id, :string
-
     timestamps()
   end
 

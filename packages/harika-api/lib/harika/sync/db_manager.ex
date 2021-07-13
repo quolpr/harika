@@ -3,7 +3,7 @@ defmodule Harika.Sync.DbManager do
   alias Harika.Sync.Migrations
 
   def get_prefix_for_user_id(user_id) do
-    "customer_#{user_id}"
+    "user_db_#{String.replace(user_id, "-", "")}"
   end
 
   def create_user_database_schema(user_id) do
@@ -26,7 +26,7 @@ defmodule Harika.Sync.DbManager do
     """
 
     Harika.Repo.query(query)
-    SchemaMigration.ensure_schema_migrations_table!(Harika.Repo, config)
+    SchemaMigration.ensure_schema_migrations_table!(Harika.Repo, config, [])
 
     migrate_repo(
       prefix: prefix,

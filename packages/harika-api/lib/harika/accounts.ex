@@ -13,7 +13,19 @@ defmodule Harika.Accounts do
   end
 
   def create_user(params) do
-    pow_create(params)
+    Repo.transaction(fn ->
+      with {:ok, %User{id: id}} = result <- pow_create(params) do
+        Harika.Sync.create_db_for_user_id(id)
+
+        result
+      else
+        res -> res
+      end
+    end)
+    |> case do
+      {:ok, res} -> res
+      res -> res
+    end
   end
 
   def get_user!(id) do

@@ -6,11 +6,11 @@ defmodule HarikaWeb.Schema do
 
   alias HarikaWeb.Schema.AuthenticationMiddleware
   alias HarikaWeb.Schema.AccountsResolver
+  alias Harika.Accounts.User
 
   import_types(HarikaWeb.Schema.ValidationMessageTypes)
 
   object :session do
-    field :token, non_null(:string)
     field :user, non_null(:user)
   end
 
@@ -42,6 +42,16 @@ defmodule HarikaWeb.Schema do
 
       resolve(&AccountsResolver.create_user/3)
       middleware(&build_payload/2)
+
+      middleware(fn resolution, _ ->
+        case resolution.value.result do
+          %{user: %User{} = user} ->
+            Map.update!(resolution, :context, &Map.put(&1, :set_current_user_id, user.id))
+
+          _ ->
+            resolution
+        end
+      end)
     end
 
     field :login, non_null(:session) do
@@ -49,6 +59,16 @@ defmodule HarikaWeb.Schema do
       arg(:password, non_null(:string))
 
       resolve(&AccountsResolver.login/3)
+
+      middleware(fn resolution, _ ->
+        case resolution.value do
+          %{user: %User{} = user} ->
+            Map.update!(resolution, :context, &Map.put(&1, :set_current_user_id, user.id))
+
+          _ ->
+            resolution
+        end
+      end)
     end
   end
 end

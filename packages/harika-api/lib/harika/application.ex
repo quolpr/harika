@@ -7,6 +7,13 @@ defmodule Harika.Application do
 
   def start(_type, _args) do
     children = [
+      {Redlock,
+       [
+         pool_size: 2,
+         servers: [
+           [host: "localhost", port: 6379]
+         ]
+       ]},
       # Start the Ecto repository
       Harika.Repo,
       # Start the Telemetry supervisor
