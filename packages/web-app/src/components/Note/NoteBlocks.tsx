@@ -181,6 +181,7 @@ const Handlers = observer(
 
       const handler = (e: KeyboardEvent) => {
         if (e.key === 'Backspace') {
+          e.preventDefault();
           note.deleteNoteBlockIds(view.selectedIds);
         }
       };

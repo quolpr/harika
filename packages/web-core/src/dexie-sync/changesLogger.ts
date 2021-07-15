@@ -305,6 +305,8 @@ export const startChangeLog = (db: Dexie, windowId: string) => {
           ({ transactionSource }) => transactionSource !== 'serverChanges',
         );
 
+        console.log({ newChanges: changes });
+
         if (filteredChanges.length > 0) {
           await db.table('_changesToSend').bulkAdd(filteredChanges);
         }

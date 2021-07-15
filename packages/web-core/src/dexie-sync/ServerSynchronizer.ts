@@ -48,12 +48,14 @@ export class ServerSynchronizer {
     private serverConnector: ServerConnector,
     private conflictResolver: IConflictsResolver,
     private stop$: Subject<void> = new Subject(),
+    private log: (str: string) => void,
   ) {}
 
   async initialize() {
     await this.syncStatus.initialize();
     await this.serverConnector.initialize();
 
+    let i = 0;
     this.serverConnector.isConnectedAndReadyToUse$
       .pipe(
         switchMap((isConnectedAndInitialized) => {
@@ -69,10 +71,25 @@ export class ServerSynchronizer {
               syncEmitter.pipe(mapTo('syncChanges' as const)),
             ).pipe(
               concatMap((command) => {
+                const id = i++;
+
+                this.log(`[${id}] Executing command ${command}`);
+
                 if (command === 'getChanges') {
-                  return of(null).pipe(changesPipe);
+                  return of(null).pipe(
+                    changesPipe,
+                    tap(() => {
+                      this.log(`[${id}] Done executing`);
+                    }),
+                  );
                 } else {
-                  return of(null).pipe(syncPipe);
+                  return of(null).pipe(
+                    syncPipe,
+
+                    tap(() => {
+                      this.log(`[${id}] Done executing`);
+                    }),
+                  );
                 }
               }),
             );
@@ -104,7 +121,6 @@ export class ServerSynchronizer {
           'rw',
           [this.syncStatus.tableName, '_changesFromServer'],
           async () => {
-            console.log({ currentRevision: res.currentRevision, res });
             const currentChangesCount = await this.db
               .table<IServerChangesRow>('_changesFromServer')
               .count();
@@ -141,10 +157,11 @@ export class ServerSynchronizer {
         this.serverConnector.channel$.pipe(
           switchMap((channel) => {
             return new Observable((observer) => {
-              channel.on('revision_was_changed', () => {
-                console.log(this.db.name, 'revision_was_changed!');
+              const ref = channel.on('revision_was_changed', () => {
                 observer.next();
               });
+
+              return () => channel.off('revision_was_changed', ref);
             });
           }),
         ),
@@ -196,7 +213,7 @@ export class ServerSynchronizer {
             if (!res) return of(null);
 
             if (res.status === 'locked') {
-              console.log('Locked. Just waiting for new changes');
+              this.log('Locked. Just waiting for new changes');
 
               return of(null);
             }

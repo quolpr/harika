@@ -1,6 +1,12 @@
 import type { Dexie } from 'dexie';
-import { merge, Subject, Observable } from 'rxjs';
-import { mapTo, shareReplay, switchMap, takeUntil } from 'rxjs/operators';
+import { merge, Subject, Observable, of } from 'rxjs';
+import {
+  distinctUntilChanged,
+  mapTo,
+  shareReplay,
+  switchMap,
+  takeUntil,
+} from 'rxjs/operators';
 import { BroadcastChannel, createLeaderElection } from 'broadcast-channel';
 import Phoenix from 'phoenix';
 import type { SyncStatusService } from '../SyncStatusService';
@@ -28,6 +34,7 @@ export class ServerConnector {
     private url: string,
     private authToken: string,
     private syncStatus: SyncStatusService,
+    private log: (str: string) => void,
     private stop$: Subject<void>,
   ) {
     const connect$ = this.socket$.pipe(
@@ -60,37 +67,48 @@ export class ServerConnector {
       connect$.pipe(mapTo(true)),
       disconnect$.pipe(mapTo(false)),
     ).pipe(
+      distinctUntilChanged(),
       takeUntil(this.stop$),
       shareReplay({
         refCount: true,
       }),
     );
 
-    this.isConnectedAndReadyToUse$ = this.channel$.pipe(
-      switchMap(
-        (channel) =>
-          new Observable<boolean>((observer) => {
-            channel
-              .join()
-              .receive('ok', ({ messages }) => {
-                console.log('Joined channel', messages);
+    const isJoined$ = this.channel$.pipe(
+      switchMap((channel) => {
+        return new Observable<boolean>((observer) => {
+          channel
+            .join()
+            .receive('ok', () => {
+              this.log('Joined channel');
 
-                observer.next(true);
-              })
-              .receive('error', ({ reason }) => {
-                console.log('Channel error', reason);
+              observer.next(true);
+            })
+            .receive('error', ({ reason }) => {
+              this.log(`Channel error - ${JSON.stringify(reason)}`);
 
-                observer.next(false);
-              })
-              .receive('timeout', () => {
-                observer.next(false);
-              });
-          }),
-      ),
-      takeUntil(this.stop$),
-      shareReplay({
-        refCount: true,
+              observer.next(false);
+            })
+            .receive('timeout', () => {
+              this.log('Channel timeout');
+
+              observer.next(false);
+            });
+        });
       }),
+      distinctUntilChanged(),
+      takeUntil(this.stop$),
+      shareReplay({ refCount: false, bufferSize: 1 }),
+    );
+
+    isJoined$.subscribe();
+
+    this.isConnectedAndReadyToUse$ = this.isConnected$.pipe(
+      switchMap((isConnected) => {
+        return isConnected ? isJoined$ : of(false);
+      }),
+      distinctUntilChanged(),
+      takeUntil(this.stop$),
     );
   }
 
@@ -98,7 +116,11 @@ export class ServerConnector {
     this.connectWhenElected();
 
     this.isConnected$.subscribe((isConnected) => {
-      console.log({ isConnected });
+      this.log(JSON.stringify({ isConnected }));
+    });
+
+    this.isConnectedAndReadyToUse$.subscribe((isConnectedAndReadyToUse) => {
+      this.log(JSON.stringify({ isConnectedAndReadyToUse }));
     });
   }
 

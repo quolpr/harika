@@ -48,7 +48,9 @@ defmodule HarikaWeb.DbChangesChannel do
         nil
     end
 
-    {:reply, :ok, socket}
+    IO.inspect({"sending", res})
+
+    {:reply, res, socket}
   end
 
   def handle_info({:broadcast_rev, new_rev}, socket) do

@@ -19,7 +19,7 @@ export const initSync = async (
   const stop$: Subject<void> = new Subject();
 
   const log = (msg: string) => {
-    console.debug(`[vault][${dbId}] ${msg}`);
+    console.debug(`[${db.name}] ${msg}`);
   };
 
   const syncStatus = new SyncStatusService(db);
@@ -28,6 +28,7 @@ export const initSync = async (
     url,
     authToken,
     syncStatus,
+    log,
     stop$,
   );
   const commandExecuter = new CommandsExecuter(
@@ -44,6 +45,7 @@ export const initSync = async (
     serverConnector,
     conflictResolver,
     stop$,
+    log,
   );
 
   syncer.initialize();
