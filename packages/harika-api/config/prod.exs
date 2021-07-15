@@ -13,7 +13,7 @@ config :harika, HarikaWeb.Endpoint,
   url: [host: "harika.io", port: 80],
   # TODO: debug_errors is added
   debug_errors: true,
-  cache_static_manifest: "priv/static/cache_manifest.json"
+  # cache_static_manifest: "priv/static/cache_manifest.json"
 
 # Do not print debug messages in production
 # config :logger, level: :info
