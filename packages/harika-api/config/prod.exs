@@ -1,6 +1,6 @@
 use Mix.Config
 
-config :harika, cors_enabled: false
+config :harika, :cors_enabled, false
 
 # For production, don't forget to configure the url host
 # to something meaningful, Phoenix uses this information
