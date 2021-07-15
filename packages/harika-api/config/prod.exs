@@ -1,5 +1,7 @@
 use Mix.Config
 
+config :harika, cors_enabled: false
+
 # For production, don't forget to configure the url host
 # to something meaningful, Phoenix uses this information
 # when generating URLs.
@@ -11,7 +13,7 @@ use Mix.Config
 # before starting your production server.
 config :harika, HarikaWeb.Endpoint,
   # cache_static_manifest: "priv/static/cache_manifest.json"
-  url: [host: "harika.io", port: 80],
+  url: [host: System.fetch_env!("HOST_URL"), port: 80],
   # TODO: debug_errors is added
   debug_errors: true
 
