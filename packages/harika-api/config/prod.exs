@@ -10,10 +10,10 @@ use Mix.Config
 # which you should run after static files are built and
 # before starting your production server.
 config :harika, HarikaWeb.Endpoint,
+  # cache_static_manifest: "priv/static/cache_manifest.json"
   url: [host: "harika.io", port: 80],
   # TODO: debug_errors is added
-  debug_errors: true,
-  # cache_static_manifest: "priv/static/cache_manifest.json"
+  debug_errors: true
 
 # Do not print debug messages in production
 # config :logger, level: :info
