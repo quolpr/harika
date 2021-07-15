@@ -8,7 +8,6 @@ import { SyncStatusService } from './SyncStatusService';
 
 export const initSync = async (
   db: Dexie,
-  dbId: string,
   windowId: string,
   url: string,
   authToken: string,

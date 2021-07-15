@@ -35,7 +35,6 @@ export class VaultsRepository {
     if (this.sync) {
       initSync(
         this.database,
-        this.dbId,
         windowId,
         this.config.wsUrl,
         this.config.authToken,
@@ -117,7 +116,6 @@ export class VaultsRepository {
     if (this.sync) {
       initSync(
         db,
-        db.id,
         windowId,
         this.config.wsUrl,
         this.config.authToken,
