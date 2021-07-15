@@ -1,5 +1,9 @@
 use Mix.Config
 
+config :harika, :redis,
+  port: 6379,
+  host: "localhost"
+
 # Configure your database
 config :harika, Harika.Repo,
   username: "postgres",

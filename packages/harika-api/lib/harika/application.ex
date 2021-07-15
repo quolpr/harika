@@ -6,12 +6,14 @@ defmodule Harika.Application do
   use Application
 
   def start(_type, _args) do
+    redis_config = Application.get_env(:harika, :redis)
+
     children = [
       {Redlock,
        [
          pool_size: 2,
          servers: [
-           [host: "localhost", port: 6379]
+           [host: redis_config[:host], port: redis_config[:port]]
          ]
        ]},
       # Start the Ecto repository

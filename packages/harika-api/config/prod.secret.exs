@@ -4,6 +4,13 @@
 # remember to add this file to your .gitignore.
 use Mix.Config
 
+redis_host = System.get_env("REDIS_HOST", "localhost")
+{redis_port, _} = Integer.parse(System.get_env("REDIS_HOST", "6379"))
+
+config :harika, :redis,
+  port: redis_port,
+  host: redis_host
+
 database_url =
   System.get_env("DATABASE_URL") ||
     raise """
