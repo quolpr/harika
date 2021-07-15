@@ -4,12 +4,7 @@ import { buffer, concatMap, debounceTime } from 'rxjs/operators';
 import { IDatabaseChange, DatabaseChangeType } from '@harika/common';
 import { globalChangesSubject } from './changesChannel';
 import { mapValues, pickBy } from 'lodash-es';
-
-type DistributiveOmit<T, K extends keyof any> = T extends any
-  ? Omit<T, K>
-  : never;
-
-export type IChangeRow = DistributiveOmit<IDatabaseChange, 'source'>;
+import { v4 } from 'uuid';
 
 // export const startChangeLog = (db: Dexie, windowId: string) => {
 //   db.use({
@@ -181,7 +176,7 @@ export type IChangeRow = DistributiveOmit<IDatabaseChange, 'source'>;
 
 export const startChangeLog = (db: Dexie, windowId: string) => {
   const changesSubject = new Subject<
-    IChangeRow & { transactionSource: string }
+    IDatabaseChange & { transactionSource: string }
   >();
 
   db.use({
@@ -231,6 +226,7 @@ export const startChangeLog = (db: Dexie, windowId: string) => {
                 if (req.type === 'add') {
                   req.values.forEach((val) => {
                     changesSubject.next({
+                      id: v4(),
                       type: DatabaseChangeType.Create,
                       table: tableName,
                       key: val.id,
@@ -242,13 +238,16 @@ export const startChangeLog = (db: Dexie, windowId: string) => {
 
                 if (req.type === 'delete') {
                   req.keys.forEach((id) => {
-                    changesSubject.next({
-                      table: tableName,
-                      type: DatabaseChangeType.Delete,
-                      key: id,
-                      transactionSource: source,
-                      obj: oldObjects[id] as Record<string, unknown>,
-                    });
+                    if (oldObjects[id]) {
+                      changesSubject.next({
+                        id: v4(),
+                        table: tableName,
+                        type: DatabaseChangeType.Delete,
+                        key: id,
+                        transactionSource: source,
+                        obj: oldObjects[id] as Record<string, unknown>,
+                      });
+                    }
                   });
                 }
 
@@ -264,6 +263,7 @@ export const startChangeLog = (db: Dexie, windowId: string) => {
 
                       if (Object.values(mods).length !== 0) {
                         changesSubject.next({
+                          id: v4(),
                           table: tableName,
                           type: DatabaseChangeType.Update,
                           obj,
@@ -277,6 +277,7 @@ export const startChangeLog = (db: Dexie, windowId: string) => {
                       }
                     } else {
                       changesSubject.next({
+                        id: v4(),
                         table: tableName,
                         type: DatabaseChangeType.Create,
                         obj: obj,

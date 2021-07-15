@@ -7,6 +7,7 @@ defmodule Harika.Sync.DbChangeTest do
     test "works" do
       assert %DbChange{} =
                DbChange.to_model!(%{
+                 "id" => Ecto.UUID.generate(),
                  "db_name" => "test",
                  "recieved_from_client_id" => Ecto.UUID.generate(),
                  "table" => "noteBlocks",

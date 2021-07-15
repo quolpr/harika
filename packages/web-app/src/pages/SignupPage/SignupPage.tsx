@@ -29,9 +29,12 @@ export const SignupPage = () => {
     const res = await signup.mutateAsync({ ...data });
 
     if (res.createUser.result?.user) {
-      const { id: userId } = res.createUser.result.user;
+      const {
+        user: { id: userId },
+        token,
+      } = res.createUser.result;
 
-      setAuthInfo({ userId, isOffline: false });
+      setAuthInfo({ userId, isOffline: false, authToken: token });
 
       history.push(paths.vaultIndexPath());
     } else {

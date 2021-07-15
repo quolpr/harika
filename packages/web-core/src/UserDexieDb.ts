@@ -11,7 +11,7 @@ export class UserDexieDatabase extends Dexie {
   vaults: Dexie.Table<VaultDocType, string>;
 
   constructor(public id: string) {
-    super(`harika_user_${id}`);
+    super(`harika_user_${id.replace(/-/g, '')}`);
 
     this.version(1).stores({
       vaults: 'id, name, createdAt, updatedAt',

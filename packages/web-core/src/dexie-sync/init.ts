@@ -2,16 +2,16 @@ import type { Dexie } from 'dexie';
 import { Subject } from 'rxjs';
 import { startChangeLog } from './changesLogger';
 import { CommandsExecuter } from './CommandsExecuter';
-import { ConnectionInitializer } from './connection/ConnectionInitializer';
 import { ServerConnector } from './connection/ServerConnector';
 import { IConflictsResolver, ServerSynchronizer } from './ServerSynchronizer';
 import { SyncStatusService } from './SyncStatusService';
 
-export const initSync = (
+export const initSync = async (
   db: Dexie,
   dbId: string,
   windowId: string,
   url: string,
+  authToken: string,
   conflictResolver: IConflictsResolver,
 ) => {
   startChangeLog(db, windowId);
@@ -23,18 +23,17 @@ export const initSync = (
   };
 
   const syncStatus = new SyncStatusService(db);
-  const serverConnector = new ServerConnector(db, url, stop$);
-  const commandExecuter = new CommandsExecuter(
-    serverConnector.socket$,
-    serverConnector.isConnected$,
-    log,
+  const serverConnector = new ServerConnector(
+    db,
+    url,
+    authToken,
+    syncStatus,
     stop$,
   );
-  const connectionInitializer = new ConnectionInitializer(
-    serverConnector.isConnected$,
-    commandExecuter,
-    syncStatus,
-    dbId,
+  const commandExecuter = new CommandsExecuter(
+    serverConnector.socket$,
+    serverConnector.channel$,
+    log,
     stop$,
   );
 
@@ -43,7 +42,6 @@ export const initSync = (
     syncStatus,
     commandExecuter,
     serverConnector,
-    connectionInitializer,
     conflictResolver,
     stop$,
   );

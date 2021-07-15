@@ -1,6 +1,8 @@
 defmodule HarikaWeb.DbChangesChannel do
   use Phoenix.Channel
 
+  require Logger
+
   alias Harika.Sync
 
   def join("db_changes:" <> db_name, %{"client_id" => client_id}, socket) do
@@ -14,7 +16,7 @@ defmodule HarikaWeb.DbChangesChannel do
 
   def handle_in(
         "get_changes",
-        %{"from_revision" => from_revision, "include_self" => true},
+        %{"from_revision" => from_revision, "include_self" => false},
         socket
       ) do
     %{db_name: db_name, client_id: client_id, user_id: user_id} = socket.assigns
@@ -23,7 +25,7 @@ defmodule HarikaWeb.DbChangesChannel do
   end
 
   def handle_in(
-        "apply_changes",
+        "apply_new_changes",
         %{"last_applied_remote_revision" => last_applied_remote_revision, "changes" => changes},
         socket
       ) do
@@ -39,13 +41,19 @@ defmodule HarikaWeb.DbChangesChannel do
       )
 
     case res do
-      {:ok, %{new_rev: new_rev}} ->
-        broadcast(socket, "revision_was_changed", %{new_rev: new_rev})
+      {:ok, %{current_revision: new_rev}} ->
+        send(self(), {:broadcast_rev, new_rev})
 
       _ ->
         nil
     end
 
-    {:reply, res, socket}
+    {:reply, :ok, socket}
+  end
+
+  def handle_info({:broadcast_rev, new_rev}, socket) do
+    broadcast(socket, "revision_was_changed", %{new_rev: new_rev})
+
+    {:noreply, socket}
   end
 end

@@ -8,6 +8,7 @@ import { useCallback } from 'react';
 export interface AuthInfo {
   userId: string;
   isOffline: boolean;
+  authToken: string;
 }
 
 const storageKey = 'auth';
@@ -15,7 +16,7 @@ const storageKey = 'auth';
 // TODO: maybe mobx localstorage?
 export const useAuthState = (): [
   authInfo: AuthInfo | undefined,
-  setAuthInfo: (data: AuthInfo | undefined) => void
+  setAuthInfo: (data: AuthInfo | undefined) => void,
 ] => {
   const [value] = useLocalStorage<AuthInfo | undefined>(storageKey, undefined);
 

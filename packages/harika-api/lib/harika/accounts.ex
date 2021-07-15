@@ -19,7 +19,8 @@ defmodule Harika.Accounts do
 
         result
       else
-        res -> res
+        {:error, res} ->
+          Repo.rollback(res)
       end
     end)
     |> case do

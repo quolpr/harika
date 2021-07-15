@@ -35,6 +35,8 @@ defmodule Harika.Sync.DbManager do
 
     Harika.Repo.stop(1000)
     Harika.Repo.put_dynamic_repo(Harika.Repo)
+
+    :ok
   end
 
   def drop_user_database_schema(user_id) do
@@ -45,6 +47,8 @@ defmodule Harika.Sync.DbManager do
     """
 
     Harika.Repo.query(query)
+
+    :ok
   end
 
   def migrate_repo(options \\ []) do

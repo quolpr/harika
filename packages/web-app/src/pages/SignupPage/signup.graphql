@@ -6,6 +6,7 @@ mutation signup($email: String!, $password: String!) {
       template
     }
     result {
+      token
       user {
         id
       }

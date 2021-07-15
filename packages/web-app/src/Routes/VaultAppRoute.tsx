@@ -17,15 +17,17 @@ export const VaultAppRoute = () => {
 
   const userId = authInfo?.userId;
   const isOffline = authInfo?.isOffline;
+  const authToken = authInfo?.authToken;
 
   useEffect(() => {
-    if (!userId || isOffline === undefined) return;
+    if (!userId || isOffline === undefined || !authToken) return;
 
     let repo: VaultsRepository | undefined = undefined;
 
     const cb = async () => {
       repo = new VaultsRepository(userId, !isOffline, {
         wsUrl: import.meta.env.SNOWPACK_PUBLIC_WS_URL,
+        authToken: authToken,
       });
 
       await repo.init();
@@ -39,7 +41,7 @@ export const VaultAppRoute = () => {
       repo?.close();
       setVaultRepository(undefined);
     };
-  }, [userId, isOffline]);
+  }, [userId, isOffline, authToken]);
 
   return (
     <>

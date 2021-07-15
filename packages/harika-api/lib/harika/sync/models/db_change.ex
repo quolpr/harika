@@ -6,7 +6,7 @@ defmodule Harika.Sync.DbChange do
   alias Harika.Sync.Schemas.UpdateSchema
   alias Harika.Sync.Schemas.DeleteSchema
 
-  @primary_key {:id, :binary_id, autogenerate: true}
+  @primary_key {:id, :binary_id, autogenerate: false}
   @foreign_key_type :binary_id
   schema "sync_db_changes" do
     field :db_name, :string
@@ -39,7 +39,7 @@ defmodule Harika.Sync.DbChange do
       :to,
       :obj
     ])
-    |> validate_required([:db_name, :table, :key, :type, :recieved_from_client_id])
+    |> validate_required([:id, :db_name, :table, :key, :type, :recieved_from_client_id])
     |> validate_on_type()
     |> put_created_at()
   end
@@ -73,6 +73,7 @@ defmodule Harika.Sync.DbChange do
     case change.type do
       :create ->
         %CreateSchema{
+          id: change.id,
           table: change.table,
           key: change.key,
           recieved_from_client_id: change.recieved_from_client_id,
@@ -81,6 +82,7 @@ defmodule Harika.Sync.DbChange do
 
       :update ->
         %UpdateSchema{
+          id: change.id,
           table: change.table,
           key: change.key,
           recieved_from_client_id: change.recieved_from_client_id,
@@ -90,6 +92,7 @@ defmodule Harika.Sync.DbChange do
 
       :delete ->
         %DeleteSchema{
+          id: change.id,
           table: change.table,
           key: change.key,
           recieved_from_client_id: change.recieved_from_client_id,

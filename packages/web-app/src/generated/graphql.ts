@@ -62,6 +62,7 @@ export type RootQueryType = {
 
 export type Session = {
   __typename?: 'Session';
+  token: Scalars['String'];
   user: User;
 };
 
@@ -144,6 +145,7 @@ export type LoginMutation = (
   { __typename?: 'RootMutationType' }
   & { login: (
     { __typename?: 'Session' }
+    & Pick<Session, 'token'>
     & { user: (
       { __typename?: 'User' }
       & Pick<User, 'id' | 'email'>
@@ -166,6 +168,7 @@ export type SignupMutation = (
       & Pick<ValidationMessage, 'field' | 'message' | 'template'>
     )>, result?: Maybe<(
       { __typename?: 'Session' }
+      & Pick<Session, 'token'>
       & { user: (
         { __typename?: 'User' }
         & Pick<User, 'id'>
@@ -178,6 +181,7 @@ export type SignupMutation = (
 export const LoginDocument = `
     mutation login($email: String!, $password: String!) {
   login(email: $email, password: $password) {
+    token
     user {
       id
       email
@@ -202,6 +206,7 @@ export const SignupDocument = `
       template
     }
     result {
+      token
       user {
         id
       }

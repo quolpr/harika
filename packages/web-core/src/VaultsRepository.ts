@@ -23,7 +23,7 @@ export class VaultsRepository {
   constructor(
     private dbId: string,
     private sync: boolean,
-    private config: { wsUrl: string },
+    private config: { wsUrl: string; authToken: string },
   ) {}
 
   async init() {
@@ -37,7 +37,8 @@ export class VaultsRepository {
         this.database,
         this.dbId,
         windowId,
-        `${this.config.wsUrl}/api/user`,
+        this.config.wsUrl,
+        this.config.authToken,
         new UserDbConflictsResolver(this.database),
       );
     }
@@ -118,7 +119,8 @@ export class VaultsRepository {
         db,
         db.id,
         windowId,
-        `${this.config.wsUrl}/api/vault`,
+        this.config.wsUrl,
+        this.config.authToken,
         new ConflictsResolver(db),
       );
     }

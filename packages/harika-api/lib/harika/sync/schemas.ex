@@ -1,19 +1,19 @@
 defmodule Harika.Sync.Schemas do
-  @derive Jason.Encoder
   defmodule CreateSchema do
-    @enforce_keys [:table, :key, :recieved_from_client_id, :obj]
-    defstruct [:table, :key, :recieved_from_client_id, :obj]
+    @derive Jason.Encoder
+    @enforce_keys [:id, :table, :key, :recieved_from_client_id, :obj]
+    defstruct [:id, :table, :key, :recieved_from_client_id, :obj, type: :create]
   end
 
-  @derive Jason.Encoder
   defmodule UpdateSchema do
-    @enforce_keys [:table, :key, :recieved_from_client_id, :from, :to]
-    defstruct [:table, :key, :recieved_from_client_id, :from, :to]
+    @derive Jason.Encoder
+    @enforce_keys [:id, :table, :key, :recieved_from_client_id, :from, :to]
+    defstruct [:id, :table, :key, :recieved_from_client_id, :from, :to, type: :update]
   end
 
-  @derive Jason.Encoder
   defmodule DeleteSchema do
-    @enforce_keys [:table, :key, :recieved_from_client_id, :obj]
-    defstruct [:table, :key, :recieved_from_client_id, :obj]
+    @derive Jason.Encoder
+    @enforce_keys [:id, :table, :key, :recieved_from_client_id, :obj]
+    defstruct [:id, :table, :key, :recieved_from_client_id, :obj, type: :delete]
   end
 end

@@ -9,7 +9,7 @@ export interface ISyncStatus {
   id: 1;
   lastReceivedRemoteRevision: number | null;
   lastAppliedRemoteRevision: number | null;
-  source: string;
+  clientId: string;
 }
 
 export class SyncStatusService {
@@ -27,15 +27,17 @@ export class SyncStatusService {
         let currentStatus = await this.table.get(1);
 
         if (!currentStatus) {
+          console.log('Creating new currentStatus');
           currentStatus = {
             id: 1,
             lastReceivedRemoteRevision: null,
             lastAppliedRemoteRevision: null,
-            source: v4(),
+            clientId: v4(),
           };
 
           this.table.put(currentStatus);
         }
+        console.log('currentStatus', currentStatus);
 
         return currentStatus;
       }),

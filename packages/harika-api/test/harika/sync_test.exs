@@ -23,6 +23,7 @@ defmodule Harika.SyncTest do
     Sync.apply_changes_with_lock(
       [
         %{
+          "id" => Ecto.UUID.generate(),
           "table" => "noteBlocks",
           "key" => "h6YjpmXhG2wbpvLcBuWX",
           "type" => "update",
@@ -49,7 +50,7 @@ defmodule Harika.SyncTest do
     setup [:insert_user]
 
     test "it works", %{user_id: user_id} do
-      assert {:ok, %{new_rev: 1}} = insert_change(%{user_id: user_id})
+      assert {:ok, %{current_revision: 1}} = insert_change(%{user_id: user_id})
     end
   end
 
@@ -57,8 +58,8 @@ defmodule Harika.SyncTest do
     setup [:insert_user, :insert_change]
 
     test "it return error", %{user_id: user_id} do
-      assert {:error, %{name: "stale_changes"}} = insert_change(%{user_id: user_id})
-      assert {:error, %{name: "stale_changes"}} = insert_change(%{user_id: user_id}, nil)
+      assert {:ok, %{status: :stale_changes}} = insert_change(%{user_id: user_id})
+      assert {:ok, %{status: :stale_changes}} = insert_change(%{user_id: user_id}, nil)
     end
   end
 
@@ -82,8 +83,13 @@ defmodule Harika.SyncTest do
     setup [:insert_user, :insert_change]
 
     test "it returns changes", %{user_id: user_id} do
-      assert %{changes: [%DbChange{}], max_rev: 1} =
+      assert %{changes: [%DbChange{}], current_revision: 1} =
                Sync.get_changes(user_id, @db_name, Ecto.UUID.generate(), 0)
+    end
+
+    test "it returns correct current_revision", %{user_id: user_id} do
+      assert %{changes: [], current_revision: 1} =
+               Sync.get_changes(user_id, @db_name, Ecto.UUID.generate(), 1)
     end
   end
 end

@@ -1,27 +1,16 @@
 import { Dexie, liveQuery } from 'dexie';
 import { v4 } from 'uuid';
+import { merge, Subject, Observable, of, pipe, from } from 'rxjs';
+import { concatMap, filter, mapTo, switchMap, tap } from 'rxjs/operators';
 import {
-  fromEvent,
-  merge,
-  Subject,
-  Observable,
-  of,
-  combineLatest,
-  pipe,
-  from,
-} from 'rxjs';
-import { concatMap, filter, map, mapTo, switchMap } from 'rxjs/operators';
-import {
-  EventTypesFromServer,
   CommandTypesFromClient,
   IDatabaseChange,
-  RevisionWasChangedEvent,
   GetChangesClientCommand,
   DatabaseChangeType,
+  ApplyNewChangesFromClientCommand,
 } from '@harika/common';
 import type { CommandsExecuter } from './CommandsExecuter';
 import type { SyncStatusService } from './SyncStatusService';
-import type { ConnectionInitializer } from './connection/ConnectionInitializer';
 import type { ServerConnector } from './connection/ServerConnector';
 import { maxBy, omit } from 'lodash-es';
 
@@ -51,32 +40,21 @@ type DistributiveOmit<T, K extends keyof any> = T extends any
 
 export class ServerSynchronizer {
   private triggerGetChangesSubject = new Subject<unknown>();
-  isConnectedAndInitialized$: Observable<boolean>;
 
   constructor(
     private db: Dexie,
     private syncStatus: SyncStatusService,
     private commandExecuter: CommandsExecuter,
     private serverConnector: ServerConnector,
-    private connectionInitializer: ConnectionInitializer,
     private conflictResolver: IConflictsResolver,
     private stop$: Subject<void> = new Subject(),
-  ) {
-    this.isConnectedAndInitialized$ = combineLatest([
-      this.serverConnector.isConnected$,
-      this.connectionInitializer.isInitialized$,
-    ]).pipe(
-      map(([isConnected, isInitialized]) => isConnected && isInitialized),
-    );
-  }
+  ) {}
 
   async initialize() {
-    this.commandExecuter.start();
     await this.syncStatus.initialize();
     await this.serverConnector.initialize();
-    this.connectionInitializer.initialize();
 
-    this.isConnectedAndInitialized$
+    this.serverConnector.isConnectedAndReadyToUse$
       .pipe(
         switchMap((isConnectedAndInitialized) => {
           if (isConnectedAndInitialized) {
@@ -108,27 +86,25 @@ export class ServerSynchronizer {
 
   private receiveServerChanges() {
     const changesPipe = pipe(
-      this.commandExecuter.send<GetChangesClientCommand>(() => ({
-        type: CommandTypesFromClient.GetChanges,
-        data: {
+      this.commandExecuter.send<GetChangesClientCommand>(
+        CommandTypesFromClient.GetChanges,
+        () => ({
           fromRevision: this.syncStatus.value.lastReceivedRemoteRevision,
           includeSelf: false,
-        },
-      })),
+        }),
+      ),
       concatMap(async (res) => {
-        if (res === null || res?.data?.status === 'error') {
+        if (res === null) {
           console.error('Failed to get changes');
 
           return;
         }
 
-        const { data } = res;
-
         await this.db.transaction(
           'rw',
           [this.syncStatus.tableName, '_changesFromServer'],
           async () => {
-            console.log({ currentRevision: data.currentRevision });
+            console.log({ currentRevision: res.currentRevision, res });
             const currentChangesCount = await this.db
               .table<IServerChangesRow>('_changesFromServer')
               .count();
@@ -136,21 +112,21 @@ export class ServerSynchronizer {
             // If changes === 0 means such changes are already applied by client
             // And we are in sync with server
             const lastAppliedRemoteRevision =
-              data.changes.length === 0 && currentChangesCount === 0
-                ? data.currentRevision
+              res.changes.length === 0 && currentChangesCount === 0
+                ? res.currentRevision
                 : this.syncStatus.value.lastAppliedRemoteRevision;
 
             this.syncStatus.update({
-              lastReceivedRemoteRevision: data.currentRevision,
+              lastReceivedRemoteRevision: res.currentRevision,
               lastAppliedRemoteRevision,
             });
 
-            if (data.changes.length !== 0) {
+            if (res.changes.length !== 0) {
               this.db.table<IServerChangesRow>('_changesFromServer').bulkAdd(
-                data.changes.map((ch) => ({
-                  id: v4(),
+                res.changes.map((ch) => ({
+                  id: ch.id,
                   change: ch,
-                  receivedAtRevisionOfServer: data.currentRevision,
+                  receivedAtRevisionOfServer: res.currentRevision,
                 })),
               );
             }
@@ -162,13 +138,15 @@ export class ServerSynchronizer {
     return {
       emitter: merge(
         of(null),
-        this.serverConnector.socket$.pipe(
-          switchMap((socket) =>
-            fromEvent<RevisionWasChangedEvent>(
-              socket,
-              EventTypesFromServer.RevisionWasChanged,
-            ),
-          ),
+        this.serverConnector.channel$.pipe(
+          switchMap((channel) => {
+            return new Observable((observer) => {
+              channel.on('revision_was_changed', () => {
+                console.log(this.db.name, 'revision_was_changed!');
+                observer.next();
+              });
+            });
+          }),
         ),
         this.triggerGetChangesSubject,
       ),
@@ -199,39 +177,32 @@ export class ServerSynchronizer {
         if (clientChanges.length === 0) return of(null);
 
         return of(null).pipe(
-          this.commandExecuter.send(() => {
-            console.log('sending!');
-            return {
-              type: CommandTypesFromClient.ApplyNewChanges,
-              data: {
+          this.commandExecuter.send<ApplyNewChangesFromClientCommand>(
+            CommandTypesFromClient.ApplyNewChanges,
+            () => {
+              return {
                 changes: clientChanges.map((change) => ({
                   ...(change.type === DatabaseChangeType.Update
                     ? omit(change, 'obj')
                     : change),
-                  source: syncStatus.source,
+                  source: syncStatus.clientId,
                 })),
                 partial: false,
                 lastAppliedRemoteRevision: syncStatus.lastAppliedRemoteRevision,
-              },
-            };
-          }),
+              };
+            },
+          ),
           switchMap((res) => {
-            if (res === null || res.data.status === 'error') {
-              console.error('Failed to send changes');
+            if (!res) return of(null);
 
-              return of(null);
-            }
-
-            if (res.data.status === 'locked') {
+            if (res.status === 'locked') {
               console.log('Locked. Just waiting for new changes');
 
               return of(null);
             }
 
-            if (res?.data.status === 'staleChanges') {
+            if (res.status === 'stale_changes') {
               // Maybe server has newer changes. Let's await for new server changes and try to send again
-
-              console.log('staled changes');
               this.triggerGetChangesSubject.next(null);
 
               return of(null);
@@ -272,7 +243,7 @@ export class ServerSynchronizer {
           await this.conflictResolver.resolveChanges(
             clientChanges.map((change) => ({
               ...change,
-              source: this.syncStatus.value.source,
+              source: this.syncStatus.value.clientId,
             })),
             serverChanges.map(({ change }) => change),
           );

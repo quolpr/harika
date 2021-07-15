@@ -214,7 +214,7 @@ export abstract class SyncGateway
           requestedMessageId: request.messageId,
           data: {
             status: 'success',
-            newRevision: newRev,
+            newRev: newRev,
           },
         };
 

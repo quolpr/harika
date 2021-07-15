@@ -433,11 +433,15 @@ export class NoteBlockModel extends Model({
       )
     ) {
       const currentRefs = Object.fromEntries(
-        this.noteBlockRefs.map((ref) => {
-          detach(ref);
+        this.noteBlockRefs
+          .map((ref) => {
+            return [ref.id, ref] as [string, Ref<NoteBlockModel>];
+          })
+          .map((data) => {
+            detach(data[1]);
 
-          return [ref.id, ref];
-        }),
+            return data;
+          }),
       );
 
       this.noteBlockRefs = data.noteBlockRefs.map((ref) =>

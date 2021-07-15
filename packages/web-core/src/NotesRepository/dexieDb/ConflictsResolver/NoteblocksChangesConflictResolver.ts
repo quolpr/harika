@@ -8,6 +8,7 @@ import {
 import { cloneDeep } from 'lodash';
 import { difference, set, uniq } from 'lodash-es';
 import { BaseConflictResolver } from './BaseConflictResolver';
+import { v4 } from 'uuid';
 
 export class NoteblocksChangesConflictResolver extends BaseConflictResolver<
   'noteBlocks',
@@ -38,7 +39,7 @@ export class NoteblocksChangesConflictResolver extends BaseConflictResolver<
       ...this.resolveContent(change1.to.content, change2.to.content),
     };
 
-    return { ...change2, to: finalMods };
+    return { ...change2, to: finalMods, id: v4() };
   }
 
   private resolveContent(
@@ -79,10 +80,10 @@ export class NoteblocksChangesConflictResolver extends BaseConflictResolver<
     });
 
     return {
+      id: v4(),
       table: 'noteBlocks',
       type: DatabaseChangeType.Create,
       key: change1.key,
-      source: change2.source,
       obj: obj,
     };
   }

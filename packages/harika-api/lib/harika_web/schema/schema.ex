@@ -11,6 +11,7 @@ defmodule HarikaWeb.Schema do
   import_types(HarikaWeb.Schema.ValidationMessageTypes)
 
   object :session do
+    field :token, non_null(:string)
     field :user, non_null(:user)
   end
 

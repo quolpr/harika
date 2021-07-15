@@ -1,127 +1,57 @@
-export enum MessageType {
-  Event = 'event',
-  CommandRequest = 'commandRequest',
-  CommandResponse = 'commandResponse',
-}
-
-export interface BaseMessage {
-  messageId: string;
-  messageType: MessageType;
-}
-
-export interface BaseCommandRequest extends BaseMessage {
-  messageType: MessageType.CommandRequest;
-}
-
-export interface BaseCommandResponse extends BaseMessage {
-  messageType: MessageType.CommandResponse;
-  requestedMessageId: string;
-}
-
-export interface BaseEvent extends BaseMessage {
-  messageType: MessageType.Event;
-}
-
-//// Client:
-
 export enum CommandTypesFromClient {
-  ApplyNewChanges = 'applyNewChanges',
-  InitializeClient = 'initializeClient',
-  GetChanges = 'getChanges',
+  ApplyNewChanges = 'apply_new_changes',
+  GetChanges = 'get_changes',
 }
 
 export type ApplyNewChangesFromClientCommand = {
+  type: CommandTypesFromClient.ApplyNewChanges;
+
   request: ApplyNewChangesFromClientRequest;
   response: ApplyNewChangesFromClientResponse;
 };
 
-export interface ApplyNewChangesFromClientRequest extends BaseCommandRequest {
-  type: CommandTypesFromClient.ApplyNewChanges;
-
-  data: {
-    changes: IDatabaseChange[];
-    partial: boolean;
-    lastAppliedRemoteRevision: number | null;
-  };
+export interface ApplyNewChangesFromClientRequest {
+  changes: IDatabaseChange[];
+  partial: boolean;
+  lastAppliedRemoteRevision: number | null;
 }
 
-export interface ApplyNewChangesFromClientResponse extends BaseCommandResponse {
-  type: CommandTypesFromClient.ApplyNewChanges;
-
-  data:
-    | {
-        status: 'success';
-        newRevision: number;
-      }
-    | {
-        status: 'staleChanges' | 'error' | 'locked';
-      };
-}
-
-export type InitializeClientCommand = {
-  request: InitializeClientRequest;
-  response: InitializeClientResponse;
-};
-
-export interface InitializeClientRequest extends BaseCommandRequest {
-  type: CommandTypesFromClient.InitializeClient;
-
-  data: {
-    identity: string;
-    scopeId: string;
-  };
-}
-
-export interface InitializeClientResponse extends BaseCommandResponse {
-  type: CommandTypesFromClient.InitializeClient;
-
-  data: {
-    status: 'success' | 'error';
-  };
-}
+export type ApplyNewChangesFromClientResponse =
+  | {
+      status: 'success';
+      newRev: number;
+    }
+  | {
+      status: 'stale_changes' | 'locked';
+    };
 
 export type GetChangesClientCommand = {
+  type: CommandTypesFromClient.GetChanges;
+
   request: GetChangesRequest;
   response: GetChangesResponse;
 };
 
-export interface GetChangesRequest extends BaseCommandRequest {
-  type: CommandTypesFromClient.GetChanges;
-
-  data: {
-    fromRevision: null | number;
-    includeSelf: false;
-  };
+export interface GetChangesRequest {
+  fromRevision: null | number;
+  includeSelf: false;
 }
 
-export interface GetChangesResponse extends BaseCommandResponse {
-  type: CommandTypesFromClient.GetChanges;
-
-  data:
-    | {
-        status: 'error';
-      }
-    | {
-        status: 'success';
-
-        changes: IDatabaseChange[];
-        currentRevision: number;
-      };
+export interface GetChangesResponse {
+  changes: IDatabaseChange[];
+  currentRevision: number;
 }
 
 export type ClientCommands =
   | GetChangesClientCommand
-  | InitializeClientCommand
   | ApplyNewChangesFromClientCommand;
 
 export type ClientCommandRequests =
   | GetChangesRequest
-  | InitializeClientRequest
   | ApplyNewChangesFromClientRequest;
 
 export type ClientCommandResponses =
   | GetChangesResponse
-  | InitializeClientResponse
   | ApplyNewChangesFromClientResponse;
 
 // Server:
@@ -130,20 +60,12 @@ export enum EventTypesFromServer {
   RevisionWasChanged = 'revisionWasChanged',
 }
 
-export interface RevisionWasChangedEvent extends BaseEvent {
-  eventType: EventTypesFromServer.RevisionWasChanged;
-
-  data: {
-    newRevision: number;
-  };
-}
-
 // DatabaseChange
 
 export enum DatabaseChangeType {
-  Create = 1,
-  Update = 2,
-  Delete = 3,
+  Create = 'create',
+  Update = 'update',
+  Delete = 'delete',
 }
 export type NoteDocType = {
   id: string;
@@ -170,35 +92,35 @@ export interface ICreateChange<
   TableName extends string = string,
   Obj extends Record<string, any> = Record<string, any>,
 > {
+  id: string;
   type: DatabaseChangeType.Create;
   table: TableName;
   key: string;
   obj: Obj;
-  source: string;
 }
 
 export interface IUpdateChange<
   TableName extends string = string,
   Obj extends Record<string, any> = Record<string, any>,
 > {
+  id: string;
   type: DatabaseChangeType.Update;
   table: TableName;
   key: string;
   obj?: Obj; // new object
   from: Partial<Obj>;
   to: Partial<Obj>;
-  source: string;
 }
 
 export interface IDeleteChange<
   TableName extends string = string,
   Obj extends Record<string, any> = Record<string, any>,
 > {
+  id: string;
   type: DatabaseChangeType.Delete;
   table: TableName;
   key: string;
   obj: Obj;
-  source: string;
 }
 
 export type IDatabaseChange<

@@ -38,9 +38,12 @@ export const LoginPage = () => {
 
         if (!res.login || !res.login.user) throw new Error('auth error');
 
-        const { id: userId } = res.login.user;
+        const {
+          token,
+          user: { id: userId },
+        } = res.login;
 
-        setAuthInfo({ userId, isOffline: false });
+        setAuthInfo({ userId, isOffline: false, authToken: token });
 
         history.push(paths.vaultIndexPath());
       } catch {
@@ -72,7 +75,7 @@ export const LoginPage = () => {
       }
     })();
 
-    setAuthInfo({ userId, isOffline: true });
+    setAuthInfo({ userId, authToken: '123', isOffline: true });
 
     history.push(paths.vaultIndexPath());
   }, [setAuthInfo, history, offlineAccounts.accounts, addOfflineAccount]);
