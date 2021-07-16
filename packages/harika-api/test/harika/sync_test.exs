@@ -5,6 +5,7 @@ defmodule Harika.SyncTest do
 
   alias Harika.Sync
   alias Harika.Sync.DbChange
+  alias Harika.Sync.Schemas.UpdateSchema
 
   alias Harika.Accounts
 
@@ -83,7 +84,7 @@ defmodule Harika.SyncTest do
     setup [:insert_user, :insert_change]
 
     test "it returns changes", %{user_id: user_id} do
-      assert %{changes: [%DbChange{}], current_revision: 1} =
+      assert %{changes: [%UpdateSchema{}], current_revision: 1} =
                Sync.get_changes(user_id, @db_name, Ecto.UUID.generate(), 0)
     end
 

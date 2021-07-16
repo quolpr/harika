@@ -1,5 +1,9 @@
 use Mix.Config
 
+config :harika, :redis,
+  port: 6379,
+  host: "localhost"
+
 # Configure your database
 #
 # The MIX_TEST_PARTITION environment variable can be used

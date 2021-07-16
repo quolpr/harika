@@ -119,7 +119,9 @@ defmodule Harika.Sync do
     ids = Enum.map(changes, & &1.id)
 
     Repo.insert_all(DbChange, for(ch <- changes, do: Map.drop(ch, [:__struct__, :__meta__])),
-      prefix: prefix
+      prefix: prefix,
+      # TODO: debug why conflicts happening
+      on_conflict: :nothing
     )
 
     from(m in DbChange,
