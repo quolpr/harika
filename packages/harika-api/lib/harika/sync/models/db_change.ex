@@ -77,7 +77,8 @@ defmodule Harika.Sync.DbChange do
           table: change.table,
           key: change.key,
           recieved_from_client_id: change.recieved_from_client_id,
-          obj: change.obj
+          obj: change.obj,
+          rev: change.rev
         }
 
       :update ->
@@ -87,7 +88,8 @@ defmodule Harika.Sync.DbChange do
           key: change.key,
           recieved_from_client_id: change.recieved_from_client_id,
           from: change.from,
-          to: change.to
+          to: change.to,
+          rev: change.rev
         }
 
       :delete ->
@@ -96,7 +98,8 @@ defmodule Harika.Sync.DbChange do
           table: change.table,
           key: change.key,
           recieved_from_client_id: change.recieved_from_client_id,
-          obj: change.obj
+          obj: change.obj,
+          rev: change.rev
         }
     end
   end

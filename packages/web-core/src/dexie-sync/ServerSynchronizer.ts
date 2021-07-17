@@ -23,6 +23,7 @@ export interface IServerChangesRow {
   id: string;
   change: IDatabaseChange;
   receivedAtRevisionOfServer: number;
+  rev: number;
 }
 
 export interface IConflictsResolver {
@@ -143,6 +144,7 @@ export class ServerSynchronizer {
                   id: ch.id,
                   change: ch,
                   receivedAtRevisionOfServer: res.currentRevision,
+                  rev: ch.rev,
                 })),
               );
             }
@@ -244,7 +246,10 @@ export class ServerSynchronizer {
     const serverChangesToApplyTable =
       this.db.table<IServerChangesRow>('_changesFromServer');
 
-    const serverChanges = await serverChangesToApplyTable.toArray();
+    // TODO: move sort to DB level
+    const serverChanges = (await serverChangesToApplyTable.toArray()).sort(
+      ({ rev: rev1 }, { rev: rev2 }) => rev1 - rev2,
+    );
 
     if (serverChanges.length > 0) {
       const clientChanges = await changesToSendTable.toArray();

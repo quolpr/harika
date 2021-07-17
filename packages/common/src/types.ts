@@ -38,7 +38,7 @@ export interface GetChangesRequest {
 }
 
 export interface GetChangesResponse {
-  changes: IDatabaseChange[];
+  changes: (IDatabaseChange & { rev: number })[];
   currentRevision: number;
 }
 
