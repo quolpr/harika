@@ -56,7 +56,7 @@ export class NoteBlockModel extends Model({
   createdAt: tProp(types.dateTimestamp),
   isDeleted: prop<boolean>(false),
 }) {
-  get parentBlock() {
+  get parentBlock(): NoteBlockModel | undefined {
     const id = this.noteRef.current.childParentRelations[this.$modelId];
 
     return id === undefined ? undefined : this.vault.blocksMap[id];
