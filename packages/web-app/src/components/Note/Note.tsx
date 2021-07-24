@@ -4,19 +4,13 @@ import './styles.css';
 import { useEffect } from 'react';
 import { useState } from 'react';
 import { observer } from 'mobx-react-lite';
-import {
-  NoteBlockModel,
-  NoteModel,
-  FocusedBlockState,
-  BlocksViewModel,
-} from '@harika/web-core';
+import { NoteBlockModel, NoteModel, FocusedBlockState } from '@harika/web-core';
 import { computed } from 'mobx';
 import { Link, useHistory } from 'react-router-dom';
 import { LinkIcon } from '@heroicons/react/solid';
 import { groupBy } from 'lodash-es';
 import clsx from 'clsx';
 import { Arrow } from '../Arrow/Arrow';
-import { paths } from '../../paths';
 import { useCurrentVault } from '../../hooks/useCurrentVault';
 import { CurrentBlockInputRefContext } from '../../contexts';
 import { useNoteRepository } from '../../contexts/CurrentNoteRepositoryContext';

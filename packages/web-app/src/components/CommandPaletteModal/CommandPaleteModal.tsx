@@ -8,7 +8,7 @@ import React, {
 import './styles.css';
 import { ChevronRightIcon, ReplyIcon } from '@heroicons/react/solid';
 import Highlighter from 'react-highlight-words';
-import { Link, useHistory, useLocation, useParams } from 'react-router-dom';
+import { Link, useHistory, useLocation } from 'react-router-dom';
 import { cn } from '../../utils';
 import { useKey } from 'react-use';
 import { v4 as uuidv4 } from 'uuid';
@@ -18,7 +18,6 @@ import { useNoteRepository } from '../../contexts/CurrentNoteRepositoryContext';
 import { useCurrentVault } from '../../hooks/useCurrentVault';
 import { Modal, modalClass } from '../Modal/Modal';
 import { firstValueFrom } from 'rxjs';
-import { useCurrentNote } from '../../hooks/useCurrentNote';
 import { generateStackedNotePath } from '../../hooks/useNoteClick';
 import pathToRegexp from 'path-to-regexp';
 
