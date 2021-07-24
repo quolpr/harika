@@ -2812,7 +2812,20 @@
   dependencies:
     "@types/node" "*"
 
-"@typescript-eslint/experimental-utils@^4.0.0":
+"@typescript-eslint/eslint-plugin@^4.28.4":
+  version "4.28.4"
+  resolved "https://registry.yarnpkg.com/@typescript-eslint/eslint-plugin/-/eslint-plugin-4.28.4.tgz#e73c8cabbf3f08dee0e1bda65ed4e622ae8f8921"
+  integrity sha512-s1oY4RmYDlWMlcV0kKPBaADn46JirZzvvH7c2CtAqxCY96S538JRBAzt83RrfkDheV/+G/vWNK0zek+8TB3Gmw==
+  dependencies:
+    "@typescript-eslint/experimental-utils" "4.28.4"
+    "@typescript-eslint/scope-manager" "4.28.4"
+    debug "^4.3.1"
+    functional-red-black-tree "^1.0.1"
+    regexpp "^3.1.0"
+    semver "^7.3.5"
+    tsutils "^3.21.0"
+
+"@typescript-eslint/experimental-utils@4.28.4", "@typescript-eslint/experimental-utils@^4.0.0":
   version "4.28.4"
   resolved "https://registry.yarnpkg.com/@typescript-eslint/experimental-utils/-/experimental-utils-4.28.4.tgz#9c70c35ebed087a5c70fb0ecd90979547b7fec96"
   integrity sha512-OglKWOQRWTCoqMSy6pm/kpinEIgdcXYceIcH3EKWUl4S8xhFtN34GQRaAvTIZB9DD94rW7d/U7tUg3SYeDFNHA==
@@ -2823,6 +2836,16 @@
     "@typescript-eslint/typescript-estree" "4.28.4"
     eslint-scope "^5.1.1"
     eslint-utils "^3.0.0"
+
+"@typescript-eslint/parser@^4.28.4":
+  version "4.28.4"
+  resolved "https://registry.yarnpkg.com/@typescript-eslint/parser/-/parser-4.28.4.tgz#bc462dc2779afeefdcf49082516afdc3e7b96fab"
+  integrity sha512-4i0jq3C6n+og7/uCHiE6q5ssw87zVdpUj1k6VlVYMonE3ILdFApEzTWgppSRG4kVNB/5jxnH+gTeKLMNfUelQA==
+  dependencies:
+    "@typescript-eslint/scope-manager" "4.28.4"
+    "@typescript-eslint/types" "4.28.4"
+    "@typescript-eslint/typescript-estree" "4.28.4"
+    debug "^4.3.1"
 
 "@typescript-eslint/scope-manager@4.28.4":
   version "4.28.4"
@@ -10605,10 +10628,10 @@ react-query@^3.19.0:
     broadcast-channel "^3.4.1"
     match-sorter "^6.0.2"
 
-react-refresh@0.10.0, react-refresh@^0.9.0:
-  version "0.10.0"
-  resolved "https://registry.yarnpkg.com/react-refresh/-/react-refresh-0.10.0.tgz#2f536c9660c0b9b1d500684d9e52a65e7404f7e3"
-  integrity sha512-PgidR3wST3dDYKr6b4pJoqQFpPGNKDSCDx4cZoshjXipw3LzO7mG1My2pwEzz2JVkF+inx3xRpDeQLFQGH/hsQ==
+react-refresh@^0.9.0:
+  version "0.9.0"
+  resolved "https://registry.yarnpkg.com/react-refresh/-/react-refresh-0.9.0.tgz#71863337adc3e5c2f8a6bfddd12ae3bfe32aafbf"
+  integrity sha512-Gvzk7OZpiqKSkxsQvO/mbTN1poglhmAV7gR/DdIrRrSMXraRQQlfikRJOr3Nb9GTMPC5kof948Zy6jJZIFtDvQ==
 
 react-router-dom@^5.2.0:
   version "5.2.0"
