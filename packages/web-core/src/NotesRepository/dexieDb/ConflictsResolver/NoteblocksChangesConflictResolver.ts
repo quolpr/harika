@@ -14,6 +14,10 @@ export class NoteblocksChangesConflictResolver extends BaseConflictResolver<
   'noteBlocks',
   NoteBlockDocType
 > {
+  constructor(private idGenerator: () => string = v4) {
+    super();
+  }
+
   resolveUpdateUpdate(
     change1: IUpdateChange<'noteBlocks', NoteBlockDocType>,
     change2: IUpdateChange<'noteBlocks', NoteBlockDocType>,
@@ -39,7 +43,7 @@ export class NoteblocksChangesConflictResolver extends BaseConflictResolver<
       ...this.resolveContent(change1.to.content, change2.to.content),
     };
 
-    return { ...change2, to: finalMods, id: v4() };
+    return { ...change2, to: finalMods, id: this.idGenerator() };
   }
 
   private resolveContent(
@@ -80,7 +84,7 @@ export class NoteblocksChangesConflictResolver extends BaseConflictResolver<
     });
 
     return {
-      id: v4(),
+      id: this.idGenerator(),
       table: 'noteBlocks',
       type: DatabaseChangeType.Create,
       key: change1.key,

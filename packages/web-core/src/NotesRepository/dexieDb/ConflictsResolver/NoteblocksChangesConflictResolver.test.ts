@@ -12,12 +12,12 @@ const updateChange = (
   to: object,
 ): INoteBlockChangeEvent => {
   return {
+    id: '123',
     table: 'noteBlocks',
     type: DatabaseChangeType.Update,
     from,
     to,
     key,
-    source: 'source',
   };
 };
 
@@ -26,10 +26,10 @@ const deleteChange = (
   obj: NoteBlockDocType,
 ): INoteBlockChangeEvent => {
   return {
+    id: '123',
     table: 'noteBlocks',
     type: DatabaseChangeType.Delete,
     key,
-    source: 'source',
     obj,
   };
 };
@@ -39,15 +39,15 @@ const createChange = (
   obj: NoteBlockDocType,
 ): INoteBlockChangeEvent => {
   return {
+    id: '123',
     table: 'noteBlocks',
     type: DatabaseChangeType.Create,
     key,
-    source: 'source',
     obj,
   };
 };
 
-const resolver = new NoteblocksChangesConflictResolver();
+const resolver = new NoteblocksChangesConflictResolver(() => '123');
 
 describe('NoteblocksChangesConflictResolver', () => {
   describe('resolveConflicts', () => {
