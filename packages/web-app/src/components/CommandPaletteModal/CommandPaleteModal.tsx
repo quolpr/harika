@@ -1,10 +1,4 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import './styles.css';
 import { ChevronRightIcon, ReplyIcon } from '@heroicons/react/solid';
 import Highlighter from 'react-highlight-words';
@@ -13,13 +7,13 @@ import { cn } from '../../utils';
 import { useKey } from 'react-use';
 import { v4 as uuidv4 } from 'uuid';
 import type { IFocusBlockState } from '../Note/Note';
-import { PATHS, paths } from '../../paths';
+import { paths } from '../../paths';
 import { useNoteRepository } from '../../contexts/CurrentNoteRepositoryContext';
 import { useCurrentVault } from '../../hooks/useCurrentVault';
 import { Modal, modalClass } from '../Modal/Modal';
 import { firstValueFrom } from 'rxjs';
 import { generateStackedNotePath } from '../../hooks/useNoteClick';
-import pathToRegexp from 'path-to-regexp';
+import { usePrimaryNoteId } from '../../hooks/usePrimaryNote';
 
 // Command executes on each user type and as result gives list of actions
 // Commands are start with `!`. If no `!` present - then search happen between all start view actions names
@@ -32,6 +26,7 @@ type IAction = (
       name: string;
       type: 'goToPage';
       href: string;
+      stackHref?: string;
     }
   | {
       id: string;
@@ -65,10 +60,7 @@ export const CommandPaletteModal = ({
 }) => {
   const location = useLocation();
 
-  const currentNoteId = useMemo(
-    () => pathToRegexp(PATHS.VAULT_NOTE_PATH).exec(location.pathname)?.[2],
-    [location.pathname],
-  );
+  const primaryNoteId = usePrimaryNoteId();
 
   const history = useHistory();
   const vault = useCurrentVault();
@@ -102,7 +94,7 @@ export const CommandPaletteModal = ({
   );
   const focusedIndex = view.actions.findIndex((n) => n.id === focusedActionId);
 
-  const prevMosePosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const prevMousePosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
   const searchItemRefs = useRef<Record<string, HTMLElement>>({});
 
@@ -127,6 +119,7 @@ export const CommandPaletteModal = ({
             type: 'createNote',
             noteName: toFind,
           };
+          console.log(location.search);
 
           return {
             actions: [
@@ -135,17 +128,18 @@ export const CommandPaletteModal = ({
                   id,
                   name: title,
                   type: 'goToPage',
-                  href: currentNoteId
-                    ? generateStackedNotePath(
-                        location.search,
-                        vault.$modelId,
-                        currentNoteId,
-                        id,
-                      )
-                    : paths.vaultNotePath({
-                        vaultId: vault.$modelId,
-                        noteId: id,
-                      }),
+                  href: paths.vaultNotePath({
+                    vaultId: vault.$modelId,
+                    noteId: id,
+                  }),
+                  stackHref:
+                    primaryNoteId &&
+                    generateStackedNotePath(
+                      location.search,
+                      vault.$modelId,
+                      primaryNoteId,
+                      id,
+                    ),
 
                   highlight: toFind,
                 }),
@@ -192,14 +186,18 @@ export const CommandPaletteModal = ({
     noteRepo,
     startView,
     location.search,
-    currentNoteId,
+    primaryNoteId,
   ]);
 
   const performAction = useCallback(
-    async (action: IAction) => {
+    async (action: IAction, isShift: boolean) => {
       switch (action.type) {
         case 'goToPage':
-          history.push(action.href);
+          if (isShift && action.stackHref) {
+            history.push(action.stackHref);
+          } else {
+            history.push(action.href + location.search);
+          }
 
           onClose();
           break;
@@ -233,7 +231,7 @@ export const CommandPaletteModal = ({
           break;
       }
     },
-    [onClose, history, vault, noteRepo],
+    [onClose, history, location.search, noteRepo, vault.$modelId],
   );
 
   useKey(
@@ -276,7 +274,7 @@ export const CommandPaletteModal = ({
       if (switchTo < view.actions.length) {
         const action = view.actions[switchTo];
 
-        if (action) performAction(action);
+        if (action) performAction(action, e.shiftKey);
       }
     },
     undefined,
@@ -291,7 +289,7 @@ export const CommandPaletteModal = ({
       if (focusedActionId) {
         const action = view.actions[focusedIndex];
 
-        if (action) performAction(action);
+        if (action) performAction(action, e.shiftKey);
       }
     },
     undefined,
@@ -356,16 +354,17 @@ export const CommandPaletteModal = ({
 
               onClick: (e: React.MouseEvent<HTMLElement>) => {
                 e.preventDefault();
-                performAction(action);
+
+                performAction(action, e.shiftKey);
               },
               onMouseMove: (e: React.MouseEvent<HTMLElement>) => {
                 if (
-                  prevMosePosRef.current.x === e.screenX &&
-                  prevMosePosRef.current.y === e.screenY
+                  prevMousePosRef.current.x === e.screenX &&
+                  prevMousePosRef.current.y === e.screenY
                 )
                   return;
 
-                prevMosePosRef.current = { x: e.screenX, y: e.screenY };
+                prevMousePosRef.current = { x: e.screenX, y: e.screenY };
 
                 setActionCommandId(action.id);
               },

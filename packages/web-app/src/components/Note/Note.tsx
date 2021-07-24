@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { NoteBlockModel, NoteModel, FocusedBlockState } from '@harika/web-core';
 import { computed } from 'mobx';
-import { Link, useHistory } from 'react-router-dom';
+import { Link, useHistory, useLocation } from 'react-router-dom';
 import { LinkIcon } from '@heroicons/react/solid';
 import { groupBy } from 'lodash-es';
 import clsx from 'clsx';
@@ -16,7 +16,8 @@ import { CurrentBlockInputRefContext } from '../../contexts';
 import { useNoteRepository } from '../../contexts/CurrentNoteRepositoryContext';
 import { NoteBlocks } from './NoteBlocks';
 import { useCurrentNote } from '../../hooks/useCurrentNote';
-import { useNotePath } from '../../hooks/useNoteClick';
+import { useHandleClick } from '../../hooks/useNoteClick';
+import { paths } from '../../paths';
 
 export interface IFocusBlockState {
   focusOnBlockId: string;
@@ -67,8 +68,13 @@ const BacklinkedNote = observer(
     const vault = useCurrentVault();
     const [isExpanded, setIsExpanded] = useState(true);
     const currentNote = useCurrentNote();
+    const location = useLocation();
 
-    const notePath = useNotePath(vault, currentNote?.$modelId, note.$modelId);
+    const handleClick = useHandleClick(
+      vault,
+      currentNote?.$modelId,
+      note?.$modelId,
+    );
 
     return (
       <div className="backlinked-note">
@@ -84,7 +90,19 @@ const BacklinkedNote = observer(
               setIsExpanded(!isExpanded);
             }}
           />
-          <Link to={notePath}>{note.title}</Link>
+          <Link
+            to={
+              note
+                ? paths.vaultNotePath({
+                    vaultId: vault.$modelId,
+                    noteId: note.$modelId,
+                  }) + location.search
+                : ''
+            }
+            onClick={handleClick}
+          >
+            {note.title}
+          </Link>
         </div>
 
         <div

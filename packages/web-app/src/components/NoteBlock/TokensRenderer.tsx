@@ -1,14 +1,16 @@
 import { observer } from 'mobx-react-lite';
 import React, { useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import type { RefToken, NoteBlockModel, Token } from '@harika/web-core';
 import { useNoteRepository } from '../../contexts/CurrentNoteRepositoryContext';
 import { useCurrentVault } from '../../hooks/useCurrentVault';
 import { useCurrentNote } from '../../hooks/useCurrentNote';
-import { useNotePath } from '../../hooks/useNoteClick';
+import { useHandleClick } from '../../hooks/useNoteClick';
+import { paths } from '../../paths';
 
 const RefRenderer = observer(
   ({ token, noteBlock }: { token: RefToken; noteBlock: NoteBlockModel }) => {
+    const location = useLocation();
     const vault = useCurrentVault();
     const noteRepo = useNoteRepository();
     const linkedNotes = noteBlock.linkedNoteRefs;
@@ -27,7 +29,11 @@ const RefRenderer = observer(
       return note.maybeCurrent?.title === token.content;
     });
 
-    const notePath = useNotePath(vault, currentNote?.$modelId, noteRef?.id);
+    const handleClick = useHandleClick(
+      vault,
+      currentNote?.$modelId,
+      noteRef?.id,
+    );
 
     if (token.content === 'TODO' || token.content === 'DONE') {
       return (
@@ -59,7 +65,17 @@ const RefRenderer = observer(
     if (!noteRef) return <>[[{token.content}]]</>;
 
     return (
-      <Link to={notePath} className="link" data-not-editable>
+      <Link
+        to={
+          paths.vaultNotePath({
+            vaultId: vault.$modelId,
+            noteId: noteRef.id,
+          }) + location.search
+        }
+        onClick={handleClick}
+        className="link"
+        data-not-editable
+      >
         [[{token.content}]]
       </Link>
     );

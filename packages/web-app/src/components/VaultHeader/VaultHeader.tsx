@@ -1,5 +1,5 @@
 import React, { useCallback, useRef, useState } from 'react';
-import { useHistory } from 'react-router-dom';
+import { useHistory, useLocation } from 'react-router-dom';
 import { CalendarIcon } from '@heroicons/react/solid';
 import './styles.css';
 import dayjs from 'dayjs';
@@ -11,8 +11,9 @@ import { CommandPaletteModal } from '../CommandPaletteModal/CommandPaleteModal';
 import { paths } from '../../paths';
 import { useNoteRepository } from '../../contexts/CurrentNoteRepositoryContext';
 import { useCurrentVault } from '../../hooks/useCurrentVault';
-import { useCurrentNote } from '../../hooks/useCurrentNote';
 import { cn } from '../../utils';
+import { generateStackedNotePath } from '../../hooks/useNoteClick';
+import { usePrimaryNote } from '../../hooks/usePrimaryNote';
 
 const vaultHeaderClass = cn('header');
 
@@ -28,13 +29,15 @@ export const VaultHeader = observer(
     isTogglerToggled: boolean;
     togglerRef: React.Ref<HTMLElement>;
   }) => {
+    const location = useLocation();
     const vault = useCurrentVault();
     const noteRepo = useNoteRepository();
     const history = useHistory();
 
-    const [isModalOpened, setIsModalOpened] = useState(false);
+    const primaryNote = usePrimaryNote();
+    const primaryNoteId = primaryNote?.$modelId;
 
-    const currentNote = useCurrentNote();
+    const [isModalOpened, setIsModalOpened] = useState(false);
 
     const [isCalendarOpened, setIsCalendarOpened] = useState(false);
 
@@ -58,21 +61,32 @@ export const VaultHeader = observer(
     }, [isCalendarOpened]);
 
     const handleCalendarChange = useCallback(
-      async (date: Date | Date[]) => {
+      async (date: Date | Date[], ev: React.ChangeEvent<HTMLInputElement>) => {
         if (Array.isArray(date)) return;
 
         const result = await noteRepo.getOrCreateDailyNote(dayjs(date));
 
         if (result.status === 'ok') {
-          history.replace(
-            paths.vaultNotePath({
-              vaultId: vault.$modelId,
-              noteId: result.data.$modelId,
-            }),
-          );
+          if ((ev.nativeEvent as MouseEvent).shiftKey && primaryNoteId) {
+            history.replace(
+              generateStackedNotePath(
+                location.search,
+                vault.$modelId,
+                primaryNoteId,
+                result.data.$modelId,
+              ),
+            );
+          } else {
+            history.replace(
+              paths.vaultNotePath({
+                vaultId: vault.$modelId,
+                noteId: result.data.$modelId,
+              }) + location.search,
+            );
+          }
         }
       },
-      [vault.$modelId, history, noteRepo],
+      [noteRepo, primaryNoteId, history, location.search, vault.$modelId],
     );
 
     return (
@@ -150,8 +164,8 @@ export const VaultHeader = observer(
             <Calendar
               onChange={handleCalendarChange}
               value={
-                currentNote?.dailyNoteDate !== undefined
-                  ? new Date(currentNote?.dailyNoteDate)
+                primaryNote?.dailyNoteDate !== undefined
+                  ? new Date(primaryNote?.dailyNoteDate)
                   : undefined
               }
               className={vaultHeaderClass('calendar', {

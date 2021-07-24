@@ -1,6 +1,6 @@
 import type { VaultModel } from '@harika/web-core';
 import queryString from 'query-string';
-import { useLocation } from 'react-router-dom';
+import { useHistory, useLocation } from 'react-router-dom';
 import { paths } from '../paths';
 
 export const generateStackedNotePath = (
@@ -28,19 +28,28 @@ export const generateStackedNotePath = (
   return `${path}?${queryString.stringify(newQuery)}`;
 };
 
-export const useNotePath = (
+export const useHandleClick = (
   vault: VaultModel,
   currentNoteId: string | undefined,
   nextNoteId: string | undefined,
 ) => {
   const location = useLocation();
+  const history = useHistory();
 
-  return currentNoteId && nextNoteId
-    ? generateStackedNotePath(
-        location.search,
-        vault.$modelId,
-        currentNoteId,
-        nextNoteId,
-      )
-    : '';
+  return (e: React.MouseEvent) => {
+    if (!e.shiftKey) return;
+
+    e.preventDefault();
+
+    history.push(
+      currentNoteId && nextNoteId
+        ? generateStackedNotePath(
+            location.search,
+            vault.$modelId,
+            currentNoteId,
+            nextNoteId,
+          )
+        : '',
+    );
+  };
 };

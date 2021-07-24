@@ -46,7 +46,7 @@ export const noteRef = customRef<NoteModel>('harika/NoteRef', {
   },
 });
 
-const modelType = 'harika/NoteModel';
+const modelType = 'harika/NoteModel' as const;
 
 export const generateRootBlockId = (noteId: string) => `${noteId}-rootBlock`;
 export const generateConflictedRootBlockId = (noteId: string) =>
