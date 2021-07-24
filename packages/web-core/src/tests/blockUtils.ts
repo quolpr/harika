@@ -1,4 +1,4 @@
-import { generateId } from '@harika/common';
+import { generateId } from '../generateId';
 import { NoteBlockModel, VaultModel } from '../NotesRepository';
 import { BlockContentModel } from '../NotesRepository/models/NoteBlockModel/BlockContentModel';
 import {

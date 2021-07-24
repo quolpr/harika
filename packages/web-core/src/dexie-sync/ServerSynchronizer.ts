@@ -1,5 +1,4 @@
 import { Dexie, liveQuery } from 'dexie';
-import { v4 } from 'uuid';
 import { merge, Subject, Observable, of, pipe, from } from 'rxjs';
 import { concatMap, filter, mapTo, switchMap, tap } from 'rxjs/operators';
 import {
@@ -8,7 +7,7 @@ import {
   GetChangesClientCommand,
   DatabaseChangeType,
   ApplyNewChangesFromClientCommand,
-} from '@harika/common';
+} from '../dexieTypes';
 import type { CommandsExecuter } from './CommandsExecuter';
 import type { SyncStatusService } from './SyncStatusService';
 import type { ServerConnector } from './connection/ServerConnector';

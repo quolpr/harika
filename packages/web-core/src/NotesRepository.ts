@@ -12,7 +12,7 @@ import { uniq, uniqBy } from 'lodash-es';
 import { filterAst } from './NotesRepository/models/NoteBlockModel/blockParser/astHelpers';
 import type { RefToken } from './NotesRepository/models/NoteBlockModel/blockParser/types';
 import { from, Observable } from 'rxjs';
-import type { NoteDocType } from '@harika/common';
+import type { NoteDocType } from './dexieTypes';
 import { liveQuery } from 'dexie';
 import { exportDB } from 'dexie-export-import';
 

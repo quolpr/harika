@@ -1,4 +1,4 @@
-import type { IDatabaseChange } from '@harika/common';
+import type { IDatabaseChange } from '../../../dexieTypes';
 import { groupBy, uniq } from 'lodash-es';
 import type { VaultDexieDatabase } from '../DexieDb';
 

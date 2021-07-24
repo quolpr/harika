@@ -5,7 +5,7 @@ import {
   ICreateChange,
   IUpdateChange,
   IDatabaseChange,
-} from '@harika/common';
+} from '../dexieTypes';
 
 async function bulkUpdate(table: Table, changes: IUpdateChange[]) {
   let keys = changes.map((c) => c.key);

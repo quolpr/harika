@@ -9,7 +9,7 @@ import { initSync } from './dexie-sync/init';
 import { liveQuery } from 'dexie';
 import { from, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { generateId } from '@harika/common';
+import { generateId } from './generateId';
 import { ConflictsResolver } from './NotesRepository/dexieDb/ConflictsResolver/ConflictsResolver';
 import { UserDbConflictsResolver } from './UserDbConflictResolver';
 

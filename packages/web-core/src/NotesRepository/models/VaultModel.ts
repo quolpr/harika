@@ -10,7 +10,7 @@ import { NoteModel, noteRef } from './NoteModel';
 import type { Optional, Required } from 'utility-types';
 import { NoteBlockModel, noteBlockRef } from './NoteBlockModel';
 import { vaultModelType } from './consts';
-import { generateId } from '@harika/common';
+import { generateId } from '../../generateId';
 import { BlockContentModel } from './NoteBlockModel/BlockContentModel';
 import { VaultUiState } from './VaultUiState';
 

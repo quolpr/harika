@@ -1,6 +1,6 @@
 import type { Dayjs } from 'dayjs';
 import Dexie from 'dexie';
-import type { NoteDocType, NoteBlockDocType } from '@harika/common';
+import type { NoteDocType, NoteBlockDocType } from '../../dexieTypes';
 
 export class VaultDexieDatabase extends Dexie {
   notes: Dexie.Table<NoteDocType, string>;

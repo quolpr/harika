@@ -3,7 +3,7 @@ import {
   DatabaseChangeType,
   INoteBlockChangeEvent,
   NoteBlockDocType,
-} from '@harika/common';
+} from '../../../dexieTypes';
 import { NoteblocksChangesConflictResolver } from './NoteblocksChangesConflictResolver';
 
 const updateChange = (

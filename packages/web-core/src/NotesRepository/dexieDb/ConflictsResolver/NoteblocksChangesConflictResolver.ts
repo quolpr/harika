@@ -4,7 +4,7 @@ import {
   IDeleteChange,
   IUpdateChange,
   NoteBlockDocType,
-} from '@harika/common';
+} from '../../../dexieTypes';
 import { cloneDeep } from 'lodash';
 import { difference, set, uniq } from 'lodash-es';
 import { BaseConflictResolver } from './BaseConflictResolver';

@@ -1,4 +1,4 @@
-import type { IDatabaseChange } from '@harika/common';
+import type { IDatabaseChange } from '../dexieTypes';
 import { BroadcastChannel } from 'broadcast-channel';
 import { fromEvent, merge, Subject } from 'rxjs';
 

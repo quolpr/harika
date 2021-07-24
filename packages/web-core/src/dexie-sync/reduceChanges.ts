@@ -3,7 +3,7 @@ import {
   ICreateChange,
   IDatabaseChange,
   IUpdateChange,
-} from '@harika/common';
+} from '../dexieTypes';
 import { cloneDeep, set } from 'lodash-es';
 
 export function reduceChanges(changes: IDatabaseChange[]) {

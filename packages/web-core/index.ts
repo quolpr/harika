@@ -7,3 +7,5 @@ export type {
   RefToken,
 } from './src/NotesRepository/models/NoteBlockModel/blockParser/types';
 export * from './src/NotesRepository/models/NoteBlockModel/parseStringToTree';
+export * from './src/generateId';
+export * from './src/dexieTypes';

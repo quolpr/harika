@@ -10,7 +10,7 @@ import {
   INoteChangeEvent,
   DatabaseChangeType,
   INoteBlockChangeEvent,
-} from '@harika/common';
+} from '../../dexieTypes';
 import { changes$ } from '../../dexie-sync/changesChannel';
 
 // type BufferDebounce = <T>(debounce: number) => OperatorFunction<T, T[]>;

@@ -9,7 +9,7 @@ import { PlusIcon } from '@heroicons/react/solid';
 import { CreateVaultModal } from './CreateVaultModal';
 import { useAuthState } from '../../hooks/useAuthState';
 import { Brand } from '../../components/Brand/Brand';
-import { generateId } from '@harika/common';
+import { generateId } from '@harika/web-core';
 import { deleteFromStorage } from '@rehooks/local-storage';
 import SettingsIcon from '@material-ui/icons/Settings';
 import { SettingsModal } from './SettingsModal';

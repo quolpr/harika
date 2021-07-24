@@ -10,11 +10,9 @@
     "test:web-core": "yarn workspace @harika/web-core test",
     "test:web-app": "yarn workspace @harika/web-app test",
     "test:api-app": "yarn workspace @harika/api-app test",
-    "test:common": "yarn workspace @harika/common test",
     "lint:web-core": "yarn workspace @harika/web-core lint",
     "lint:web-app": "yarn workspace @harika/web-app lint",
     "lint:api-app": "yarn workspace @harika/api-app lint",
-    "lint:common": "yarn workspace @harika/common lint",
     "postinstall": "patch-package"
   },
   "workspaces": [

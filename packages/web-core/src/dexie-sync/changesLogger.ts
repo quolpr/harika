@@ -1,7 +1,7 @@
 import { Dexie } from 'dexie';
 import { Subject } from 'rxjs';
 import { buffer, concatMap, debounceTime } from 'rxjs/operators';
-import { IDatabaseChange, DatabaseChangeType } from '@harika/common';
+import { IDatabaseChange, DatabaseChangeType } from '../dexieTypes';
 import { globalChangesSubject } from './changesChannel';
 import { mapValues, pickBy } from 'lodash-es';
 import { v4 } from 'uuid';

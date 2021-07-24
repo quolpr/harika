@@ -3,7 +3,7 @@ import {
   IDatabaseChange,
   IDeleteChange,
   IUpdateChange,
-} from '@harika/common';
+} from '../../../dexieTypes';
 import { reduceChanges } from '../../../dexie-sync/reduceChanges';
 
 export abstract class BaseConflictResolver<

@@ -7,7 +7,6 @@ module.exports = {
     public: { url: '/', static: true },
     src: { url: '/dist' },
     '../web-core': '/@harika/web-core',
-    '../common': '/@harika/common',
   },
   plugins: [
     '@snowpack/plugin-react-refresh',
@@ -83,6 +82,5 @@ module.exports = {
   },
   alias: {
     '@harika/web-core': '../web-core',
-    '@harika/common': '../common',
   },
 };

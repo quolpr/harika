@@ -3,7 +3,7 @@ import type {
   IDatabaseChange,
   INoteBlockChangeEvent,
   INoteChangeEvent,
-} from '@harika/common';
+} from '../../../dexieTypes';
 import { applyChanges } from '../../../dexie-sync/applyChanges';
 import type { IConflictsResolver } from '../../../dexie-sync/ServerSynchronizer';
 import { ConsistencyResolver } from '../ConsistencyResolver/ConsistencyResolver';

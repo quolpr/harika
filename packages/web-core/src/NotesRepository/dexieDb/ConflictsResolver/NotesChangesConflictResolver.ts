@@ -3,7 +3,7 @@ import type {
   IDeleteChange,
   IUpdateChange,
   NoteDocType,
-} from '@harika/common';
+} from '../../../dexieTypes';
 import { BaseConflictResolver } from './BaseConflictResolver';
 
 export class NotesChangesConflictResolver extends BaseConflictResolver<
