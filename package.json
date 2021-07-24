@@ -6,13 +6,10 @@
   "scripts": {
     "web-app": "yarn workspace @harika/web-app",
     "start:web": "yarn workspace @harika/web-app start",
-    "start:api": "yarn workspace @harika/api-app start",
     "test:web-core": "yarn workspace @harika/web-core test",
     "test:web-app": "yarn workspace @harika/web-app test",
-    "test:api-app": "yarn workspace @harika/api-app test",
     "lint:web-core": "yarn workspace @harika/web-core lint",
     "lint:web-app": "yarn workspace @harika/web-app lint",
-    "lint:api-app": "yarn workspace @harika/api-app lint",
     "postinstall": "patch-package"
   },
   "workspaces": [
