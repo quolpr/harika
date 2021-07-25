@@ -9,6 +9,8 @@ describe('filterAst', () => {
     expect(filterAst(parsedData, (t) => t.type === 'ref')).to.deep.eq([
       {
         content: 'my link',
+        ref: 'my link',
+        alias: undefined,
         id: '123',
         offsetEnd: 22,
         offsetStart: 11,
@@ -30,6 +32,8 @@ describe('filterAst', () => {
         offsetEnd: 22,
         offsetStart: 15,
         type: 'ref',
+        alias: undefined,
+        ref: 'wow',
       },
     ]);
   });
@@ -48,6 +52,8 @@ describe('findFirst', () => {
       offsetEnd: 24,
       offsetStart: 13,
       type: 'ref',
+      alias: undefined,
+      ref: 'my link',
     });
   });
 
@@ -84,6 +90,8 @@ describe('mapTokens', () => {
             content: 'my link',
             offsetStart: 13,
             offsetEnd: 24,
+            alias: undefined,
+            ref: 'my link',
           },
         ],
         offsetStart: 11,
@@ -94,6 +102,8 @@ describe('mapTokens', () => {
         id: '123',
         type: 'ref',
         content: 'wow2',
+        ref: 'wow2',
+        alias: undefined,
         offsetStart: 27,
         offsetEnd: 35,
       },

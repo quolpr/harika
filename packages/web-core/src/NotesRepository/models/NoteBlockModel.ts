@@ -470,7 +470,7 @@ export class NoteBlockModel extends Model({
       this.noteBlockRefs.forEach((blockRef) => {
         const firstTodo = blockRef.current.content.firstTodoToken;
 
-        if (firstTodo && firstTodo.content === token.content)
+        if (firstTodo && firstTodo.ref === token.ref)
           blockRef.current.toggleTodo(firstTodo.id, toggledIds);
       });
     }

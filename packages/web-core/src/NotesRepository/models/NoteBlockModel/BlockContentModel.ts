@@ -78,7 +78,7 @@ export class BlockContentModel extends Model({
       firstToken.content.trim().length === 0 &&
       isTodo(secondToken)
     )
-      return firstToken;
+      return secondToken;
 
     return undefined;
   }
@@ -101,9 +101,11 @@ export class BlockContentModel extends Model({
   toggleTodo(id: string) {
     const newAst = mapTokens(this.ast, (token) => {
       if (token.id === id && token.type === 'ref') {
+        const ref = token.ref === 'TODO' ? 'DONE' : 'TODO';
         return {
           ...token,
-          content: token.content === 'TODO' ? 'DONE' : 'TODO',
+          content: ref,
+          ref,
         };
       }
       return token;
@@ -116,8 +118,7 @@ export class BlockContentModel extends Model({
     return Boolean(
       findFirst(
         this.ast,
-        (t) =>
-          t.type === 'ref' && (t.content === 'TODO' || t.content === 'DONE'),
+        (t) => t.type === 'ref' && (t.ref === 'TODO' || t.ref === 'DONE'),
       ),
     );
   }

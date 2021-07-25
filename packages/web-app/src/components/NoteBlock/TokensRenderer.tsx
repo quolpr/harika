@@ -26,7 +26,7 @@ const RefRenderer = observer(
     );
 
     const noteRef = linkedNotes.find((note) => {
-      return note.maybeCurrent?.title === token.content;
+      return note.maybeCurrent?.title === token.ref;
     });
 
     const handleClick = useHandleClick(
@@ -35,7 +35,7 @@ const RefRenderer = observer(
       noteRef?.id,
     );
 
-    if (token.content === 'TODO' || token.content === 'DONE') {
+    if (token.ref === 'TODO' || token.ref === 'DONE') {
       return (
         <label
           className="checkbox"
@@ -76,7 +76,7 @@ const RefRenderer = observer(
         className="link"
         data-not-editable
       >
-        [[{token.content}]]
+        [[{token.alias ? token.alias : token.ref}]]
       </Link>
     );
   },

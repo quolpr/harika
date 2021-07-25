@@ -169,7 +169,7 @@ export class NotesRepository {
                   noteBlock.content.ast,
                   (t) => t.type === 'ref',
                 ) as RefToken[]
-              ).map((t: RefToken) => t.content),
+              ).map((t: RefToken) => t.ref),
             );
 
             const existingNotesIndexed = Object.fromEntries(

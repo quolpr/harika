@@ -78,6 +78,16 @@ export const parse = (data: string, idGenerator = newIdGenerator): Token[] => {
       } else {
         return t;
       }
+    } else if (t.type === 'ref') {
+      let [ref, alias] = t.content.split('|', 2) as [
+        string,
+        string | undefined,
+      ];
+
+      ref = ref.trim();
+      alias = alias?.trim();
+
+      return { ...t, ref: ref, alias: alias?.length === 0 ? undefined : alias };
     }
 
     return t;

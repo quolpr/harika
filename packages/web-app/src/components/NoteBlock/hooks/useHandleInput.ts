@@ -24,8 +24,9 @@ export const useHandleInput = (
     noteBlock.$modelId,
   );
 
-  const [noteTitleToSearch, setNoteTitleToSearch] =
-    useState<string | undefined>(undefined);
+  const [noteTitleToSearch, setNoteTitleToSearch] = useState<
+    string | undefined
+  >(undefined);
 
   const isSearching = Boolean(noteTitleToSearch);
 
@@ -310,7 +311,7 @@ export const useHandleInput = (
         const firstToken = getTokensAtCursor(start, noteBlock.content.ast)[0];
 
         if (firstToken?.type === 'ref') {
-          setNoteTitleToSearch(firstToken.content);
+          setNoteTitleToSearch(firstToken.ref);
         }
       } else {
         setNoteTitleToSearch(undefined);
@@ -329,7 +330,8 @@ export const useHandleInput = (
       const firstToken = getTokensAtCursor(start, noteBlock.content.ast)[0];
 
       if (firstToken?.type === 'ref') {
-        const toInsert = `[[${res.title}]] `;
+        const alias = firstToken.alias ? ` | ${firstToken.alias}` : '';
+        const toInsert = `[[${res.title}${alias}]] `;
 
         insertText(input, toInsert, toInsert.length, {
           start: firstToken.offsetStart,

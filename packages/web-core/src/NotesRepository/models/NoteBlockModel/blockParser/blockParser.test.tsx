@@ -18,8 +18,43 @@ describe('Parser', () => {
           id: '123',
           type: 'ref',
           content: 'world',
+          ref: 'world',
+          alias: undefined,
           offsetStart: 5,
           offsetEnd: 14,
+        },
+      ]);
+    });
+
+    it('parses alias of ref', () => {
+      const parsedData = parse('[[world | test]]', () => () => '123');
+
+      expect(parsedData).to.deep.eq([
+        {
+          id: '123',
+          type: 'ref',
+          content: 'world | test',
+
+          ref: 'world',
+          alias: 'test',
+          offsetStart: 0,
+          offsetEnd: 16,
+        },
+      ]);
+    });
+
+    it("doesn't set empty ref", () => {
+      const parsedData = parse('[[world |  ]]', () => () => '123');
+
+      expect(parsedData).to.deep.eq([
+        {
+          id: '123',
+          type: 'ref',
+          content: 'world |  ',
+          ref: 'world',
+          alias: undefined,
+          offsetStart: 0,
+          offsetEnd: 13,
         },
       ]);
     });
@@ -265,6 +300,8 @@ describe('Parser', () => {
               offsetEnd: 7,
             },
             {
+              ref: 'world',
+              alias: undefined,
               id: '123',
               type: 'ref',
               content: 'world',
@@ -310,6 +347,8 @@ describe('Parser', () => {
               content: 'world',
               offsetStart: 12,
               offsetEnd: 21,
+              ref: 'world',
+              alias: undefined,
             },
           ],
         },
@@ -343,6 +382,8 @@ describe('Parser', () => {
           content: 'world',
           offsetStart: 18,
           offsetEnd: 27,
+          ref: 'world',
+          alias: undefined,
         },
         {
           id: '123',

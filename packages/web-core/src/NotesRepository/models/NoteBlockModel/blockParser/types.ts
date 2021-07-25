@@ -9,12 +9,14 @@ export interface RefToken extends BaseToken {
   id: string;
   type: 'ref';
   content: string;
+  ref: string;
+  alias: string | undefined;
 }
 
-export interface TodoRefToken extends BaseToken {
+export interface TodoRefToken extends RefToken {
   id: string;
   type: 'ref';
-  content: 'TODO' | 'DONE';
+  ref: 'TODO' | 'DONE';
 }
 
 interface TagToken extends BaseToken {
