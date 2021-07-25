@@ -103,13 +103,14 @@ export class VaultUiState extends Model({
     })[],
   ) {
     blocksViewAttrs.forEach((attr) => {
-      if (
-        this.blocksViewsMap[attr.$modelId] &&
-        attr.collapsedBlockIds !== undefined &&
-        attr.collapsedBlockIds !== null
-      ) {
-        this.blocksViewsMap[attr.$modelId].collapsedBlockIds =
-          attr.collapsedBlockIds;
+      if (this.blocksViewsMap[attr.$modelId]) {
+        if (
+          attr.collapsedBlockIds !== undefined &&
+          attr.collapsedBlockIds !== null
+        ) {
+          this.blocksViewsMap[attr.$modelId].collapsedBlockIds =
+            attr.collapsedBlockIds;
+        }
       } else {
         this.blocksViewsMap[attr.$modelId] = new BlocksViewModel(attr);
       }
