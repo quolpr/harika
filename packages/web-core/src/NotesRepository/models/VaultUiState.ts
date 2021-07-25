@@ -78,7 +78,7 @@ export class VaultUiState extends Model({
   ) {
     const key = `${note.$modelId}-${model.$modelType}-${model.$modelId}`;
 
-    if (this.blocksViewsMap[key]) return;
+    if (this.blocksViewsMap[key]) return this.blocksViewsMap[key];
 
     this.blocksViewsMap[key] = new BlocksViewModel({
       $modelId: key,
