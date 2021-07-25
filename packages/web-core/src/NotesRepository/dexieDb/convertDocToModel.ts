@@ -4,14 +4,32 @@ import { NoteBlockModel, noteBlockRef } from '../models/NoteBlockModel';
 import { areNeededNoteDataLoaded, NoteModel } from '../models/NoteModel';
 import { noteRef } from '../models/NoteModel';
 import type { VaultDexieDatabase } from './DexieDb';
-import type { NoteDocType, NoteBlockDocType } from '../../dexieTypes';
+import type {
+  NoteDocType,
+  NoteBlockDocType,
+  BlocksViewDocType,
+} from '../../dexieTypes';
 import { BlockContentModel } from '../models/NoteBlockModel/BlockContentModel';
+import type { BlocksViewModel } from '../models/VaultUiState/BlocksViewModel';
 
 export type NoteData = ModelCreationData<NoteModel> & {
   $modelId: string;
 };
 export type NoteBlockData = ModelCreationData<NoteBlockModel> & {
   $modelId: string;
+};
+export type ViewData = ModelCreationData<BlocksViewModel> & {
+  $modelId: string;
+};
+
+export const convertViewToModelAttrs = (doc: BlocksViewDocType): ViewData => {
+  return {
+    $modelId: doc.id,
+    collapsedBlockIds: doc.collapsedBlockIds,
+    noteRef: noteRef(doc.noteId),
+    scopedModelId: doc.scopedModelId,
+    scopedModelType: doc.scopedModelType,
+  };
 };
 
 export const convertNoteBlockDocToModelAttrs = (

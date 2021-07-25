@@ -1,15 +1,18 @@
 import { Dexie } from 'dexie';
-import type {
+import {
+  IBlocksViewChangeEvent,
   IDatabaseChange,
   INoteBlockChangeEvent,
   INoteChangeEvent,
+  VaultDbTables,
 } from '../../../dexieTypes';
 import { applyChanges } from '../../../dexie-sync/applyChanges';
 import type { IConflictsResolver } from '../../../dexie-sync/ServerSynchronizer';
 import { ConsistencyResolver } from '../ConsistencyResolver/ConsistencyResolver';
-import type { VaultDexieDatabase } from '../DexieDb';
 import { NoteblocksChangesConflictResolver } from './NoteblocksChangesConflictResolver';
 import { NotesChangesConflictResolver } from './NotesChangesConflictResolver';
+import { BlocksViewsChangesConflictResolver } from './BlocksViewsConflictResolver';
+import type { VaultDexieDatabase } from '../DexieDb';
 
 export class ConflictsResolver implements IConflictsResolver {
   private consistencyResolver: ConsistencyResolver;
@@ -37,24 +40,33 @@ export class ConflictsResolver implements IConflictsResolver {
 
           const noteblocksResolver = new NoteblocksChangesConflictResolver();
           const notesResolver = new NotesChangesConflictResolver();
+          const viewsResolver = new BlocksViewsChangesConflictResolver();
 
           const noteBlocksFilter = ({ table }: { table: string }) =>
-            table === 'noteBlocks';
+            table === VaultDbTables.NoteBlocks;
           const newBlocksChanges = noteblocksResolver.resolveConflicts(
             clientChanges.filter(noteBlocksFilter) as INoteBlockChangeEvent[],
             serverChanges.filter(noteBlocksFilter) as INoteBlockChangeEvent[],
           );
 
           const notesFilter = ({ table }: { table: string }) =>
-            table === 'notes';
+            table === VaultDbTables.Notes;
           const notesChanges = notesResolver.resolveConflicts(
             clientChanges.filter(notesFilter) as INoteChangeEvent[],
             serverChanges.filter(notesFilter) as INoteChangeEvent[],
           );
 
+          const viewsFilter = ({ table }: { table: string }) =>
+            table === VaultDbTables.BlocksViews;
+          const viewsChanges = viewsResolver.resolveConflicts(
+            clientChanges.filter(viewsFilter) as IBlocksViewChangeEvent[],
+            serverChanges.filter(viewsFilter) as IBlocksViewChangeEvent[],
+          );
+
           const allChanges = [
             ...notesChanges.changes,
             ...newBlocksChanges.changes,
+            ...viewsChanges.changes,
           ];
 
           await applyChanges(this.db, allChanges);

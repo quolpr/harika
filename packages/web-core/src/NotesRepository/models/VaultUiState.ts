@@ -1,4 +1,10 @@
-import { model, Model, modelAction, prop } from 'mobx-keystone';
+import {
+  model,
+  Model,
+  modelAction,
+  ModelCreationData,
+  prop,
+} from 'mobx-keystone';
 import { NoteModel, noteRef } from './NoteModel';
 import { BlocksViewModel } from './VaultUiState/BlocksViewModel';
 
@@ -83,8 +89,30 @@ export class VaultUiState extends Model({
     this.blocksViewsMap[key] = new BlocksViewModel({
       $modelId: key,
       noteRef: noteRef(note),
+      scopedModelId: model.$modelId,
+      scopedModelType: model.$modelType,
     });
 
     return this.blocksViewsMap[key];
+  }
+
+  @modelAction
+  createOrUpdateEntitiesFromAttrs(
+    blocksViewAttrs: (ModelCreationData<BlocksViewModel> & {
+      $modelId: string;
+    })[],
+  ) {
+    blocksViewAttrs.forEach((attr) => {
+      if (
+        this.blocksViewsMap[attr.$modelId] &&
+        attr.collapsedBlockIds !== undefined &&
+        attr.collapsedBlockIds !== null
+      ) {
+        this.blocksViewsMap[attr.$modelId].collapsedBlockIds =
+          attr.collapsedBlockIds;
+      } else {
+        this.blocksViewsMap[attr.$modelId] = new BlocksViewModel(attr);
+      }
+    });
   }
 }

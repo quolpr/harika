@@ -26,11 +26,12 @@ export const useFindNote = (noteId: string) => {
       if (!note) {
         setIsLoading(false);
       } else {
-        vault.ui.createViewByModel(note, note);
-
-        note.linkedBlocks.forEach((block) => {
-          vault.ui.createViewByModel(note, block);
-        });
+        await Promise.all([
+          noteRepo.preloadOrCreateBlocksView(note, note),
+          ...note.linkedBlocks.map((block) =>
+            noteRepo.preloadOrCreateBlocksView(note, block),
+          ),
+        ]);
 
         setNote(note);
 

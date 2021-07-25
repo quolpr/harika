@@ -27,6 +27,7 @@ const LinkedBlock = observer(({ noteBlock }: { noteBlock: NoteBlockModel }) => {
   const vault = useCurrentVault();
   const path = noteBlock.path;
   const note = useCurrentNote()!;
+  const noteRepo = useNoteRepository();
 
   const view = computed(() => {
     return vault.ui.getView(note, noteBlock);
@@ -34,7 +35,7 @@ const LinkedBlock = observer(({ noteBlock }: { noteBlock: NoteBlockModel }) => {
 
   useEffect(() => {
     if (!view) {
-      vault.ui.createViewByModel(note, noteBlock);
+      noteRepo.preloadOrCreateBlocksView(note, noteBlock);
     }
   });
 
@@ -195,7 +196,7 @@ const NoteBody = observer(({ note }: { note: NoteModel }) => {
 
   useEffect(() => {
     if (!view) {
-      vault.ui.createViewByModel(note, note);
+      noteRepo.preloadOrCreateBlocksView(note, note);
     }
   });
 

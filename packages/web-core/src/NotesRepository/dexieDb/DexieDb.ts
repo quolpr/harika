@@ -1,26 +1,37 @@
 import type { Dayjs } from 'dayjs';
 import Dexie from 'dexie';
-import type { NoteDocType, NoteBlockDocType } from '../../dexieTypes';
+import {
+  NoteDocType,
+  NoteBlockDocType,
+  BlocksViewDocType,
+  VaultDbTables,
+} from '../../dexieTypes';
 
 export class VaultDexieDatabase extends Dexie {
   notes: Dexie.Table<NoteDocType, string>;
   noteBlocks: Dexie.Table<NoteBlockDocType, string>;
+  blocksViews: Dexie.Table<BlocksViewDocType, string>;
 
   constructor(public id: string) {
     super(`harika_vault_${id}`);
 
     this.version(1).stores({
-      noteBlocks:
+      [VaultDbTables.NoteBlocks]:
         'id, parentBlockId, noteId, *noteBlockIds, *linkedNoteIds, content, createdAt, updatedAt',
-      notes:
+      [VaultDbTables.Notes]:
         'id, rootBlockId, title, dailyNoteDate, createdAt, updatedAt, [title+id]',
       _syncStatus: 'id',
       _changesToSend: '++rev',
       _changesFromServer: 'id',
     });
 
-    this.noteBlocks = this.table('noteBlocks');
-    this.notes = this.table('notes');
+    this.version(2).stores({
+      [VaultDbTables.BlocksViews]: 'id, *collapsedIds',
+    });
+
+    this.noteBlocks = this.table(VaultDbTables.NoteBlocks);
+    this.notes = this.table(VaultDbTables.Notes);
+    this.blocksViews = this.table(VaultDbTables.BlocksViews);
   }
 
   get noteBlocksQueries() {

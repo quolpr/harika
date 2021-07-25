@@ -2,14 +2,18 @@ import type { VaultModel } from '../NotesRepository';
 import {
   convertNoteBlockDocToModelAttrs,
   convertNoteDocToModelAttrs,
+  convertViewToModelAttrs,
   NoteBlockData,
   NoteData,
+  ViewData,
 } from './convertDocToModel';
 import type { VaultDexieDatabase } from './DexieDb';
 import {
   INoteChangeEvent,
   DatabaseChangeType,
   INoteBlockChangeEvent,
+  VaultDbTables,
+  IBlocksViewChangeEvent,
 } from '../../dexieTypes';
 import { changes$ } from '../../dexie-sync/changesChannel';
 
@@ -51,8 +55,6 @@ export const toMobxSync = (
   //});
 
   changes$.subscribe((evs) => {
-    console.log('toMobxSync', { evs });
-
     // TODO refactor notes and noteblocks to one method
 
     evs = evs.filter(
@@ -61,13 +63,12 @@ export const toMobxSync = (
         windowId !== currentWindowId ||
         transactionSource === 'conflictsResolution',
     );
-    console.log('new changes', evs);
 
     if (evs.length === 0) return;
 
     const notes = (() => {
       const noteEvents = evs.filter(
-        (ev) => ev.table === 'notes',
+        (ev) => ev.table === VaultDbTables.Notes,
       ) as INoteChangeEvent[];
 
       const latestDedupedEvents: Record<string, INoteChangeEvent> = {};
@@ -104,7 +105,7 @@ export const toMobxSync = (
     // TODO: better ref resolving logic - check that all needed ref of noteBlock are loaded
     const blocks = (() => {
       const blockEvents = evs.filter(
-        (ev) => ev.table === 'noteBlocks',
+        (ev) => ev.table === VaultDbTables.NoteBlocks,
       ) as INoteBlockChangeEvent[];
 
       const latestDedupedEvents: Record<string, INoteBlockChangeEvent> = {};
@@ -136,10 +137,34 @@ export const toMobxSync = (
       });
     })();
 
+    const blockViews = (() => {
+      const viewEvents = evs.filter(
+        (ev) => ev.table === VaultDbTables.BlocksViews,
+      ) as IBlocksViewChangeEvent[];
+
+      const latestDedupedEvents: Record<string, IBlocksViewChangeEvent> = {};
+
+      viewEvents.reverse().forEach((ev) => {
+        if (!latestDedupedEvents[ev.key]) {
+          latestDedupedEvents[ev.key] = ev;
+        }
+      });
+
+      return viewEvents.map((ev) => {
+        if (!ev.obj) return undefined;
+
+        return convertViewToModelAttrs(ev.obj);
+      });
+    })().filter((n) => !!n) as ViewData[];
+
     vault.createOrUpdateEntitiesFromAttrs(
       notes.filter((n) => !!n) as NoteData[],
       blocks.filter((n) => !!n) as NoteBlockData[],
     );
+
+    if (blockViews.length > 0) {
+      vault.ui.createOrUpdateEntitiesFromAttrs(blockViews);
+    }
   });
 
   // db$

@@ -14,12 +14,14 @@ import type { VaultModel } from '../VaultModel';
 
 @model('harika/BlocksViewModel')
 export class BlocksViewModel extends Model({
-  expandedIds: prop<Record<string, boolean>>(() => ({})),
+  collapsedBlockIds: prop<string[]>(() => []),
   noteRef: prop<Ref<NoteModel>>(),
   selectionInterval: prop<[string, string] | undefined>(),
   prevSelectionInterval: prop<[string, string] | undefined>(),
   // Is needed to handle when shift+click pressed
   addableSelectionId: prop<string | undefined>(),
+  scopedModelId: prop<string>(),
+  scopedModelType: prop<string>(),
 }) {
   @computed
   get vault() {
@@ -27,10 +29,9 @@ export class BlocksViewModel extends Model({
   }
 
   isExpanded(noteBlockId: string) {
-    if (this.expandedIds[noteBlockId] !== undefined)
-      return this.expandedIds[noteBlockId];
-
-    return true;
+    return (
+      this.collapsedBlockIds.find((id) => noteBlockId === id) === undefined
+    );
   }
 
   getStringTreeToCopy() {
@@ -47,10 +48,12 @@ export class BlocksViewModel extends Model({
 
   @modelAction
   toggleExpand(noteBlockId: string) {
-    if (this.expandedIds[noteBlockId] !== undefined) {
-      this.expandedIds[noteBlockId] = !this.expandedIds[noteBlockId];
+    if (this.isExpanded(noteBlockId)) {
+      this.collapsedBlockIds = [...this.collapsedBlockIds, noteBlockId];
     } else {
-      this.expandedIds[noteBlockId] = false;
+      this.collapsedBlockIds = this.collapsedBlockIds.filter(
+        (id) => id !== noteBlockId,
+      );
     }
   }
 

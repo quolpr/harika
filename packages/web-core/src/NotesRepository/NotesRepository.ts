@@ -6,7 +6,10 @@ import type { Required } from 'utility-types';
 import type { ICreationResult } from './types';
 import type { VaultModel } from './models/VaultModel';
 import type { VaultDexieDatabase } from './dexieDb/DexieDb';
-import { loadNoteDocToModelAttrs } from './dexieDb/convertDocToModel';
+import {
+  convertViewToModelAttrs,
+  loadNoteDocToModelAttrs,
+} from './dexieDb/convertDocToModel';
 import { distinctUntilChanged, map } from 'rxjs/operators';
 import { uniq, uniqBy } from 'lodash-es';
 import { filterAst } from '../blockParser/astHelpers';
@@ -18,10 +21,7 @@ import { exportDB } from 'dexie-export-import';
 
 export { NoteModel } from './models/NoteModel';
 export { VaultModel } from './models/VaultModel';
-export {
-  NoteBlockModel,
-  noteBlockRef,
-} from './models/NoteBlockModel';
+export { NoteBlockModel, noteBlockRef } from './models/NoteBlockModel';
 
 // Document = Dexie doc
 // Model = DDD model
@@ -206,6 +206,23 @@ export class NotesRepository {
         );
       },
     );
+  }
+
+  async preloadOrCreateBlocksView(
+    note: NoteModel,
+    model: { $modelId: string; $modelType: string },
+  ) {
+    const key = `${note.$modelId}-${model.$modelType}-${model.$modelId}`;
+
+    const doc = await this.db.blocksViews.get(key);
+
+    if (doc) {
+      this.vault.ui.createOrUpdateEntitiesFromAttrs([
+        convertViewToModelAttrs(doc),
+      ]);
+    } else {
+      this.vault.ui.createViewByModel(note, model);
+    }
   }
 
   async preloadNote(

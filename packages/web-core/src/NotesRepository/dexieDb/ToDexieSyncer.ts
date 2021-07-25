@@ -1,19 +1,20 @@
 import Dexie, { Table } from 'dexie';
 import { uniq } from 'lodash-es';
-import type { Patch } from 'mobx-keystone';
+import type { Patch, Path } from 'mobx-keystone';
 import { Subject } from 'rxjs';
 import { buffer, debounceTime, concatMap, tap } from 'rxjs/operators';
-import type {
-  NoteBlockModel,
-  NoteModel,
-  VaultModel,
-} from '../NotesRepository';
+import type { NoteBlockModel, NoteModel, VaultModel } from '../NotesRepository';
 import type { VaultDexieDatabase } from './DexieDb';
-import type { NoteDocType, NoteBlockDocType } from '../../dexieTypes';
+import type {
+  NoteDocType,
+  NoteBlockDocType,
+  BlocksViewDocType,
+} from '../../dexieTypes';
+import type { BlocksViewModel } from '../models/VaultUiState/BlocksViewModel';
 
 // TODO: type rootKey
-const zipPatches = (rootKey: string, patches: Patch[]) => {
-  const scopedPatches = patches.filter((p) => p.path[0] === rootKey);
+const zipPatches = (selector: (path: Path) => boolean, patches: Patch[]) => {
+  const scopedPatches = patches.filter((p) => selector(p.path));
 
   const toDeleteIds = uniq(
     scopedPatches
@@ -82,6 +83,16 @@ const mapNote = (model: NoteModel): NoteDocType => {
   };
 };
 
+const mapView = (model: BlocksViewModel): BlocksViewDocType => {
+  return {
+    id: model.$modelId,
+    collapsedBlockIds: [...model.collapsedBlockIds],
+    noteId: model.noteRef.id,
+    scopedModelId: model.scopedModelId,
+    scopedModelType: model.scopedModelType,
+  };
+};
+
 export class ToDexieSyncer {
   patchesSubject: Subject<Patch>;
 
@@ -136,24 +147,36 @@ export class ToDexieSyncer {
   };
 
   private applyPatches = async (patches: Patch[]) => {
-    patches = patches.filter(({ path }) =>
-      ['blocksMap', 'notesMap'].includes(path[0] as string),
+    patches = patches.filter(
+      ({ path }) =>
+        ['blocksMap', 'notesMap'].includes(path[0] as string) ||
+        (path[0] === 'ui' && path[1] === 'blocksViewsMap'),
     );
 
     if (patches.length === 0) return;
 
-    const blocksResult = zipPatches('blocksMap', patches);
-    const noteResult = zipPatches('notesMap', patches);
+    const blocksResult = zipPatches((p) => p[0] === 'blocksMap', patches);
+    const noteResult = zipPatches((p) => p[0] === 'notesMap', patches);
+    const viewToUpdateIds = patches
+      .map((p) =>
+        p.path.length > 2 &&
+        p.path[0] === 'ui' &&
+        p.path[1] === 'blocksViewsMap'
+          ? p.path[2]
+          : undefined,
+      )
+      .filter((id) => id !== undefined) as string[];
 
     console.debug(
       'Applying patches from mobx',
-      JSON.stringify({ blocksResult, noteResult }, null, 2),
+      JSON.stringify({ blocksResult, noteResult, viewToUpdateIds }, null, 2),
     );
 
     this.database.transaction(
       'rw',
       this.database.notes,
       this.database.noteBlocks,
+      this.database.blocksViews,
       async () => {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
@@ -165,6 +188,11 @@ export class ToDexieSyncer {
           ),
           this.applier(blocksResult, this.database.noteBlocks, (id) =>
             mapNoteBlock(this.vault.blocksMap[id]),
+          ),
+          this.applier(
+            { toCreateIds: [], toUpdateIds: viewToUpdateIds, toDeleteIds: [] },
+            this.database.blocksViews,
+            (id) => mapView(this.vault.ui.blocksViewsMap[id]),
           ),
         ]);
       },

@@ -88,6 +88,14 @@ export type NoteBlockDocType = {
   updatedAt?: number;
 };
 
+export type BlocksViewDocType = {
+  id: string;
+  collapsedBlockIds: string[];
+  noteId: string;
+  scopedModelId: string;
+  scopedModelType: string;
+};
+
 export interface ICreateChange<
   TableName extends string = string,
   Obj extends Record<string, any> = Record<string, any>,
@@ -131,9 +139,22 @@ export type IDatabaseChange<
   | IUpdateChange<TableName, Obj>
   | IDeleteChange<TableName, Obj>;
 
-export type INoteChangeEvent = IDatabaseChange<'notes', NoteDocType>;
+export enum VaultDbTables {
+  NoteBlocks = 'noteBlocks',
+  Notes = 'notes',
+  BlocksViews = 'blocksViews',
+}
+
+export type INoteChangeEvent = IDatabaseChange<
+  VaultDbTables.Notes,
+  NoteDocType
+>;
 export type INoteBlockChangeEvent = IDatabaseChange<
-  'noteBlocks',
+  VaultDbTables.NoteBlocks,
   NoteBlockDocType
+>;
+export type IBlocksViewChangeEvent = IDatabaseChange<
+  VaultDbTables.BlocksViews,
+  BlocksViewDocType
 >;
 export type IChangeEvent = INoteChangeEvent | INoteBlockChangeEvent;
