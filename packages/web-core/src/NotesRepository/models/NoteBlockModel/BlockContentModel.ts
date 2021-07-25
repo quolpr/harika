@@ -1,8 +1,8 @@
 import { computed } from 'mobx';
 import { model, Model, modelAction, prop } from 'mobx-keystone';
-import { findFirst, isTodo, mapTokens } from './blockParser/astHelpers';
-import { parse } from './blockParser/blockParser';
-import type { Token } from './blockParser/types';
+import { findFirst, isTodo, mapTokens } from '../../../blockParser/astHelpers';
+import { parse } from '../../../blockParser/blockParser';
+import type { Token } from '../../../blockParser/types';
 
 function assertUnreachable(x: never): never {
   throw new Error("Didn't expect to get here");

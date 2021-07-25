@@ -18,9 +18,9 @@ import { isVault } from './utils';
 import { isEqual } from 'lodash-es';
 import { BlockContentModel } from './NoteBlockModel/BlockContentModel';
 import type { BlocksViewModel } from './VaultUiState/BlocksViewModel';
-import type { TreeToken } from './NoteBlockModel/parseStringToTree';
-import { addTokensToNoteBlock } from '../../tests/blockUtils';
-import { isTodo } from './NoteBlockModel/blockParser/astHelpers';
+import type { TreeToken } from '../../blockParser/parseStringToTree';
+import { addTokensToNoteBlock } from '../../blockParser/blockUtils';
+import { isTodo } from '../../blockParser/astHelpers';
 
 export const noteBlockRef = customRef<NoteBlockModel>('harika/NoteBlockRef', {
   // this works, but we will use getRefId() from the Todo class instead

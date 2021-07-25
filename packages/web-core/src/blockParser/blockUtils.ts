@@ -1,10 +1,10 @@
 import { generateId } from '../generateId';
-import { NoteBlockModel, VaultModel } from '../NotesRepository';
+import { NoteBlockModel, VaultModel } from '../NotesRepository/NotesRepository';
 import { BlockContentModel } from '../NotesRepository/models/NoteBlockModel/BlockContentModel';
 import {
   parseStringToTree,
   TreeToken,
-} from '../NotesRepository/models/NoteBlockModel/parseStringToTree';
+} from './parseStringToTree';
 import { NoteModel, noteRef } from '../NotesRepository/models/NoteModel';
 
 export const normalizeBlockTree = (str: string) => {

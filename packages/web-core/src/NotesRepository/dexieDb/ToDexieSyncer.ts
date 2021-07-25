@@ -7,7 +7,7 @@ import type {
   NoteBlockModel,
   NoteModel,
   VaultModel,
-} from '../../NotesRepository';
+} from '../NotesRepository';
 import type { VaultDexieDatabase } from './DexieDb';
 import type { NoteDocType, NoteBlockDocType } from '../../dexieTypes';
 

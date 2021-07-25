@@ -1,4 +1,4 @@
-import type { VaultModel } from '../../NotesRepository';
+import type { VaultModel } from '../NotesRepository';
 import {
   convertNoteBlockDocToModelAttrs,
   convertNoteDocToModelAttrs,

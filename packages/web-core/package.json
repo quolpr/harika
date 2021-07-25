@@ -9,7 +9,7 @@
     "test": "web-test-runner \"src/**/*.test.{ts,tsx}\"",
     "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx}\"",
     "lint": "eslint \"src/**/*.{tsx,ts}\"",
-    "gen-block-parser": "peggy -o src/NotesRepository/models/NoteBlockModel/blockParser/pegParser.js --cache src/NotesRepository/models/NoteBlockModel/blockParser/pegParser.pegjs"
+    "gen-block-parser": "peggy -o src/blockParser/pegParser.js --cache src/NotesRepository/models/NoteBlockModel/blockParser/pegParser.pegjs"
   },
   "dependencies": {
     "broadcast-channel": "^3.7.0",

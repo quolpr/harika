@@ -7,7 +7,7 @@ import {
   prop,
   Ref,
 } from 'mobx-keystone';
-import { normalizeBlockTree } from '../../../tests/blockUtils';
+import { normalizeBlockTree } from '../../../blockParser/blockUtils';
 import type { NoteModel } from '../NoteModel';
 import { isVault } from '../utils';
 import type { VaultModel } from '../VaultModel';

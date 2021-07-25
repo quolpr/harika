@@ -1,16 +1,16 @@
-import { VaultModel } from './NotesRepository/models/VaultModel';
-import { syncMiddleware } from './NotesRepository/models/syncable';
-import { VaultDexieDatabase } from './NotesRepository/dexieDb/DexieDb';
-import { ToDexieSyncer } from './NotesRepository/dexieDb/ToDexieSyncer';
-import { toMobxSync } from './NotesRepository/dexieDb/toMobxSync';
+import { VaultModel } from '../NotesRepository/models/VaultModel';
+import { syncMiddleware } from '../NotesRepository/models/syncable';
+import { VaultDexieDatabase } from '../NotesRepository/dexieDb/DexieDb';
+import { ToDexieSyncer } from '../NotesRepository/dexieDb/ToDexieSyncer';
+import { toMobxSync } from '../NotesRepository/dexieDb/toMobxSync';
 import { UserDexieDatabase, VaultDocType } from './UserDexieDb';
-import { NotesRepository } from './NotesRepository';
-import { initSync } from './dexie-sync/init';
+import { NotesRepository } from '../NotesRepository/NotesRepository';
+import { initSync } from '../dexie-sync/init';
 import { liveQuery } from 'dexie';
 import { from, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { generateId } from './generateId';
-import { ConflictsResolver } from './NotesRepository/dexieDb/ConflictsResolver/ConflictsResolver';
+import { generateId } from '../generateId';
+import { ConflictsResolver } from '../NotesRepository/dexieDb/ConflictsResolver/ConflictsResolver';
 import { UserDbConflictsResolver } from './UserDbConflictResolver';
 
 const windowId = generateId();
