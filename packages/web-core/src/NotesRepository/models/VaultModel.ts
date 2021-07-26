@@ -4,6 +4,7 @@ import {
   modelAction,
   ModelCreationData,
   prop,
+  Ref,
   transaction,
 } from 'mobx-keystone';
 import { NoteModel, noteRef } from './NoteModel';
@@ -120,12 +121,14 @@ export class VaultModel extends Model({
     );
     // BLOCK
 
-    blocksAttrs.forEach((attr) => {
+    const blocks = blocksAttrs.map((attr) => {
       if (!this.blocksMap[attr.$modelId]) {
         this.blocksMap[attr.$modelId] = new NoteBlockModel(attr);
       } else {
         this.blocksMap[attr.$modelId].updateAttrs(attr);
       }
+
+      return this.blocksMap[attr.$modelId];
     });
 
     // NOTE
@@ -138,26 +141,26 @@ export class VaultModel extends Model({
       }
     });
 
-    // blocks.forEach((model) => {
-    //   const toRemoveRefs = model.noteBlockRefs
-    //     .map((ref, i) => {
-    //       if (!this.blocksMap[ref.id]) {
-    //         return ref;
-    //       }
+    blocks.forEach((model) => {
+      const toRemoveRefs = model.noteBlockRefs
+        .map((ref) => {
+          if (!this.blocksMap[ref.id]) {
+            return ref;
+          }
 
-    //       return false;
-    //     })
-    //     .filter(Boolean) as Ref<NoteBlockModel>[];
+          return false;
+        })
+        .filter(Boolean) as Ref<NoteBlockModel>[];
 
-    //   toRemoveRefs.forEach((ref) => {
-    //     console.error(
-    //       'removing noteblock ref cause noteblock was not found',
-    //       ref.id,
-    //       JSON.stringify(model.noteBlockRefs.indexOf(ref)),
-    //     );
+      toRemoveRefs.forEach((ref) => {
+        console.error(
+          'removing noteblock ref cause noteblock was not found',
+          ref.id,
+          JSON.stringify(model.$),
+        );
 
-    //     model.noteBlockRefs.splice(model.noteBlockRefs.indexOf(ref), 1);
-    //   });
-    // });
+        model.noteBlockRefs.splice(model.noteBlockRefs.indexOf(ref), 1);
+      });
+    });
   }
 }
