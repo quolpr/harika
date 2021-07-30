@@ -15,7 +15,7 @@ import { uniq, uniqBy } from 'lodash-es';
 import { filterAst } from '../blockParser/astHelpers';
 import type { RefToken } from '../blockParser/types';
 import { from, Observable } from 'rxjs';
-import type { NoteDocType } from '../dexieTypes';
+import { NoteDocType, VaultDbTables } from '../dexieTypes';
 import { liveQuery } from 'dexie';
 import { exportDB } from 'dexie-export-import';
 
@@ -347,7 +347,12 @@ export class NotesRepository {
   async export() {
     // Fails to compile on build time, so I put any here
     return exportDB(this.db as any, {
-      filter: (t) => ['notes', 'noteBlocks'].includes(t),
+      filter: (t) =>
+        [
+          VaultDbTables.Notes,
+          VaultDbTables.NoteBlocks,
+          VaultDbTables.BlocksViews,
+        ].includes(t as VaultDbTables),
     });
   }
 

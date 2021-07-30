@@ -110,9 +110,7 @@ export class ServerConnector {
       distinctUntilChanged(),
       takeUntil(this.stop$),
     );
-  }
 
-  async initialize() {
     this.connectWhenElected();
 
     this.isConnected$.subscribe((isConnected) => {
@@ -129,18 +127,18 @@ export class ServerConnector {
     // TODO: what to do with leader duplication?
     const elector = createLeaderElection(channel);
 
-    elector.awaitLeadership().then(() => {
+    elector.awaitLeadership().then(async () => {
       const socket = new Phoenix.Socket(this.url, {
         params: { token: this.authToken },
       });
       socket.connect();
 
-      const channel = socket.channel('db_changes:' + this.db.name, {
-        client_id: this.syncStatus.value.clientId,
+      const phoenixChannel = socket.channel('db_changes:' + this.db.name, {
+        client_id: (await this.syncStatus.get()).clientId,
       });
 
       this.socketSubject.next(socket);
-      this.channelSubject.next(channel);
+      this.channelSubject.next(phoenixChannel);
     });
   }
 }

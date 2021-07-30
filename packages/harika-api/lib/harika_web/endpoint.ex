@@ -49,9 +49,7 @@ defmodule HarikaWeb.Endpoint do
   plug Plug.Head
   plug Plug.Session, @session_options
 
-  if Application.fetch_env!(:harika, :cors_enabled) do
-    plug CORSPlug, origin: ["http://localhost:8080", "http://192.168.1.41:4200"]
-  end
+  plug CORSPlug, origin: ["http://localhost:8080", "http://192.168.1.41:4200"]
 
   plug Pow.Plug.Session, otp_app: :harika
   plug HarikaWeb.Router

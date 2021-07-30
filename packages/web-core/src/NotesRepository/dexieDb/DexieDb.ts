@@ -20,13 +20,11 @@ export class VaultDexieDatabase extends Dexie {
         'id, parentBlockId, noteId, *noteBlockIds, *linkedNoteIds, content, createdAt, updatedAt',
       [VaultDbTables.Notes]:
         'id, rootBlockId, title, dailyNoteDate, createdAt, updatedAt, [title+id]',
+      [VaultDbTables.BlocksViews]: 'id, *collapsedIds',
       _syncStatus: 'id',
       _changesToSend: '++rev',
       _changesFromServer: 'id',
-    });
-
-    this.version(2).stores({
-      [VaultDbTables.BlocksViews]: 'id, *collapsedIds',
+      _changesPulls: 'id',
     });
 
     this.noteBlocks = this.table(VaultDbTables.NoteBlocks);

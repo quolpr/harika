@@ -47,5 +47,5 @@ export const initSync = async (
     log,
   );
 
-  syncer.initialize();
+  syncer.start();
 };

@@ -21,6 +21,7 @@ export class UserDexieDatabase extends Dexie {
       _syncStatus: 'id',
       _changesToSend: '++rev',
       _changesFromServer: 'id',
+      _changesPulls: 'id',
     });
 
     this.vaults = this.table('vaults');
