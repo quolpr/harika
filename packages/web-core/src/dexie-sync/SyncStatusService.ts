@@ -17,22 +17,20 @@ export class SyncStatusService {
   }
 
   async get() {
-    return await this.db.transaction('rw', '_syncStatus', async () => {
-      let currentStatus = await this.table.get(1);
+    let currentStatus = await this.table.get(1);
 
-      if (!currentStatus) {
-        currentStatus = {
-          id: 1,
-          lastReceivedRemoteRevision: null,
-          lastAppliedRemoteRevision: null,
-          clientId: v4(),
-        };
+    if (!currentStatus) {
+      currentStatus = {
+        id: 1,
+        lastReceivedRemoteRevision: null,
+        lastAppliedRemoteRevision: null,
+        clientId: v4(),
+      };
 
-        await this.table.put(currentStatus);
-      }
+      await this.table.put(currentStatus);
+    }
 
-      return currentStatus;
-    });
+    return currentStatus;
   }
 
   async update(data: Partial<ISyncStatus>) {
