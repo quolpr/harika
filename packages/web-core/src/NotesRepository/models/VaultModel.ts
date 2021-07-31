@@ -119,18 +119,6 @@ export class VaultModel extends Model({
         2,
       ),
     );
-    // BLOCK
-
-    const blocks = blocksAttrs.map((attr) => {
-      if (!this.blocksMap[attr.$modelId]) {
-        this.blocksMap[attr.$modelId] = new NoteBlockModel(attr);
-      } else {
-        this.blocksMap[attr.$modelId].updateAttrs(attr);
-      }
-
-      return this.blocksMap[attr.$modelId];
-    });
-
     // NOTE
 
     noteAttrs.forEach((attr) => {
@@ -141,7 +129,25 @@ export class VaultModel extends Model({
       }
     });
 
+    // BLOCK
+
+    const blocks = blocksAttrs.map((attr) => {
+      const note = this.notesMap[attr.noteRef.id];
+      if (!note) return undefined;
+      if (!note.areChildrenLoaded) return undefined;
+
+      if (!this.blocksMap[attr.$modelId]) {
+        this.blocksMap[attr.$modelId] = new NoteBlockModel(attr);
+      } else {
+        this.blocksMap[attr.$modelId].updateAttrs(attr);
+      }
+
+      return this.blocksMap[attr.$modelId];
+    });
+
     blocks.forEach((model) => {
+      if (!model) return;
+
       const toRemoveRefs = model.noteBlockRefs
         .map((ref) => {
           if (!this.blocksMap[ref.id]) {
