@@ -8,32 +8,30 @@ import {
 } from '../../../dexieTypes';
 import { applyChanges } from '../../../dexie-sync/applyChanges';
 import type { IConflictsResolver } from '../../../dexie-sync/ServerSynchronizer';
-import { ConsistencyResolver } from '../ConsistencyResolver/ConsistencyResolver';
 import { NoteblocksChangesConflictResolver } from './NoteblocksChangesConflictResolver';
 import { NotesChangesConflictResolver } from './NotesChangesConflictResolver';
 import { BlocksViewsChangesConflictResolver } from './BlocksViewsConflictResolver';
 import type { VaultDexieDatabase } from '../DexieDb';
+import { VaultDbConsistencyResolver } from '../ConsistencyResolver/VaultDbConsistencyResolver';
 
 export class ConflictsResolver implements IConflictsResolver {
-  private consistencyResolver: ConsistencyResolver;
+  private consistencyResolver: VaultDbConsistencyResolver;
 
   constructor(private db: VaultDexieDatabase) {
-    this.consistencyResolver = new ConsistencyResolver(db);
+    this.consistencyResolver = new VaultDbConsistencyResolver(db);
   }
 
   async resolveChanges(
     clientChanges: IDatabaseChange[],
     serverChanges: IDatabaseChange[],
   ) {
-    await this.db.transaction('rw', this.tables(), async () => {
-      const appliedChanges = await (async () => {
+    const { conflictedChanges, notConflictedServerChanges } =
+      await (async () => {
         if (clientChanges.length === 0) {
-          // @ts-ignore
-          Dexie.currentTransaction.source = 'serverChanges';
-
-          await applyChanges(this.db, serverChanges);
-
-          return serverChanges;
+          return {
+            notConflictedServerChanges: serverChanges,
+            conflictedChanges: [],
+          };
         } else {
           // @ts-ignore
           Dexie.currentTransaction.source = 'conflictsResolution';
@@ -63,22 +61,39 @@ export class ConflictsResolver implements IConflictsResolver {
             serverChanges.filter(viewsFilter) as IBlocksViewChangeEvent[],
           );
 
-          const allChanges = [
-            ...notesChanges.changes,
-            ...newBlocksChanges.changes,
-            ...viewsChanges.changes,
+          const conflictedChanges = [
+            ...notesChanges.conflictedChanges,
+            ...newBlocksChanges.conflictedChanges,
+            ...viewsChanges.conflictedChanges,
           ];
 
-          await applyChanges(this.db, allChanges);
+          const notConflictedServerChanges = [
+            ...notesChanges.notConflictedServerChanges,
+            ...newBlocksChanges.notConflictedServerChanges,
+            ...viewsChanges.notConflictedServerChanges,
+          ];
 
-          return allChanges;
+          return { conflictedChanges, notConflictedServerChanges };
         }
       })();
+
+    await this.db.transaction('rw', this.tables(), async () => {
+      await this.db.transaction('rw', this.tables(), async () => {
+        // @ts-ignore
+        Dexie.currentTransaction.source = 'serverChanges';
+
+        await applyChanges(this.db, notConflictedServerChanges);
+      });
 
       await this.db.transaction('rw', this.tables(), async () => {
         // @ts-ignore
         Dexie.currentTransaction.source = 'conflictsResolution';
-        await this.consistencyResolver.resolve(appliedChanges);
+
+        await applyChanges(this.db, conflictedChanges);
+
+        if (serverChanges.length > 0 && clientChanges.length > 0) {
+          await this.consistencyResolver.resolve();
+        }
       });
     });
   }

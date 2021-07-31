@@ -12,6 +12,7 @@ import { map } from 'rxjs/operators';
 import { generateId } from '../generateId';
 import { ConflictsResolver } from '../NotesRepository/dexieDb/ConflictsResolver/ConflictsResolver';
 import { UserDbConflictsResolver } from './UserDbConflictResolver';
+import { VaultDbConsistencyResolver } from '../NotesRepository/dexieDb/ConsistencyResolver/VaultDbConsistencyResolver';
 
 const windowId = generateId();
 
@@ -39,6 +40,7 @@ export class VaultsRepository {
         this.config.wsUrl,
         this.config.authToken,
         new UserDbConflictsResolver(this.database),
+        undefined,
       );
     }
   }
@@ -120,6 +122,7 @@ export class VaultsRepository {
         this.config.wsUrl,
         this.config.authToken,
         new ConflictsResolver(db),
+        new VaultDbConsistencyResolver(db),
       );
     }
 

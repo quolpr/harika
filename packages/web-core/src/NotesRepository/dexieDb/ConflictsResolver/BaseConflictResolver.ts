@@ -23,32 +23,32 @@ export abstract class BaseConflictResolver<
       IDatabaseChange<T, K>
     >;
 
-    const mergedChanges: Record<string, IDatabaseChange<T, K>> = {};
+    const notConflictedServerChanges: Record<
+      string,
+      IDatabaseChange<T, K>
+    > = {};
+    const conflictedChanges: Record<string, IDatabaseChange<T, K>> = {};
 
     Object.entries(reducedClientChanges).forEach(([key, clientChange]) => {
       if (!reducedServerChanges[key]) {
-        mergedChanges[key] = clientChange;
-
         return;
       }
 
-      mergedChanges[key] = this.resolveConflictedChanges(
+      conflictedChanges[key] = this.resolveConflictedChanges(
         clientChange,
         reducedServerChanges[key],
       );
     });
 
     Object.entries(reducedServerChanges).forEach(([key, serverChange]) => {
-      if (!mergedChanges[key]) {
-        mergedChanges[key] = serverChange;
+      if (!conflictedChanges[key]) {
+        notConflictedServerChanges[key] = serverChange;
       }
     });
 
-    const changesArray = Object.values(mergedChanges);
-
     return {
-      changes: changesArray,
-      touchedIds: changesArray.map((ch) => ch.key),
+      conflictedChanges: Object.values(conflictedChanges),
+      notConflictedServerChanges: Object.values(notConflictedServerChanges),
     };
   }
 

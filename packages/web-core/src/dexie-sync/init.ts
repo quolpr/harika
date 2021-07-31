@@ -3,7 +3,11 @@ import { Subject } from 'rxjs';
 import { startChangeLog } from './changesLogger';
 import { CommandsExecuter } from './CommandsExecuter';
 import { ServerConnector } from './connection/ServerConnector';
-import { IConflictsResolver, ServerSynchronizer } from './ServerSynchronizer';
+import {
+  IConflictsResolver,
+  IConsistencyResolver,
+  ServerSynchronizer,
+} from './ServerSynchronizer';
 import { SyncStatusService } from './SyncStatusService';
 
 export const initSync = async (
@@ -12,6 +16,7 @@ export const initSync = async (
   url: string,
   authToken: string,
   conflictResolver: IConflictsResolver,
+  consistencyResolver: IConsistencyResolver | undefined,
 ) => {
   startChangeLog(db, windowId);
 

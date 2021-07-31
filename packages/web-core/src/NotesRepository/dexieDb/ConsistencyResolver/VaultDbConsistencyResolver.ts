@@ -1,11 +1,11 @@
-import type { IDatabaseChange } from '../../../dexieTypes';
 import { groupBy, uniq } from 'lodash-es';
+import type { IConsistencyResolver } from '../../../dexie-sync/ServerSynchronizer';
 import type { VaultDexieDatabase } from '../DexieDb';
 
-export class ConsistencyResolver {
+export class VaultDbConsistencyResolver implements IConsistencyResolver {
   constructor(private db: VaultDexieDatabase) {}
 
-  async resolve(changes: IDatabaseChange[]) {
+  async resolve() {
     await this.resolveNoteDuplications();
   }
 

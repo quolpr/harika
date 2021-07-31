@@ -101,6 +101,9 @@ export class ChangesApplierAndSender {
         await this.changeFromServerTable.bulkDelete(
           serverChanges.map(({ id }) => id),
         );
+        await this.changesPullsTable.bulkDelete(
+          serverPulls.map(({ id }) => id),
+        );
       }
 
       const maxRevision = maxBy(

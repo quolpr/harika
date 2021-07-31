@@ -1,12 +1,16 @@
 import type { Dexie } from 'dexie';
 import { merge, Subject, of } from 'rxjs';
-import { concatMap, finalize, mapTo, switchMap, tap } from 'rxjs/operators';
+import { concatMap, finalize, mapTo, switchMap } from 'rxjs/operators';
 import type { IDatabaseChange } from '../dexieTypes';
 import type { CommandsExecuter } from './CommandsExecuter';
 import type { SyncStatusService } from './SyncStatusService';
 import type { ServerConnector } from './connection/ServerConnector';
 import { ServerChangesReceiver } from './ServerSynchronizer/ServerChangesReceiver';
 import { ChangesApplierAndSender } from './ServerSynchronizer/ChangesApplierAndSender';
+
+export interface IConsistencyResolver {
+  resolve(): Promise<void>;
+}
 
 export interface IConflictsResolver {
   resolveChanges(
@@ -70,13 +74,13 @@ export class ServerSynchronizer {
     );
     const changesPipe = this.serverChangesReceiver.pipe();
 
-    const syncEmitter = this.changesApplierAndSender.emitter();
-    const syncPipe = this.changesApplierAndSender.pipe();
+    const changesApplyAndSendEmitter = this.changesApplierAndSender.emitter();
+    const changesApplyAndSendPipe = this.changesApplierAndSender.pipe();
 
     // Only one command at once
     return merge(
       changesEmitter.pipe(mapTo('getChanges' as const)),
-      syncEmitter.pipe(mapTo('syncChanges' as const)),
+      changesApplyAndSendEmitter.pipe(mapTo('applyChangesAndSend' as const)),
     ).pipe(
       concatMap((command) => {
         const id = i++;
@@ -92,7 +96,7 @@ export class ServerSynchronizer {
           );
         } else {
           return of(null).pipe(
-            syncPipe,
+            changesApplyAndSendPipe,
             finalize(() => {
               this.log(`[${id}] Done executing`);
             }),
