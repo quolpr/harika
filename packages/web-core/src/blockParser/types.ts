@@ -23,6 +23,7 @@ interface TagToken extends BaseToken {
   id: string;
   type: 'tag';
   content: string;
+  withBrackets: boolean;
 }
 
 interface BoldToken extends BaseToken {

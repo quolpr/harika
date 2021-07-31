@@ -33,8 +33,8 @@
 }
 
 Expression
-  = result:((OneLineTokens)? Data) { 
-    return result[0] ? [...result[0], ...result[1]] : result[1]
+  = result:((OneLineTokens / Tag)? Data) { 
+    return result[0] ? [...(Array.isArray(result[0]) ? result[0] : [result[0]]), ...result[1]] : result[1]
   }
  
 Data
@@ -45,38 +45,51 @@ Data
   }
   
 Token
-  = EOLOneLineTokens / Bold / Italic / Highlight / CodeBlock / InlineCode / Tag / Ref 
+  = EOLOneLineTokens / TagWithBrackets / SpaceBeforeTag / Bold / Italic / Highlight / CodeBlock / InlineCode /  Ref 
  
 Ref
-  = '[[' content:([^^'\]\]']+) ']]' { 
+  = '[[' content:($[^'\]\]']+) ']]' { 
     const loc = location();
 
-    return {id: options.generateId(), type: 'ref', content: content.join(''), offsetStart: loc.start.offset, offsetEnd: loc.end.offset} 
+    return {id: options.generateId(), type: 'ref', content: content, offsetStart: loc.start.offset, offsetEnd: loc.end.offset} 
+  }
+
+TagWithBrackets
+  = '#[[' content:($[^'\]\]']+) ']]' { 
+    const loc = location();
+
+    return {id: options.generateId(), type: 'tag', content: content, offsetStart: loc.start.offset, offsetEnd: loc.end.offset, withBrackets: true} 
   }
 
 Tag
-  = '#[[' content:([^^'\]\]']+) ']]' { 
+  = '#' content:($[^' '^'\n'^'\r'^'\t'^'\f']+) {
     const loc = location();
 
-    return {id: options.generateId(), type: 'tag', content: content.join(''), offsetStart: loc.start.offset, offsetEnd: loc.end.offset} 
+    return {id: options.generateId(), type: 'tag', content: content, offsetStart: loc.start.offset, offsetEnd: loc.end.offset, withBrackets: false}
+  }
+
+SpaceBeforeTag
+  = before:([' '\n\r\t\f]) tag:Tag {
+
+    return [before, tag];
   }
 
 Bold
-  = '**' content:(Token / [^'**'])* '**' { 
+  = '**' content:(Token / $[^'**'])* '**' { 
     const loc = location();
 
     return {id: options.generateId(), type: 'bold', content: joinChars(content, loc.start.offset + 2), offsetStart: loc.start.offset, offsetEnd: loc.end.offset} 
   }
  
 Italic
-  = '__' content:(Token / [^'__'])*  '__' {
+  = '__' content:(Token / $[^'__'])*  '__' {
     const loc = location();
 
     return {id: options.generateId(), type: 'italic', content: joinChars(content, loc.start.offset + 2), offsetStart: loc.start.offset, offsetEnd: loc.end.offset}
   }
   
 Highlight
-  = '^^' content:(Token / [^'^^'])*  '^^' {
+  = '^^' content:(Token / $[^'^^'])*  '^^' {
     const loc = location();
 
     return {id: options.generateId(), type: 'highlight', content: joinChars(content, loc.start.offset + 2), offsetStart: loc.start.offset, offsetEnd: loc.end.offset}
@@ -103,17 +116,17 @@ Quote
   }
 
 Head
-  = depth:('###' / '##' / '#') content:(!EOL (Token/.))+ {
+  = depth:('###' / '##') content:(!EOL (Token/.))+ {
     const loc = location();
 
     return {id: options.generateId(), type: 'head', depth: depth.length, offsetStart: loc.start.offset, offsetEnd: loc.end.offset, content: joinChars(content.map(([, val]) => val), loc.start.offset + depth.length) }
   }
 
 InlineCode
-  = '`' content:[^`]* '`' { 
+  = '`' content:$[^`]* '`' { 
     const loc = location();
 
-    return {id: options.generateId(), type: 'inlineCode', content: content.join(''), offsetStart: loc.start.offset, offsetEnd: loc.end.offset}
+    return {id: options.generateId(), type: 'inlineCode', content: content, offsetStart: loc.start.offset, offsetEnd: loc.end.offset}
   }
 
 CodeBlock
