@@ -152,59 +152,52 @@ export class NotesRepository {
   }
 
   async updateNoteBlockLinks(noteBlockIds: string[]) {
-    return this.db.transaction(
-      'r',
-      this.db.notes,
-      this.db.noteBlocks,
-      async () => {
-        return Promise.all(
-          noteBlockIds.map(async (id) => {
-            const noteBlock = this.vault.blocksMap[id];
+    return Promise.all(
+      noteBlockIds.map(async (id) => {
+        const noteBlock = this.vault.blocksMap[id];
 
-            console.debug('Updating links');
+        console.debug('Updating links');
 
-            const titles = uniq(
-              (
-                filterAst(
-                  noteBlock.content.ast,
-                  (t) => t.type === 'ref',
-                ) as RefToken[]
-              ).map((t: RefToken) => t.ref),
-            );
-
-            const existingNotesIndexed = Object.fromEntries(
-              (await this.db.notesQueries.getByTitles(titles)).map((n) => [
-                n.title,
-                n,
-              ]),
-            );
-
-            const allParsedLinkedNotes = (
-              await Promise.all(
-                titles.map(async (name) => {
-                  if (!existingNotesIndexed[name]) {
-                    const result = await this.createNote({ title: name });
-
-                    if (result.status === 'ok') {
-                      return result.data;
-                    } else {
-                      alert(JSON.stringify(result.errors));
-                    }
-                  } else {
-                    const existing = existingNotesIndexed[name];
-
-                    return this.findNote(existing.id, false, false, false);
-                  }
-                }),
-              )
-            ).flatMap((n) => (n ? [n] : []));
-
-            noteBlock.updateLinks(
-              allParsedLinkedNotes.map(({ $modelId }) => $modelId),
-            );
-          }),
+        const titles = uniq(
+          (
+            filterAst(
+              noteBlock.content.ast,
+              (t) => t.type === 'ref',
+            ) as RefToken[]
+          ).map((t: RefToken) => t.ref),
         );
-      },
+
+        const existingNotesIndexed = Object.fromEntries(
+          (await this.db.notesQueries.getByTitles(titles)).map((n) => [
+            n.title,
+            n,
+          ]),
+        );
+
+        const allParsedLinkedNotes = (
+          await Promise.all(
+            titles.map(async (name) => {
+              if (!existingNotesIndexed[name]) {
+                const result = await this.createNote({ title: name });
+
+                if (result.status === 'ok') {
+                  return result.data;
+                } else {
+                  alert(JSON.stringify(result.errors));
+                }
+              } else {
+                const existing = existingNotesIndexed[name];
+
+                return this.findNote(existing.id, false, false, false);
+              }
+            }),
+          )
+        ).flatMap((n) => (n ? [n] : []));
+
+        noteBlock.updateLinks(
+          allParsedLinkedNotes.map(({ $modelId }) => $modelId),
+        );
+      }),
     );
   }
 

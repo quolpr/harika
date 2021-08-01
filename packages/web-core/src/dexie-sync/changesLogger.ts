@@ -71,10 +71,14 @@ export const startChangeLog = (db: Dexie, windowId: string) => {
 
               const res = await downlevelTable.mutate(req);
 
+              let mutations: (IDatabaseChange & {
+                transactionSource: string;
+              })[] = [];
+
               if (tableName[0] !== '_') {
                 if (req.type === 'add') {
                   req.values.forEach((val) => {
-                    changesSubject.next({
+                    mutations.push({
                       id: v4(),
                       type: DatabaseChangeType.Create,
                       table: tableName,
@@ -88,7 +92,7 @@ export const startChangeLog = (db: Dexie, windowId: string) => {
                 if (req.type === 'delete') {
                   req.keys.forEach((id) => {
                     if (oldObjects[id]) {
-                      changesSubject.next({
+                      mutations.push({
                         id: v4(),
                         table: tableName,
                         type: DatabaseChangeType.Delete,
@@ -117,7 +121,7 @@ export const startChangeLog = (db: Dexie, windowId: string) => {
 
                         if (isEqual(from, mods)) return;
 
-                        changesSubject.next({
+                        mutations.push({
                           id: v4(),
                           table: tableName,
                           type: DatabaseChangeType.Update,
@@ -129,7 +133,7 @@ export const startChangeLog = (db: Dexie, windowId: string) => {
                         });
                       }
                     } else {
-                      changesSubject.next({
+                      mutations.push({
                         id: v4(),
                         table: tableName,
                         type: DatabaseChangeType.Create,
@@ -142,6 +146,14 @@ export const startChangeLog = (db: Dexie, windowId: string) => {
                 }
               }
 
+              if (mutations.length !== 0 && source !== 'serverChanges') {
+                await db.table('_changesToSend').bulkAdd(mutations);
+              }
+
+              if (mutations.length !== 0) {
+                mutations.forEach((mut) => changesSubject.next(mut));
+              }
+
               return res;
             },
           };
@@ -152,13 +164,6 @@ export const startChangeLog = (db: Dexie, windowId: string) => {
 
   changesSubject
     .pipe(
-      concatMap(async (ch) => {
-        if (ch.transactionSource === 'serverChanges') return ch;
-
-        await db.table('_changesToSend').add(ch);
-
-        return ch;
-      }),
       buffer(changesSubject.pipe(debounceTime(100))),
       concatMap(async (changes) => {
         globalChangesSubject.next(
