@@ -62,23 +62,23 @@ describe('Parser', () => {
 
   describe('head parser', () => {
     it('parses when it on first line', () => {
-      const parsedData = parse('#test', () => () => '123');
+      const parsedData = parse('##test', () => () => '123');
 
       expect(parsedData).to.deep.eq([
         {
           id: '123',
           type: 'head',
-          depth: 1,
+          depth: 2,
           offsetStart: 0,
-          offsetEnd: 5,
+          offsetEnd: 6,
           withTrailingEOL: false,
           content: [
             {
               id: '123',
               type: 'str',
               content: 'test',
-              offsetStart: 1,
-              offsetEnd: 5,
+              offsetStart: 2,
+              offsetEnd: 6,
             },
           ],
         },
@@ -86,38 +86,38 @@ describe('Parser', () => {
     });
 
     it('parses trailing EOL', () => {
-      const parsedData = parse('#test\nhey!', () => () => '123');
+      const parsedData = parse('##test\nhey!', () => () => '123');
 
       expect(parsedData).to.deep.eq([
         {
           id: '123',
           type: 'head',
-          depth: 1,
+          depth: 2,
           offsetStart: 0,
-          offsetEnd: 6,
+          offsetEnd: 7,
           withTrailingEOL: true,
           content: [
             {
               id: '123',
               type: 'str',
               content: 'test',
-              offsetStart: 1,
-              offsetEnd: 5,
+              offsetStart: 2,
+              offsetEnd: 6,
             },
           ],
         },
         {
           content: 'hey!',
           id: '123',
-          offsetEnd: 10,
-          offsetStart: 6,
+          offsetEnd: 11,
+          offsetStart: 7,
           type: 'str',
         },
       ]);
     });
 
     it('parses when it is on new line', () => {
-      const parsedData = parse('kek\n#test', () => () => '123');
+      const parsedData = parse('kek\n##test', () => () => '123');
 
       expect(parsedData).to.deep.eq([
         {
@@ -130,17 +130,17 @@ describe('Parser', () => {
         {
           id: '123',
           type: 'head',
-          depth: 1,
+          depth: 2,
           offsetStart: 4,
-          offsetEnd: 9,
+          offsetEnd: 10,
           withTrailingEOL: false,
           content: [
             {
               id: '123',
               type: 'str',
               content: 'test',
-              offsetStart: 5,
-              offsetEnd: 9,
+              offsetStart: 6,
+              offsetEnd: 10,
             },
           ],
         },
@@ -148,15 +148,23 @@ describe('Parser', () => {
     });
 
     it("doesn't parse not on new line", () => {
-      const parsedData = parse('kek\n kek #test', () => () => '123');
+      const parsedData = parse('kek\n kek ##test', () => () => '123');
 
       expect(parsedData).to.deep.eq([
         {
           id: '123',
           type: 'str',
-          content: 'kek\n kek #test',
+          content: 'kek\n kek ',
           offsetStart: 0,
-          offsetEnd: 14,
+          offsetEnd: 9,
+        },
+        {
+          content: '#test',
+          id: '123',
+          offsetEnd: 15,
+          offsetStart: 9,
+          type: 'tag',
+          withBrackets: false,
         },
       ]);
     });

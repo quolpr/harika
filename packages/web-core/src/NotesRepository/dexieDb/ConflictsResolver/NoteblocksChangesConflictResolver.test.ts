@@ -3,6 +3,7 @@ import {
   DatabaseChangeType,
   INoteBlockChangeEvent,
   NoteBlockDocType,
+  VaultDbTables,
 } from '../../../dexieTypes';
 import { NoteblocksChangesConflictResolver } from './NoteblocksChangesConflictResolver';
 
@@ -13,7 +14,7 @@ const updateChange = (
 ): INoteBlockChangeEvent => {
   return {
     id: '123',
-    table: 'noteBlocks',
+    table: VaultDbTables.NoteBlocks,
     type: DatabaseChangeType.Update,
     from,
     to,
@@ -27,7 +28,7 @@ const deleteChange = (
 ): INoteBlockChangeEvent => {
   return {
     id: '123',
-    table: 'noteBlocks',
+    table: VaultDbTables.NoteBlocks,
     type: DatabaseChangeType.Delete,
     key,
     obj,
@@ -40,7 +41,7 @@ const createChange = (
 ): INoteBlockChangeEvent => {
   return {
     id: '123',
-    table: 'noteBlocks',
+    table: VaultDbTables.NoteBlocks,
     type: DatabaseChangeType.Create,
     key,
     obj,
@@ -81,7 +82,8 @@ describe('NoteblocksChangesConflictResolver', () => {
             ];
 
             expect(
-              resolver.resolveConflicts(clientChanges, serverChanges).changes,
+              resolver.resolveConflicts(clientChanges, serverChanges)
+                .conflictedChanges,
             ).to.deep.eq([
               updateChange(
                 '111',
@@ -121,7 +123,8 @@ describe('NoteblocksChangesConflictResolver', () => {
             ];
 
             expect(
-              resolver.resolveConflicts(clientChanges, serverChanges).changes,
+              resolver.resolveConflicts(clientChanges, serverChanges)
+                .conflictedChanges,
             ).to.deep.eq([
               updateChange(
                 '111',
@@ -163,7 +166,8 @@ describe('NoteblocksChangesConflictResolver', () => {
             ];
 
             expect(
-              resolver.resolveConflicts(clientChanges, serverChanges).changes,
+              resolver.resolveConflicts(clientChanges, serverChanges)
+                .conflictedChanges,
             ).to.deep.eq([
               updateChange(
                 '123',
@@ -200,7 +204,8 @@ describe('NoteblocksChangesConflictResolver', () => {
             ];
 
             expect(
-              resolver.resolveConflicts(clientChanges, serverChanges).changes,
+              resolver.resolveConflicts(clientChanges, serverChanges)
+                .conflictedChanges,
             ).to.deep.eq([
               updateChange(
                 '123',
@@ -249,7 +254,8 @@ describe('NoteblocksChangesConflictResolver', () => {
         ];
 
         expect(
-          resolver.resolveConflicts(clientChanges, serverChanges).changes,
+          resolver.resolveConflicts(clientChanges, serverChanges)
+            .conflictedChanges,
         ).to.deep.eq([
           createChange('123', {
             id: '123',
@@ -326,7 +332,8 @@ describe('NoteblocksChangesConflictResolver', () => {
       ];
 
       expect(
-        resolver.resolveConflicts(clientChanges, serverChanges).changes,
+        resolver.resolveConflicts(clientChanges, serverChanges)
+          .conflictedChanges,
       ).to.deep.eq([clientChanges[0]]);
     });
 
