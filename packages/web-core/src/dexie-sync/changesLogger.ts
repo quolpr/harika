@@ -5,6 +5,7 @@ import { IDatabaseChange, DatabaseChangeType } from '../dexieTypes';
 import { globalChangesSubject } from './changesChannel';
 import { isEqual, mapValues, pickBy } from 'lodash-es';
 import { v4 } from 'uuid';
+import { getObjectDiff } from './utils';
 
 export const startChangeLog = (db: Dexie, windowId: string) => {
   const changesSubject = new Subject<
@@ -107,27 +108,22 @@ export const startChangeLog = (db: Dexie, windowId: string) => {
                 if (req.type === 'put') {
                   req.values.forEach((obj) => {
                     if (oldObjects[obj.id]) {
-                      const mods = mapValues(
-                        (Dexie as any).getObjectDiff(oldObjects[obj.id], obj),
-                        (val) => (val === undefined ? null : val),
+                      const { from, to } = getObjectDiff(
+                        oldObjects[obj.id],
+                        obj,
                       );
 
-                      const modsKeys = Object.keys(mods);
-
-                      if (Object.values(mods).length !== 0) {
-                        const from = pickBy(oldObjects[obj.id], (_v, k) =>
-                          modsKeys.includes(k),
-                        );
-
-                        if (isEqual(from, mods)) return;
-
+                      if (
+                        Object.keys(from).length > 0 ||
+                        Object.keys(to).length > 0
+                      ) {
                         mutations.push({
                           id: v4(),
                           table: tableName,
                           type: DatabaseChangeType.Update,
                           obj,
                           from,
-                          to: mods,
+                          to,
                           key: obj.id,
                           transactionSource: source,
                         });
