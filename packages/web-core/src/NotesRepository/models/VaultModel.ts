@@ -104,31 +104,31 @@ export class VaultModel extends Model({
       $modelId: string;
     })[],
   ) {
-    console.debug(
-      'createOrUpdateEntitiesFromAttrs, notes: ',
-      JSON.stringify(
-        {
-          noteAttrs: noteAttrs.map(
-            ({
-              $modelId,
-              title,
-              areNoteLinksLoaded: areBacklinksLoaded,
-              areChildrenLoaded,
-              areBlockLinksLoaded: areLinksLoaded,
-            }) => ({
-              $modelId,
-              title,
-              areBacklinksLoaded,
-              areChildrenLoaded,
-              areLinksLoaded,
-            }),
-          ),
-          blocksAttrs: blocksAttrs,
-        },
-        null,
-        2,
-      ),
-    );
+    // console.debug(
+    //   'createOrUpdateEntitiesFromAttrs, notes: ',
+    //   JSON.stringify(
+    //     {
+    //       noteAttrs: noteAttrs.map(
+    //         ({
+    //           $modelId,
+    //           title,
+    //           areNoteLinksLoaded: areBacklinksLoaded,
+    //           areChildrenLoaded,
+    //           areBlockLinksLoaded: areLinksLoaded,
+    //         }) => ({
+    //           $modelId,
+    //           title,
+    //           areBacklinksLoaded,
+    //           areChildrenLoaded,
+    //           areLinksLoaded,
+    //         }),
+    //       ),
+    //       blocksAttrs: blocksAttrs,
+    //     },
+    //     null,
+    //     2,
+    //   ),
+    // );
     // NOTE
 
     noteAttrs.forEach((attr) => {

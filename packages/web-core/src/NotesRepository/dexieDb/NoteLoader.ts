@@ -20,14 +20,8 @@ class PreloadStore {
 
   constructor(private statuses: Record<string, INoteLoadStatus>) {}
 
-  getNoteStatus(noteId: string) {
-    return (
-      this.statuses[noteId] || {
-        areNoteLinksLoaded: false,
-        areChildrenLoaded: false,
-        areBlockLinksLoaded: false,
-      }
-    );
+  getNoteStatus(noteId: string): INoteLoadStatus | undefined {
+    return this.statuses[noteId];
   }
 
   setNoteStatus(noteId: string, status: INoteLoadStatus) {
@@ -35,7 +29,11 @@ class PreloadStore {
   }
 
   areNeededNoteDataLoaded(noteId: string, toPreloadInfo: ToPreloadInfo) {
-    return areNeededNoteDataLoaded(this.getNoteStatus(noteId), toPreloadInfo);
+    const status = this.getNoteStatus(noteId);
+
+    if (!status) return false;
+
+    return areNeededNoteDataLoaded(status, toPreloadInfo);
   }
 
   addNote(data: NoteData) {
@@ -79,8 +77,10 @@ export class NoteLoader {
   }
 
   private async doLoadNote(noteId: string, toPreloadInfo: ToPreloadInfo) {
-    if (this.preloadStore.areNeededNoteDataLoaded(noteId, toPreloadInfo))
+    if (this.preloadStore.areNeededNoteDataLoaded(noteId, toPreloadInfo)) {
+      console.log(noteId, 'loaded');
       return;
+    }
 
     const noteDoc = await this.db.notes.get(noteId);
 

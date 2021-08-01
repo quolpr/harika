@@ -32,7 +32,11 @@ export class CommandsExecuter {
       switchMap((channel) => {
         return new Observable<T['response']>((observer) => {
           this.log(
-            `[${id}] Sending message ${JSON.stringify(command, null, 2)}`,
+            `[requestId=${id}] Sending message ${JSON.stringify(
+              command,
+              null,
+              2,
+            )}`,
           );
           channel
             .push(commandType, snakecaseKeys(command, { deep: true }), 20_000)
@@ -42,7 +46,11 @@ export class CommandsExecuter {
               }) as T['response'];
 
               this.log(
-                `[${id}] Response received, ${JSON.stringify(result, null, 2)}`,
+                `[requestId=${id}] Response received, ${JSON.stringify(
+                  result,
+                  null,
+                  2,
+                )}`,
               );
 
               observer.next(result);
@@ -53,7 +61,7 @@ export class CommandsExecuter {
               observer.error();
             })
             .receive('timeout', () => {
-              this.log(`[${id}] Command timeout`);
+              this.log(`[requestId=${id}] Command timeout`);
 
               observer.error();
             });
