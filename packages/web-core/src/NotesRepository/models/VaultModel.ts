@@ -7,7 +7,7 @@ import {
   Ref,
   transaction,
 } from 'mobx-keystone';
-import { NoteModel, noteRef } from './NoteModel';
+import { INoteLoadStatus, NoteModel, noteRef } from './NoteModel';
 import type { Optional, Required } from 'utility-types';
 import { NoteBlockModel, noteBlockRef } from './NoteBlockModel';
 import { vaultModelType } from './consts';
@@ -22,14 +22,24 @@ export class VaultModel extends Model({
   blocksMap: prop<Record<string, NoteBlockModel>>(() => ({})),
   ui: prop<VaultUiState>(() => new VaultUiState({})),
 }) {
+  get noteStatuses() {
+    const notesStatus: Record<string, INoteLoadStatus> = {};
+
+    Object.entries(this.notesMap).forEach(([id, note]) => {
+      notesStatus[id] = note.loadStatus;
+    });
+
+    return notesStatus;
+  }
+
   @modelAction
   newNote(
     attrs: Required<
       Optional<
         ModelCreationData<NoteModel>,
-        | 'areLinksLoaded'
+        | 'areBlockLinksLoaded'
         | 'areChildrenLoaded'
-        | 'areBacklinksLoaded'
+        | 'areNoteLinksLoaded'
         | 'createdAt'
         | 'dailyNoteDate'
         | 'rootBlockRef'
@@ -55,9 +65,9 @@ export class VaultModel extends Model({
       $modelId: noteId,
       createdAt: new Date().getTime(),
       dailyNoteDate: new Date().getTime(),
-      areLinksLoaded: true,
+      areBlockLinksLoaded: true,
       areChildrenLoaded: true,
-      areBacklinksLoaded: true,
+      areNoteLinksLoaded: true,
       rootBlockRef: noteBlockRef(rootBlock),
       ...attrs,
     });
@@ -102,9 +112,9 @@ export class VaultModel extends Model({
             ({
               $modelId,
               title,
-              areBacklinksLoaded,
+              areNoteLinksLoaded: areBacklinksLoaded,
               areChildrenLoaded,
-              areLinksLoaded,
+              areBlockLinksLoaded: areLinksLoaded,
             }) => ({
               $modelId,
               title,

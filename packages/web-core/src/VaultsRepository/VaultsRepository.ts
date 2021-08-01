@@ -111,7 +111,7 @@ export class VaultsRepository {
     });
 
     syncMiddleware(vault, new ToDexieSyncer(db, vault).handlePatch);
-    toMobxSync(db, vault, windowId);
+    toMobxSync(vault, windowId);
 
     const repo = new NotesRepository(db, vault);
 

@@ -23,7 +23,13 @@ export const usePrimaryNote = () => {
     const callback = async () => {
       if (!primaryNoteId) return;
 
-      setPrimaryNote(await repo.findNote(primaryNoteId));
+      setPrimaryNote(
+        await repo.findNote(primaryNoteId, {
+          preloadChildren: true,
+          preloadBlockLinks: true,
+          preloadNoteLinks: true,
+        }),
+      );
     };
 
     callback();

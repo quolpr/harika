@@ -136,11 +136,9 @@ class NotesQueries {
   }
 
   // TODO: maybe could be optimized
-  async getLinkedNotesOfNoteId(id: string) {
-    return this.getByIds(
-      (await this.db.noteBlocksQueries.getLinkedBlocksOfNoteId(id)).map(
-        ({ noteId }) => noteId,
-      ),
+  async getLinkedNoteIdsOfNoteId(id: string) {
+    return (await this.db.noteBlocksQueries.getLinkedBlocksOfNoteId(id)).map(
+      ({ noteId }) => noteId,
     );
   }
 }

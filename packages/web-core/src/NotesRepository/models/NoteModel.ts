@@ -20,6 +20,13 @@ import { isVault } from './utils';
 import type { VaultModel } from './VaultModel';
 import { BlockContentModel } from './NoteBlockModel/BlockContentModel';
 import { omit } from 'lodash-es';
+import type { ToPreloadInfo } from '../dexieDb/NoteLoader';
+
+export interface INoteLoadStatus {
+  areBlockLinksLoaded: boolean;
+  areChildrenLoaded: boolean;
+  areNoteLinksLoaded: boolean;
+}
 
 export const noteRef = customRef<NoteModel>('harika/NoteRef', {
   // this works, but we will use getRefId() from the Todo class instead
@@ -62,11 +69,19 @@ export class NoteModel extends Model({
   dailyNoteDate: tProp(types.maybe(types.dateTimestamp)),
   createdAt: tProp(types.dateTimestamp),
   areChildrenLoaded: prop<boolean>(),
-  areLinksLoaded: prop<boolean>(),
-  areBacklinksLoaded: prop<boolean>(),
+  areBlockLinksLoaded: prop<boolean>(),
+  areNoteLinksLoaded: prop<boolean>(),
   isDeleted: prop<boolean>(false),
   rootBlockRef: prop<Ref<NoteBlockModel>>(),
 }) {
+  get loadStatus(): INoteLoadStatus {
+    return {
+      areBlockLinksLoaded: this.areBlockLinksLoaded,
+      areChildrenLoaded: this.areChildrenLoaded,
+      areNoteLinksLoaded: this.areNoteLinksLoaded,
+    };
+  }
+
   @computed
   get childParentRelations() {
     const relations: Record<string, string> = {};
@@ -176,16 +191,16 @@ export class NoteModel extends Model({
 
   @modelAction
   updateAttrs(attrs: ModelCreationData<NoteModel>) {
-    if (!this.areLinksLoaded && attrs.areLinksLoaded) {
-      this.areLinksLoaded = true;
+    if (!this.areBlockLinksLoaded && attrs.areBlockLinksLoaded) {
+      this.areBlockLinksLoaded = true;
     }
 
     if (!this.areChildrenLoaded && attrs.areChildrenLoaded) {
       this.areChildrenLoaded = true;
     }
 
-    if (!this.areBacklinksLoaded && attrs.areBacklinksLoaded) {
-      this.areBacklinksLoaded = true;
+    if (!this.areNoteLinksLoaded && attrs.areNoteLinksLoaded) {
+      this.areNoteLinksLoaded = true;
     }
 
     this.title = attrs.title;
@@ -205,33 +220,18 @@ export class NoteModel extends Model({
     }
   }
 
-  areNeededDataLoaded(
-    preloadChildren: boolean,
-    preloadBacklinks: boolean,
-    preloadBlockLinks: boolean,
-  ) {
-    return areNeededNoteDataLoaded(
-      this,
-      preloadChildren,
-      preloadBacklinks,
-      preloadBlockLinks,
-    );
+  areNeededDataLoaded(toPreloadInfo: ToPreloadInfo) {
+    return areNeededNoteDataLoaded(this, toPreloadInfo);
   }
 }
 
 export function areNeededNoteDataLoaded(
-  data: {
-    areChildrenLoaded: boolean | undefined;
-    areLinksLoaded: boolean | undefined;
-    areBacklinksLoaded: boolean | undefined;
-  },
-  preloadChildren: boolean,
-  preloadBacklinks: boolean,
-  preloadBlockLinks: boolean,
+  data: INoteLoadStatus,
+  { preloadChildren, preloadNoteLinks, preloadBlockLinks }: ToPreloadInfo,
 ) {
   return (
     !(preloadChildren === true && data.areChildrenLoaded === false) &&
-    !(preloadBlockLinks === true && data.areLinksLoaded === false) &&
-    !(preloadBacklinks === true && data.areBacklinksLoaded === false)
+    !(preloadBlockLinks === true && data.areBlockLinksLoaded === false) &&
+    !(preloadNoteLinks === true && data.areNoteLinksLoaded === false)
   );
 }

@@ -22,7 +22,12 @@ export const useFindNote = (noteId: string) => {
 
   useEffect(() => {
     const callback = async () => {
-      const note = await noteRepo.findNote(noteId);
+      const note = await noteRepo.findNote(noteId, {
+        preloadChildren: true,
+        preloadBlockLinks: true,
+        preloadNoteLinks: true,
+      });
+
       if (!note) {
         setIsLoading(false);
       } else {
