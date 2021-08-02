@@ -1,5 +1,6 @@
 import React, { MutableRefObject, Suspense, useEffect, useRef } from 'react';
 import './App.css';
+import './tailwind.css';
 import './variables.css';
 import Modal from 'react-modal';
 import { paths, PATHS, VAULT_PREFIX } from './paths';

@@ -1,7 +1,12 @@
 import { observer } from 'mobx-react-lite';
 import React, { useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import type { RefToken, NoteBlockModel, Token } from '@harika/web-core';
+import type {
+  RefToken,
+  NoteBlockModel,
+  Token,
+  TagToken,
+} from '@harika/web-core';
 import { useNoteRepository } from '../../contexts/CurrentNoteRepositoryContext';
 import { useCurrentVault } from '../../hooks/useCurrentVault';
 import { useCurrentNote } from '../../hooks/useCurrentNote';
@@ -62,7 +67,7 @@ const RefRenderer = observer(
       );
     }
 
-    if (!noteRef) return <>[[{token.content}]]</>;
+    if (!noteRef) return <>{token.alias ? token.alias : token.ref}</>;
 
     return (
       <Link
@@ -76,7 +81,44 @@ const RefRenderer = observer(
         className="link"
         data-not-editable
       >
-        [[{token.alias ? token.alias : token.ref}]]
+        {token.alias ? token.alias : token.ref}
+      </Link>
+    );
+  },
+);
+
+const TagRenderer = observer(
+  ({ token, noteBlock }: { token: TagToken; noteBlock: NoteBlockModel }) => {
+    const location = useLocation();
+    const vault = useCurrentVault();
+    const currentNote = useCurrentNote();
+    const linkedNotes = noteBlock.linkedNoteRefs;
+
+    const noteRef = linkedNotes.find((note) => {
+      return note.maybeCurrent?.title === token.ref;
+    });
+
+    const handleClick = useHandleClick(
+      vault,
+      currentNote?.$modelId,
+      noteRef?.id,
+    );
+
+    if (!noteRef) return <>#{token.ref}</>;
+
+    return (
+      <Link
+        to={
+          paths.vaultNotePath({
+            vaultId: vault.$modelId,
+            noteId: noteRef.id,
+          }) + location.search
+        }
+        onClick={handleClick}
+        className="link link--darker"
+        data-not-editable
+      >
+        #{token.ref}
       </Link>
     );
   },
@@ -86,7 +128,7 @@ const TokenRenderer = observer(
   ({ noteBlock, token }: { noteBlock: NoteBlockModel; token: Token }) => {
     switch (token.type) {
       case 'tag':
-        return <div>#[[{token.content}]]</div>;
+        return <TagRenderer token={token} noteBlock={noteBlock} />;
       case 'ref':
         return <RefRenderer token={token} noteBlock={noteBlock} />;
       case 'bold':

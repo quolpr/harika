@@ -160,6 +160,7 @@ describe('Parser', () => {
         },
         {
           content: '#test',
+          ref: '#test',
           id: '123',
           offsetEnd: 15,
           offsetStart: 9,
@@ -567,6 +568,167 @@ describe('Parser', () => {
           offsetEnd: 15,
         },
       ]);
+    });
+  });
+
+  describe('tags support', () => {
+    describe('on first line', () => {
+      it("doesn't parse tag from URL", () => {
+        const parsedData = parse('http://test.com#test', () => () => '123');
+
+        expect(parsedData).to.deep.eq([
+          {
+            id: '123',
+            type: 'link',
+            linkType: 'url',
+            content: 'http://test.com#test',
+            href: 'http://test.com#test',
+            offsetStart: 0,
+            offsetEnd: 20,
+          },
+        ]);
+      });
+
+      describe('with brackets', () => {
+        it('works', () => {
+          const parsedData = parse('#[[test]] tag', () => () => '123');
+
+          expect(parsedData).to.deep.eq([
+            {
+              id: '123',
+              type: 'tag',
+              content: 'test',
+              ref: 'test',
+              offsetStart: 0,
+              offsetEnd: 9,
+              withBrackets: true,
+            },
+            {
+              id: '123',
+              type: 'str',
+              content: ' tag',
+              offsetStart: 9,
+              offsetEnd: 13,
+            },
+          ]);
+        });
+      });
+
+      describe('without brackets', () => {
+        it('works', () => {
+          const parsedData = parse('#test tag', () => () => '123');
+
+          expect(parsedData).to.deep.eq([
+            {
+              id: '123',
+              type: 'tag',
+              content: 'test',
+              ref: 'test',
+              offsetStart: 0,
+              offsetEnd: 5,
+              withBrackets: false,
+            },
+            {
+              id: '123',
+              type: 'str',
+              content: ' tag',
+              offsetStart: 5,
+              offsetEnd: 9,
+            },
+          ]);
+        });
+      });
+    });
+
+    describe('on other lines', () => {
+      it("doesn't parse tag from URL", () => {
+        const parsedData = parse(
+          'hey!\nhttp://test.com#test',
+          () => () => '123',
+        );
+
+        expect(parsedData).to.deep.eq([
+          {
+            id: '123',
+            type: 'str',
+            content: 'hey!\n',
+            offsetStart: 0,
+            offsetEnd: 5,
+          },
+          {
+            id: '123',
+            type: 'link',
+            linkType: 'url',
+            content: 'http://test.com#test',
+            href: 'http://test.com#test',
+            offsetStart: 5,
+            offsetEnd: 25,
+          },
+        ]);
+      });
+      describe('with brackets', () => {
+        it('works', () => {
+          const parsedData = parse('kek\n#[[test]] tag', () => () => '123');
+
+          expect(parsedData).to.deep.eq([
+            {
+              id: '123',
+              type: 'str',
+              content: 'kek\n',
+              offsetStart: 0,
+              offsetEnd: 4,
+            },
+            {
+              id: '123',
+              type: 'tag',
+              content: 'test',
+              ref: 'test',
+              offsetStart: 4,
+              offsetEnd: 13,
+              withBrackets: true,
+            },
+            {
+              id: '123',
+              type: 'str',
+              content: ' tag',
+              offsetStart: 13,
+              offsetEnd: 17,
+            },
+          ]);
+        });
+      });
+
+      describe('without brackets', () => {
+        it('works', () => {
+          const parsedData = parse('kek\n#test tag', () => () => '123');
+
+          expect(parsedData).to.deep.eq([
+            {
+              id: '123',
+              type: 'str',
+              content: 'kek\n',
+              offsetStart: 0,
+              offsetEnd: 4,
+            },
+            {
+              id: '123',
+              type: 'tag',
+              content: 'test',
+              ref: 'test',
+              offsetStart: 4,
+              offsetEnd: 9,
+              withBrackets: false,
+            },
+            {
+              id: '123',
+              type: 'str',
+              content: ' tag',
+              offsetStart: 9,
+              offsetEnd: 13,
+            },
+          ]);
+        });
+      });
     });
   });
 });

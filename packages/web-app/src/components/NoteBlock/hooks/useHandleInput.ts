@@ -248,7 +248,7 @@ export const useHandleInput = (
       if (start === end) {
         const firstToken = getTokensAtCursor(start, noteBlock.content.ast)[0];
 
-        if (firstToken?.type !== 'ref') {
+        if (firstToken?.type !== 'ref' && firstToken?.type !== 'tag') {
           setNoteTitleToSearch(undefined);
         }
       }
@@ -310,7 +310,9 @@ export const useHandleInput = (
       if (start === end) {
         const firstToken = getTokensAtCursor(start, noteBlock.content.ast)[0];
 
-        if (firstToken?.type === 'ref') {
+        console.log({ firstToken, ast: noteBlock.content.ast, start });
+
+        if (firstToken?.type === 'ref' || firstToken?.type === 'tag') {
           setNoteTitleToSearch(firstToken.ref);
         }
       } else {
@@ -332,6 +334,15 @@ export const useHandleInput = (
       if (firstToken?.type === 'ref') {
         const alias = firstToken.alias ? ` | ${firstToken.alias}` : '';
         const toInsert = `[[${res.title}${alias}]] `;
+
+        insertText(input, toInsert, toInsert.length, {
+          start: firstToken.offsetStart,
+          end: firstToken.offsetEnd,
+        });
+      } else if (firstToken?.type === 'tag') {
+        const hasSpaces = /\s/g.test(res.title);
+
+        const toInsert = `#${hasSpaces ? `[[${res.title}]]` : res.title} `;
 
         insertText(input, toInsert, toInsert.length, {
           start: firstToken.offsetStart,

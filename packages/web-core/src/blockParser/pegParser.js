@@ -308,6 +308,7 @@ function peg$parse(input, options) {
     return {
       id: options.generateId(),
       type: 'tag',
+      ref: content,
       content: content,
       offsetStart: loc.start.offset,
       offsetEnd: loc.end.offset,
@@ -320,6 +321,7 @@ function peg$parse(input, options) {
     return {
       id: options.generateId(),
       type: 'tag',
+      ref: content,
       content: content,
       offsetStart: loc.start.offset,
       offsetEnd: loc.end.offset,
@@ -611,7 +613,10 @@ function peg$parse(input, options) {
     s1 = peg$currPos;
     s2 = peg$parseOneLineTokens();
     if (s2 === peg$FAILED) {
-      s2 = peg$parseTag();
+      s2 = peg$parseTagWithBrackets();
+      if (s2 === peg$FAILED) {
+        s2 = peg$parseTag();
+      }
     }
     if (s2 === peg$FAILED) {
       s2 = null;
@@ -692,22 +697,19 @@ function peg$parse(input, options) {
 
     s0 = peg$parseEOLOneLineTokens();
     if (s0 === peg$FAILED) {
-      s0 = peg$parseTagWithBrackets();
+      s0 = peg$parseSpaceBeforeTag();
       if (s0 === peg$FAILED) {
-        s0 = peg$parseSpaceBeforeTag();
+        s0 = peg$parseBold();
         if (s0 === peg$FAILED) {
-          s0 = peg$parseBold();
+          s0 = peg$parseItalic();
           if (s0 === peg$FAILED) {
-            s0 = peg$parseItalic();
+            s0 = peg$parseHighlight();
             if (s0 === peg$FAILED) {
-              s0 = peg$parseHighlight();
+              s0 = peg$parseCodeBlock();
               if (s0 === peg$FAILED) {
-                s0 = peg$parseCodeBlock();
+                s0 = peg$parseInlineCode();
                 if (s0 === peg$FAILED) {
-                  s0 = peg$parseInlineCode();
-                  if (s0 === peg$FAILED) {
-                    s0 = peg$parseRef();
-                  }
+                  s0 = peg$parseRef();
                 }
               }
             }
@@ -988,7 +990,10 @@ function peg$parse(input, options) {
       }
     }
     if (s1 !== peg$FAILED) {
-      s2 = peg$parseTag();
+      s2 = peg$parseTagWithBrackets();
+      if (s2 === peg$FAILED) {
+        s2 = peg$parseTag();
+      }
       if (s2 !== peg$FAILED) {
         peg$savedPos = s0;
         s0 = peg$f5(s1, s2);

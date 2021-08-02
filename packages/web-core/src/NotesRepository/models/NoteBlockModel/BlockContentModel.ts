@@ -18,7 +18,7 @@ const astToString = (ast: Token[]): string => {
             return `[[${t.content}]]`;
 
           case 'tag':
-            return `#[[${t.content}]]`;
+            return t.withBrackets ? `#[[${t.content}]]` : `#${t.content}`;
 
           case 'bold':
             return `**${astToString(t.content)}**`;

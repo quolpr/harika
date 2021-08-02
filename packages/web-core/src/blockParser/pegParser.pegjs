@@ -33,7 +33,7 @@
 }
 
 Expression
-  = result:((OneLineTokens / Tag)? Data) { 
+  = result:((OneLineTokens / TagWithBrackets / Tag)? Data) { 
     return result[0] ? [...(Array.isArray(result[0]) ? result[0] : [result[0]]), ...result[1]] : result[1]
   }
  
@@ -45,7 +45,7 @@ Data
   }
   
 Token
-  = EOLOneLineTokens / TagWithBrackets / SpaceBeforeTag / Bold / Italic / Highlight / CodeBlock / InlineCode /  Ref 
+  = EOLOneLineTokens /  SpaceBeforeTag / Bold / Italic / Highlight / CodeBlock / InlineCode /  Ref 
  
 Ref
   = '[[' content:($[^'\]\]']+) ']]' { 
@@ -58,18 +58,18 @@ TagWithBrackets
   = '#[[' content:($[^'\]\]']+) ']]' { 
     const loc = location();
 
-    return {id: options.generateId(), type: 'tag', content: content, offsetStart: loc.start.offset, offsetEnd: loc.end.offset, withBrackets: true} 
+    return {id: options.generateId(), type: 'tag', ref: content, content: content, offsetStart: loc.start.offset, offsetEnd: loc.end.offset, withBrackets: true} 
   }
 
 Tag
   = '#' content:($[^' '^'\n'^'\r'^'\t'^'\f']+) {
     const loc = location();
 
-    return {id: options.generateId(), type: 'tag', content: content, offsetStart: loc.start.offset, offsetEnd: loc.end.offset, withBrackets: false}
+    return {id: options.generateId(), type: 'tag', ref: content, content: content, offsetStart: loc.start.offset, offsetEnd: loc.end.offset, withBrackets: false}
   }
 
 SpaceBeforeTag
-  = before:([' '\n\r\t\f]) tag:Tag {
+  = before:([' '\n\r\t\f]) tag:(TagWithBrackets / Tag) {
 
     return [before, tag];
   }

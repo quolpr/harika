@@ -9,7 +9,6 @@ import scrollIntoView from 'scroll-into-view-if-needed';
 import './styles.css';
 
 export type SearchedNote = { id: string; title: string };
-
 export const noteAutocompleteClass = cn('note-autocomplete');
 
 export const NoteTitleAutocomplete = React.memo(

@@ -19,9 +19,10 @@ export interface TodoRefToken extends RefToken {
   ref: 'TODO' | 'DONE';
 }
 
-interface TagToken extends BaseToken {
+export interface TagToken extends BaseToken {
   id: string;
   type: 'tag';
+  ref: string;
   content: string;
   withBrackets: boolean;
 }

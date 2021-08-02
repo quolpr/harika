@@ -9,7 +9,7 @@ import type { VaultDexieDatabase } from './dexieDb/DexieDb';
 import { distinctUntilChanged, map } from 'rxjs/operators';
 import { uniq, uniqBy } from 'lodash-es';
 import { filterAst } from '../blockParser/astHelpers';
-import type { RefToken } from '../blockParser/types';
+import type { RefToken, TagToken } from '../blockParser/types';
 import { from, Observable } from 'rxjs';
 import { NoteDocType, VaultDbTables } from '../dexieTypes';
 import { liveQuery } from 'dexie';
@@ -129,14 +129,20 @@ export class NotesRepository {
 
         console.debug('Updating links');
 
-        const titles = uniq(
-          (
+        const titles = uniq([
+          ...(
             filterAst(
               noteBlock.content.ast,
               (t) => t.type === 'ref',
             ) as RefToken[]
           ).map((t: RefToken) => t.ref),
-        );
+          ...(
+            filterAst(
+              noteBlock.content.ast,
+              (t) => t.type === 'tag',
+            ) as TagToken[]
+          ).map((t: TagToken) => t.ref),
+        ]);
 
         const existingNotesIndexed = Object.fromEntries(
           (await this.db.notesQueries.getByTitles(titles)).map((n) => [

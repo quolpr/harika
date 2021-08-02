@@ -6,7 +6,7 @@ export const getTokensAtCursor = (
   tokensAtPos: Token[] = [],
 ) => {
   tokens.forEach((t) => {
-    if (t.offsetStart < pos && pos < t.offsetEnd) {
+    if (t.offsetStart < pos && pos <= t.offsetEnd) {
       tokensAtPos.push(t);
     }
 

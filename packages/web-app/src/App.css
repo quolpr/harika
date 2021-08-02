@@ -1,7 +1,3 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 html,
 body,
 #root {
@@ -104,6 +100,10 @@ input[type='search']::-webkit-search-results-decoration {
 
 .link {
   @apply text-pink-600 hover:underline;
+
+  &--darker {
+    @apply text-gray-600;
+  }
 }
 
 .checkbox {
