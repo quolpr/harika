@@ -71,7 +71,11 @@ export const toMobxSync = (vault: VaultModel, currentWindowId: string) => {
           if (!ev.obj) throw new Error('obj should be present');
 
           // Any changes we will load to mobx cause they may have refs
-          return convertNoteDocToModelAttrs(ev.obj, note.loadStatus);
+          return convertNoteDocToModelAttrs(ev.obj, {
+            areChildrenLoaded: false,
+            areNoteLinksLoaded: false,
+            areBlockLinksLoaded: false,
+          });
         }
       });
     })();

@@ -91,7 +91,7 @@ export class ConflictsResolver implements IConflictsResolver {
 
         await applyChanges(this.db, conflictedChanges);
 
-        if (serverChanges.length > 0 && clientChanges.length > 0) {
+        if (serverChanges.length > 0) {
           await this.consistencyResolver.resolve();
         }
       });

@@ -82,7 +82,7 @@ export abstract class BaseConflictResolver<
       case DatabaseChangeType.Delete: {
         switch (serverChange.type) {
           case DatabaseChangeType.Create: {
-            return clientChange;
+            return serverChange;
           }
 
           case DatabaseChangeType.Update: {
