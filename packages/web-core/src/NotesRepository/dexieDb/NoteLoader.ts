@@ -66,12 +66,14 @@ export class NoteLoader {
   constructor(
     private db: VaultDexieDatabase,
     statuses: Record<string, INoteLoadStatus>,
+    private noteId: string,
+    private toPreloadInfo: ToPreloadInfo,
   ) {
     this.preloadStore = new PreloadStore(statuses);
   }
 
-  async loadNote(noteId: string, toPreload: ToPreloadInfo) {
-    await this.doLoadNote(noteId, toPreload);
+  async loadNote() {
+    await this.doLoadNote(this.noteId, this.toPreloadInfo);
 
     return this.preloadStore.dump();
   }

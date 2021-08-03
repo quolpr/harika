@@ -200,9 +200,15 @@ export class NotesRepository {
   }
 
   async preloadNote(id: string, toPreloadInfo: ToPreloadInfo) {
-    const loader = new NoteLoader(this.db, this.vault.noteStatuses);
-    const data = await loader.loadNote(id, toPreloadInfo);
+    const data = await new NoteLoader(
+      this.db,
+      this.vault.noteStatuses,
+      id,
+      toPreloadInfo,
+    ).loadNote();
+
     this.vault.createOrUpdateEntitiesFromAttrs(data.notes, data.noteBlocks);
+
     return this.vault.notesMap[id];
   }
 
