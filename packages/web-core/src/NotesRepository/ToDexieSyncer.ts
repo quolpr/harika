@@ -3,14 +3,14 @@ import { uniq } from 'lodash-es';
 import type { Patch, Path } from 'mobx-keystone';
 import { Subject } from 'rxjs';
 import { buffer, debounceTime, concatMap, tap } from 'rxjs/operators';
-import type { NoteBlockModel, NoteModel, VaultModel } from '../NotesRepository';
-import type { VaultDexieDatabase } from './DexieDb';
+import type { NoteBlockModel, NoteModel, VaultModel } from './NotesRepository';
+import type { VaultDexieDatabase } from './dexieDb/DexieDb';
 import type {
   NoteDocType,
   NoteBlockDocType,
   BlocksViewDocType,
-} from '../../dexieTypes';
-import type { BlocksViewModel } from '../models/VaultUiState/BlocksViewModel';
+} from '../dexieTypes';
+import type { BlocksViewModel } from './models/VaultUiState/BlocksViewModel';
 
 // TODO: type rootKey
 const zipPatches = (selector: (path: Path) => boolean, patches: Patch[]) => {
@@ -118,34 +118,6 @@ export class ToDexieSyncer {
     });
   };
 
-  private applier = <T extends object>(
-    result: {
-      toCreateIds: string[];
-      toUpdateIds: string[];
-      toDeleteIds: string[];
-    },
-    table: Table,
-    mapper: (id: string) => T,
-  ) => {
-    return Promise.all([
-      (async () => {
-        if (result.toCreateIds.length > 0) {
-          await table.bulkPut(result.toCreateIds.map(mapper));
-        }
-      })(),
-      (async () => {
-        if (result.toUpdateIds.length > 0) {
-          await table.bulkPut(result.toUpdateIds.map(mapper));
-        }
-      })(),
-      (async () => {
-        if (result.toDeleteIds.length > 0) {
-          await table.bulkDelete(result.toDeleteIds);
-        }
-      })(),
-    ]);
-  };
-
   private applyPatches = async (patches: Patch[]) => {
     patches = patches.filter(
       ({ path }) =>
@@ -197,5 +169,33 @@ export class ToDexieSyncer {
         ]);
       },
     );
+  };
+
+  private applier = <T extends object>(
+    result: {
+      toCreateIds: string[];
+      toUpdateIds: string[];
+      toDeleteIds: string[];
+    },
+    table: Table,
+    mapper: (id: string) => T,
+  ) => {
+    return Promise.all([
+      (async () => {
+        if (result.toCreateIds.length > 0) {
+          await table.bulkPut(result.toCreateIds.map(mapper));
+        }
+      })(),
+      (async () => {
+        if (result.toUpdateIds.length > 0) {
+          await table.bulkPut(result.toUpdateIds.map(mapper));
+        }
+      })(),
+      (async () => {
+        if (result.toDeleteIds.length > 0) {
+          await table.bulkDelete(result.toDeleteIds);
+        }
+      })(),
+    ]);
   };
 }

@@ -1,8 +1,6 @@
 import { VaultModel } from '../NotesRepository/models/VaultModel';
 import { syncMiddleware } from '../NotesRepository/models/syncable';
 import { VaultDexieDatabase } from '../NotesRepository/dexieDb/DexieDb';
-import { ToDexieSyncer } from '../NotesRepository/dexieDb/ToDexieSyncer';
-import { toMobxSync } from '../NotesRepository/dexieDb/toMobxSync';
 import { UserDexieDatabase, VaultDocType } from './UserDexieDb';
 import { NotesRepository } from '../NotesRepository/NotesRepository';
 import { initSync } from '../dexie-sync/init';
@@ -13,6 +11,9 @@ import { generateId } from '../generateId';
 import { ConflictsResolver } from '../NotesRepository/dexieDb/ConflictsResolver/ConflictsResolver';
 import { UserDbConflictsResolver } from './UserDbConflictResolver';
 import { VaultDbConsistencyResolver } from '../NotesRepository/dexieDb/ConsistencyResolver/VaultDbConsistencyResolver';
+import { changes$ } from '../dexie-sync/changesChannel';
+import { ToDexieSyncer } from '../NotesRepository/ToDexieSyncer';
+import { ToMobxSyncer } from '../NotesRepository/ToMobxSyncer';
 
 const windowId = generateId();
 
@@ -111,7 +112,7 @@ export class VaultsRepository {
     });
 
     syncMiddleware(vault, new ToDexieSyncer(db, vault).handlePatch);
-    toMobxSync(vault, windowId);
+    new ToMobxSyncer(changes$, vault, windowId).start();
 
     const repo = new NotesRepository(db, vault);
 
