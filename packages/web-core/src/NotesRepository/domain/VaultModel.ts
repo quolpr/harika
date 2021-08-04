@@ -14,6 +14,11 @@ import { vaultModelType } from './consts';
 import { generateId } from '../../generateId';
 import { BlockContentModel } from './NoteBlockModel/BlockContentModel';
 import { VaultUiState } from './VaultUiState';
+import {
+  newTreeModel,
+  NotesTreeModel,
+  PartialNote,
+} from './NotesTree/NotesTreeModel';
 
 @model(vaultModelType)
 export class VaultModel extends Model({
@@ -21,6 +26,7 @@ export class VaultModel extends Model({
   notesMap: prop<Record<string, NoteModel>>(() => ({})),
   blocksMap: prop<Record<string, NoteBlockModel>>(() => ({})),
   ui: prop<VaultUiState>(() => new VaultUiState({})),
+  notesTree: prop<NotesTreeModel>(() => newTreeModel()),
 }) {
   get noteStatuses() {
     const notesStatus: Record<string, INoteLoadStatus> = {};
@@ -30,6 +36,11 @@ export class VaultModel extends Model({
     });
 
     return notesStatus;
+  }
+
+  @modelAction
+  initializeNotesTree(partialNotes: PartialNote[]) {
+    this.notesTree.initializeTree(partialNotes);
   }
 
   @modelAction

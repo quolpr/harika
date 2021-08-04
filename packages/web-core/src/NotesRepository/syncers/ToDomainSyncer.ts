@@ -1,13 +1,13 @@
 import type { Observable } from 'dexie';
-import type { ITransmittedChange } from '../dexie-sync/changesChannel';
+import type { ITransmittedChange } from '../../dexie-sync/changesChannel';
 import {
   VaultDbTables,
   INoteChangeEvent,
   DatabaseChangeType,
   INoteBlockChangeEvent,
   IBlocksViewChangeEvent,
-} from '../dexieTypes';
-import type { VaultModel } from './models/VaultModel';
+} from '../../dexieTypes';
+import type { VaultModel } from '../domain/VaultModel';
 import {
   convertNoteDocToModelAttrs,
   convertNoteBlockDocToModelAttrs,
@@ -15,9 +15,9 @@ import {
   ViewData,
   NoteData,
   NoteBlockData,
-} from './dexieDb/toModelDataConverters';
+} from './toDomainModelsConverters';
 
-export class ToMobxSyncer {
+export class ToDomainSyncer {
   constructor(
     private changes$: Observable<ITransmittedChange[]>,
     private vault: VaultModel,

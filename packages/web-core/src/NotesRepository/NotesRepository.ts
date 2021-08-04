@@ -1,32 +1,75 @@
 import type { ModelCreationData } from 'mobx-keystone';
 import type { Dayjs } from 'dayjs';
-import type { NoteModel } from './models/NoteModel';
+import type { NoteModel } from './domain/NoteModel';
 import type { Optional } from 'utility-types';
 import type { Required } from 'utility-types';
 import type { ICreationResult } from './types';
-import type { VaultModel } from './models/VaultModel';
-import type { VaultDexieDatabase } from './dexieDb/DexieDb';
-import { distinctUntilChanged, map } from 'rxjs/operators';
+import type { VaultModel } from './domain/VaultModel';
+import type { VaultDexieDatabase } from './persistence/DexieDb';
+import {
+  distinctUntilChanged,
+  filter,
+  map,
+  take,
+  takeUntil,
+  tap,
+} from 'rxjs/operators';
 import { uniq, uniqBy } from 'lodash-es';
 import { filterAst } from '../blockParser/astHelpers';
 import type { RefToken, TagToken } from '../blockParser/types';
-import { from, Observable } from 'rxjs';
-import { NoteDocType, VaultDbTables } from '../dexieTypes';
+import { from, Observable, Subject } from 'rxjs';
+import { INoteChangeEvent, NoteDocType, VaultDbTables } from '../dexieTypes';
 import { liveQuery } from 'dexie';
 import { exportDB } from 'dexie-export-import';
-import { NoteLoader, ToPreloadInfo } from './dexieDb/NoteLoader';
-import { convertViewToModelAttrs } from './dexieDb/toModelDataConverters';
+import { NoteLoader, ToPreloadInfo } from './persistence/NoteLoader';
+import { convertViewToModelAttrs } from './syncers/toDomainModelsConverters';
+import type { ITransmittedChange } from '../dexie-sync/changesChannel';
+import { NotesChangesTracker } from './domain/NotesTree/NotesChangesTracker';
 
-export { NoteModel } from './models/NoteModel';
-export { VaultModel } from './models/VaultModel';
-export { NoteBlockModel, noteBlockRef } from './models/NoteBlockModel';
+export { NoteModel } from './domain/NoteModel';
+export { VaultModel } from './domain/VaultModel';
+export { NoteBlockModel, noteBlockRef } from './domain/NoteBlockModel';
 
 // Document = Dexie doc
 // Model = DDD model
 // Tuple = plain object data, used for fast data getting
 
 export class NotesRepository {
-  constructor(private db: VaultDexieDatabase, public vault: VaultModel) {}
+  private stopSubject = new Subject<unknown>();
+  private stop$ = this.stopSubject.pipe(take(1));
+
+  constructor(
+    private db: VaultDexieDatabase,
+    public vault: VaultModel,
+    private globalChanges$: Observable<ITransmittedChange[]>,
+  ) {}
+
+  async initialize() {
+    const notesChangesTracker = new NotesChangesTracker(
+      this.vault.notesTree,
+      this.stop$,
+    );
+
+    this.globalChanges$
+      .pipe(
+        map(
+          (chs) =>
+            chs.filter(
+              (ch) => ch.table === VaultDbTables.Notes,
+            ) as INoteChangeEvent[],
+        ),
+        filter((chs) => chs.length !== 0),
+        takeUntil(this.stop$),
+      )
+      .subscribe((chs) => notesChangesTracker.handleChanges(chs));
+
+    this.vault.initializeNotesTree(
+      (await this.db.notes.toArray()).map(({ id, title }) => ({
+        id,
+        title,
+      })),
+    );
+  }
 
   async createNote(
     attrs: Required<
@@ -323,6 +366,7 @@ export class NotesRepository {
   close = () => {
     console.debug(`Vault ${this.vault.$modelId} is closed`);
 
+    this.stopSubject.next(null);
     this.db.close();
   };
 }

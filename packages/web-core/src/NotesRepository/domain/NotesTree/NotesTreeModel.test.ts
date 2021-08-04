@@ -29,6 +29,7 @@ describe('NotesTreeModel', () => {
       ]);
 
       expect(getSnapshot(treeNode)).to.deep.equal({
+        isInitialized: true,
         rootNodeRef: {
           id: 'id-1',
           $modelId: 'id-2',
@@ -37,6 +38,7 @@ describe('NotesTreeModel', () => {
         nodesMap: {
           'id-1': {
             title: 'root',
+            noteId: undefined,
             nodeRefs: [
               {
                 id: 'id-4',
@@ -111,6 +113,7 @@ describe('NotesTreeModel', () => {
           },
           'id-14': {
             title: 'Work',
+            noteId: undefined,
             nodeRefs: [
               {
                 id: 'id-16',
@@ -131,6 +134,30 @@ describe('NotesTreeModel', () => {
         },
         $modelId: 'id-3',
         $modelType: 'harika/NotesTreeModel',
+      });
+    });
+
+    it("doesn't take notes without group", () => {
+      const treeNode = newTreeModel();
+
+      treeNode.initializeTree([{ id: '123', title: 'Home' }]);
+
+      expect(getSnapshot(treeNode)).to.deep.equal({
+        isInitialized: true,
+        rootNodeRef: {
+          id: 'id-1',
+          $modelId: 'id-2',
+          $modelType: 'harika/NotesTree/nodeRef',
+        },
+        nodesMap: {
+          'id-1': {
+            title: 'root',
+            noteId: undefined,
+            nodeRefs: [],
+            $modelId: 'id-1',
+            $modelType: 'harika/NotesTree/TreeNodeModel',
+          },
+        },
       });
     });
   });

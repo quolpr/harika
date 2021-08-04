@@ -1,19 +1,19 @@
-import { VaultModel } from '../NotesRepository/models/VaultModel';
-import { syncMiddleware } from '../NotesRepository/models/syncable';
-import { VaultDexieDatabase } from '../NotesRepository/dexieDb/DexieDb';
-import { UserDexieDatabase, VaultDocType } from './UserDexieDb';
+import { VaultModel } from '../NotesRepository/domain/VaultModel';
+import { syncMiddleware } from '../NotesRepository/domain/syncable';
+import { VaultDexieDatabase } from '../NotesRepository/persistence/DexieDb';
+import { UserDexieDatabase, VaultDocType } from './persistence/UserDexieDb';
 import { NotesRepository } from '../NotesRepository/NotesRepository';
 import { initSync } from '../dexie-sync/init';
 import { liveQuery } from 'dexie';
 import { from, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { generateId } from '../generateId';
-import { ConflictsResolver } from '../NotesRepository/dexieDb/ConflictsResolver/ConflictsResolver';
-import { UserDbConflictsResolver } from './UserDbConflictResolver';
-import { VaultDbConsistencyResolver } from '../NotesRepository/dexieDb/ConsistencyResolver/VaultDbConsistencyResolver';
-import { changes$ } from '../dexie-sync/changesChannel';
-import { ToDexieSyncer } from '../NotesRepository/ToDexieSyncer';
-import { ToMobxSyncer } from '../NotesRepository/ToMobxSyncer';
+import { ConflictsResolver } from '../NotesRepository/persistence/ConflictsResolver/ConflictsResolver';
+import { UserDbConflictsResolver } from './persistence/UserDbConflictResolver';
+import { VaultDbConsistencyResolver } from '../NotesRepository/persistence/ConsistencyResolver/VaultDbConsistencyResolver';
+import { changes$, globalChangesSubject } from '../dexie-sync/changesChannel';
+import { ToDbSyncer } from '../NotesRepository/syncers/ToDbSyncer';
+import { ToDomainSyncer } from '../NotesRepository/syncers/ToDomainSyncer';
 
 const windowId = generateId();
 
@@ -111,10 +111,13 @@ export class VaultsRepository {
       $modelId: id,
     });
 
-    syncMiddleware(vault, new ToDexieSyncer(db, vault).handlePatch);
-    new ToMobxSyncer(changes$, vault, windowId).start();
+    syncMiddleware(vault, new ToDbSyncer(db, vault).handlePatch);
+    new ToDomainSyncer(changes$, vault, windowId).start();
 
-    const repo = new NotesRepository(db, vault);
+    const repo = new NotesRepository(db, vault, globalChangesSubject);
+
+    // Don't need to await
+    repo.initialize();
 
     if (this.sync) {
       initSync(

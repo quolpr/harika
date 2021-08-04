@@ -2,7 +2,7 @@ import { model, Model, modelAction, prop, Ref } from 'mobx-keystone';
 import type { INoteChangeEvent } from '../../../dexieTypes';
 import { nodeRef, TreeNodeModel } from './NoteNodeModel';
 
-interface PartialNote {
+export interface PartialNote {
   id: string;
   title: string;
 }
@@ -13,9 +13,12 @@ export const notesTreeModelType = 'harika/NotesTreeModel' as const;
 export class NotesTreeModel extends Model({
   nodesMap: prop<Record<string, TreeNodeModel>>(() => ({})),
   rootNodeRef: prop<Ref<TreeNodeModel>>(),
+  isInitialized: prop<boolean>(() => false),
 }) {
   @modelAction
   initializeTree(partialNotes: PartialNote[]): void {
+    const rootNode = this.rootNodeRef.current;
+
     partialNotes.forEach(({ title: noteTitle, id }) => {
       let previousNode = this.rootNodeRef.current;
 
@@ -34,9 +37,17 @@ export class NotesTreeModel extends Model({
         previousNode = node;
       });
     });
+
+    rootNode.nodeRefs = rootNode.nodeRefs.filter(
+      (nodeRef) => nodeRef.current.nodeRefs.length !== 0,
+    );
+
+    this.isInitialized = true;
   }
 
-  handleNotesChanges(changes: INoteChangeEvent[]) {}
+  handleNotesChanges(changes: INoteChangeEvent[]) {
+    console.log({ changes });
+  }
 
   private findOrCreateNode(parentNode: TreeNodeModel, title: string) {
     const foundNode = parentNode.getChildWithTitle(title);

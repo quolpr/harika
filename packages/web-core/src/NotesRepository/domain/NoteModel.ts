@@ -20,7 +20,7 @@ import { isVault } from './utils';
 import type { VaultModel } from './VaultModel';
 import { BlockContentModel } from './NoteBlockModel/BlockContentModel';
 import { omit } from 'lodash-es';
-import type { ToPreloadInfo } from '../dexieDb/NoteLoader';
+import type { ToPreloadInfo } from '../persistence/NoteLoader';
 
 export interface INoteLoadStatus {
   areBlockLinksLoaded: boolean;

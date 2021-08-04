@@ -1,13 +1,13 @@
 import type { ModelCreationData } from 'mobx-keystone';
-import { NoteBlockModel, noteBlockRef } from '../models/NoteBlockModel';
-import { INoteLoadStatus, NoteModel, noteRef } from '../models/NoteModel';
+import { NoteBlockModel, noteBlockRef } from '../domain/NoteBlockModel';
+import { INoteLoadStatus, NoteModel, noteRef } from '../domain/NoteModel';
 import type {
   NoteDocType,
   NoteBlockDocType,
   BlocksViewDocType,
 } from '../../dexieTypes';
-import { BlockContentModel } from '../models/NoteBlockModel/BlockContentModel';
-import type { BlocksViewModel } from '../models/VaultUiState/BlocksViewModel';
+import { BlockContentModel } from '../domain/NoteBlockModel/BlockContentModel';
+import type { BlocksViewModel } from '../domain/VaultUiState/BlocksViewModel';
 
 export type NoteData = ModelCreationData<NoteModel> & {
   $modelId: string;

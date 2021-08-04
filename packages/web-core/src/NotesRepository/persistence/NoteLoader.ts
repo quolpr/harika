@@ -1,12 +1,12 @@
 import { uniq } from 'lodash-es';
-import { areNeededNoteDataLoaded, INoteLoadStatus } from '../models/NoteModel';
+import { areNeededNoteDataLoaded, INoteLoadStatus } from '../domain/NoteModel';
 import type { VaultDexieDatabase } from './DexieDb';
 import {
   NoteData,
   NoteBlockData,
   convertNoteDocToModelAttrs,
   convertNoteBlockDocToModelAttrs,
-} from './toModelDataConverters';
+} from '../syncers/toDomainModelsConverters';
 
 export interface ToPreloadInfo {
   preloadChildren: boolean;

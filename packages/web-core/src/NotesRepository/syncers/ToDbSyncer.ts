@@ -1,16 +1,11 @@
-import Dexie, { Table } from 'dexie';
-import { uniq } from 'lodash-es';
-import type { Patch, Path } from 'mobx-keystone';
-import { Subject } from 'rxjs';
-import { buffer, debounceTime, concatMap, tap } from 'rxjs/operators';
-import type { NoteBlockModel, NoteModel, VaultModel } from './NotesRepository';
-import type { VaultDexieDatabase } from './dexieDb/DexieDb';
-import type {
-  NoteDocType,
-  NoteBlockDocType,
-  BlocksViewDocType,
-} from '../dexieTypes';
-import type { BlocksViewModel } from './models/VaultUiState/BlocksViewModel';
+import Dexie, {Table} from 'dexie';
+import {uniq} from 'lodash-es';
+import type {Patch, Path} from 'mobx-keystone';
+import {Subject} from 'rxjs';
+import {buffer, concatMap, debounceTime, tap} from 'rxjs/operators';
+import type {VaultModel} from '../NotesRepository';
+import type {VaultDexieDatabase} from '../persistence/DexieDb';
+import {mapNote, mapNoteBlock, mapView} from "./toDbDocsConverters";
 
 // TODO: type rootKey
 const zipPatches = (selector: (path: Path) => boolean, patches: Patch[]) => {
@@ -62,38 +57,7 @@ const zipPatches = (selector: (path: Path) => boolean, patches: Patch[]) => {
   };
 };
 
-const mapNoteBlock = (model: NoteBlockModel): NoteBlockDocType => {
-  return {
-    id: model.$modelId,
-    noteId: model.noteRef.id,
-    content: model.content.value,
-    createdAt: model.createdAt,
-    noteBlockIds: model.noteBlockRefs.map(({ id }) => id),
-    linkedNoteIds: model.linkedNoteRefs.map(({ id }) => id),
-  };
-};
-
-const mapNote = (model: NoteModel): NoteDocType => {
-  return {
-    id: model.$modelId,
-    dailyNoteDate: model.dailyNoteDate,
-    title: model.title,
-    createdAt: model.createdAt,
-    rootBlockId: model.rootBlockRef.id,
-  };
-};
-
-const mapView = (model: BlocksViewModel): BlocksViewDocType => {
-  return {
-    id: model.$modelId,
-    collapsedBlockIds: [...model.collapsedBlockIds],
-    noteId: model.noteRef.id,
-    scopedModelId: model.scopedModelId,
-    scopedModelType: model.scopedModelType,
-  };
-};
-
-export class ToDexieSyncer {
+export class ToDbSyncer {
   patchesSubject: Subject<Patch>;
 
   constructor(
