@@ -9,6 +9,7 @@ module.exports = {
     '../web-core': '/@harika/web-core',
   },
   plugins: [
+    'snowpack-svgr-plugin',
     '@snowpack/plugin-react-refresh',
     '@snowpack/plugin-dotenv',
     [

@@ -9,6 +9,9 @@ import { useCallback } from 'react';
 import { useNoteRepository } from '../../contexts/CurrentNoteRepositoryContext';
 import dayjs from 'dayjs';
 import download from 'downloadjs';
+import VaultIcon from './vault.svgr.svg';
+import DailyNoteIcon from '../../icons/daily-note.svgr.svg';
+import NotesIcon from '../../icons/notes.svgr.svg';
 
 const sidebarClass = cn('sidebar');
 
@@ -61,47 +64,81 @@ export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
         ref={ref}
         className={`${sidebarClass({ isOpened: isOpened })} ${className}`}
       >
-        <div className={sidebarClass('links')}>
+        <div className={sidebarClass('header')}>
+          <div className={sidebarClass('header-vault-icon')}>
+            <VaultIcon />
+          </div>
+          <div className={sidebarClass('header-vault-name')}>{vault.name}</div>
+        </div>
+        <div className={sidebarClass('menu')}>
           <Link
-            className={sidebarClass('link')}
+            className={sidebarClass('menu-link')}
             to={paths.vaultDailyPath({ vaultId: vault.$modelId })}
             onClick={onNavClick}
           >
-            Daily note
+            <div className={sidebarClass('menu-link-icon')}>
+              <DailyNoteIcon />
+            </div>
+
+            <div className={sidebarClass('menu-link-title')}>Daily Note</div>
           </Link>
 
           <Link
-            className={sidebarClass('link')}
+            className={sidebarClass('menu-link')}
             to={paths.vaultNoteIndexPath({ vaultId: vault.$modelId })}
             onClick={onNavClick}
           >
-            All Notes
+            <div className={sidebarClass('menu-link-icon')}>
+              <NotesIcon />
+            </div>
+
+            <div className={sidebarClass('menu-link-title')}>All Notes</div>
           </Link>
+        </div>
 
-          <Link
-            className={sidebarClass('link')}
-            to={paths.vaultIndexPath()}
-            onClick={onNavClick}
-          >
-            Vaults
-          </Link>
+        <div style={{ display: 'none' }}>
+          <div className={sidebarClass('links')}>
+            <Link
+              className={sidebarClass('link')}
+              to={paths.vaultDailyPath({ vaultId: vault.$modelId })}
+              onClick={onNavClick}
+            >
+              Daily note
+            </Link>
 
-          <button
-            className={sidebarClass('link')}
-            onClick={handleDownloadClick}
-          >
-            Download db
-          </button>
+            <Link
+              className={sidebarClass('link')}
+              to={paths.vaultNoteIndexPath({ vaultId: vault.$modelId })}
+              onClick={onNavClick}
+            >
+              All Notes
+            </Link>
 
-          <label className={sidebarClass('link')}>
-            <input
-              id="upload"
-              type="file"
-              style={{ display: 'none' }}
-              onChange={handleImport}
-            />
-            Import DB
-          </label>
+            <Link
+              className={sidebarClass('link')}
+              to={paths.vaultIndexPath()}
+              onClick={onNavClick}
+            >
+              Vaults
+            </Link>
+
+            <button
+              className={sidebarClass('link')}
+              onClick={handleDownloadClick}
+            >
+              Download db
+            </button>
+
+            <label className={sidebarClass('link')}>
+              <input
+                id="upload"
+                type="file"
+                style={{ display: 'none' }}
+                onChange={handleImport}
+              />
+              Import DB
+            </label>
+          </div>
         </div>
 
         <Brand className={sidebarClass('brand')} onClick={onNavClick} />

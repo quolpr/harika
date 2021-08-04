@@ -9,5 +9,6 @@ module.exports = {
     require('postcss-import'),
     require('autoprefixer'),
     require('tailwindcss'),
+    require('postcss-rem'),
   ],
 };
