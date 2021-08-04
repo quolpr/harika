@@ -6,25 +6,18 @@ import type { Required } from 'utility-types';
 import type { ICreationResult } from './types';
 import type { VaultModel } from './domain/VaultModel';
 import type { VaultDexieDatabase } from './persistence/DexieDb';
-import {
-  distinctUntilChanged,
-  filter,
-  map,
-  take,
-  takeUntil,
-  tap,
-} from 'rxjs/operators';
+import { distinctUntilChanged, map, take } from 'rxjs/operators';
 import { uniq, uniqBy } from 'lodash-es';
 import { filterAst } from '../blockParser/astHelpers';
 import type { RefToken, TagToken } from '../blockParser/types';
 import { from, Observable, Subject } from 'rxjs';
-import { INoteChangeEvent, NoteDocType, VaultDbTables } from '../dexieTypes';
+import { NoteDocType, VaultDbTables } from '../dexieTypes';
 import { liveQuery } from 'dexie';
 import { exportDB } from 'dexie-export-import';
 import { NoteLoader, ToPreloadInfo } from './persistence/NoteLoader';
 import { convertViewToModelAttrs } from './syncers/toDomainModelsConverters';
 import type { ITransmittedChange } from '../dexie-sync/changesChannel';
-import { NotesChangesTracker } from './domain/NotesTree/NotesChangesTracker';
+import { NotesChangesTrackerService } from './services/notes-tree/NotesChangesTrackerService';
 
 export { NoteModel } from './domain/NoteModel';
 export { VaultModel } from './domain/VaultModel';
@@ -45,23 +38,11 @@ export class NotesRepository {
   ) {}
 
   async initialize() {
-    const notesChangesTracker = new NotesChangesTracker(
+    new NotesChangesTrackerService(
+      this.globalChanges$,
       this.vault.notesTree,
       this.stop$,
     );
-
-    this.globalChanges$
-      .pipe(
-        map(
-          (chs) =>
-            chs.filter(
-              (ch) => ch.table === VaultDbTables.Notes,
-            ) as INoteChangeEvent[],
-        ),
-        filter((chs) => chs.length !== 0),
-        takeUntil(this.stop$),
-      )
-      .subscribe((chs) => notesChangesTracker.handleChanges(chs));
 
     this.vault.initializeNotesTree(
       (await this.db.notes.toArray()).map(({ id, title }) => ({
