@@ -4,7 +4,6 @@ import { Link } from 'react-router-dom';
 import { paths } from '../../paths';
 import { useCurrentVault } from '../../hooks/useCurrentVault';
 import { cn } from '../../utils';
-import { Brand } from '../Brand/Brand';
 import { useCallback } from 'react';
 import { useNoteRepository } from '../../contexts/CurrentNoteRepositoryContext';
 import dayjs from 'dayjs';
@@ -102,7 +101,7 @@ export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
             <NotesTree />
           </div>
 
-          <Brand className={sidebarClass('brand')} onClick={onNavClick} />
+          {/* <Brand className={sidebarClass('brand')} onClick={onNavClick} /> */}
         </div>
 
         <div style={{ display: 'none' }}>

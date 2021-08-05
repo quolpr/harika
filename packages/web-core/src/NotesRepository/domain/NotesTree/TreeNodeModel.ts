@@ -4,6 +4,7 @@ import {
   findParent,
   Model,
   model,
+  modelAction,
   prop,
   Ref,
 } from 'mobx-keystone';
@@ -35,11 +36,8 @@ export class TreeNodeModel extends Model({
   title: prop<string>(),
   nodeRefs: prop<Ref<TreeNodeModel>[]>(() => []),
   noteId: prop<string | undefined>(() => undefined),
+  isExpanded: prop<boolean>(() => true),
 }) {
-  get isExpanded() {
-    return true;
-  }
-
   get isFocused() {
     return this.title === 'Я';
   }
@@ -48,5 +46,10 @@ export class TreeNodeModel extends Model({
     return this.nodeRefs.find((ref) => {
       return ref.current.title === title;
     });
+  }
+
+  @modelAction
+  toggleExpand() {
+    this.isExpanded = !this.isExpanded;
   }
 }

@@ -38,9 +38,9 @@ export class NotesTreeModel extends Model({
       });
     });
 
-    // rootNode.nodeRefs = rootNode.nodeRefs.filter(
-    //   (nodeRef) => nodeRef.current.nodeRefs.length !== 0,
-    // );
+    rootNode.nodeRefs = rootNode.nodeRefs.filter(
+      (nodeRef) => nodeRef.current.nodeRefs.length !== 0,
+    );
 
     this.isInitialized = true;
   }

@@ -10,6 +10,8 @@
 
   color: #a9a9a9;
 
+  cursor: pointer;
+
   &:hover {
     color: #d7d7d7;
   }
@@ -102,7 +104,7 @@
   }
 
   &__notes-tree {
-    margin: rem(24px) rem(8px);
+    margin: 0 rem(12px);
   }
 }
 
@@ -136,12 +138,15 @@
     margin-right: rem(12px);
   }
 
-  &__node-info {
+  &__node-title {
     text-overflow: ellipsis;
 
     overflow: hidden;
     white-space: nowrap;
+    min-width: 0;
+  }
 
+  &__node-info {
     border-radius: 5px;
 
     transition: background-color 0.05s ease-out;
@@ -156,6 +161,10 @@
   }
 
   &__expand-arrow-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
     flex-shrink: 0;
     width: 14px;
     height: 14px;
@@ -165,6 +174,10 @@
 
     transition: background-color 0.25s ease;
     border-radius: 2px;
+
+    &--invisible {
+      visibility: hidden;
+    }
 
     &:hover {
       background: #727272;

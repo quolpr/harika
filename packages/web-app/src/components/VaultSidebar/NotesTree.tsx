@@ -1,31 +1,46 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { useCurrentVault } from '../../hooks/useCurrentVault';
 import type { TreeNodeModel } from '@harika/web-core';
 import { cn } from '../../utils';
 import { Link } from 'react-router-dom';
 import { paths } from '../../paths';
-import NoteIcon from '../../icons/note.svgr.svg';
-import TagIcon from '../../icons/tag.svgr.svg';
+import ArrowDown from '../../icons/arrow-down.svgr.svg';
+import ArrowRight from '../../icons/arrow-right.svgr.svg';
+import { observer } from 'mobx-react-lite';
+import { usePrimaryNoteId } from '../../hooks/usePrimaryNote';
 
 const treeClass = cn('notes-tree');
 const sidebarItemClass = cn('sidebar-item');
 
-const NoteNode = ({ node }: { node: TreeNodeModel }) => {
+const NoteNode = observer(({ node }: { node: TreeNodeModel }) => {
   const vault = useCurrentVault();
+  const primaryNoteId = usePrimaryNoteId();
+  const isFocused = primaryNoteId ? primaryNoteId === node.noteId : false;
 
-  const isActive = node.isFocused;
+  const handleExpandClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+
+      node.toggleExpand();
+    },
+    [node],
+  );
 
   const nodeInfoChild = (
     <>
-      <div
-        className={treeClass('expand-arrow-container', { lighter: isActive })}
-      ></div>
-      <div className={treeClass('node-icon')}>
-        {node.noteId ? <NoteIcon /> : <TagIcon />}
-      </div>
+      <button
+        className={treeClass('expand-arrow-container', {
+          invisible: node.nodeRefs.length === 0,
+        })}
+        onClick={handleExpandClick}
+      >
+        {node.isExpanded ? <ArrowDown /> : <ArrowRight />}
+      </button>
       <div className={treeClass('node-title')}>{node.title}</div>
     </>
   );
+
+  const createNoteAndGo = useCallback(() => {}, []);
 
   return (
     <div className={treeClass('node')}>
@@ -35,29 +50,30 @@ const NoteNode = ({ node }: { node: TreeNodeModel }) => {
             vaultId: vault.$modelId,
             noteId: node.noteId,
           })}
-          className={`${sidebarItemClass({ active: isActive })} ${treeClass(
+          className={`${sidebarItemClass({ active: isFocused })} ${treeClass(
             'node-info',
             {
-              active: isActive,
+              active: isFocused,
             },
           )}`}
         >
           {nodeInfoChild}
         </Link>
       ) : (
-        <div
-          className={`${sidebarItemClass({ active: isActive })} ${treeClass(
+        <button
+          className={`${sidebarItemClass({ active: isFocused })} ${treeClass(
             'node-info',
             {
-              active: isActive,
+              active: isFocused,
             },
           )}`}
+          onClick={createNoteAndGo}
         >
           {nodeInfoChild}
-        </div>
+        </button>
       )}
 
-      {node.nodeRefs.length !== 0 && (
+      {node.nodeRefs.length !== 0 && node.isExpanded && (
         <div
           className={treeClass('node-children', { 'with-left-margin': true })}
         >
@@ -68,9 +84,9 @@ const NoteNode = ({ node }: { node: TreeNodeModel }) => {
       )}
     </div>
   );
-};
+});
 
-export const NotesTree = () => {
+export const NotesTree = observer(() => {
   const vault = useCurrentVault();
 
   const rootNode = vault.notesTree.rootNodeRef.current;
@@ -87,4 +103,4 @@ export const NotesTree = () => {
       </div>
     </div>
   );
-};
+});
