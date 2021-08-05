@@ -57,7 +57,7 @@ export class VaultModel extends Model({
       >,
       'title'
     >,
-    options?: { addEmptyBlock?: boolean },
+    options?: { addEmptyBlock?: boolean; isDaily?: boolean },
   ) {
     options = { addEmptyBlock: true, ...options };
 
@@ -75,11 +75,15 @@ export class VaultModel extends Model({
     const note = new NoteModel({
       $modelId: noteId,
       createdAt: new Date().getTime(),
-      dailyNoteDate: new Date().getTime(),
       areBlockLinksLoaded: true,
       areChildrenLoaded: true,
       areNoteLinksLoaded: true,
       rootBlockRef: noteBlockRef(rootBlock),
+      ...(options.isDaily
+        ? {
+            dailyNoteDate: new Date().getTime(),
+          }
+        : {}),
       ...attrs,
     });
 

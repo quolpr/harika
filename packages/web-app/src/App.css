@@ -6,6 +6,9 @@ body,
   min-width: 320px;
   -webkit-overflow-scrolling: auto;
   overscroll-behavior-x: none;
+
+  -moz-osx-font-smoothing: grayscale; /*(For Firefox)*/
+  -webkit-font-smoothing: antialiased; /*(For Chrome and Safari)*/
 }
 
 body {

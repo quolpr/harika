@@ -1,6 +1,6 @@
 import { model, Model, modelAction, prop, Ref } from 'mobx-keystone';
 import type { INoteChangeEvent } from '../../../dexieTypes';
-import { nodeRef, TreeNodeModel } from './NoteNodeModel';
+import { nodeRef, TreeNodeModel } from './TreeNodeModel';
 
 export interface PartialNote {
   id: string;
@@ -38,9 +38,9 @@ export class NotesTreeModel extends Model({
       });
     });
 
-    rootNode.nodeRefs = rootNode.nodeRefs.filter(
-      (nodeRef) => nodeRef.current.nodeRefs.length !== 0,
-    );
+    // rootNode.nodeRefs = rootNode.nodeRefs.filter(
+    //   (nodeRef) => nodeRef.current.nodeRefs.length !== 0,
+    // );
 
     this.isInitialized = true;
   }

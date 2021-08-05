@@ -1,3 +1,26 @@
+.sidebar-item {
+  height: rem(28px);
+
+  display: flex;
+  align-items: center;
+
+  font-size: rem(16px);
+
+  transition: color 0.25s ease;
+
+  color: #a9a9a9;
+
+  &:hover {
+    color: #d7d7d7;
+  }
+
+  &--active {
+    font-weight: bold;
+    font-size: 16px;
+    color: #e4e4e4;
+  }
+}
+
 .sidebar {
   display: flex;
   flex-direction: column;
@@ -6,6 +29,7 @@
   position: absolute;
   height: calc(var(--app-height) - var(--vault-header-full-height));
   top: var(--vault-header-full-height);
+  bottom: 0;
   z-index: 1000;
 
   background-color: #2c2d2f;
@@ -30,25 +54,18 @@
   }
 
   &__menu {
-    font-family: 'Roboto', sans-serif;
-    margin: rem(14px) rem(32px);
+    display: flex;
+    flex-direction: column;
+    gap: rem(4px);
+
+    font-family: Roboto;
+    font-style: normal;
+    font-weight: normal;
+
+    margin: rem(18px) rem(36px);
   }
 
   &__menu-link {
-    height: rem(36px);
-
-    display: flex;
-    align-items: center;
-
-    font-size: rem(16px);
-
-    transition: color 0.25s ease;
-
-    color: #a9a9a9;
-
-    &:hover {
-      color: #d7d7d7;
-    }
   }
 
   &__menu-link-title {
@@ -69,7 +86,7 @@
   }
 
   &__link {
-    @apply mb-3;
+    @apply pb-3;
 
     text-align: left;
 
@@ -77,6 +94,80 @@
 
     &:last-child {
       @apply mb-0;
+    }
+  }
+
+  &__menu-container {
+    overflow: scroll;
+  }
+
+  &__notes-tree {
+    margin: rem(24px) rem(8px);
+  }
+}
+
+.notes-tree {
+  font-family: Roboto;
+  font-style: normal;
+  font-weight: normal;
+
+  &__node {
+  }
+
+  &__node-children {
+    display: flex;
+    flex-direction: column;
+    gap: rem(4px);
+    margin-top: rem(4px);
+
+    &--with-left-margin {
+      margin-left: rem(22px);
+    }
+  }
+
+  &__node-icon {
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: rem(20px);
+    margin-right: rem(12px);
+  }
+
+  &__node-info {
+    text-overflow: ellipsis;
+
+    overflow: hidden;
+    white-space: nowrap;
+
+    border-radius: 5px;
+
+    transition: background-color 0.05s ease-out;
+
+    &--active {
+      background: #535354;
+    }
+
+    &:hover {
+      background: #535354;
+    }
+  }
+
+  &__expand-arrow-container {
+    flex-shrink: 0;
+    width: 14px;
+    height: 14px;
+    margin: 0 rem(8px);
+
+    cursor: pointer;
+
+    transition: background-color 0.25s ease;
+    border-radius: 2px;
+
+    &:hover {
+      background: #727272;
     }
   }
 }

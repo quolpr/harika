@@ -36,6 +36,14 @@ export class TreeNodeModel extends Model({
   nodeRefs: prop<Ref<TreeNodeModel>[]>(() => []),
   noteId: prop<string | undefined>(() => undefined),
 }) {
+  get isExpanded() {
+    return true;
+  }
+
+  get isFocused() {
+    return this.title === 'Я';
+  }
+
   getChildWithTitle(title: string) {
     return this.nodeRefs.find((ref) => {
       return ref.current.title === title;

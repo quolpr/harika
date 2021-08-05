@@ -12,6 +12,7 @@ import download from 'downloadjs';
 import VaultIcon from './vault.svgr.svg';
 import DailyNoteIcon from '../../icons/daily-note.svgr.svg';
 import NotesIcon from '../../icons/notes.svgr.svg';
+import { NotesTree } from './NotesTree';
 
 const sidebarClass = cn('sidebar');
 
@@ -70,30 +71,38 @@ export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
           </div>
           <div className={sidebarClass('header-vault-name')}>{vault.name}</div>
         </div>
-        <div className={sidebarClass('menu')}>
-          <Link
-            className={sidebarClass('menu-link')}
-            to={paths.vaultDailyPath({ vaultId: vault.$modelId })}
-            onClick={onNavClick}
-          >
-            <div className={sidebarClass('menu-link-icon')}>
-              <DailyNoteIcon />
-            </div>
+        <div className={sidebarClass('menu-container')}>
+          <div className={sidebarClass('menu')}>
+            <Link
+              className={sidebarClass('menu-link sidebar-item')}
+              to={paths.vaultDailyPath({ vaultId: vault.$modelId })}
+              onClick={onNavClick}
+            >
+              <div className={sidebarClass('menu-link-icon')}>
+                <DailyNoteIcon />
+              </div>
 
-            <div className={sidebarClass('menu-link-title')}>Daily Note</div>
-          </Link>
+              <div className={sidebarClass('menu-link-title')}>Daily Note</div>
+            </Link>
 
-          <Link
-            className={sidebarClass('menu-link')}
-            to={paths.vaultNoteIndexPath({ vaultId: vault.$modelId })}
-            onClick={onNavClick}
-          >
-            <div className={sidebarClass('menu-link-icon')}>
-              <NotesIcon />
-            </div>
+            <Link
+              className={sidebarClass('menu-link sidebar-item')}
+              to={paths.vaultNoteIndexPath({ vaultId: vault.$modelId })}
+              onClick={onNavClick}
+            >
+              <div className={sidebarClass('menu-link-icon')}>
+                <NotesIcon />
+              </div>
 
-            <div className={sidebarClass('menu-link-title')}>All Notes</div>
-          </Link>
+              <div className={sidebarClass('menu-link-title')}>All Notes</div>
+            </Link>
+          </div>
+
+          <div className={sidebarClass('notes-tree')}>
+            <NotesTree />
+          </div>
+
+          <Brand className={sidebarClass('brand')} onClick={onNavClick} />
         </div>
 
         <div style={{ display: 'none' }}>
@@ -140,8 +149,6 @@ export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
             </label>
           </div>
         </div>
-
-        <Brand className={sidebarClass('brand')} onClick={onNavClick} />
       </div>
     );
   },

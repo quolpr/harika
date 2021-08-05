@@ -6,3 +6,5 @@ export type { Token, RefToken, TagToken } from './src/blockParser/types';
 export * from './src/blockParser/parseStringToTree';
 export * from './src/generateId';
 export * from './src/dexieTypes';
+export * from './src/NotesRepository/domain/NotesTree/NotesTreeModel';
+export * from './src/NotesRepository/domain/NotesTree/TreeNodeModel';

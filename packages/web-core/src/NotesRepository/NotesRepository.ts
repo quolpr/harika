@@ -18,6 +18,7 @@ import { NoteLoader, ToPreloadInfo } from './persistence/NoteLoader';
 import { convertViewToModelAttrs } from './syncers/toDomainModelsConverters';
 import type { ITransmittedChange } from '../dexie-sync/changesChannel';
 import { NotesChangesTrackerService } from './services/notes-tree/NotesChangesTrackerService';
+import dayjs from 'dayjs';
 
 export { NoteModel } from './domain/NoteModel';
 export { VaultModel } from './domain/VaultModel';
@@ -45,10 +46,19 @@ export class NotesRepository {
     );
 
     this.vault.initializeNotesTree(
-      (await this.db.notes.toArray()).map(({ id, title }) => ({
-        id,
-        title,
-      })),
+      (await this.db.notes.toArray())
+        .filter(
+          ({ dailyNoteDate, title }) =>
+            !dailyNoteDate ||
+            // TODO: remove this hack. Only !dailyNoteDate check will be needed
+            (dailyNoteDate &&
+              dayjs(dailyNoteDate).format('D MMM YYYY') !== title),
+        )
+
+        .map(({ id, title }) => ({
+          id,
+          title,
+        })),
     );
   }
 
@@ -65,7 +75,10 @@ export class NotesRepository {
       >,
       'title'
     >,
+    options?: { isDaily?: boolean },
   ) {
+    options = { isDaily: false, ...options };
+
     if (attrs.title.trim().length === 0) {
       return {
         status: 'error',
@@ -82,12 +95,15 @@ export class NotesRepository {
 
     return {
       status: 'ok',
-      data: this.vault.newNote({
-        ...attrs,
-        areChildrenLoaded: true,
-        areBlockLinksLoaded: true,
-        areNoteLinksLoaded: true,
-      }),
+      data: this.vault.newNote(
+        {
+          ...attrs,
+          areChildrenLoaded: true,
+          areBlockLinksLoaded: true,
+          areNoteLinksLoaded: true,
+        },
+        options,
+      ),
     } as ICreationResult<NoteModel>;
   }
 
@@ -108,13 +124,16 @@ export class NotesRepository {
     const title = date.format('D MMM YYYY');
     const startOfDate = date.startOf('day');
 
-    return await this.createNote({
-      title,
-      dailyNoteDate: startOfDate.toDate().getTime(),
-      areChildrenLoaded: true,
-      areBlockLinksLoaded: true,
-      areNoteLinksLoaded: true,
-    });
+    return await this.createNote(
+      {
+        title,
+        dailyNoteDate: startOfDate.toDate().getTime(),
+        areChildrenLoaded: true,
+        areBlockLinksLoaded: true,
+        areNoteLinksLoaded: true,
+      },
+      { isDaily: true },
+    );
   }
 
   async findNote(id: string, toPreloadInfo: ToPreloadInfo) {
@@ -179,7 +198,10 @@ export class NotesRepository {
           await Promise.all(
             titles.map(async (name) => {
               if (!existingNotesIndexed[name]) {
-                const result = await this.createNote({ title: name });
+                const result = await this.createNote(
+                  { title: name },
+                  { isDaily: false },
+                );
 
                 if (result.status === 'ok') {
                   return result.data;
