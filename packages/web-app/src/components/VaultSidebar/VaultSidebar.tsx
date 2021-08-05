@@ -95,49 +95,15 @@ export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
 
               <div className={sidebarClass('menu-link-title')}>All Notes</div>
             </Link>
-          </div>
-
-          <div className={sidebarClass('notes-tree')}>
-            <NotesTree />
-          </div>
-
-          {/* <Brand className={sidebarClass('brand')} onClick={onNavClick} /> */}
-        </div>
-
-        <div style={{ display: 'none' }}>
-          <div className={sidebarClass('links')}>
-            <Link
-              className={sidebarClass('link')}
-              to={paths.vaultDailyPath({ vaultId: vault.$modelId })}
-              onClick={onNavClick}
-            >
-              Daily note
-            </Link>
-
-            <Link
-              className={sidebarClass('link')}
-              to={paths.vaultNoteIndexPath({ vaultId: vault.$modelId })}
-              onClick={onNavClick}
-            >
-              All Notes
-            </Link>
-
-            <Link
-              className={sidebarClass('link')}
-              to={paths.vaultIndexPath()}
-              onClick={onNavClick}
-            >
-              Vaults
-            </Link>
 
             <button
-              className={sidebarClass('link')}
+              className={sidebarClass('menu-link sidebar-item')}
               onClick={handleDownloadClick}
             >
               Download db
             </button>
 
-            <label className={sidebarClass('link')}>
+            <label className={sidebarClass('menu-link sidebar-item')}>
               <input
                 id="upload"
                 type="file"
@@ -147,6 +113,12 @@ export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
               Import DB
             </label>
           </div>
+
+          <div className={sidebarClass('notes-tree')}>
+            <NotesTree />
+          </div>
+
+          {/* <Brand className={sidebarClass('brand')} onClick={onNavClick} /> */}
         </div>
       </div>
     );
