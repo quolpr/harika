@@ -12,8 +12,6 @@
 
   cursor: pointer;
 
-  width: 100%;
-
   &:hover {
     color: #d7d7d7;
   }
@@ -66,7 +64,8 @@
     font-style: normal;
     font-weight: normal;
 
-    margin: rem(18px) rem(36px);
+    margin: rem(16px) rem(26px);
+    margin-bottom: rem(12px);
   }
 
   &__menu-link {
@@ -108,6 +107,17 @@
   &__notes-tree {
     margin: 0 rem(12px);
   }
+
+  &__notes-tree-title {
+    font-family: Roboto;
+    font-style: normal;
+    font-weight: bold;
+    font-size: 13px;
+    color: #7e7e88;
+
+    margin-bottom: rem(8px);
+    margin-left: rem(16px);
+  }
 }
 
 .notes-tree {
@@ -125,7 +135,7 @@
     margin-top: rem(4px);
 
     &--with-left-margin {
-      margin-left: rem(22px);
+      margin-left: rem(14px);
     }
   }
 
@@ -149,6 +159,7 @@
   }
 
   &__node-info {
+    width: 100%;
     border-radius: 5px;
 
     transition: background-color 0.05s ease-out;

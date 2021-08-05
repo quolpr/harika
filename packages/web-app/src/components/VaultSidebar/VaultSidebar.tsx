@@ -11,6 +11,8 @@ import download from 'downloadjs';
 import VaultIcon from './vault.svgr.svg';
 import DailyNoteIcon from '../../icons/daily-note.svgr.svg';
 import NotesIcon from '../../icons/notes.svgr.svg';
+import UploadIcon from '../../icons/upload.svgr.svg';
+import DownloadIcon from '../../icons/download.svgr.svg';
 import { NotesTree } from './NotesTree';
 
 const sidebarClass = cn('sidebar');
@@ -100,7 +102,11 @@ export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
               className={sidebarClass('menu-link sidebar-item')}
               onClick={handleDownloadClick}
             >
-              Download db
+              <div className={sidebarClass('menu-link-icon')}>
+                <DownloadIcon />
+              </div>
+
+              <div className={sidebarClass('menu-link-title')}>Download db</div>
             </button>
 
             <label className={sidebarClass('menu-link sidebar-item')}>
@@ -110,9 +116,15 @@ export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
                 style={{ display: 'none' }}
                 onChange={handleImport}
               />
-              Import DB
+              <div className={sidebarClass('menu-link-icon')}>
+                <UploadIcon />
+              </div>
+
+              <div className={sidebarClass('menu-link-title')}>Import DB</div>
             </label>
           </div>
+
+          <div className={sidebarClass('notes-tree-title')}>Notes Tree</div>
 
           <div className={sidebarClass('notes-tree')}>
             <NotesTree />
