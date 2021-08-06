@@ -38,7 +38,7 @@ export class TreeNodeModel extends Model({
   title: prop<string>(),
   nodeRefs: prop<Ref<TreeNodeModel>[]>(() => []),
   noteId: prop<string | undefined>(() => undefined),
-  isExpanded: prop<boolean>(() => true),
+  isExpanded: prop<boolean>(() => false),
 }) {
   @computed
   get sortedChildNodes() {
