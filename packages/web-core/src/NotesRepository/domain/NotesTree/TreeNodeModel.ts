@@ -1,7 +1,9 @@
+import { computed } from 'mobx';
 import {
   customRef,
   detach,
   findParent,
+  getRefsResolvingTo,
   Model,
   model,
   modelAction,
@@ -9,7 +11,7 @@ import {
   Ref,
 } from 'mobx-keystone';
 import { isNotesTree } from '../utils';
-import type { NotesTreeModel } from './NotesTreeModel';
+import { NotesTreeModel, notesTreeModelType } from './NotesTreeModel';
 
 export const nodeRef = customRef<TreeNodeModel>('harika/NotesTree/nodeRef', {
   resolve(ref) {
@@ -38,14 +40,73 @@ export class TreeNodeModel extends Model({
   noteId: prop<string | undefined>(() => undefined),
   isExpanded: prop<boolean>(() => true),
 }) {
-  get isFocused() {
-    return this.title === 'Я';
+  @computed
+  get sortedChildNodes() {
+    return this.nodeRefs
+      .map(({ current }) => current)
+      .sort((a, b) => {
+        if (a.title > b.title) {
+          return 1;
+        }
+        if (a.title < b.title) {
+          return -1;
+        }
+
+        return 0;
+      });
+  }
+
+  @computed
+  get treeModel() {
+    return findParent<NotesTreeModel>(
+      this,
+      (obj) => (obj as any).$modelType === notesTreeModelType,
+    )!;
+  }
+
+  @computed
+  get fullTitle() {
+    return [...this.path.slice(1), this].map(({ title }) => title).join('/');
+  }
+
+  @computed
+  get parent() {
+    return this.treeModel.parentIdsMap[this.$modelId];
+  }
+
+  @computed
+  get path() {
+    let parent = this.parent;
+    const nodes: TreeNodeModel[] = [];
+
+    while (parent) {
+      nodes.push(parent);
+
+      parent = parent.parent;
+    }
+
+    return nodes.reverse();
+  }
+
+  @computed
+  get indent() {
+    return this.path.length;
   }
 
   getChildWithTitle(title: string) {
     return this.nodeRefs.find((ref) => {
       return ref.current.title === title;
     });
+  }
+
+  @modelAction
+  removeFromParent() {
+    this.parent.removeChildById(this.$modelId);
+  }
+
+  @modelAction
+  removeChildById(id: string) {
+    this.nodeRefs = this.nodeRefs.filter((ref) => ref.id !== id);
   }
 
   @modelAction

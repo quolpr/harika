@@ -77,8 +77,8 @@ const NoteNode = observer(({ node }: { node: TreeNodeModel }) => {
         <div
           className={treeClass('node-children', { 'with-left-margin': true })}
         >
-          {node.nodeRefs.map((nodeRef) => (
-            <NoteNode node={nodeRef.current} key={nodeRef.id} />
+          {node.sortedChildNodes.map((node) => (
+            <NoteNode node={node} key={node.$modelId} />
           ))}
         </div>
       )}
@@ -97,8 +97,8 @@ export const NotesTree = observer(() => {
         className={treeClass('node-children')}
         style={{ overflow: 'scroll' }}
       >
-        {rootNode.nodeRefs.map((nodeRef) => (
-          <NoteNode node={nodeRef.current} key={nodeRef.id} />
+        {rootNode.sortedChildNodes.map((node) => (
+          <NoteNode node={node} key={node.$modelId} />
         ))}
       </div>
     </div>

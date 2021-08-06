@@ -1,8 +1,15 @@
 import { autorun } from 'mobx';
 import { filter, map, Observable, takeUntil } from 'rxjs';
 import type { ITransmittedChange } from '../../../dexie-sync/changesChannel';
-import { INoteChangeEvent, VaultDbTables } from '../../../dexieTypes';
-import type { NotesTreeModel } from '../../domain/NotesTree/NotesTreeModel';
+import {
+  DatabaseChangeType,
+  INoteChangeEvent,
+  VaultDbTables,
+} from '../../../dexieTypes';
+import type {
+  INoteTitleChange,
+  NotesTreeModel,
+} from '../../domain/NotesTree/NotesTreeModel';
 
 export class NotesChangesTrackerService {
   private bufferedChanges: INoteChangeEvent[] = [];
@@ -44,7 +51,28 @@ export class NotesChangesTrackerService {
       return;
     }
 
-    this.treeModel.handleNotesChanges(changes);
+    this.treeModel.handleNotesChanges(
+      changes
+        .map((ch): INoteTitleChange | undefined => {
+          if (ch.type === DatabaseChangeType.Create) {
+            return { type: 'create', id: ch.key, title: ch.obj.title };
+          } else if (ch.type === DatabaseChangeType.Update && ch.to.title) {
+            return {
+              type: 'rename',
+              id: ch.key,
+              toTitle: ch.to.title,
+            };
+          } else if (ch.type === DatabaseChangeType.Delete) {
+            return {
+              type: 'delete',
+              id: ch.key,
+            };
+          }
+
+          return undefined;
+        })
+        .filter((ch) => Boolean(ch)) as INoteTitleChange[],
+    );
   }
 
   private freeBuffer() {
