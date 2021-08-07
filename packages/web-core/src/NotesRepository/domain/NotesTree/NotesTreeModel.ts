@@ -65,14 +65,18 @@ export class NotesTreeModel extends Model({
       }
 
       if (ch.type === 'delete') {
-        this.removeNode(this.noteIdsMap[ch.id].$modelId);
+        const node = this.nodesMap[this.noteIdsMap[ch.id].$modelId];
+        node.noteId = undefined;
+
         this.deleteEmptyNodes();
       }
 
       if (ch.type === 'rename') {
         // TODO: could me optimized
 
-        this.removeNode(this.noteIdsMap[ch.id].$modelId);
+        const node = this.nodesMap[this.noteIdsMap[ch.id].$modelId];
+        node.noteId = undefined;
+
         this.insertNoteTitle(ch.id, ch.toTitle);
 
         this.deleteEmptyNodes();
@@ -120,15 +124,6 @@ export class NotesTreeModel extends Model({
     node.removeFromParent();
 
     delete this.nodesMap[node.$modelId];
-  }
-
-  @modelAction
-  private cleanRootNotes() {
-    const rootNode = this.rootNodeRef.current;
-
-    rootNode.nodeRefs = rootNode.nodeRefs.filter(
-      (nodeRef) => nodeRef.current.nodeRefs.length !== 0,
-    );
   }
 
   private findOrCreateNode(parentNode: TreeNodeModel, title: string) {
