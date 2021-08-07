@@ -54,8 +54,6 @@ export class NotesTreeModel extends Model({
       this.insertNoteTitle(id, noteTitle);
     });
 
-    this.cleanRootNotes();
-
     this.isInitialized = true;
   }
 
@@ -64,8 +62,6 @@ export class NotesTreeModel extends Model({
     changes.forEach((ch) => {
       if (ch.type === 'create') {
         this.insertNoteTitle(ch.id, ch.title);
-
-        this.cleanRootNotes();
       }
 
       if (ch.type === 'delete') {
@@ -80,7 +76,6 @@ export class NotesTreeModel extends Model({
         this.insertNoteTitle(ch.id, ch.toTitle);
 
         this.deleteEmptyNodes();
-        this.cleanRootNotes();
       }
     });
   }

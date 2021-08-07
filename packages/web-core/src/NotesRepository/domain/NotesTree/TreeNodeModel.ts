@@ -40,19 +40,38 @@ export class TreeNodeModel extends Model({
   noteId: prop<string | undefined>(() => undefined),
   isExpanded: prop<boolean>(() => false),
 }) {
+  isInsideNode(noteId: string): boolean {
+    if (noteId === this.noteId) return true;
+
+    return Boolean(
+      this.nodeRefs.find((nodeRef) => {
+        return nodeRef.current.isInsideNode(noteId);
+      }),
+    );
+  }
+
+  @computed
+  get hasNotes() {
+    return this.nodeRefs.length !== 0;
+  }
+
   @computed
   get sortedChildNodes() {
     return this.nodeRefs
       .map(({ current }) => current)
       .sort((a, b) => {
-        if (a.title > b.title) {
-          return 1;
-        }
-        if (a.title < b.title) {
-          return -1;
-        }
+        if (a.hasNotes === b.hasNotes) {
+          if (a.title > b.title) {
+            return 1;
+          }
+          if (a.title < b.title) {
+            return -1;
+          }
 
-        return 0;
+          return 0;
+        } else {
+          return a.hasNotes ? -1 : 1;
+        }
       });
   }
 
@@ -97,6 +116,11 @@ export class TreeNodeModel extends Model({
     return this.nodeRefs.find((ref) => {
       return ref.current.title === title;
     });
+  }
+
+  @modelAction
+  setNoteId(noteId: string) {
+    this.noteId = noteId;
   }
 
   @modelAction

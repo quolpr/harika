@@ -127,7 +127,7 @@ export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
           <div className={sidebarClass('notes-tree-title')}>Notes Tree</div>
 
           <div className={sidebarClass('notes-tree')}>
-            <NotesTree />
+            <NotesTree onNavClick={onNavClick} />
           </div>
 
           {/* <Brand className={sidebarClass('brand')} onClick={onNavClick} /> */}

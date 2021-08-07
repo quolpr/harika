@@ -55,6 +55,8 @@ export class NotesChangesTrackerService {
       changes
         .map((ch): INoteTitleChange | undefined => {
           if (ch.type === DatabaseChangeType.Create) {
+            if (ch.obj.dailyNoteDate) return undefined;
+
             return { type: 'create', id: ch.key, title: ch.obj.title };
           } else if (ch.type === DatabaseChangeType.Update && ch.to.title) {
             return {
