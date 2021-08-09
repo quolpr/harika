@@ -2,6 +2,7 @@ import {
   customRef,
   detach,
   findParent,
+  getSnapshot,
   model,
   Model,
   modelAction,
@@ -9,18 +10,27 @@ import {
   prop,
   Ref,
   tProp,
+  transaction,
   types,
 } from 'mobx-keystone';
 import { comparer, computed } from 'mobx';
-import { NoteModel, noteRef } from './NoteModel';
-import type { VaultModel } from './VaultModel';
-import { isVault } from './utils';
 import { isEqual } from 'lodash-es';
 import { BlockContentModel } from './NoteBlockModel/BlockContentModel';
 import type { BlocksViewModel } from './VaultUiState/BlocksViewModel';
 import type { TreeToken } from '../../blockParser/parseStringToTree';
 import { addTokensToNoteBlock } from '../../blockParser/blockUtils';
 import { isTodo } from '../../blockParser/astHelpers';
+import type { Optional } from 'utility-types';
+import { generateId } from '../../generateId';
+import { omit } from 'lodash-es';
+import type { VaultModel } from './VaultModel';
+import { isVault } from './utils';
+
+const treeHolderType = 'harika/BlocksTreeHolder';
+
+const isTreeHolder = (obj: any): obj is BlocksTreeHolder => {
+  return obj.$modelType === treeHolderType;
+};
 
 export const noteBlockRef = customRef<NoteBlockModel>('harika/NoteBlockRef', {
   // this works, but we will use getRefId() from the Todo class instead
@@ -29,13 +39,13 @@ export const noteBlockRef = customRef<NoteBlockModel>('harika/NoteBlockRef', {
   // },
 
   resolve(ref) {
-    const vault = findParent<VaultModel>(this, isVault);
+    const rootBlock = findParent<BlocksTreeHolder>(this, isTreeHolder);
 
-    if (!vault) {
+    if (!rootBlock) {
       return undefined;
     }
 
-    return vault.blocksMap[ref.id];
+    return rootBlock.blocksMap[ref.id];
   },
 
   onResolvedValueChange(ref, newTodo, oldTodo) {
@@ -49,17 +59,21 @@ export const noteBlockRef = customRef<NoteBlockModel>('harika/NoteBlockRef', {
 
 @model('harika/NoteBlockModel')
 export class NoteBlockModel extends Model({
-  noteRef: prop<Ref<NoteModel>>(),
+  noteId: prop<string>(),
   content: prop<BlockContentModel>(),
   noteBlockRefs: prop<Ref<NoteBlockModel>[]>(),
-  linkedNoteRefs: prop<Ref<NoteModel>[]>(),
+  linkedNoteIds: prop<string[]>(),
   createdAt: tProp(types.dateTimestamp),
   isDeleted: prop<boolean>(false),
 }) {
-  get parentBlock(): NoteBlockModel | undefined {
-    const id = this.noteRef.current.childParentRelations[this.$modelId];
+  get treeHolder() {
+    return findParent<BlocksTreeHolder>(this, isTreeHolder)!;
+  }
 
-    return id === undefined ? undefined : this.vault.blocksMap[id];
+  get parentBlock(): NoteBlockModel | undefined {
+    const id = this.treeHolder.childParentRelations[this.$modelId];
+
+    return id === undefined ? undefined : this.treeHolder.blocksMap[id];
   }
 
   @computed({ equals: comparer.shallow })
@@ -123,12 +137,6 @@ export class NoteBlockModel extends Model({
     }
 
     return path;
-  }
-
-  @computed
-  get vault() {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    return findParent<VaultModel>(this, isVault)!;
   }
 
   @computed({ equals: comparer.shallow })
@@ -262,7 +270,7 @@ export class NoteBlockModel extends Model({
       ...this.noteBlockRefs.map((r) => noteBlockRef(r.id)),
     );
 
-    left.linkedNoteRefs.push(...this.linkedNoteRefs.map((r) => noteRef(r.id)));
+    left.linkedNoteIds.push(...this.linkedNoteIds);
 
     this.delete(false, false);
 
@@ -292,7 +300,7 @@ export class NoteBlockModel extends Model({
 
   @modelAction
   createAndAppendChildBlock(data: { content: string; id?: string }) {
-    return this.noteRef.current.createBlock(
+    return this.treeHolder.createBlock(
       {
         content: new BlockContentModel({ value: data.content }),
         ...(data.id ? { $modelId: data.id } : {}),
@@ -304,7 +312,7 @@ export class NoteBlockModel extends Model({
 
   @modelAction
   injectNewTreeTokens(tokens: TreeToken[]) {
-    return addTokensToNoteBlock(this.noteRef.current, this, tokens);
+    return addTokensToNoteBlock(this.treeHolder, this, tokens);
   }
 
   @modelAction
@@ -327,7 +335,7 @@ export class NoteBlockModel extends Model({
       }
     })();
 
-    const newNoteBlock = this.noteRef.current.createBlock(
+    const newNoteBlock = this.treeHolder.createBlock(
       {
         content: new BlockContentModel({ value: content }),
       },
@@ -417,8 +425,8 @@ export class NoteBlockModel extends Model({
       this.content = data.content;
     }
 
-    if (data.noteRef && data.noteRef.id !== this.noteRef.id) {
-      this.noteRef = data.noteRef;
+    if (data.noteId && data.noteId !== this.noteId) {
+      this.noteId = data.noteId;
     }
 
     if (data.createdAt && data.createdAt !== this.createdAt) {
@@ -450,13 +458,10 @@ export class NoteBlockModel extends Model({
     }
 
     if (
-      data.linkedNoteRefs &&
-      !isEqual(
-        data.linkedNoteRefs.map(({ id }) => id),
-        this.linkedNoteRefs.map(({ id }) => id),
-      )
+      data.linkedNoteIds &&
+      !isEqual(data.linkedNoteIds, this.linkedNoteIds)
     ) {
-      this.linkedNoteRefs = data.linkedNoteRefs;
+      this.linkedNoteIds = data.linkedNoteIds;
     }
   }
 
@@ -497,19 +502,160 @@ export class NoteBlockModel extends Model({
 
   @modelAction
   updateLinks(allNoteIds: string[]) {
-    this.linkedNoteRefs.forEach((ref, index) => {
-      const note = ref.maybeCurrent;
-
-      if (!note || !allNoteIds.includes(ref.id)) {
-        this.linkedNoteRefs.splice(index, 1);
+    this.linkedNoteIds.forEach((id, index) => {
+      if (!allNoteIds.includes(id)) {
+        this.linkedNoteIds.splice(index, 1);
       }
     });
 
-    const currentLinkedNoteIds = this.linkedNoteRefs.map(({ id }) => id);
     allNoteIds.forEach((noteId) => {
-      if (!currentLinkedNoteIds.includes(noteId)) {
-        this.linkedNoteRefs.push(noteRef(noteId));
+      if (!this.linkedNoteIds.includes(noteId)) {
+        this.linkedNoteIds.push(noteId);
       }
     });
+  }
+}
+
+export const blocksTreeHolderRef = customRef<BlocksTreeHolder>(
+  'harika/BlocksTreeHolderRef',
+  {
+    // this works, but we will use getRefId() from the Todo class instead
+    // getId(maybeTodo) {
+    //   return maybeTodo instanceof Todo ? maybeTodo.id : undefined
+    // },
+
+    resolve(ref) {
+      const vault = findParent<VaultModel>(this, isVault);
+
+      if (!vault) {
+        return undefined;
+      }
+
+      return vault.blocksTreeHoldersMap[ref.id];
+    },
+
+    onResolvedValueChange(ref, newTodo, oldTodo) {
+      if (oldTodo && !newTodo) {
+        // if the todo value we were referencing disappeared then remove the reference
+        // from its parent
+        detach(ref);
+      }
+    },
+  },
+);
+
+@model(treeHolderType)
+export class BlocksTreeHolder extends Model({
+  blocksMap: prop<Record<string, NoteBlockModel>>(() => ({})),
+  noteId: prop<string>(),
+}) {
+  @computed
+  get rootBlock() {
+    return Object.values(this.blocksMap).find((block) => block.isRoot)!;
+  }
+
+  @computed
+  get childParentRelations() {
+    const relations: Record<string, string> = {};
+
+    Object.values(this.blocksMap).forEach((block) => {
+      block.noteBlockRefs.forEach((childRef) => {
+        relations[childRef.id] = block.$modelId;
+      });
+    });
+
+    return relations;
+  }
+
+  getLinkedBlocksOfNoteId(noteId: string) {
+    const linkedBlocks: NoteBlockModel[] = [];
+
+    Object.values(this.blocksMap).forEach((block) => {
+      if (block.linkedNoteIds.includes(noteId)) {
+        linkedBlocks.push(block);
+      }
+    });
+
+    return linkedBlocks;
+  }
+
+  @modelAction
+  createBlock(
+    attrs: Optional<
+      ModelCreationData<NoteBlockModel>,
+      'createdAt' | 'noteId' | 'noteBlockRefs' | 'linkedNoteIds'
+    >,
+    parent: NoteBlockModel,
+    pos: number,
+  ) {
+    const newNoteBlock = new NoteBlockModel({
+      $modelId: attrs.$modelId ? attrs.$modelId : generateId(),
+      createdAt: new Date().getTime(),
+      noteId: this.noteId,
+      noteBlockRefs: [],
+      linkedNoteIds: [],
+      ...omit(attrs, '$modelId'),
+    });
+
+    this.blocksMap[newNoteBlock.$modelId] = newNoteBlock;
+
+    parent.noteBlockRefs.splice(pos, 0, noteBlockRef(newNoteBlock));
+
+    return newNoteBlock;
+  }
+
+  @modelAction
+  buildBlock(
+    attrs: Optional<
+      ModelCreationData<NoteBlockModel>,
+      'createdAt' | 'noteId' | 'noteBlockRefs' | 'linkedNoteIds'
+    >,
+  ) {
+    return new NoteBlockModel({
+      $modelId: attrs.$modelId ? attrs.$modelId : generateId(),
+      createdAt: new Date().getTime(),
+      noteId: this.noteId,
+      noteBlockRefs: [],
+      linkedNoteIds: [],
+      ...omit(attrs, '$modelId'),
+    });
+  }
+
+  @modelAction
+  @transaction
+  deleteNoteBlockIds(ids: string[]) {
+    ids.forEach((id) => {
+      this.blocksMap[id].delete(false, true);
+    });
+
+    if (!this.rootBlock.hasChildren) {
+      this.createBlock(
+        { content: new BlockContentModel({ value: '' }) },
+        this.rootBlock,
+        0,
+      );
+    }
+  }
+
+  @modelAction
+  addBlocks(blocks: NoteBlockModel[]) {
+    this.blocksMap = {
+      ...this.blocksMap,
+      ...Object.fromEntries(blocks.map((block) => [block.$modelId, block])),
+    };
+  }
+
+  createOrUpdateBlock(
+    attr: ModelCreationData<NoteBlockModel> & {
+      $modelId: string;
+    },
+  ) {
+    if (!this.blocksMap[attr.$modelId]) {
+      this.blocksMap[attr.$modelId] = new NoteBlockModel(attr);
+    } else {
+      this.blocksMap[attr.$modelId].updateAttrs(attr);
+    }
+
+    return this.blocksMap[attr.$modelId];
   }
 }

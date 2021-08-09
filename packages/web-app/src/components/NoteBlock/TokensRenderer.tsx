@@ -1,24 +1,34 @@
 import { observer } from 'mobx-react-lite';
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import type {
   RefToken,
   NoteBlockModel,
   Token,
   TagToken,
+  NoteModel,
 } from '@harika/web-core';
 import { useNoteRepository } from '../../contexts/CurrentNoteRepositoryContext';
 import { useCurrentVault } from '../../hooks/useCurrentVault';
 import { useCurrentNote } from '../../hooks/useCurrentNote';
 import { useHandleClick } from '../../hooks/useNoteClick';
 import { paths } from '../../paths';
+import { useAsync } from 'react-use';
+import { getSnapshot } from 'mobx-keystone';
 
 const RefRenderer = observer(
-  ({ token, noteBlock }: { token: RefToken; noteBlock: NoteBlockModel }) => {
+  ({
+    token,
+    noteBlock,
+    linkedNotes,
+  }: {
+    token: RefToken;
+    noteBlock: NoteBlockModel;
+    linkedNotes: NoteModel[];
+  }) => {
     const location = useLocation();
     const vault = useCurrentVault();
     const noteRepo = useNoteRepository();
-    const linkedNotes = noteBlock.linkedNoteRefs;
     const currentNote = useCurrentNote();
 
     const handleTodoToggle = useCallback(
@@ -30,14 +40,14 @@ const RefRenderer = observer(
       [noteBlock, noteRepo, token.id],
     );
 
-    const noteRef = linkedNotes.find((note) => {
-      return note.maybeCurrent?.title === token.ref;
+    const note = linkedNotes.find((n) => {
+      return n.title === token.ref;
     });
 
     const handleClick = useHandleClick(
       vault,
       currentNote?.$modelId,
-      noteRef?.id,
+      note?.$modelId,
     );
 
     if (token.ref === 'TODO' || token.ref === 'DONE') {
@@ -67,14 +77,14 @@ const RefRenderer = observer(
       );
     }
 
-    if (!noteRef) return <>{token.alias ? token.alias : token.ref}</>;
+    if (!note) return <>{token.alias ? token.alias : token.ref}</>;
 
     return (
       <Link
         to={
           paths.vaultNotePath({
             vaultId: vault.$modelId,
-            noteId: noteRef.id,
+            noteId: note.$modelId,
           }) + location.search
         }
         onClick={handleClick}
@@ -88,30 +98,29 @@ const RefRenderer = observer(
 );
 
 const TagRenderer = observer(
-  ({ token, noteBlock }: { token: TagToken; noteBlock: NoteBlockModel }) => {
+  ({ token, linkedNotes }: { token: TagToken; linkedNotes: NoteModel[] }) => {
     const location = useLocation();
     const vault = useCurrentVault();
     const currentNote = useCurrentNote();
-    const linkedNotes = noteBlock.linkedNoteRefs;
 
-    const noteRef = linkedNotes.find((note) => {
-      return note.maybeCurrent?.title === token.ref;
+    const note = linkedNotes.find((n) => {
+      return n.title === token.ref;
     });
 
     const handleClick = useHandleClick(
       vault,
       currentNote?.$modelId,
-      noteRef?.id,
+      note?.$modelId,
     );
 
-    if (!noteRef) return <>#{token.ref}</>;
+    if (!note) return <>#{token.ref}</>;
 
     return (
       <Link
         to={
           paths.vaultNotePath({
             vaultId: vault.$modelId,
-            noteId: noteRef.id,
+            noteId: note.$modelId,
           }) + location.search
         }
         onClick={handleClick}
@@ -125,12 +134,26 @@ const TagRenderer = observer(
 );
 
 const TokenRenderer = observer(
-  ({ noteBlock, token }: { noteBlock: NoteBlockModel; token: Token }) => {
+  ({
+    noteBlock,
+    token,
+    linkedNotes,
+  }: {
+    noteBlock: NoteBlockModel;
+    token: Token;
+    linkedNotes: NoteModel[];
+  }) => {
     switch (token.type) {
       case 'tag':
-        return <TagRenderer token={token} noteBlock={noteBlock} />;
+        return <TagRenderer token={token} linkedNotes={linkedNotes} />;
       case 'ref':
-        return <RefRenderer token={token} noteBlock={noteBlock} />;
+        return (
+          <RefRenderer
+            token={token}
+            noteBlock={noteBlock}
+            linkedNotes={linkedNotes}
+          />
+        );
       case 'bold':
         return (
           <b>
@@ -233,22 +256,26 @@ const TokenRenderer = observer(
   },
 );
 
-export const TokensRenderer = ({
-  noteBlock,
-  tokens,
-}: {
-  noteBlock: NoteBlockModel;
-  tokens: Token[];
-}) => {
-  return (
-    <>
-      {tokens.map((token) => (
-        <TokenRenderer
-          key={`${token.offsetStart}${token.offsetEnd}`}
-          noteBlock={noteBlock}
-          token={token}
-        />
-      ))}
-    </>
-  );
-};
+export const TokensRenderer = observer(
+  ({ noteBlock, tokens }: { noteBlock: NoteBlockModel; tokens: Token[] }) => {
+    const noteRepo = useNoteRepository();
+
+    const linkedNotesState = useAsync(
+      () => noteRepo.findNoteByIds(noteBlock.linkedNoteIds),
+      [noteRepo, noteBlock.linkedNoteIds.join()],
+    );
+
+    return (
+      <>
+        {tokens.map((token) => (
+          <TokenRenderer
+            key={`${token.offsetStart}${token.offsetEnd}`}
+            noteBlock={noteBlock}
+            token={token}
+            linkedNotes={linkedNotesState.value || []}
+          />
+        ))}
+      </>
+    );
+  },
+);

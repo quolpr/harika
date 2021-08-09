@@ -2,6 +2,7 @@ import {
   BlocksViewModel,
   NoteModel,
   FocusedBlockState,
+  BlocksTreeHolder,
 } from '@harika/web-core';
 import { observer } from 'mobx-react-lite';
 import { useEffect } from 'react';
@@ -19,7 +20,15 @@ import { isEqual } from 'lodash-es';
 import { useCurrentVault } from '../../hooks/useCurrentVault';
 
 export const NoteBlocksHandlers = observer(
-  ({ view, note }: { view: BlocksViewModel; note: NoteModel }) => {
+  ({
+    view,
+    note,
+    blocksTreeHolder,
+  }: {
+    view: BlocksViewModel;
+    note: NoteModel;
+    blocksTreeHolder: BlocksTreeHolder;
+  }) => {
     const vault = useCurrentVault();
     const focusedBlock = vault.ui.focusedBlock;
 
@@ -163,13 +172,13 @@ export const NoteBlocksHandlers = observer(
 
         navigator.clipboard.writeText(view.getStringTreeToCopy());
 
-        note.deleteNoteBlockIds(selectedIds);
+        blocksTreeHolder.deleteNoteBlockIds(selectedIds);
       };
 
       document.addEventListener('cut', handler);
 
       return () => document.removeEventListener('cut', handler);
-    }, [isSelecting, note, vault, view]);
+    }, [blocksTreeHolder, isSelecting, note, vault, view]);
 
     useEffect(() => {
       if (!isSelecting) return;
@@ -177,14 +186,14 @@ export const NoteBlocksHandlers = observer(
       const handler = (e: KeyboardEvent) => {
         if (e.key === 'Backspace') {
           e.preventDefault();
-          note.deleteNoteBlockIds(view.selectedIds);
+          blocksTreeHolder.deleteNoteBlockIds(view.selectedIds);
         }
       };
 
       document.addEventListener('keydown', handler);
 
       return () => document.removeEventListener('keydown', handler);
-    }, [isSelecting, note, view]);
+    }, [blocksTreeHolder, isSelecting, note, view]);
 
     useEffect(() => {
       const handler = (e: MouseEvent) => {

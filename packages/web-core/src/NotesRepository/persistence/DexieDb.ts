@@ -1,5 +1,6 @@
 import type { Dayjs } from 'dayjs';
 import Dexie from 'dexie';
+import { uniq } from 'lodash-es';
 import {
   NoteDocType,
   NoteBlockDocType,
@@ -137,8 +138,10 @@ class NotesQueries {
 
   // TODO: maybe could be optimized
   async getLinkedNoteIdsOfNoteId(id: string) {
-    return (await this.db.noteBlocksQueries.getLinkedBlocksOfNoteId(id)).map(
-      ({ noteId }) => noteId,
+    return uniq(
+      (await this.db.noteBlocksQueries.getLinkedBlocksOfNoteId(id)).map(
+        ({ noteId }) => noteId,
+      ),
     );
   }
 }

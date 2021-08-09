@@ -217,10 +217,6 @@ export const CommandPaletteModal = ({
               vaultId: vault.$modelId,
               noteId: result.data.$modelId,
             }),
-            {
-              focusOnBlockId:
-                result.data.rootBlockRef.current.noteBlockRefs[0].id,
-            } as IFocusBlockState,
           );
 
           onClose();

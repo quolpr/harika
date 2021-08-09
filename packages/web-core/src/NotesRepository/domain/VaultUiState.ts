@@ -5,7 +5,8 @@ import {
   ModelCreationData,
   prop,
 } from 'mobx-keystone';
-import { NoteModel, noteRef } from './NoteModel';
+import { blocksTreeHolderRef } from './NoteBlockModel';
+import type { NoteModel } from './NoteModel';
 import { BlocksViewModel } from './VaultUiState/BlocksViewModel';
 
 export interface EditState {
@@ -78,6 +79,14 @@ export class VaultUiState extends Model({
   }
 
   @modelAction
+  createViewsByModels(
+    note: NoteModel,
+    models: { $modelId: string; $modelType: string }[],
+  ) {
+    models.map((model) => this.createViewByModel(note, model));
+  }
+
+  @modelAction
   createViewByModel(
     note: NoteModel,
     model: { $modelId: string; $modelType: string },
@@ -88,7 +97,7 @@ export class VaultUiState extends Model({
 
     this.blocksViewsMap[key] = new BlocksViewModel({
       $modelId: key,
-      noteRef: noteRef(note),
+      blockTreeHolderRef: blocksTreeHolderRef(note.$modelId),
       scopedModelId: model.$modelId,
       scopedModelType: model.$modelType,
     });

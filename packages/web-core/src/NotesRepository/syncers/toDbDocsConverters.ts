@@ -1,16 +1,20 @@
-import type {NoteBlockModel} from "../domain/NoteBlockModel";
-import type {BlocksViewDocType, NoteBlockDocType, NoteDocType} from "../../dexieTypes";
-import type {NoteModel} from "../domain/NoteModel";
-import type {BlocksViewModel} from "../domain/VaultUiState/BlocksViewModel";
+import type { NoteBlockModel } from '../domain/NoteBlockModel';
+import type {
+  BlocksViewDocType,
+  NoteBlockDocType,
+  NoteDocType,
+} from '../../dexieTypes';
+import type { NoteModel } from '../domain/NoteModel';
+import type { BlocksViewModel } from '../domain/VaultUiState/BlocksViewModel';
 
 export const mapNoteBlock = (model: NoteBlockModel): NoteBlockDocType => {
   return {
     id: model.$modelId,
-    noteId: model.noteRef.id,
+    noteId: model.noteId,
     content: model.content.value,
     createdAt: model.createdAt,
-    noteBlockIds: model.noteBlockRefs.map(({id}) => id),
-    linkedNoteIds: model.linkedNoteRefs.map(({id}) => id),
+    noteBlockIds: model.noteBlockRefs.map(({ id }) => id),
+    linkedNoteIds: [...model.linkedNoteIds],
   };
 };
 export const mapNote = (model: NoteModel): NoteDocType => {
@@ -19,14 +23,14 @@ export const mapNote = (model: NoteModel): NoteDocType => {
     dailyNoteDate: model.dailyNoteDate,
     title: model.title,
     createdAt: model.createdAt,
-    rootBlockId: model.rootBlockRef.id,
+    rootBlockId: model.rootBlockId,
   };
 };
 export const mapView = (model: BlocksViewModel): BlocksViewDocType => {
   return {
     id: model.$modelId,
     collapsedBlockIds: [...model.collapsedBlockIds],
-    noteId: model.noteRef.id,
+    noteId: model.blockTreeHolderRef.id,
     scopedModelId: model.scopedModelId,
     scopedModelType: model.scopedModelType,
   };

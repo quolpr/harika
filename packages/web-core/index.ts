@@ -8,3 +8,4 @@ export * from './src/generateId';
 export * from './src/dexieTypes';
 export * from './src/NotesRepository/domain/NotesTree/NotesTreeModel';
 export * from './src/NotesRepository/domain/NotesTree/TreeNodeModel';
+export * from './src/NotesRepository/domain/NoteBlockModel';

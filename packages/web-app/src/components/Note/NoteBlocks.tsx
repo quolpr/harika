@@ -1,40 +1,44 @@
 import { observer } from 'mobx-react-lite';
-import React from 'react';
-import { useMedia } from 'react-use';
+import React, { useEffect, useState } from 'react';
+import { useAsync, useMedia } from 'react-use';
 import { NoteBlock } from '../NoteBlock/NoteBlock';
-import type { Ref } from 'mobx-keystone';
 import { Toolbar } from './Toolbar';
 import { NoteBlocksHandlers } from './NoteBlocksHandlers';
-import type {
-  NoteBlockModel,
-  BlocksViewModel,
-  NoteModel,
-} from '@harika/web-core';
+import type { BlocksViewModel, NoteModel } from '@harika/web-core';
+import type { BlocksTreeHolder } from '@harika/web-core';
+import { useNoteRepository } from '../../contexts/CurrentNoteRepositoryContext';
 
 export const NoteBlocks = observer(
-  ({
-    childBlocks,
-    view,
-    note,
-  }: {
-    childBlocks: Ref<NoteBlockModel>[];
-    view: BlocksViewModel;
-    note: NoteModel;
-  }) => {
+  ({ view, note }: { view: BlocksViewModel; note: NoteModel }) => {
+    const noteRepo = useNoteRepository();
     const isWide = useMedia('(min-width: 768px)');
+
+    const blockTreeHolderState = useAsync(
+      () => noteRepo.getBlocksTreeHolder(note.$modelId),
+      [noteRepo, note.$modelId],
+    );
 
     return (
       <>
-        <NoteBlocksHandlers view={view} note={note} />
+        {blockTreeHolderState.value && (
+          <NoteBlocksHandlers
+            view={view}
+            note={note}
+            blocksTreeHolder={blockTreeHolderState.value}
+          />
+        )}
 
         <div className="note__body">
-          {childBlocks.map((noteBlock) => (
-            <NoteBlock
-              key={noteBlock.current.$modelId}
-              noteBlock={noteBlock.current}
-              view={view}
-            />
-          ))}
+          {blockTreeHolderState.value &&
+            blockTreeHolderState.value.rootBlock.noteBlockRefs.map(
+              (noteBlock) => (
+                <NoteBlock
+                  key={noteBlock.current.$modelId}
+                  noteBlock={noteBlock.current}
+                  view={view}
+                />
+              ),
+            )}
         </div>
 
         {!isWide && <Toolbar view={view} />}

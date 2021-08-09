@@ -22,22 +22,11 @@ export const useFindNote = (noteId: string) => {
 
   useEffect(() => {
     const callback = async () => {
-      const note = await noteRepo.findNote(noteId, {
-        preloadChildren: true,
-        preloadBlockLinks: true,
-        preloadNoteLinks: true,
-      });
+      const note = await noteRepo.findNote(noteId);
 
       if (!note) {
         setIsLoading(false);
       } else {
-        await Promise.all([
-          noteRepo.preloadOrCreateBlocksView(note, note),
-          ...note.linkedBlocks.map((block) =>
-            noteRepo.preloadOrCreateBlocksView(note, block),
-          ),
-        ]);
-
         setNote(note);
 
         if (!note.isDeleted) {

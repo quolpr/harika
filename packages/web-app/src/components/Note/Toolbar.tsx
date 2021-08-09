@@ -40,7 +40,7 @@ export const Toolbar = observer(({ view }: { view: BlocksViewModel }) => {
   }, [currentBlockInputRef]);
 
   const currentBlock = vault.ui.focusedBlock.state?.blockId
-    ? vault.blocksMap[vault.ui.focusedBlock.state?.blockId]
+    ? vault.getNoteBlock(vault.ui.focusedBlock.state?.blockId)
     : undefined;
 
   const handleTodoPress = useCallback(

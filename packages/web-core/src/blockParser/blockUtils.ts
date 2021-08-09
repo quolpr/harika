@@ -1,11 +1,8 @@
 import { generateId } from '../generateId';
 import { NoteBlockModel, VaultModel } from '../NotesRepository/NotesRepository';
 import { BlockContentModel } from '../NotesRepository/domain/NoteBlockModel/BlockContentModel';
-import {
-  parseStringToTree,
-  TreeToken,
-} from './parseStringToTree';
-import { NoteModel, noteRef } from '../NotesRepository/domain/NoteModel';
+import { parseStringToTree, TreeToken } from './parseStringToTree';
+import type { BlocksTreeHolder } from '../NotesRepository/domain/NoteBlockModel';
 
 export const normalizeBlockTree = (str: string) => {
   const parsed = parseStringToTree(str);
@@ -22,7 +19,7 @@ export const normalizeBlockTree = (str: string) => {
 };
 
 export const addTokensToNoteBlock = (
-  note: NoteModel,
+  treeHolder: BlocksTreeHolder,
   noteBlock: NoteBlockModel,
   tokens: TreeToken[],
 ): NoteBlockModel[] => {
@@ -30,9 +27,9 @@ export const addTokensToNoteBlock = (
 
   const virtualRootBlock = new NoteBlockModel({
     createdAt: new Date().getTime(),
-    noteRef: noteRef(note),
+    noteId: noteBlock.noteId,
     noteBlockRefs: [],
-    linkedNoteRefs: [],
+    linkedNoteIds: [],
     content: new BlockContentModel({ value: '' }),
   });
 
@@ -60,9 +57,9 @@ export const addTokensToNoteBlock = (
     const newBlock = new NoteBlockModel({
       $modelId: token.id ? token.id : generateId(),
       createdAt: new Date().getTime(),
-      noteRef: noteRef(note),
+      noteId: noteBlock.noteId,
       noteBlockRefs: [],
-      linkedNoteRefs: [],
+      linkedNoteIds: [],
       content: new BlockContentModel({ value: token.content }),
     });
 
@@ -73,7 +70,7 @@ export const addTokensToNoteBlock = (
     addedModels.push(previousBlock.model);
   });
 
-  note.vault.addBlocks(addedModels);
+  treeHolder.addBlocks(addedModels);
 
   noteBlock.merge(virtualRootBlock);
 
@@ -87,9 +84,12 @@ export const parseToBlocksTree = (str: string) => {
     name: 'Vault',
   });
 
-  const note = vault.newNote({ title: 'Note' }, { addEmptyBlock: false });
+  const { note, treeHolder } = vault.newNote(
+    { title: 'Note' },
+    { addEmptyBlock: false },
+  );
 
-  addTokensToNoteBlock(note, note.rootBlockRef.current, tokens);
+  addTokensToNoteBlock(treeHolder, treeHolder.rootBlock, tokens);
 
   return { vault, note };
 };

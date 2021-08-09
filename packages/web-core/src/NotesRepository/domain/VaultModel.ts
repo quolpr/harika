@@ -7,9 +7,8 @@ import {
   Ref,
   transaction,
 } from 'mobx-keystone';
-import { INoteLoadStatus, NoteModel, noteRef } from './NoteModel';
+import { NoteModel } from './NoteModel';
 import type { Optional, Required } from 'utility-types';
-import { NoteBlockModel, noteBlockRef } from './NoteBlockModel';
 import { vaultModelType } from './consts';
 import { generateId } from '../../generateId';
 import { BlockContentModel } from './NoteBlockModel/BlockContentModel';
@@ -19,23 +18,25 @@ import {
   NotesTreeModel,
   PartialNote,
 } from './NotesTree/NotesTreeModel';
+import { BlocksTreeHolder, NoteBlockModel } from './NoteBlockModel';
 
 @model(vaultModelType)
 export class VaultModel extends Model({
   name: prop<string>(),
   notesMap: prop<Record<string, NoteModel>>(() => ({})),
-  blocksMap: prop<Record<string, NoteBlockModel>>(() => ({})),
+  // Key is noteId
+  blocksTreeHoldersMap: prop<Record<string, BlocksTreeHolder>>(() => ({})),
   ui: prop<VaultUiState>(() => new VaultUiState({})),
   notesTree: prop<NotesTreeModel>(() => newTreeModel()),
 }) {
-  get noteStatuses() {
-    const notesStatus: Record<string, INoteLoadStatus> = {};
+  getNoteBlock(blockId: string) {
+    for (const treeHolder of Object.values(this.blocksTreeHoldersMap)) {
+      const block = treeHolder.blocksMap[blockId];
 
-    Object.entries(this.notesMap).forEach(([id, note]) => {
-      notesStatus[id] = note.loadStatus;
-    });
+      if (block) return block;
+    }
 
-    return notesStatus;
+    return undefined;
   }
 
   @modelAction
@@ -48,12 +49,7 @@ export class VaultModel extends Model({
     attrs: Required<
       Optional<
         ModelCreationData<NoteModel>,
-        | 'areBlockLinksLoaded'
-        | 'areChildrenLoaded'
-        | 'areNoteLinksLoaded'
-        | 'createdAt'
-        | 'dailyNoteDate'
-        | 'rootBlockRef'
+        'createdAt' | 'dailyNoteDate' | 'rootBlockId'
       >,
       'title'
     >,
@@ -66,19 +62,16 @@ export class VaultModel extends Model({
     const rootBlock = new NoteBlockModel({
       $modelId: generateId(),
       createdAt: new Date().getTime(),
-      noteRef: noteRef(noteId),
+      noteId: noteId,
       noteBlockRefs: [],
       content: new BlockContentModel({ value: '' }),
-      linkedNoteRefs: [],
+      linkedNoteIds: [],
     });
 
     const note = new NoteModel({
       $modelId: noteId,
       createdAt: new Date().getTime(),
-      areBlockLinksLoaded: true,
-      areChildrenLoaded: true,
-      areNoteLinksLoaded: true,
-      rootBlockRef: noteBlockRef(rootBlock),
+      rootBlockId: rootBlock.$modelId,
       ...(options.isDaily
         ? {
             dailyNoteDate: new Date().getTime(),
@@ -88,25 +81,22 @@ export class VaultModel extends Model({
     });
 
     this.notesMap[note.$modelId] = note;
-    this.blocksMap[rootBlock.$modelId] = rootBlock;
+
+    const treeHolder = new BlocksTreeHolder({
+      blocksMap: { [rootBlock.$modelId]: rootBlock },
+      noteId: noteId,
+    });
+    this.blocksTreeHoldersMap[treeHolder.noteId] = treeHolder;
 
     if (options.addEmptyBlock) {
-      note.createBlock(
+      treeHolder.createBlock(
         { content: new BlockContentModel({ value: '' }) },
         rootBlock,
         0,
       );
     }
 
-    return note;
-  }
-
-  @modelAction
-  addBlocks(blocks: NoteBlockModel[]) {
-    this.blocksMap = {
-      ...this.blocksMap,
-      ...Object.fromEntries(blocks.map((block) => [block.$modelId, block])),
-    };
+    return { note, treeHolder };
   }
 
   @modelAction
@@ -154,20 +144,16 @@ export class VaultModel extends Model({
       }
     });
 
-    // BLOCK
+    // // BLOCK
 
     const blocks = blocksAttrs.map((attr) => {
-      const note = this.notesMap[attr.noteRef.id];
-      if (!note) return undefined;
-      if (!note.areChildrenLoaded) return undefined;
-
-      if (!this.blocksMap[attr.$modelId]) {
-        this.blocksMap[attr.$modelId] = new NoteBlockModel(attr);
-      } else {
-        this.blocksMap[attr.$modelId].updateAttrs(attr);
+      if (!this.blocksTreeHoldersMap[attr.noteId]) {
+        this.blocksTreeHoldersMap[attr.noteId] = new BlocksTreeHolder({
+          noteId: attr.noteId,
+        });
       }
 
-      return this.blocksMap[attr.$modelId];
+      return this.blocksTreeHoldersMap[attr.noteId].createOrUpdateBlock(attr);
     });
 
     blocks.forEach((model) => {
@@ -175,7 +161,7 @@ export class VaultModel extends Model({
 
       const toRemoveRefs = model.noteBlockRefs
         .map((ref) => {
-          if (!this.blocksMap[ref.id]) {
+          if (!this.blocksTreeHoldersMap[model.noteId].blocksMap[ref.id]) {
             return ref;
           }
 

@@ -1,21 +1,12 @@
 import { comparer, computed } from 'mobx';
-import {
-  findParent,
-  model,
-  Model,
-  modelAction,
-  prop,
-  Ref,
-} from 'mobx-keystone';
+import { model, Model, modelAction, prop, Ref } from 'mobx-keystone';
 import { normalizeBlockTree } from '../../../blockParser/blockUtils';
-import type { NoteModel } from '../NoteModel';
-import { isVault } from '../utils';
-import type { VaultModel } from '../VaultModel';
+import type { BlocksTreeHolder } from '../NoteBlockModel';
 
 @model('harika/BlocksViewModel')
 export class BlocksViewModel extends Model({
   collapsedBlockIds: prop<string[]>(() => []),
-  noteRef: prop<Ref<NoteModel>>(),
+  blockTreeHolderRef: prop<Ref<BlocksTreeHolder>>(),
   selectionInterval: prop<[string, string] | undefined>(),
   prevSelectionInterval: prop<[string, string] | undefined>(),
   // Is needed to handle when shift+click pressed
@@ -23,11 +14,6 @@ export class BlocksViewModel extends Model({
   scopedModelId: prop<string>(),
   scopedModelType: prop<string>(),
 }) {
-  @computed
-  get vault() {
-    return findParent<VaultModel>(this, isVault)!;
-  }
-
   isExpanded(noteBlockId: string) {
     return (
       this.collapsedBlockIds.find((id) => noteBlockId === id) === undefined
@@ -38,7 +24,7 @@ export class BlocksViewModel extends Model({
     let str = '';
 
     this.selectedIds.forEach((id) => {
-      const block = this.vault.blocksMap[id];
+      const block = this.blockTreeHolderRef.current.blocksMap[id];
 
       str += `${'  '.repeat(block.indent - 1)}- ${block.content.value}\n`;
     });
@@ -68,7 +54,7 @@ export class BlocksViewModel extends Model({
 
     const [fromId, toId] = this.selectionInterval;
 
-    const flattenTree = this.noteRef.current.rootBlockRef.current.flattenTree;
+    const flattenTree = this.blockTreeHolderRef.current.rootBlock.flattenTree;
 
     const fromIndex = flattenTree.findIndex(
       ({ $modelId }) => $modelId === fromId,

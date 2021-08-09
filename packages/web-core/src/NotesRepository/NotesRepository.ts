@@ -6,16 +6,19 @@ import type { Required } from 'utility-types';
 import type { ICreationResult } from './types';
 import type { VaultModel } from './domain/VaultModel';
 import type { VaultDexieDatabase } from './persistence/DexieDb';
-import { distinctUntilChanged, map, take } from 'rxjs/operators';
+import { distinctUntilChanged, map, switchMap, take } from 'rxjs/operators';
 import { uniq, uniqBy } from 'lodash-es';
 import { filterAst } from '../blockParser/astHelpers';
 import type { RefToken, TagToken } from '../blockParser/types';
 import { from, Observable, Subject } from 'rxjs';
-import { NoteDocType, VaultDbTables } from '../dexieTypes';
+import { BlocksViewDocType, NoteDocType, VaultDbTables } from '../dexieTypes';
 import { liveQuery } from 'dexie';
 import { exportDB } from 'dexie-export-import';
-import { NoteLoader, ToPreloadInfo } from './persistence/NoteLoader';
-import { convertViewToModelAttrs } from './syncers/toDomainModelsConverters';
+import {
+  convertNoteBlockDocToModelAttrs,
+  convertNoteDocToModelAttrs,
+  convertViewToModelAttrs,
+} from './syncers/toDomainModelsConverters';
 import type { ITransmittedChange } from '../dexie-sync/changesChannel';
 import { NotesChangesTrackerService } from './services/notes-tree/NotesChangesTrackerService';
 import dayjs from 'dayjs';
@@ -62,16 +65,15 @@ export class NotesRepository {
     );
   }
 
+  async updateNoteTitle(noteId: string, newTitle: string) {
+    // TODO
+  }
+
   async createNote(
     attrs: Required<
       Optional<
         ModelCreationData<NoteModel>,
-        | 'createdAt'
-        | 'dailyNoteDate'
-        | 'rootBlockRef'
-        | 'areBlockLinksLoaded'
-        | 'areNoteLinksLoaded'
-        | 'areChildrenLoaded'
+        'createdAt' | 'dailyNoteDate' | 'rootBlockId'
       >,
       'title'
     >,
@@ -95,15 +97,7 @@ export class NotesRepository {
 
     return {
       status: 'ok',
-      data: this.vault.newNote(
-        {
-          ...attrs,
-          areChildrenLoaded: true,
-          areBlockLinksLoaded: true,
-          areNoteLinksLoaded: true,
-        },
-        options,
-      ),
+      data: this.vault.newNote(attrs, options).note,
     } as ICreationResult<NoteModel>;
   }
 
@@ -113,11 +107,7 @@ export class NotesRepository {
     if (noteRow) {
       return {
         status: 'ok',
-        data: await this.findNote(noteRow.id, {
-          preloadChildren: true,
-          preloadBlockLinks: true,
-          preloadNoteLinks: true,
-        }),
+        data: await this.findNote(noteRow.id),
       } as ICreationResult<NoteModel>;
     }
 
@@ -128,30 +118,84 @@ export class NotesRepository {
       {
         title,
         dailyNoteDate: startOfDate.toDate().getTime(),
-        areChildrenLoaded: true,
-        areBlockLinksLoaded: true,
-        areNoteLinksLoaded: true,
       },
       { isDaily: true },
     );
   }
 
-  async findNote(id: string, toPreloadInfo: ToPreloadInfo) {
-    if (this.vault.notesMap[id]) {
-      const noteInStore = this.vault.notesMap[id];
+  getLinkedNotes$(noteId: string) {
+    return from(
+      liveQuery(() =>
+        this.db.notesQueries.getLinkedNoteIdsOfNoteId(noteId),
+      ) as Observable<string[]>,
+    ).pipe(
+      switchMap(
+        (ids) =>
+          liveQuery(() => this.findNoteByIds(ids)) as Observable<NoteModel[]>,
+      ),
+    );
+  }
 
-      if (!noteInStore.areNeededDataLoaded(toPreloadInfo)) {
-        console.debug(`Loading Note#${id} from dexie`);
+  async getBlocksTreeHolderByNoteIds(notesIds: string[]) {
+    const toLoadNoteIds = notesIds.filter(
+      (id) => this.vault.blocksTreeHoldersMap[id] === undefined,
+    );
 
-        return this.preloadNote(id, toPreloadInfo);
-      } else {
-        console.debug(`Note${id} already loaded`);
+    const blocksAttrs = (
+      await this.db.noteBlocksQueries.getByNoteIds(toLoadNoteIds)
+    ).map((m) => convertNoteBlockDocToModelAttrs(m));
 
-        return noteInStore;
-      }
+    this.vault.createOrUpdateEntitiesFromAttrs([], blocksAttrs);
+
+    return notesIds.map((noteId) => this.vault.blocksTreeHoldersMap[noteId]);
+  }
+
+  async getBlocksTreeHolder(noteId: string) {
+    if (!this.vault.blocksTreeHoldersMap[noteId]) {
+      const noteBlockAttrs = await Promise.all(
+        (
+          await this.db.noteBlocksQueries.getByNoteId(noteId)
+        ).map((m) => convertNoteBlockDocToModelAttrs(m)),
+      );
+
+      this.vault.createOrUpdateEntitiesFromAttrs([], noteBlockAttrs);
     }
 
-    return this.preloadNote(id, toPreloadInfo);
+    return this.vault.blocksTreeHoldersMap[noteId];
+  }
+
+  async findNoteByIds(ids: string[]) {
+    const noteDocs = await this.db.notesQueries.getByIds(ids);
+
+    this.vault.createOrUpdateEntitiesFromAttrs(
+      noteDocs.map((doc) => convertNoteDocToModelAttrs(doc)),
+      [],
+    );
+
+    return ids.map((id) => this.vault.notesMap[id]).filter((v) => Boolean(v));
+  }
+
+  async findNote(id: string) {
+    if (this.vault.notesMap[id]) {
+      return this.vault.notesMap[id];
+    } else {
+      const noteDoc = await this.db.notes.get(id);
+
+      if (!noteDoc) {
+        console.error(`Note with id ${id} not found`);
+
+        return;
+      }
+
+      this.vault.createOrUpdateEntitiesFromAttrs(
+        [convertNoteDocToModelAttrs(noteDoc)],
+        [],
+      );
+
+      console.debug(`Loading Note#${id} from dexie`);
+
+      return this.vault.notesMap[id];
+    }
   }
 
   getNoteIdByTitle$(title: string) {
@@ -168,8 +212,12 @@ export class NotesRepository {
   async updateNoteBlockLinks(noteBlockIds: string[]) {
     return Promise.all(
       noteBlockIds.map(async (id) => {
-        const noteBlock = this.vault.blocksMap[id];
+        const noteBlock = this.vault.getNoteBlock(id);
 
+        if (!noteBlock) {
+          console.error('noteBlock note found');
+          return;
+        }
         console.debug('Updating links');
 
         const titles = uniq([
@@ -211,11 +259,7 @@ export class NotesRepository {
               } else {
                 const existing = existingNotesIndexed[name];
 
-                return this.findNote(existing.id, {
-                  preloadChildren: false,
-                  preloadBlockLinks: false,
-                  preloadNoteLinks: false,
-                });
+                return this.findNote(existing.id);
               }
             }),
           )
@@ -226,6 +270,25 @@ export class NotesRepository {
         );
       }),
     );
+  }
+
+  async preloadOrCreateBlocksViews(
+    note: NoteModel,
+    models: { $modelId: string; $modelType: string }[],
+  ) {
+    const generateKey = (model: { $modelId: string; $modelType: string }) =>
+      `${note.$modelId}-${model.$modelType}-${model.$modelId}`;
+    const keys = models.map((model) => generateKey(model));
+
+    const docs = (await this.db.blocksViews.bulkGet(keys)).filter((v) =>
+      Boolean(v),
+    ) as BlocksViewDocType[];
+
+    this.vault.ui.createOrUpdateEntitiesFromAttrs(
+      docs.map((doc) => convertViewToModelAttrs(doc)),
+    );
+
+    this.vault.ui.createViewsByModels(note, models);
   }
 
   async preloadOrCreateBlocksView(
@@ -243,19 +306,6 @@ export class NotesRepository {
     } else {
       this.vault.ui.createViewByModel(note, model);
     }
-  }
-
-  async preloadNote(id: string, toPreloadInfo: ToPreloadInfo) {
-    const data = await new NoteLoader(
-      this.db,
-      this.vault.noteStatuses,
-      id,
-      toPreloadInfo,
-    ).loadNote();
-
-    this.vault.createOrUpdateEntitiesFromAttrs(data.notes, data.noteBlocks);
-
-    return this.vault.notesMap[id];
   }
 
   async isNoteExists(title: string) {

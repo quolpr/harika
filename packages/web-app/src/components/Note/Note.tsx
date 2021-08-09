@@ -3,40 +3,110 @@ import './styles.css';
 import { useEffect } from 'react';
 import { useState } from 'react';
 import { observer } from 'mobx-react-lite';
-import { NoteBlockModel, NoteModel, FocusedBlockState } from '@harika/web-core';
+import { NoteModel, FocusedBlockState } from '@harika/web-core';
 import { computed } from 'mobx';
 import { useHistory } from 'react-router-dom';
 import { LinkIcon } from '@heroicons/react/solid';
-import { groupBy } from 'lodash-es';
 import { useCurrentVault } from '../../hooks/useCurrentVault';
 import { CurrentBlockInputRefContext } from '../../contexts';
 import { useNoteRepository } from '../../contexts/CurrentNoteRepositoryContext';
 import { NoteBlocks } from './NoteBlocks';
 import { BacklinkedNote } from './BacklinkedNote';
+import { useAsync } from 'react-use';
+import { uniq } from 'lodash-es';
+import { useObservable, useObservableState } from 'observable-hooks';
+import { switchMap } from 'rxjs';
 
 export interface IFocusBlockState {
   focusOnBlockId: string;
 }
 
-const Backlinks = observer(
-  ({ linkedBlocks }: { linkedBlocks: NoteBlockModel[] }) => {
+const BacklinkedNoteLoader = observer(
+  ({ linkedNote, note }: { linkedNote: NoteModel; note: NoteModel }) => {
+    const noteRepo = useNoteRepository();
+
+    const blockTreeHolderState = useAsync(
+      () => noteRepo.getBlocksTreeHolder(linkedNote.$modelId),
+      [noteRepo, linkedNote.$modelId],
+    );
+
+    const linkedBlocks = computed(() => {
+      return blockTreeHolderState.value
+        ? blockTreeHolderState.value.getLinkedBlocksOfNoteId(note.$modelId)
+        : [];
+    }).get();
+
     return (
       <>
-        {Object.entries(
-          groupBy(linkedBlocks, (block): string => block.noteRef.id),
-        ).map(([, blocks]) => {
-          const note = blocks[0].noteRef.current;
-
-          return (
-            <BacklinkedNote key={note.$modelId} note={note} blocks={blocks} />
-          );
-        })}
+        {blockTreeHolderState.value && (
+          <BacklinkedNote
+            key={linkedNote.$modelId}
+            note={linkedNote}
+            blocks={linkedBlocks}
+            treeHolder={blockTreeHolderState.value}
+          />
+        )}
       </>
     );
   },
 );
 
-// TODO: on NoteBlock change it still rerenders. Why?
+const BacklinkedNotes = observer(({ note }: { note: NoteModel }) => {
+  const noteRepo = useNoteRepository();
+
+  const linkedNotes$ = useObservable(
+    ($inputs) =>
+      $inputs.pipe(switchMap(([noteId]) => noteRepo.getLinkedNotes$(noteId))),
+    [note.$modelId],
+  );
+  const linkedNotes = useObservableState(linkedNotes$, undefined);
+
+  const blockState = useAsync(async () => {
+    if (!linkedNotes) return { isLoaded: false } as const;
+
+    // Just batch loading, for optimization
+    const treeHolders = await noteRepo.getBlocksTreeHolderByNoteIds(
+      linkedNotes.map(({ $modelId }) => $modelId),
+    );
+
+    const allBlocks = uniq(
+      treeHolders.flatMap((holder) =>
+        holder.getLinkedBlocksOfNoteId(note.$modelId),
+      ),
+    );
+
+    await noteRepo.preloadOrCreateBlocksViews(note, allBlocks);
+
+    return { isLoaded: true, refsCount: allBlocks.length } as const;
+  }, [noteRepo, linkedNotes, note]);
+
+  return (
+    <>
+      {blockState.value?.refsCount !== undefined ? (
+        <div className="note__linked-references">
+          <LinkIcon className="note__link-icon" style={{ width: 16 }} />
+          {blockState.value.refsCount} Linked References
+        </div>
+      ) : (
+        <div className="note__linked-references">
+          <LinkIcon className="note__link-icon" style={{ width: 16 }} />
+          References are loading...
+        </div>
+      )}
+
+      {linkedNotes &&
+        blockState.value?.isLoaded === true &&
+        linkedNotes.map((linkedNote) => (
+          <BacklinkedNoteLoader
+            key={linkedNote.$modelId}
+            linkedNote={linkedNote}
+            note={note}
+          />
+        ))}
+    </>
+  );
+});
+
 const NoteBody = observer(({ note }: { note: NoteModel }) => {
   const vault = useCurrentVault();
   const noteRepo = useNoteRepository();
@@ -61,7 +131,7 @@ const NoteBody = observer(({ note }: { note: NoteModel }) => {
 
       setNoteTitle(note.title);
     } else {
-      note.updateTitle(noteTitle);
+      noteRepo.updateNoteTitle(note.$modelId, noteTitle);
     }
   }, [note, noteRepo, noteTitle]);
 
@@ -114,20 +184,9 @@ const NoteBody = observer(({ note }: { note: NoteModel }) => {
         />
       </h2>
 
-      {view && (
-        <NoteBlocks
-          note={note}
-          view={view}
-          childBlocks={note.rootBlockRef.current.noteBlockRefs}
-        />
-      )}
+      {view && <NoteBlocks note={note} view={view} />}
 
-      <div className="note__linked-references">
-        <LinkIcon className="note__link-icon" style={{ width: 16 }} />
-        {note.linkedBlocks.length} Linked References
-      </div>
-
-      <Backlinks linkedBlocks={note.linkedBlocks} />
+      <BacklinkedNotes note={note} />
     </div>
   );
 });

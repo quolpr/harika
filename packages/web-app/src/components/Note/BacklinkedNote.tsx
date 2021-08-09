@@ -7,7 +7,11 @@ import { useHandleClick } from '../../hooks/useNoteClick';
 import { Arrow } from '../Arrow/Arrow';
 import { Link, useLocation } from 'react-router-dom';
 import { paths } from '../../paths';
-import type { NoteBlockModel, NoteModel } from '@harika/web-core';
+import type {
+  BlocksTreeHolder,
+  NoteBlockModel,
+  NoteModel,
+} from '@harika/web-core';
 import { useNoteRepository } from '../../contexts/CurrentNoteRepositoryContext';
 import { computed } from 'mobx';
 import { NoteBlock } from '../NoteBlock/NoteBlock';
@@ -17,9 +21,11 @@ const LinkedBlock = observer(
   ({
     note,
     noteBlock,
+    treeHolder,
   }: {
     note: NoteModel;
     noteBlock: NoteBlockModel;
+    treeHolder: BlocksTreeHolder;
   }): JSX.Element => {
     const vault = useCurrentVault();
     const path = noteBlock.path;
@@ -56,7 +62,13 @@ const LinkedBlock = observer(
           </div>
         )}
 
-        {view && <NoteBlocksHandlers note={note} view={view} />}
+        {view && (
+          <NoteBlocksHandlers
+            note={note}
+            view={view}
+            blocksTreeHolder={treeHolder}
+          />
+        )}
         {view && <NoteBlock noteBlock={noteBlock} view={view} />}
       </div>
     );
@@ -64,7 +76,15 @@ const LinkedBlock = observer(
 );
 
 export const BacklinkedNote = observer(
-  ({ note, blocks }: { note: NoteModel; blocks: NoteBlockModel[] }) => {
+  ({
+    note,
+    blocks,
+    treeHolder,
+  }: {
+    note: NoteModel;
+    blocks: NoteBlockModel[];
+    treeHolder: BlocksTreeHolder;
+  }) => {
     const vault = useCurrentVault();
     const [isExpanded, setIsExpanded] = useState(true);
     const currentNote = useCurrentNote();
@@ -115,6 +135,7 @@ export const BacklinkedNote = observer(
               key={noteBlock.$modelId}
               note={note}
               noteBlock={noteBlock}
+              treeHolder={treeHolder}
             />
           ))}
         </div>

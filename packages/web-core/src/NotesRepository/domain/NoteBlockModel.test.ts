@@ -1,5 +1,8 @@
 import { expect } from '@esm-bundle/chai';
-import { normalizeBlockTree, parseToBlocksTree } from '../../blockParser/blockUtils';
+import {
+  normalizeBlockTree,
+  parseToBlocksTree,
+} from '../../blockParser/blockUtils';
 import { parseStringToTree } from '../../blockParser/parseStringToTree';
 
 describe('NoteBlockModel', () => {
@@ -13,7 +16,7 @@ describe('NoteBlockModel', () => {
 
       const { note } = parseToBlocksTree(expectedTree);
 
-      expect(note.rootBlockRef.current.getStringTree(true).trim()).to.equal(
+      expect(note.rootBlockId.current.getStringTree(true).trim()).to.equal(
         expectedTree,
       );
     });
@@ -29,7 +32,7 @@ describe('NoteBlockModel', () => {
 
       const { note } = parseToBlocksTree(normalizedTree);
 
-      expect(note.rootBlockRef.current.getStringTree(true).trim()).to.equal(
+      expect(note.rootBlockId.current.getStringTree(true).trim()).to.equal(
         normalizedTree,
       );
     });
@@ -58,7 +61,7 @@ describe('NoteBlockModel', () => {
 
       vault.blocksMap['4'].injectNewTreeTokens(toInsert());
 
-      expect(note.rootBlockRef.current.getStringTree().trim()).to.equal(
+      expect(note.rootBlockId.current.getStringTree().trim()).to.equal(
         normalizeBlockTree(`
           - block0
           - block1
@@ -85,7 +88,7 @@ describe('NoteBlockModel', () => {
 
       vault.blocksMap['0'].injectNewTreeTokens(toInsert());
 
-      expect(note.rootBlockRef.current.getStringTree().trim()).to.equal(
+      expect(note.rootBlockId.current.getStringTree().trim()).to.equal(
         normalizeBlockTree(`
           - block0
           - block6
@@ -120,7 +123,7 @@ describe('NoteBlockModel', () => {
           '2',
         ]);
 
-        expect(note.rootBlockRef.current.getStringTree().trim()).to.equal(
+        expect(note.rootBlockId.current.getStringTree().trim()).to.equal(
           normalizeBlockTree(`
             - [[DONE]] block0
               - [[DONE]] block1
@@ -152,7 +155,7 @@ describe('NoteBlockModel', () => {
           '3',
         ]);
 
-        expect(note.rootBlockRef.current.getStringTree().trim()).to.equal(
+        expect(note.rootBlockId.current.getStringTree().trim()).to.equal(
           normalizeBlockTree(`
           - [[TODO]] block0
             - [[TODO]] block1

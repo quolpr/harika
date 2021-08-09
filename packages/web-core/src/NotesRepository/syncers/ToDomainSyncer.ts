@@ -89,7 +89,7 @@ export class ToDomainSyncer {
 
     return Object.values(latestDedupedEvents)
       .map((ev) => {
-        const noteBlock = this.vault.blocksMap[ev.key];
+        const noteBlock = this.vault.getNoteBlock(ev.key);
 
         if (ev.type === DatabaseChangeType.Delete) {
           if (noteBlock) {
@@ -137,11 +137,7 @@ export class ToDomainSyncer {
           if (!ev.obj) throw new Error('obj should be present');
 
           // Any changes we will load to mobx cause they may have refs
-          return convertNoteDocToModelAttrs(ev.obj, {
-            areChildrenLoaded: false,
-            areNoteLinksLoaded: false,
-            areBlockLinksLoaded: false,
-          });
+          return convertNoteDocToModelAttrs(ev.obj);
         }
       })
       .filter((n) => !!n) as NoteData[];
