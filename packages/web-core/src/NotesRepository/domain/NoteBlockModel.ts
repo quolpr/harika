@@ -639,10 +639,9 @@ export class BlocksTreeHolder extends Model({
 
   @modelAction
   addBlocks(blocks: NoteBlockModel[]) {
-    this.blocksMap = {
-      ...this.blocksMap,
-      ...Object.fromEntries(blocks.map((block) => [block.$modelId, block])),
-    };
+    blocks.forEach((block) => {
+      this.blocksMap[block.$modelId] = block;
+    });
   }
 
   createOrUpdateBlock(

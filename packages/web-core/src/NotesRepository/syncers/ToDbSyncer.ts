@@ -194,6 +194,8 @@ const getBlocksPatches = (
           toUpdateIds.add(id);
         }
       }
+    } else if (patch.path[0] === 'blocksTreeHoldersMap') {
+      console.error(patch, 'Unknown patch');
     }
   });
 

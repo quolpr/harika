@@ -1,6 +1,6 @@
 import type { IDatabaseChange } from '../../dexieTypes';
 import { applyChanges } from '../../dexie-sync/applyChanges';
-import type Dexie from 'dexie';
+import Dexie from 'dexie';
 import type { IConflictsResolver } from '../../dexie-sync/ServerSynchronizer';
 
 export class UserDbConflictsResolver implements IConflictsResolver {
