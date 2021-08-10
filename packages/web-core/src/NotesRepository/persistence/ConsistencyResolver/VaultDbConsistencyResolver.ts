@@ -36,8 +36,14 @@ export class VaultDbConsistencyResolver implements IConsistencyResolver {
           (b) => b.id !== oldestRootBlock?.id,
         );
 
-        if (!oldestRootBlock)
-          throw new Error('Unexpected error - root block not found');
+        if (!oldestRootBlock) {
+          console.error(
+            'Unexpected error - root block not found',
+            rootBlocks,
+            notes,
+          );
+          return;
+        }
 
         rootBlocks.forEach((noteBlock) => {
           if (noteBlock.id === oldestRootBlock.id) return;

@@ -10,7 +10,7 @@ import { distinctUntilChanged, map, switchMap, take } from 'rxjs/operators';
 import { uniq, uniqBy } from 'lodash-es';
 import { filterAst } from '../blockParser/astHelpers';
 import type { RefToken, TagToken } from '../blockParser/types';
-import { from, Observable, Subject } from 'rxjs';
+import { firstValueFrom, from, Observable, Subject } from 'rxjs';
 import { BlocksViewDocType, NoteDocType, VaultDbTables } from '../dexieTypes';
 import { liveQuery } from 'dexie';
 import { exportDB } from 'dexie-export-import';
@@ -66,7 +66,29 @@ export class NotesRepository {
   }
 
   async updateNoteTitle(noteId: string, newTitle: string) {
-    // TODO
+    const exists = await this.isNoteExists(newTitle);
+
+    if (exists) return 'exists' as const;
+
+    const note = await this.findNote(noteId);
+
+    if (!note) return;
+
+    const oldTitle = note.title;
+
+    (
+      await this.getBlocksTreeHolderByNoteIds(
+        (
+          await firstValueFrom(this.getLinkedNotes$(noteId))
+        ).map(({ $modelId }) => $modelId),
+      )
+    )
+      .flatMap((holder) => holder.getLinkedBlocksOfNoteId(noteId))
+      .map((block) => block.content.updateTitle(oldTitle, newTitle));
+
+    note.updateTitle(newTitle);
+
+    return 'ok';
   }
 
   async createNote(

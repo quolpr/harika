@@ -65,6 +65,8 @@ export class NotesTreeModel extends Model({
       }
 
       if (ch.type === 'delete') {
+        if (!this.noteIdsMap[ch.id]) return;
+
         const node = this.nodesMap[this.noteIdsMap[ch.id].$modelId];
         node.noteId = undefined;
 
@@ -73,9 +75,10 @@ export class NotesTreeModel extends Model({
 
       if (ch.type === 'rename') {
         // TODO: could me optimized
-
-        const node = this.nodesMap[this.noteIdsMap[ch.id].$modelId];
-        node.noteId = undefined;
+        if (this.noteIdsMap[ch.id].$modelId) {
+          const node = this.nodesMap[this.noteIdsMap[ch.id].$modelId];
+          node.noteId = undefined;
+        }
 
         this.insertNoteTitle(ch.id, ch.toTitle);
 

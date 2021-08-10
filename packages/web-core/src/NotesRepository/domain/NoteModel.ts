@@ -62,6 +62,11 @@ export class NoteModel extends Model({
   isDeleted: prop<boolean>(false),
   rootBlockId: prop<string>(),
 }) {
+  @modelAction
+  updateTitle(newTitle: string) {
+    this.title = newTitle;
+  }
+
   updateAttrs(attrs: ModelCreationData<NoteModel>) {
     this.title = attrs.title;
     this.dailyNoteDate = attrs.dailyNoteDate;

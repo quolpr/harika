@@ -10,7 +10,12 @@ export class UserDbConflictsResolver implements IConflictsResolver {
     clientChanges: IDatabaseChange[],
     serverChanges: IDatabaseChange[],
   ) {
-    await applyChanges(this.db, serverChanges);
+    // TODO: client/sercer conflicts resolution
+    await this.db.transaction('rw', this.db.tables, async () => {
+      // @ts-ignore
+      Dexie.currentTransaction.source = 'serverChanges';
+      await applyChanges(this.db, serverChanges);
+    });
   }
 
   tables() {

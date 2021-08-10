@@ -122,16 +122,14 @@ const NoteBody = observer(({ note }: { note: NoteModel }) => {
   const changeTitle = useCallback(async () => {
     if (note.title === noteTitle) return;
 
-    const exists = await noteRepo.isNoteExists(noteTitle);
+    const result = await noteRepo.updateNoteTitle(note.$modelId, noteTitle);
 
-    if (exists) {
+    if (result === 'exists') {
       alert(
         `Can't change note title to ${noteTitle} - such note already exists`,
       );
 
       setNoteTitle(note.title);
-    } else {
-      noteRepo.updateNoteTitle(note.$modelId, noteTitle);
     }
   }, [note, noteRepo, noteTitle]);
 
