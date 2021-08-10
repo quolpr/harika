@@ -2,7 +2,7 @@
 
 Harika is an offline-first, performance-focused notebook for organizing your knowledge database.
 
-## Key features:
+## Key features
 
 - Offline first — use it with your mobile or desktop, and see changes on the fly; even when you are offline, it all got synced when you will get online back
 - Scalable — notes are loading on-demand, so it doesn't matter how large your knowledge base will be.
