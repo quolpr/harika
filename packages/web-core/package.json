@@ -15,7 +15,7 @@
     "broadcast-channel": "^3.7.0",
     "camelcase-keys": "^7.0.0",
     "dayjs": "^1.10.6",
-    "dexie": "3.2.0-beta-2",
+    "dexie": "3.2.0-beta.3",
     "dexie-export-import": "^1.0.3",
     "downloadjs": "^1.4.7",
     "lodash-es": "^4.17.21",

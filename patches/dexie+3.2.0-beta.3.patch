@@ -1,0 +1,123 @@
+diff --git a/node_modules/dexie/dist/dexie.js b/node_modules/dexie/dist/dexie.js
+index 52031d3..9fae277 100644
+--- a/node_modules/dexie/dist/dexie.js
++++ b/node_modules/dexie/dist/dexie.js
+@@ -5009,21 +5009,21 @@
+     var propagateLocally = fireLocally;
+     var propagatingLocally = false;
+     var accumulatedParts = {};
+-    if (typeof document !== 'undefined' && document.addEventListener) {
+-        var fireIfVisible_1 = function () {
+-            if (document.visibilityState === "visible") {
+-                if (Object.keys(accumulatedParts).length > 0) {
+-                    fireLocally(accumulatedParts);
+-                }
+-                accumulatedParts = {};
+-            }
+-        };
+-        document.addEventListener("visibilitychange", fireIfVisible_1);
+-        propagateLocally = function (changedParts) {
+-            extendObservabilitySet(accumulatedParts, changedParts);
+-            fireIfVisible_1();
+-        };
+-    }
++    // if (typeof document !== 'undefined' && document.addEventListener) {
++    //     var fireIfVisible_1 = function () {
++    //         if (document.visibilityState === "visible") {
++    //             if (Object.keys(accumulatedParts).length > 0) {
++    //                 fireLocally(accumulatedParts);
++    //             }
++    //             accumulatedParts = {};
++    //         }
++    //     };
++    //     document.addEventListener("visibilitychange", fireIfVisible_1);
++    //     propagateLocally = function (changedParts) {
++    //         extendObservabilitySet(accumulatedParts, changedParts);
++    //         fireIfVisible_1();
++    //     };
++    // }
+ 
+     if (typeof BroadcastChannel !== "undefined") {
+         var bc_1 = new BroadcastChannel("dexie-txcommitted");
+diff --git a/node_modules/dexie/dist/dexie.mjs b/node_modules/dexie/dist/dexie.mjs
+index 808da48..73b8c0d 100644
+--- a/node_modules/dexie/dist/dexie.mjs
++++ b/node_modules/dexie/dist/dexie.mjs
+@@ -5003,21 +5003,21 @@ function fireLocally(updateParts) {
+ var propagateLocally = fireLocally;
+ var propagatingLocally = false;
+ var accumulatedParts = {};
+-if (typeof document !== 'undefined' && document.addEventListener) {
+-    var fireIfVisible_1 = function () {
+-        if (document.visibilityState === "visible") {
+-            if (Object.keys(accumulatedParts).length > 0) {
+-                fireLocally(accumulatedParts);
+-            }
+-            accumulatedParts = {};
+-        }
+-    };
+-    document.addEventListener("visibilitychange", fireIfVisible_1);
+-    propagateLocally = function (changedParts) {
+-        extendObservabilitySet(accumulatedParts, changedParts);
+-        fireIfVisible_1();
+-    };
+-}
++// if (typeof document !== 'undefined' && document.addEventListener) {
++//     var fireIfVisible_1 = function () {
++//         if (document.visibilityState === "visible") {
++//             if (Object.keys(accumulatedParts).length > 0) {
++//                 fireLocally(accumulatedParts);
++//             }
++//             accumulatedParts = {};
++//         }
++//     };
++//     document.addEventListener("visibilitychange", fireIfVisible_1);
++//     propagateLocally = function (changedParts) {
++//         extendObservabilitySet(accumulatedParts, changedParts);
++//         fireIfVisible_1();
++//     };
++// }
+ 
+ if (typeof BroadcastChannel !== "undefined") {
+     var bc_1 = new BroadcastChannel("dexie-txcommitted");
+diff --git a/node_modules/dexie/dist/modern/dexie.mjs b/node_modules/dexie/dist/modern/dexie.mjs
+index bfa100d..e21c0b4 100644
+--- a/node_modules/dexie/dist/modern/dexie.mjs
++++ b/node_modules/dexie/dist/modern/dexie.mjs
+@@ -4937,21 +4937,21 @@ function fireLocally(updateParts) {
+ let propagateLocally = fireLocally;
+ let propagatingLocally = false;
+ let accumulatedParts = {};
+-if (typeof document !== 'undefined' && document.addEventListener) {
+-    const fireIfVisible = () => {
+-        if (document.visibilityState === "visible") {
+-            if (Object.keys(accumulatedParts).length > 0) {
+-                fireLocally(accumulatedParts);
+-            }
+-            accumulatedParts = {};
+-        }
+-    };
+-    document.addEventListener("visibilitychange", fireIfVisible);
+-    propagateLocally = (changedParts) => {
+-        extendObservabilitySet(accumulatedParts, changedParts);
+-        fireIfVisible();
+-    };
+-}
++// if (typeof document !== 'undefined' && document.addEventListener) {
++//     const fireIfVisible = () => {
++//         if (document.visibilityState === "visible") {
++//             if (Object.keys(accumulatedParts).length > 0) {
++//                 fireLocally(accumulatedParts);
++//             }
++//             accumulatedParts = {};
++//         }
++//     };
++//     document.addEventListener("visibilitychange", fireIfVisible);
++//     propagateLocally = (changedParts) => {
++//         extendObservabilitySet(accumulatedParts, changedParts);
++//         fireIfVisible();
++//     };
++// }
+ 
+ if (typeof BroadcastChannel !== "undefined") {
+     const bc = new BroadcastChannel("dexie-txcommitted");
