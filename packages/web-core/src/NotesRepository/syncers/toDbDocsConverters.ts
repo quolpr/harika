@@ -15,6 +15,7 @@ export const mapNoteBlock = (model: NoteBlockModel): NoteBlockDocType => {
     createdAt: model.createdAt,
     noteBlockIds: model.noteBlockRefs.map(({ id }) => id),
     linkedNoteIds: [...model.linkedNoteIds],
+    isRoot: model.isRoot ? 1 : 0,
   };
 };
 export const mapNote = (model: NoteModel): NoteDocType => {
@@ -23,7 +24,6 @@ export const mapNote = (model: NoteModel): NoteDocType => {
     dailyNoteDate: model.dailyNoteDate,
     title: model.title,
     createdAt: model.createdAt,
-    rootBlockId: model.rootBlockId,
   };
 };
 export const mapView = (model: BlocksViewModel): BlocksViewDocType => {

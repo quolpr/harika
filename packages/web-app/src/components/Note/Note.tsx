@@ -166,6 +166,7 @@ const NoteBody = observer(({ note }: { note: NoteModel }) => {
     }
   });
 
+
   return (
     <div className="note">
       <h2 className="note__header">

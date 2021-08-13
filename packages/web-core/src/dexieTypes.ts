@@ -71,7 +71,6 @@ export type NoteDocType = {
   id: string;
   title: string;
   dailyNoteDate: number | undefined;
-  rootBlockId: string;
   createdAt: number;
   updatedAt?: number;
 };
@@ -79,6 +78,7 @@ export type NoteDocType = {
 export type NoteBlockDocType = {
   id: string;
   noteId: string;
+  isRoot: 0 | 1;
 
   noteBlockIds: string[];
   linkedNoteIds: string[];

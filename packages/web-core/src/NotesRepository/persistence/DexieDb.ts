@@ -18,9 +18,9 @@ export class VaultDexieDatabase extends Dexie {
 
     this.version(1).stores({
       [VaultDbTables.NoteBlocks]:
-        'id, parentBlockId, noteId, *noteBlockIds, *linkedNoteIds, content, createdAt, updatedAt',
+        'id, isRoot, noteId, [noteId+isRoot], *noteBlockIds, *linkedNoteIds, content, createdAt, updatedAt',
       [VaultDbTables.Notes]:
-        'id, rootBlockId, title, dailyNoteDate, createdAt, updatedAt, [title+id]',
+        'id, title, dailyNoteDate, createdAt, updatedAt, [title+id]',
       [VaultDbTables.BlocksViews]: 'id, *collapsedIds',
       _syncStatus: 'id',
       _changesToSend: '++rev',
@@ -51,6 +51,10 @@ class NoteBlocksQueries {
 
   getById(id: string) {
     return this.table.get({ id });
+  }
+
+  getRootBlock(noteId: string) {
+    return this.table.get({ noteId, isRoot: 1 });
   }
 
   async getByIds(ids: string[]) {

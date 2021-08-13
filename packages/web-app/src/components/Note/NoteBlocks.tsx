@@ -1,11 +1,10 @@
 import { observer } from 'mobx-react-lite';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useAsync, useMedia } from 'react-use';
 import { NoteBlock } from '../NoteBlock/NoteBlock';
 import { Toolbar } from './Toolbar';
 import { NoteBlocksHandlers } from './NoteBlocksHandlers';
 import type { BlocksViewModel, NoteModel } from '@harika/web-core';
-import type { BlocksTreeHolder } from '@harika/web-core';
 import { useNoteRepository } from '../../contexts/CurrentNoteRepositoryContext';
 
 export const NoteBlocks = observer(
@@ -30,7 +29,7 @@ export const NoteBlocks = observer(
 
         <div className="note__body">
           {blockTreeHolderState.value &&
-            blockTreeHolderState.value.rootBlock.noteBlockRefs.map(
+            blockTreeHolderState.value.rootBlock?.noteBlockRefs.map(
               (noteBlock) => (
                 <NoteBlock
                   key={noteBlock.current.$modelId}

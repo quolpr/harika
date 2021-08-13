@@ -1,5 +1,6 @@
 import { groupBy, uniq } from 'lodash-es';
 import type { IConsistencyResolver } from '../../../dexie-sync/ServerSynchronizer';
+import type { NoteBlockDocType, NoteDocType } from '../../../dexieTypes';
 import type { VaultDexieDatabase } from '../DexieDb';
 
 export class VaultDbConsistencyResolver implements IConsistencyResolver {
@@ -24,17 +25,25 @@ export class VaultDbConsistencyResolver implements IConsistencyResolver {
 
         // 1. merge root blocks
 
-        const rootBlocks = await this.db.noteBlocksQueries.getByIds(
-          notes.map(({ rootBlockId }) => rootBlockId),
-        );
+        const rootBlocks = (
+          await Promise.all(
+            notes.map(async (note) => ({
+              note,
+              rootBlock: await this.db.noteBlocksQueries.getRootBlock(note.id),
+            })),
+          )
+        ).filter(({ rootBlock }) => Boolean(rootBlock)) as {
+          note: NoteDocType;
+          rootBlock: NoteBlockDocType;
+        }[];
 
         const oldestRootBlock = rootBlocks.find(
-          ({ id }) => id === oldestNote.rootBlockId,
-        );
+          ({ note }) => note.id === oldestNote.id,
+        )?.rootBlock;
 
-        const nonOldestRootBlocks = rootBlocks.filter(
-          (b) => b.id !== oldestRootBlock?.id,
-        );
+        const nonOldestRootBlocks = rootBlocks
+          .filter(({ rootBlock }) => rootBlock?.id !== oldestRootBlock?.id)
+          .map(({ rootBlock }) => rootBlock);
 
         if (!oldestRootBlock) {
           console.error(
@@ -45,12 +54,12 @@ export class VaultDbConsistencyResolver implements IConsistencyResolver {
           return;
         }
 
-        rootBlocks.forEach((noteBlock) => {
-          if (noteBlock.id === oldestRootBlock.id) return;
+        rootBlocks.forEach(({ rootBlock }) => {
+          if (rootBlock.id === oldestRootBlock.id) return;
 
           oldestRootBlock.noteBlockIds = [
             ...oldestRootBlock.noteBlockIds,
-            ...noteBlock.noteBlockIds,
+            ...rootBlock.noteBlockIds,
           ];
         });
 
