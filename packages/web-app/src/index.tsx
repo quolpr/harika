@@ -1,6 +1,25 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
+import { Workbox } from 'workbox-window';
 import { App } from './App';
+
+if (import.meta.env.MODE === 'production' && 'serviceWorker' in navigator) {
+  console.log('Starting service worker');
+
+  const wb = new Workbox('/sw.js');
+
+  wb.addEventListener('waiting', () => {
+    if (window.confirm('New version available. Update?')) {
+      wb.addEventListener('controlling', () => {
+        window.location.reload();
+      });
+
+      wb.messageSkipWaiting();
+    }
+  });
+
+  wb.register();
+}
 
 const renderApp = async () => {
   if (import.meta.env.MODE !== 'production') {
