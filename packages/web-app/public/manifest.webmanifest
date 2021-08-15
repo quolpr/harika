@@ -1,0 +1,15 @@
+{
+  "name": "Harika",
+  "short_name": "Harika",
+  "theme_color": "#DB2777",
+  "background_color": "#2196f3",
+  "display": "standalone",
+  "scope": "https://app-dev.harika.io/",
+  "start_url": "https://app-dev.harika.io/",
+  "prefer_related_applications": false,
+  "version": "1.0.0",
+  "icons": [
+    { "src": "/favicon-192.png", "type": "image/png", "sizes": "192x192" },
+    { "src": "/favicon-512.png", "type": "image/png", "sizes": "512x512" }
+  ]
+}
