@@ -234,6 +234,8 @@ export class ToDbSyncer {
   };
 
   private applyPatches = async (patches: Patch[]) => {
+    console.log('received patches from mobx', patches);
+
     patches = patches.filter(
       ({ path }) =>
         ['blocksTreeHoldersMap', 'notesMap'].includes(path[0] as string) ||
