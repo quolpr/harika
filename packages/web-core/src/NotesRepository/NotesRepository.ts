@@ -413,12 +413,32 @@ export class NotesRepository {
     const tables = data.map(({ tableName }) => tableName);
 
     return this.db.transaction('rw', tables, async () => {
-      return Promise.all(
+      await Promise.all(
         data.map(async ({ tableName, rows }) => {
-          await this.db
-            .table(tableName)
-            .bulkAdd(rows.filter(({ id }) => Boolean(id))); // some rows could be broken, we check that at least id present
+          await this.db.table(tableName).bulkAdd(
+            rows
+              .filter(({ id }) => Boolean(id)) // some rows could be broken, we check that at least id present
+              .map((row) =>
+                tableName === VaultDbTables.NoteBlocks
+                  ? {
+                      ...row,
+                      isRoot: row.isRoot === undefined ? 0 : row.isRoot,
+                    }
+                  : row,
+              ),
+          );
         }),
+      );
+
+      const rootBlockIds = data
+        .find(({ tableName }) => tableName === 'notes')
+        ?.rows.map(({ rootBlockId }) => rootBlockId)
+        .filter((id) => Boolean(id)) as string[];
+
+      await Promise.all(
+        rootBlockIds.map((id) =>
+          this.db.noteBlocks.update(id, { isRoot: true }),
+        ),
       );
     });
   }

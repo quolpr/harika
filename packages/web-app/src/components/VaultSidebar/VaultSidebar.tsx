@@ -68,7 +68,9 @@ export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
       >
         <div className={sidebarClass('header')}>
           <div className={sidebarClass('header-vault-icon')}>
-            <VaultIcon />
+            <Link to={paths.vaultIndexPath()}>
+              <VaultIcon />
+            </Link>
           </div>
           <div className={sidebarClass('header-vault-name')}>{vault.name}</div>
         </div>
