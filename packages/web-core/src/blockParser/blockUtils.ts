@@ -31,6 +31,7 @@ export const addTokensToNoteBlock = (
     noteBlockRefs: [],
     linkedNoteIds: [],
     content: new BlockContentModel({ value: '' }),
+    isRoot: true,
   });
 
   tokens = tokens.map((token) => ({ ...token, indent: token.indent + 1 }));
@@ -61,6 +62,7 @@ export const addTokensToNoteBlock = (
       noteBlockRefs: [],
       linkedNoteIds: [],
       content: new BlockContentModel({ value: token.content }),
+      isRoot: false,
     });
 
     parentBlock.model.appendChildBlock(newBlock);
@@ -88,6 +90,10 @@ export const parseToBlocksTree = (str: string) => {
     { title: 'Note' },
     { addEmptyBlock: false },
   );
+
+  if (!treeHolder.rootBlock) {
+    throw new Error('Root block is not present!');
+  }
 
   addTokensToNoteBlock(treeHolder, treeHolder.rootBlock, tokens);
 

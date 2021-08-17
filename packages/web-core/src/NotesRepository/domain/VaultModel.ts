@@ -46,10 +46,7 @@ export class VaultModel extends Model({
   @modelAction
   newNote(
     attrs: Required<
-      Optional<
-        ModelCreationData<NoteModel>,
-        'createdAt' | 'dailyNoteDate' | 'rootBlockId'
-      >,
+      Optional<ModelCreationData<NoteModel>, 'createdAt' | 'dailyNoteDate'>,
       'title'
     >,
     options?: { addEmptyBlock?: boolean; isDaily?: boolean },
@@ -65,12 +62,12 @@ export class VaultModel extends Model({
       noteBlockRefs: [],
       content: new BlockContentModel({ value: '' }),
       linkedNoteIds: [],
+      isRoot: true,
     });
 
     const note = new NoteModel({
       $modelId: noteId,
       createdAt: new Date().getTime(),
-      rootBlockId: rootBlock.$modelId,
       ...(options.isDaily
         ? {
             dailyNoteDate: new Date().getTime(),
@@ -89,7 +86,7 @@ export class VaultModel extends Model({
 
     if (options.addEmptyBlock) {
       treeHolder.createBlock(
-        { content: new BlockContentModel({ value: '' }) },
+        { content: new BlockContentModel({ value: '' }), isRoot: false },
         rootBlock,
         0,
       );

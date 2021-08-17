@@ -54,7 +54,9 @@ export class BlocksViewModel extends Model({
 
     const [fromId, toId] = this.selectionInterval;
 
-    const flattenTree = this.blockTreeHolderRef.current.rootBlock.flattenTree;
+    const flattenTree = this.blockTreeHolderRef.current.rootBlock?.flattenTree;
+
+    if (!flattenTree) return [];
 
     const fromIndex = flattenTree.findIndex(
       ({ $modelId }) => $modelId === fromId,

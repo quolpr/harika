@@ -93,10 +93,7 @@ export class NotesRepository {
 
   async createNote(
     attrs: Required<
-      Optional<
-        ModelCreationData<NoteModel>,
-        'createdAt' | 'dailyNoteDate' | 'rootBlockId'
-      >,
+      Optional<ModelCreationData<NoteModel>, 'createdAt' | 'dailyNoteDate'>,
       'title'
     >,
     options?: { isDaily?: boolean },

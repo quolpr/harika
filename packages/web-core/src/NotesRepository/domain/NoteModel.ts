@@ -46,10 +46,6 @@ export const noteRef = customRef<NoteModel>('harika/NoteRef', {
 
 const modelType = 'harika/NoteModel' as const;
 
-export const generateRootBlockId = (noteId: string) => `${noteId}-rootBlock`;
-export const generateConflictedRootBlockId = (noteId: string) =>
-  `${noteId}-conflictedRootBlock`;
-
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const isNoteModel = (model: any): model is NoteModel =>
   '$modelType' in model && model.$modelType === modelType;
@@ -60,7 +56,6 @@ export class NoteModel extends Model({
   dailyNoteDate: tProp(types.maybe(types.dateTimestamp)),
   createdAt: tProp(types.dateTimestamp),
   isDeleted: prop<boolean>(false),
-  rootBlockId: prop<string>(),
 }) {
   @modelAction
   updateTitle(newTitle: string) {
@@ -71,10 +66,6 @@ export class NoteModel extends Model({
     this.title = attrs.title;
     this.dailyNoteDate = attrs.dailyNoteDate;
     this.createdAt = attrs.createdAt;
-
-    if (this.rootBlockId !== attrs.rootBlockId) {
-      this.rootBlockId = attrs.rootBlockId;
-    }
 
     if (
       attrs.isDeleted !== undefined &&

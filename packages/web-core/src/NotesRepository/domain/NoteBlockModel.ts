@@ -65,6 +65,7 @@ export class NoteBlockModel extends Model({
   linkedNoteIds: prop<string[]>(),
   createdAt: tProp(types.dateTimestamp),
   isDeleted: prop<boolean>(false),
+  isRoot: prop<boolean>(),
 }) {
   get treeHolder() {
     return findParent<BlocksTreeHolder>(this, isTreeHolder)!;
@@ -92,11 +93,6 @@ export class NoteBlockModel extends Model({
   @computed
   get indent() {
     return this.path.length;
-  }
-
-  @computed
-  get isRoot() {
-    return this.parentBlock === undefined;
   }
 
   @computed({ equals: comparer.shallow })
@@ -304,6 +300,7 @@ export class NoteBlockModel extends Model({
       {
         content: new BlockContentModel({ value: data.content }),
         ...(data.id ? { $modelId: data.id } : {}),
+        isRoot: false,
       },
       this,
       this.noteBlockRefs.length,
@@ -338,6 +335,7 @@ export class NoteBlockModel extends Model({
     const newNoteBlock = this.treeHolder.createBlock(
       {
         content: new BlockContentModel({ value: content }),
+        isRoot: false,
       },
       parent,
       injectTo,
@@ -431,6 +429,10 @@ export class NoteBlockModel extends Model({
 
     if (data.createdAt && data.createdAt !== this.createdAt) {
       this.createdAt = data.createdAt;
+    }
+
+    if (data.isRoot !== undefined && data.isRoot !== this.isRoot) {
+      this.isRoot = data.isRoot;
     }
 
     if (
@@ -549,11 +551,13 @@ export class BlocksTreeHolder extends Model({
   blocksMap: prop<Record<string, NoteBlockModel>>(() => ({})),
   noteId: prop<string>(),
 }) {
+  // TODO: optimize
   @computed
-  get rootBlock() {
+  get rootBlock(): NoteBlockModel | undefined {
     return Object.values(this.blocksMap).find((block) => block.isRoot)!;
   }
 
+  // TODO: optimize
   @computed
   get childParentRelations() {
     const relations: Record<string, string> = {};
@@ -628,9 +632,9 @@ export class BlocksTreeHolder extends Model({
       this.blocksMap[id].delete(false, true);
     });
 
-    if (!this.rootBlock.hasChildren) {
+    if (this.rootBlock && !this.rootBlock?.hasChildren) {
       this.createBlock(
-        { content: new BlockContentModel({ value: '' }) },
+        { content: new BlockContentModel({ value: '' }), isRoot: false },
         this.rootBlock,
         0,
       );
