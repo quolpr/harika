@@ -15,7 +15,7 @@ import { BacklinkedNote } from './BacklinkedNote';
 import { useAsync } from 'react-use';
 import { uniq } from 'lodash-es';
 import { useObservable, useObservableState } from 'observable-hooks';
-import { switchMap } from 'rxjs';
+import { map, switchMap } from 'rxjs';
 
 export interface IFocusBlockState {
   focusOnBlockId: string;
@@ -54,38 +54,48 @@ const BacklinkedNoteLoader = observer(
 const BacklinkedNotes = observer(({ note }: { note: NoteModel }) => {
   const noteRepo = useNoteRepository();
 
-  const linkedNotes$ = useObservable(
+  const backlinks$ = useObservable(
     ($inputs) =>
-      $inputs.pipe(switchMap(([noteId]) => noteRepo.getLinkedNotes$(noteId))),
-    [note.$modelId],
-  );
-  const linkedNotes = useObservableState(linkedNotes$, undefined);
+      $inputs.pipe(
+        switchMap(([note]) =>
+          noteRepo
+            .getLinkedNotes$(note.$modelId)
+            .pipe(map((linkedNotes) => ({ linkedNotes, note }))),
+        ),
+        switchMap(async ({ linkedNotes, note }) => ({
+          note,
+          linkedNotes,
+          treeHolders: await noteRepo.getBlocksTreeHolderByNoteIds(
+            linkedNotes.map(({ $modelId }) => $modelId),
+          ),
+        })),
+        switchMap(async ({ note, treeHolders, linkedNotes }) => {
+          const allBlocks = uniq(
+            treeHolders.flatMap((holder) =>
+              holder.getLinkedBlocksOfNoteId(note.$modelId),
+            ),
+          );
 
-  const blockState = useAsync(async () => {
-    if (!linkedNotes) return { isLoaded: false } as const;
+          await noteRepo.preloadOrCreateBlocksViews(note, allBlocks);
 
-    // Just batch loading, for optimization
-    const treeHolders = await noteRepo.getBlocksTreeHolderByNoteIds(
-      linkedNotes.map(({ $modelId }) => $modelId),
-    );
-
-    const allBlocks = uniq(
-      treeHolders.flatMap((holder) =>
-        holder.getLinkedBlocksOfNoteId(note.$modelId),
+          return { areLoaded: true, linkedNotes, count: allBlocks.length };
+        }),
       ),
-    );
+    [note],
+  );
 
-    await noteRepo.preloadOrCreateBlocksViews(note, allBlocks);
-
-    return { isLoaded: true, refsCount: allBlocks.length } as const;
-  }, [noteRepo, linkedNotes, note]);
+  const backlinks = useObservableState(backlinks$, {
+    areLoaded: false,
+    count: 0,
+    linkedNotes: [],
+  });
 
   return (
     <>
-      {blockState.value?.refsCount !== undefined ? (
+      {backlinks.areLoaded ? (
         <div className="note__linked-references">
           <LinkIcon className="note__link-icon" style={{ width: 16 }} />
-          {blockState.value.refsCount} Linked References
+          {backlinks.count} Linked References
         </div>
       ) : (
         <div className="note__linked-references">
@@ -94,9 +104,8 @@ const BacklinkedNotes = observer(({ note }: { note: NoteModel }) => {
         </div>
       )}
 
-      {linkedNotes &&
-        blockState.value?.isLoaded === true &&
-        linkedNotes.map((linkedNote) => (
+      {backlinks.areLoaded &&
+        backlinks.linkedNotes.map((linkedNote) => (
           <BacklinkedNoteLoader
             key={linkedNote.$modelId}
             linkedNote={linkedNote}
@@ -165,7 +174,6 @@ const NoteBody = observer(({ note }: { note: NoteModel }) => {
       noteRepo.preloadOrCreateBlocksView(note, note);
     }
   });
-
 
   return (
     <div className="note">

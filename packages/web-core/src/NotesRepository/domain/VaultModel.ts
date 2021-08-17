@@ -28,6 +28,10 @@ export class VaultModel extends Model({
   ui: prop<VaultUiState>(() => new VaultUiState({})),
   notesTree: prop<NotesTreeModel>(() => newTreeModel()),
 }) {
+  isBlockTreeHolderExists(noteId: string) {
+    return Boolean(this.blocksTreeHoldersMap[noteId]);
+  }
+
   getNoteBlock(blockId: string) {
     for (const treeHolder of Object.values(this.blocksTreeHoldersMap)) {
       const block = treeHolder.blocksMap[blockId];

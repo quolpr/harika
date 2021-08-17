@@ -13,6 +13,8 @@ export class VaultDbConsistencyResolver implements IConsistencyResolver {
   async resolveNoteDuplications() {
     const conflicts = await this.getNotesConflicts();
 
+    console.log('Resolving conflicts', { conflicts });
+
     await Promise.all(
       conflicts.map(async (conflict) => {
         const notes = (await this.db.notesQueries.getByIds(conflict.ids)).sort(
@@ -46,11 +48,11 @@ export class VaultDbConsistencyResolver implements IConsistencyResolver {
           .map(({ rootBlock }) => rootBlock);
 
         if (!oldestRootBlock) {
-          console.error(
-            'Unexpected error - root block not found',
+          console.error('Unexpected error - root block not found', {
+            oldestNote,
             rootBlocks,
             notes,
-          );
+          });
           return;
         }
 
@@ -102,6 +104,7 @@ export class VaultDbConsistencyResolver implements IConsistencyResolver {
   }
 
   async getNotesConflicts() {
+    // TODO: performance bottle neck maybe here. On every sync it would get title+id
     const keys = await this.db.notes.orderBy('[title+id]').keys();
 
     const conflicts = (

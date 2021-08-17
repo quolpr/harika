@@ -436,9 +436,7 @@ export class NotesRepository {
         .filter((id) => Boolean(id)) as string[];
 
       await Promise.all(
-        rootBlockIds.map((id) =>
-          this.db.noteBlocks.update(id, { isRoot: true }),
-        ),
+        rootBlockIds.map((id) => this.db.noteBlocks.update(id, { isRoot: 1 })),
       );
     });
   }
