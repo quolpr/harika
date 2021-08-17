@@ -15,7 +15,7 @@ import { BacklinkedNote } from './BacklinkedNote';
 import { useAsync } from 'react-use';
 import { uniq } from 'lodash-es';
 import { useObservable, useObservableState } from 'observable-hooks';
-import { map, switchMap } from 'rxjs';
+import { map, of, switchMap } from 'rxjs';
 
 export interface IFocusBlockState {
   focusOnBlockId: string;
@@ -55,21 +55,21 @@ const BacklinkedNotes = observer(({ note }: { note: NoteModel }) => {
   const noteRepo = useNoteRepository();
 
   const backlinks$ = useObservable(
-    ($inputs) =>
-      $inputs.pipe(
+    ($inputs) => {
+      return $inputs.pipe(
         switchMap(([note]) =>
           noteRepo
             .getLinkedNotes$(note.$modelId)
             .pipe(map((linkedNotes) => ({ linkedNotes, note }))),
         ),
-        switchMap(async ({ linkedNotes, note }) => ({
-          note,
-          linkedNotes,
-          treeHolders: await noteRepo.getBlocksTreeHolderByNoteIds(
-            linkedNotes.map(({ $modelId }) => $modelId),
-          ),
-        })),
-        switchMap(async ({ note, treeHolders, linkedNotes }) => {
+        switchMap(({ linkedNotes, note }) =>
+          noteRepo
+            .getBlocksTreeHolderByNoteIds$(
+              of(linkedNotes.map(({ $modelId }) => $modelId)),
+            )
+            .pipe(map((treeHolders) => ({ treeHolders, note, linkedNotes }))),
+        ),
+        switchMap(async ({ linkedNotes, treeHolders }) => {
           const allBlocks = uniq(
             treeHolders.flatMap((holder) =>
               holder.getLinkedBlocksOfNoteId(note.$modelId),
@@ -80,7 +80,8 @@ const BacklinkedNotes = observer(({ note }: { note: NoteModel }) => {
 
           return { areLoaded: true, linkedNotes, count: allBlocks.length };
         }),
-      ),
+      );
+    },
     [note],
   );
 

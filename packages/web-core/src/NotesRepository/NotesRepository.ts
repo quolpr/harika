@@ -18,6 +18,7 @@ import {
   convertNoteBlockDocToModelAttrs,
   convertNoteDocToModelAttrs,
   convertViewToModelAttrs,
+  NoteBlockData,
 } from './syncers/toDomainModelsConverters';
 import type { ITransmittedChange } from '../dexie-sync/changesChannel';
 import { NotesChangesTrackerService } from './services/notes-tree/NotesChangesTrackerService';
@@ -77,10 +78,12 @@ export class NotesRepository {
     const oldTitle = note.title;
 
     (
-      await this.getBlocksTreeHolderByNoteIds(
-        (
-          await firstValueFrom(this.getLinkedNotes$(noteId))
-        ).map(({ $modelId }) => $modelId),
+      await firstValueFrom(
+        this.getBlocksTreeHolderByNoteIds$(
+          this.getLinkedNotes$(noteId).pipe(
+            map((models) => models.map(({ $modelId }) => $modelId)),
+          ),
+        ),
       )
     )
       .flatMap((holder) => holder.getLinkedBlocksOfNoteId(noteId))
@@ -155,18 +158,30 @@ export class NotesRepository {
     );
   }
 
-  async getBlocksTreeHolderByNoteIds(notesIds: string[]) {
-    const toLoadNoteIds = notesIds.filter(
-      (id) => this.vault.blocksTreeHoldersMap[id] === undefined,
+  getBlocksTreeHolderByNoteIds$(notesIds$: Observable<string[]>) {
+    const notLoadedNotes$ = notesIds$.pipe(
+      switchMap((notesIds) =>
+        from(
+          liveQuery(async () =>
+            (
+              await this.db.noteBlocksQueries.getByNoteIds(
+                notesIds.filter(
+                  (id) => this.vault.blocksTreeHoldersMap[id] === undefined,
+                ),
+              )
+            ).map((m) => convertNoteBlockDocToModelAttrs(m)),
+          ) as Observable<NoteBlockData[]>,
+        ).pipe(map((attrs) => ({ unloadedBlocksAttrs: attrs, notesIds }))),
+      ),
     );
 
-    const blocksAttrs = (
-      await this.db.noteBlocksQueries.getByNoteIds(toLoadNoteIds)
-    ).map((m) => convertNoteBlockDocToModelAttrs(m));
+    return notLoadedNotes$.pipe(
+      map(({ unloadedBlocksAttrs, notesIds }) => {
+        this.vault.createOrUpdateEntitiesFromAttrs([], unloadedBlocksAttrs);
 
-    this.vault.createOrUpdateEntitiesFromAttrs([], blocksAttrs);
-
-    return notesIds.map((noteId) => this.vault.blocksTreeHoldersMap[noteId]);
+        return notesIds.map((id) => this.vault.blocksTreeHoldersMap[id]);
+      }),
+    );
   }
 
   async getBlocksTreeHolder(noteId: string) {
@@ -430,14 +445,14 @@ export class NotesRepository {
         }),
       );
 
-      const rootBlockIds = data
-        .find(({ tableName }) => tableName === 'notes')
-        ?.rows.map(({ rootBlockId }) => rootBlockId)
-        .filter((id) => Boolean(id)) as string[];
+      // const rootBlockIds = data
+      //   .find(({ tableName }) => tableName === 'notes')
+      //   ?.rows.map(({ rootBlockId }) => rootBlockId)
+      //   .filter((id) => Boolean(id)) as string[];
 
-      await Promise.all(
-        rootBlockIds.map((id) => this.db.noteBlocks.update(id, { isRoot: 1 })),
-      );
+      // await Promise.all(
+      //   rootBlockIds.map((id) => this.db.noteBlocks.update(id, { isRoot: 1 })),
+      // );
     });
   }
 
