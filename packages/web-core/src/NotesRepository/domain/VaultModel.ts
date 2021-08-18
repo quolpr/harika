@@ -108,6 +108,7 @@ export class VaultModel extends Model({
     blocksAttrs: (ModelCreationData<NoteBlockModel> & {
       $modelId: string;
     })[],
+    createTreeHolder: boolean,
   ) {
     // console.debug(
     //   'createOrUpdateEntitiesFromAttrs, notes: ',
@@ -147,13 +148,26 @@ export class VaultModel extends Model({
     // // BLOCK
 
     blocksAttrs.map((attr) => {
-      if (!this.blocksTreeHoldersMap[attr.noteId]) {
+      const existentNoteBlock = this.getNoteBlock(attr.$modelId);
+      if (existentNoteBlock && existentNoteBlock.noteId !== attr.noteId) {
+        existentNoteBlock.delete();
+
+        delete this.blocksTreeHoldersMap[existentNoteBlock.noteId].blocksMap[
+          attr.$modelId
+        ];
+      }
+
+      if (!this.blocksTreeHoldersMap[attr.noteId] && createTreeHolder) {
         this.blocksTreeHoldersMap[attr.noteId] = new BlocksTreeHolder({
           noteId: attr.noteId,
         });
       }
 
-      return this.blocksTreeHoldersMap[attr.noteId].createOrUpdateBlock(attr);
+      if (this.blocksTreeHoldersMap[attr.noteId]) {
+        return this.blocksTreeHoldersMap[attr.noteId].createOrUpdateBlock(attr);
+      }
+
+      return undefined;
     });
 
     // blocks.forEach((model) => {

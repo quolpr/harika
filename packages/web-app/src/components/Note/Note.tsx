@@ -3,7 +3,7 @@ import './styles.css';
 import { useEffect } from 'react';
 import { useState } from 'react';
 import { observer } from 'mobx-react-lite';
-import { NoteModel, FocusedBlockState } from '@harika/web-core';
+import { NoteModel, FocusedBlockState, toObserver } from '@harika/web-core';
 import { computed } from 'mobx';
 import { useHistory } from 'react-router-dom';
 import { LinkIcon } from '@heroicons/react/solid';
@@ -12,10 +12,10 @@ import { CurrentBlockInputRefContext } from '../../contexts';
 import { useNoteRepository } from '../../contexts/CurrentNoteRepositoryContext';
 import { NoteBlocks } from './NoteBlocks';
 import { BacklinkedNote } from './BacklinkedNote';
-import { useAsync } from 'react-use';
 import { uniq } from 'lodash-es';
 import { useObservable, useObservableState } from 'observable-hooks';
-import { map, of, switchMap } from 'rxjs';
+import { from, map, of, switchMap } from 'rxjs';
+import { comparer } from 'mobx';
 
 export interface IFocusBlockState {
   focusOnBlockId: string;
@@ -25,25 +25,32 @@ const BacklinkedNoteLoader = observer(
   ({ linkedNote, note }: { linkedNote: NoteModel; note: NoteModel }) => {
     const noteRepo = useNoteRepository();
 
-    const blockTreeHolderState = useAsync(
-      () => noteRepo.getBlocksTreeHolder(linkedNote.$modelId),
-      [noteRepo, linkedNote.$modelId],
+    const blocksTreeHolder$ = useObservable(
+      ($inputs) => {
+        return noteRepo.getBlocksTreeHolder$($inputs.pipe(map(([id]) => id)));
+      },
+      [note.$modelId],
     );
 
-    const linkedBlocks = computed(() => {
-      return blockTreeHolderState.value
-        ? blockTreeHolderState.value.getLinkedBlocksOfNoteId(note.$modelId)
-        : [];
-    }).get();
+    const blocksTreeHolder = useObservableState(blocksTreeHolder$, undefined);
+
+    const linkedBlocks = computed(
+      () => {
+        return blocksTreeHolder
+          ? blocksTreeHolder.getLinkedBlocksOfNoteId(note.$modelId)
+          : [];
+      },
+      { equals: comparer.shallow },
+    ).get();
 
     return (
       <>
-        {blockTreeHolderState.value && (
+        {blocksTreeHolder && (
           <BacklinkedNote
             key={linkedNote.$modelId}
             note={linkedNote}
             blocks={linkedBlocks}
-            treeHolder={blockTreeHolderState.value}
+            treeHolder={blocksTreeHolder}
           />
         )}
       </>
@@ -69,13 +76,18 @@ const BacklinkedNotes = observer(({ note }: { note: NoteModel }) => {
             )
             .pipe(map((treeHolders) => ({ treeHolders, note, linkedNotes }))),
         ),
-        switchMap(async ({ linkedNotes, treeHolders }) => {
-          const allBlocks = uniq(
-            treeHolders.flatMap((holder) =>
-              holder.getLinkedBlocksOfNoteId(note.$modelId),
+        switchMap(({ treeHolders, linkedNotes }) =>
+          from(
+            toObserver(() =>
+              uniq(
+                treeHolders.flatMap((holder) =>
+                  holder.getLinkedBlocksOfNoteId(note.$modelId),
+                ),
+              ),
             ),
-          );
-
+          ).pipe(map((allBlocks) => ({ linkedNotes, allBlocks }))),
+        ),
+        switchMap(async ({ linkedNotes, allBlocks }) => {
           await noteRepo.preloadOrCreateBlocksViews(note, allBlocks);
 
           return { areLoaded: true, linkedNotes, count: allBlocks.length };

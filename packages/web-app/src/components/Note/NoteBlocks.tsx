@@ -1,43 +1,47 @@
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { useAsync, useMedia } from 'react-use';
+import { useMedia } from 'react-use';
 import { NoteBlock } from '../NoteBlock/NoteBlock';
 import { Toolbar } from './Toolbar';
 import { NoteBlocksHandlers } from './NoteBlocksHandlers';
 import type { BlocksViewModel, NoteModel } from '@harika/web-core';
 import { useNoteRepository } from '../../contexts/CurrentNoteRepositoryContext';
+import { useObservable, useObservableState } from 'observable-hooks';
+import { map } from 'rxjs';
 
 export const NoteBlocks = observer(
   ({ view, note }: { view: BlocksViewModel; note: NoteModel }) => {
     const noteRepo = useNoteRepository();
     const isWide = useMedia('(min-width: 768px)');
 
-    const blockTreeHolderState = useAsync(
-      () => noteRepo.getBlocksTreeHolder(note.$modelId),
-      [noteRepo, note.$modelId],
+    const blocksTreeHolder$ = useObservable(
+      ($inputs) => {
+        return noteRepo.getBlocksTreeHolder$($inputs.pipe(map(([id]) => id)));
+      },
+      [note.$modelId],
     );
+
+    const blocksTreeHolder = useObservableState(blocksTreeHolder$, undefined);
 
     return (
       <>
-        {blockTreeHolderState.value && (
+        {blocksTreeHolder && (
           <NoteBlocksHandlers
             view={view}
             note={note}
-            blocksTreeHolder={blockTreeHolderState.value}
+            blocksTreeHolder={blocksTreeHolder}
           />
         )}
 
         <div className="note__body">
-          {blockTreeHolderState.value &&
-            blockTreeHolderState.value.rootBlock?.noteBlockRefs.map(
-              (noteBlock) => (
-                <NoteBlock
-                  key={noteBlock.current.$modelId}
-                  noteBlock={noteBlock.current}
-                  view={view}
-                />
-              ),
-            )}
+          {blocksTreeHolder &&
+            blocksTreeHolder.rootBlock?.noteBlockRefs.map((noteBlock) => (
+              <NoteBlock
+                key={noteBlock.current.$modelId}
+                noteBlock={noteBlock.current}
+                view={view}
+              />
+            ))}
         </div>
 
         {!isWide && <Toolbar view={view} />}

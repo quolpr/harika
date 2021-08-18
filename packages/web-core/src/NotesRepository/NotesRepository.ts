@@ -10,7 +10,7 @@ import { distinctUntilChanged, map, switchMap, take } from 'rxjs/operators';
 import { uniq, uniqBy } from 'lodash-es';
 import { filterAst } from '../blockParser/astHelpers';
 import type { RefToken, TagToken } from '../blockParser/types';
-import { firstValueFrom, from, Observable, Subject } from 'rxjs';
+import { firstValueFrom, from, Observable, of, Subject } from 'rxjs';
 import { BlocksViewDocType, NoteDocType, VaultDbTables } from '../dexieTypes';
 import { liveQuery } from 'dexie';
 import { exportDB } from 'dexie-export-import';
@@ -23,6 +23,8 @@ import {
 import type { ITransmittedChange } from '../dexie-sync/changesChannel';
 import { NotesChangesTrackerService } from './services/notes-tree/NotesChangesTrackerService';
 import dayjs from 'dayjs';
+import { toObserver } from '../toObserver';
+import type { BlocksTreeHolder } from './domain/NoteBlockModel';
 
 export { NoteModel } from './domain/NoteModel';
 export { VaultModel } from './domain/VaultModel';
@@ -146,16 +148,13 @@ export class NotesRepository {
   }
 
   getLinkedNotes$(noteId: string) {
-    return from(
+    const noteIds$ = from(
       liveQuery(() =>
         this.db.notesQueries.getLinkedNoteIdsOfNoteId(noteId),
       ) as Observable<string[]>,
-    ).pipe(
-      switchMap(
-        (ids) =>
-          liveQuery(() => this.findNoteByIds(ids)) as Observable<NoteModel[]>,
-      ),
     );
+
+    return this.findNoteByIds$(noteIds$);
   }
 
   getBlocksTreeHolderByNoteIds$(notesIds$: Observable<string[]>) {
@@ -177,36 +176,67 @@ export class NotesRepository {
 
     return notLoadedNotes$.pipe(
       map(({ unloadedBlocksAttrs, notesIds }) => {
-        this.vault.createOrUpdateEntitiesFromAttrs([], unloadedBlocksAttrs);
+        this.vault.createOrUpdateEntitiesFromAttrs(
+          [],
+          unloadedBlocksAttrs,
+          true,
+        );
 
         return notesIds.map((id) => this.vault.blocksTreeHoldersMap[id]);
       }),
     );
   }
 
-  async getBlocksTreeHolder(noteId: string) {
-    if (!this.vault.blocksTreeHoldersMap[noteId]) {
-      const noteBlockAttrs = await Promise.all(
-        (
-          await this.db.noteBlocksQueries.getByNoteId(noteId)
-        ).map((m) => convertNoteBlockDocToModelAttrs(m)),
-      );
+  getBlocksTreeHolder$(noteId$: Observable<string>) {
+    return noteId$.pipe(
+      switchMap((noteId) =>
+        toObserver(() => this.vault.blocksTreeHoldersMap[noteId]).pipe(
+          map((holder) => ({ holder, noteId })),
+        ),
+      ),
+      switchMap(({ holder, noteId }) => {
+        if (!holder) {
+          return liveQuery(async () => {
+            const noteBlockAttrs = await Promise.all(
+              (
+                await this.db.noteBlocksQueries.getByNoteId(noteId)
+              ).map((m) => convertNoteBlockDocToModelAttrs(m)),
+            );
 
-      this.vault.createOrUpdateEntitiesFromAttrs([], noteBlockAttrs);
-    }
+            this.vault.createOrUpdateEntitiesFromAttrs(
+              [],
+              noteBlockAttrs,
+              true,
+            );
 
-    return this.vault.blocksTreeHoldersMap[noteId];
+            return this.vault.blocksTreeHoldersMap[noteId];
+          }) as Observable<BlocksTreeHolder>;
+        } else {
+          return of(holder);
+        }
+      }),
+    );
   }
 
-  async findNoteByIds(ids: string[]) {
-    const noteDocs = await this.db.notesQueries.getByIds(ids);
+  findNoteByIds$(ids$: Observable<string[]>) {
+    return ids$.pipe(
+      switchMap(
+        (ids) =>
+          liveQuery(async () => {
+            const noteDocs = await this.db.notesQueries.getByIds(ids);
 
-    this.vault.createOrUpdateEntitiesFromAttrs(
-      noteDocs.map((doc) => convertNoteDocToModelAttrs(doc)),
-      [],
+            this.vault.createOrUpdateEntitiesFromAttrs(
+              noteDocs.map((doc) => convertNoteDocToModelAttrs(doc)),
+              [],
+              true,
+            );
+
+            return ids
+              .map((id) => this.vault.notesMap[id])
+              .filter((v) => Boolean(v));
+          }) as Observable<NoteModel[]>,
+      ),
     );
-
-    return ids.map((id) => this.vault.notesMap[id]).filter((v) => Boolean(v));
   }
 
   async findNote(id: string) {
@@ -224,6 +254,7 @@ export class NotesRepository {
       this.vault.createOrUpdateEntitiesFromAttrs(
         [convertNoteDocToModelAttrs(noteDoc)],
         [],
+        false,
       );
 
       console.debug(`Loading Note#${id} from dexie`);

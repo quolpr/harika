@@ -44,9 +44,13 @@ export class ToDomainSyncer {
         this.vault.ui.createOrUpdateEntitiesFromAttrs(blockViews);
       }
 
+      const notesChanges = this.getNoteChanges(evs);
+      const blockChanges = this.getBlockChanges(evs);
+
       this.vault.createOrUpdateEntitiesFromAttrs(
-        this.getNoteChanges(evs),
-        this.getBlockChanges(evs),
+        notesChanges,
+        blockChanges,
+        false,
       );
     });
   }
@@ -102,7 +106,11 @@ export class ToDomainSyncer {
             ...noteBlock.$,
             isDeleted: true,
           };
-        } else if (ev.type === DatabaseChangeType.Update && noteBlock) {
+        } else if (
+          ev.type === DatabaseChangeType.Update &&
+          (noteBlock ||
+            (ev.to.noteId && this.vault.isBlockTreeHolderExists(ev.to.noteId)))
+        ) {
           if (!ev.obj) throw new Error('obj should be present');
 
           // Any changes we will load to mobx cause they may have refs

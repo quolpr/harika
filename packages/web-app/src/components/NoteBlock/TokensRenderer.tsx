@@ -15,6 +15,8 @@ import { useHandleClick } from '../../hooks/useNoteClick';
 import { paths } from '../../paths';
 import { useAsync } from 'react-use';
 import { getSnapshot } from 'mobx-keystone';
+import { useObservable, useObservableState } from 'observable-hooks';
+import { map } from 'rxjs';
 
 const RefRenderer = observer(
   ({
@@ -260,10 +262,14 @@ export const TokensRenderer = observer(
   ({ noteBlock, tokens }: { noteBlock: NoteBlockModel; tokens: Token[] }) => {
     const noteRepo = useNoteRepository();
 
-    const linkedNotesState = useAsync(
-      () => noteRepo.findNoteByIds(noteBlock.linkedNoteIds),
-      [noteRepo, noteBlock.linkedNoteIds.join()],
+    const linkedNoteIds = noteBlock.linkedNoteIds;
+    const linkedNotes$ = useObservable(
+      ($inputs) => {
+        return noteRepo.findNoteByIds$($inputs.pipe(map(([ids]) => ids)));
+      },
+      [linkedNoteIds],
     );
+    const linkedNotes = useObservableState(linkedNotes$, []);
 
     return (
       <>
@@ -272,7 +278,7 @@ export const TokensRenderer = observer(
             key={`${token.offsetStart}${token.offsetEnd}`}
             noteBlock={noteBlock}
             token={token}
-            linkedNotes={linkedNotesState.value || []}
+            linkedNotes={linkedNotes}
           />
         ))}
       </>
