@@ -1,5 +1,5 @@
 import { observer } from 'mobx-react-lite';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import type {
   RefToken,
@@ -13,10 +13,9 @@ import { useCurrentVault } from '../../hooks/useCurrentVault';
 import { useCurrentNote } from '../../hooks/useCurrentNote';
 import { useHandleClick } from '../../hooks/useNoteClick';
 import { paths } from '../../paths';
-import { useAsync } from 'react-use';
-import { getSnapshot } from 'mobx-keystone';
 import { useObservable, useObservableState } from 'observable-hooks';
 import { map } from 'rxjs';
+import { useDeepMemo } from '../../utils';
 
 const RefRenderer = observer(
   ({
@@ -262,7 +261,11 @@ export const TokensRenderer = observer(
   ({ noteBlock, tokens }: { noteBlock: NoteBlockModel; tokens: Token[] }) => {
     const noteRepo = useNoteRepository();
 
-    const linkedNoteIds = noteBlock.linkedNoteIds;
+    const linkedNoteIds = useDeepMemo(
+      () => [...noteBlock.linkedNoteIds],
+      [[...noteBlock.linkedNoteIds]],
+    );
+
     const linkedNotes$ = useObservable(
       ($inputs) => {
         return noteRepo.findNoteByIds$($inputs.pipe(map(([ids]) => ids)));

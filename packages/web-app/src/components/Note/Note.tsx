@@ -29,7 +29,7 @@ const BacklinkedNoteLoader = observer(
       ($inputs) => {
         return noteRepo.getBlocksTreeHolder$($inputs.pipe(map(([id]) => id)));
       },
-      [note.$modelId],
+      [linkedNote.$modelId],
     );
 
     const blocksTreeHolder = useObservableState(blocksTreeHolder$, undefined);

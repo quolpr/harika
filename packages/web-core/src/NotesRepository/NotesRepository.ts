@@ -189,11 +189,10 @@ export class NotesRepository {
 
   getBlocksTreeHolder$(noteId$: Observable<string>) {
     return noteId$.pipe(
-      switchMap((noteId) =>
-        toObserver(() => this.vault.blocksTreeHoldersMap[noteId]).pipe(
-          map((holder) => ({ holder, noteId })),
-        ),
-      ),
+      map((noteId) => ({
+        noteId,
+        holder: this.vault.blocksTreeHoldersMap[noteId],
+      })),
       switchMap(({ holder, noteId }) => {
         if (!holder) {
           return liveQuery(async () => {
@@ -209,12 +208,15 @@ export class NotesRepository {
               true,
             );
 
-            return this.vault.blocksTreeHoldersMap[noteId];
-          }) as Observable<BlocksTreeHolder>;
+            return noteId;
+          }) as Observable<string>;
         } else {
-          return of(holder);
+          return of(noteId);
         }
       }),
+      switchMap((noteId) =>
+        toObserver(() => this.vault.blocksTreeHoldersMap[noteId]),
+      ),
     );
   }
 

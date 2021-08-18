@@ -1,4 +1,6 @@
 import { withNaming } from '@bem-react/classname';
+import { useRef } from 'react';
+import { isEqual } from 'lodash-es';
 import type { ErrorOption } from 'react-hook-form';
 import type { ValidationMessage } from './generated/graphql';
 
@@ -51,4 +53,17 @@ export function setServerErrors<T>(
   errors.forEach(({ field, message }) => {
     setError(field as keyof T, { type: 'server', message });
   });
+}
+
+export function useDeepMemo<TKey, TValue>(
+  memoFn: () => TValue,
+  key: TKey,
+): TValue {
+  const ref = useRef<{ key: TKey; value: TValue }>();
+
+  if (!ref.current || !isEqual(key, ref.current.key)) {
+    ref.current = { key, value: memoFn() };
+  }
+
+  return ref.current.value;
 }
