@@ -10,3 +10,5 @@ export * from './src/NotesRepository/domain/NotesTree/NotesTreeModel';
 export * from './src/NotesRepository/domain/NotesTree/TreeNodeModel';
 export * from './src/NotesRepository/domain/NoteBlockModel';
 export * from './src/toObserver';
+
+import './src/initWorker';

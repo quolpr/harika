@@ -12,8 +12,11 @@
     "gen-block-parser": "peggy -o src/blockParser/pegParser.js --cache src/blockParser/pegParser.pegjs"
   },
   "dependencies": {
+    "@jlongster/sql.js": "^1.6.7",
+    "absurd-sql": "^0.0.53",
     "broadcast-channel": "^3.7.0",
     "camelcase-keys": "^7.0.0",
+    "comlink": "^4.3.1",
     "dayjs": "^1.10.6",
     "dexie": "3.2.0-beta.3",
     "dexie-export-import": "^1.0.3",
@@ -28,6 +31,7 @@
     "react-dom": "^17.0.2",
     "rxjs": "^7.2.0",
     "snakecase-keys": "^4.0.2",
+    "sql-bricks": "^2.0.5",
     "utility-types": "^3.10.0"
   },
   "resolutions": {
@@ -49,6 +53,8 @@
     "@types/react-dom": "^17.0.9",
     "@types/snowpack-env": "^2.3.4",
     "@types/socket.io-client": "~1.4.36",
+    "@types/sql-bricks": "^2.0.2",
+    "@types/sql.js": "^1.4.2",
     "@typescript-eslint/eslint-plugin": "^4.28.4",
     "@typescript-eslint/parser": "^4.28.4",
     "eslint-plugin-rxjs": "^3.3.5",

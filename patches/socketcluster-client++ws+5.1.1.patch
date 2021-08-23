@@ -1,15 +1,16 @@
 diff --git a/node_modules/socketcluster-client/node_modules/ws/lib/websocket-server.js b/node_modules/socketcluster-client/node_modules/ws/lib/websocket-server.js
-index 72618d0..cbac102 100644
+index 72618d0..9366b72 100644
 --- a/node_modules/socketcluster-client/node_modules/ws/lib/websocket-server.js
 +++ b/node_modules/socketcluster-client/node_modules/ws/lib/websocket-server.js
-@@ -1,6 +1,6 @@
- 'use strict';
- 
--const EventEmitter = require('events');
-+const { EventEmitter } = require('events');
- const crypto = require('crypto');
- const http = require('http');
- const url = require('url');
+@@ -15,7 +15,7 @@ const WebSocket = require('./websocket');
+  *
+  * @extends EventEmitter
+  */
+-class WebSocketServer extends EventEmitter {
++class WebSocketServer extends EventEmitter.EventEmitter {
+   /**
+    * Create a `WebSocketServer` instance.
+    *
 diff --git a/node_modules/socketcluster-client/node_modules/ws/lib/websocket.js b/node_modules/socketcluster-client/node_modules/ws/lib/websocket.js
 index 67cd8a4..902d85d 100644
 --- a/node_modules/socketcluster-client/node_modules/ws/lib/websocket.js

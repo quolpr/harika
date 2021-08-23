@@ -1776,6 +1776,11 @@
     "@types/yargs" "^16.0.0"
     chalk "^4.0.0"
 
+"@jlongster/sql.js@^1.6.7":
+  version "1.6.7"
+  resolved "https://registry.yarnpkg.com/@jlongster/sql.js/-/sql.js-1.6.7.tgz#f5391db62c25a6ba8a162bdcfed6e3392ef2b40f"
+  integrity sha512-4hf0kZr5WPoirdR5hUSfQ9O0JpH/qlW1CaR2wZ6zGrDz1xjSdTPuR8AW/oXzIHnJvZSEvlcIE+dfXJZwh/Lxfw==
+
 "@material-ui/core@^4.12.2":
   version "4.12.2"
   resolved "https://registry.yarnpkg.com/@material-ui/core/-/core-4.12.2.tgz#59a8b19f16b8c218d912f37f5ae70473c3c82c73"
@@ -2521,6 +2526,11 @@
   resolved "https://registry.yarnpkg.com/@types/downloadjs/-/downloadjs-1.4.2.tgz#6734e60840cd8df3f0f8937c80e67efe7de6f886"
   integrity sha512-9UWO+nrRhwyKcFe45SFc98sWI8RGwpVwtZiZzi0W/dWdrp1SiUWFNANLlAXZb5QCMFDbeRiAQEhRn5btLd4a4w==
 
+"@types/emscripten@*":
+  version "1.39.5"
+  resolved "https://registry.yarnpkg.com/@types/emscripten/-/emscripten-1.39.5.tgz#eb0fb1048301df980b6f8a5ec3d63f7d1572bb73"
+  integrity sha512-DIOOg+POSrYl+OlNRHQuIEqCd8DCtynG57H862UCce16nXJX7J8eWxNGgOcf8Eyge8zXeSs27mz1UcFu8L/L7g==
+
 "@types/eslint-scope@^3.7.0":
   version "3.7.1"
   resolved "https://registry.yarnpkg.com/@types/eslint-scope/-/eslint-scope-3.7.1.tgz#8dc390a7b4f9dd9f1284629efce982e41612116e"
@@ -2852,6 +2862,19 @@
   version "1.4.36"
   resolved "https://registry.yarnpkg.com/@types/socket.io-client/-/socket.io-client-1.4.36.tgz#e4f1ca065f84c20939e9850e70222202bd76ff3f"
   integrity sha512-ZJWjtFBeBy1kRSYpVbeGYTElf6BqPQUkXDlHHD4k/42byCN5Rh027f4yARHCink9sKAkbtGZXEAmR0ZCnc2/Ag==
+
+"@types/sql-bricks@^2.0.2":
+  version "2.0.2"
+  resolved "https://registry.yarnpkg.com/@types/sql-bricks/-/sql-bricks-2.0.2.tgz#4d573180225ddd97c48a75ee73f06752fb912ba3"
+  integrity sha512-+F8GIhuDxsdVlgeNbsmEN472AJ+AEUnU9+QQ97BSCEXX/t7hEBUnA6lvDxl1x5vQSKIDqOmPE6ZoiqjJkP+MEg==
+
+"@types/sql.js@^1.4.2":
+  version "1.4.2"
+  resolved "https://registry.yarnpkg.com/@types/sql.js/-/sql.js-1.4.2.tgz#7bf4f9ec12013f48d23d77f42fe0945b37ac8808"
+  integrity sha512-3Mq6KcJp+1qJ6FfE7c16oNZcgGrPiUZWj8DSePRRZQCPhi4vawX/thGCzwqIg59tOCjdQI1eMC+pLk9FLfTXwQ==
+  dependencies:
+    "@types/emscripten" "*"
+    "@types/node" "*"
 
 "@types/uuid@^8.3.0":
   version "8.3.1"
@@ -3311,6 +3334,11 @@ abort-controller@3.0.0:
   integrity sha512-h8lQ8tacZYnR3vNQTgibj+tODHI5/+l06Au2Pcriv/Gmet0eaj4TwWH41sO9wnHDiQsEj19q0drzdWdeAHtweg==
   dependencies:
     event-target-shim "^5.0.0"
+
+absurd-sql@^0.0.53:
+  version "0.0.53"
+  resolved "https://registry.yarnpkg.com/absurd-sql/-/absurd-sql-0.0.53.tgz#e8c84cfd4cf32feb539a667f9f7afe4697c15740"
+  integrity sha512-oglPUqDOM9bqbFmeqX5dkJzfk3MccCiZ4MarcqNqonWmVIJuR+/tyEW6F766r3OiKz8H/omzI8Wdipt6NFXkFA==
 
 accepts@^1.3.5:
   version "1.3.7"
@@ -4649,6 +4677,11 @@ combined-stream@^1.0.6, combined-stream@^1.0.8, combined-stream@~1.0.6:
   dependencies:
     delayed-stream "~1.0.0"
 
+comlink@^4.3.1:
+  version "4.3.1"
+  resolved "https://registry.yarnpkg.com/comlink/-/comlink-4.3.1.tgz#0c6b9d69bcd293715c907c33fe8fc45aecad13c5"
+  integrity sha512-+YbhUdNrpBZggBAHWcgQMLPLH1KDF3wJpeqrCKieWQ8RL7atmgsgTQko1XEBK6PsecfopWNntopJ+ByYG1lRaA==
+
 command-line-args@^5.1.1:
   version "5.1.3"
   resolved "https://registry.yarnpkg.com/command-line-args/-/command-line-args-5.1.3.tgz#1e57d2816f28804073bb5e75cd24e02e2aa321e7"
@@ -5357,10 +5390,10 @@ dexie-export-import@^1.0.3:
   resolved "https://registry.yarnpkg.com/dexie-export-import/-/dexie-export-import-1.0.3.tgz#e93926a0a3939c68f5e2b80b48517ea4c6d88fde"
   integrity sha512-oun27bUUEaeOfSZ8Cv3Nvj5s0LeANYBYQ7ROpF/3Zg1X/IALUnrX0hk5ZUMlYC3s99kFHimXX57ac5AlOdMzWw==
 
-dexie@3.2.0-beta.3:
-  version "3.2.0-beta.3"
-  resolved "https://registry.yarnpkg.com/dexie/-/dexie-3.2.0-beta.3.tgz#6e14328b2257929d93f7d597307186cb982691f7"
-  integrity sha512-gfnFMoUIxXxoY8rtMaiW1ryAOJL663irbXLutPB2bFjbegIvsHGUbJf4a20eqcF0RYbBZUg6otML0pRTWAppig==
+dexie@3.2.0-beta-2, dexie@3.2.0-beta.3:
+  version "3.2.0-beta-2"
+  resolved "https://registry.yarnpkg.com/dexie/-/dexie-3.2.0-beta-2.tgz#9037bb09231b512afdf7db4fec5692276d2e3744"
+  integrity sha512-T6UutBUmDDbccDV80GdLfFftWsTfi35yohtO3Lm/KkemmMeQw2ndFFcKHJkkc6GjFR1DOolsNs4pL7RTwagHAQ==
 
 dezalgo@^1.0.0:
   version "1.0.3"
@@ -10729,10 +10762,10 @@ react-query@^3.19.0:
     broadcast-channel "^3.4.1"
     match-sorter "^6.0.2"
 
-react-refresh@0.10.0, react-refresh@^0.9.0:
-  version "0.10.0"
-  resolved "https://registry.yarnpkg.com/react-refresh/-/react-refresh-0.10.0.tgz#2f536c9660c0b9b1d500684d9e52a65e7404f7e3"
-  integrity sha512-PgidR3wST3dDYKr6b4pJoqQFpPGNKDSCDx4cZoshjXipw3LzO7mG1My2pwEzz2JVkF+inx3xRpDeQLFQGH/hsQ==
+react-refresh@^0.9.0:
+  version "0.9.0"
+  resolved "https://registry.yarnpkg.com/react-refresh/-/react-refresh-0.9.0.tgz#71863337adc3e5c2f8a6bfddd12ae3bfe32aafbf"
+  integrity sha512-Gvzk7OZpiqKSkxsQvO/mbTN1poglhmAV7gR/DdIrRrSMXraRQQlfikRJOr3Nb9GTMPC5kof948Zy6jJZIFtDvQ==
 
 react-router-dom@^5.2.0:
   version "5.2.0"
@@ -11897,6 +11930,13 @@ sprintf-js@~1.0.2:
   resolved "https://registry.yarnpkg.com/sprintf-js/-/sprintf-js-1.0.3.tgz#04e6926f662895354f3dd015203633b857297e2c"
   integrity sha1-BOaSb2YolTVPPdAVIDYzuFcpfiw=
 
+sql-bricks@^2.0.5:
+  version "2.0.5"
+  resolved "https://registry.yarnpkg.com/sql-bricks/-/sql-bricks-2.0.5.tgz#96db7c9044cb07811f61218737a9761344156962"
+  integrity sha512-Q9qpODBZPMaPb+bjlmFYKMNk/6zpXSv1VNjJmGd9LvoqXwxd8TmE39s79wzrgAfw2lzohr4eNEpWRhHT5UYAfQ==
+  dependencies:
+    underscore "1.4.x"
+
 sshpk@^1.7.0:
   version "1.16.1"
   resolved "https://registry.yarnpkg.com/sshpk/-/sshpk-1.16.1.tgz#fb661c0bef29b39db40769ee39fa70093d6f6877"
@@ -12711,6 +12751,11 @@ unc-path-regex@^0.1.2:
   version "0.1.2"
   resolved "https://registry.yarnpkg.com/unc-path-regex/-/unc-path-regex-0.1.2.tgz#e73dd3d7b0d7c5ed86fbac6b0ae7d8c6a69d50fa"
   integrity sha1-5z3T17DXxe2G+6xrCufYxqadUPo=
+
+underscore@1.4.x:
+  version "1.4.4"
+  resolved "https://registry.yarnpkg.com/underscore/-/underscore-1.4.4.tgz#61a6a32010622afa07963bf325203cf12239d604"
+  integrity sha1-YaajIBBiKvoHljvzJSA88SI51gQ=
 
 unicode-canonical-property-names-ecmascript@^1.0.4:
   version "1.0.4"

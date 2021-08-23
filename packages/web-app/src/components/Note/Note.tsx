@@ -14,7 +14,7 @@ import { NoteBlocks } from './NoteBlocks';
 import { BacklinkedNote } from './BacklinkedNote';
 import { uniq } from 'lodash-es';
 import { useObservable, useObservableState } from 'observable-hooks';
-import { from, map, of, switchMap } from 'rxjs';
+import { from, map, of, switchMap, tap } from 'rxjs';
 import { comparer } from 'mobx';
 
 export interface IFocusBlockState {
@@ -64,6 +64,9 @@ const BacklinkedNotes = observer(({ note }: { note: NoteModel }) => {
   const backlinks$ = useObservable(
     ($inputs) => {
       return $inputs.pipe(
+        tap(([note]) => {
+          console.log({ note });
+        }),
         switchMap(([note]) =>
           noteRepo
             .getLinkedNotes$(note.$modelId)
@@ -77,12 +80,10 @@ const BacklinkedNotes = observer(({ note }: { note: NoteModel }) => {
             .pipe(map((treeHolders) => ({ treeHolders, note, linkedNotes }))),
         ),
         switchMap(({ treeHolders, linkedNotes }) =>
-          from(
-            toObserver(() =>
-              uniq(
-                treeHolders.flatMap((holder) =>
-                  holder.getLinkedBlocksOfNoteId(note.$modelId),
-                ),
+          toObserver(() =>
+            uniq(
+              treeHolders.flatMap((holder) =>
+                holder.getLinkedBlocksOfNoteId(note.$modelId),
               ),
             ),
           ).pipe(map((allBlocks) => ({ linkedNotes, allBlocks }))),
@@ -90,7 +91,7 @@ const BacklinkedNotes = observer(({ note }: { note: NoteModel }) => {
         switchMap(async ({ linkedNotes, allBlocks }) => {
           await noteRepo.preloadOrCreateBlocksViews(note, allBlocks);
 
-          return { areLoaded: true, linkedNotes, count: allBlocks.length };
+          return { areLoaded: true, linkedNotes, allBlocks };
         }),
       );
     },
@@ -99,8 +100,8 @@ const BacklinkedNotes = observer(({ note }: { note: NoteModel }) => {
 
   const backlinks = useObservableState(backlinks$, {
     areLoaded: false,
-    count: 0,
     linkedNotes: [],
+    allBlocks: [],
   });
 
   return (
@@ -108,7 +109,7 @@ const BacklinkedNotes = observer(({ note }: { note: NoteModel }) => {
       {backlinks.areLoaded ? (
         <div className="note__linked-references">
           <LinkIcon className="note__link-icon" style={{ width: 16 }} />
-          {backlinks.count} Linked References
+          {backlinks.allBlocks.length} Linked References
         </div>
       ) : (
         <div className="note__linked-references">

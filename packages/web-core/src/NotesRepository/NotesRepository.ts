@@ -6,7 +6,13 @@ import type { Required } from 'utility-types';
 import type { ICreationResult } from './types';
 import type { VaultModel } from './domain/VaultModel';
 import type { VaultDexieDatabase } from './persistence/DexieDb';
-import { distinctUntilChanged, map, switchMap, take } from 'rxjs/operators';
+import {
+  distinctUntilChanged,
+  map,
+  switchMap,
+  take,
+  tap,
+} from 'rxjs/operators';
 import { uniq, uniqBy } from 'lodash-es';
 import { filterAst } from '../blockParser/astHelpers';
 import type { RefToken, TagToken } from '../blockParser/types';
@@ -175,15 +181,18 @@ export class NotesRepository {
     );
 
     return notLoadedNotes$.pipe(
-      map(({ unloadedBlocksAttrs, notesIds }) => {
+      tap(({ unloadedBlocksAttrs }) => {
         this.vault.createOrUpdateEntitiesFromAttrs(
           [],
           unloadedBlocksAttrs,
           true,
         );
-
-        return notesIds.map((id) => this.vault.blocksTreeHoldersMap[id]);
       }),
+      switchMap(({ notesIds }) =>
+        toObserver(() => {
+          return notesIds.map((id) => this.vault.blocksTreeHoldersMap[id]);
+        }),
+      ),
     );
   }
 
