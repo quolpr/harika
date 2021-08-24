@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import type { ModelCreationData } from 'mobx-keystone';
 import type { Dayjs } from 'dayjs';
 import type { NoteModel } from './domain/NoteModel';
@@ -30,7 +31,10 @@ import type { ITransmittedChange } from '../dexie-sync/changesChannel';
 import { NotesChangesTrackerService } from './services/notes-tree/NotesChangesTrackerService';
 import dayjs from 'dayjs';
 import { toObserver } from '../toObserver';
-import type { BlocksTreeHolder } from './domain/NoteBlockModel';
+import type { VaultWorker } from '../SqlNotesRepository.worker';
+import { initBackend } from 'absurd-sql/dist/indexeddb-main-thread';
+import { proxy, Remote, wrap } from 'comlink';
+import { generateId } from '../generateId';
 
 export { NoteModel } from './domain/NoteModel';
 export { VaultModel } from './domain/VaultModel';
@@ -40,7 +44,7 @@ export { NoteBlockModel, noteBlockRef } from './domain/NoteBlockModel';
 // Model = DDD model
 // Tuple = plain object data, used for fast data getting
 
-export class NotesRepository {
+export class NotesService {
   private stopSubject = new Subject<unknown>();
   private stop$ = this.stopSubject.pipe(take(1));
 
@@ -71,6 +75,52 @@ export class NotesRepository {
           id,
           title,
         })),
+    );
+
+    console.time('worker');
+
+    let worker = new Worker(
+      new URL('../SqlNotesRepository.worker.js', import.meta.url),
+      {
+        name: 'sql-notes-worker',
+        type: 'module',
+      },
+    );
+
+    // This is only required because Safari doesn't support nested
+    // workers. This installs a handler that will proxy creating web
+    // workers through the main thread
+    initBackend(worker);
+
+    const Klass = wrap<VaultWorker>(worker) as unknown as new () => Promise<
+      Remote<VaultWorker>
+    >;
+    const obj = await new Klass();
+
+    console.log('hey4!');
+    await obj.initialize(
+      '123',
+      proxy((ch) => {
+        console.log('New ch', ch);
+      }),
+    );
+
+    const notesRepo = await obj.getNotesRepo();
+
+    console.timeEnd('worker');
+
+    notesRepo.create(
+      {
+        id: generateId(),
+        title: 'hey!',
+        dailyNoteDate: undefined,
+        createdAt: new Date().getTime(),
+      },
+      {
+        windowId: generateId(),
+        shouldRecordChange: true,
+        source: 'inDbChanges',
+      },
     );
   }
 
@@ -131,7 +181,7 @@ export class NotesRepository {
     } as ICreationResult<NoteModel>;
   }
 
-  async getOrCreateDailyNote(this: NotesRepository, date: Dayjs) {
+  async getOrCreateDailyNote(this: NotesService, date: Dayjs) {
     const noteRow = await this.db.notesQueries.getDailyNote(date);
 
     if (noteRow) {

@@ -1,35 +1,88 @@
-import initSqlJs, { BindParams, Database } from '@jlongster/sql.js';
+import initSqlJs, { Database } from '@jlongster/sql.js';
 import { SQLiteFS } from 'absurd-sql';
 import IndexedDBBackend from 'absurd-sql/dist/indexeddb-backend';
 import { expose, proxy } from 'comlink';
-import { snakeCase } from 'lodash-es';
-import { insert, select } from 'sql-bricks';
-import type { NoteBlockDocType, NoteDocType } from './dexieTypes';
+import {
+  deleteFrom,
+  insert,
+  select,
+  Statement,
+  in as $in,
+  eq,
+  update,
+} from 'sql-bricks';
+import type {
+  IDatabaseChange,
+  NoteBlockDocType,
+  NoteDocType,
+} from './dexieTypes';
 import { DatabaseChangeType } from './dexieTypes';
 import { v4 as uuidv4 } from 'uuid';
+import { getObjectDiff } from './dexie-sync/utils';
 
 // eslint-disable-next-line no-restricted-globals
 // const ctx: Worker = self as any;
 
 const notesTable = 'notes' as const;
 const noteBlocksTable = 'noteBlocks' as const;
-
 const changesToSendTable = 'changesToSend' as const;
 
-interface IChangeRow {
+type IBaseChangeRow = {
   id: string;
-  type: DatabaseChangeType;
-  inTable: typeof noteBlocksTable | typeof notesTable;
   key: string;
   obj: string;
-  changeFrom?: string;
-  changeTo?: string;
+  inTable: string;
+};
+
+type ICreateChangeRow = IBaseChangeRow & {
+  type: DatabaseChangeType.Create;
+};
+
+type IUpdateChangeRow = IBaseChangeRow & {
+  type: DatabaseChangeType.Update;
+  changeFrom: string;
+  changeTo: string;
+};
+
+type IDeleteChangeRow = IBaseChangeRow & {
+  type: DatabaseChangeType.Delete;
+};
+
+type IChangeRow = ICreateChangeRow | IUpdateChangeRow | IDeleteChangeRow;
+
+interface ICtx {
+  windowId: string;
+  shouldRecordChange: boolean;
+  source: 'inDomainChanges' | 'inDbChanges';
 }
+
+let currentCtx: ICtx | undefined;
+const shareCtx = <T extends any>(func: () => T, ctx: ICtx) => {
+  const prevCtx = currentCtx;
+  currentCtx = ctx;
+
+  const result = func();
+
+  currentCtx = prevCtx;
+
+  return result;
+};
+const getCtxStrict = (): ICtx => {
+  if (currentCtx === undefined) throw new Error('Ctx not set!');
+
+  return currentCtx;
+};
+
+type IExtendedDatabaseChange = IDatabaseChange & {
+  windowId: string;
+  source: 'inDomainChanges' | 'inDbChanges';
+};
 
 class DB {
   sqlDb!: Database;
 
   private inTransaction: boolean = false;
+  private transactionCtx: ICtx | undefined;
 
   async init(vaultId: string) {
     let SQL = await initSqlJs({
@@ -72,14 +125,22 @@ class DB {
     `);
   }
 
-  transaction<T extends any>(func: () => T): T {
+  transaction<T extends any>(func: () => T, ctx?: ICtx): T {
     if (this.inTransaction) return func();
 
     this.sqlDb.run('BEGIN TRANSACTION;');
 
-    const result = func();
+    let result: T | undefined = undefined;
 
-    this.sqlDb.run('COMMIT');
+    try {
+      result = ctx ? shareCtx(func, ctx) : func();
+
+      this.sqlDb.run('COMMIT;');
+    } catch (e) {
+      this.sqlDb.run('ROLLBACK;');
+
+      throw e;
+    }
 
     return result;
   }
@@ -97,20 +158,17 @@ class DB {
       .values(values.map(([, v]) => v))
       .toParams();
 
-    console.log({ sql });
-
-    console.log(this.sqlDb.exec(sql.text, sql.values));
+    this.sqlDb.exec(sql.text, sql.values);
   }
 
-  getRecords<T extends Record<string, any>>(
-    sql: string,
-    params?: BindParams,
-    mapper?: () => T,
-  ) {
-    const [result] = this.sqlDb.exec(sql, params);
+  // TODO: add mapper for better performance
+  getRecords<T extends Record<string, any>>(query: Statement): T[] {
+    const sql = query.toParams();
+
+    const [result] = this.sqlDb.exec(sql.text, sql.values);
 
     return result.values.map((res) => {
-      const obj: Record<string, any> = {};
+      let obj: Record<string, any> = {};
 
       result.columns.forEach((col, i) => {
         obj[col] = res[i];
@@ -119,84 +177,216 @@ class DB {
       return obj;
     }) as T[];
   }
+
+  execQuery(query: Statement) {
+    const sql = query.toParams();
+
+    return this.sqlDb.exec(sql.text, sql.values);
+  }
 }
 
-export class SyncRepository {
-  constructor(private db: DB) {}
+class SyncRepository {
+  constructor(
+    private db: DB,
+    private onChange: (ch: IExtendedDatabaseChange) => void,
+  ) {}
 
-  createCreateChange(
-    table: IChangeRow['inTable'],
-    data: Record<string, unknown>,
-  ) {
-    const change: IChangeRow = {
-      id: uuidv4(),
+  createCreateChange(table: string, data: Record<string, unknown>) {
+    const ctx = getCtxStrict();
+    const id = uuidv4();
+
+    this.onChange({
+      id,
       type: DatabaseChangeType.Create,
-      inTable: table,
+      table,
       key: data.id as string,
-      obj: JSON.stringify(data),
-    };
+      obj: data,
+      windowId: ctx.windowId,
+      source: ctx.source,
+    });
 
-    this.db.insertRecord(changesToSendTable, change);
+    if (ctx.shouldRecordChange) {
+      const changeRow: ICreateChangeRow = {
+        id,
+        type: DatabaseChangeType.Create,
+        inTable: table,
+        key: data.id as string,
+        obj: JSON.stringify(data),
+      };
+
+      this.db.insertRecord(changesToSendTable, changeRow);
+    }
+  }
+
+  createUpdateChange(
+    table: string,
+    from: Record<string, unknown>,
+    to: Record<string, unknown>,
+  ) {
+    const ctx = getCtxStrict();
+    const id = uuidv4();
+    const diff = getObjectDiff(from, to);
+
+    this.onChange({
+      id,
+      type: DatabaseChangeType.Update,
+      table,
+      key: from.id as string,
+      obj: to,
+      from,
+      to,
+      windowId: ctx.windowId,
+      source: ctx.source,
+    });
+
+    if (ctx.shouldRecordChange) {
+      const change: IUpdateChangeRow = {
+        id,
+        type: DatabaseChangeType.Update,
+        inTable: table,
+        key: from.id as string,
+        changeFrom: JSON.stringify(diff.from),
+        changeTo: JSON.stringify(diff.to),
+        obj: JSON.stringify(to),
+      };
+
+      this.db.insertRecord(changesToSendTable, change);
+    }
+  }
+
+  createDeleteChange(table: string, obj: Record<string, unknown>) {
+    const ctx = getCtxStrict();
+    const id = uuidv4();
+
+    this.onChange({
+      id,
+      type: DatabaseChangeType.Delete,
+      table,
+      key: obj.id as string,
+      obj,
+      windowId: ctx.windowId,
+      source: ctx.source,
+    });
+
+    if (ctx.shouldRecordChange) {
+      const change: IDeleteChangeRow = {
+        id,
+        type: DatabaseChangeType.Delete,
+        inTable: table,
+        key: obj.id as string,
+        obj: JSON.stringify(obj),
+      };
+
+      this.db.insertRecord(changesToSendTable, change);
+    }
   }
 
   getChangesPulls() {}
   getChangesFromServer(ids: string[]) {}
   getChangesToSend() {
-    return this.db.getRecords<IChangeRow>(
-      select().from(changesToSendTable).toString(),
-    );
+    return this.db.getRecords<IChangeRow>(select().from(changesToSendTable));
   }
 
   deletePulls(ids: string[]) {}
   deleteChangesToSend(ids: string[]) {
-    return this.db.getRecords<IChangeRow>(
-      select().from(changesToSendTable).toString(),
+    this.db.execQuery(
+      deleteFrom().from(changesToSendTable),
+      // .where($in('id', ...ids)),
     );
   }
 }
 
-export class SyncService {
+class SyncService {
   constructor(private db: DB) {}
 
   applyServerChanges() {}
 }
 
-export class SqlNotesBlocksRepository {
-  constructor(private syncRepository: SyncRepository, private db: DB) {}
+abstract class BaseSyncRepository<
+  T extends Record<string, unknown> & { id: string },
+> {
+  constructor(protected syncRepository: SyncRepository, protected db: DB) {}
 
-  create(attrs: NoteBlockDocType) {
-    //start transaction
-    this.syncRepository.createCreateChange(notesTable, attrs);
-
-    // this.db call
-
-    //end transaction
+  getById(id: string): T | undefined {
+    return this.db.getRecords<T>(
+      select().from(this.getTableName()).where(eq('id', id)),
+    )[0];
   }
-  getById(id: string): NoteBlockDocType {}
-  getRootBlock(id: string): NoteBlockDocType {}
-}
 
-export class SqlNotesRepository {
-  constructor(private syncRepository: SyncRepository, private db: DB) {}
+  create(attrs: T, ctx: ICtx) {
+    console.log('hey!');
 
-  create(attrs: NoteDocType) {
+    const result = this.db.transaction(() => {
+      this.syncRepository.createCreateChange(this.getTableName(), attrs);
+
+      return this.db.insertRecord(this.getTableName(), attrs);
+    }, ctx);
+
+    return result;
+  }
+
+  update(changeTo: T, ctx: ICtx) {
     return this.db.transaction(() => {
-      this.syncRepository.createCreateChange(notesTable, attrs);
+      const currentRecord = this.getById(changeTo.id);
 
-      return this.db.insertRecord(notesTable, attrs);
-    });
+      if (!currentRecord)
+        throw new Error(
+          `Couldn't update. ${this.getTableName()}=${changeTo.id} not found`,
+        );
+
+      this.syncRepository.createUpdateChange(
+        this.getTableName(),
+        currentRecord,
+        changeTo,
+      );
+
+      this.db.execQuery(
+        update(this.getTableName())
+          .set(changeTo)
+          .where(eq('id', currentRecord.id)),
+      );
+    }, ctx);
+  }
+
+  delete(changeTo: NoteBlockDocType, ctx: ICtx) {
+    return this.db.transaction(() => {
+      const currentRecord = this.getById(changeTo.id);
+
+      if (!currentRecord)
+        throw new Error(
+          `Couldn't delete. ${this.getTableName()}=${changeTo.id} not found`,
+        );
+
+      this.syncRepository.createDeleteChange(
+        this.getTableName(),
+        currentRecord,
+      );
+      this.db.execQuery(
+        deleteFrom(this.getTableName()).where(eq('id', currentRecord.id)),
+      );
+    }, ctx);
   }
 
   getAll() {
-    console.log(select().from(notesTable).toString());
+    return this.db.getRecords<T>(select().from(this.getTableName()));
+  }
 
-    return this.db.getRecords<NoteDocType>(
-      select().from(notesTable).toString(),
-    );
+  abstract getTableName(): string;
+}
+
+class SqlNotesBlocksRepository extends BaseSyncRepository<NoteBlockDocType> {
+  getTableName() {
+    return noteBlocksTable;
   }
 }
 
-export class VaultService {
+class SqlNotesRepository extends BaseSyncRepository<NoteDocType> {
+  getTableName() {
+    return notesTable;
+  }
+}
+
+class VaultService {
   constructor(
     private notesRepository: SqlNotesRepository,
     private notesBlocksRepository: SqlNotesBlocksRepository,
@@ -211,23 +401,30 @@ export class VaultService {
 
 export class VaultWorker {
   private db!: DB;
+  private syncRepo!: SyncRepository;
 
-  async initialize(vaultId: string) {
+  async initialize(
+    vaultId: string,
+    onChange: (ch: IExtendedDatabaseChange) => void,
+  ) {
+    console.log('yep');
     if (!this.db) {
       this.db = new DB();
       await this.db.init(vaultId);
+
+      this.syncRepo = new SyncRepository(this.db, onChange);
     }
   }
 
-  notesRepo() {
-    const syncRepo = new SyncRepository(this.db);
-
-    return proxy(new SqlNotesRepository(syncRepo, this.db));
+  getNotesRepo() {
+    return proxy(new SqlNotesRepository(this.syncRepo, this.db));
   }
 
-  syncRepo() {
-    return proxy(new SyncRepository(this.db));
+  getSyncRepo() {
+    return proxy(this.syncRepo);
   }
 }
+
+console.log('hhuuu!!');
 
 expose(VaultWorker);

@@ -2,7 +2,7 @@ import { VaultModel } from '../NotesRepository/domain/VaultModel';
 import { syncMiddleware } from '../NotesRepository/domain/syncable';
 import { VaultDexieDatabase } from '../NotesRepository/persistence/DexieDb';
 import { UserDexieDatabase, VaultDocType } from './persistence/UserDexieDb';
-import { NotesRepository } from '../NotesRepository/NotesRepository';
+import { NotesService } from '../NotesRepository/NotesRepository';
 import { initSync } from '../dexie-sync/init';
 import { liveQuery } from 'dexie';
 import { from, Observable } from 'rxjs';
@@ -18,7 +18,7 @@ import { ToDomainSyncer } from '../NotesRepository/syncers/ToDomainSyncer';
 const windowId = generateId();
 
 export class VaultsRepository {
-  private notesRepositories: Record<string, NotesRepository | undefined> = {};
+  private notesRepositories: Record<string, NotesService | undefined> = {};
 
   database!: UserDexieDatabase;
 
@@ -114,7 +114,7 @@ export class VaultsRepository {
     syncMiddleware(vault, new ToDbSyncer(db, vault).handlePatch);
     new ToDomainSyncer(changes$, vault, windowId).start();
 
-    const repo = new NotesRepository(db, vault, globalChangesSubject);
+    const repo = new NotesService(db, vault, globalChangesSubject);
 
     // Don't need to await
     repo.initialize();
