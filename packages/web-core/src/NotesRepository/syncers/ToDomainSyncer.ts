@@ -1,4 +1,4 @@
-import type { Observable } from 'dexie';
+import type { Observable } from 'rxjs';
 import type { ITransmittedChange } from '../../dexie-sync/changesChannel';
 import {
   VaultDbTables,
@@ -7,6 +7,7 @@ import {
   INoteBlockChangeEvent,
   IBlocksViewChangeEvent,
 } from '../../dexieTypes';
+import type { IExtendedDatabaseChange } from '../../SqlNotesRepository.worker';
 import type { VaultModel } from '../domain/VaultModel';
 import {
   convertNoteDocToModelAttrs,
@@ -19,7 +20,7 @@ import {
 
 export class ToDomainSyncer {
   constructor(
-    private changes$: Observable<ITransmittedChange[]>,
+    private changes$: Observable<IExtendedDatabaseChange[]>,
     private vault: VaultModel,
     private currentWindowId: string,
   ) {}
@@ -29,20 +30,18 @@ export class ToDomainSyncer {
       console.log({ evs });
 
       evs = evs.filter(
-        ({ fromServer, windowId, transactionSource }) =>
+        ({ windowId, source }) =>
           // we are going to pick all events except one that came from current mobx
-          fromServer ||
-          windowId !== this.currentWindowId ||
-          transactionSource === 'conflictsResolution',
+          windowId !== this.currentWindowId || source === 'inDbChanges',
       );
 
       if (evs.length === 0) return;
 
-      const blockViews = this.getViews(evs);
+      // const blockViews = this.getViews(evs);
 
-      if (blockViews.length > 0) {
-        this.vault.ui.createOrUpdateEntitiesFromAttrs(blockViews);
-      }
+      // if (blockViews.length > 0) {
+      //   this.vault.ui.createOrUpdateEntitiesFromAttrs(blockViews);
+      // }
 
       const notesChanges = this.getNoteChanges(evs);
       const blockChanges = this.getBlockChanges(evs);
@@ -55,31 +54,31 @@ export class ToDomainSyncer {
     });
   }
 
-  private getViews(evs: ITransmittedChange[]) {
-    const viewEvents = evs.filter(
-      (ev) => ev.table === VaultDbTables.BlocksViews,
-    ) as IBlocksViewChangeEvent[];
+  //   private getViews(evs: IExtendedDatabaseChange[]) {
+  //     const viewEvents = evs.filter(
+  //       (ev) => ev.table === VaultDbTables.BlocksViews,
+  //     ) as IBlocksViewChangeEvent[];
 
-    const latestDedupedEvents: Record<string, IBlocksViewChangeEvent> = {};
+  //     const latestDedupedEvents: Record<string, IBlocksViewChangeEvent> = {};
 
-    viewEvents.reverse().forEach((ev) => {
-      if (!latestDedupedEvents[ev.key]) {
-        latestDedupedEvents[ev.key] = ev;
-      }
-    });
+  //     viewEvents.reverse().forEach((ev) => {
+  //       if (!latestDedupedEvents[ev.key]) {
+  //         latestDedupedEvents[ev.key] = ev;
+  //       }
+  //     });
 
-    return viewEvents
-      .map((ev) => {
-        if (!ev.obj) return undefined;
+  //     return viewEvents
+  //       .map((ev) => {
+  //         if (!ev.obj) return undefined;
 
-        return convertViewToModelAttrs(ev.obj);
-      })
-      .filter((n) => !!n) as ViewData[];
-  }
+  //         return convertViewToModelAttrs(ev.obj);
+  //       })
+  //       .filter((n) => !!n) as ViewData[];
+  //   }
 
   // TODO refactor notes and noteblocks to one method
 
-  private getBlockChanges(evs: ITransmittedChange[]) {
+  private getBlockChanges(evs: IExtendedDatabaseChange[]) {
     const blockEvents = evs.filter(
       (ev) => ev.table === VaultDbTables.NoteBlocks,
     ) as INoteBlockChangeEvent[];
@@ -122,7 +121,7 @@ export class ToDomainSyncer {
       .filter((n) => !!n) as NoteBlockData[];
   }
 
-  private getNoteChanges(evs: ITransmittedChange[]) {
+  private getNoteChanges(evs: IExtendedDatabaseChange[]) {
     const noteEvents = evs.filter(
       (ev) => ev.table === VaultDbTables.Notes,
     ) as INoteChangeEvent[];

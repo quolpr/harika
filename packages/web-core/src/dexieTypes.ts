@@ -70,22 +70,22 @@ export enum DatabaseChangeType {
 export type NoteDocType = {
   id: string;
   title: string;
-  dailyNoteDate: number | undefined;
+  dailyNoteDate: number | null;
   createdAt: number;
-  updatedAt?: number;
+  updatedAt: number | null;
 };
 
 export type NoteBlockDocType = {
   id: string;
   noteId: string;
-  isRoot: 0 | 1;
+  isRoot: boolean;
 
   noteBlockIds: string[];
   linkedNoteIds: string[];
 
   content: string;
   createdAt: number;
-  updatedAt?: number;
+  updatedAt: number | null;
 };
 
 export type BlocksViewDocType = {

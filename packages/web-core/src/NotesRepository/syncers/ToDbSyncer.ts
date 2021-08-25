@@ -1,12 +1,16 @@
-import Dexie, { Table } from 'dexie';
+import type { Remote, UnproxyOrClone } from 'comlink';
 import { uniq } from 'lodash-es';
 import type { Patch, Path } from 'mobx-keystone';
 import { Subject } from 'rxjs';
 import { buffer, concatMap, debounceTime, tap } from 'rxjs/operators';
+import type {
+  BaseSyncRepository,
+  SqlNotesBlocksRepository,
+  SqlNotesRepository,
+} from '../../SqlNotesRepository.worker';
 import type { NoteBlockModel } from '../domain/NoteBlockModel';
 import type { VaultModel } from '../NotesRepository';
-import type { VaultDexieDatabase } from '../persistence/DexieDb';
-import { mapNote, mapNoteBlock, mapView } from './toDbDocsConverters';
+import { mapNote, mapNoteBlock } from './toDbDocsConverters';
 
 // TODO: type rootKey
 const zipPatches = (selector: (path: Path) => boolean, patches: Patch[]) => {
@@ -212,7 +216,9 @@ export class ToDbSyncer {
   patchesSubject: Subject<Patch>;
 
   constructor(
-    private database: VaultDexieDatabase,
+    private notesRepository: Remote<SqlNotesRepository>,
+    private notesBlocksRepository: Remote<SqlNotesBlocksRepository>,
+    private windowId: string,
     private vault: VaultModel,
     onPatchesApplied?: () => void,
   ) {
@@ -234,8 +240,6 @@ export class ToDbSyncer {
   };
 
   private applyPatches = async (patches: Patch[]) => {
-    console.log('received patches from mobx', patches);
-
     patches = patches.filter(
       ({ path }) =>
         ['blocksTreeHoldersMap', 'notesMap'].includes(path[0] as string) ||
@@ -265,57 +269,52 @@ export class ToDbSyncer {
       JSON.stringify({ blocksResult, noteResult, viewToUpdateIds }, null, 2),
     );
 
-    this.database.transaction(
-      'rw',
-      this.database.notes,
-      this.database.noteBlocks,
-      this.database.blocksViews,
-      async () => {
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        Dexie.currentTransaction.source = this.database.windowId;
-
-        await Promise.all([
-          this.applier(noteResult, this.database.notes, (id) =>
-            mapNote(this.vault.notesMap[id]),
-          ),
-          this.applier(blocksResult, this.database.noteBlocks, (id) =>
-            mapNoteBlock(this.vault.getNoteBlock(id)!),
-          ),
-          this.applier(
-            { toCreateIds: [], toUpdateIds: viewToUpdateIds, toDeleteIds: [] },
-            this.database.blocksViews,
-            (id) => mapView(this.vault.ui.blocksViewsMap[id]),
-          ),
-        ]);
-      },
+    await this.applier(noteResult, this.notesRepository, (id) =>
+      mapNote(this.vault.notesMap[id]),
     );
+
+    await this.applier(blocksResult, this.notesBlocksRepository, (id) =>
+      mapNoteBlock(this.vault.getNoteBlock(id)!),
+    );
+    // TODO: views
   };
 
-  private applier = <T extends object>(
+  private applier = <T extends Record<string, unknown> & { id: string }>(
     result: {
       toCreateIds: string[];
       toUpdateIds: string[];
       toDeleteIds: string[];
     },
-    table: Table,
+    repo: Remote<BaseSyncRepository<T, any>>,
     mapper: (id: string) => T,
   ) => {
+    const ctx = {
+      windowId: this.windowId,
+      shouldRecordChange: true,
+      source: 'inDomainChanges' as const,
+    };
+
     return Promise.all([
       (async () => {
-        if (result.toCreateIds.length > 0) {
-          await table.bulkPut(result.toCreateIds.map(mapper));
-        }
+        await Promise.all(
+          result.toCreateIds.map(async (id) => {
+            await repo.create(mapper(id) as UnproxyOrClone<T>, ctx);
+          }),
+        );
       })(),
       (async () => {
-        if (result.toUpdateIds.length > 0) {
-          await table.bulkPut(result.toUpdateIds.map(mapper));
-        }
+        await Promise.all(
+          result.toUpdateIds.map(async (id) => {
+            await repo.update(mapper(id) as UnproxyOrClone<T>, ctx);
+          }),
+        );
       })(),
       (async () => {
-        if (result.toDeleteIds.length > 0) {
-          await table.bulkDelete(result.toDeleteIds);
-        }
+        await Promise.all(
+          result.toDeleteIds.map(async (id) => {
+            await repo.delete(id, ctx);
+          }),
+        );
       })(),
     ]);
   };

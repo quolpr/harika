@@ -1,16 +1,12 @@
-import initSqlJs, { Database } from '@jlongster/sql.js';
+import initSqlJs, {
+  BindParams,
+  Database,
+  QueryExecResult,
+} from '@jlongster/sql.js';
 import { SQLiteFS } from 'absurd-sql';
 import IndexedDBBackend from 'absurd-sql/dist/indexeddb-backend';
 import { expose, proxy } from 'comlink';
-import {
-  deleteFrom,
-  insert,
-  select,
-  Statement,
-  in as $in,
-  eq,
-  update,
-} from 'sql-bricks';
+import Q from 'sql-bricks';
 import type {
   IDatabaseChange,
   NoteBlockDocType,
@@ -19,6 +15,10 @@ import type {
 import { DatabaseChangeType } from './dexieTypes';
 import { v4 as uuidv4 } from 'uuid';
 import { getObjectDiff } from './dexie-sync/utils';
+import { BroadcastChannel } from 'broadcast-channel';
+import { buffer, debounceTime, Subject } from 'rxjs';
+import { mapValues } from 'lodash-es';
+import dayjs from 'dayjs';
 
 // eslint-disable-next-line no-restricted-globals
 // const ctx: Worker = self as any;
@@ -50,6 +50,27 @@ type IDeleteChangeRow = IBaseChangeRow & {
 
 type IChangeRow = ICreateChangeRow | IUpdateChangeRow | IDeleteChangeRow;
 
+export type NoteRowType = {
+  id: string;
+  title: string;
+  dailyNoteDate: number | null;
+  createdAt: number;
+  updatedAt: number | null;
+};
+
+export type NoteBlockRowType = {
+  id: string;
+  noteId: string;
+  isRoot: 0 | 1;
+  // TODO: make separate table
+  noteBlockIds: string;
+  // TODO: make separate table
+  linkedNoteIds: string;
+  content: string;
+  createdAt: number;
+  updatedAt: number | null;
+};
+
 interface ICtx {
   windowId: string;
   shouldRecordChange: boolean;
@@ -73,7 +94,7 @@ const getCtxStrict = (): ICtx => {
   return currentCtx;
 };
 
-type IExtendedDatabaseChange = IDatabaseChange & {
+export type IExtendedDatabaseChange = IDatabaseChange & {
   windowId: string;
   source: 'inDomainChanges' | 'inDbChanges';
 };
@@ -101,6 +122,8 @@ class DB {
 
     this.sqlDb.exec(`
       PRAGMA journal_mode=MEMORY;
+      PRAGMA page_size=8192;
+      PRAGMA cache_size=-${10 * 1024};
     `);
 
     this.sqlDb.exec(`
@@ -108,6 +131,16 @@ class DB {
         id varchar(20) PRIMARY KEY,
         title varchar(255) NOT NULL,
         dailyNoteDate INTEGER,
+        updatedAt INTEGER,
+        createdAt INTEGER NOT NULL
+      );
+    `);
+    this.sqlDb.exec(`
+      CREATE TABLE IF NOT EXISTS ${notesTable} (
+        id varchar(20) PRIMARY KEY,
+        title varchar(255) NOT NULL,
+        dailyNoteDate INTEGER,
+        updatedAt INTEGER,
         createdAt INTEGER NOT NULL
       );
     `);
@@ -121,6 +154,19 @@ class DB {
         obj TEXT NOT NULL,
         changeFrom TEXT,
         changeTo TEXT
+      );
+    `);
+
+    this.sqlDb.exec(`
+      CREATE TABLE IF NOT EXISTS ${noteBlocksTable} (
+        id varchar(20) PRIMARY KEY,
+        noteId varchar(20) NOT NULL,
+        isRoot BOOLEAN NOT NULL CHECK (isRoot IN (0, 1)),
+        noteBlockIds TEXT NOT NULL,
+        linkedNoteIds TEXT NOT NULL,
+        content TEXT NOT NULL,
+        updatedAt INTEGER,
+        createdAt INTEGER NOT NULL
       );
     `);
   }
@@ -145,29 +191,44 @@ class DB {
     return result;
   }
 
+  private sqlExec(sql: string, params?: BindParams): QueryExecResult[] {
+    const startTime = performance.now();
+    const res = this.sqlDb.exec(sql, params);
+    const end = performance.now();
+
+    console.debug(
+      'Done executing',
+      sql,
+      params,
+      `Time: ${((end - startTime) / 1000).toFixed(4)}s`,
+    );
+
+    return res;
+  }
+
   insertRecord(table: string, obj: Record<string, any>) {
     const values = Object.entries(obj).map(([k, v]) => [
       k,
       v === undefined ? null : v,
     ]);
 
-    const sql = insert(
+    const sql = Q.insert(
       table,
       values.map(([k]) => k),
     )
       .values(values.map(([, v]) => v))
       .toParams();
 
-    this.sqlDb.exec(sql.text, sql.values);
+    return this.sqlExec(sql.text, sql.values);
   }
 
   // TODO: add mapper for better performance
-  getRecords<T extends Record<string, any>>(query: Statement): T[] {
+  getRecords<T extends Record<string, any>>(query: Q.Statement): T[] {
     const sql = query.toParams();
 
-    const [result] = this.sqlDb.exec(sql.text, sql.values);
+    const [result] = this.sqlExec(sql.text, sql.values);
 
-    return result.values.map((res) => {
+    return (result?.values?.map((res) => {
       let obj: Record<string, any> = {};
 
       result.columns.forEach((col, i) => {
@@ -175,13 +236,13 @@ class DB {
       });
 
       return obj;
-    }) as T[];
+    }) || []) as T[];
   }
 
-  execQuery(query: Statement) {
+  execQuery(query: Q.Statement) {
     const sql = query.toParams();
 
-    return this.sqlDb.exec(sql.text, sql.values);
+    return this.sqlExec(sql.text, sql.values);
   }
 }
 
@@ -233,8 +294,8 @@ class SyncRepository {
       table,
       key: from.id as string,
       obj: to,
-      from,
-      to,
+      from: diff.from,
+      to: diff.to,
       windowId: ctx.windowId,
       source: ctx.source,
     });
@@ -284,14 +345,13 @@ class SyncRepository {
   getChangesPulls() {}
   getChangesFromServer(ids: string[]) {}
   getChangesToSend() {
-    return this.db.getRecords<IChangeRow>(select().from(changesToSendTable));
+    return this.db.getRecords<IChangeRow>(Q.select().from(changesToSendTable));
   }
 
   deletePulls(ids: string[]) {}
   deleteChangesToSend(ids: string[]) {
     this.db.execQuery(
-      deleteFrom().from(changesToSendTable),
-      // .where($in('id', ...ids)),
+      Q.deleteFrom().from(changesToSendTable).where(Q.in('id', ids)),
     );
   }
 }
@@ -302,30 +362,47 @@ class SyncService {
   applyServerChanges() {}
 }
 
-abstract class BaseSyncRepository<
-  T extends Record<string, unknown> & { id: string },
+export abstract class BaseSyncRepository<
+  Doc extends Record<string, unknown> & { id: string },
+  Row extends Record<string, unknown> & { id: string },
 > {
   constructor(protected syncRepository: SyncRepository, protected db: DB) {}
 
-  getById(id: string): T | undefined {
-    return this.db.getRecords<T>(
-      select().from(this.getTableName()).where(eq('id', id)),
+  findBy(obj: Partial<Doc>): Doc | undefined {
+    const row = this.db.getRecords<Row>(
+      Q.select().from(this.getTableName()).where(obj),
     )[0];
+
+    return row ? this.toModel(row) : undefined;
   }
 
-  create(attrs: T, ctx: ICtx) {
-    console.log('hey!');
+  getByIds(ids: string[]): Doc[] {
+    return this.db
+      .getRecords<Row>(
+        Q.select().from(this.getTableName()).where(Q.in('id', ids)),
+      )
+      .map((row) => this.toModel(row));
+  }
 
-    const result = this.db.transaction(() => {
+  getById(id: string): Doc | undefined {
+    return this.findBy({ id } as Partial<Doc>);
+  }
+
+  getIsExists(id: string): boolean {
+    return this.getById(id) !== undefined;
+  }
+
+  create(attrs: Doc, ctx: ICtx) {
+    return this.db.transaction(() => {
       this.syncRepository.createCreateChange(this.getTableName(), attrs);
 
-      return this.db.insertRecord(this.getTableName(), attrs);
-    }, ctx);
+      this.db.insertRecord(this.getTableName(), this.toDoc(attrs));
 
-    return result;
+      return attrs;
+    }, ctx);
   }
 
-  update(changeTo: T, ctx: ICtx) {
+  update(changeTo: Doc, ctx: ICtx) {
     return this.db.transaction(() => {
       const currentRecord = this.getById(changeTo.id);
 
@@ -341,20 +418,22 @@ abstract class BaseSyncRepository<
       );
 
       this.db.execQuery(
-        update(this.getTableName())
-          .set(changeTo)
-          .where(eq('id', currentRecord.id)),
+        Q.update(this.getTableName())
+          .set(this.toDoc(changeTo))
+          .where(Q.eq('id', currentRecord.id)),
       );
+
+      return changeTo;
     }, ctx);
   }
 
-  delete(changeTo: NoteBlockDocType, ctx: ICtx) {
+  delete(id: string, ctx: ICtx) {
     return this.db.transaction(() => {
-      const currentRecord = this.getById(changeTo.id);
+      const currentRecord = this.getById(id);
 
       if (!currentRecord)
         throw new Error(
-          `Couldn't delete. ${this.getTableName()}=${changeTo.id} not found`,
+          `Couldn't delete. ${this.getTableName()}=${id} not found`,
         );
 
       this.syncRepository.createDeleteChange(
@@ -362,25 +441,110 @@ abstract class BaseSyncRepository<
         currentRecord,
       );
       this.db.execQuery(
-        deleteFrom(this.getTableName()).where(eq('id', currentRecord.id)),
+        Q.deleteFrom(this.getTableName()).where(Q.eq('id', id)),
       );
     }, ctx);
   }
 
   getAll() {
-    return this.db.getRecords<T>(select().from(this.getTableName()));
+    return this.db.getRecords<Doc>(Q.select().from(this.getTableName()));
+  }
+
+  toDoc(model: Doc): Row {
+    return mapValues(model, (v) => (v === undefined ? null : v)) as Row;
+  }
+
+  toModel(row: Row): Doc {
+    return row as Doc;
   }
 
   abstract getTableName(): string;
 }
 
-class SqlNotesBlocksRepository extends BaseSyncRepository<NoteBlockDocType> {
+export class SqlNotesBlocksRepository extends BaseSyncRepository<
+  NoteBlockDocType,
+  NoteBlockRowType
+> {
+  getByNoteIds(ids: string[]) {
+    console.log({ ids });
+    const res = this.db.getRecords<NoteBlockRowType>(
+      Q.select().from(this.getTableName()).where(Q.in('noteId', ids)),
+    );
+
+    return res?.map((res) => this.toModel(res)) || [];
+  }
+
+  getByNoteId(id: string): NoteBlockDocType[] {
+    return this.getByNoteIds([id]);
+  }
+
   getTableName() {
     return noteBlocksTable;
   }
+
+  getLinkedNoteIdsOfNoteId(id: string): string[] {
+    const [res] = this.db.execQuery(
+      Q.select()
+        .distinct('noteId')
+        .from(this.getTableName())
+        .where(Q.like('linkedNoteIds', `%${id}%`)),
+    );
+
+    return res?.values?.map(([val]) => val as string) || [];
+  }
+
+  toDoc(model: NoteBlockDocType): NoteBlockRowType {
+    return {
+      ...super.toDoc(model),
+      noteBlockIds: JSON.stringify(model.noteBlockIds),
+      linkedNoteIds: JSON.stringify(model.linkedNoteIds),
+      isRoot: model.isRoot ? 1 : 0,
+    };
+  }
+
+  toModel(row: NoteBlockRowType): NoteBlockDocType {
+    return {
+      ...super.toModel(row),
+      noteBlockIds: JSON.parse(row['noteBlockIds'] as string),
+      linkedNoteIds: JSON.parse(row['linkedNoteIds'] as string),
+      isRoot: Boolean(row.isRoot),
+    } as NoteBlockDocType;
+  }
 }
 
-class SqlNotesRepository extends BaseSyncRepository<NoteDocType> {
+export class SqlNotesRepository extends BaseSyncRepository<
+  NoteDocType,
+  NoteRowType
+> {
+  // TODO: move to getBy
+  getByTitles(titles: string[]): NoteDocType[] {
+    return this.db
+      .getRecords<NoteDocType>(
+        Q.select().from(this.getTableName()).where(Q.in('title', titles)),
+      )
+      .map((row) => this.toModel(row));
+  }
+
+  findInTitle(title: string): NoteDocType[] {
+    return this.db
+      .getRecords<NoteDocType>(
+        Q.select()
+          .from(this.getTableName())
+          .where(Q.like('title', `%${title}%`)),
+      )
+      .map((row) => this.toModel(row));
+  }
+
+  getIsExistsByTitle(title: string): boolean {
+    return this.findBy({ title }) !== undefined;
+  }
+
+  getDailyNote(date: number) {
+    const startOfDate = dayjs(date).startOf('day');
+
+    return this.findBy({ dailyNoteDate: startOfDate.unix() * 1000 });
+  }
+
   getTableName() {
     return notesTable;
   }
@@ -402,17 +566,28 @@ class VaultService {
 export class VaultWorker {
   private db!: DB;
   private syncRepo!: SyncRepository;
+  private eventsSubject$: Subject<IExtendedDatabaseChange> = new Subject();
 
-  async initialize(
-    vaultId: string,
-    onChange: (ch: IExtendedDatabaseChange) => void,
-  ) {
-    console.log('yep');
+  constructor(private dbName: string) {
+    const eventsChannel = new BroadcastChannel(this.dbName, {
+      webWorkerSupport: true,
+    });
+
+    this.eventsSubject$
+      .pipe(buffer(this.eventsSubject$.pipe(debounceTime(200))))
+      .subscribe((e) => {
+        eventsChannel.postMessage(e);
+      });
+  }
+
+  async initialize() {
     if (!this.db) {
       this.db = new DB();
-      await this.db.init(vaultId);
+      await this.db.init(this.dbName);
 
-      this.syncRepo = new SyncRepository(this.db, onChange);
+      this.syncRepo = new SyncRepository(this.db, (e) =>
+        this.eventsSubject$.next(e),
+      );
     }
   }
 
@@ -420,11 +595,13 @@ export class VaultWorker {
     return proxy(new SqlNotesRepository(this.syncRepo, this.db));
   }
 
+  getNotesBlocksRepo() {
+    return proxy(new SqlNotesBlocksRepository(this.syncRepo, this.db));
+  }
+
   getSyncRepo() {
     return proxy(this.syncRepo);
   }
 }
-
-console.log('hhuuu!!');
 
 expose(VaultWorker);

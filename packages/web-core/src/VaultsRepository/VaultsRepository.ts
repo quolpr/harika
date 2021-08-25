@@ -14,6 +14,8 @@ import { VaultDbConsistencyResolver } from '../NotesRepository/persistence/Consi
 import { changes$, globalChangesSubject } from '../dexie-sync/changesChannel';
 import { ToDbSyncer } from '../NotesRepository/syncers/ToDbSyncer';
 import { ToDomainSyncer } from '../NotesRepository/syncers/ToDomainSyncer';
+import { getWorker } from '../getWorker';
+import { DbEventsService } from '../DbEventsService';
 
 const windowId = generateId();
 
@@ -111,10 +113,31 @@ export class VaultsRepository {
       $modelId: id,
     });
 
-    syncMiddleware(vault, new ToDbSyncer(db, vault).handlePatch);
-    new ToDomainSyncer(changes$, vault, windowId).start();
+    const dbName = `vault-${id}`;
+    console.log('hey1');
+    const worker = await getWorker(dbName);
+    console.log('hey2');
 
-    const repo = new NotesService(db, vault, globalChangesSubject);
+    syncMiddleware(
+      vault,
+      new ToDbSyncer(
+        await worker.getNotesRepo(),
+        await worker.getNotesBlocksRepo(),
+        windowId,
+        vault,
+      ).handlePatch,
+    );
+    const eventsService = new DbEventsService(dbName);
+
+    new ToDomainSyncer(eventsService.channel$(), vault, windowId).start();
+
+    const repo = new NotesService(
+      await worker.getNotesRepo(),
+      await worker.getNotesBlocksRepo(),
+      eventsService,
+      vault,
+      globalChangesSubject,
+    );
 
     // Don't need to await
     repo.initialize();

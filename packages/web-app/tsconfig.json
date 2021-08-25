@@ -24,5 +24,6 @@
     "allowSyntheticDefaultImports": true,
     "importsNotUsedAsValues": "error",
     "experimentalDecorators": true
-  }
+  },
+  "files": ["../web-core/src/types.d.ts"]
 }

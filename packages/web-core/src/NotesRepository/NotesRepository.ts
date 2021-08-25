@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import type { ModelCreationData } from 'mobx-keystone';
+import { BroadcastChannel } from 'broadcast-channel';
 import type { Dayjs } from 'dayjs';
 import type { NoteModel } from './domain/NoteModel';
 import type { Optional } from 'utility-types';
@@ -31,10 +32,14 @@ import type { ITransmittedChange } from '../dexie-sync/changesChannel';
 import { NotesChangesTrackerService } from './services/notes-tree/NotesChangesTrackerService';
 import dayjs from 'dayjs';
 import { toObserver } from '../toObserver';
-import type { VaultWorker } from '../SqlNotesRepository.worker';
-import { initBackend } from 'absurd-sql/dist/indexeddb-main-thread';
-import { proxy, Remote, wrap } from 'comlink';
+import type {
+  SqlNotesBlocksRepository,
+  SqlNotesRepository,
+  VaultWorker,
+} from '../SqlNotesRepository.worker';
 import { generateId } from '../generateId';
+import type { Remote } from 'comlink';
+import type { DbEventsService } from '../DbEventsService';
 
 export { NoteModel } from './domain/NoteModel';
 export { VaultModel } from './domain/VaultModel';
@@ -49,7 +54,9 @@ export class NotesService {
   private stop$ = this.stopSubject.pipe(take(1));
 
   constructor(
-    private db: VaultDexieDatabase,
+    private notesRepository: Remote<SqlNotesRepository>,
+    private notesBlocksRepository: Remote<SqlNotesBlocksRepository>,
+    private dbEventsService: DbEventsService,
     public vault: VaultModel,
     private globalChanges$: Observable<ITransmittedChange[]>,
   ) {}
@@ -62,7 +69,7 @@ export class NotesService {
     );
 
     this.vault.initializeNotesTree(
-      (await this.db.notes.toArray())
+      (await this.notesRepository.getAll())
         .filter(
           ({ dailyNoteDate, title }) =>
             !dailyNoteDate ||
@@ -75,52 +82,6 @@ export class NotesService {
           id,
           title,
         })),
-    );
-
-    console.time('worker');
-
-    let worker = new Worker(
-      new URL('../SqlNotesRepository.worker.js', import.meta.url),
-      {
-        name: 'sql-notes-worker',
-        type: 'module',
-      },
-    );
-
-    // This is only required because Safari doesn't support nested
-    // workers. This installs a handler that will proxy creating web
-    // workers through the main thread
-    initBackend(worker);
-
-    const Klass = wrap<VaultWorker>(worker) as unknown as new () => Promise<
-      Remote<VaultWorker>
-    >;
-    const obj = await new Klass();
-
-    console.log('hey4!');
-    await obj.initialize(
-      '123',
-      proxy((ch) => {
-        console.log('New ch', ch);
-      }),
-    );
-
-    const notesRepo = await obj.getNotesRepo();
-
-    console.timeEnd('worker');
-
-    notesRepo.create(
-      {
-        id: generateId(),
-        title: 'hey!',
-        dailyNoteDate: undefined,
-        createdAt: new Date().getTime(),
-      },
-      {
-        windowId: generateId(),
-        shouldRecordChange: true,
-        source: 'inDbChanges',
-      },
     );
   }
 
@@ -168,7 +129,7 @@ export class NotesService {
       } as ICreationResult<NoteModel>;
     }
 
-    if (await this.db.notesQueries.getIsNoteExists(attrs.title)) {
+    if (await this.notesRepository.getIsExistsByTitle(attrs.title)) {
       return {
         status: 'error',
         errors: { title: ['Already exists'] },
@@ -182,7 +143,7 @@ export class NotesService {
   }
 
   async getOrCreateDailyNote(this: NotesService, date: Dayjs) {
-    const noteRow = await this.db.notesQueries.getDailyNote(date);
+    const noteRow = await this.notesRepository.getDailyNote(date.unix());
 
     if (noteRow) {
       return {
@@ -205,9 +166,9 @@ export class NotesService {
 
   getLinkedNotes$(noteId: string) {
     const noteIds$ = from(
-      liveQuery(() =>
-        this.db.notesQueries.getLinkedNoteIdsOfNoteId(noteId),
-      ) as Observable<string[]>,
+      this.dbEventsService.liveQuery([VaultDbTables.Notes], () =>
+        this.notesBlocksRepository.getLinkedNoteIdsOfNoteId(noteId),
+      ),
     );
 
     return this.findNoteByIds$(noteIds$);
@@ -217,15 +178,15 @@ export class NotesService {
     const notLoadedNotes$ = notesIds$.pipe(
       switchMap((notesIds) =>
         from(
-          liveQuery(async () =>
+          this.dbEventsService.liveQuery([VaultDbTables.NoteBlocks], async () =>
             (
-              await this.db.noteBlocksQueries.getByNoteIds(
+              await this.notesBlocksRepository.getByNoteIds(
                 notesIds.filter(
                   (id) => this.vault.blocksTreeHoldersMap[id] === undefined,
                 ),
               )
             ).map((m) => convertNoteBlockDocToModelAttrs(m)),
-          ) as Observable<NoteBlockData[]>,
+          ),
         ).pipe(map((attrs) => ({ unloadedBlocksAttrs: attrs, notesIds }))),
       ),
     );
@@ -254,21 +215,24 @@ export class NotesService {
       })),
       switchMap(({ holder, noteId }) => {
         if (!holder) {
-          return liveQuery(async () => {
-            const noteBlockAttrs = await Promise.all(
-              (
-                await this.db.noteBlocksQueries.getByNoteId(noteId)
-              ).map((m) => convertNoteBlockDocToModelAttrs(m)),
-            );
+          return this.dbEventsService.liveQuery(
+            [VaultDbTables.NoteBlocks],
+            async () => {
+              const noteBlockAttrs = await Promise.all(
+                (
+                  await this.notesBlocksRepository.getByNoteId(noteId)
+                ).map((m) => convertNoteBlockDocToModelAttrs(m)),
+              );
 
-            this.vault.createOrUpdateEntitiesFromAttrs(
-              [],
-              noteBlockAttrs,
-              true,
-            );
+              this.vault.createOrUpdateEntitiesFromAttrs(
+                [],
+                noteBlockAttrs,
+                true,
+              );
 
-            return noteId;
-          }) as Observable<string>;
+              return noteId;
+            },
+          );
         } else {
           return of(noteId);
         }
@@ -281,21 +245,21 @@ export class NotesService {
 
   findNoteByIds$(ids$: Observable<string[]>) {
     return ids$.pipe(
-      switchMap(
-        (ids) =>
-          liveQuery(async () => {
-            const noteDocs = await this.db.notesQueries.getByIds(ids);
+      switchMap((ids) =>
+        this.dbEventsService.liveQuery([VaultDbTables.Notes], async () => {
+          const noteDocs =
+            ids.length !== 0 ? await this.notesRepository.getByIds(ids) : [];
 
-            this.vault.createOrUpdateEntitiesFromAttrs(
-              noteDocs.map((doc) => convertNoteDocToModelAttrs(doc)),
-              [],
-              true,
-            );
+          this.vault.createOrUpdateEntitiesFromAttrs(
+            noteDocs.map((doc) => convertNoteDocToModelAttrs(doc)),
+            [],
+            true,
+          );
 
-            return ids
-              .map((id) => this.vault.notesMap[id])
-              .filter((v) => Boolean(v));
-          }) as Observable<NoteModel[]>,
+          return ids
+            .map((id) => this.vault.notesMap[id])
+            .filter((v) => Boolean(v));
+        }),
       ),
     );
   }
@@ -304,7 +268,7 @@ export class NotesService {
     if (this.vault.notesMap[id]) {
       return this.vault.notesMap[id];
     } else {
-      const noteDoc = await this.db.notes.get(id);
+      const noteDoc = await this.notesRepository.getById(id);
 
       if (!noteDoc) {
         console.error(`Note with id ${id} not found`);
@@ -324,16 +288,16 @@ export class NotesService {
     }
   }
 
-  getNoteIdByTitle$(title: string) {
-    return from(
-      liveQuery(() => this.db.notesQueries.getByTitles([title])) as Observable<
-        NoteDocType[]
-      >,
-    ).pipe(
-      map((docs) => docs[0]?.id),
-      distinctUntilChanged(),
-    );
-  }
+  // getNoteIdByTitle$(title: string) {
+  //   return from(
+  //     liveQuery(() => this.db.notesQueries.getByTitles([title])) as Observable<
+  //       NoteDocType[]
+  //     >,
+  //   ).pipe(
+  //     map((docs) => docs[0]?.id),
+  //     distinctUntilChanged(),
+  //   );
+  // }
 
   async updateNoteBlockLinks(noteBlockIds: string[]) {
     return Promise.all(
@@ -362,10 +326,10 @@ export class NotesService {
         ]);
 
         const existingNotesIndexed = Object.fromEntries(
-          (await this.db.notesQueries.getByTitles(titles)).map((n) => [
-            n.title,
-            n,
-          ]),
+          (titles.length > 0
+            ? await this.notesRepository.getByTitles(titles)
+            : []
+          ).map((n) => [n.title, n]),
         );
 
         const allParsedLinkedNotes = (
@@ -406,9 +370,11 @@ export class NotesService {
       `${note.$modelId}-${model.$modelType}-${model.$modelId}`;
     const keys = models.map((model) => generateKey(model));
 
-    const docs = (await this.db.blocksViews.bulkGet(keys)).filter((v) =>
-      Boolean(v),
-    ) as BlocksViewDocType[];
+    // const docs = (await this.db.blocksViews.bulkGet(keys)).filter((v) =>
+    //   Boolean(v),
+    // ) as BlocksViewDocType[];
+
+    const docs: BlocksViewDocType[] = [];
 
     this.vault.ui.createOrUpdateEntitiesFromAttrs(
       docs.map((doc) => convertViewToModelAttrs(doc)),
@@ -423,7 +389,8 @@ export class NotesService {
   ) {
     const key = `${note.$modelId}-${model.$modelType}-${model.$modelId}`;
 
-    const doc = await this.db.blocksViews.get(key);
+    // const doc = await this.db.blocksViews.get(key);
+    const doc = undefined;
 
     if (doc) {
       this.vault.ui.createOrUpdateEntitiesFromAttrs([
@@ -438,7 +405,7 @@ export class NotesService {
     if (Object.values(this.vault.notesMap).find((note) => note.title === title))
       return true;
 
-    if (await this.db.notes.get({ title })) return true;
+    if (await this.notesRepository.findBy({ title })) return true;
 
     return false;
   }
@@ -446,9 +413,9 @@ export class NotesService {
   // TODO: better Rx way, put title to pipe
   searchNotesTuples$(title: string) {
     return from(
-      liveQuery(() => this.db.notesQueries.searchNotes(title)) as Observable<
-        NoteDocType[]
-      >,
+      this.dbEventsService.liveQuery([VaultDbTables.Notes], () =>
+        this.notesRepository.findInTitle(title),
+      ),
     ).pipe(
       map((rows) =>
         rows.map((row) => ({
@@ -461,7 +428,9 @@ export class NotesService {
 
   getAllNotesTuples$() {
     return from(
-      liveQuery(() => this.db.notesQueries.all()) as Observable<NoteDocType[]>,
+      this.dbEventsService.liveQuery([VaultDbTables.Notes], () =>
+        this.notesRepository.getAll(),
+      ),
     ).pipe(
       map((rows) =>
         rows.map((row) => ({
@@ -474,96 +443,91 @@ export class NotesService {
   }
 
   async deleteNote(id: string) {
-    return this.db.transaction(
-      'rw',
-      [this.db.noteBlocks, this.db.notes],
-      async () => {
-        let [linkedBlocks, blocks, note] = await Promise.all([
-          this.db.noteBlocksQueries.getLinkedBlocksOfNoteId(id),
-          this.db.noteBlocksQueries.getByNoteId(id),
-          this.db.notesQueries.getById(id),
-        ]);
-
-        const noteBlockIds = blocks.map(({ id }) => id);
-        linkedBlocks = uniqBy(linkedBlocks, ({ id }) => id).filter(
-          // cause they will be already removed
-          ({ id }) => !noteBlockIds.includes(id),
-        );
-
-        if (!note) {
-          console.error(`Note with id ${id} not deleted - not found`);
-
-          return;
-        }
-
-        await Promise.all([
-          await this.db.notes.delete(note.id),
-          await this.db.noteBlocks.bulkDelete(noteBlockIds),
-          await Promise.all(
-            linkedBlocks.map(async (block) => {
-              await this.db.noteBlocks.update(block.id, {
-                linkedNoteIds: block.linkedNoteIds.filter((key) => key !== id),
-              });
-            }),
-          ),
-        ]);
-      },
-    );
+    // return this.db.transaction(
+    //   'rw',
+    //   [this.db.noteBlocks, this.db.notes],
+    //   async () => {
+    //     let [linkedBlocks, blocks, note] = await Promise.all([
+    //       this.db.noteBlocksQueries.getLinkedBlocksOfNoteId(id),
+    //       this.db.noteBlocksQueries.getByNoteId(id),
+    //       this.db.notesQueries.getById(id),
+    //     ]);
+    //     const noteBlockIds = blocks.map(({ id }) => id);
+    //     linkedBlocks = uniqBy(linkedBlocks, ({ id }) => id).filter(
+    //       // cause they will be already removed
+    //       ({ id }) => !noteBlockIds.includes(id),
+    //     );
+    //     if (!note) {
+    //       console.error(`Note with id ${id} not deleted - not found`);
+    //       return;
+    //     }
+    //     await Promise.all([
+    //       await this.db.notes.delete(note.id),
+    //       await this.db.noteBlocks.bulkDelete(noteBlockIds),
+    //       await Promise.all(
+    //         linkedBlocks.map(async (block) => {
+    //           await this.db.noteBlocks.update(block.id, {
+    //             linkedNoteIds: block.linkedNoteIds.filter((key) => key !== id),
+    //           });
+    //         }),
+    //       ),
+    //     ]);
+    //   },
+    // );
   }
 
-  async import(importData: {
-    data: { data: { tableName: string; rows: any[] }[] };
-  }) {
-    const data = importData.data.data.filter(
-      ({ tableName }) => tableName[0] !== '_',
-    );
-    const tables = data.map(({ tableName }) => tableName);
+  // async import(importData: {
+  //   data: { data: { tableName: string; rows: any[] }[] };
+  // }) {
+  //   const data = importData.data.data.filter(
+  //     ({ tableName }) => tableName[0] !== '_',
+  //   );
+  //   const tables = data.map(({ tableName }) => tableName);
 
-    return this.db.transaction('rw', tables, async () => {
-      await Promise.all(
-        data.map(async ({ tableName, rows }) => {
-          await this.db.table(tableName).bulkAdd(
-            rows
-              .filter(({ id }) => Boolean(id)) // some rows could be broken, we check that at least id present
-              .map((row) =>
-                tableName === VaultDbTables.NoteBlocks
-                  ? {
-                      ...row,
-                      isRoot: row.isRoot === undefined ? 0 : row.isRoot,
-                    }
-                  : row,
-              ),
-          );
-        }),
-      );
+  //   return this.db.transaction('rw', tables, async () => {
+  //     await Promise.all(
+  //       data.map(async ({ tableName, rows }) => {
+  //         await this.db.table(tableName).bulkAdd(
+  //           rows
+  //             .filter(({ id }) => Boolean(id)) // some rows could be broken, we check that at least id present
+  //             .map((row) =>
+  //               tableName === VaultDbTables.NoteBlocks
+  //                 ? {
+  //                     ...row,
+  //                     isRoot: row.isRoot === undefined ? 0 : row.isRoot,
+  //                   }
+  //                 : row,
+  //             ),
+  //         );
+  //       }),
+  //     );
 
-      // const rootBlockIds = data
-      //   .find(({ tableName }) => tableName === 'notes')
-      //   ?.rows.map(({ rootBlockId }) => rootBlockId)
-      //   .filter((id) => Boolean(id)) as string[];
+  //     // const rootBlockIds = data
+  //     //   .find(({ tableName }) => tableName === 'notes')
+  //     //   ?.rows.map(({ rootBlockId }) => rootBlockId)
+  //     //   .filter((id) => Boolean(id)) as string[];
 
-      // await Promise.all(
-      //   rootBlockIds.map((id) => this.db.noteBlocks.update(id, { isRoot: 1 })),
-      // );
-    });
-  }
+  //     // await Promise.all(
+  //     //   rootBlockIds.map((id) => this.db.noteBlocks.update(id, { isRoot: 1 })),
+  //     // );
+  //   });
+  // }
 
   async export() {
     // Fails to compile on build time, so I put any here
-    return exportDB(this.db as any, {
-      filter: (t) =>
-        [
-          VaultDbTables.Notes,
-          VaultDbTables.NoteBlocks,
-          VaultDbTables.BlocksViews,
-        ].includes(t as VaultDbTables),
-    });
+    // return exportDB(this.db as any, {
+    //   filter: (t) =>
+    //     [
+    //       VaultDbTables.Notes,
+    //       VaultDbTables.NoteBlocks,
+    //       VaultDbTables.BlocksViews,
+    //     ].includes(t as VaultDbTables),
+    // });
   }
 
   close = () => {
     console.debug(`Vault ${this.vault.$modelId} is closed`);
 
     this.stopSubject.next(null);
-    this.db.close();
   };
 }
