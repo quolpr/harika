@@ -25,6 +25,7 @@ import dayjs from 'dayjs';
 
 const notesTable = 'notes' as const;
 const noteBlocksTable = 'noteBlocks' as const;
+const noteBlocksNotesTable = 'noteBlocksNotes' as const;
 const changesToSendTable = 'changesToSend' as const;
 
 type IBaseChangeRow = {
@@ -158,6 +159,13 @@ class DB {
     `);
 
     this.sqlDb.exec(`
+      CREATE TABLE IF NOT EXISTS ${noteBlocksNotesTable} (
+        noteId varchar(20) NOT NULL,
+        noteBlockId varchar(20) NOT NULL
+      )
+    `);
+
+    this.sqlDb.exec(`
       CREATE TABLE IF NOT EXISTS ${noteBlocksTable} (
         id varchar(20) PRIMARY KEY,
         noteId varchar(20) NOT NULL,
@@ -169,6 +177,27 @@ class DB {
         createdAt INTEGER NOT NULL
       );
     `);
+
+    const sql = `
+      CREATE TRIGGER IF NOT EXISTS populateNoteBlocksNotesTable_insert AFTER INSERT ON ${noteBlocksTable} BEGIN
+        INSERT INTO ${noteBlocksNotesTable}(noteId, noteBlockId) SELECT j.value, new.id FROM json_each(new.linkedNoteIds) AS j;
+      END;
+
+      CREATE TRIGGER IF NOT EXISTS populateNoteBlocksNotesTable_deleteBlock AFTER DELETE ON ${noteBlocksTable} BEGIN
+        DELETE FROM ${noteBlocksNotesTable} WHERE noteBlockId = old.id;
+      END;
+
+      CREATE TRIGGER IF NOT EXISTS populateNoteBlocksNotesTable_deleteNote AFTER DELETE ON ${notesTable} BEGIN
+        DELETE FROM ${noteBlocksNotesTable} WHERE noteId = old.id;
+      END;
+
+      CREATE TRIGGER IF NOT EXISTS populateNoteBlocksNotesTable_update AFTER UPDATE ON ${noteBlocksTable} BEGIN
+        DELETE FROM ${noteBlocksNotesTable} WHERE noteBlockId = old.id;
+        INSERT INTO ${noteBlocksNotesTable}(noteId, noteBlockId) SELECT j.value, new.id FROM json_each(new.linkedNoteIds) AS j;
+      END;
+    `;
+
+    this.sqlDb.exec(sql);
   }
 
   transaction<T extends any>(func: () => T, ctx?: ICtx): T {
@@ -485,9 +514,12 @@ export class SqlNotesBlocksRepository extends BaseSyncRepository<
   getLinkedNoteIdsOfNoteId(id: string): string[] {
     const [res] = this.db.execQuery(
       Q.select()
-        .distinct('noteId')
-        .from(this.getTableName())
-        .where(Q.like('linkedNoteIds', `%${id}%`)),
+        .distinct('joined.noteId')
+        .from(noteBlocksNotesTable)
+        .leftJoin(`${this.getTableName()} joined`, {
+          [`${noteBlocksNotesTable}.noteBlockId`]: `joined.id`,
+        })
+        .where({ [`${noteBlocksNotesTable}.noteId`]: id }),
     );
 
     return res?.values?.map(([val]) => val as string) || [];
