@@ -58,12 +58,11 @@ export class NotesService {
     private notesBlocksRepository: Remote<SqlNotesBlocksRepository>,
     private dbEventsService: DbEventsService,
     public vault: VaultModel,
-    private globalChanges$: Observable<ITransmittedChange[]>,
   ) {}
 
   async initialize() {
     new NotesChangesTrackerService(
-      this.globalChanges$,
+      this.dbEventsService.channel$(),
       this.vault.notesTree,
       this.stop$,
     );
@@ -115,7 +114,10 @@ export class NotesService {
 
   async createNote(
     attrs: Required<
-      Optional<ModelCreationData<NoteModel>, 'createdAt' | 'dailyNoteDate'>,
+      Optional<
+        ModelCreationData<NoteModel>,
+        'createdAt' | 'updatedAt' | 'dailyNoteDate'
+      >,
       'title'
     >,
     options?: { isDaily?: boolean },
@@ -288,16 +290,16 @@ export class NotesService {
     }
   }
 
-  // getNoteIdByTitle$(title: string) {
-  //   return from(
-  //     liveQuery(() => this.db.notesQueries.getByTitles([title])) as Observable<
-  //       NoteDocType[]
-  //     >,
-  //   ).pipe(
-  //     map((docs) => docs[0]?.id),
-  //     distinctUntilChanged(),
-  //   );
-  // }
+  getNoteIdByTitle$(title: string) {
+    return from(
+      this.dbEventsService.liveQuery([VaultDbTables.Notes], () =>
+        this.notesRepository.getByTitles([title]),
+      ) as Observable<NoteDocType[]>,
+    ).pipe(
+      map((docs) => docs[0]?.id),
+      distinctUntilChanged(),
+    );
+  }
 
   async updateNoteBlockLinks(noteBlockIds: string[]) {
     return Promise.all(

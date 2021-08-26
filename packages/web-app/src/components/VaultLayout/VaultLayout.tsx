@@ -1,4 +1,4 @@
-import type { VaultsRepository, NotesRepository } from '@harika/web-core';
+import type { VaultsRepository, NotesService } from '@harika/web-core';
 import React, {
   useCallback,
   useContext,
@@ -8,7 +8,7 @@ import React, {
 } from 'react';
 import { useHistory, useLocation, useParams } from 'react-router-dom';
 import { useClickAway, useMedia } from 'react-use';
-import { NoteRepositoryContext } from '../../contexts/CurrentNoteRepositoryContext';
+import { NotesServiceContext } from '../../contexts/CurrentNotesServiceContext';
 import { CurrentVaultContext } from '../../contexts/CurrentVaultContext';
 import { cn } from '../../utils';
 import { VaultHeader } from '../VaultHeader/VaultHeader';
@@ -103,7 +103,7 @@ export const VaultLayout: React.FC<{
   const history = useHistory();
   const { vaultId } = useParams<{ vaultId: string }>();
   const isWide = useMedia('(min-width: 768px)');
-  const [notesRepo, setNotesRepo] = useState<NotesRepository | undefined>();
+  const [notesRepo, setNotesRepo] = useState<NotesService | undefined>();
   const [isSidebarOpened, setIsSidebarOpened] = useState(isWide);
 
   const togglerRef = useRef<HTMLDivElement>(null);
@@ -171,7 +171,7 @@ export const VaultLayout: React.FC<{
 
   return (
     <CurrentVaultContext.Provider value={notesRepo.vault}>
-      <NoteRepositoryContext.Provider value={notesRepo}>
+      <NotesServiceContext.Provider value={notesRepo}>
         <FooterRefContext.Provider value={footerRef}>
           <div className={layoutClass()}>
             <VaultSidebar
@@ -218,7 +218,7 @@ export const VaultLayout: React.FC<{
             </div>
           </div>
         </FooterRefContext.Provider>
-      </NoteRepositoryContext.Provider>
+      </NotesServiceContext.Provider>
     </CurrentVaultContext.Provider>
   );
 };

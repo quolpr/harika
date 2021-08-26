@@ -1,5 +1,5 @@
 import { generateId } from '../generateId';
-import { NoteBlockModel, VaultModel } from '../NotesRepository/NotesRepository';
+import { NoteBlockModel, VaultModel } from '../NotesRepository/NotesService';
 import { BlockContentModel } from '../NotesRepository/domain/NoteBlockModel/BlockContentModel';
 import { parseStringToTree, TreeToken } from './parseStringToTree';
 import type { BlocksTreeHolder } from '../NotesRepository/domain/NoteBlockModel';
@@ -27,6 +27,7 @@ export const addTokensToNoteBlock = (
 
   const virtualRootBlock = new NoteBlockModel({
     createdAt: new Date().getTime(),
+    updatedAt: new Date().getTime(),
     noteId: noteBlock.noteId,
     noteBlockRefs: [],
     linkedNoteIds: [],
@@ -58,6 +59,7 @@ export const addTokensToNoteBlock = (
     const newBlock = new NoteBlockModel({
       $modelId: token.id ? token.id : generateId(),
       createdAt: new Date().getTime(),
+      updatedAt: new Date().getTime(),
       noteId: noteBlock.noteId,
       noteBlockRefs: [],
       linkedNoteIds: [],

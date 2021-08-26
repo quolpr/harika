@@ -1,4 +1,4 @@
-export * from './src/NotesRepository/NotesRepository';
+export * from './src/NotesRepository/NotesService';
 export * from './src/VaultsRepository/VaultsRepository';
 export * from './src/NotesRepository/domain/VaultUiState';
 export * from './src/NotesRepository/domain/VaultUiState/BlocksViewModel';

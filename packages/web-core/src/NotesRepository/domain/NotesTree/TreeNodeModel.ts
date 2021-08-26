@@ -3,7 +3,6 @@ import {
   customRef,
   detach,
   findParent,
-  getRefsResolvingTo,
   Model,
   model,
   modelAction,

@@ -4,7 +4,7 @@ import { useHistory } from 'react-router-dom';
 import { NEVER, of, race } from 'rxjs';
 import { timeout, map } from 'rxjs/operators';
 import { LoadingDoneSubjectContext } from '../../contexts';
-import { useNoteRepository } from '../../contexts/CurrentNoteRepositoryContext';
+import { useNoteService } from '../../contexts/CurrentNotesServiceContext';
 import { useCurrentVault } from '../../hooks/useCurrentVault';
 import { paths } from '../../paths';
 
@@ -12,7 +12,7 @@ type IPipeResult = { status: 'found'; id: string } | { status: 'not_found' };
 
 export const useFindNote = (noteId: string) => {
   const vault = useCurrentVault();
-  const noteRepo = useNoteRepository();
+  const notesService = useNoteService();
   const history = useHistory();
 
   const [note, setNote] = useState<NoteModel | undefined>();
@@ -22,7 +22,7 @@ export const useFindNote = (noteId: string) => {
 
   useEffect(() => {
     const callback = async () => {
-      const note = await noteRepo.findNote(noteId);
+      const note = await notesService.findNote(noteId);
 
       if (!note) {
         setIsLoading(false);
@@ -37,7 +37,7 @@ export const useFindNote = (noteId: string) => {
     };
 
     callback();
-  }, [loadingDoneSubject, noteId, noteRepo, vault.ui]);
+  }, [loadingDoneSubject, noteId, notesService, vault.ui]);
 
   const noteTitle = note?.title;
   const isDeleted = note?.isDeleted;
@@ -47,7 +47,7 @@ export const useFindNote = (noteId: string) => {
     if (isDeleted) {
       // In case conflict resolving. We wait for n seconds for new id of note title to appear
       const flow = race(
-        noteRepo.getNoteIdByTitle$(noteTitle).pipe(
+        notesService.getNoteIdByTitle$(noteTitle).pipe(
           map(
             (val): IPipeResult => ({
               status: 'found',
@@ -75,7 +75,7 @@ export const useFindNote = (noteId: string) => {
 
       return () => flow.unsubscribe();
     }
-  }, [history, isDeleted, noteId, noteRepo, noteTitle, vault.$modelId]);
+  }, [history, isDeleted, noteId, notesService, noteTitle, vault.$modelId]);
 
   return { note, isLoading };
 };

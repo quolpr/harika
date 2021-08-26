@@ -40,6 +40,7 @@ export const convertNoteBlockDocToModelAttrs = (
     $modelId: doc.id,
     content: new BlockContentModel({ value: doc.content }),
     createdAt: doc.createdAt,
+    updatedAt: doc.updatedAt,
     noteId: doc.noteId,
     noteBlockRefs: doc.noteBlockIds
       .filter((v) => Boolean(v))
@@ -55,5 +56,6 @@ export const convertNoteDocToModelAttrs = (doc: NoteDocType): NoteData => {
     title: doc.title,
     dailyNoteDate: doc.dailyNoteDate ? doc.dailyNoteDate : new Date().getTime(),
     createdAt: doc.createdAt,
+    updatedAt: doc.updatedAt,
   };
 };

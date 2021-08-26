@@ -5,9 +5,6 @@ import { paths } from '../../paths';
 import { useCurrentVault } from '../../hooks/useCurrentVault';
 import { cn } from '../../utils';
 import { useCallback } from 'react';
-import { useNoteRepository } from '../../contexts/CurrentNoteRepositoryContext';
-import dayjs from 'dayjs';
-import download from 'downloadjs';
 import VaultIcon from './vault.svgr.svg';
 import DailyNoteIcon from '../../icons/daily-note.svgr.svg';
 import NotesIcon from '../../icons/notes.svgr.svg';
@@ -26,19 +23,17 @@ type IProps = {
 export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
   ({ className, isOpened, onNavClick }: IProps, ref) => {
     const vault = useCurrentVault();
-    const notesRepository = useNoteRepository();
 
     const handleDownloadClick = useCallback(async () => {
-      const blob = await notesRepository.export();
-
-      download(
-        blob,
-        `${vault.name
-          .replace(/[^a-z0-9]/gi, '_')
-          .toLowerCase()}-${dayjs().format('DD-MM-YYYY')}.json`,
-        'application/json',
-      );
-    }, [notesRepository, vault.name]);
+      // const blob = await notesRepository.export();
+      // download(
+      //   blob,
+      //   `${vault.name
+      //     .replace(/[^a-z0-9]/gi, '_')
+      //     .toLowerCase()}-${dayjs().format('DD-MM-YYYY')}.json`,
+      //   'application/json',
+      // );
+    }, []);
 
     const handleImport = useCallback(
       (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -49,16 +44,15 @@ export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
           if (!eReader?.target?.result) return;
 
           try {
-            const result = JSON.parse(eReader.target.result.toString());
-
-            notesRepository.import(result);
+            // const result = JSON.parse(eReader.target.result.toString());
+            // notesRepository.import(result);
           } catch (e) {
             alert('Failed to import db');
           }
         };
         reader.readAsText(e.target.files[0]);
       },
-      [notesRepository],
+      [],
     );
 
     return (

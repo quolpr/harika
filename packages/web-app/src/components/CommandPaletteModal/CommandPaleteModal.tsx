@@ -6,9 +6,8 @@ import { Link, useHistory, useLocation } from 'react-router-dom';
 import { cn } from '../../utils';
 import { useKey } from 'react-use';
 import { v4 as uuidv4 } from 'uuid';
-import type { IFocusBlockState } from '../Note/Note';
 import { paths } from '../../paths';
-import { useNoteRepository } from '../../contexts/CurrentNoteRepositoryContext';
+import { useNoteService } from '../../contexts/CurrentNotesServiceContext';
 import { useCurrentVault } from '../../hooks/useCurrentVault';
 import { Modal, modalClass } from '../Modal/Modal';
 import { firstValueFrom } from 'rxjs';
@@ -64,7 +63,7 @@ export const CommandPaletteModal = ({
 
   const history = useHistory();
   const vault = useCurrentVault();
-  const noteRepo = useNoteRepository();
+  const noteRepo = useNoteService();
   const [inputCommandValue, setInputCommandValue] = useState('!findOrCreate ');
 
   const startView: IView = React.useMemo(

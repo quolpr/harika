@@ -1,7 +1,7 @@
 import pathToRegexp from 'path-to-regexp';
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { useNoteRepository } from '../contexts/CurrentNoteRepositoryContext';
+import { useNoteService } from '../contexts/CurrentNotesServiceContext';
 import { PATHS } from '../paths';
 import type { NoteModel } from '@harika/web-core';
 
@@ -16,7 +16,7 @@ export const usePrimaryNoteId = () => {
 
 export const usePrimaryNote = () => {
   const primaryNoteId = usePrimaryNoteId();
-  const repo = useNoteRepository();
+  const repo = useNoteService();
   const [primaryNote, setPrimaryNote] = useState<NoteModel>();
 
   useEffect(() => {

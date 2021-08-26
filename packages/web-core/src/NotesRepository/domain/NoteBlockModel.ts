@@ -2,7 +2,6 @@ import {
   customRef,
   detach,
   findParent,
-  getSnapshot,
   model,
   Model,
   modelAction,
@@ -64,6 +63,7 @@ export class NoteBlockModel extends Model({
   noteBlockRefs: prop<Ref<NoteBlockModel>[]>(),
   linkedNoteIds: prop<string[]>(),
   createdAt: tProp(types.dateTimestamp),
+  updatedAt: tProp(types.dateTimestamp),
   isDeleted: prop<boolean>(false),
   isRoot: prop<boolean>(),
 }) {
@@ -301,6 +301,7 @@ export class NoteBlockModel extends Model({
         content: new BlockContentModel({ value: data.content }),
         ...(data.id ? { $modelId: data.id } : {}),
         isRoot: false,
+        updatedAt: new Date().getTime(),
       },
       this,
       this.noteBlockRefs.length,
@@ -336,6 +337,7 @@ export class NoteBlockModel extends Model({
       {
         content: new BlockContentModel({ value: content }),
         isRoot: false,
+        updatedAt: new Date().getTime(),
       },
       parent,
       injectTo,
@@ -587,7 +589,7 @@ export class BlocksTreeHolder extends Model({
   createBlock(
     attrs: Optional<
       ModelCreationData<NoteBlockModel>,
-      'createdAt' | 'noteId' | 'noteBlockRefs' | 'linkedNoteIds'
+      'createdAt' | 'noteId' | 'noteBlockRefs' | 'linkedNoteIds' | 'updatedAt'
     >,
     parent: NoteBlockModel,
     pos: number,
@@ -595,6 +597,7 @@ export class BlocksTreeHolder extends Model({
     const newNoteBlock = new NoteBlockModel({
       $modelId: attrs.$modelId ? attrs.$modelId : generateId(),
       createdAt: new Date().getTime(),
+      updatedAt: new Date().getTime(),
       noteId: this.noteId,
       noteBlockRefs: [],
       linkedNoteIds: [],
@@ -634,7 +637,11 @@ export class BlocksTreeHolder extends Model({
 
     if (this.rootBlock && !this.rootBlock?.hasChildren) {
       this.createBlock(
-        { content: new BlockContentModel({ value: '' }), isRoot: false },
+        {
+          content: new BlockContentModel({ value: '' }),
+          isRoot: false,
+          updatedAt: new Date().getTime(),
+        },
         this.rootBlock,
         0,
       );

@@ -9,7 +9,7 @@ import type {
   SqlNotesRepository,
 } from '../../SqlNotesRepository.worker';
 import type { NoteBlockModel } from '../domain/NoteBlockModel';
-import type { VaultModel } from '../NotesRepository';
+import type { VaultModel } from '../NotesService';
 import { mapNote, mapNoteBlock } from './toDbDocsConverters';
 
 // TODO: type rootKey
@@ -295,27 +295,21 @@ export class ToDbSyncer {
     };
 
     return Promise.all([
-      (async () => {
-        await Promise.all(
-          result.toCreateIds.map(async (id) => {
-            await repo.create(mapper(id) as UnproxyOrClone<T>, ctx);
-          }),
-        );
-      })(),
-      (async () => {
-        await Promise.all(
-          result.toUpdateIds.map(async (id) => {
-            await repo.update(mapper(id) as UnproxyOrClone<T>, ctx);
-          }),
-        );
-      })(),
-      (async () => {
-        await Promise.all(
-          result.toDeleteIds.map(async (id) => {
-            await repo.delete(id, ctx);
-          }),
-        );
-      })(),
+      result.toCreateIds.length > 0
+        ? repo.bulkCreate(
+            result.toCreateIds.map((id) => mapper(id)),
+            ctx,
+          )
+        : null,
+      result.toUpdateIds.length > 0
+        ? repo.bulkUpdate(
+            result.toUpdateIds.map((id) => mapper(id)),
+            ctx,
+          )
+        : null,
+      result.toDeleteIds.length > 0
+        ? repo.bulkDelete(result.toDeleteIds, ctx)
+        : null,
     ]);
   };
 }

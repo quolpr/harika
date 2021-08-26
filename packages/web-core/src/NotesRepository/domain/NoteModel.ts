@@ -54,6 +54,7 @@ export const isNoteModel = (model: any): model is NoteModel =>
 export class NoteModel extends Model({
   title: prop<string>(),
   dailyNoteDate: tProp(types.maybe(types.dateTimestamp)),
+  updatedAt: tProp(types.dateTimestamp),
   createdAt: tProp(types.dateTimestamp),
   isDeleted: prop<boolean>(false),
 }) {

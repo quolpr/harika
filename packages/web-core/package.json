@@ -32,6 +32,7 @@
     "rxjs": "^7.2.0",
     "snakecase-keys": "^4.0.2",
     "sql-bricks": "^2.0.5",
+    "sql-bricks-sqlite": "^0.1.0",
     "utility-types": "^3.10.0"
   },
   "resolutions": {

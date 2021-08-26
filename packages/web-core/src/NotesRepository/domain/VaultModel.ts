@@ -18,6 +18,7 @@ import {
   PartialNote,
 } from './NotesTree/NotesTreeModel';
 import { BlocksTreeHolder, NoteBlockModel } from './NoteBlockModel';
+import dayjs from 'dayjs';
 
 @model(vaultModelType)
 export class VaultModel extends Model({
@@ -50,7 +51,10 @@ export class VaultModel extends Model({
   @modelAction
   newNote(
     attrs: Required<
-      Optional<ModelCreationData<NoteModel>, 'createdAt' | 'dailyNoteDate'>,
+      Optional<
+        ModelCreationData<NoteModel>,
+        'createdAt' | 'dailyNoteDate' | 'updatedAt'
+      >,
       'title'
     >,
     options?: { addEmptyBlock?: boolean; isDaily?: boolean },
@@ -62,6 +66,7 @@ export class VaultModel extends Model({
     const rootBlock = new NoteBlockModel({
       $modelId: generateId(),
       createdAt: new Date().getTime(),
+      updatedAt: new Date().getTime(),
       noteId: noteId,
       noteBlockRefs: [],
       content: new BlockContentModel({ value: '' }),
@@ -72,9 +77,10 @@ export class VaultModel extends Model({
     const note = new NoteModel({
       $modelId: noteId,
       createdAt: new Date().getTime(),
+      updatedAt: new Date().getTime(),
       ...(options.isDaily
         ? {
-            dailyNoteDate: new Date().getTime(),
+            dailyNoteDate: dayjs().startOf('day').unix(),
           }
         : {}),
       ...attrs,

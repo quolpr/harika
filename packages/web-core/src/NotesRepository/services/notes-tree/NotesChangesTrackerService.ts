@@ -1,11 +1,11 @@
 import { autorun } from 'mobx';
 import { filter, map, Observable, takeUntil } from 'rxjs';
-import type { ITransmittedChange } from '../../../dexie-sync/changesChannel';
 import {
   DatabaseChangeType,
   INoteChangeEvent,
   VaultDbTables,
 } from '../../../dexieTypes';
+import type { IExtendedDatabaseChange } from '../../../SqlNotesRepository.worker';
 import type {
   INoteTitleChange,
   NotesTreeModel,
@@ -15,11 +15,11 @@ export class NotesChangesTrackerService {
   private bufferedChanges: INoteChangeEvent[] = [];
 
   constructor(
-    private globalChanges$: Observable<ITransmittedChange[]>,
+    private changes$: Observable<IExtendedDatabaseChange[]>,
     private treeModel: NotesTreeModel,
     stop$: Observable<unknown>,
   ) {
-    this.globalChanges$
+    this.changes$
       .pipe(
         map(
           (chs) =>

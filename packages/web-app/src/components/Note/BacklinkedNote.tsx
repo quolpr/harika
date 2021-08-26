@@ -12,7 +12,7 @@ import type {
   NoteBlockModel,
   NoteModel,
 } from '@harika/web-core';
-import { useNoteRepository } from '../../contexts/CurrentNoteRepositoryContext';
+import { useNoteService } from '../../contexts/CurrentNotesServiceContext';
 import { computed } from 'mobx';
 import { NoteBlock } from '../NoteBlock/NoteBlock';
 import { NoteBlocksHandlers } from './NoteBlocksHandlers';
@@ -30,7 +30,7 @@ const LinkedBlock = observer(
     const vault = useCurrentVault();
     const path = noteBlock.path;
     const currentNote = useCurrentNote()!;
-    const noteRepo = useNoteRepository();
+    const noteRepo = useNoteService();
 
     const view = computed(() => {
       return vault.ui.getView(currentNote, noteBlock);

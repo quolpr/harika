@@ -8,7 +8,9 @@ import IndexedDBBackend from 'absurd-sql/dist/indexeddb-backend';
 import { expose, proxy } from 'comlink';
 import Q from 'sql-bricks';
 import type {
-  IDatabaseChange,
+  ICreateChange,
+  IDeleteChange,
+  IUpdateChange,
   NoteBlockDocType,
   NoteDocType,
 } from './dexieTypes';
@@ -22,6 +24,29 @@ import dayjs from 'dayjs';
 
 // eslint-disable-next-line no-restricted-globals
 // const ctx: Worker = self as any;
+
+// @ts-ignore
+Q.update.defineClause('or', '{{#if _or}}OR {{_or}}{{/if}}', {
+  after: 'update',
+});
+// @ts-ignore
+Q.insert.defineClause('or', '{{#if _or}}OR {{_or}}{{/if}}', {
+  after: 'insert',
+});
+
+const or_methods = {
+  orReplace: 'REPLACE',
+  orRollback: 'ROLLBACK',
+  orAbort: 'ABORT',
+  orFail: 'FAIL',
+};
+Object.keys(or_methods).forEach(function (method) {
+  Q.insert.prototype[method] = Q.update.prototype[method] = function () {
+    // @ts-ignore
+    this._or = or_methods[method];
+    return this;
+  };
+});
 
 const notesTable = 'notes' as const;
 const noteBlocksTable = 'noteBlocks' as const;
@@ -94,11 +119,19 @@ const getCtxStrict = (): ICtx => {
 
   return currentCtx;
 };
-
-export type IExtendedDatabaseChange = IDatabaseChange & {
+type IChangeExtended = {
   windowId: string;
   source: 'inDomainChanges' | 'inDbChanges';
 };
+
+export type IExtendedCreateDatabaseChange = ICreateChange & IChangeExtended;
+export type IExtendedUpdateDatabaseChange = IUpdateChange & IChangeExtended;
+export type IExtendedDeleteDatabaseChange = IDeleteChange & IChangeExtended;
+
+export type IExtendedDatabaseChange =
+  | IExtendedDeleteDatabaseChange
+  | IExtendedUpdateDatabaseChange
+  | IExtendedCreateDatabaseChange;
 
 class DB {
   sqlDb!: Database;
@@ -203,6 +236,8 @@ class DB {
   transaction<T extends any>(func: () => T, ctx?: ICtx): T {
     if (this.inTransaction) return func();
 
+    this.inTransaction = true;
+
     this.sqlDb.run('BEGIN TRANSACTION;');
 
     let result: T | undefined = undefined;
@@ -215,6 +250,8 @@ class DB {
       this.sqlDb.run('ROLLBACK;');
 
       throw e;
+    } finally {
+      this.inTransaction = false;
     }
 
     return result;
@@ -235,18 +272,18 @@ class DB {
     return res;
   }
 
-  insertRecord(table: string, obj: Record<string, any>) {
-    const values = Object.entries(obj).map(([k, v]) => [
-      k,
-      v === undefined ? null : v,
-    ]);
+  insertRecords(
+    table: string,
+    objs: Record<string, any>[],
+    replace: boolean = false,
+  ) {
+    let query = Q.insertInto(table).values(objs);
 
-    const sql = Q.insert(
-      table,
-      values.map(([k]) => k),
-    )
-      .values(values.map(([, v]) => v))
-      .toParams();
+    if (replace) {
+      query = query.orReplace();
+    }
+
+    const sql = query.toParams();
 
     return this.sqlExec(sql.text, sql.values);
   }
@@ -278,97 +315,130 @@ class DB {
 class SyncRepository {
   constructor(
     private db: DB,
-    private onChange: (ch: IExtendedDatabaseChange) => void,
+    private onChange: (ch: IExtendedDatabaseChange[]) => void,
   ) {}
 
-  createCreateChange(table: string, data: Record<string, unknown>) {
-    const ctx = getCtxStrict();
-    const id = uuidv4();
+  createCreateChanges(table: string, records: Record<string, unknown>[]) {
+    this.db.transaction(() => {
+      const ctx = getCtxStrict();
 
-    this.onChange({
-      id,
-      type: DatabaseChangeType.Create,
-      table,
-      key: data.id as string,
-      obj: data,
-      windowId: ctx.windowId,
-      source: ctx.source,
+      const changeEvents = records.map(
+        (data): IExtendedCreateDatabaseChange => {
+          const id = uuidv4();
+
+          return {
+            id,
+            type: DatabaseChangeType.Create,
+            table,
+            key: data.id as string,
+            obj: data,
+            windowId: ctx.windowId,
+            source: ctx.source,
+          };
+        },
+      );
+
+      this.onChange(changeEvents);
+
+      if (ctx.shouldRecordChange) {
+        this.db.insertRecords(
+          changesToSendTable,
+          changeEvents.map((ev): ICreateChangeRow => {
+            return {
+              id: ev.id,
+              type: DatabaseChangeType.Create,
+              inTable: table,
+              key: ev.key,
+              obj: JSON.stringify(ev.obj),
+            };
+          }),
+        );
+      }
     });
-
-    if (ctx.shouldRecordChange) {
-      const changeRow: ICreateChangeRow = {
-        id,
-        type: DatabaseChangeType.Create,
-        inTable: table,
-        key: data.id as string,
-        obj: JSON.stringify(data),
-      };
-
-      this.db.insertRecord(changesToSendTable, changeRow);
-    }
   }
 
-  createUpdateChange(
+  createUpdateChanges(
     table: string,
-    from: Record<string, unknown>,
-    to: Record<string, unknown>,
+    changes: {
+      from: Record<string, unknown>;
+      to: Record<string, unknown>;
+    }[],
   ) {
-    const ctx = getCtxStrict();
-    const id = uuidv4();
-    const diff = getObjectDiff(from, to);
+    this.db.transaction(() => {
+      const ctx = getCtxStrict();
 
-    this.onChange({
-      id,
-      type: DatabaseChangeType.Update,
-      table,
-      key: from.id as string,
-      obj: to,
-      from: diff.from,
-      to: diff.to,
-      windowId: ctx.windowId,
-      source: ctx.source,
+      const changeEvents = changes.map((ch): IExtendedUpdateDatabaseChange => {
+        const id = uuidv4();
+
+        const diff = getObjectDiff(ch.from, ch.to);
+
+        return {
+          id,
+          type: DatabaseChangeType.Update,
+          table,
+          key: ch.from.id as string,
+          obj: ch.to,
+          from: diff.from,
+          to: diff.to,
+          windowId: ctx.windowId,
+          source: ctx.source,
+        };
+      });
+
+      this.onChange(changeEvents);
+
+      if (ctx.shouldRecordChange) {
+        this.db.insertRecords(
+          changesToSendTable,
+          changeEvents.map((ev): IUpdateChangeRow => {
+            return {
+              id: ev.id,
+              type: DatabaseChangeType.Update,
+              inTable: table,
+              key: ev.key,
+              changeFrom: JSON.stringify(ev.from),
+              changeTo: JSON.stringify(ev.to),
+              obj: JSON.stringify(ev.obj),
+            };
+          }),
+        );
+      }
     });
-
-    if (ctx.shouldRecordChange) {
-      const change: IUpdateChangeRow = {
-        id,
-        type: DatabaseChangeType.Update,
-        inTable: table,
-        key: from.id as string,
-        changeFrom: JSON.stringify(diff.from),
-        changeTo: JSON.stringify(diff.to),
-        obj: JSON.stringify(to),
-      };
-
-      this.db.insertRecord(changesToSendTable, change);
-    }
   }
 
-  createDeleteChange(table: string, obj: Record<string, unknown>) {
-    const ctx = getCtxStrict();
-    const id = uuidv4();
+  createDeleteChanges(table: string, objs: Record<string, unknown>[]) {
+    this.db.transaction(() => {
+      const ctx = getCtxStrict();
 
-    this.onChange({
-      id,
-      type: DatabaseChangeType.Delete,
-      table,
-      key: obj.id as string,
-      obj,
-      windowId: ctx.windowId,
-      source: ctx.source,
+      const changeEvents = objs.map((obj): IExtendedDeleteDatabaseChange => {
+        const id = uuidv4();
+
+        return {
+          id,
+          type: DatabaseChangeType.Delete,
+          table,
+          key: obj.id as string,
+          obj,
+          windowId: ctx.windowId,
+          source: ctx.source,
+        };
+      });
+
+      if (ctx.shouldRecordChange) {
+        this.db.insertRecords(
+          changesToSendTable,
+          changeEvents.map((ev) => {
+            return {
+              id: ev.id,
+              type: DatabaseChangeType.Delete,
+              inTable: table,
+              key: ev.key,
+              obj: JSON.stringify(ev.obj),
+            };
+          }),
+        );
+      }
     });
-
-    if (ctx.shouldRecordChange) {
-      const change: IDeleteChangeRow = {
-        id,
-        type: DatabaseChangeType.Delete,
-        inTable: table,
-        key: obj.id as string,
-        obj: JSON.stringify(obj),
-      };
-
-      this.db.insertRecord(changesToSendTable, change);
-    }
   }
 
   getChangesPulls() {}
@@ -422,57 +492,72 @@ export abstract class BaseSyncRepository<
   }
 
   create(attrs: Doc, ctx: ICtx) {
+    return this.bulkCreate([attrs], ctx)[0];
+  }
+
+  bulkCreate(attrsArray: Doc[], ctx: ICtx) {
     return this.db.transaction(() => {
-      this.syncRepository.createCreateChange(this.getTableName(), attrs);
+      this.syncRepository.createCreateChanges(this.getTableName(), attrsArray);
 
-      this.db.insertRecord(this.getTableName(), this.toDoc(attrs));
+      this.db.insertRecords(
+        this.getTableName(),
+        attrsArray.map((attrs) => this.toDoc(attrs)),
+      );
 
-      return attrs;
+      return attrsArray;
     }, ctx);
   }
 
   update(changeTo: Doc, ctx: ICtx) {
+    return this.bulkUpdate([changeTo], ctx)[0];
+  }
+
+  bulkUpdate(records: Doc[], ctx: ICtx) {
     return this.db.transaction(() => {
-      const currentRecord = this.getById(changeTo.id);
+      const prevRecordsMap = Object.fromEntries(
+        this.getByIds(records.map(({ id }) => id)).map((prev) => [
+          prev.id,
+          prev,
+        ]),
+      );
 
-      if (!currentRecord)
-        throw new Error(
-          `Couldn't update. ${this.getTableName()}=${changeTo.id} not found`,
-        );
+      const changes = records.map((record) => {
+        if (!prevRecordsMap[record.id])
+          throw new Error(
+            `Prev record for ${JSON.stringify(record)} not found!`,
+          );
 
-      this.syncRepository.createUpdateChange(
+        return { from: record, to: prevRecordsMap[record.id] };
+      });
+
+      this.syncRepository.createUpdateChanges(this.getTableName(), changes);
+
+      // More efficient
+      this.db.insertRecords(
         this.getTableName(),
-        currentRecord,
-        changeTo,
+        records.map((r) => this.toDoc(r)),
+        true,
       );
 
-      this.db.execQuery(
-        Q.update(this.getTableName())
-          .set(this.toDoc(changeTo))
-          .where(Q.eq('id', currentRecord.id)),
-      );
-
-      return changeTo;
+      return records;
     }, ctx);
   }
 
   delete(id: string, ctx: ICtx) {
+    this.bulkDelete([id], ctx);
+  }
+
+  bulkDelete(ids: string[], ctx: ICtx) {
     return this.db.transaction(() => {
-      const currentRecord = this.getById(id);
-
-      if (!currentRecord)
-        throw new Error(
-          `Couldn't delete. ${this.getTableName()}=${id} not found`,
-        );
-
-      this.syncRepository.createDeleteChange(
+      this.syncRepository.createDeleteChanges(
         this.getTableName(),
-        currentRecord,
+        this.getByIds(ids),
       );
+
       this.db.execQuery(
-        Q.deleteFrom(this.getTableName()).where(Q.eq('id', id)),
+        Q.deleteFrom(this.getTableName()).where(Q.in('id', ids)),
       );
-    }, ctx);
+    });
   }
 
   getAll() {
@@ -572,7 +657,7 @@ export class SqlNotesRepository extends BaseSyncRepository<
   }
 
   getDailyNote(date: number) {
-    const startOfDate = dayjs(date).startOf('day');
+    const startOfDate = dayjs.unix(date).startOf('day');
 
     return this.findBy({ dailyNoteDate: startOfDate.unix() * 1000 });
   }
@@ -582,23 +667,10 @@ export class SqlNotesRepository extends BaseSyncRepository<
   }
 }
 
-class VaultService {
-  constructor(
-    private notesRepository: SqlNotesRepository,
-    private notesBlocksRepository: SqlNotesBlocksRepository,
-    private db: DB,
-  ) {}
-
-  createNoteAndBlocks() {
-    //start transaction
-    //end transaction
-  }
-}
-
 export class VaultWorker {
   private db!: DB;
   private syncRepo!: SyncRepository;
-  private eventsSubject$: Subject<IExtendedDatabaseChange> = new Subject();
+  private eventsSubject$: Subject<IExtendedDatabaseChange[]> = new Subject();
 
   constructor(private dbName: string) {
     const eventsChannel = new BroadcastChannel(this.dbName, {
@@ -607,8 +679,8 @@ export class VaultWorker {
 
     this.eventsSubject$
       .pipe(buffer(this.eventsSubject$.pipe(debounceTime(200))))
-      .subscribe((e) => {
-        eventsChannel.postMessage(e);
+      .subscribe((evs) => {
+        eventsChannel.postMessage(evs.flat());
       });
   }
 

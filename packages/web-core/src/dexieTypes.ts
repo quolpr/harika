@@ -72,7 +72,7 @@ export type NoteDocType = {
   title: string;
   dailyNoteDate: number | null;
   createdAt: number;
-  updatedAt: number | null;
+  updatedAt: number;
 };
 
 export type NoteBlockDocType = {
@@ -85,7 +85,7 @@ export type NoteBlockDocType = {
 
   content: string;
   createdAt: number;
-  updatedAt: number | null;
+  updatedAt: number;
 };
 
 export type BlocksViewDocType = {

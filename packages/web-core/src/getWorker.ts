@@ -1,5 +1,5 @@
 import { initBackend } from 'absurd-sql/dist/indexeddb-main-thread';
-import { proxy, Remote, wrap } from 'comlink';
+import { Remote, wrap } from 'comlink';
 import type { VaultWorker } from './SqlNotesRepository.worker';
 
 export const getWorker = async (dbName: string) => {

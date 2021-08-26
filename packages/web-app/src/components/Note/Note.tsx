@@ -9,12 +9,12 @@ import { useHistory } from 'react-router-dom';
 import { LinkIcon } from '@heroicons/react/solid';
 import { useCurrentVault } from '../../hooks/useCurrentVault';
 import { CurrentBlockInputRefContext } from '../../contexts';
-import { useNoteRepository } from '../../contexts/CurrentNoteRepositoryContext';
+import { useNoteService } from '../../contexts/CurrentNotesServiceContext';
 import { NoteBlocks } from './NoteBlocks';
 import { BacklinkedNote } from './BacklinkedNote';
 import { uniq } from 'lodash-es';
 import { useObservable, useObservableState } from 'observable-hooks';
-import { from, map, of, switchMap, tap } from 'rxjs';
+import { map, of, switchMap, tap } from 'rxjs';
 import { comparer } from 'mobx';
 
 export interface IFocusBlockState {
@@ -23,7 +23,7 @@ export interface IFocusBlockState {
 
 const BacklinkedNoteLoader = observer(
   ({ linkedNote, note }: { linkedNote: NoteModel; note: NoteModel }) => {
-    const noteRepo = useNoteRepository();
+    const noteRepo = useNoteService();
 
     const blocksTreeHolder$ = useObservable(
       ($inputs) => {
@@ -59,7 +59,7 @@ const BacklinkedNoteLoader = observer(
 );
 
 const BacklinkedNotes = observer(({ note }: { note: NoteModel }) => {
-  const noteRepo = useNoteRepository();
+  const noteRepo = useNoteService();
 
   const backlinks$ = useObservable(
     ($inputs) => {
@@ -132,7 +132,7 @@ const BacklinkedNotes = observer(({ note }: { note: NoteModel }) => {
 
 const NoteBody = observer(({ note }: { note: NoteModel }) => {
   const vault = useCurrentVault();
-  const noteRepo = useNoteRepository();
+  const noteRepo = useNoteService();
   const history = useHistory<IFocusBlockState>();
   const focusOnBlockId = (history.location.state || {}).focusOnBlockId;
 

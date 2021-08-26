@@ -1,19 +1,15 @@
 import type { Observable } from 'rxjs';
-import type { ITransmittedChange } from '../../dexie-sync/changesChannel';
 import {
   VaultDbTables,
   INoteChangeEvent,
   DatabaseChangeType,
   INoteBlockChangeEvent,
-  IBlocksViewChangeEvent,
 } from '../../dexieTypes';
 import type { IExtendedDatabaseChange } from '../../SqlNotesRepository.worker';
 import type { VaultModel } from '../domain/VaultModel';
 import {
   convertNoteDocToModelAttrs,
   convertNoteBlockDocToModelAttrs,
-  convertViewToModelAttrs,
-  ViewData,
   NoteData,
   NoteBlockData,
 } from './toDomainModelsConverters';

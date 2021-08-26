@@ -1,7 +1,7 @@
 import { useEffect, MutableRefObject, useContext } from 'react';
 import { CurrentBlockInputRefContext } from '../../../contexts';
 import type { EditState, NoteBlockModel } from '@harika/web-core';
-import { useNoteRepository } from '../../../contexts/CurrentNoteRepositoryContext';
+import { useNoteService } from '../../../contexts/CurrentNotesServiceContext';
 import { usePrevious } from 'react-use';
 
 export const useProvideInputToContext = (
@@ -25,7 +25,7 @@ export const useUpdateBlockLinks = (
   noteBlock: NoteBlockModel,
   editState: EditState,
 ) => {
-  const noteRepo = useNoteRepository();
+  const noteRepo = useNoteService();
 
   const wasEditing = usePrevious(editState.isEditing);
 

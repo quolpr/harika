@@ -4,7 +4,7 @@ import {
   parseStringToTree,
 } from '@harika/web-core';
 import { RefObject, useCallback, useContext, useState } from 'react';
-import { useNoteRepository } from '../../../contexts/CurrentNoteRepositoryContext';
+import { useNoteService } from '../../../contexts/CurrentNotesServiceContext';
 import { ShiftPressedContext } from '../../../contexts/ShiftPressedContext';
 import { useCurrentFocusedBlockState } from '../../../hooks/useFocusedBlockState';
 import { isIOS, insertText } from '../../../utils';
@@ -30,7 +30,7 @@ export const useHandleInput = (
 
   const isSearching = Boolean(noteTitleToSearch);
 
-  const noteRepo = useNoteRepository();
+  const noteRepo = useNoteService();
 
   const handleKeyPress = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -309,8 +309,6 @@ export const useHandleInput = (
 
       if (start === end) {
         const firstToken = getTokensAtCursor(start, noteBlock.content.ast)[0];
-
-        console.log({ firstToken, ast: noteBlock.content.ast, start });
 
         if (firstToken?.type === 'ref' || firstToken?.type === 'tag') {
           setNoteTitleToSearch(firstToken.ref);
