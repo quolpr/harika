@@ -16,7 +16,7 @@ export interface IConflictsResolver {
   resolveChanges(
     clientChanges: IDatabaseChange[],
     serverChanges: IDatabaseChange[],
-  ): Promise<void>;
+  ): void;
 
   tables(): Dexie.Table[];
 }
