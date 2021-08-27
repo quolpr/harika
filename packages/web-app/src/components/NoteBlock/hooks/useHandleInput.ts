@@ -4,7 +4,7 @@ import {
   parseStringToTree,
 } from '@harika/web-core';
 import { RefObject, useCallback, useContext, useState } from 'react';
-import { useNoteService } from '../../../contexts/CurrentNotesServiceContext';
+import { useNotesService } from '../../../contexts/CurrentNotesServiceContext';
 import { ShiftPressedContext } from '../../../contexts/ShiftPressedContext';
 import { useCurrentFocusedBlockState } from '../../../hooks/useFocusedBlockState';
 import { isIOS, insertText } from '../../../utils';
@@ -30,7 +30,7 @@ export const useHandleInput = (
 
   const isSearching = Boolean(noteTitleToSearch);
 
-  const noteRepo = useNoteService();
+  const noteRepo = useNotesService();
 
   const handleKeyPress = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {

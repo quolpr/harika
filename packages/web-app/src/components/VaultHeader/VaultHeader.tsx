@@ -9,7 +9,7 @@ import { useClickAway, useKey } from 'react-use';
 import { observer } from 'mobx-react-lite';
 import { CommandPaletteModal } from '../CommandPaletteModal/CommandPaleteModal';
 import { paths } from '../../paths';
-import { useNoteService } from '../../contexts/CurrentNotesServiceContext';
+import { useNotesService } from '../../contexts/CurrentNotesServiceContext';
 import { useCurrentVault } from '../../hooks/useCurrentVault';
 import { cn } from '../../utils';
 import { generateStackedNotePath } from '../../hooks/useNoteClick';
@@ -31,7 +31,7 @@ export const VaultHeader = observer(
   }) => {
     const location = useLocation();
     const vault = useCurrentVault();
-    const noteRepo = useNoteService();
+    const noteRepo = useNotesService();
     const history = useHistory();
 
     const primaryNote = usePrimaryNote();

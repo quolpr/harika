@@ -13,11 +13,16 @@ import {
   take,
   tap,
 } from 'rxjs/operators';
-import { uniq } from 'lodash-es';
+import { omit, uniq } from 'lodash-es';
 import { filterAst } from '../blockParser/astHelpers';
 import type { RefToken, TagToken } from '../blockParser/types';
 import { firstValueFrom, from, Observable, of, Subject } from 'rxjs';
-import { BlocksViewDocType, NoteDocType, VaultDbTables } from '../dexieTypes';
+import {
+  BlocksViewDocType,
+  NoteBlockDocType,
+  NoteDocType,
+  VaultDbTables,
+} from '../dexieTypes';
 import {
   convertNoteBlockDocToModelAttrs,
   convertNoteDocToModelAttrs,
@@ -470,42 +475,73 @@ export class NotesService {
     // );
   }
 
-  // async import(importData: {
-  //   data: { data: { tableName: string; rows: any[] }[] };
-  // }) {
-  //   const data = importData.data.data.filter(
-  //     ({ tableName }) => tableName[0] !== '_',
-  //   );
-  //   const tables = data.map(({ tableName }) => tableName);
+  async import(importData: {
+    data: { data: { tableName: string; rows: any[] }[] };
+  }) {
+    const data = importData.data.data.filter(
+      ({ tableName }) => tableName[0] !== '_',
+    );
+    const tables = data.map(({ tableName }) => tableName);
 
-  //   return this.db.transaction('rw', tables, async () => {
-  //     await Promise.all(
-  //       data.map(async ({ tableName, rows }) => {
-  //         await this.db.table(tableName).bulkAdd(
-  //           rows
-  //             .filter(({ id }) => Boolean(id)) // some rows could be broken, we check that at least id present
-  //             .map((row) =>
-  //               tableName === VaultDbTables.NoteBlocks
-  //                 ? {
-  //                     ...row,
-  //                     isRoot: row.isRoot === undefined ? 0 : row.isRoot,
-  //                   }
-  //                 : row,
-  //             ),
-  //         );
-  //       }),
-  //     );
+    // TODO: in one transaction
+    await Promise.all(
+      importData.data.data.map(async ({ rows, tableName }) => {
+        if (tableName === 'notes') {
+          await this.notesRepository.bulkCreate(
+            rows
+              .filter(({ title }) => title !== undefined)
+              .map(
+                (row) =>
+                  omit(
+                    {
+                      ...row,
+                      updatedAt: row.updatedAt || new Date().getTime(),
+                    },
+                    ['rootBlockId', '$types'],
+                  ) as NoteDocType,
+              ),
+            {
+              shouldRecordChange: true,
+              source: 'inDbChanges',
+            },
+          );
+        } else if (tableName === 'noteBlocks') {
+          await this.notesBlocksRepository.bulkCreate(
+            rows
+              .filter((row) => Boolean(row.noteId))
+              .map(
+                (row) =>
+                  omit(
+                    {
+                      ...row,
+                      updatedAt: row.updatedAt || new Date().getTime(),
+                      linkedNoteIds: row.linkedNoteIds.filter(
+                        (v: string | null) => Boolean(v),
+                      ),
+                      noteBlockIds: row.noteBlockIds.filter(
+                        (v: string | null) => Boolean(v),
+                      ),
+                    },
+                    ['parentBlockId'],
+                  ) as NoteBlockDocType,
+              ),
+            {
+              shouldRecordChange: true,
+              source: 'inDbChanges',
+            },
+          );
+        }
+      }),
+    );
+    // const rootBlockIds = data
+    //   .find(({ tableName }) => tableName === 'notes')
+    //   ?.rows.map(({ rootBlockId }) => rootBlockId)
+    //   .filter((id) => Boolean(id)) as string[];
 
-  //     // const rootBlockIds = data
-  //     //   .find(({ tableName }) => tableName === 'notes')
-  //     //   ?.rows.map(({ rootBlockId }) => rootBlockId)
-  //     //   .filter((id) => Boolean(id)) as string[];
-
-  //     // await Promise.all(
-  //     //   rootBlockIds.map((id) => this.db.noteBlocks.update(id, { isRoot: 1 })),
-  //     // );
-  //   });
-  // }
+    // await Promise.all(
+    //   rootBlockIds.map((id) => this.db.noteBlocks.update(id, { isRoot: 1 })),
+    // );
+  }
 
   async export() {
     // Fails to compile on build time, so I put any here

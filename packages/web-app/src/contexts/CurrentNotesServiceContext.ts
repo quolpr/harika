@@ -5,6 +5,6 @@ export const NotesServiceContext = createContext<NotesService>(
   {} as NotesService,
 );
 
-export const useNoteService = () => {
+export const useNotesService = () => {
   return useContext(NotesServiceContext);
 };

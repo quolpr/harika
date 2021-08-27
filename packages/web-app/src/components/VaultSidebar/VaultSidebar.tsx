@@ -11,6 +11,7 @@ import NotesIcon from '../../icons/notes.svgr.svg';
 import UploadIcon from '../../icons/upload.svgr.svg';
 import DownloadIcon from '../../icons/download.svgr.svg';
 import { NotesTree } from './NotesTree';
+import { useNotesService } from '../../contexts/CurrentNotesServiceContext';
 
 const sidebarClass = cn('sidebar');
 
@@ -23,6 +24,7 @@ type IProps = {
 export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
   ({ className, isOpened, onNavClick }: IProps, ref) => {
     const vault = useCurrentVault();
+    const notesService = useNotesService();
 
     const handleDownloadClick = useCallback(async () => {
       // const blob = await notesRepository.export();
@@ -44,15 +46,15 @@ export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
           if (!eReader?.target?.result) return;
 
           try {
-            // const result = JSON.parse(eReader.target.result.toString());
-            // notesRepository.import(result);
+            const result = JSON.parse(eReader.target.result.toString());
+            notesService.import(result);
           } catch (e) {
             alert('Failed to import db');
           }
         };
         reader.readAsText(e.target.files[0]);
       },
-      [],
+      [notesService],
     );
 
     return (

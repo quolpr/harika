@@ -3,7 +3,7 @@ import { isEqual } from 'lodash-es';
 import { useEffect, useMemo, useState } from 'react';
 import { BehaviorSubject, combineLatest, timer } from 'rxjs';
 import { debounce, distinctUntilChanged, filter, map } from 'rxjs/operators';
-import { useNoteService } from '../../../contexts/CurrentNotesServiceContext';
+import { useNotesService } from '../../../contexts/CurrentNotesServiceContext';
 import { cn } from '../../../utils';
 import scrollIntoView from 'scroll-into-view-if-needed';
 import './styles.css';
@@ -19,7 +19,7 @@ export const NoteTitleAutocomplete = React.memo(
     value: string | undefined;
     onSelect: (res: SearchedNote) => void;
   }) => {
-    const noteRepo = useNoteService();
+    const noteRepo = useNotesService();
 
     const [wasFirstSearchHappened, setWasFirstSearchHappened] = useState(false);
 

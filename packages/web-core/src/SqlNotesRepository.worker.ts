@@ -411,15 +411,17 @@ class DB {
     objs: Record<string, any>[],
     replace: boolean = false,
   ) {
-    let query = Q.insertInto(table).values(objs);
+    objs.forEach((obj) => {
+      let query = Q.insertInto(table).values(obj);
 
-    if (replace) {
-      query = query.orReplace();
-    }
+      if (replace) {
+        query = query.orReplace();
+      }
 
-    const sql = query.toParams();
+      const sql = query.toParams();
 
-    return this.sqlExec(sql.text, sql.values);
+      this.sqlExec(sql.text, sql.values);
+    });
   }
 
   // TODO: add mapper for better performance
@@ -485,8 +487,6 @@ export class SyncRepository {
         };
       });
 
-      this.onChange(changeEvents);
-
       if (ctx.shouldRecordChange) {
         this.db.insertRecords(
           clientChangesTable,
@@ -504,6 +504,8 @@ export class SyncRepository {
           }),
         );
       }
+
+      this.onChange(changeEvents);
     });
   }
 
@@ -535,8 +537,6 @@ export class SyncRepository {
         };
       });
 
-      this.onChange(changeEvents);
-
       if (ctx.shouldRecordChange) {
         this.db.insertRecords(
           clientChangesTable,
@@ -554,6 +554,8 @@ export class SyncRepository {
           }),
         );
       }
+
+      this.onChange(changeEvents);
     });
   }
 
@@ -578,8 +580,6 @@ export class SyncRepository {
         };
       });
 
-      this.onChange(changeEvents);
-
       if (ctx.shouldRecordChange) {
         this.db.insertRecords(
           clientChangesTable,
@@ -597,6 +597,8 @@ export class SyncRepository {
           }),
         );
       }
+
+      this.onChange(changeEvents);
     });
   }
 
@@ -830,14 +832,14 @@ export abstract class BaseSyncRepository<
   bulkCreate(attrsArray: Doc[], ctx: ISyncCtx) {
     return this.db.transaction(
       () => {
-        this.syncRepository.createCreateChanges(
-          this.getTableName(),
-          attrsArray,
-        );
-
         this.db.insertRecords(
           this.getTableName(),
           attrsArray.map((attrs) => this.toDoc(attrs)),
+        );
+
+        this.syncRepository.createCreateChanges(
+          this.getTableName(),
+          attrsArray,
         );
 
         return attrsArray;
@@ -869,14 +871,13 @@ export abstract class BaseSyncRepository<
           return { from: prevRecordsMap[record.id], to: record };
         });
 
-        this.syncRepository.createUpdateChanges(this.getTableName(), changes);
-
-        // More efficient
         this.db.insertRecords(
           this.getTableName(),
           records.map((r) => this.toDoc(r)),
           true,
         );
+
+        this.syncRepository.createUpdateChanges(this.getTableName(), changes);
 
         return records;
       },
@@ -891,13 +892,13 @@ export abstract class BaseSyncRepository<
   bulkDelete(ids: string[], ctx: ISyncCtx) {
     return this.db.transaction(
       () => {
+        this.db.execQuery(
+          Q.deleteFrom(this.getTableName()).where(Q.in('id', ids)),
+        );
+
         this.syncRepository.createDeleteChanges(
           this.getTableName(),
           this.getByIds(ids),
-        );
-
-        this.db.execQuery(
-          Q.deleteFrom(this.getTableName()).where(Q.in('id', ids)),
         );
       },
       { ...ctx, windowId: this.windowId },

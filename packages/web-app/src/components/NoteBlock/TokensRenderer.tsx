@@ -8,7 +8,7 @@ import type {
   TagToken,
   NoteModel,
 } from '@harika/web-core';
-import { useNoteService } from '../../contexts/CurrentNotesServiceContext';
+import { useNotesService } from '../../contexts/CurrentNotesServiceContext';
 import { useCurrentVault } from '../../hooks/useCurrentVault';
 import { useCurrentNote } from '../../hooks/useCurrentNote';
 import { useHandleClick } from '../../hooks/useNoteClick';
@@ -29,7 +29,7 @@ const RefRenderer = observer(
   }) => {
     const location = useLocation();
     const vault = useCurrentVault();
-    const noteRepo = useNoteService();
+    const noteRepo = useNotesService();
     const currentNote = useCurrentNote();
 
     const handleTodoToggle = useCallback(
@@ -259,7 +259,7 @@ const TokenRenderer = observer(
 
 export const TokensRenderer = observer(
   ({ noteBlock, tokens }: { noteBlock: NoteBlockModel; tokens: Token[] }) => {
-    const noteRepo = useNoteService();
+    const noteRepo = useNotesService();
 
     const linkedNoteIds = useDeepMemo(
       () => [...noteBlock.linkedNoteIds],

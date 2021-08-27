@@ -7,7 +7,7 @@ import { cn } from '../../utils';
 import { useKey } from 'react-use';
 import { v4 as uuidv4 } from 'uuid';
 import { paths } from '../../paths';
-import { useNoteService } from '../../contexts/CurrentNotesServiceContext';
+import { useNotesService } from '../../contexts/CurrentNotesServiceContext';
 import { useCurrentVault } from '../../hooks/useCurrentVault';
 import { Modal, modalClass } from '../Modal/Modal';
 import { firstValueFrom } from 'rxjs';
@@ -63,7 +63,7 @@ export const CommandPaletteModal = ({
 
   const history = useHistory();
   const vault = useCurrentVault();
-  const noteRepo = useNoteService();
+  const noteRepo = useNotesService();
   const [inputCommandValue, setInputCommandValue] = useState('!findOrCreate ');
 
   const startView: IView = React.useMemo(

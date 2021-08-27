@@ -5,13 +5,13 @@ import { NoteBlock } from '../NoteBlock/NoteBlock';
 import { Toolbar } from './Toolbar';
 import { NoteBlocksHandlers } from './NoteBlocksHandlers';
 import type { BlocksViewModel, NoteModel } from '@harika/web-core';
-import { useNoteService } from '../../contexts/CurrentNotesServiceContext';
+import { useNotesService } from '../../contexts/CurrentNotesServiceContext';
 import { useObservable, useObservableState } from 'observable-hooks';
 import { map } from 'rxjs';
 
 export const NoteBlocks = observer(
   ({ view, note }: { view: BlocksViewModel; note: NoteModel }) => {
-    const noteRepo = useNoteService();
+    const noteRepo = useNotesService();
     const isWide = useMedia('(min-width: 768px)');
 
     const blocksTreeHolder$ = useObservable(

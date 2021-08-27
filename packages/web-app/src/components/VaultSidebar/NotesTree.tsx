@@ -8,7 +8,7 @@ import ArrowDown from '../../icons/arrow-down.svgr.svg';
 import ArrowRight from '../../icons/arrow-right.svgr.svg';
 import { observer } from 'mobx-react-lite';
 import { usePrimaryNoteId } from '../../hooks/usePrimaryNote';
-import { useNoteService } from '../../contexts/CurrentNotesServiceContext';
+import { useNotesService } from '../../contexts/CurrentNotesServiceContext';
 
 const treeClass = cn('notes-tree');
 const sidebarItemClass = cn('sidebar-item');
@@ -22,7 +22,7 @@ const NoteNode = observer(
     onNavClick: (e: React.MouseEvent) => void;
   }) => {
     const vault = useCurrentVault();
-    const repo = useNoteService();
+    const repo = useNotesService();
     const primaryNoteId = usePrimaryNoteId();
     const isFocused = primaryNoteId
       ? node.isExpanded

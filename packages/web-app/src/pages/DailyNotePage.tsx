@@ -1,14 +1,14 @@
 import { useEffect } from 'react';
 import dayjs from 'dayjs';
 import { useHistory } from 'react-router-dom';
-import { useNoteService } from '../contexts/CurrentNotesServiceContext';
+import { useNotesService } from '../contexts/CurrentNotesServiceContext';
 import { useCurrentVault } from '../hooks/useCurrentVault';
 import { observer } from 'mobx-react-lite';
 import { paths } from '../paths';
 
 export const DailyNotePage = observer(() => {
   const vault = useCurrentVault();
-  const noteRepo = useNoteService();
+  const noteRepo = useNotesService();
   const history = useHistory();
 
   useEffect(() => {
