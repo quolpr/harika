@@ -5,11 +5,10 @@ import initSqlJs, {
 } from '@jlongster/sql.js';
 import { SQLiteFS } from 'absurd-sql';
 import IndexedDBBackend from 'absurd-sql/dist/indexeddb-backend';
-import { expose, proxy } from 'comlink';
+import { proxy, ProxyMarked } from 'comlink';
 import Q from 'sql-bricks';
 import type {
   ICreateChange,
-  IDatabaseChange,
   IDeleteChange,
   IUpdateChange,
   NoteBlockDocType,
@@ -23,9 +22,8 @@ import { buffer, debounceTime, Subject } from 'rxjs';
 import { mapValues, maxBy } from 'lodash-es';
 import dayjs from 'dayjs';
 import { v4 } from 'uuid';
-import type { IConflictsResolver } from './dexie-sync/ServerSynchronizer';
-import { UserDbConflictsResolver } from './VaultsRepository/persistence/UserDbConflictResolver';
-import { ConflictsResolver } from './NotesRepository/persistence/ConflictsResolver/ConflictsResolver';
+import type { IChangesApplier } from './dexie-sync/ServerSynchronizer';
+import type { Overwrite, Required } from 'utility-types';
 
 // eslint-disable-next-line no-restricted-globals
 // const ctx: Worker = self as any;
@@ -56,35 +54,90 @@ Object.keys(or_methods).forEach(function (method) {
 const notesTable = 'notes' as const;
 const noteBlocksTable = 'noteBlocks' as const;
 const noteBlocksNotesTable = 'noteBlocksNotes' as const;
-const changesToSendTable = 'changesToSend' as const;
-const syncStatusTable = 'syncStatus' as const;
-const changesPullsTable = 'changesPulls' as const;
-const changesFromServerTable = 'changesFromServer' as const;
 
-type IBaseChangeRow = {
+//
+
+const clientChangesTable = 'clientChanges' as const;
+const syncStatusTable = 'syncStatus' as const;
+const serverChangesPullsTable = 'serverChangesPulls' as const;
+const serverChangesTable = 'serverChanges' as const;
+
+//
+
+export const vaultsTable = 'vaultsTable' as const;
+
+type IBaseClientChangeRow = {
   id: string;
   key: string;
   obj: string;
   inTable: string;
+  rev: number;
 };
 
-type ICreateChangeRow = IBaseChangeRow & {
+type ICreateClientChangeRow = IBaseClientChangeRow & {
   type: DatabaseChangeType.Create;
+  changeFrom: null;
+  changeTo: null;
 };
 
-type IUpdateChangeRow = IBaseChangeRow & {
+type IUpdateClientChangeRow = IBaseClientChangeRow & {
   type: DatabaseChangeType.Update;
   changeFrom: string;
   changeTo: string;
 };
 
-type IDeleteChangeRow = IBaseChangeRow & {
+type IDeleteClientChangeRow = IBaseClientChangeRow & {
   type: DatabaseChangeType.Delete;
+  changeFrom: null;
+  changeTo: null;
 };
 
-type IChangeRow = ICreateChangeRow | IUpdateChangeRow | IDeleteChangeRow;
+type IClientChangeRow =
+  | ICreateClientChangeRow
+  | IUpdateClientChangeRow
+  | IDeleteClientChangeRow;
 
-export type NoteRowType = {
+type ICreateClientChangeDoc = ICreateChange & { rev: number };
+type IUpdateClientChangeDoc = Required<IUpdateChange, 'obj'> & { rev: number };
+type IDeleteClientChangeDoc = IDeleteChange & { rev: number };
+
+type IClientChangeDoc =
+  | ICreateClientChangeDoc
+  | IUpdateClientChangeDoc
+  | IDeleteClientChangeDoc;
+
+export type ITransmittedCreateChange = ICreateChange & IChangeExtended;
+export type ITransmittedUpdateChange = IUpdateChange & IChangeExtended;
+export type ITransmittedDeleteChange = IDeleteChange & IChangeExtended;
+
+export type ITransmittedChange =
+  | ITransmittedDeleteChange
+  | ITransmittedUpdateChange
+  | ITransmittedCreateChange;
+
+type ICreateServerChangeRow = ICreateClientChangeRow;
+type IUpdateServerChangeRow = Overwrite<IUpdateClientChangeRow, { obj: null }>;
+type IDeleteServerChangeRow = IDeleteClientChangeRow;
+
+export type IServerChangeRow = (
+  | ICreateServerChangeRow
+  | IUpdateServerChangeRow
+  | IDeleteServerChangeRow
+) & {
+  pullId: string;
+  rev: number;
+};
+export type IServerChangeDoc = (
+  | ICreateChange
+  | Omit<IUpdateChange, 'obj'>
+  | IDeleteChange
+) & {
+  pullId: string;
+  rev: number;
+};
+export type IChangesPullsRow = { id: string; serverRevision: number };
+
+export type NoteRow = {
   id: string;
   title: string;
   dailyNoteDate: number | null;
@@ -92,7 +145,7 @@ export type NoteRowType = {
   updatedAt: number | null;
 };
 
-export type NoteBlockRowType = {
+export type NoteBlockRow = {
   id: string;
   noteId: string;
   isRoot: 0 | 1;
@@ -102,6 +155,15 @@ export type NoteBlockRowType = {
   createdAt: number;
   updatedAt: number | null;
 };
+
+export type VaultRow = {
+  id: string;
+  name: string;
+  updatedAt: number;
+  createdAt: number;
+};
+
+export type VaultDoc = VaultRow;
 
 interface ICtx {
   windowId: string;
@@ -129,33 +191,6 @@ type IChangeExtended = {
   windowId: string;
   source: 'inDomainChanges' | 'inDbChanges';
 };
-
-export type IExtendedCreateDatabaseChange = ICreateChange & IChangeExtended;
-export type IExtendedUpdateDatabaseChange = IUpdateChange & IChangeExtended;
-export type IExtendedDeleteDatabaseChange = IDeleteChange & IChangeExtended;
-
-export type IExtendedDatabaseChange =
-  | IExtendedDeleteDatabaseChange
-  | IExtendedUpdateDatabaseChange
-  | IExtendedCreateDatabaseChange;
-
-export type IChangeFromServerRow = (
-  | ICreateChangeRow
-  | Omit<IUpdateChangeRow, 'obj'>
-  | IDeleteChangeRow
-) & {
-  pullId: string;
-  rev: number;
-};
-export type IChangeFromServerDoc = (
-  | ICreateChange
-  | Omit<IUpdateChange, 'obj'>
-  | IDeleteChange
-) & {
-  pullId: string;
-  rev: number;
-};
-export type IChangesPullsRow = { id: string; serverRevision: number };
 
 class DB {
   sqlDb!: Database;
@@ -185,11 +220,26 @@ class DB {
     `);
 
     this.sqlDb.exec(`
+      CREATE TABLE IF NOT EXISTS ${vaultsTable} (
+        id varchar(20) PRIMARY KEY,
+        name varchar(255) NOT NULL,
+        updatedAt INTEGER NOT NULL,
+        createdAt INTEGER NOT NULL
+      );
+    `);
+
+    this.sqlDb.exec(`
+      CREATE TABLE IF NOT EXISTS incrementTable (value INT, tableName TEXT);
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_incrementTable ON incrementTable(tableName);
+      INSERT OR IGNORE INTO incrementTable VALUES (0, '${clientChangesTable}');
+    `);
+
+    this.sqlDb.exec(`
       CREATE TABLE IF NOT EXISTS ${notesTable} (
         id varchar(20) PRIMARY KEY,
         title varchar(255) NOT NULL,
         dailyNoteDate INTEGER,
-        updatedAt INTEGER,
+        updatedAt INTEGER NOT NULL,
         createdAt INTEGER NOT NULL
       );
 
@@ -198,7 +248,7 @@ class DB {
     `);
 
     this.sqlDb.exec(`
-      CREATE TABLE IF NOT EXISTS ${changesToSendTable} (
+      CREATE TABLE IF NOT EXISTS ${clientChangesTable} (
         id varchar(36) PRIMARY KEY,
         type varchar(10) NOT NULL,
         inTable varchar(10) NOT NULL,
@@ -206,8 +256,21 @@ class DB {
         obj TEXT NOT NULL,
         changeFrom TEXT,
         changeTo TEXT,
-        rev INTEGER NOT NULL AUTOINCREMENT,
+        rev INTEGER NOT NULL DEFAULT 0 
       );
+
+      CREATE TRIGGER IF NOT EXISTS setRev_${clientChangesTable} AFTER INSERT ON ${clientChangesTable} BEGIN
+          UPDATE  incrementTable
+          SET     value = value + 1
+          WHERE   tableName = '${clientChangesTable}';
+
+          UPDATE  ${clientChangesTable}
+          SET     rev = (
+                      SELECT value
+                      FROM incrementTable
+                      WHERE tableName = '${clientChangesTable}')
+          WHERE   id = new.id;
+      END;
     `);
 
     this.sqlDb.exec(`
@@ -228,7 +291,7 @@ class DB {
         noteBlockIds TEXT NOT NULL,
         linkedNoteIds TEXT NOT NULL,
         content TEXT NOT NULL,
-        updatedAt INTEGER,
+        updatedAt INTEGER NOT NULL,
         createdAt INTEGER NOT NULL
       );
 
@@ -266,14 +329,14 @@ class DB {
     `);
 
     this.sqlDb.exec(`
-      CREATE TABLE IF NOT EXISTS ${changesPullsTable} (
+      CREATE TABLE IF NOT EXISTS ${serverChangesPullsTable} (
         id varchar(36) PRIMARY KEY,
         serverRevision INTEGER NOT NULL
       );
     `);
 
     this.sqlDb.exec(`
-      CREATE TABLE IF NOT EXISTS ${changesFromServerTable} (
+      CREATE TABLE IF NOT EXISTS ${serverChangesTable} (
         id varchar(36) PRIMARY KEY,
 
         pullId varchar(36) NOT NULL,
@@ -286,10 +349,10 @@ class DB {
         changeFrom TEXT,
         changeTo TEXT,
 
-        FOREIGN KEY(pullId) REFERENCES ${changesPullsTable}(id) ON DELETE CASCADE
+        FOREIGN KEY(pullId) REFERENCES ${serverChangesPullsTable}(id) ON DELETE CASCADE
       );
 
-      CREATE INDEX IF NOT EXISTS idx_change_from_server_pullId ON ${changesFromServerTable}(pullId);
+      CREATE INDEX IF NOT EXISTS idx_change_from_server_pullId ON ${serverChangesTable}(pullId);
     `);
   }
 
@@ -318,18 +381,23 @@ class DB {
   }
 
   private sqlExec(sql: string, params?: BindParams): QueryExecResult[] {
-    const startTime = performance.now();
-    const res = this.sqlDb.exec(sql, params);
-    const end = performance.now();
+    try {
+      const startTime = performance.now();
+      const res = this.sqlDb.exec(sql, params);
+      const end = performance.now();
 
-    console.debug(
-      'Done executing',
-      sql,
-      params,
-      `Time: ${((end - startTime) / 1000).toFixed(4)}s`,
-    );
+      console.debug(
+        'Done executing',
+        sql,
+        params,
+        `Time: ${((end - startTime) / 1000).toFixed(4)}s`,
+      );
 
-    return res;
+      return res;
+    } catch (e) {
+      console.log('Failed execute', sql, params);
+      throw e;
+    }
   }
 
   insertRecords(
@@ -372,7 +440,7 @@ class DB {
   }
 }
 
-interface ISyncStatus {
+export interface ISyncStatus {
   id: 1;
   lastReceivedRemoteRevision: number | null;
   lastAppliedRemoteRevision: number | null;
@@ -382,41 +450,42 @@ interface ISyncStatus {
 export class SyncRepository {
   constructor(
     private db: DB,
-    private onChange: (ch: IExtendedDatabaseChange[]) => void,
+    private onChange: (ch: ITransmittedChange[]) => void,
   ) {}
 
   createCreateChanges(table: string, records: Record<string, unknown>[]) {
     this.db.transaction(() => {
       const ctx = getCtxStrict();
 
-      const changeEvents = records.map(
-        (data): IExtendedCreateDatabaseChange => {
-          const id = uuidv4();
+      const changeEvents = records.map((data): ITransmittedCreateChange => {
+        const id = uuidv4();
 
-          return {
-            id,
-            type: DatabaseChangeType.Create,
-            table,
-            key: data.id as string,
-            obj: data,
-            windowId: ctx.windowId,
-            source: ctx.source,
-          };
-        },
-      );
+        return {
+          id,
+          type: DatabaseChangeType.Create,
+          table,
+          key: data.id as string,
+          obj: data,
+          windowId: ctx.windowId,
+          source: ctx.source,
+        };
+      });
 
       this.onChange(changeEvents);
 
       if (ctx.shouldRecordChange) {
         this.db.insertRecords(
-          changesToSendTable,
-          changeEvents.map((ev): ICreateChangeRow => {
+          clientChangesTable,
+          changeEvents.map((ev): ICreateClientChangeRow => {
             return {
               id: ev.id,
               type: DatabaseChangeType.Create,
               inTable: table,
               key: ev.key,
               obj: JSON.stringify(ev.obj),
+              rev: 0,
+              changeFrom: null,
+              changeTo: null,
             };
           }),
         );
@@ -434,7 +503,7 @@ export class SyncRepository {
     this.db.transaction(() => {
       const ctx = getCtxStrict();
 
-      const changeEvents = changes.map((ch): IExtendedUpdateDatabaseChange => {
+      const changeEvents = changes.map((ch): ITransmittedUpdateChange => {
         const id = uuidv4();
 
         const diff = getObjectDiff(ch.from, ch.to);
@@ -456,8 +525,8 @@ export class SyncRepository {
 
       if (ctx.shouldRecordChange) {
         this.db.insertRecords(
-          changesToSendTable,
-          changeEvents.map((ev): IUpdateChangeRow => {
+          clientChangesTable,
+          changeEvents.map((ev): IUpdateClientChangeRow => {
             return {
               id: ev.id,
               type: DatabaseChangeType.Update,
@@ -466,6 +535,7 @@ export class SyncRepository {
               changeFrom: JSON.stringify(ev.from),
               changeTo: JSON.stringify(ev.to),
               obj: JSON.stringify(ev.obj),
+              rev: 0,
             };
           }),
         );
@@ -477,7 +547,7 @@ export class SyncRepository {
     this.db.transaction(() => {
       const ctx = getCtxStrict();
 
-      const changeEvents = objs.map((obj): IExtendedDeleteDatabaseChange => {
+      const changeEvents = objs.map((obj): ITransmittedDeleteChange => {
         const id = uuidv4();
 
         return {
@@ -493,14 +563,17 @@ export class SyncRepository {
 
       if (ctx.shouldRecordChange) {
         this.db.insertRecords(
-          changesToSendTable,
-          changeEvents.map((ev) => {
+          clientChangesTable,
+          changeEvents.map((ev): IDeleteClientChangeRow => {
             return {
               id: ev.id,
               type: DatabaseChangeType.Delete,
               inTable: table,
               key: ev.key,
               obj: JSON.stringify(ev.obj),
+              rev: 0,
+              changeFrom: null,
+              changeTo: null,
             };
           }),
         );
@@ -508,76 +581,54 @@ export class SyncRepository {
     });
   }
 
-  getChangesPulls() {
+  getChangesPulls(): IChangesPullsRow[] {
     return this.db.getRecords<IChangesPullsRow>(
-      Q.select().from(changesPullsTable),
-    );
-  }
-  getChangesFromServerByPullIds(pullIds: string[]) {
-    return this.db.getRecords<IChangeFromServerRow>(
-      Q.select()
-        .from(changesFromServerTable)
-        .where(Q.in('pullId', Q.in('pullId', pullIds)))
-        .orderBy('rev'),
-    );
-  }
-  getChangesToSend() {
-    return this.db.getRecords<IChangeRow>(
-      Q.select().from(changesToSendTable).orderBy('rev'),
+      Q.select().from(serverChangesPullsTable),
     );
   }
 
-  bulkDeleteChangesToSend(ids: string[]) {
-    return this.db.execQuery(
-      Q.deleteFrom().from(changesToSendTable).where(Q.in('id', ids)),
+  getServerChangesByPullIds(pullIds: string[]): IServerChangeDoc[] {
+    return this.db
+      .getRecords<IServerChangeRow>(
+        Q.select()
+          .from(serverChangesTable)
+          .where(Q.in('pullId', pullIds))
+          .orderBy('rev'),
+      )
+      .map((row) => this.serverChangeRowToDoc(row));
+  }
+
+  getClientChanges() {
+    return this.db
+      .getRecords<IClientChangeRow>(
+        Q.select().from(clientChangesTable).orderBy('rev'),
+      )
+      .map((row) => this.clientChangeRowToDoc(row));
+  }
+
+  bulkDeleteClientChanges(ids: string[]) {
+    this.db.execQuery(
+      Q.deleteFrom().from(clientChangesTable).where(Q.in('id', ids)),
     );
   }
 
   deletePulls(ids: string[]) {
     this.db.execQuery(
-      Q.deleteFrom().from(changesPullsTable).where(Q.in('id', ids)),
+      Q.deleteFrom().from(serverChangesPullsTable).where(Q.in('id', ids)),
     );
   }
 
-  insertChangesFromServer(
-    pull: IChangesPullsRow,
-    changes: IChangeFromServerDoc[],
-  ) {
+  createPull(pull: IChangesPullsRow, changes: IServerChangeDoc[]) {
     this.db.transaction(() => {
-      this.db.execQuery(Q.insertInto(changesPullsTable).values(pull));
+      this.db.execQuery(Q.insertInto(serverChangesPullsTable).values(pull));
 
-      const rows = changes.map((ch): IChangeFromServerRow => {
-        const base = {
-          id: ch.id,
-          key: ch.key,
-          inTable: ch.table,
-          pullId: ch.pullId,
-          rev: ch.rev,
-        };
-
-        if (ch.type === DatabaseChangeType.Create) {
-          return {
-            ...base,
-            type: DatabaseChangeType.Create,
-            obj: JSON.stringify(ch.obj),
-          };
-        } else if (ch.type === DatabaseChangeType.Update) {
-          return {
-            ...base,
-            type: DatabaseChangeType.Update,
-            changeFrom: JSON.stringify(ch.from),
-            changeTo: JSON.stringify(ch.to),
-          };
-        } else {
-          return {
-            ...base,
-            type: DatabaseChangeType.Delete,
-            obj: JSON.stringify(ch.obj),
-          };
-        }
+      const rows = changes.map((ch): IServerChangeRow => {
+        return this.serverChangeDocToRow(ch);
       });
 
-      this.db.execQuery(Q.insertInto(changesFromServerTable).values(rows));
+      if (rows.length > 0) {
+        this.db.execQuery(Q.insertInto(serverChangesTable).values(rows));
+      }
 
       this.updateSyncStatus({
         lastReceivedRemoteRevision: pull.serverRevision,
@@ -606,6 +657,104 @@ export class SyncRepository {
 
   updateSyncStatus(status: Partial<ISyncStatus>) {
     this.db.execQuery(Q.update(syncStatusTable).set(status).where({ id: 1 }));
+  }
+
+  private clientChangeRowToDoc(ch: IClientChangeRow): IClientChangeDoc {
+    const base = {
+      id: ch.id,
+      key: ch.key,
+      table: ch.inTable,
+      rev: ch.rev,
+    };
+
+    if (ch.type === DatabaseChangeType.Create) {
+      return {
+        ...base,
+        type: DatabaseChangeType.Create,
+        obj: JSON.parse(ch.obj),
+      };
+    } else if (ch.type === DatabaseChangeType.Update) {
+      return {
+        ...base,
+        type: DatabaseChangeType.Update,
+        obj: JSON.parse(ch.obj),
+        from: JSON.parse(ch.changeFrom),
+        to: JSON.parse(ch.changeTo),
+      };
+    } else {
+      return {
+        ...base,
+        type: DatabaseChangeType.Delete,
+        obj: JSON.parse(ch.obj),
+      };
+    }
+  }
+
+  private serverChangeRowToDoc(ch: IServerChangeRow): IServerChangeDoc {
+    const base = {
+      id: ch.id,
+      key: ch.key,
+      table: ch.inTable,
+      pullId: ch.pullId,
+      rev: ch.rev,
+    };
+
+    if (ch.type === DatabaseChangeType.Create) {
+      return {
+        ...base,
+        type: DatabaseChangeType.Create,
+        obj: JSON.parse(ch.obj),
+      };
+    } else if (ch.type === DatabaseChangeType.Update) {
+      return {
+        ...base,
+        type: DatabaseChangeType.Update,
+        from: JSON.parse(ch.changeFrom),
+        to: JSON.parse(ch.changeTo),
+      };
+    } else {
+      return {
+        ...base,
+        type: DatabaseChangeType.Delete,
+        obj: JSON.parse(ch.obj),
+      };
+    }
+  }
+
+  private serverChangeDocToRow(ch: IServerChangeDoc): IServerChangeRow {
+    const base = {
+      id: ch.id,
+      key: ch.key,
+      inTable: ch.table,
+      pullId: ch.pullId,
+      rev: ch.rev,
+    };
+
+    if (ch.type === DatabaseChangeType.Create) {
+      return {
+        ...base,
+        type: DatabaseChangeType.Create,
+        obj: JSON.stringify(ch.obj),
+        changeFrom: null,
+        changeTo: null,
+      };
+    } else if (ch.type === DatabaseChangeType.Update) {
+      return {
+        ...base,
+        type: DatabaseChangeType.Update,
+        changeFrom: JSON.stringify(ch.from),
+        changeTo: JSON.stringify(ch.to),
+        obj: null,
+      };
+    } else {
+      return {
+        ...base,
+        type: DatabaseChangeType.Delete,
+        obj: JSON.stringify(ch.obj),
+        changeFrom: null,
+        changeTo: null,
+      };
+    }
   }
 }
 
@@ -725,11 +874,11 @@ export abstract class BaseSyncRepository<
 
 export class SqlNotesBlocksRepository extends BaseSyncRepository<
   NoteBlockDocType,
-  NoteBlockRowType
+  NoteBlockRow
 > {
   getByNoteIds(ids: string[]) {
     console.log({ ids });
-    const res = this.db.getRecords<NoteBlockRowType>(
+    const res = this.db.getRecords<NoteBlockRow>(
       Q.select().from(this.getTableName()).where(Q.in('noteId', ids)),
     );
 
@@ -758,7 +907,7 @@ export class SqlNotesBlocksRepository extends BaseSyncRepository<
     return res?.values?.map(([val]) => val as string) || [];
   }
 
-  toDoc(model: NoteBlockDocType): NoteBlockRowType {
+  toDoc(model: NoteBlockDocType): NoteBlockRow {
     return {
       ...super.toDoc(model),
       noteBlockIds: JSON.stringify(model.noteBlockIds),
@@ -767,7 +916,7 @@ export class SqlNotesBlocksRepository extends BaseSyncRepository<
     };
   }
 
-  toModel(row: NoteBlockRowType): NoteBlockDocType {
+  toModel(row: NoteBlockRow): NoteBlockDocType {
     return {
       ...super.toModel(row),
       noteBlockIds: JSON.parse(row['noteBlockIds'] as string),
@@ -779,7 +928,7 @@ export class SqlNotesBlocksRepository extends BaseSyncRepository<
 
 export class SqlNotesRepository extends BaseSyncRepository<
   NoteDocType,
-  NoteRowType
+  NoteRow
 > {
   // TODO: move to getBy
   getByTitles(titles: string[]): NoteDocType[] {
@@ -814,11 +963,19 @@ export class SqlNotesRepository extends BaseSyncRepository<
     return notesTable;
   }
 }
+export class SqlVaultsRepository extends BaseSyncRepository<
+  VaultDoc,
+  VaultRow
+> {
+  getTableName() {
+    return vaultsTable;
+  }
+}
 
 export class ApplyChangesService {
   constructor(
     private db: DB,
-    private resolver: IConflictsResolver,
+    private resolver: IChangesApplier,
     private syncRepo: SyncRepository,
   ) {}
 
@@ -827,28 +984,31 @@ export class ApplyChangesService {
       const syncStatus = this.syncRepo.getSyncStatus();
 
       const serverPulls = this.syncRepo.getChangesPulls();
-      const serverChanges = this.syncRepo.getChangesFromServerByPullIds(
+      console.log({ serverPulls });
+      const serverChanges = this.syncRepo.getServerChangesByPullIds(
         serverPulls.map(({ id }) => id),
       );
 
-      if (serverChanges.length > 0) {
-        const clientChanges = this.syncRepo.getChangesToSend();
+      // if (serverChanges.length > 0) {
+      //   const clientChanges = this.syncRepo.getClientChanges();
 
-        this.resolver.resolveChanges(
-          clientChanges.map((change) => ({
-            ...change,
-            source: syncStatus.clientId,
-          })),
-          serverChanges,
-        );
+      //   this.resolver.resolveChanges(
+      //     clientChanges.map((change) => ({
+      //       ...change,
+      //       source: syncStatus.clientId,
+      //     })),
+      //     serverChanges,
+      //   );
 
-        this.syncRepo.deletePulls(serverPulls.map(({ id }) => id));
-      }
+      //   this.syncRepo.deletePulls(serverPulls.map(({ id }) => id));
+      // }
 
       const maxRevision = maxBy(
         serverPulls,
         ({ serverRevision }) => serverRevision,
       )?.serverRevision;
+
+      console.log({ maxRevision });
 
       if (maxRevision) {
         this.syncRepo.updateSyncStatus({
@@ -859,10 +1019,10 @@ export class ApplyChangesService {
   }
 }
 
-export class VaultWorker {
-  private db!: DB;
-  private syncRepo!: SyncRepository;
-  private eventsSubject$: Subject<IExtendedDatabaseChange[]> = new Subject();
+export abstract class BaseDbWorker {
+  protected db!: DB;
+  protected syncRepo!: SyncRepository;
+  protected eventsSubject$: Subject<ITransmittedChange[]> = new Subject();
 
   constructor(private dbName: string) {
     const eventsChannel = new BroadcastChannel(this.dbName, {
@@ -887,29 +1047,9 @@ export class VaultWorker {
     }
   }
 
-  getNotesRepo() {
-    return proxy(new SqlNotesRepository(this.syncRepo, this.db));
-  }
-
-  getNotesBlocksRepo() {
-    return proxy(new SqlNotesBlocksRepository(this.syncRepo, this.db));
-  }
-
   getSyncRepo() {
     return proxy(this.syncRepo);
   }
 
-  getApplyChangesService(type: 'vault' | 'user') {
-    return proxy(
-      new ApplyChangesService(
-        this.db,
-        type === 'vault'
-          ? new ConflictsResolver()
-          : new UserDbConflictsResolver(),
-        this.syncRepo,
-      ),
-    );
-  }
+  abstract getApplyChangesService(): ApplyChangesService & ProxyMarked;
 }
-
-expose(VaultWorker);

@@ -1,24 +1,25 @@
-import type { Dexie } from 'dexie';
-import { merge, Subject, of } from 'rxjs';
+import { merge, Subject, of, Observable } from 'rxjs';
 import { concatMap, finalize, mapTo, switchMap } from 'rxjs/operators';
 import type { IDatabaseChange } from '../dexieTypes';
 import type { CommandsExecuter } from './CommandsExecuter';
-import type { SyncStatusService } from './SyncStatusService';
 import type { ServerConnector } from './connection/ServerConnector';
 import { ServerChangesReceiver } from './ServerSynchronizer/ServerChangesReceiver';
 import { ChangesApplierAndSender } from './ServerSynchronizer/ChangesApplierAndSender';
+import type { Remote } from 'comlink';
+import type {
+  ApplyChangesService,
+  SyncRepository,
+} from '../SqlNotesRepository.worker';
 
 export interface IConsistencyResolver {
   resolve(): Promise<void>;
 }
 
-export interface IConflictsResolver {
+export interface IChangesApplier {
   resolveChanges(
     clientChanges: IDatabaseChange[],
     serverChanges: IDatabaseChange[],
   ): void;
-
-  tables(): Dexie.Table[];
 }
 
 export class ServerSynchronizer {
@@ -27,27 +28,26 @@ export class ServerSynchronizer {
   private changesApplierAndSender: ChangesApplierAndSender;
 
   constructor(
-    db: Dexie,
-    syncStatus: SyncStatusService,
+    syncRepo: Remote<SyncRepository>,
+    applyChangesService: Remote<ApplyChangesService>,
     commandExecuter: CommandsExecuter,
     private serverConnector: ServerConnector,
-    conflictResolver: IConflictsResolver,
+    onNewChange$: Observable<unknown>,
     private stop$: Subject<void> = new Subject(),
     private log: (str: string) => void,
   ) {
     this.serverChangesReceiver = new ServerChangesReceiver(
-      db,
-      syncStatus,
+      syncRepo,
       commandExecuter,
     );
 
     this.changesApplierAndSender = new ChangesApplierAndSender(
-      db,
-      syncStatus,
+      syncRepo,
+      applyChangesService,
       commandExecuter,
-      conflictResolver,
       this.triggerGetChangesSubject,
       this.log,
+      onNewChange$,
     );
   }
 

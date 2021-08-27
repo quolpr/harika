@@ -5,7 +5,7 @@ import {
   DatabaseChangeType,
   INoteBlockChangeEvent,
 } from '../../dexieTypes';
-import type { IExtendedDatabaseChange } from '../../SqlNotesRepository.worker';
+import type { ITransmittedChange } from '../../SqlNotesRepository.worker';
 import type { VaultModel } from '../domain/VaultModel';
 import {
   convertNoteDocToModelAttrs,
@@ -16,7 +16,7 @@ import {
 
 export class ToDomainSyncer {
   constructor(
-    private changes$: Observable<IExtendedDatabaseChange[]>,
+    private changes$: Observable<ITransmittedChange[]>,
     private vault: VaultModel,
     private currentWindowId: string,
   ) {}
@@ -74,7 +74,7 @@ export class ToDomainSyncer {
 
   // TODO refactor notes and noteblocks to one method
 
-  private getBlockChanges(evs: IExtendedDatabaseChange[]) {
+  private getBlockChanges(evs: ITransmittedChange[]) {
     const blockEvents = evs.filter(
       (ev) => ev.table === VaultDbTables.NoteBlocks,
     ) as INoteBlockChangeEvent[];
@@ -117,7 +117,7 @@ export class ToDomainSyncer {
       .filter((n) => !!n) as NoteBlockData[];
   }
 
-  private getNoteChanges(evs: IExtendedDatabaseChange[]) {
+  private getNoteChanges(evs: ITransmittedChange[]) {
     const noteEvents = evs.filter(
       (ev) => ev.table === VaultDbTables.Notes,
     ) as INoteChangeEvent[];

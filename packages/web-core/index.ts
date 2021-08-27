@@ -1,5 +1,5 @@
 export * from './src/NotesRepository/NotesService';
-export * from './src/VaultsRepository/VaultsRepository';
+export * from './src/VaultsRepository/VaultsService';
 export * from './src/NotesRepository/domain/VaultUiState';
 export * from './src/NotesRepository/domain/VaultUiState/BlocksViewModel';
 export type { Token, RefToken, TagToken } from './src/blockParser/types';

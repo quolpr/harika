@@ -5,7 +5,7 @@ import {
   INoteChangeEvent,
   VaultDbTables,
 } from '../../../dexieTypes';
-import type { IExtendedDatabaseChange } from '../../../SqlNotesRepository.worker';
+import type { ITransmittedChange } from '../../../SqlNotesRepository.worker';
 import type {
   INoteTitleChange,
   NotesTreeModel,
@@ -15,7 +15,7 @@ export class NotesChangesTrackerService {
   private bufferedChanges: INoteChangeEvent[] = [];
 
   constructor(
-    private changes$: Observable<IExtendedDatabaseChange[]>,
+    private changes$: Observable<ITransmittedChange[]>,
     private treeModel: NotesTreeModel,
     stop$: Observable<unknown>,
   ) {

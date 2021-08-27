@@ -1,4 +1,4 @@
-import type { VaultsRepository } from '@harika/web-core';
+import type { VaultsService } from '@harika/web-core';
 import React, { useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { Modal, modalClass } from '../../components/Modal/Modal';
@@ -19,7 +19,7 @@ export const SettingsModal = ({
   setIsOpened,
 }: {
   vault: { id: string; name: string };
-  vaults: VaultsRepository;
+  vaults: VaultsService;
   isOpened: boolean;
   setIsOpened: (t: boolean) => void;
 }) => {

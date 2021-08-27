@@ -1,4 +1,3 @@
-import type { Dexie } from 'dexie';
 import { merge, Subject, Observable, of } from 'rxjs';
 import {
   distinctUntilChanged,
@@ -9,7 +8,6 @@ import {
 } from 'rxjs/operators';
 import { BroadcastChannel, createLeaderElection } from 'broadcast-channel';
 import Phoenix from 'phoenix';
-import type { SyncStatusService } from '../SyncStatusService';
 
 export class ServerConnector {
   private socketSubject = new Subject<Phoenix.Socket>();
@@ -30,10 +28,10 @@ export class ServerConnector {
   );
 
   constructor(
-    private db: Dexie,
+    private dbName: string,
+    private clientId: string,
     private url: string,
     private authToken: string,
-    private syncStatus: SyncStatusService,
     private log: (str: string) => void,
     private stop$: Subject<void>,
   ) {
@@ -123,7 +121,7 @@ export class ServerConnector {
   }
 
   private connectWhenElected() {
-    const channel = new BroadcastChannel(`dexieSync-${this.db.name}`);
+    const channel = new BroadcastChannel(`dexieSync-${this.dbName}`);
     // TODO: what to do with leader duplication?
     const elector = createLeaderElection(channel);
 
@@ -133,8 +131,8 @@ export class ServerConnector {
       });
       socket.connect();
 
-      const phoenixChannel = socket.channel('db_changes:' + this.db.name, {
-        client_id: (await this.syncStatus.get()).clientId,
+      const phoenixChannel = socket.channel('db_changes:' + this.dbName, {
+        client_id: this.clientId,
       });
 
       this.socketSubject.next(socket);

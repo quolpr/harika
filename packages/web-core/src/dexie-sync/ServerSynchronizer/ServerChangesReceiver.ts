@@ -6,9 +6,11 @@ import {
   GetChangesResponse,
 } from '../../dexieTypes';
 import type { CommandsExecuter } from '../CommandsExecuter';
-import type { ISyncStatus } from '../SyncStatusService';
 import { v4 } from 'uuid';
-import type { SyncRepository } from '../../SqlNotesRepository.worker';
+import type {
+  ISyncStatus,
+  SyncRepository,
+} from '../../SqlNotesRepository.worker';
 import type { Remote } from 'comlink';
 
 export interface IChangePullRow {
@@ -70,12 +72,14 @@ export class ServerChangesReceiver {
   ) => {
     const pullId = v4();
 
-    await this.syncRepo.insertChangesFromServer(
-      {
-        id: pullId,
-        serverRevision: res.currentRevision,
-      },
-      res.changes.map((ch) => ({ ...ch, pullId })),
-    );
+    if (res.currentRevision !== null) {
+      await this.syncRepo.createPull(
+        {
+          id: pullId,
+          serverRevision: res.currentRevision,
+        },
+        res.changes.map((ch) => ({ ...ch, pullId })),
+      );
+    }
   };
 }

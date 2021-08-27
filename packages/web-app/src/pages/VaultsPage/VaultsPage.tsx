@@ -1,4 +1,4 @@
-import type { VaultsRepository } from '@harika/web-core';
+import type { VaultsService } from '@harika/web-core';
 import React, { useCallback, useMemo, useState } from 'react';
 import { cn } from '../../utils';
 import './styles.css';
@@ -22,7 +22,7 @@ const VaultBlock = ({
   vaults,
 }: {
   vault: { id: string; name: string };
-  vaults: VaultsRepository;
+  vaults: VaultsService;
 }) => {
   const [isOpened, setIsOpened] = useState(false);
 
@@ -57,7 +57,7 @@ const VaultBlock = ({
   );
 };
 
-export const VaultsPage = ({ vaults }: { vaults: VaultsRepository }) => {
+export const VaultsPage = ({ vaults }: { vaults: VaultsService }) => {
   const history = useHistory();
 
   const [isCreateModalOpened, setIsCreateModalOpened] = useState(false);

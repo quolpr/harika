@@ -4,7 +4,16 @@ import {
   DatabaseChangeType,
 } from '../../dexieTypes';
 import type { CommandsExecuter } from '../CommandsExecuter';
-import { filter, from, map, of, pipe, Subject, switchMap } from 'rxjs';
+import {
+  filter,
+  from,
+  map,
+  Observable,
+  of,
+  pipe,
+  Subject,
+  switchMap,
+} from 'rxjs';
 import { omit } from 'lodash-es';
 import type { Remote } from 'comlink';
 import type {
@@ -19,10 +28,11 @@ export class ChangesApplierAndSender {
     private commandExecuter: CommandsExecuter,
     private triggerGetChangesSubject: Subject<unknown>,
     private log: (str: string) => void,
+    private onNewChange$: Observable<unknown>,
   ) {}
 
   emitter() {
-    return of(null);
+    return this.onNewChange$;
   }
 
   pipe() {
@@ -37,7 +47,7 @@ export class ChangesApplierAndSender {
   }
 
   private sendChanges = () => {
-    return from(this.syncRepo.getChangesToSend()).pipe(
+    return from(this.syncRepo.getClientChanges()).pipe(
       filter((clientChanges) => clientChanges.length > 0),
       switchMap(async (clientChanges) => ({
         clientChanges,
@@ -76,7 +86,7 @@ export class ChangesApplierAndSender {
           return of(null);
         }
 
-        return this.syncRepo.bulkDeleteChangesToSend(
+        return this.syncRepo.bulkDeleteClientChanges(
           clientChanges.map(({ id }) => id),
         );
       }),

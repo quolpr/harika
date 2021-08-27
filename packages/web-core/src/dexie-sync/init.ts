@@ -1,37 +1,32 @@
-import type { Dexie } from 'dexie';
+import type { Remote } from 'comlink';
 import { Subject } from 'rxjs';
-import { startChangeLog } from './changesLogger';
+import type { DbEventsService } from '../DbEventsService';
+import type { BaseDbWorker } from '../SqlNotesRepository.worker';
 import { CommandsExecuter } from './CommandsExecuter';
 import { ServerConnector } from './connection/ServerConnector';
-import {
-  IConflictsResolver,
-  IConsistencyResolver,
-  ServerSynchronizer,
-} from './ServerSynchronizer';
-import { SyncStatusService } from './SyncStatusService';
+import { ServerSynchronizer } from './ServerSynchronizer';
 
 export const initSync = async (
-  db: Dexie,
-  windowId: string,
+  dbName: string,
+  dbWorker: Remote<BaseDbWorker>,
   url: string,
   authToken: string,
-  conflictResolver: IConflictsResolver,
-  consistencyResolver: IConsistencyResolver | undefined,
+  eventsService: DbEventsService,
 ) => {
-  startChangeLog(db, windowId);
-
   const stop$: Subject<void> = new Subject();
 
   const log = (msg: string) => {
-    console.debug(`[${db.name}] ${msg}`);
+    console.debug(`[${dbName}] ${msg}`);
   };
 
-  const syncStatus = new SyncStatusService(db);
+  const syncRepo = await dbWorker.getSyncRepo();
+  const syncStatus = await syncRepo.getSyncStatus();
+
   const serverConnector = new ServerConnector(
-    db,
+    dbName,
+    syncStatus.clientId,
     url,
     authToken,
-    syncStatus,
     log,
     stop$,
   );
@@ -43,11 +38,11 @@ export const initSync = async (
   );
 
   const syncer = new ServerSynchronizer(
-    db,
-    syncStatus,
+    syncRepo,
+    await dbWorker.getApplyChangesService(),
     commandExecuter,
     serverConnector,
-    conflictResolver,
+    eventsService.channel$(),
     stop$,
     log,
   );

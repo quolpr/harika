@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Switch, Route } from 'react-router-dom';
 import { VaultLayout } from '../components/VaultLayout/VaultLayout';
 import { PATHS, VAULT_PREFIX } from '../paths';
-import { VaultsRepository } from '@harika/web-core';
+import { VaultsService } from '@harika/web-core';
 import { useAuthState } from '../hooks/useAuthState';
 import { OnlyAuthed } from '../components/OnlyAuthed';
 import { DailyNotePage } from '../pages/DailyNotePage';
@@ -12,8 +12,7 @@ import { VaultsPage } from '../pages/VaultsPage/VaultsPage';
 
 export const VaultAppRoute = () => {
   const [authInfo] = useAuthState();
-  const [vaultRepository, setVaultRepository] =
-    useState<VaultsRepository | undefined>();
+  const [vaultService, setVaultService] = useState<VaultsService | undefined>();
 
   const userId = authInfo?.userId;
   const isOffline = authInfo?.isOffline;
@@ -22,24 +21,24 @@ export const VaultAppRoute = () => {
   useEffect(() => {
     if (!userId || isOffline === undefined || !authToken) return;
 
-    let repo: VaultsRepository | undefined = undefined;
+    let service: VaultsService | undefined = undefined;
 
     const cb = async () => {
-      repo = new VaultsRepository(userId, !isOffline, {
+      service = new VaultsService(userId, !isOffline, {
         wsUrl: import.meta.env.SNOWPACK_PUBLIC_WS_URL,
         authToken: authToken,
       });
 
-      await repo.init();
+      await service.init();
 
-      setVaultRepository(repo);
+      setVaultService(service);
     };
 
     cb();
 
     return () => {
-      repo?.close();
-      setVaultRepository(undefined);
+      service?.close();
+      setVaultService(undefined);
     };
   }, [userId, isOffline, authToken]);
 
@@ -47,8 +46,8 @@ export const VaultAppRoute = () => {
     <>
       <Route path={VAULT_PREFIX}>
         <OnlyAuthed>
-          {vaultRepository && (
-            <VaultLayout vaultRepository={vaultRepository}>
+          {vaultService && (
+            <VaultLayout vaultService={vaultService}>
               <Switch>
                 <Route exact path={PATHS.VAULT_DAILY_PATH}>
                   <DailyNotePage />
@@ -68,7 +67,7 @@ export const VaultAppRoute = () => {
       </Route>
       <Route exact path={PATHS.VAULT_INDEX_PATH}>
         <OnlyAuthed>
-          {vaultRepository && <VaultsPage vaults={vaultRepository} />}
+          {vaultService && <VaultsPage vaults={vaultService} />}
         </OnlyAuthed>
       </Route>
     </>

@@ -28,16 +28,13 @@ import {
   convertViewToModelAttrs,
   NoteBlockData,
 } from './syncers/toDomainModelsConverters';
-import type { ITransmittedChange } from '../dexie-sync/changesChannel';
 import { NotesChangesTrackerService } from './services/notes-tree/NotesChangesTrackerService';
 import dayjs from 'dayjs';
 import { toObserver } from '../toObserver';
 import type {
   SqlNotesBlocksRepository,
   SqlNotesRepository,
-  VaultWorker,
 } from '../SqlNotesRepository.worker';
-import { generateId } from '../generateId';
 import type { Remote } from 'comlink';
 import type { DbEventsService } from '../DbEventsService';
 

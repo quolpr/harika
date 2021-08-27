@@ -7,14 +7,14 @@ import {
   VaultDbTables,
 } from '../../../dexieTypes';
 import { applyChanges } from '../../../dexie-sync/applyChanges';
-import type { IConflictsResolver } from '../../../dexie-sync/ServerSynchronizer';
+import type { IChangesApplier } from '../../../dexie-sync/ServerSynchronizer';
 import { NoteblocksChangesConflictResolver } from './NoteblocksChangesConflictResolver';
 import { NotesChangesConflictResolver } from './NotesChangesConflictResolver';
 import { BlocksViewsChangesConflictResolver } from './BlocksViewsConflictResolver';
 import type { VaultDexieDatabase } from '../DexieDb';
 import { VaultDbConsistencyResolver } from '../ConsistencyResolver/VaultDbConsistencyResolver';
 
-export class ConflictsResolver implements IConflictsResolver {
+export class ConflictsResolver implements IChangesApplier {
   private consistencyResolver: VaultDbConsistencyResolver;
 
   constructor(private db: VaultDexieDatabase) {

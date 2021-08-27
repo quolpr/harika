@@ -1,9 +1,9 @@
 import type { IDatabaseChange } from '../../dexieTypes';
 import { applyChanges } from '../../dexie-sync/applyChanges';
 import Dexie from 'dexie';
-import type { IConflictsResolver } from '../../dexie-sync/ServerSynchronizer';
+import type { IChangesApplier } from '../../dexie-sync/ServerSynchronizer';
 
-export class UserDbConflictsResolver implements IConflictsResolver {
+export class UserDbConflictsResolver implements IChangesApplier {
   constructor(private db: Dexie) {}
 
   async resolveChanges(

@@ -1,6 +1,6 @@
 import { BroadcastChannel } from 'broadcast-channel';
 import { Observable, ObservableInput, switchMap } from 'rxjs';
-import type { IExtendedDatabaseChange } from './SqlNotesRepository.worker';
+import type { ITransmittedChange } from './SqlNotesRepository.worker';
 
 export class DbEventsService {
   dbEventsChannel: BroadcastChannel;
@@ -13,7 +13,7 @@ export class DbEventsService {
 
   liveQuery<T extends any>(tables: string[], query: () => ObservableInput<T>) {
     return new Observable((subscriber) => {
-      const func = (evs: IExtendedDatabaseChange[]) => {
+      const func = (evs: ITransmittedChange[]) => {
         if (
           evs.find(
             ({ table, source }) =>
@@ -32,8 +32,8 @@ export class DbEventsService {
   }
 
   channel$() {
-    return new Observable<IExtendedDatabaseChange[]>((subscriber) => {
-      const func = (evs: IExtendedDatabaseChange[]) => subscriber.next(evs);
+    return new Observable<ITransmittedChange[]>((subscriber) => {
+      const func = (evs: ITransmittedChange[]) => subscriber.next(evs);
 
       this.dbEventsChannel.addEventListener('message', func);
 

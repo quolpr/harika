@@ -1,4 +1,4 @@
-import type { VaultsRepository, NotesService } from '@harika/web-core';
+import type { VaultsService, NotesService } from '@harika/web-core';
 import React, {
   useCallback,
   useContext,
@@ -98,8 +98,8 @@ const useKeepScroll = () => {
 };
 
 export const VaultLayout: React.FC<{
-  vaultRepository: VaultsRepository;
-}> = ({ children, vaultRepository }) => {
+  vaultService: VaultsService;
+}> = ({ children, vaultService }) => {
   const history = useHistory();
   const { vaultId } = useParams<{ vaultId: string }>();
   const isWide = useMedia('(min-width: 768px)');
@@ -118,7 +118,7 @@ export const VaultLayout: React.FC<{
     let closeDevtool = () => {};
 
     const cb = async () => {
-      const repo = await vaultRepository.getNotesRepo(vaultId);
+      const repo = await vaultService.getNotesService(vaultId);
 
       if (!repo) {
         writeStorage('lastVaultId', undefined);
@@ -141,12 +141,12 @@ export const VaultLayout: React.FC<{
     cb();
 
     return () => {
-      vaultRepository.closeNotesRepo(vaultId);
+      vaultService.closeNotesRepo(vaultId);
 
       setNotesRepo(undefined);
       closeDevtool();
     };
-  }, [vaultRepository, vaultId, history]);
+  }, [vaultService, vaultId, history]);
 
   // TODO: reset focused block on page change
 

@@ -5390,10 +5390,10 @@ dexie-export-import@^1.0.3:
   resolved "https://registry.yarnpkg.com/dexie-export-import/-/dexie-export-import-1.0.3.tgz#e93926a0a3939c68f5e2b80b48517ea4c6d88fde"
   integrity sha512-oun27bUUEaeOfSZ8Cv3Nvj5s0LeANYBYQ7ROpF/3Zg1X/IALUnrX0hk5ZUMlYC3s99kFHimXX57ac5AlOdMzWw==
 
-dexie@3.2.0-beta-2, dexie@3.2.0-beta.3:
-  version "3.2.0-beta-2"
-  resolved "https://registry.yarnpkg.com/dexie/-/dexie-3.2.0-beta-2.tgz#9037bb09231b512afdf7db4fec5692276d2e3744"
-  integrity sha512-T6UutBUmDDbccDV80GdLfFftWsTfi35yohtO3Lm/KkemmMeQw2ndFFcKHJkkc6GjFR1DOolsNs4pL7RTwagHAQ==
+dexie@3.2.0-beta.3:
+  version "3.2.0-beta.3"
+  resolved "https://registry.yarnpkg.com/dexie/-/dexie-3.2.0-beta.3.tgz#6e14328b2257929d93f7d597307186cb982691f7"
+  integrity sha512-gfnFMoUIxXxoY8rtMaiW1ryAOJL663irbXLutPB2bFjbegIvsHGUbJf4a20eqcF0RYbBZUg6otML0pRTWAppig==
 
 dezalgo@^1.0.0:
   version "1.0.3"
@@ -10762,10 +10762,10 @@ react-query@^3.19.0:
     broadcast-channel "^3.4.1"
     match-sorter "^6.0.2"
 
-react-refresh@^0.9.0:
-  version "0.9.0"
-  resolved "https://registry.yarnpkg.com/react-refresh/-/react-refresh-0.9.0.tgz#71863337adc3e5c2f8a6bfddd12ae3bfe32aafbf"
-  integrity sha512-Gvzk7OZpiqKSkxsQvO/mbTN1poglhmAV7gR/DdIrRrSMXraRQQlfikRJOr3Nb9GTMPC5kof948Zy6jJZIFtDvQ==
+react-refresh@0.10.0, react-refresh@^0.9.0:
+  version "0.10.0"
+  resolved "https://registry.yarnpkg.com/react-refresh/-/react-refresh-0.10.0.tgz#2f536c9660c0b9b1d500684d9e52a65e7404f7e3"
+  integrity sha512-PgidR3wST3dDYKr6b4pJoqQFpPGNKDSCDx4cZoshjXipw3LzO7mG1My2pwEzz2JVkF+inx3xRpDeQLFQGH/hsQ==
 
 react-router-dom@^5.2.0:
   version "5.2.0"
