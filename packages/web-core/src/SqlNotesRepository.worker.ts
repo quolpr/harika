@@ -411,17 +411,15 @@ class DB {
     objs: Record<string, any>[],
     replace: boolean = false,
   ) {
-    objs.forEach((obj) => {
-      let query = Q.insertInto(table).values(obj);
+    let query = Q.insertInto(table).values(objs);
 
-      if (replace) {
-        query = query.orReplace();
-      }
+    if (replace) {
+      query = query.orReplace();
+    }
 
-      const sql = query.toParams();
+    const sql = query.toParams();
 
-      this.sqlExec(sql.text, sql.values);
-    });
+    return this.sqlExec(sql.text, sql.values);
   }
 
   // TODO: add mapper for better performance

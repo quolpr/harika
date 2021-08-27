@@ -492,13 +492,13 @@ export class NotesService {
               .filter(({ title }) => title !== undefined)
               .map(
                 (row) =>
-                  omit(
-                    {
-                      ...row,
-                      updatedAt: row.updatedAt || new Date().getTime(),
-                    },
-                    ['rootBlockId', '$types'],
-                  ) as NoteDocType,
+                  ({
+                    id: row.id,
+                    title: row.title,
+                    dailyNoteDate: row.dailyNoteDate ? row.dailyNoteDate : null,
+                    createdAt: row.createdAt ? row.createdAt : null,
+                    updatedAt: row.updatedAt || new Date().getTime(),
+                  } as NoteDocType),
               ),
             {
               shouldRecordChange: true,
