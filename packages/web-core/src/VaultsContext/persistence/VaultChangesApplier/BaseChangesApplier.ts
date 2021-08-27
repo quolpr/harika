@@ -6,9 +6,9 @@ import {
 } from '../../../dexieTypes';
 import { reduceChanges } from '../../../dexie-sync/reduceChanges';
 
-export abstract class BaseConflictResolver<
+export abstract class BaseChangesApplier<
   T extends string,
-  K extends Record<string, any>,
+  K extends Record<string, any> & { id: string },
 > {
   resolveConflicts(
     clientChanges: IDatabaseChange<T, K>[],

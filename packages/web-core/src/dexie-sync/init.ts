@@ -42,7 +42,8 @@ export const initSync = async (
     await dbWorker.getApplyChangesService(),
     commandExecuter,
     serverConnector,
-    eventsService.channel$(),
+    eventsService.changesChannel$(),
+    eventsService.newSyncPullsChannel$(),
     stop$,
     log,
   );

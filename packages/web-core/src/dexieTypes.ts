@@ -98,7 +98,9 @@ export type BlocksViewDocType = {
 
 export interface ICreateChange<
   TableName extends string = string,
-  Obj extends Record<string, any> = Record<string, any>,
+  Obj extends Record<string, any> & { id: string } = Record<string, any> & {
+    id: string;
+  },
 > {
   id: string;
   type: DatabaseChangeType.Create;
@@ -109,7 +111,9 @@ export interface ICreateChange<
 
 export interface IUpdateChange<
   TableName extends string = string,
-  Obj extends Record<string, any> = Record<string, any>,
+  Obj extends Record<string, any> & { id: string } = Record<string, any> & {
+    id: string;
+  },
 > {
   id: string;
   type: DatabaseChangeType.Update;
@@ -122,7 +126,9 @@ export interface IUpdateChange<
 
 export interface IDeleteChange<
   TableName extends string = string,
-  Obj extends Record<string, any> = Record<string, any>,
+  Obj extends Record<string, any> & { id: string } = Record<string, any> & {
+    id: string;
+  },
 > {
   id: string;
   type: DatabaseChangeType.Delete;
@@ -133,7 +139,9 @@ export interface IDeleteChange<
 
 export type IDatabaseChange<
   TableName extends string = string,
-  Obj extends Record<string, any> = Record<string, any>,
+  Obj extends Record<string, any> & { id: string } = Record<string, any> & {
+    id: string;
+  },
 > =
   | ICreateChange<TableName, Obj>
   | IUpdateChange<TableName, Obj>

@@ -5,7 +5,7 @@ import {
   NoteBlockDocType,
   VaultDbTables,
 } from '../../../dexieTypes';
-import { NoteblocksChangesConflictResolver } from './NoteblocksChangesConflictResolver';
+import { NoteblocksChangesApplier } from './NoteblocksChangesApplier';
 
 const updateChange = (
   key: string,
@@ -48,7 +48,7 @@ const createChange = (
   };
 };
 
-const resolver = new NoteblocksChangesConflictResolver(() => '123');
+const resolver = new NoteblocksChangesApplier(() => '123');
 
 describe('NoteblocksChangesConflictResolver', () => {
   describe('resolveConflicts', () => {

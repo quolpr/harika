@@ -8,6 +8,7 @@ import {
   filter,
   from,
   map,
+  merge,
   Observable,
   of,
   pipe,
@@ -29,10 +30,11 @@ export class ChangesApplierAndSender {
     private triggerGetChangesSubject: Subject<unknown>,
     private log: (str: string) => void,
     private onNewChange$: Observable<unknown>,
+    private onNewPull$: Observable<unknown>,
   ) {}
 
   emitter() {
-    return this.onNewChange$;
+    return merge(this.onNewChange$, of(null), this.onNewPull$);
   }
 
   pipe() {

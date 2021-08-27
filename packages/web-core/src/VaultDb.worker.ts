@@ -1,24 +1,40 @@
 import { expose, proxy } from 'comlink';
-import { ConflictsResolver } from './NotesRepository/persistence/ConflictsResolver/ConflictsResolver';
+import { VaultChangesApplier } from './VaultsContext/persistence/VaultChangesApplier/VaultChangesApplier';
 import {
   BaseDbWorker,
   ApplyChangesService,
   SqlNotesRepository,
   SqlNotesBlocksRepository,
+  DbChangesWriterService,
 } from './SqlNotesRepository.worker';
 
 export class VaultDbWorker extends BaseDbWorker {
   getNotesRepo() {
-    return proxy(new SqlNotesRepository(this.syncRepo, this.db));
+    return proxy(this.getNotesRepoWithoutProxy());
   }
 
   getNotesBlocksRepo() {
-    return proxy(new SqlNotesBlocksRepository(this.syncRepo, this.db));
+    return proxy(this.getNoteBlocksRepoWithoutProxy());
+  }
+
+  private getNotesRepoWithoutProxy() {
+    return new SqlNotesRepository(this.syncRepo, this.db, this.windowId);
+  }
+
+  private getNoteBlocksRepoWithoutProxy() {
+    return new SqlNotesBlocksRepository(this.syncRepo, this.db, this.windowId);
   }
 
   getApplyChangesService() {
     return proxy(
-      new ApplyChangesService(this.db, new ConflictsResolver(), this.syncRepo),
+      new ApplyChangesService(
+        new VaultChangesApplier(
+          this.getNotesRepoWithoutProxy(),
+          this.getNoteBlocksRepoWithoutProxy(),
+          new DbChangesWriterService(),
+        ),
+        this.syncRepo,
+      ),
     );
   }
 }

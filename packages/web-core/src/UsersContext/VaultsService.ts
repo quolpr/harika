@@ -1,12 +1,12 @@
-import { VaultModel } from '../NotesRepository/domain/VaultModel';
-import { syncMiddleware } from '../NotesRepository/domain/syncable';
-import { VaultDexieDatabase } from '../NotesRepository/persistence/DexieDb';
-import { NotesService } from '../NotesRepository/NotesService';
+import { VaultModel } from '../VaultsContext/domain/VaultModel';
+import { syncMiddleware } from '../VaultsContext/domain/syncable';
+import { VaultDexieDatabase } from '../VaultsContext/persistence/DexieDb';
+import { NotesService } from '../VaultsContext/NotesService';
 import { initSync } from '../dexie-sync/init';
 import { map } from 'rxjs/operators';
 import { generateId } from '../generateId';
-import { ToDbSyncer } from '../NotesRepository/syncers/ToDbSyncer';
-import { ToDomainSyncer } from '../NotesRepository/syncers/ToDomainSyncer';
+import { ToDbSyncer } from '../VaultsContext/syncers/ToDbSyncer';
+import { ToDomainSyncer } from '../VaultsContext/syncers/ToDomainSyncer';
 import { getDbWorker } from '../getDbWorker';
 import { DbEventsService } from '../DbEventsService';
 import type { VaultDbWorker } from '../VaultDb.worker';
@@ -34,6 +34,7 @@ export class VaultsService {
 
     const { worker, terminate } = await getDbWorker<UserDbWorker>(
       dbName,
+      windowId,
       'user',
     );
 
@@ -70,9 +71,8 @@ export class VaultsService {
     const db = new VaultDexieDatabase(vaultId);
 
     await this.vaultsRepo.delete(vaultId, {
-      windowId,
       shouldRecordChange: true,
-      source: 'inDomainChanges',
+      source: 'inDbChanges',
     });
 
     await db.delete();
@@ -101,9 +101,8 @@ export class VaultsService {
         createdAt: new Date().getTime(),
       },
       {
-        windowId,
         shouldRecordChange: true,
-        source: 'inDomainChanges',
+        source: 'inDbChanges',
       },
     );
 
@@ -122,9 +121,8 @@ export class VaultsService {
         updatedAt: new Date().getTime(),
       },
       {
-        windowId,
         shouldRecordChange: true,
-        source: 'inDomainChanges',
+        source: 'inDbChanges',
       },
     );
 
@@ -144,6 +142,7 @@ export class VaultsService {
     const dbName = `vault_${id}`;
     const { worker, terminate } = await getDbWorker<VaultDbWorker>(
       dbName,
+      windowId,
       'vault',
     );
 
@@ -158,7 +157,11 @@ export class VaultsService {
     );
     const eventsService = new DbEventsService(dbName);
 
-    new ToDomainSyncer(eventsService.channel$(), vault, windowId).start();
+    new ToDomainSyncer(
+      eventsService.changesChannel$(),
+      vault,
+      windowId,
+    ).start();
 
     const repo = new NotesService(
       await worker.getNotesRepo(),

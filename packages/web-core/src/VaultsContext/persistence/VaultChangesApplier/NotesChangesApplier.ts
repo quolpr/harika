@@ -4,9 +4,9 @@ import type {
   IUpdateChange,
   NoteDocType,
 } from '../../../dexieTypes';
-import { BaseConflictResolver } from './BaseConflictResolver';
+import { BaseChangesApplier } from './BaseChangesApplier';
 
-export class NotesChangesConflictResolver extends BaseConflictResolver<
+export class NotesChangesApplier extends BaseChangesApplier<
   'notes',
   NoteDocType
 > {

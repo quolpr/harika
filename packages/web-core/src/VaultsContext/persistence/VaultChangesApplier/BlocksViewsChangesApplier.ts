@@ -5,9 +5,9 @@ import type {
   IUpdateChange,
   VaultDbTables,
 } from '../../../dexieTypes';
-import { BaseConflictResolver } from './BaseConflictResolver';
+import { BaseChangesApplier } from './BaseChangesApplier';
 
-export class BlocksViewsChangesConflictResolver extends BaseConflictResolver<
+export class BlocksViewsChangesConflictResolver extends BaseChangesApplier<
   VaultDbTables.BlocksViews,
   BlocksViewDocType
 > {

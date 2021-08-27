@@ -7,10 +7,10 @@ import {
 } from '../../../dexieTypes';
 import { cloneDeep } from 'lodash';
 import { difference, set, uniq } from 'lodash-es';
-import { BaseConflictResolver } from './BaseConflictResolver';
+import { BaseChangesApplier } from './BaseChangesApplier';
 import { v4 } from 'uuid';
 
-export class NoteblocksChangesConflictResolver extends BaseConflictResolver<
+export class NoteblocksChangesApplier extends BaseChangesApplier<
   'noteBlocks',
   NoteBlockDocType
 > {

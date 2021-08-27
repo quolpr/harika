@@ -4,6 +4,7 @@ import type { BaseDbWorker } from './SqlNotesRepository.worker';
 
 export const getDbWorker = async <T extends BaseDbWorker>(
   dbName: string,
+  windowId: string,
   type: 'vault' | 'user',
 ): Promise<{ worker: Remote<T>; terminate: () => void }> => {
   let worker = new Worker(
@@ -24,8 +25,9 @@ export const getDbWorker = async <T extends BaseDbWorker>(
 
   const Klass = wrap<BaseDbWorker>(worker) as unknown as new (
     dbName: string,
+    windowId: string,
   ) => Promise<Remote<T>>;
-  const obj = await new Klass(dbName);
+  const obj = await new Klass(dbName, windowId);
 
   await obj.initialize();
 

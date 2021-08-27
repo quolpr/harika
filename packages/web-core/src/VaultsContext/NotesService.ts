@@ -1,13 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import type { ModelCreationData } from 'mobx-keystone';
-import { BroadcastChannel } from 'broadcast-channel';
 import type { Dayjs } from 'dayjs';
 import type { NoteModel } from './domain/NoteModel';
 import type { Optional } from 'utility-types';
 import type { Required } from 'utility-types';
 import type { ICreationResult } from './types';
 import type { VaultModel } from './domain/VaultModel';
-import type { VaultDexieDatabase } from './persistence/DexieDb';
 import {
   distinctUntilChanged,
   map,
@@ -15,18 +13,15 @@ import {
   take,
   tap,
 } from 'rxjs/operators';
-import { uniq, uniqBy } from 'lodash-es';
+import { uniq } from 'lodash-es';
 import { filterAst } from '../blockParser/astHelpers';
 import type { RefToken, TagToken } from '../blockParser/types';
 import { firstValueFrom, from, Observable, of, Subject } from 'rxjs';
 import { BlocksViewDocType, NoteDocType, VaultDbTables } from '../dexieTypes';
-import { liveQuery } from 'dexie';
-import { exportDB } from 'dexie-export-import';
 import {
   convertNoteBlockDocToModelAttrs,
   convertNoteDocToModelAttrs,
   convertViewToModelAttrs,
-  NoteBlockData,
 } from './syncers/toDomainModelsConverters';
 import { NotesChangesTrackerService } from './services/notes-tree/NotesChangesTrackerService';
 import dayjs from 'dayjs';
@@ -59,7 +54,7 @@ export class NotesService {
 
   async initialize() {
     new NotesChangesTrackerService(
-      this.dbEventsService.channel$(),
+      this.dbEventsService.changesChannel$(),
       this.vault.notesTree,
       this.stop$,
     );

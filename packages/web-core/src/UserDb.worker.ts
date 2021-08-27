@@ -3,19 +3,27 @@ import {
   BaseDbWorker,
   ApplyChangesService,
   SqlVaultsRepository,
+  DbChangesWriterService,
 } from './SqlNotesRepository.worker';
-import { UserDbConflictsResolver } from './VaultsRepository/persistence/UserDbConflictResolver';
+import { UserDbChangesApplier } from './UsersContext/persistence/UserDbChangesApplier';
 
 export class UserDbWorker extends BaseDbWorker {
   getVaultsRepo() {
-    return proxy(new SqlVaultsRepository(this.syncRepo, this.db));
+    return proxy(
+      new SqlVaultsRepository(this.syncRepo, this.db, this.windowId),
+    );
+  }
+
+  private getVaultsRepoWithoutProxy() {
+    return new SqlVaultsRepository(this.syncRepo, this.db, this.windowId);
   }
 
   getApplyChangesService() {
+    const vaultsRepo = this.getVaultsRepoWithoutProxy();
+
     return proxy(
       new ApplyChangesService(
-        this.db,
-        new UserDbConflictsResolver(),
+        new UserDbChangesApplier(vaultsRepo, new DbChangesWriterService()),
         this.syncRepo,
       ),
     );

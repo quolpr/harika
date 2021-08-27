@@ -9,6 +9,7 @@ import { proxy, ProxyMarked } from 'comlink';
 import Q from 'sql-bricks';
 import type {
   ICreateChange,
+  IDatabaseChange,
   IDeleteChange,
   IUpdateChange,
   NoteBlockDocType,
@@ -51,8 +52,8 @@ Object.keys(or_methods).forEach(function (method) {
   };
 });
 
-const notesTable = 'notes' as const;
-const noteBlocksTable = 'noteBlocks' as const;
+export const notesTable = 'notes' as const;
+export const noteBlocksTable = 'noteBlocks' as const;
 const noteBlocksNotesTable = 'noteBlocksNotes' as const;
 
 //
@@ -64,7 +65,7 @@ const serverChangesTable = 'serverChanges' as const;
 
 //
 
-export const vaultsTable = 'vaultsTable' as const;
+export const vaultsTable = 'vaults' as const;
 
 type IBaseClientChangeRow = {
   id: string;
@@ -165,14 +166,17 @@ export type VaultRow = {
 
 export type VaultDoc = VaultRow;
 
-interface ICtx {
-  windowId: string;
+export interface ISyncCtx {
   shouldRecordChange: boolean;
   source: 'inDomainChanges' | 'inDbChanges';
 }
 
-let currentCtx: ICtx | undefined;
-const shareCtx = <T extends any>(func: () => T, ctx: ICtx) => {
+interface IInternalSyncCtx extends ISyncCtx {
+  windowId: string;
+}
+
+let currentCtx: IInternalSyncCtx | undefined;
+const shareCtx = <T extends any>(func: () => T, ctx: IInternalSyncCtx) => {
   const prevCtx = currentCtx;
   currentCtx = ctx;
 
@@ -182,7 +186,7 @@ const shareCtx = <T extends any>(func: () => T, ctx: ICtx) => {
 
   return result;
 };
-const getCtxStrict = (): ICtx => {
+const getCtxStrict = (): IInternalSyncCtx => {
   if (currentCtx === undefined) throw new Error('Ctx not set!');
 
   return currentCtx;
@@ -196,7 +200,7 @@ class DB {
   sqlDb!: Database;
 
   private inTransaction: boolean = false;
-  private transactionCtx: ICtx | undefined;
+  private transactionCtx: ISyncCtx | undefined;
 
   async init(vaultId: string) {
     let SQL = await initSqlJs({
@@ -356,8 +360,10 @@ class DB {
     `);
   }
 
-  transaction<T extends any>(func: () => T, ctx?: ICtx): T {
-    if (this.inTransaction) return func();
+  transaction<T extends any>(func: () => T, ctx?: IInternalSyncCtx): T {
+    if (this.inTransaction) {
+      return ctx ? shareCtx(func, ctx) : func();
+    }
 
     this.inTransaction = true;
 
@@ -451,9 +457,17 @@ export class SyncRepository {
   constructor(
     private db: DB,
     private onChange: (ch: ITransmittedChange[]) => void,
+    private onNewPull: () => void,
   ) {}
 
-  createCreateChanges(table: string, records: Record<string, unknown>[]) {
+  transaction<T extends any>(func: () => T, ctx?: IInternalSyncCtx): T {
+    return this.db.transaction(func, ctx);
+  }
+
+  createCreateChanges(
+    table: string,
+    records: (Record<string, unknown> & { id: string })[],
+  ) {
     this.db.transaction(() => {
       const ctx = getCtxStrict();
 
@@ -496,8 +510,8 @@ export class SyncRepository {
   createUpdateChanges(
     table: string,
     changes: {
-      from: Record<string, unknown>;
-      to: Record<string, unknown>;
+      from: Record<string, unknown> & { id: string };
+      to: Record<string, unknown> & { id: string };
     }[],
   ) {
     this.db.transaction(() => {
@@ -543,7 +557,10 @@ export class SyncRepository {
     });
   }
 
-  createDeleteChanges(table: string, objs: Record<string, unknown>[]) {
+  createDeleteChanges(
+    table: string,
+    objs: (Record<string, unknown> & { id: string })[],
+  ) {
     this.db.transaction(() => {
       const ctx = getCtxStrict();
 
@@ -560,6 +577,8 @@ export class SyncRepository {
           source: ctx.source,
         };
       });
+
+      this.onChange(changeEvents);
 
       if (ctx.shouldRecordChange) {
         this.db.insertRecords(
@@ -634,6 +653,8 @@ export class SyncRepository {
         lastReceivedRemoteRevision: pull.serverRevision,
       });
     });
+
+    this.onNewPull();
   }
 
   getSyncStatus(): ISyncStatus {
@@ -759,10 +780,24 @@ export class SyncRepository {
 }
 
 export abstract class BaseSyncRepository<
-  Doc extends Record<string, unknown> & { id: string },
-  Row extends Record<string, unknown> & { id: string },
+  Doc extends Record<string, unknown> & { id: string } = Record<
+    string,
+    unknown
+  > & { id: string },
+  Row extends Record<string, unknown> & { id: string } = Record<
+    string,
+    unknown
+  > & { id: string },
 > {
-  constructor(protected syncRepository: SyncRepository, protected db: DB) {}
+  constructor(
+    protected syncRepository: SyncRepository,
+    protected db: DB,
+    protected windowId: string,
+  ) {}
+
+  transaction<T extends any>(func: () => T, ctx?: IInternalSyncCtx): T {
+    return this.db.transaction(func, ctx);
+  }
 
   findBy(obj: Partial<Doc>): Doc | undefined {
     const row = this.db.getRecords<Row>(
@@ -788,73 +823,85 @@ export abstract class BaseSyncRepository<
     return this.getById(id) !== undefined;
   }
 
-  create(attrs: Doc, ctx: ICtx) {
+  create(attrs: Doc, ctx: ISyncCtx) {
     return this.bulkCreate([attrs], ctx)[0];
   }
 
-  bulkCreate(attrsArray: Doc[], ctx: ICtx) {
-    return this.db.transaction(() => {
-      this.syncRepository.createCreateChanges(this.getTableName(), attrsArray);
+  bulkCreate(attrsArray: Doc[], ctx: ISyncCtx) {
+    return this.db.transaction(
+      () => {
+        this.syncRepository.createCreateChanges(
+          this.getTableName(),
+          attrsArray,
+        );
 
-      this.db.insertRecords(
-        this.getTableName(),
-        attrsArray.map((attrs) => this.toDoc(attrs)),
-      );
+        this.db.insertRecords(
+          this.getTableName(),
+          attrsArray.map((attrs) => this.toDoc(attrs)),
+        );
 
-      return attrsArray;
-    }, ctx);
+        return attrsArray;
+      },
+      { ...ctx, windowId: this.windowId },
+    );
   }
 
-  update(changeTo: Doc, ctx: ICtx) {
+  update(changeTo: Doc, ctx: ISyncCtx) {
     return this.bulkUpdate([changeTo], ctx)[0];
   }
 
-  bulkUpdate(records: Doc[], ctx: ICtx) {
-    return this.db.transaction(() => {
-      const prevRecordsMap = Object.fromEntries(
-        this.getByIds(records.map(({ id }) => id)).map((prev) => [
-          prev.id,
-          prev,
-        ]),
-      );
+  bulkUpdate(records: Doc[], ctx: ISyncCtx) {
+    return this.db.transaction(
+      () => {
+        const prevRecordsMap = Object.fromEntries(
+          this.getByIds(records.map(({ id }) => id)).map((prev) => [
+            prev.id,
+            prev,
+          ]),
+        );
 
-      const changes = records.map((record) => {
-        if (!prevRecordsMap[record.id])
-          throw new Error(
-            `Prev record for ${JSON.stringify(record)} not found!`,
-          );
+        const changes = records.map((record) => {
+          if (!prevRecordsMap[record.id])
+            throw new Error(
+              `Prev record for ${JSON.stringify(record)} not found!`,
+            );
 
-        return { from: record, to: prevRecordsMap[record.id] };
-      });
+          return { from: prevRecordsMap[record.id], to: record };
+        });
 
-      this.syncRepository.createUpdateChanges(this.getTableName(), changes);
+        this.syncRepository.createUpdateChanges(this.getTableName(), changes);
 
-      // More efficient
-      this.db.insertRecords(
-        this.getTableName(),
-        records.map((r) => this.toDoc(r)),
-        true,
-      );
+        // More efficient
+        this.db.insertRecords(
+          this.getTableName(),
+          records.map((r) => this.toDoc(r)),
+          true,
+        );
 
-      return records;
-    }, ctx);
+        return records;
+      },
+      { ...ctx, windowId: this.windowId },
+    );
   }
 
-  delete(id: string, ctx: ICtx) {
+  delete(id: string, ctx: ISyncCtx) {
     this.bulkDelete([id], ctx);
   }
 
-  bulkDelete(ids: string[], ctx: ICtx) {
-    return this.db.transaction(() => {
-      this.syncRepository.createDeleteChanges(
-        this.getTableName(),
-        this.getByIds(ids),
-      );
+  bulkDelete(ids: string[], ctx: ISyncCtx) {
+    return this.db.transaction(
+      () => {
+        this.syncRepository.createDeleteChanges(
+          this.getTableName(),
+          this.getByIds(ids),
+        );
 
-      this.db.execQuery(
-        Q.deleteFrom(this.getTableName()).where(Q.in('id', ids)),
-      );
-    });
+        this.db.execQuery(
+          Q.deleteFrom(this.getTableName()).where(Q.in('id', ids)),
+        );
+      },
+      { ...ctx, windowId: this.windowId },
+    );
   }
 
   getAll() {
@@ -974,41 +1021,37 @@ export class SqlVaultsRepository extends BaseSyncRepository<
 
 export class ApplyChangesService {
   constructor(
-    private db: DB,
     private resolver: IChangesApplier,
     private syncRepo: SyncRepository,
   ) {}
 
   applyChanges() {
-    this.db.transaction(() => {
+    this.syncRepo.transaction(() => {
       const syncStatus = this.syncRepo.getSyncStatus();
 
       const serverPulls = this.syncRepo.getChangesPulls();
-      console.log({ serverPulls });
       const serverChanges = this.syncRepo.getServerChangesByPullIds(
         serverPulls.map(({ id }) => id),
       );
 
-      // if (serverChanges.length > 0) {
-      //   const clientChanges = this.syncRepo.getClientChanges();
+      if (serverChanges.length > 0) {
+        const clientChanges = this.syncRepo.getClientChanges();
 
-      //   this.resolver.resolveChanges(
-      //     clientChanges.map((change) => ({
-      //       ...change,
-      //       source: syncStatus.clientId,
-      //     })),
-      //     serverChanges,
-      //   );
+        this.resolver.resolveChanges(
+          clientChanges.map((change) => ({
+            ...change,
+            source: syncStatus.clientId,
+          })),
+          serverChanges,
+        );
 
-      //   this.syncRepo.deletePulls(serverPulls.map(({ id }) => id));
-      // }
+        this.syncRepo.deletePulls(serverPulls.map(({ id }) => id));
+      }
 
       const maxRevision = maxBy(
         serverPulls,
         ({ serverRevision }) => serverRevision,
       )?.serverRevision;
-
-      console.log({ maxRevision });
 
       if (maxRevision) {
         this.syncRepo.updateSyncStatus({
@@ -1019,12 +1062,99 @@ export class ApplyChangesService {
   }
 }
 
+export class DbChangesWriterService {
+  writeChanges(
+    changes: IDatabaseChange[],
+    repo: BaseSyncRepository,
+    ctx: ISyncCtx,
+  ) {
+    if (changes.length === 0) return;
+
+    const collectedChanges: {
+      [DatabaseChangeType.Create]: ICreateChange[];
+      [DatabaseChangeType.Delete]: IDeleteChange[];
+      [DatabaseChangeType.Update]: IUpdateChange[];
+    } = {
+      [DatabaseChangeType.Create]: [],
+      [DatabaseChangeType.Delete]: [],
+      [DatabaseChangeType.Update]: [],
+    };
+
+    changes.forEach((ch) => {
+      if (ch.table !== repo.getTableName())
+        throw new Error(
+          `Only table type ${repo.getTableName()} could be used. Received: ${
+            ch.table
+          }`,
+        );
+
+      collectedChanges[ch.type].push(ch as any);
+    });
+
+    const createChangesToApply = collectedChanges[DatabaseChangeType.Create];
+    const deleteChangesToApply = collectedChanges[DatabaseChangeType.Delete];
+    const updateChangesToApply = collectedChanges[DatabaseChangeType.Update];
+
+    repo.transaction(() => {
+      if (createChangesToApply.length > 0)
+        repo.bulkCreate(
+          createChangesToApply.map((c) => c.obj),
+          ctx,
+        );
+
+      if (updateChangesToApply.length > 0)
+        this.bulkUpdate(updateChangesToApply, repo, ctx);
+
+      if (deleteChangesToApply.length > 0)
+        repo.bulkDelete(
+          deleteChangesToApply.map((c) => c.key),
+          ctx,
+        );
+    });
+  }
+
+  private bulkUpdate(
+    changes: IUpdateChange[],
+    repo: BaseSyncRepository,
+    ctx: ISyncCtx,
+  ) {
+    let keys = changes.map((c) => c.key);
+    let map: Record<string, any> = {};
+
+    // Retrieve current object of each change to update and map each
+    // found object's primary key to the existing object:
+    repo.getByIds(keys).forEach((obj) => {
+      map[obj.id] = obj;
+    });
+
+    // Filter away changes whose key wasn't found in the local database
+    // (we can't update them if we do not know the existing values)
+    let updatesThatApply = changes.filter((ch) => map.hasOwnProperty(ch.key));
+
+    // Apply modifications onto each existing object (in memory)
+    // and generate array of resulting objects to put using bulkPut():
+    let objsToPut = updatesThatApply.map((ch) => {
+      let row = map[ch.key];
+
+      // TODO: also mark keys from `from` that not present in `to` as undefined
+      Object.keys(ch.to).forEach((keyPath) => {
+        row[keyPath] = ch.to[keyPath];
+      });
+
+      return row;
+    });
+
+    return repo.bulkUpdate(objsToPut, ctx);
+  }
+}
+
 export abstract class BaseDbWorker {
   protected db!: DB;
   protected syncRepo!: SyncRepository;
   protected eventsSubject$: Subject<ITransmittedChange[]> = new Subject();
+  protected onNewSyncPull$: Subject<void> = new Subject();
 
-  constructor(private dbName: string) {
+  constructor(protected dbName: string, protected windowId: string) {
     const eventsChannel = new BroadcastChannel(this.dbName, {
       webWorkerSupport: true,
     });
@@ -1034,6 +1164,14 @@ export abstract class BaseDbWorker {
       .subscribe((evs) => {
         eventsChannel.postMessage(evs.flat());
       });
+
+    const newSyncPullsChannel = new BroadcastChannel(
+      `${this.dbName}_syncPull`,
+      {
+        webWorkerSupport: true,
+      },
+    );
+    this.onNewSyncPull$.subscribe(() => newSyncPullsChannel.postMessage(''));
   }
 
   async initialize() {
@@ -1041,8 +1179,12 @@ export abstract class BaseDbWorker {
       this.db = new DB();
       await this.db.init(this.dbName);
 
-      this.syncRepo = new SyncRepository(this.db, (e) =>
-        this.eventsSubject$.next(e),
+      this.syncRepo = new SyncRepository(
+        this.db,
+        (e) => {
+          this.eventsSubject$.next(e);
+        },
+        () => this.onNewSyncPull$.next(),
       );
     }
   }

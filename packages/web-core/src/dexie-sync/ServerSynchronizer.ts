@@ -33,6 +33,7 @@ export class ServerSynchronizer {
     commandExecuter: CommandsExecuter,
     private serverConnector: ServerConnector,
     onNewChange$: Observable<unknown>,
+    onNewPull$: Observable<unknown>,
     private stop$: Subject<void> = new Subject(),
     private log: (str: string) => void,
   ) {
@@ -48,6 +49,7 @@ export class ServerSynchronizer {
       this.triggerGetChangesSubject,
       this.log,
       onNewChange$,
+      onNewPull$,
     );
   }
 

@@ -4,9 +4,14 @@ import type { ITransmittedChange } from './SqlNotesRepository.worker';
 
 export class DbEventsService {
   dbEventsChannel: BroadcastChannel;
+  newSyncPullsChannel: BroadcastChannel;
 
   constructor(dbName: string) {
     this.dbEventsChannel = new BroadcastChannel(dbName, {
+      webWorkerSupport: true,
+    });
+
+    this.newSyncPullsChannel = new BroadcastChannel(`${dbName}_syncPull`, {
       webWorkerSupport: true,
     });
   }
@@ -31,13 +36,26 @@ export class DbEventsService {
     }).pipe(switchMap(() => query()));
   }
 
-  channel$() {
+  changesChannel$() {
     return new Observable<ITransmittedChange[]>((subscriber) => {
       const func = (evs: ITransmittedChange[]) => subscriber.next(evs);
 
       this.dbEventsChannel.addEventListener('message', func);
 
       return () => this.dbEventsChannel.removeEventListener('message', func);
+    });
+  }
+
+  newSyncPullsChannel$() {
+    return new Observable<unknown>((subscriber) => {
+      const func = () => {
+        subscriber.next();
+      };
+
+      this.newSyncPullsChannel.addEventListener('message', func);
+
+      return () =>
+        this.newSyncPullsChannel.removeEventListener('message', func);
     });
   }
 }
