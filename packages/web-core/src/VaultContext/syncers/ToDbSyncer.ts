@@ -5,12 +5,13 @@ import { Subject } from 'rxjs';
 import { buffer, concatMap, debounceTime, tap } from 'rxjs/operators';
 import type {
   BaseSyncRepository,
+  SqlBlocksViewsRepository,
   SqlNotesBlocksRepository,
   SqlNotesRepository,
 } from '../../SqlNotesRepository.worker';
 import type { NoteBlockModel } from '../domain/NoteBlockModel';
 import type { VaultModel } from '../NotesService';
-import { mapNote, mapNoteBlock } from './toDbDocsConverters';
+import { mapNote, mapNoteBlock, mapView } from './toDbDocsConverters';
 
 // TODO: type rootKey
 const zipPatches = (selector: (path: Path) => boolean, patches: Patch[]) => {
@@ -218,6 +219,7 @@ export class ToDbSyncer {
   constructor(
     private notesRepository: Remote<SqlNotesRepository>,
     private notesBlocksRepository: Remote<SqlNotesBlocksRepository>,
+    private blocksViewsRepository: Remote<SqlBlocksViewsRepository>,
     private windowId: string,
     private vault: VaultModel,
     onPatchesApplied?: () => void,
@@ -276,7 +278,14 @@ export class ToDbSyncer {
     await this.applier(blocksResult, this.notesBlocksRepository, (id) =>
       mapNoteBlock(this.vault.getNoteBlock(id)!),
     );
-    // TODO: views
+
+    await this.blocksViewsRepository.bulkCreateOrUpdate(
+      viewToUpdateIds.map((id) => mapView(this.vault.ui.blocksViewsMap[id])),
+      {
+        shouldRecordChange: true,
+        source: 'inDomainChanges' as const,
+      },
+    );
   };
 
   private applier = <T extends Record<string, unknown> & { id: string }>(
@@ -289,7 +298,6 @@ export class ToDbSyncer {
     mapper: (id: string) => T,
   ) => {
     const ctx = {
-      windowId: this.windowId,
       shouldRecordChange: true,
       source: 'inDomainChanges' as const,
     };

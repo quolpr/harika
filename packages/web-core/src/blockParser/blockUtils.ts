@@ -1,8 +1,8 @@
 import { generateId } from '../generateId';
-import { NoteBlockModel, VaultModel } from '../VaultsContext/NotesService';
-import { BlockContentModel } from '../VaultsContext/domain/NoteBlockModel/BlockContentModel';
+import { NoteBlockModel, VaultModel } from '../VaultContext/NotesService';
+import { BlockContentModel } from '../VaultContext/domain/NoteBlockModel/BlockContentModel';
 import { parseStringToTree, TreeToken } from './parseStringToTree';
-import type { BlocksTreeHolder } from '../VaultsContext/domain/NoteBlockModel';
+import type { BlocksTreeHolder } from '../VaultContext/domain/NoteBlockModel';
 
 export const normalizeBlockTree = (str: string) => {
   const parsed = parseStringToTree(str);

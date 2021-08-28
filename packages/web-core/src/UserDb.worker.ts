@@ -5,7 +5,7 @@ import {
   SqlVaultsRepository,
   DbChangesWriterService,
 } from './SqlNotesRepository.worker';
-import { UserDbChangesApplier } from './UsersContext/persistence/UserDbChangesApplier';
+import { UserDbChangesApplier } from './UserContext/persistence/UserDbChangesApplier';
 
 export class UserDbWorker extends BaseDbWorker {
   getVaultsRepo() {

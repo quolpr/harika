@@ -1,12 +1,12 @@
-import { VaultModel } from '../VaultsContext/domain/VaultModel';
-import { syncMiddleware } from '../VaultsContext/domain/syncable';
-import { VaultDexieDatabase } from '../VaultsContext/persistence/DexieDb';
-import { NotesService } from '../VaultsContext/NotesService';
+import { VaultModel } from '../VaultContext/domain/VaultModel';
+import { syncMiddleware } from '../VaultContext/domain/syncable';
+import { VaultDexieDatabase } from '../VaultContext/persistence/DexieDb';
+import { NotesService } from '../VaultContext/NotesService';
 import { initSync } from '../dexie-sync/init';
 import { map } from 'rxjs/operators';
 import { generateId } from '../generateId';
-import { ToDbSyncer } from '../VaultsContext/syncers/ToDbSyncer';
-import { ToDomainSyncer } from '../VaultsContext/syncers/ToDomainSyncer';
+import { ToDbSyncer } from '../VaultContext/syncers/ToDbSyncer';
+import { ToDomainSyncer } from '../VaultContext/syncers/ToDomainSyncer';
 import { getDbWorker } from '../getDbWorker';
 import { DbEventsService } from '../DbEventsService';
 import type { VaultDbWorker } from '../VaultDb.worker';
@@ -146,14 +146,14 @@ export class VaultsService {
       'vault',
     );
 
+    const notesRepo = await worker.getNotesRepo();
+    const blocksRepo = await worker.getNotesBlocksRepo();
+    const viewsRepo = await worker.getBlocksViewsRepo();
+
     syncMiddleware(
       vault,
-      new ToDbSyncer(
-        await worker.getNotesRepo(),
-        await worker.getNotesBlocksRepo(),
-        windowId,
-        vault,
-      ).handlePatch,
+      new ToDbSyncer(notesRepo, blocksRepo, viewsRepo, windowId, vault)
+        .handlePatch,
     );
     const eventsService = new DbEventsService(dbName);
 
@@ -163,15 +163,17 @@ export class VaultsService {
       windowId,
     ).start();
 
-    const repo = new NotesService(
-      await worker.getNotesRepo(),
-      await worker.getNotesBlocksRepo(),
+    const service = new NotesService(
+      notesRepo,
+      blocksRepo,
+      viewsRepo,
       eventsService,
+      await worker.getImportExportService(),
       vault,
     );
 
     // Don't need to await
-    repo.initialize();
+    service.initialize();
 
     if (this.sync) {
       initSync(
@@ -183,7 +185,7 @@ export class VaultsService {
       );
     }
 
-    return repo;
+    return service;
   }
 
   close = () => {

@@ -13,16 +13,11 @@ import {
   take,
   tap,
 } from 'rxjs/operators';
-import { omit, uniq } from 'lodash-es';
+import { uniq } from 'lodash-es';
 import { filterAst } from '../blockParser/astHelpers';
 import type { RefToken, TagToken } from '../blockParser/types';
 import { firstValueFrom, from, Observable, of, Subject } from 'rxjs';
-import {
-  BlocksViewDocType,
-  NoteBlockDocType,
-  NoteDocType,
-  VaultDbTables,
-} from '../dexieTypes';
+import { NoteDocType, VaultDbTables } from '../dexieTypes';
 import {
   convertNoteBlockDocToModelAttrs,
   convertNoteDocToModelAttrs,
@@ -32,11 +27,13 @@ import { NotesChangesTrackerService } from './services/notes-tree/NotesChangesTr
 import dayjs from 'dayjs';
 import { toObserver } from '../toObserver';
 import type {
+  SqlBlocksViewsRepository,
   SqlNotesBlocksRepository,
   SqlNotesRepository,
 } from '../SqlNotesRepository.worker';
 import type { Remote } from 'comlink';
 import type { DbEventsService } from '../DbEventsService';
+import type { ImportExportService } from '../VaultDb.worker';
 
 export { NoteModel } from './domain/NoteModel';
 export { VaultModel } from './domain/VaultModel';
@@ -53,7 +50,9 @@ export class NotesService {
   constructor(
     private notesRepository: Remote<SqlNotesRepository>,
     private notesBlocksRepository: Remote<SqlNotesBlocksRepository>,
+    private blocksViewsRepo: Remote<SqlBlocksViewsRepository>,
     private dbEventsService: DbEventsService,
+    private importExportService: Remote<ImportExportService>,
     public vault: VaultModel,
   ) {}
 
@@ -369,11 +368,7 @@ export class NotesService {
       `${note.$modelId}-${model.$modelType}-${model.$modelId}`;
     const keys = models.map((model) => generateKey(model));
 
-    // const docs = (await this.db.blocksViews.bulkGet(keys)).filter((v) =>
-    //   Boolean(v),
-    // ) as BlocksViewDocType[];
-
-    const docs: BlocksViewDocType[] = [];
+    const docs = await this.blocksViewsRepo.getByIds(keys);
 
     this.vault.ui.createOrUpdateEntitiesFromAttrs(
       docs.map((doc) => convertViewToModelAttrs(doc)),
@@ -388,8 +383,7 @@ export class NotesService {
   ) {
     const key = `${note.$modelId}-${model.$modelType}-${model.$modelId}`;
 
-    // const doc = await this.db.blocksViews.get(key);
-    const doc = undefined;
+    const doc = await this.blocksViewsRepo.getById(key);
 
     if (doc) {
       this.vault.ui.createOrUpdateEntitiesFromAttrs([
@@ -478,72 +472,11 @@ export class NotesService {
   async import(importData: {
     data: { data: { tableName: string; rows: any[] }[] };
   }) {
-    const data = importData.data.data.filter(
-      ({ tableName }) => tableName[0] !== '_',
-    );
-    const tables = data.map(({ tableName }) => tableName);
-
-    // TODO: in one transaction
-    await Promise.all(
-      importData.data.data.map(async ({ rows, tableName }) => {
-        if (tableName === 'notes') {
-          await this.notesRepository.bulkCreate(
-            rows
-              .filter(({ title }) => title !== undefined)
-              .map(
-                (row) =>
-                  ({
-                    id: row.id,
-                    title: row.title,
-                    dailyNoteDate: row.dailyNoteDate ? row.dailyNoteDate : null,
-                    createdAt: row.createdAt ? row.createdAt : null,
-                    updatedAt: row.updatedAt || new Date().getTime(),
-                  } as NoteDocType),
-              ),
-            {
-              shouldRecordChange: true,
-              source: 'inDbChanges',
-            },
-          );
-        } else if (tableName === 'noteBlocks') {
-          await this.notesBlocksRepository.bulkCreate(
-            rows
-              .filter((row) => Boolean(row.noteId))
-              .map(
-                (row) =>
-                  omit(
-                    {
-                      ...row,
-                      updatedAt: row.updatedAt || new Date().getTime(),
-                      linkedNoteIds: row.linkedNoteIds.filter(
-                        (v: string | null) => Boolean(v),
-                      ),
-                      noteBlockIds: row.noteBlockIds.filter(
-                        (v: string | null) => Boolean(v),
-                      ),
-                    },
-                    ['parentBlockId'],
-                  ) as NoteBlockDocType,
-              ),
-            {
-              shouldRecordChange: true,
-              source: 'inDbChanges',
-            },
-          );
-        }
-      }),
-    );
-    // const rootBlockIds = data
-    //   .find(({ tableName }) => tableName === 'notes')
-    //   ?.rows.map(({ rootBlockId }) => rootBlockId)
-    //   .filter((id) => Boolean(id)) as string[];
-
-    // await Promise.all(
-    //   rootBlockIds.map((id) => this.db.noteBlocks.update(id, { isRoot: 1 })),
-    // );
+    await this.importExportService.import(importData);
   }
 
   async export() {
+    return await this.importExportService.export();
     // Fails to compile on build time, so I put any here
     // return exportDB(this.db as any, {
     //   filter: (t) =>

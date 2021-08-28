@@ -12,6 +12,8 @@ import UploadIcon from '../../icons/upload.svgr.svg';
 import DownloadIcon from '../../icons/download.svgr.svg';
 import { NotesTree } from './NotesTree';
 import { useNotesService } from '../../contexts/CurrentNotesServiceContext';
+import download from 'downloadjs';
+import dayjs from 'dayjs';
 
 const sidebarClass = cn('sidebar');
 
@@ -27,15 +29,21 @@ export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
     const notesService = useNotesService();
 
     const handleDownloadClick = useCallback(async () => {
-      // const blob = await notesRepository.export();
-      // download(
-      //   blob,
-      //   `${vault.name
-      //     .replace(/[^a-z0-9]/gi, '_')
-      //     .toLowerCase()}-${dayjs().format('DD-MM-YYYY')}.json`,
-      //   'application/json',
-      // );
-    }, []);
+      const str = await notesService.export();
+
+      const bytes = new TextEncoder().encode(str);
+      const blob = new Blob([bytes], {
+        type: 'application/json;charset=utf-8',
+      });
+
+      download(
+        blob,
+        `${vault.name
+          .replace(/[^a-z0-9]/gi, '_')
+          .toLowerCase()}-${dayjs().format('DD-MM-YYYY')}.json`,
+        'application/json',
+      );
+    }, [notesService, vault.name]);
 
     const handleImport = useCallback(
       (e: React.ChangeEvent<HTMLInputElement>) => {

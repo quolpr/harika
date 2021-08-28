@@ -11,10 +11,12 @@ import { NoteblocksChangesApplier } from './NoteblocksChangesApplier';
 import { NotesChangesApplier } from './NotesChangesApplier';
 import { BlocksViewsChangesConflictResolver } from './BlocksViewsChangesApplier';
 import {
+  blocksViewsTable,
   DbChangesWriterService,
   ISyncCtx,
   noteBlocksTable,
   notesTable,
+  SqlBlocksViewsRepository,
   SqlNotesBlocksRepository,
   SqlNotesRepository,
 } from '../../../SqlNotesRepository.worker';
@@ -25,6 +27,7 @@ export class VaultChangesApplier implements IChangesApplier {
   constructor(
     private noteRepo: SqlNotesRepository,
     private noteBlocksRepo: SqlNotesBlocksRepository,
+    private blocksViewsRepo: SqlBlocksViewsRepository,
     private dbChangesWriter: DbChangesWriterService,
   ) {
     // this.consistencyResolver = new VaultDbConsistencyResolver(db);
@@ -102,11 +105,19 @@ export class VaultChangesApplier implements IChangesApplier {
         const noteBlocksChanges = chs.filter(
           ({ table }) => table === noteBlocksTable,
         );
+        const viewsChanges = chs.filter(
+          ({ table }) => table === blocksViewsTable,
+        );
 
         this.dbChangesWriter.writeChanges(notesChanges, this.noteRepo, ctx);
         this.dbChangesWriter.writeChanges(
           noteBlocksChanges,
           this.noteBlocksRepo,
+          ctx,
+        );
+        this.dbChangesWriter.writeChanges(
+          viewsChanges,
+          this.blocksViewsRepo,
           ctx,
         );
       });

@@ -54,6 +54,7 @@ Object.keys(or_methods).forEach(function (method) {
 
 export const notesTable = 'notes' as const;
 export const noteBlocksTable = 'noteBlocks' as const;
+export const blocksViewsTable = 'blocksViews' as const;
 const noteBlocksNotesTable = 'noteBlocksNotes' as const;
 
 //
@@ -175,6 +176,22 @@ interface IInternalSyncCtx extends ISyncCtx {
   windowId: string;
 }
 
+export type BlocksViewRow = {
+  id: string;
+  collapsedBlockIds: string;
+  noteId: string;
+  scopedModelId: string;
+  scopedModelType: string;
+};
+
+type BlocksViewDoc = {
+  id: string;
+  collapsedBlockIds: string[];
+  noteId: string;
+  scopedModelId: string;
+  scopedModelType: string;
+};
+
 let currentCtx: IInternalSyncCtx | undefined;
 const shareCtx = <T extends any>(func: () => T, ctx: IInternalSyncCtx) => {
   const prevCtx = currentCtx;
@@ -275,6 +292,18 @@ class DB {
                       WHERE tableName = '${clientChangesTable}')
           WHERE   id = new.id;
       END;
+    `);
+
+    this.sqlDb.exec(`
+      CREATE TABLE IF NOT EXISTS ${blocksViewsTable} (
+        id varchar(100) PRIMARY KEY,
+        collapsedBlockIds TEXT NOT NULL,
+        noteId varchar(20) NOT NULL,
+        scopedModelId varchar(50) NOT NULL,
+        scopedModelType varchar(50) NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_${blocksViewsTable}_noteId ON ${blocksViewsTable}(noteId);
     `);
 
     this.sqlDb.exec(`
@@ -804,7 +833,7 @@ export abstract class BaseSyncRepository<
       Q.select().from(this.getTableName()).where(obj),
     )[0];
 
-    return row ? this.toModel(row) : undefined;
+    return row ? this.toDoc(row) : undefined;
   }
 
   getByIds(ids: string[]): Doc[] {
@@ -812,7 +841,7 @@ export abstract class BaseSyncRepository<
       .getRecords<Row>(
         Q.select().from(this.getTableName()).where(Q.in('id', ids)),
       )
-      .map((row) => this.toModel(row));
+      .map((row) => this.toDoc(row));
   }
 
   getById(id: string): Doc | undefined {
@@ -823,8 +852,46 @@ export abstract class BaseSyncRepository<
     return this.getById(id) !== undefined;
   }
 
+  getExistingIds(ids: string[]): string[] {
+    const [result] = this.db.execQuery(
+      Q.select('id').from(this.getTableName()).where(Q.in('id', ids)),
+    );
+
+    return (result?.values?.flat() || []) as string[];
+  }
+
   create(attrs: Doc, ctx: ISyncCtx) {
     return this.bulkCreate([attrs], ctx)[0];
+  }
+
+  bulkCreateOrUpdate(attrsArray: Doc[], ctx: ISyncCtx) {
+    const internalCtx = { ...ctx, windowId: this.windowId };
+
+    return this.db.transaction(() => {
+      // TODO: could be optimized
+      const existingIds = new Set(
+        this.getExistingIds(attrsArray.map(({ id }) => id)),
+      );
+
+      const existingRecords: Doc[] = [];
+      const notExistingRecords: Doc[] = [];
+
+      attrsArray.forEach((doc) => {
+        if (existingIds.has(doc.id)) {
+          existingRecords.push(doc);
+        } else {
+          notExistingRecords.push(doc);
+        }
+      });
+
+      if (notExistingRecords.length > 0) {
+        this.bulkCreate(notExistingRecords, internalCtx);
+      }
+
+      if (existingRecords.length > 0) {
+        this.bulkUpdate(existingRecords, internalCtx);
+      }
+    }, internalCtx);
   }
 
   bulkCreate(attrsArray: Doc[], ctx: ISyncCtx) {
@@ -832,7 +899,7 @@ export abstract class BaseSyncRepository<
       () => {
         this.db.insertRecords(
           this.getTableName(),
-          attrsArray.map((attrs) => this.toDoc(attrs)),
+          attrsArray.map((attrs) => this.toRow(attrs)),
         );
 
         this.syncRepository.createCreateChanges(
@@ -871,7 +938,7 @@ export abstract class BaseSyncRepository<
 
         this.db.insertRecords(
           this.getTableName(),
-          records.map((r) => this.toDoc(r)),
+          records.map((r) => this.toRow(r)),
           true,
         );
 
@@ -890,14 +957,13 @@ export abstract class BaseSyncRepository<
   bulkDelete(ids: string[], ctx: ISyncCtx) {
     return this.db.transaction(
       () => {
+        const records = this.getByIds(ids);
+
         this.db.execQuery(
           Q.deleteFrom(this.getTableName()).where(Q.in('id', ids)),
         );
 
-        this.syncRepository.createDeleteChanges(
-          this.getTableName(),
-          this.getByIds(ids),
-        );
+        this.syncRepository.createDeleteChanges(this.getTableName(), records);
       },
       { ...ctx, windowId: this.windowId },
     );
@@ -907,15 +973,38 @@ export abstract class BaseSyncRepository<
     return this.db.getRecords<Doc>(Q.select().from(this.getTableName()));
   }
 
-  toDoc(model: Doc): Row {
-    return mapValues(model, (v) => (v === undefined ? null : v)) as Row;
+  toRow(doc: Doc): Row {
+    return mapValues(doc, (v) => (v === undefined ? null : v)) as Row;
   }
 
-  toModel(row: Row): Doc {
+  toDoc(row: Row): Doc {
     return row as Doc;
   }
 
   abstract getTableName(): string;
+}
+
+export class SqlBlocksViewsRepository extends BaseSyncRepository<
+  BlocksViewDoc,
+  BlocksViewRow
+> {
+  getTableName() {
+    return blocksViewsTable;
+  }
+
+  toDoc(row: BlocksViewRow): BlocksViewDoc {
+    return {
+      ...super.toDoc(row),
+      collapsedBlockIds: JSON.parse(row.collapsedBlockIds),
+    };
+  }
+
+  toRow(doc: BlocksViewDoc): BlocksViewRow {
+    return {
+      ...super.toRow(doc),
+      collapsedBlockIds: JSON.stringify(doc.collapsedBlockIds),
+    };
+  }
 }
 
 export class SqlNotesBlocksRepository extends BaseSyncRepository<
@@ -928,7 +1017,7 @@ export class SqlNotesBlocksRepository extends BaseSyncRepository<
       Q.select().from(this.getTableName()).where(Q.in('noteId', ids)),
     );
 
-    return res?.map((res) => this.toModel(res)) || [];
+    return res?.map((res) => this.toDoc(res)) || [];
   }
 
   getByNoteId(id: string): NoteBlockDocType[] {
@@ -953,18 +1042,18 @@ export class SqlNotesBlocksRepository extends BaseSyncRepository<
     return res?.values?.map(([val]) => val as string) || [];
   }
 
-  toDoc(model: NoteBlockDocType): NoteBlockRow {
+  toRow(doc: NoteBlockDocType): NoteBlockRow {
     return {
-      ...super.toDoc(model),
-      noteBlockIds: JSON.stringify(model.noteBlockIds),
-      linkedNoteIds: JSON.stringify(model.linkedNoteIds),
-      isRoot: model.isRoot ? 1 : 0,
+      ...super.toRow(doc),
+      noteBlockIds: JSON.stringify(doc.noteBlockIds),
+      linkedNoteIds: JSON.stringify(doc.linkedNoteIds),
+      isRoot: doc.isRoot ? 1 : 0,
     };
   }
 
-  toModel(row: NoteBlockRow): NoteBlockDocType {
+  toDoc(row: NoteBlockRow): NoteBlockDocType {
     return {
-      ...super.toModel(row),
+      ...super.toDoc(row),
       noteBlockIds: JSON.parse(row['noteBlockIds'] as string),
       linkedNoteIds: JSON.parse(row['linkedNoteIds'] as string),
       isRoot: Boolean(row.isRoot),
@@ -982,7 +1071,7 @@ export class SqlNotesRepository extends BaseSyncRepository<
       .getRecords<NoteDocType>(
         Q.select().from(this.getTableName()).where(Q.in('title', titles)),
       )
-      .map((row) => this.toModel(row));
+      .map((row) => this.toDoc(row));
   }
 
   findInTitle(title: string): NoteDocType[] {
@@ -992,7 +1081,7 @@ export class SqlNotesRepository extends BaseSyncRepository<
           .from(this.getTableName())
           .where(Q.like('title', `%${title}%`)),
       )
-      .map((row) => this.toModel(row));
+      .map((row) => this.toDoc(row));
   }
 
   getIsExistsByTitle(title: string): boolean {
@@ -1043,9 +1132,9 @@ export class ApplyChangesService {
           })),
           serverChanges,
         );
-
-        this.syncRepo.deletePulls(serverPulls.map(({ id }) => id));
       }
+
+      this.syncRepo.deletePulls(serverPulls.map(({ id }) => id));
 
       const maxRevision = maxBy(
         serverPulls,
