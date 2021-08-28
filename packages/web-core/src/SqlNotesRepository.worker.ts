@@ -56,6 +56,7 @@ export const notesTable = 'notes' as const;
 export const noteBlocksTable = 'noteBlocks' as const;
 export const blocksViewsTable = 'blocksViews' as const;
 const noteBlocksNotesTable = 'noteBlocksNotes' as const;
+const noteBlocksContentTable = 'noteBlocksContent' as const;
 
 //
 
@@ -327,6 +328,22 @@ class DB {
         updatedAt INTEGER NOT NULL,
         createdAt INTEGER NOT NULL
       );
+
+      CREATE VIRTUAL TABLE IF NOT EXISTS ${noteBlocksContentTable} USING fts3(noteBlockId, content, notindexed=noteBlockId);
+
+      CREATE TRIGGER IF NOT EXISTS ${noteBlocksTable}_insertFTS AFTER INSERT ON ${noteBlocksTable} BEGIN
+        INSERT INTO ${noteBlocksContentTable}(noteBlockId, content) SELECT new.id, new.content;
+      END;
+
+      CREATE TRIGGER IF NOT EXISTS ${noteBlocksTable}_updateFTS AFTER UPDATE ON ${noteBlocksTable} BEGIN
+        DELETE FROM ${noteBlocksContentTable} WHERE noteBlockId = old.id;
+        INSERT INTO ${noteBlocksContentTable}(noteBlockId, content) SELECT new.id, new.content;
+      END;
+
+      CREATE TRIGGER IF NOT EXISTS ${noteBlocksTable}_deleteFTS AFTER DELETE ON ${noteBlocksTable} BEGIN
+        DELETE FROM ${noteBlocksContentTable} WHERE noteBlockId = old.id;
+      END;
+
 
       CREATE INDEX IF NOT EXISTS idx_note_blocks_noteId ON ${noteBlocksTable}(noteId);
     `);
