@@ -1120,6 +1120,9 @@ export class ApplyChangesService {
       const syncStatus = this.syncRepo.getSyncStatus();
 
       const serverPulls = this.syncRepo.getChangesPulls();
+
+      if (serverPulls.length === 0) return;
+
       const serverChanges = this.syncRepo.getServerChangesByPullIds(
         serverPulls.map(({ id }) => id),
       );

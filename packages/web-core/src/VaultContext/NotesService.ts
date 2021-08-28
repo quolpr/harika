@@ -8,12 +8,13 @@ import type { ICreationResult } from './types';
 import type { VaultModel } from './domain/VaultModel';
 import {
   distinctUntilChanged,
+  first,
   map,
   switchMap,
   take,
   tap,
 } from 'rxjs/operators';
-import { uniq } from 'lodash-es';
+import { isEqual, uniq } from 'lodash-es';
 import { filterAst } from '../blockParser/astHelpers';
 import type { RefToken, TagToken } from '../blockParser/types';
 import { firstValueFrom, from, Observable, of, Subject } from 'rxjs';
@@ -164,29 +165,43 @@ export class NotesService {
 
   getLinkedNotes$(noteId: string) {
     const noteIds$ = from(
-      this.dbEventsService.liveQuery([VaultDbTables.Notes], () =>
-        this.notesBlocksRepository.getLinkedNoteIdsOfNoteId(noteId),
+      this.dbEventsService.liveQuery(
+        [VaultDbTables.Notes, VaultDbTables.NoteBlocks],
+        () => this.notesBlocksRepository.getLinkedNoteIdsOfNoteId(noteId),
+        false,
       ),
-    );
+    ).pipe(distinctUntilChanged((a, b) => isEqual(a, b)));
 
     return this.findNoteByIds$(noteIds$);
   }
 
   getBlocksTreeHolderByNoteIds$(notesIds$: Observable<string[]>) {
     const notLoadedNotes$ = notesIds$.pipe(
-      switchMap((notesIds) =>
-        from(
-          this.dbEventsService.liveQuery([VaultDbTables.NoteBlocks], async () =>
-            (
-              await this.notesBlocksRepository.getByNoteIds(
-                notesIds.filter(
-                  (id) => this.vault.blocksTreeHoldersMap[id] === undefined,
-                ),
-              )
-            ).map((m) => convertNoteBlockDocToModelAttrs(m)),
-          ),
-        ).pipe(map((attrs) => ({ unloadedBlocksAttrs: attrs, notesIds }))),
-      ),
+      switchMap((notesIds) => {
+        const notLoadedTreeHolderIds = notesIds.filter(
+          (id) => this.vault.blocksTreeHoldersMap[id] === undefined,
+        );
+
+        return notLoadedTreeHolderIds.length > 0
+          ? from(
+              this.dbEventsService.liveQuery(
+                [VaultDbTables.NoteBlocks],
+                async () =>
+                  (
+                    await this.notesBlocksRepository.getByNoteIds(
+                      notesIds.filter(
+                        (id) =>
+                          this.vault.blocksTreeHoldersMap[id] === undefined,
+                      ),
+                    )
+                  ).map((m) => convertNoteBlockDocToModelAttrs(m)),
+              ),
+            ).pipe(
+              first(),
+              map((attrs) => ({ unloadedBlocksAttrs: attrs, notesIds })),
+            )
+          : of({ unloadedBlocksAttrs: [], notesIds });
+      }),
     );
 
     return notLoadedNotes$.pipe(
@@ -202,6 +217,7 @@ export class NotesService {
           return notesIds.map((id) => this.vault.blocksTreeHoldersMap[id]);
         }),
       ),
+      distinctUntilChanged((a, b) => isEqual(a, b)),
     );
   }
 
@@ -238,15 +254,23 @@ export class NotesService {
       switchMap((noteId) =>
         toObserver(() => this.vault.blocksTreeHoldersMap[noteId]),
       ),
+      distinctUntilChanged((a, b) => isEqual(a, b)),
     );
   }
 
   findNoteByIds$(ids$: Observable<string[]>) {
     return ids$.pipe(
       switchMap((ids) =>
+        // TODO: load only not loaded
         this.dbEventsService.liveQuery([VaultDbTables.Notes], async () => {
+          const toLoadIds = ids.filter(
+            (id) => !Boolean(this.vault.notesMap[id]),
+          );
+
           const noteDocs =
-            ids.length !== 0 ? await this.notesRepository.getByIds(ids) : [];
+            toLoadIds.length !== 0
+              ? await this.notesRepository.getByIds(toLoadIds)
+              : [];
 
           this.vault.createOrUpdateEntitiesFromAttrs(
             noteDocs.map((doc) => convertNoteDocToModelAttrs(doc)),
@@ -259,6 +283,7 @@ export class NotesService {
             .filter((v) => Boolean(v));
         }),
       ),
+      distinctUntilChanged((a, b) => isEqual(a, b)),
     );
   }
 
@@ -477,15 +502,6 @@ export class NotesService {
 
   async export() {
     return await this.importExportService.export();
-    // Fails to compile on build time, so I put any here
-    // return exportDB(this.db as any, {
-    //   filter: (t) =>
-    //     [
-    //       VaultDbTables.Notes,
-    //       VaultDbTables.NoteBlocks,
-    //       VaultDbTables.BlocksViews,
-    //     ].includes(t as VaultDbTables),
-    // });
   }
 
   close = () => {

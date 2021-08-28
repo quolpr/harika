@@ -4,6 +4,7 @@ import {
   INoteChangeEvent,
   DatabaseChangeType,
   INoteBlockChangeEvent,
+  IBlocksViewChangeEvent,
 } from '../../dexieTypes';
 import type { ITransmittedChange } from '../../SqlNotesRepository.worker';
 import type { VaultModel } from '../domain/VaultModel';
@@ -12,6 +13,8 @@ import {
   convertNoteBlockDocToModelAttrs,
   NoteData,
   NoteBlockData,
+  convertViewToModelAttrs,
+  ViewData,
 } from './toDomainModelsConverters';
 
 export class ToDomainSyncer {
@@ -33,11 +36,11 @@ export class ToDomainSyncer {
 
       if (evs.length === 0) return;
 
-      // const blockViews = this.getViews(evs);
+      const blockViews = this.getViews(evs);
 
-      // if (blockViews.length > 0) {
-      //   this.vault.ui.createOrUpdateEntitiesFromAttrs(blockViews);
-      // }
+      if (blockViews.length > 0) {
+        this.vault.ui.createOrUpdateEntitiesFromAttrs(blockViews);
+      }
 
       const notesChanges = this.getNoteChanges(evs);
       const blockChanges = this.getBlockChanges(evs);
@@ -50,27 +53,27 @@ export class ToDomainSyncer {
     });
   }
 
-  //   private getViews(evs: IExtendedDatabaseChange[]) {
-  //     const viewEvents = evs.filter(
-  //       (ev) => ev.table === VaultDbTables.BlocksViews,
-  //     ) as IBlocksViewChangeEvent[];
+  private getViews(evs: ITransmittedChange[]) {
+    const viewEvents = evs.filter(
+      (ev) => ev.table === VaultDbTables.BlocksViews,
+    ) as IBlocksViewChangeEvent[];
 
-  //     const latestDedupedEvents: Record<string, IBlocksViewChangeEvent> = {};
+    const latestDedupedEvents: Record<string, IBlocksViewChangeEvent> = {};
 
-  //     viewEvents.reverse().forEach((ev) => {
-  //       if (!latestDedupedEvents[ev.key]) {
-  //         latestDedupedEvents[ev.key] = ev;
-  //       }
-  //     });
+    viewEvents.reverse().forEach((ev) => {
+      if (!latestDedupedEvents[ev.key]) {
+        latestDedupedEvents[ev.key] = ev;
+      }
+    });
 
-  //     return viewEvents
-  //       .map((ev) => {
-  //         if (!ev.obj) return undefined;
+    return viewEvents
+      .map((ev) => {
+        if (!ev.obj) return undefined;
 
-  //         return convertViewToModelAttrs(ev.obj);
-  //       })
-  //       .filter((n) => !!n) as ViewData[];
-  //   }
+        return convertViewToModelAttrs(ev.obj);
+      })
+      .filter((n) => !!n) as ViewData[];
+  }
 
   // TODO refactor notes and noteblocks to one method
 

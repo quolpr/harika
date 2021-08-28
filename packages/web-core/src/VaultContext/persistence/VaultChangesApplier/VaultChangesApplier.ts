@@ -1,4 +1,3 @@
-import { Dexie } from 'dexie';
 import {
   IBlocksViewChangeEvent,
   IDatabaseChange,
@@ -44,9 +43,6 @@ export class VaultChangesApplier implements IChangesApplier {
           conflictedChanges: [],
         };
       } else {
-        // @ts-ignore
-        Dexie.currentTransaction.source = 'conflictsResolution';
-
         const noteblocksResolver = new NoteblocksChangesApplier();
         const notesResolver = new NotesChangesApplier();
         const viewsResolver = new BlocksViewsChangesConflictResolver();

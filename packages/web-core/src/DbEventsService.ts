@@ -16,13 +16,18 @@ export class DbEventsService {
     });
   }
 
-  liveQuery<T extends any>(tables: string[], query: () => ObservableInput<T>) {
+  liveQuery<T extends any>(
+    tables: string[],
+    query: () => ObservableInput<T>,
+    onlyInDb = true,
+  ) {
     return new Observable((subscriber) => {
       const func = (evs: ITransmittedChange[]) => {
         if (
           evs.find(
             ({ table, source }) =>
-              source === 'inDbChanges' && tables.includes(table),
+              (onlyInDb ? source === 'inDbChanges' : true) &&
+              tables.includes(table),
           )
         ) {
           subscriber.next();
@@ -38,7 +43,9 @@ export class DbEventsService {
 
   changesChannel$() {
     return new Observable<ITransmittedChange[]>((subscriber) => {
-      const func = (evs: ITransmittedChange[]) => subscriber.next(evs);
+      const func = (evs: ITransmittedChange[]) => {
+        subscriber.next(evs);
+      };
 
       this.dbEventsChannel.addEventListener('message', func);
 
