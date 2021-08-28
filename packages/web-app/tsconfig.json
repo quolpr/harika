@@ -1,5 +1,5 @@
 {
-  "include": ["src", "types"],
+  "include": ["src", "types", "../web-core/types"],
   "compilerOptions": {
     "module": "esnext",
     "target": "esnext",
@@ -24,6 +24,5 @@
     "allowSyntheticDefaultImports": true,
     "importsNotUsedAsValues": "error",
     "experimentalDecorators": true
-  },
-  "files": ["../web-core/src/types.d.ts"]
+  }
 }

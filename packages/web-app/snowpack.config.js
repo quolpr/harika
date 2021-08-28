@@ -31,7 +31,7 @@ module.exports = {
           const { InjectManifest } = require('workbox-webpack-plugin');
 
           const additionalManifestEntries = [
-            ...glob.sync('*.{png,html,json,txt,css}', { cwd: './build' }),
+            ...glob.sync('*.{png,html,json,txt,css,wasm}', { cwd: './build' }),
           ].map((e) => ({
             url: e,
             revision: process.env.SNOWPACK_PUBLIC_PACKAGE_VERSION,
@@ -46,15 +46,15 @@ module.exports = {
             }),
           );
 
-          const BundleAnalyzerPlugin =
-            require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+          // const BundleAnalyzerPlugin =
+          //   require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
-          config.plugins.push(
-            new BundleAnalyzerPlugin({
-              analyzerMode: 'static',
-              defaultSizes: 'gzip',
-            }),
-          );
+          // config.plugins.push(
+          //   new BundleAnalyzerPlugin({
+          //     analyzerMode: 'static',
+          //     defaultSizes: 'gzip',
+          //   }),
+          // );
 
           return config;
         },
