@@ -970,7 +970,9 @@ export abstract class BaseSyncRepository<
   }
 
   getAll() {
-    return this.db.getRecords<Doc>(Q.select().from(this.getTableName()));
+    return this.db
+      .getRecords<Row>(Q.select().from(this.getTableName()))
+      .map((row) => this.toDoc(row));
   }
 
   toRow(doc: Doc): Row {
