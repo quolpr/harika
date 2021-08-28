@@ -1693,6 +1693,11 @@
   dependencies:
     "@hapi/hoek" "^8.3.0"
 
+"@harika-org/sql.js@^1.6.6":
+  version "1.6.6"
+  resolved "https://registry.yarnpkg.com/@harika-org/sql.js/-/sql.js-1.6.6.tgz#7194571adcce9cf7fe3ac44d42ea3bc280f6806a"
+  integrity sha512-vbEq55CZGNdkcT3x+SgfujuUANDEUA4PkejwY9zCF6nslCLJhvm8gzCo2bkHxZDT5RpFCx7eC6uPzeeRDeU3jw==
+
 "@heroicons/react@^1.0.2":
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/@heroicons/react/-/react-1.0.2.tgz#e44a25d139e6fc8f94f4b146aeebad8f9af3d7dc"
@@ -1775,11 +1780,6 @@
     "@types/node" "*"
     "@types/yargs" "^16.0.0"
     chalk "^4.0.0"
-
-"@jlongster/sql.js@^1.6.7":
-  version "1.6.7"
-  resolved "https://registry.yarnpkg.com/@jlongster/sql.js/-/sql.js-1.6.7.tgz#f5391db62c25a6ba8a162bdcfed6e3392ef2b40f"
-  integrity sha512-4hf0kZr5WPoirdR5hUSfQ9O0JpH/qlW1CaR2wZ6zGrDz1xjSdTPuR8AW/oXzIHnJvZSEvlcIE+dfXJZwh/Lxfw==
 
 "@material-ui/core@^4.12.2":
   version "4.12.2"

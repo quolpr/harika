@@ -1,4 +1,4 @@
-declare module '@jlongster/sql.js' {
+declare module '@harika-org/sql.js' {
   /// <reference types="node" />
   /// <reference types="emscripten" />
 

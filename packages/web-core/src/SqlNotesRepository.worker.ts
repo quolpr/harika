@@ -2,7 +2,7 @@ import initSqlJs, {
   BindParams,
   Database,
   QueryExecResult,
-} from '@jlongster/sql.js';
+} from '@harika-org/sql.js';
 import { SQLiteFS } from 'absurd-sql';
 import IndexedDBBackend from 'absurd-sql/dist/indexeddb-backend';
 import { proxy, ProxyMarked } from 'comlink';
@@ -329,7 +329,7 @@ class DB {
         createdAt INTEGER NOT NULL
       );
 
-      CREATE VIRTUAL TABLE IF NOT EXISTS ${noteBlocksContentTable} USING fts3(noteBlockId, content, notindexed=noteBlockId);
+      CREATE VIRTUAL TABLE IF NOT EXISTS ${noteBlocksContentTable} USING fts5(noteBlockId UNINDEXED, content, tokenize="trigram");
 
       CREATE TRIGGER IF NOT EXISTS ${noteBlocksTable}_insertFTS AFTER INSERT ON ${noteBlocksTable} BEGIN
         INSERT INTO ${noteBlocksContentTable}(noteBlockId, content) SELECT new.id, new.content;

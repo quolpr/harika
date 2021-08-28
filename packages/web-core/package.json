@@ -12,7 +12,7 @@
     "gen-block-parser": "peggy -o src/blockParser/pegParser.js --cache src/blockParser/pegParser.pegjs"
   },
   "dependencies": {
-    "@jlongster/sql.js": "^1.6.7",
+    "@harika-org/sql.js": "^1.6.6",
     "absurd-sql": "^0.0.53",
     "broadcast-channel": "^3.7.0",
     "camelcase-keys": "^7.0.0",

@@ -7,7 +7,7 @@ module.exports = {
     public: { url: '/', static: true },
     src: { url: '/dist' },
     '../web-core': '/@harika/web-core',
-    '../../node_modules/@jlongster/sql.js/dist/': '/sqljs/',
+    '../../node_modules/@harika-org/sql.js/dist/': '/sqljs/',
   },
   plugins: [
     'snowpack-svgr-plugin',
