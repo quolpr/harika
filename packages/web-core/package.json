@@ -53,7 +53,7 @@
     "@types/sql-bricks": "^2.0.2",
     "@types/sql.js": "^1.4.2",
     "@typescript-eslint/eslint-plugin": "^4.28.4",
-    "@typescript-eslint/parser": "^4.28.4",
+    "@typescript-eslint/parser": "^4.29.3",
     "eslint-plugin-rxjs": "^3.3.5",
     "peggy": "^1.2.0",
     "prettier": "^2.3.2",
