@@ -35,7 +35,7 @@ import type {
 } from '../SqlNotesRepository';
 import type { Remote } from 'comlink';
 import type { DbEventsService } from '../DbEventsService';
-import type { ImportExportService } from '../VaultDb.worker';
+import type { DeleteNoteService, ImportExportService } from '../VaultDb.worker';
 
 export { NoteModel } from './domain/NoteModel';
 export { VaultModel } from './domain/VaultModel';
@@ -55,6 +55,7 @@ export class NotesService {
     private blocksViewsRepo: Remote<SqlBlocksViewsRepository>,
     private dbEventsService: DbEventsService,
     private importExportService: Remote<ImportExportService>,
+    private deleteNoteService: Remote<DeleteNoteService>,
     public vault: VaultModel,
   ) {}
 
@@ -462,37 +463,7 @@ export class NotesService {
   }
 
   async deleteNote(id: string) {
-    // return this.db.transaction(
-    //   'rw',
-    //   [this.db.noteBlocks, this.db.notes],
-    //   async () => {
-    //     let [linkedBlocks, blocks, note] = await Promise.all([
-    //       this.db.noteBlocksQueries.getLinkedBlocksOfNoteId(id),
-    //       this.db.noteBlocksQueries.getByNoteId(id),
-    //       this.db.notesQueries.getById(id),
-    //     ]);
-    //     const noteBlockIds = blocks.map(({ id }) => id);
-    //     linkedBlocks = uniqBy(linkedBlocks, ({ id }) => id).filter(
-    //       // cause they will be already removed
-    //       ({ id }) => !noteBlockIds.includes(id),
-    //     );
-    //     if (!note) {
-    //       console.error(`Note with id ${id} not deleted - not found`);
-    //       return;
-    //     }
-    //     await Promise.all([
-    //       await this.db.notes.delete(note.id),
-    //       await this.db.noteBlocks.bulkDelete(noteBlockIds),
-    //       await Promise.all(
-    //         linkedBlocks.map(async (block) => {
-    //           await this.db.noteBlocks.update(block.id, {
-    //             linkedNoteIds: block.linkedNoteIds.filter((key) => key !== id),
-    //           });
-    //         }),
-    //       ),
-    //     ]);
-    //   },
-    // );
+    await this.deleteNoteService.deleteNote(id);
   }
 
   async import(importData: {

@@ -501,6 +501,7 @@ export interface ISyncStatus {
   clientId: string;
 }
 
+// TODO: emit events after transaction finish
 export class SyncRepository {
   constructor(
     private db: DB,
@@ -1033,12 +1034,19 @@ export class SqlNotesBlocksRepository extends BaseSyncRepository<
   NoteBlockRow
 > {
   getByNoteIds(ids: string[]) {
-    console.log({ ids });
     const res = this.db.getRecords<NoteBlockRow>(
       Q.select().from(this.getTableName()).where(Q.in('noteId', ids)),
     );
 
     return res?.map((res) => this.toDoc(res)) || [];
+  }
+
+  getIdsByNoteId(id: string) {
+    const [res] = this.db.execQuery(
+      Q.select('id').from(this.getTableName()).where(Q.in('noteId', id)),
+    );
+
+    return res?.values?.map(([val]) => val as string) || [];
   }
 
   getByNoteId(id: string): NoteBlockDocType[] {
@@ -1047,6 +1055,21 @@ export class SqlNotesBlocksRepository extends BaseSyncRepository<
 
   getTableName() {
     return noteBlocksTable;
+  }
+
+  getLinkedBlocksOfNoteId(id: string): NoteBlockDocType[] {
+    return (
+      this.db
+        .getRecords<NoteBlockRow>(
+          Q.select(`joined.*`)
+            .from(noteBlocksNotesTable)
+            .leftJoin(`${this.getTableName()} joined`, {
+              [`${noteBlocksNotesTable}.noteBlockId`]: `joined.id`,
+            })
+            .where({ [`${noteBlocksNotesTable}.noteId`]: id }),
+        )
+        ?.map((res) => this.toDoc(res)) || []
+    );
   }
 
   getLinkedNoteIdsOfNoteId(id: string): string[] {

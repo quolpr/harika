@@ -166,6 +166,7 @@ export class VaultsService {
       viewsRepo,
       eventsService,
       await worker.getImportExportService(),
+      await worker.getDeleteNoteService(),
       vault,
     );
 
