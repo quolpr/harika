@@ -5,8 +5,7 @@ import type {
   IDeleteChange,
   IUpdateChange,
 } from '../../../dexieTypes';
-import { cloneDeep } from 'lodash';
-import { difference, set, uniq } from 'lodash-es';
+import { difference, set, uniq, cloneDeep } from 'lodash-es';
 import { BaseChangesApplier } from './BaseChangesApplier';
 import { v4 } from 'uuid';
 

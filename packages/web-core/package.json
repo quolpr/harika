@@ -19,8 +19,6 @@
     "camelcase-keys": "^7.0.0",
     "comlink": "^4.3.1",
     "dayjs": "^1.10.6",
-    "dexie": "3.2.0-beta.3",
-    "dexie-export-import": "^1.0.3",
     "downloadjs": "^1.4.7",
     "lodash-es": "^4.17.21",
     "mobx": "^6.3.2",
@@ -35,9 +33,6 @@
     "sql-bricks": "^2.0.5",
     "sql-bricks-sqlite": "^0.1.0",
     "utility-types": "^3.10.0"
-  },
-  "resolutions": {
-    "dexie": "3.2.0-beta-2"
   },
   "devDependencies": {
     "@esm-bundle/chai": "^4.3.4",

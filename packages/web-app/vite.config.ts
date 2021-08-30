@@ -22,6 +22,6 @@ export default defineConfig({
       ],
       mode: 'production', // this inlines the module imports when using yarn build
     }),
-    visualizer({ open: true }),
+    visualizer({ open: true, filename: 'dist/stats.html' }),
   ],
 });

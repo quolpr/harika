@@ -13,7 +13,7 @@
     /* Additional Options */
     "strict": true,
     "skipLibCheck": false,
-    "types": ["mocha", "jest"],
+    "types": ["mocha"],
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,

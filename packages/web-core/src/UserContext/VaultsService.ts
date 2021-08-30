@@ -1,6 +1,5 @@
 import { VaultModel } from '../VaultContext/domain/VaultModel';
 import { syncMiddleware } from '../VaultContext/domain/syncable';
-import { VaultDexieDatabase } from '../VaultContext/persistence/DexieDb';
 import { NotesService } from '../VaultContext/NotesService';
 import { initSync } from '../dexie-sync/init';
 import { map } from 'rxjs/operators';
@@ -67,15 +66,12 @@ export class VaultsService {
   }
 
   // TODO: also clean on server
+  // TODO: drop IDB
   async dropVault(vaultId: string) {
-    const db = new VaultDexieDatabase(vaultId);
-
     await this.vaultsRepo.delete(vaultId, {
       shouldRecordChange: true,
       source: 'inDbChanges',
     });
-
-    await db.delete();
   }
 
   getAllVaultTuples$() {
@@ -140,7 +136,7 @@ export class VaultsService {
     });
 
     const dbName = `vault_${id}`;
-    console.log({ dbName });
+
     const { worker, terminate } = await getDbWorker<VaultDbWorker>(
       dbName,
       windowId,
