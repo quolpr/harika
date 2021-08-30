@@ -1,5 +1,7 @@
+const vite = require('vite-web-test-runner-plugin');
+
 process.env.NODE_ENV = 'test';
 
 module.exports = {
-  plugins: [require('@snowpack/web-test-runner-plugin')()],
+  plugins: [vite()],
 };
