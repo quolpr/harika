@@ -4,7 +4,7 @@ import {
   ApplyChangesService,
   SqlVaultsRepository,
   DbChangesWriterService,
-} from './SqlNotesRepository.worker';
+} from './SqlNotesRepository';
 import { UserDbChangesApplier } from './UserContext/persistence/UserDbChangesApplier';
 
 export class UserDbWorker extends BaseDbWorker {

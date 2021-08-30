@@ -1,8 +1,8 @@
 {
   "name": "@harika/web-core",
   "version": "1.0.0",
-  "main": "build/index.js",
   "private": true,
+  "module": "./index.ts",
   "scripts": {
     "start": "snowpack dev",
     "build": "snowpack build",
@@ -63,6 +63,7 @@
     "prettier": "^2.3.2",
     "snowpack": "^3.8.3",
     "snowpack-svgr-plugin": "^1.0.3",
-    "typescript": "4.2.3"
+    "typescript": "4.2.3",
+    "vite-plugin-copy": "^0.1.6"
   }
 }

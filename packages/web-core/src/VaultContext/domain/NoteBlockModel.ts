@@ -5,13 +5,12 @@ import {
   model,
   Model,
   modelAction,
-  ModelCreationData,
   prop,
-  Ref,
   tProp,
   transaction,
   types,
 } from 'mobx-keystone';
+import type { Ref, ModelCreationData } from 'mobx-keystone';
 import { comparer, computed } from 'mobx';
 import { isEqual } from 'lodash-es';
 import { BlockContentModel } from './NoteBlockModel/BlockContentModel';

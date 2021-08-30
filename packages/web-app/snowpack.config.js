@@ -1,6 +1,6 @@
 /** @type {import("snowpack").SnowpackUserConfig } */
 
-process.env.SNOWPACK_PUBLIC_SERVICE_WORKER = 'sw.js';
+process.env.VITE_PUBLIC_SERVICE_WORKER = 'sw.js';
 
 module.exports = {
   mount: {
@@ -34,7 +34,7 @@ module.exports = {
             ...glob.sync('*.{png,html,json,txt,css,wasm}', { cwd: './build' }),
           ].map((e) => ({
             url: e,
-            revision: process.env.SNOWPACK_PUBLIC_PACKAGE_VERSION,
+            revision: process.env.VITE_PUBLIC_PACKAGE_VERSION,
           }));
 
           config.plugins.push(
@@ -42,7 +42,7 @@ module.exports = {
               mode: 'development',
               additionalManifestEntries: additionalManifestEntries,
               swSrc: './dist/serviceWorker.js',
-              swDest: process.env.SNOWPACK_PUBLIC_SERVICE_WORKER,
+              swDest: process.env.VITE_PUBLIC_SERVICE_WORKER,
             }),
           );
 

@@ -1,6 +1,7 @@
 import { BroadcastChannel } from 'broadcast-channel';
-import { Observable, ObservableInput, switchMap } from 'rxjs';
-import type { ITransmittedChange } from './SqlNotesRepository.worker';
+import type { ObservableInput } from 'rxjs';
+import { Observable, switchMap } from 'rxjs';
+import type { ITransmittedChange } from './SqlNotesRepository';
 
 export class DbEventsService {
   dbEventsChannel: BroadcastChannel;

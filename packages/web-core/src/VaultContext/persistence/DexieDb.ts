@@ -1,11 +1,11 @@
 import type { Dayjs } from 'dayjs';
 import Dexie from 'dexie';
 import { uniq } from 'lodash-es';
-import {
+import { VaultDbTables } from '../../dexieTypes';
+import type {
   NoteDocType,
   NoteBlockDocType,
   BlocksViewDocType,
-  VaultDbTables,
 } from '../../dexieTypes';
 
 export class VaultDexieDatabase extends Dexie {

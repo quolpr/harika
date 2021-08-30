@@ -25,7 +25,7 @@ export const VaultAppRoute = () => {
 
     const cb = async () => {
       service = new VaultsService(userId, !isOffline, {
-        wsUrl: import.meta.env.SNOWPACK_PUBLIC_WS_URL,
+        wsUrl: import.meta.env.VITE_PUBLIC_WS_URL as string,
         authToken: authToken,
       });
 

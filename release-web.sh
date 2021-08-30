@@ -2,7 +2,7 @@
 
 set -e
 
-export SNOWPACK_PUBLIC_PACKAGE_VERSION="$(date +'%d.%m.%Y-%R:%S')@$(git rev-parse --short HEAD)"
+export VITE_PUBLIC_PACKAGE_VERSION="$(date +'%d.%m.%Y-%R:%S')@$(git rev-parse --short HEAD)"
 export SENTRY_ORG="harika"
 export SENTRY_PROJECT="web-dev"
 
@@ -12,18 +12,18 @@ if [[ -z "${SENTRY_AUTH_TOKEN}" ]]; then
   exit 1
 fi
 
-yarn sentry-cli releases new "$SNOWPACK_PUBLIC_PACKAGE_VERSION"
+yarn sentry-cli releases new "$VITE_PUBLIC_PACKAGE_VERSION"
 
-yarn sentry-cli releases set-commits "$SNOWPACK_PUBLIC_PACKAGE_VERSION" --auto
+yarn sentry-cli releases set-commits "$VITE_PUBLIC_PACKAGE_VERSION" --auto
 
-echo "Building release:" $SNOWPACK_PUBLIC_PACKAGE_VERSION
+echo "Building release:" $VITE_PUBLIC_PACKAGE_VERSION
 
 NODE_ENV=production yarn web-app build --polyfill-node
 
-yarn sentry-cli releases files "$SNOWPACK_PUBLIC_PACKAGE_VERSION" upload-sourcemaps packages/web-app/build/js \
+yarn sentry-cli releases files "$VITE_PUBLIC_PACKAGE_VERSION" upload-sourcemaps packages/web-app/build/js \
     --url-prefix '~/js'
 
-yarn sentry-cli releases finalize "$SNOWPACK_PUBLIC_PACKAGE_VERSION"
+yarn sentry-cli releases finalize "$VITE_PUBLIC_PACKAGE_VERSION"
 
 rm -Rf packages/web-app/build/dist
 rm -Rf packages/web-app/build/_snowpack

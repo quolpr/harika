@@ -61,3 +61,8 @@ declare module '*.png' {
 declare module 'remotedev' {
   export const connectViaExtension = (args: any) => any;
 }
+
+declare module '*.svg?component' {
+  const ref: string;
+  export default ref;
+}

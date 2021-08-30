@@ -1,10 +1,11 @@
 {
   "include": ["src", "types"],
   "compilerOptions": {
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "module": "esnext",
     "target": "esnext",
     "moduleResolution": "node",
-    "jsx": "preserve",
+    "jsx": "react",
     "baseUrl": "./",
     /* paths - import rewriting/resolving */
     "paths": {
@@ -17,12 +18,14 @@
     "noEmit": true,
     /* Additional Options */
     "strict": true,
-    "skipLibCheck": true,
+    "skipLibCheck": false,
     "types": ["mocha", "snowpack-env", "jest"],
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
     "importsNotUsedAsValues": "error",
-    "experimentalDecorators": true
+    "experimentalDecorators": true,
+    "isolatedModules": true,
+    "esModuleInterop": false
   }
 }

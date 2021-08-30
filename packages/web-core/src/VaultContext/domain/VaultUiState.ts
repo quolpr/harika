@@ -1,10 +1,5 @@
-import {
-  model,
-  Model,
-  modelAction,
-  ModelCreationData,
-  prop,
-} from 'mobx-keystone';
+import { model, Model, modelAction, prop } from 'mobx-keystone';
+import type { ModelCreationData } from 'mobx-keystone';
 import { blocksTreeHolderRef } from './NoteBlockModel';
 import type { NoteModel } from './NoteModel';
 import { BlocksViewModel } from './VaultUiState/BlocksViewModel';

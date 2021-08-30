@@ -1,3 +1,0 @@
-describe('App', () => {
-  it('works', () => {});
-});

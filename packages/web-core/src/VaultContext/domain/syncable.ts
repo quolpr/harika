@@ -1,10 +1,5 @@
-import {
-  actionTrackingMiddleware,
-  Patch,
-  PatchRecorder,
-  patchRecorder,
-  SimpleActionContext,
-} from 'mobx-keystone';
+import { actionTrackingMiddleware, patchRecorder } from 'mobx-keystone';
+import type { PatchRecorder, SimpleActionContext, Patch } from 'mobx-keystone';
 
 export function syncMiddleware(
   subtreeRoot: object,

@@ -1,23 +1,18 @@
 import { initBackend } from 'absurd-sql/dist/indexeddb-main-thread';
-import { Remote, wrap } from 'comlink';
-import type { BaseDbWorker } from './SqlNotesRepository.worker';
+import { wrap } from 'comlink';
+import type { Remote } from 'comlink';
+import type { BaseDbWorker } from './SqlNotesRepository';
+import VaultWorker from './VaultDb.worker?worker';
+import UserWorker from './UserDb.worker?worker';
 
 export const getDbWorker = async <T extends BaseDbWorker>(
   dbName: string,
   windowId: string,
   type: 'vault' | 'user',
 ): Promise<{ worker: Remote<T>; terminate: () => void }> => {
-  let worker =
-    type === 'vault'
-      ? new Worker(new URL('./VaultDb.worker.js', import.meta.url), {
-          name: 'sql-vault-worker',
-          type: import.meta.env.MODE === 'development' ? 'module' : 'classic',
-        })
-      : new Worker(new URL('./UserDb.worker.js', import.meta.url), {
-          name: 'sql-user-worker',
-          type: import.meta.env.MODE === 'development' ? 'module' : 'classic',
-        });
+  let worker = type === 'vault' ? new VaultWorker() : new UserWorker();
 
+  console.log('Got worker', type, worker);
   // This is only required because Safari doesn't support nested
   // workers. This installs a handler that will proxy creating web
   // workers through the main thread
@@ -28,6 +23,7 @@ export const getDbWorker = async <T extends BaseDbWorker>(
     windowId: string,
   ) => Promise<Remote<T>>;
   const obj = await new Klass(dbName, windowId);
+  console.log('Got worker 2', type, worker);
 
   await obj.initialize();
 

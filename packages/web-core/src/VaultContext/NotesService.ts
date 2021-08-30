@@ -18,7 +18,8 @@ import { isEqual, uniq } from 'lodash-es';
 import { filterAst } from '../blockParser/astHelpers';
 import type { RefToken, TagToken } from '../blockParser/types';
 import { firstValueFrom, from, Observable, of, Subject } from 'rxjs';
-import { NoteDocType, VaultDbTables } from '../dexieTypes';
+import type { NoteDocType } from '../dexieTypes';
+import { VaultDbTables } from '../dexieTypes';
 import {
   convertNoteBlockDocToModelAttrs,
   convertNoteDocToModelAttrs,
@@ -31,7 +32,7 @@ import type {
   SqlBlocksViewsRepository,
   SqlNotesBlocksRepository,
   SqlNotesRepository,
-} from '../SqlNotesRepository.worker';
+} from '../SqlNotesRepository';
 import type { Remote } from 'comlink';
 import type { DbEventsService } from '../DbEventsService';
 import type { ImportExportService } from '../VaultDb.worker';
@@ -497,11 +498,11 @@ export class NotesService {
   async import(importData: {
     data: { data: { tableName: string; rows: any[] }[] };
   }) {
-    await this.importExportService.import(importData);
+    await this.importExportService.importData(importData);
   }
 
   async export() {
-    return await this.importExportService.export();
+    return await this.importExportService.exportData();
   }
 
   close = () => {

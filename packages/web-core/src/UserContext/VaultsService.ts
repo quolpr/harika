@@ -10,7 +10,7 @@ import { ToDomainSyncer } from '../VaultContext/syncers/ToDomainSyncer';
 import { getDbWorker } from '../getDbWorker';
 import { DbEventsService } from '../DbEventsService';
 import type { VaultDbWorker } from '../VaultDb.worker';
-import { SqlVaultsRepository, vaultsTable } from '../SqlNotesRepository.worker';
+import { SqlVaultsRepository, vaultsTable } from '../SqlNotesRepository';
 import type { UserDbWorker } from '../UserDb.worker';
 import type { Remote } from 'comlink';
 
@@ -140,6 +140,7 @@ export class VaultsService {
     });
 
     const dbName = `vault_${id}`;
+    console.log({ dbName });
     const { worker, terminate } = await getDbWorker<VaultDbWorker>(
       dbName,
       windowId,

@@ -3,7 +3,7 @@ import type { IChangesApplier } from '../../dexie-sync/ServerSynchronizer';
 import type {
   DbChangesWriterService,
   SqlVaultsRepository,
-} from '../../SqlNotesRepository.worker';
+} from '../../SqlNotesRepository';
 
 export class UserDbChangesApplier implements IChangesApplier {
   constructor(

@@ -31,7 +31,7 @@ const importSentry = async () => {
           routingInstrumentation: Sentry.reactRouterV5Instrumentation(history),
         }),
       ],
-      release: import.meta.env.SNOWPACK_PUBLIC_PACKAGE_VERSION,
+      release: import.meta.env.VITE_PUBLIC_PACKAGE_VERSION as string,
 
       // Set tracesSampleRate to 1.0 to capture 100%
       // of transactions for performance monitoring.

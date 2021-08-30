@@ -1,22 +1,13 @@
-import {
-  Model,
-  model,
-  modelAction,
-  ModelCreationData,
-  prop,
-  transaction,
-} from 'mobx-keystone';
+import { Model, model, modelAction, prop, transaction } from 'mobx-keystone';
+import type { ModelCreationData } from 'mobx-keystone';
 import { NoteModel } from './NoteModel';
 import type { Optional, Required } from 'utility-types';
 import { vaultModelType } from './consts';
 import { generateId } from '../../generateId';
 import { BlockContentModel } from './NoteBlockModel/BlockContentModel';
 import { VaultUiState } from './VaultUiState';
-import {
-  newTreeModel,
-  NotesTreeModel,
-  PartialNote,
-} from './NotesTree/NotesTreeModel';
+import { newTreeModel, NotesTreeModel } from './NotesTree/NotesTreeModel';
+import type { PartialNote } from './NotesTree/NotesTreeModel';
 import { BlocksTreeHolder, NoteBlockModel } from './NoteBlockModel';
 import dayjs from 'dayjs';
 

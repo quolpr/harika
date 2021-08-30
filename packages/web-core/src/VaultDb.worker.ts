@@ -1,17 +1,28 @@
+// import { expose, proxy } from 'comlink';
+// import { VaultChangesApplier } from './VaultContext/persistence/VaultChangesApplier/VaultChangesApplier';
+// import {
+//   BaseDbWorker,
+//   ApplyChangesService,
+//   SqlNotesRepository,
+//   SqlNotesBlocksRepository,
+//   DbChangesWriterService,
+//   SqlBlocksViewsRepository,
+// } from './SqlNotesRepository';
+
 import { expose, proxy } from 'comlink';
-import { VaultChangesApplier } from './VaultContext/persistence/VaultChangesApplier/VaultChangesApplier';
 import {
-  BaseDbWorker,
   ApplyChangesService,
-  SqlNotesRepository,
-  SqlNotesBlocksRepository,
-  DbChangesWriterService,
-  SqlBlocksViewsRepository,
-  ISyncCtx,
-  notesTable,
-  noteBlocksTable,
+  BaseDbWorker,
   blocksViewsTable,
-} from './SqlNotesRepository.worker';
+  DbChangesWriterService,
+  noteBlocksTable,
+  notesTable,
+  SqlBlocksViewsRepository,
+  SqlNotesBlocksRepository,
+  SqlNotesRepository,
+} from './SqlNotesRepository';
+import type { ISyncCtx } from './SqlNotesRepository';
+import { VaultChangesApplier } from './VaultContext/persistence/VaultChangesApplier/VaultChangesApplier';
 import type { NoteBlockDocType, NoteDocType } from './dexieTypes';
 import { omit } from 'lodash-es';
 
@@ -22,7 +33,9 @@ export class ImportExportService {
     private blocksViewsRepo: SqlBlocksViewsRepository,
   ) {}
 
-  import(importData: { data: { data: { tableName: string; rows: any[] }[] } }) {
+  importData(importData: {
+    data: { data: { tableName: string; rows: any[] }[] };
+  }) {
     const ctx: ISyncCtx = {
       shouldRecordChange: true,
       source: 'inDbChanges',
@@ -75,7 +88,7 @@ export class ImportExportService {
     });
   }
 
-  export() {
+  exportData() {
     return JSON.stringify({
       data: {
         data: [

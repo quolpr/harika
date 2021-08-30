@@ -1,4 +1,5 @@
-import { EditState, FocusedBlockState } from '@harika/web-core';
+import { FocusedBlockState } from '@harika/web-core';
+import type { EditState } from '@harika/web-core';
 import { comparer, computed } from 'mobx';
 import { useCallback } from 'react';
 import { useCurrentVault } from './useCurrentVault';

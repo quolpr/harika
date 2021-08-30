@@ -9,7 +9,7 @@ generates:
       - typescript-react-query
     config:
       fetcher: 
-        endpoint: '`${import.meta.env.SNOWPACK_PUBLIC_API_URL}/api/graphql`'
+        endpoint: '`${import.meta.env.VITE_PUBLIC_API_URL}/api/graphql`'
         fetchParams:
           headers:
             Content-Type: 'application/json'

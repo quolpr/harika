@@ -1,11 +1,8 @@
 import { autorun } from 'mobx';
 import { filter, map, Observable, takeUntil } from 'rxjs';
-import {
-  DatabaseChangeType,
-  INoteChangeEvent,
-  VaultDbTables,
-} from '../../../dexieTypes';
-import type { ITransmittedChange } from '../../../SqlNotesRepository.worker';
+import { DatabaseChangeType, VaultDbTables } from '../../../dexieTypes';
+import type { INoteChangeEvent } from '../../../dexieTypes';
+import type { ITransmittedChange } from '../../../SqlNotesRepository';
 import type {
   INoteTitleChange,
   NotesTreeModel,

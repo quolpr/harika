@@ -6,7 +6,8 @@ import {
 } from '@harika/web-core';
 import { observer } from 'mobx-react-lite';
 import { useEffect } from 'react';
-import { EMPTY, fromEvent, merge, OperatorFunction } from 'rxjs';
+import { EMPTY, fromEvent, merge } from 'rxjs';
+import type { OperatorFunction } from 'rxjs';
 import {
   distinctUntilChanged,
   filter,

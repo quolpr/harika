@@ -7,7 +7,8 @@ import {
   takeUntil,
 } from 'rxjs/operators';
 import { BroadcastChannel, createLeaderElection } from 'broadcast-channel';
-import Phoenix from 'phoenix';
+import type Phoenix from 'phoenix';
+import { Socket } from 'phoenix';
 
 export class ServerConnector {
   private socketSubject = new Subject<Phoenix.Socket>();
@@ -126,7 +127,7 @@ export class ServerConnector {
     const elector = createLeaderElection(channel);
 
     elector.awaitLeadership().then(async () => {
-      const socket = new Phoenix.Socket(this.url, {
+      const socket = new Socket(this.url, {
         params: { token: this.authToken },
       });
       socket.connect();

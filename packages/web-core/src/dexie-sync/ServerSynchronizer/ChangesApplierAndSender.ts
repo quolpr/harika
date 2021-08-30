@@ -1,8 +1,5 @@
-import {
-  ApplyNewChangesFromClientCommand,
-  CommandTypesFromClient,
-  DatabaseChangeType,
-} from '../../dexieTypes';
+import { CommandTypesFromClient, DatabaseChangeType } from '../../dexieTypes';
+import type { ApplyNewChangesFromClientCommand } from '../../dexieTypes';
 import type { CommandsExecuter } from '../CommandsExecuter';
 import {
   filter,
@@ -20,7 +17,7 @@ import type { Remote } from 'comlink';
 import type {
   ApplyChangesService,
   SyncRepository,
-} from '../../SqlNotesRepository.worker';
+} from '../../SqlNotesRepository';
 
 export class ChangesApplierAndSender {
   constructor(

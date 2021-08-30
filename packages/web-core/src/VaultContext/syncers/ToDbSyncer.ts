@@ -8,7 +8,7 @@ import type {
   SqlBlocksViewsRepository,
   SqlNotesBlocksRepository,
   SqlNotesRepository,
-} from '../../SqlNotesRepository.worker';
+} from '../../SqlNotesRepository';
 import type { NoteBlockModel } from '../domain/NoteBlockModel';
 import type { VaultModel } from '../NotesService';
 import { mapNote, mapNoteBlock, mapView } from './toDbDocsConverters';

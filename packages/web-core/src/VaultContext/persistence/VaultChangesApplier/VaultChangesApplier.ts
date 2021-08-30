@@ -1,24 +1,46 @@
-import {
-  IBlocksViewChangeEvent,
-  IDatabaseChange,
-  INoteBlockChangeEvent,
-  INoteChangeEvent,
-  VaultDbTables,
-} from '../../../dexieTypes';
+// import { VaultDbTables } from '../../../dexieTypes';
+// import type {
+//   IBlocksViewChangeEvent,
+//   IDatabaseChange,
+//   INoteBlockChangeEvent,
+//   INoteChangeEvent,
+// } from '../../../dexieTypes';
+// import type { IChangesApplier } from '../../../dexie-sync/ServerSynchronizer';
+// import { NoteblocksChangesApplier } from './NoteblocksChangesApplier';
+// import { NotesChangesApplier } from './NotesChangesApplier';
+// import { BlocksViewsChangesConflictResolver } from './BlocksViewsChangesApplier';
+// import {
+//   blocksViewsTable,
+//   DbChangesWriterService,
+//   noteBlocksTable,
+//   notesTable,
+//   SqlBlocksViewsRepository,
+//   SqlNotesBlocksRepository,
+//   SqlNotesRepository,
+// } from '../../../SqlNotesRepository';
+// import type { ISyncCtx } from '../../../SqlNotesRepository';
+
 import type { IChangesApplier } from '../../../dexie-sync/ServerSynchronizer';
-import { NoteblocksChangesApplier } from './NoteblocksChangesApplier';
-import { NotesChangesApplier } from './NotesChangesApplier';
-import { BlocksViewsChangesConflictResolver } from './BlocksViewsChangesApplier';
+import { VaultDbTables } from '../../../dexieTypes';
+import type {
+  IBlocksViewChangeEvent,
+  INoteChangeEvent,
+  INoteBlockChangeEvent,
+  IDatabaseChange,
+} from '../../../dexieTypes';
 import {
   blocksViewsTable,
   DbChangesWriterService,
-  ISyncCtx,
   noteBlocksTable,
   notesTable,
   SqlBlocksViewsRepository,
   SqlNotesBlocksRepository,
   SqlNotesRepository,
-} from '../../../SqlNotesRepository.worker';
+} from '../../../SqlNotesRepository';
+import type { ISyncCtx } from '../../../SqlNotesRepository';
+import { BlocksViewsChangesConflictResolver } from './BlocksViewsChangesApplier';
+import { NotesChangesApplier } from './NotesChangesApplier';
+import { NoteblocksChangesApplier } from './NoteblocksChangesApplier';
 
 export class VaultChangesApplier implements IChangesApplier {
   // private consistencyResolver: VaultDbConsistencyResolver;

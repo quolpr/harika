@@ -1,5 +1,5 @@
-import {
-  DatabaseChangeType,
+import { DatabaseChangeType } from '../dexieTypes';
+import type {
   ICreateChange,
   IDatabaseChange,
   IUpdateChange,

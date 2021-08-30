@@ -1,9 +1,9 @@
-import {
-  DatabaseChangeType,
+import { DatabaseChangeType } from '../../../dexieTypes';
+import type { NoteBlockDocType } from '../../../dexieTypes';
+import type {
   ICreateChange,
   IDeleteChange,
   IUpdateChange,
-  NoteBlockDocType,
 } from '../../../dexieTypes';
 import { cloneDeep } from 'lodash';
 import { difference, set, uniq } from 'lodash-es';

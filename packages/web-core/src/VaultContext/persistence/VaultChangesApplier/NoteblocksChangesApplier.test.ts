@@ -1,10 +1,10 @@
 import { expect } from '@esm-bundle/chai';
 import {
   DatabaseChangeType,
-  INoteBlockChangeEvent,
   NoteBlockDocType,
   VaultDbTables,
 } from '../../../dexieTypes';
+import type { INoteBlockChangeEvent } from '../../../dexieTypes';
 import { NoteblocksChangesApplier } from './NoteblocksChangesApplier';
 
 const updateChange = (

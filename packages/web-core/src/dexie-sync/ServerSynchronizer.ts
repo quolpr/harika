@@ -9,7 +9,7 @@ import type { Remote } from 'comlink';
 import type {
   ApplyChangesService,
   SyncRepository,
-} from '../SqlNotesRepository.worker';
+} from '../SqlNotesRepository';
 
 export interface IConsistencyResolver {
   resolve(): Promise<void>;

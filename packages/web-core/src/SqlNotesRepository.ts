@@ -5,7 +5,8 @@ import initSqlJs, {
 } from '@harika-org/sql.js';
 import { SQLiteFS } from 'absurd-sql';
 import IndexedDBBackend from 'absurd-sql/dist/indexeddb-backend';
-import { proxy, ProxyMarked } from 'comlink';
+import { proxy } from 'comlink';
+import type { ProxyMarked } from 'comlink';
 import Q from 'sql-bricks';
 import type {
   ICreateChange,
@@ -25,6 +26,7 @@ import dayjs from 'dayjs';
 import { v4 } from 'uuid';
 import type { IChangesApplier } from './dexie-sync/ServerSynchronizer';
 import type { Overwrite, Required } from 'utility-types';
+import sqlWasmUrl from '@harika-org/sql.js/dist/sql-wasm.wasm?url';
 
 // eslint-disable-next-line no-restricted-globals
 // const ctx: Worker = self as any;
@@ -222,7 +224,7 @@ class DB {
 
   async init(vaultId: string) {
     let SQL = await initSqlJs({
-      locateFile: (file: string) => `/sqljs/${file}`,
+      locateFile: () => sqlWasmUrl,
     });
 
     let sqlFS = new SQLiteFS(SQL.FS, new IndexedDBBackend());
