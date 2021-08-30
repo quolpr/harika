@@ -18,15 +18,7 @@ yarn sentry-cli releases set-commits "$VITE_PUBLIC_PACKAGE_VERSION" --auto
 
 echo "Building release:" $VITE_PUBLIC_PACKAGE_VERSION
 
-NODE_ENV=production yarn web-app build --polyfill-node
-
-yarn sentry-cli releases files "$VITE_PUBLIC_PACKAGE_VERSION" upload-sourcemaps packages/web-app/build/js \
-    --url-prefix '~/js'
+NODE_ENV=production yarn web-app build
 
 yarn sentry-cli releases finalize "$VITE_PUBLIC_PACKAGE_VERSION"
-
-rm -Rf packages/web-app/build/dist
-rm -Rf packages/web-app/build/_snowpack
-rm -Rf packages/web-app/build/@harika
-rm -Rf packages/web-app/build/**/*.map
 
