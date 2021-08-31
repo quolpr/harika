@@ -21,7 +21,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { getObjectDiff } from './dexie-sync/utils';
 import { BroadcastChannel } from 'broadcast-channel';
 import { buffer, debounceTime, Subject } from 'rxjs';
-import { mapValues, maxBy } from 'lodash-es';
+import { mapValues, maxBy, omit } from 'lodash-es';
 import dayjs from 'dayjs';
 import { v4 } from 'uuid';
 import type { IChangesApplier } from './dexie-sync/ServerSynchronizer';
@@ -54,11 +54,18 @@ Object.keys(or_methods).forEach(function (method) {
   };
 });
 
+// @ts-ignore
+Q['match'] = function (name: string, col: number, val: string) {
+  // @ts-ignore
+  return new Q.Binary('MATCH', col, val);
+}.bind(null, 'match');
+
 export const notesTable = 'notes' as const;
 export const noteBlocksTable = 'noteBlocks' as const;
 export const blocksViewsTable = 'blocksViews' as const;
-const noteBlocksNotesTable = 'noteBlocksNotes' as const;
-const noteBlocksContentTable = 'noteBlocksContent' as const;
+export const noteBlocksNotesTable = 'noteBlocksNotes' as const;
+export const notesFTSTable = 'notesFTS' as const;
+export const noteBlocksFTSTable = 'noteBlocksFTS' as const;
 
 //
 
@@ -168,7 +175,7 @@ export type VaultRow = {
   createdAt: number;
 };
 
-export type VaultDoc = VaultRow;
+export type VaultDoc = Omit<VaultRow, '_normalizedTitle'>;
 
 export interface ISyncCtx {
   shouldRecordChange: boolean;
@@ -216,7 +223,7 @@ type IChangeExtended = {
   source: 'inDomainChanges' | 'inDbChanges';
 };
 
-class DB {
+export class DB {
   sqlDb!: Database;
 
   private inTransaction: boolean = false;
@@ -331,36 +338,59 @@ class DB {
         createdAt INTEGER NOT NULL
       );
 
-      CREATE VIRTUAL TABLE IF NOT EXISTS ${noteBlocksContentTable} USING fts5(noteBlockId UNINDEXED, content, tokenize="trigram");
-
-      CREATE TRIGGER IF NOT EXISTS ${noteBlocksTable}_insertFTS AFTER INSERT ON ${noteBlocksTable} BEGIN
-        INSERT INTO ${noteBlocksContentTable}(noteBlockId, content) SELECT new.id, new.content;
-      END;
-
-      CREATE TRIGGER IF NOT EXISTS ${noteBlocksTable}_updateFTS AFTER UPDATE ON ${noteBlocksTable} BEGIN
-        DELETE FROM ${noteBlocksContentTable} WHERE noteBlockId = old.id;
-        INSERT INTO ${noteBlocksContentTable}(noteBlockId, content) SELECT new.id, new.content;
-      END;
-
-      CREATE TRIGGER IF NOT EXISTS ${noteBlocksTable}_deleteFTS AFTER DELETE ON ${noteBlocksTable} BEGIN
-        DELETE FROM ${noteBlocksContentTable} WHERE noteBlockId = old.id;
-      END;
-
-
       CREATE INDEX IF NOT EXISTS idx_note_blocks_noteId ON ${noteBlocksTable}(noteId);
     `);
+
+    this.sqlDb.exec(`
+      CREATE VIRTUAL TABLE IF NOT EXISTS ${noteBlocksFTSTable} USING fts5(id UNINDEXED, textContent, tokenize="trigram");
+    `);
+
+    this.sqlDb.exec(`
+      CREATE VIRTUAL TABLE IF NOT EXISTS ${notesFTSTable} USING fts5(id UNINDEXED, title, tokenize="trigram");
+    `);
+
+    // this.sqlDb.exec(`
+    //   CREATE VIRTUAL TABLE IF NOT EXISTS ${noteBlocksFTSTable} USING fts5(id UNINDEXED, textContent, content='${noteBlocksTable}', tokenize="trigram");
+
+    //   CREATE TRIGGER IF NOT EXISTS ${noteBlocksFTSTable}_insert AFTER INSERT ON ${noteBlocksTable} BEGIN
+    //     INSERT INTO ${noteBlocksFTSTable}(rowid, id, textContent) VALUES(new.rowid, new.id, new.textContent);
+    //   END;
+
+    //   CREATE TRIGGER IF NOT EXISTS ${noteBlocksFTSTable}_update AFTER UPDATE ON ${noteBlocksTable} BEGIN
+    //     INSERT INTO ${noteBlocksFTSTable}(${noteBlocksFTSTable}, rowid, id, textContent) VALUES ('delete', old.rowid, old.id, old.textContent);
+    //     INSERT INTO ${noteBlocksFTSTable}(rowid, id, textContent) VALUES(new.rowid, new.id, new.textContent);
+    //   END;
+
+    //   CREATE TRIGGER IF NOT EXISTS ${noteBlocksTable}_delete AFTER DELETE ON ${noteBlocksTable} BEGIN
+    //     INSERT INTO ${noteBlocksFTSTable}(${noteBlocksFTSTable}, id, rowid, textContent) VALUES ('delete', old.id, old.rowid, old.textContent);
+    //   END;
+    // `);
+
+    // this.sqlDb.exec(`
+    //   CREATE VIRTUAL TABLE IF NOT EXISTS ${notesFTSTable} USING fts5(id UNINDEXED, title, content='${notesTable}', tokenize="trigram");
+
+    //   CREATE TRIGGER IF NOT EXISTS ${notesFTSTable}_insert AFTER INSERT ON ${notesTable} BEGIN
+    //     INSERT INTO ${notesFTSTable}(rowid, id, title) VALUES(new.rowid, new.id, new.title);
+    //   END;
+
+    //   CREATE TRIGGER IF NOT EXISTS ${notesFTSTable}_update AFTER UPDATE ON ${notesTable} BEGIN
+    //     INSERT INTO ${notesFTSTable}(${notesFTSTable}, id, rowid, title) VALUES ('delete', old.id, old.rowid, old.title);
+    //     INSERT INTO ${noteBlocksFTSTable}(rowid, id, title) VALUES(new.rowid, new.id, new.title);
+    //   END;
+
+    //   CREATE TRIGGER IF NOT EXISTS ${noteBlocksTable}_delete AFTER DELETE ON ${notesTable} BEGIN
+    //     INSERT INTO ${notesFTSTable}(${notesFTSTable}, id, rowid, title) VALUES ('delete', old.id, old.rowid, old.title);
+    //   END;
+    // `);
 
     const sql = `
       CREATE TRIGGER IF NOT EXISTS populateNoteBlocksNotesTable_insert AFTER INSERT ON ${noteBlocksTable} BEGIN
         INSERT INTO ${noteBlocksNotesTable}(noteId, noteBlockId) SELECT j.value, new.id FROM json_each(new.linkedNoteIds) AS j;
       END;
 
+      -- after delete trigger on notes table is not required cause noteBlocks table is source of truth
       CREATE TRIGGER IF NOT EXISTS populateNoteBlocksNotesTable_deleteBlock AFTER DELETE ON ${noteBlocksTable} BEGIN
         DELETE FROM ${noteBlocksNotesTable} WHERE noteBlockId = old.id;
-      END;
-
-      CREATE TRIGGER IF NOT EXISTS populateNoteBlocksNotesTable_deleteNote AFTER DELETE ON ${notesTable} BEGIN
-        DELETE FROM ${noteBlocksNotesTable} WHERE noteId = old.id;
       END;
 
       CREATE TRIGGER IF NOT EXISTS populateNoteBlocksNotesTable_update AFTER UPDATE ON ${noteBlocksTable} BEGIN
@@ -434,7 +464,7 @@ class DB {
     return result;
   }
 
-  private sqlExec(sql: string, params?: BindParams): QueryExecResult[] {
+  sqlExec(sql: string, params?: BindParams): QueryExecResult[] {
     try {
       const startTime = performance.now();
       const res = this.sqlDb.exec(sql, params);
@@ -445,6 +475,7 @@ class DB {
         sql,
         params,
         `Time: ${((end - startTime) / 1000).toFixed(4)}s`,
+        res,
       );
 
       return res;
@@ -995,6 +1026,7 @@ export abstract class BaseSyncRepository<
       .map((row) => this.toDoc(row));
   }
 
+  // TODO: don't call as super. Make nullify() method instead
   toRow(doc: Doc): Row {
     return mapValues(doc, (v) => (v === undefined ? null : v)) as Row;
   }
@@ -1033,6 +1065,68 @@ export class SqlNotesBlocksRepository extends BaseSyncRepository<
   NoteBlockDocType,
   NoteBlockRow
 > {
+  bulkCreate(attrsArray: NoteBlockDocType[], ctx: ISyncCtx) {
+    return this.db.transaction(
+      () => {
+        const res = super.bulkCreate(attrsArray, ctx);
+
+        this.db.execQuery(
+          Q.insertInto(noteBlocksFTSTable).values(
+            res.map((row) => ({
+              id: row.id,
+              textContent: row.content.toLowerCase(),
+            })),
+          ),
+        );
+
+        return res;
+      },
+      { ...ctx, windowId: this.windowId },
+    );
+  }
+
+  bulkUpdate(records: NoteBlockDocType[], ctx: ISyncCtx) {
+    return this.db.transaction(
+      () => {
+        const res = super.bulkUpdate(records, ctx);
+
+        this.db.execQuery(
+          Q.deleteFrom(noteBlocksFTSTable).where(
+            Q.in(
+              'id',
+              res.map(({ id }) => id),
+            ),
+          ),
+        );
+        this.db.execQuery(
+          Q.insertInto(noteBlocksFTSTable).values(
+            res.map((row) => ({
+              id: row.id,
+              textContent: row.content.toLowerCase(),
+            })),
+          ),
+        );
+
+        return res;
+      },
+      { ...ctx, windowId: this.windowId },
+    );
+  }
+  bulkDelete(ids: string[], ctx: ISyncCtx) {
+    return this.db.transaction(
+      () => {
+        const res = super.bulkDelete(ids, ctx);
+
+        this.db.execQuery(
+          Q.deleteFrom(noteBlocksFTSTable).where(Q.in('id', ids)),
+        );
+
+        return res;
+      },
+      { ...ctx, windowId: this.windowId },
+    );
+  }
+
   getByNoteIds(ids: string[]) {
     const res = this.db.getRecords<NoteBlockRow>(
       Q.select().from(this.getTableName()).where(Q.in('noteId', ids)),
@@ -1087,21 +1181,25 @@ export class SqlNotesBlocksRepository extends BaseSyncRepository<
   }
 
   toRow(doc: NoteBlockDocType): NoteBlockRow {
-    return {
+    const res = {
       ...super.toRow(doc),
       noteBlockIds: JSON.stringify(doc.noteBlockIds),
       linkedNoteIds: JSON.stringify(doc.linkedNoteIds),
-      isRoot: doc.isRoot ? 1 : 0,
+      isRoot: doc.isRoot ? (1 as const) : (0 as const),
     };
+
+    return res;
   }
 
   toDoc(row: NoteBlockRow): NoteBlockDocType {
-    return {
+    const res = {
       ...super.toDoc(row),
       noteBlockIds: JSON.parse(row['noteBlockIds'] as string),
       linkedNoteIds: JSON.parse(row['linkedNoteIds'] as string),
       isRoot: Boolean(row.isRoot),
-    } as NoteBlockDocType;
+    };
+
+    return res;
   }
 }
 
@@ -1109,6 +1207,66 @@ export class SqlNotesRepository extends BaseSyncRepository<
   NoteDocType,
   NoteRow
 > {
+  bulkCreate(attrsArray: NoteDocType[], ctx: ISyncCtx) {
+    return this.db.transaction(
+      () => {
+        const res = super.bulkCreate(attrsArray, ctx);
+
+        this.db.execQuery(
+          Q.insertInto(notesFTSTable).values(
+            res.map((row) => ({
+              id: row.id,
+              title: row.title.toLowerCase(),
+            })),
+          ),
+        );
+
+        return res;
+      },
+      { ...ctx, windowId: this.windowId },
+    );
+  }
+
+  bulkUpdate(records: NoteDocType[], ctx: ISyncCtx) {
+    return this.db.transaction(
+      () => {
+        const res = super.bulkUpdate(records, ctx);
+
+        this.db.execQuery(
+          Q.deleteFrom(notesFTSTable).where(
+            Q.in(
+              'id',
+              res.map(({ id }) => id),
+            ),
+          ),
+        );
+        this.db.execQuery(
+          Q.insertInto(noteBlocksFTSTable).values(
+            res.map((row) => ({
+              id: row.id,
+              title: row.title.toLowerCase(),
+            })),
+          ),
+        );
+
+        return res;
+      },
+      { ...ctx, windowId: this.windowId },
+    );
+  }
+
+  bulkDelete(ids: string[], ctx: ISyncCtx) {
+    return this.db.transaction(
+      () => {
+        const res = super.bulkDelete(ids, ctx);
+
+        this.db.execQuery(Q.deleteFrom(notesFTSTable).where(Q.in('id', ids)));
+
+        return res;
+      },
+      { ...ctx, windowId: this.windowId },
+    );
+  }
   // TODO: move to getBy
   getByTitles(titles: string[]): NoteDocType[] {
     return this.db

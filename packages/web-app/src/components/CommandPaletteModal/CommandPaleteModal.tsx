@@ -10,9 +10,11 @@ import { paths } from '../../paths';
 import { useNotesService } from '../../contexts/CurrentNotesServiceContext';
 import { useCurrentVault } from '../../hooks/useCurrentVault';
 import { Modal, modalClass } from '../Modal/Modal';
-import { firstValueFrom } from 'rxjs';
+import { debounceTime, map, Observable, of, switchMap, tap } from 'rxjs';
 import { generateStackedNotePath } from '../../hooks/useNoteClick';
 import { usePrimaryNoteId } from '../../hooks/usePrimaryNote';
+import { useObservable, useObservableState } from 'observable-hooks';
+import type { NotesService } from '@harika/web-core';
 
 // Command executes on each user type and as result gives list of actions
 // Commands are start with `!`. If no `!` present - then search happen between all start view actions names
@@ -50,6 +52,91 @@ type IView = {
   actions: IAction[];
 };
 
+const spawnView = ([
+  inputCommandValue,
+  vaultModelId,
+  noteService,
+  startView,
+  locationSearch,
+  primaryNoteId,
+]: [
+  string,
+  string,
+  NotesService,
+  IView,
+  string,
+  string | undefined,
+]): Observable<IView> => {
+  if (inputCommandValue.startsWith('!findOrCreate')) {
+    const toFind = inputCommandValue
+      .trim()
+      .replace(/^!findOrCreate/, '')
+      .trim();
+
+    const createNoteAction: IAction = {
+      id: uuidv4(),
+      name: `Create note "${toFind}"`,
+      type: 'createNote',
+      noteName: toFind,
+    };
+
+    return (
+      toFind.length === 0 ? of([]) : noteService.findNotesOrBlocks$(toFind)
+    ).pipe(
+      map((rows) => {
+        return {
+          actions: [
+            ...rows.map(
+              ({ id, title }): IAction => ({
+                id,
+                name: title,
+                type: 'goToPage',
+                href: paths.vaultNotePath({
+                  vaultId: vaultModelId,
+                  noteId: id,
+                }),
+                stackHref:
+                  primaryNoteId &&
+                  generateStackedNotePath(
+                    locationSearch,
+                    vaultModelId,
+                    primaryNoteId,
+                    id,
+                  ),
+
+                highlight: toFind,
+              }),
+            ),
+            ...(toFind.length !== 0 ? [createNoteAction] : []),
+          ],
+        };
+      }),
+    );
+  } else {
+    const actualInputValue = inputCommandValue.trim();
+
+    return of(
+      actualInputValue.length !== 0
+        ? {
+            actions: startView.actions
+              .filter(
+                (action) =>
+                  action.name
+                    .toLowerCase()
+                    .indexOf(inputCommandValue.toLowerCase()) !== -1 ||
+                  ('commandToType' in action &&
+                    action.commandToType.indexOf(inputCommandValue) !== -1),
+              )
+              .map((action) => ({
+                ...action,
+                highlight: actualInputValue,
+              })),
+          }
+        : startView,
+    );
+  }
+};
+
 export const CommandPaletteModal = ({
   isOpened,
   onClose,
@@ -63,7 +150,7 @@ export const CommandPaletteModal = ({
 
   const history = useHistory();
   const vault = useCurrentVault();
-  const noteRepo = useNotesService();
+  const noteService = useNotesService();
   const [inputCommandValue, setInputCommandValue] = useState('!findOrCreate ');
 
   const startView: IView = React.useMemo(
@@ -87,106 +174,38 @@ export const CommandPaletteModal = ({
     [vault.$modelId],
   );
 
-  const [view, setView] = useState(startView);
+  const prevMousePosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const searchItemRefs = useRef<Record<string, HTMLElement>>({});
+
   const [focusedActionId, setActionCommandId] = useState<undefined | string>(
     startView.actions[0].id,
   );
+  const currentView$ = useObservable(
+    ($inputs) => {
+      return $inputs.pipe(
+        debounceTime(300),
+        switchMap((args) => spawnView(args)),
+        tap((view) => {
+          if (view.actions[0]) {
+            setActionCommandId(view.actions[0].id);
+          } else {
+            setActionCommandId(undefined);
+          }
+        }),
+      );
+    },
+    [
+      inputCommandValue,
+      vault.$modelId,
+      noteService,
+      startView,
+      location.search,
+      primaryNoteId,
+    ],
+  );
+
+  const view = useObservableState(currentView$, startView);
   const focusedIndex = view.actions.findIndex((n) => n.id === focusedActionId);
-
-  const prevMousePosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
-
-  const searchItemRefs = useRef<Record<string, HTMLElement>>({});
-
-  useEffect(() => {
-    // TODO: rxJS
-    const cb = async () => {
-      const newView = await (async (): Promise<IView> => {
-        if (inputCommandValue.startsWith('!findOrCreate')) {
-          const toFind = inputCommandValue
-            .trim()
-            .replace(/^!findOrCreate/, '')
-            .trim();
-
-          // TODO: to RxJS
-          const notes = (
-            await firstValueFrom(noteRepo.getAllNotesTuples$())
-          ).filter(({ title }) => title.toLowerCase().includes(toFind));
-
-          const createNoteAction: IAction = {
-            id: uuidv4(),
-            name: `Create note "${toFind}"`,
-            type: 'createNote',
-            noteName: toFind,
-          };
-          console.log(location.search);
-
-          return {
-            actions: [
-              ...notes.map(
-                ({ id, title }): IAction => ({
-                  id,
-                  name: title,
-                  type: 'goToPage',
-                  href: paths.vaultNotePath({
-                    vaultId: vault.$modelId,
-                    noteId: id,
-                  }),
-                  stackHref:
-                    primaryNoteId &&
-                    generateStackedNotePath(
-                      location.search,
-                      vault.$modelId,
-                      primaryNoteId,
-                      id,
-                    ),
-
-                  highlight: toFind,
-                }),
-              ),
-              ...(toFind.length !== 0 ? [createNoteAction] : []),
-            ],
-          };
-        } else {
-          const actualInputValue = inputCommandValue.trim();
-
-          return actualInputValue.length !== 0
-            ? {
-                actions: startView.actions
-                  .filter(
-                    (action) =>
-                      action.name
-                        .toLowerCase()
-                        .indexOf(inputCommandValue.toLowerCase()) !== -1 ||
-                      ('commandToType' in action &&
-                        action.commandToType.indexOf(inputCommandValue) !== -1),
-                  )
-                  .map((action) => ({
-                    ...action,
-                    highlight: actualInputValue,
-                  })),
-              }
-            : startView;
-        }
-      })();
-
-      setView(newView);
-
-      if (newView.actions[0]) {
-        setActionCommandId(newView.actions[0].id);
-      } else {
-        setActionCommandId(undefined);
-      }
-    };
-
-    cb();
-  }, [
-    inputCommandValue,
-    vault.$modelId,
-    noteRepo,
-    startView,
-    location.search,
-    primaryNoteId,
-  ]);
 
   const performAction = useCallback(
     async (action: IAction, isShift: boolean) => {
@@ -201,7 +220,7 @@ export const CommandPaletteModal = ({
           onClose();
           break;
         case 'createNote': {
-          const result = await noteRepo.createNote({
+          const result = await noteService.createNote({
             title: action.noteName,
           });
 
@@ -226,7 +245,7 @@ export const CommandPaletteModal = ({
           break;
       }
     },
-    [onClose, history, location.search, noteRepo, vault.$modelId],
+    [onClose, history, location.search, noteService, vault.$modelId],
   );
 
   useKey(

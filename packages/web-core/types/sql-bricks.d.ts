@@ -10,4 +10,8 @@ declare module 'sql-bricks' {
   interface InsertStatement {
     orReplace: () => InsertStatement;
   }
+
+  interface SqlBricksFn {
+    match(column: string | SelectStatement, value?: any): WhereBinary;
+  }
 }

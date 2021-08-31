@@ -1,21 +1,13 @@
-// import { expose, proxy } from 'comlink';
-// import { VaultChangesApplier } from './VaultContext/persistence/VaultChangesApplier/VaultChangesApplier';
-// import {
-//   BaseDbWorker,
-//   ApplyChangesService,
-//   SqlNotesRepository,
-//   SqlNotesBlocksRepository,
-//   DbChangesWriterService,
-//   SqlBlocksViewsRepository,
-// } from './SqlNotesRepository';
-
 import { expose, proxy } from 'comlink';
 import {
   ApplyChangesService,
   BaseDbWorker,
   blocksViewsTable,
+  DB,
   DbChangesWriterService,
+  noteBlocksFTSTable,
   noteBlocksTable,
+  notesFTSTable,
   notesTable,
   SqlBlocksViewsRepository,
   SqlNotesBlocksRepository,
@@ -25,6 +17,57 @@ import type { ISyncCtx } from './SqlNotesRepository';
 import { VaultChangesApplier } from './VaultContext/persistence/VaultChangesApplier/VaultChangesApplier';
 import type { NoteBlockDocType, NoteDocType } from './dexieTypes';
 import { omit } from 'lodash-es';
+import Q from 'sql-bricks';
+
+export class FindNoteOrBlockService {
+  constructor(
+    private db: DB, // private notesRepo: SqlNotesRepository, // private notesBlocksRepo: SqlNotesBlocksRepository,
+  ) {}
+
+  find(text: string) {
+    text = text.toLowerCase().trim();
+
+    const res = this.db.getRecords<{
+      id: string;
+      tableType: typeof notesTable | typeof noteBlocksTable;
+      data: string;
+    }>(
+      Q.select()
+        .from(
+          Q.select(
+            'id',
+            `bm25(${noteBlocksFTSTable}) rank`,
+            `'${noteBlocksTable}' tableType`,
+            Q.select('content')
+              .as('data')
+              .from(noteBlocksTable)
+              .where(Q(`id = ${noteBlocksFTSTable}.id`)),
+          )
+            .from(noteBlocksFTSTable)
+            // @ts-ignore
+            .where(Q.like('textContent', `%${text}%`))
+            .union(
+              Q.select(
+                'id',
+                `bm25(${notesFTSTable}) rank`,
+                `'${notesTable}' tableType`,
+                Q.select('title')
+                  .as('data')
+                  .from(notesTable)
+                  .where(Q(`id = ${notesFTSTable}.id`)),
+              )
+                .from(notesFTSTable)
+                .where(Q.like('title', `%${text}%`)),
+            ),
+        )
+        .orderBy('rank'),
+    );
+
+    console.log({ res });
+
+    return res;
+  }
+}
 
 export class ImportExportService {
   constructor(
@@ -144,6 +187,9 @@ export class VaultDbWorker extends BaseDbWorker {
 
   getBlocksViewsRepo() {
     return proxy(this.getBlocksViewRepoWithoutProxy());
+  }
+  getFindService() {
+    return proxy(new FindNoteOrBlockService(this.db));
   }
 
   getImportExportService() {

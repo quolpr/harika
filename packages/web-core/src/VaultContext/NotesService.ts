@@ -35,7 +35,11 @@ import type {
 } from '../SqlNotesRepository';
 import type { Remote } from 'comlink';
 import type { DbEventsService } from '../DbEventsService';
-import type { DeleteNoteService, ImportExportService } from '../VaultDb.worker';
+import type {
+  DeleteNoteService,
+  FindNoteOrBlockService,
+  ImportExportService,
+} from '../VaultDb.worker';
 
 export { NoteModel } from './domain/NoteModel';
 export { VaultModel } from './domain/VaultModel';
@@ -56,6 +60,7 @@ export class NotesService {
     private dbEventsService: DbEventsService,
     private importExportService: Remote<ImportExportService>,
     private deleteNoteService: Remote<DeleteNoteService>,
+    private findService: Remote<FindNoteOrBlockService>,
     public vault: VaultModel,
   ) {}
 
@@ -446,6 +451,23 @@ export class NotesService {
     );
   }
 
+  findNotesOrBlocks$(content: string) {
+    return from(
+      this.dbEventsService.liveQuery(
+        [VaultDbTables.Notes, VaultDbTables.NoteBlocks],
+        () => this.findService.find(content),
+        false,
+      ),
+    ).pipe(
+      map((rows) =>
+        rows.map((row) => ({
+          id: row.id,
+          title: row.data,
+          createdAt: new Date(),
+        })),
+      ),
+    );
+  }
   getAllNotesTuples$() {
     return from(
       this.dbEventsService.liveQuery([VaultDbTables.Notes], () =>
