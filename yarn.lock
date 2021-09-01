@@ -2695,10 +2695,9 @@ abort-controller@3.0.0:
   dependencies:
     event-target-shim "^5.0.0"
 
-absurd-sql@^0.0.53:
+absurd-sql@quolpr/absurd-sql#withDist:
   version "0.0.53"
-  resolved "https://registry.yarnpkg.com/absurd-sql/-/absurd-sql-0.0.53.tgz#e8c84cfd4cf32feb539a667f9f7afe4697c15740"
-  integrity sha512-oglPUqDOM9bqbFmeqX5dkJzfk3MccCiZ4MarcqNqonWmVIJuR+/tyEW6F766r3OiKz8H/omzI8Wdipt6NFXkFA==
+  resolved "https://codeload.github.com/quolpr/absurd-sql/tar.gz/80949bb486e0a0ed84884eac79040cf7e8700e22"
 
 accepts@^1.3.5:
   version "1.3.7"

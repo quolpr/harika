@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@harika-org/sql.js": "^1.6.6",
-    "absurd-sql": "^0.0.53",
+    "absurd-sql": "quolpr/absurd-sql#withDist",
     "broadcast-channel": "^3.7.0",
     "camelcase-keys": "^7.0.0",
     "comlink": "^4.3.1",
