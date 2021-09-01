@@ -439,7 +439,7 @@ export class NotesService {
   searchNotesTuples$(title: string) {
     return from(
       this.dbEventsService.liveQuery([VaultDbTables.Notes], () =>
-        this.notesRepository.findInTitle(title),
+        this.findService.findNote(title),
       ),
     ).pipe(
       map((rows) =>
@@ -461,7 +461,7 @@ export class NotesService {
     ).pipe(
       map((rows) =>
         rows.map((row) => ({
-          id: row.id,
+          id: row.noteId,
           title: row.data,
           createdAt: new Date(),
         })),

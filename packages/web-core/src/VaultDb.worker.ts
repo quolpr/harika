@@ -28,18 +28,23 @@ export class FindNoteOrBlockService {
     text = text.toLowerCase().trim();
 
     const res = this.db.getRecords<{
-      id: string;
+      noteId: string;
+      noteBlockId: string | null;
       tableType: typeof notesTable | typeof noteBlocksTable;
       data: string;
     }>(
       Q.select()
         .from(
           Q.select(
-            'id',
+            'id noteBlockId',
             `bm25(${noteBlocksFTSTable}) rank`,
             `'${noteBlocksTable}' tableType`,
             Q.select('content')
               .as('data')
+              .from(noteBlocksTable)
+              .where(Q(`id = ${noteBlocksFTSTable}.id`)),
+            Q.select('noteId')
+              .as('noteId')
               .from(noteBlocksTable)
               .where(Q(`id = ${noteBlocksFTSTable}.id`)),
           )
@@ -48,9 +53,10 @@ export class FindNoteOrBlockService {
             .where(Q.like('textContent', `%${text}%`))
             .union(
               Q.select(
-                'id',
+                'id noteId',
                 `bm25(${notesFTSTable}) rank`,
                 `'${notesTable}' tableType`,
+                'NULL as noteBlockId',
                 Q.select('title')
                   .as('data')
                   .from(notesTable)
@@ -63,7 +69,27 @@ export class FindNoteOrBlockService {
         .orderBy('rank'),
     );
 
-    console.log({ res });
+    return res;
+  }
+
+  findNote(text: string) {
+    text = text.toLowerCase().trim();
+
+    const res = this.db.getRecords<{
+      id: string;
+      title: string;
+    }>(
+      Q.select(
+        'id',
+        Q.select('title')
+          .as('title')
+          .from(notesTable)
+          .where(Q(`id = ${notesFTSTable}.id`)),
+      )
+        .from(notesFTSTable)
+        .where(Q.like('title', `%${text}%`))
+        .orderBy('rank'),
+    );
 
     return res;
   }

@@ -2,11 +2,19 @@ import React, { useRef } from 'react';
 import { isEqual } from 'lodash-es';
 import { useEffect, useMemo, useState } from 'react';
 import { BehaviorSubject, combineLatest, timer } from 'rxjs';
-import { debounce, distinctUntilChanged, filter, map } from 'rxjs/operators';
+import {
+  debounce,
+  distinctUntilChanged,
+  filter,
+  map,
+  switchMap,
+  tap,
+} from 'rxjs/operators';
 import { useNotesService } from '../../../contexts/CurrentNotesServiceContext';
 import { cn } from '../../../utils';
 import scrollIntoView from 'scroll-into-view-if-needed';
 import './styles.css';
+import { useObservable, useObservableState } from 'observable-hooks';
 
 export type SearchedNote = { id: string; title: string };
 export const noteAutocompleteClass = cn('note-autocomplete');
@@ -19,54 +27,34 @@ export const NoteTitleAutocomplete = React.memo(
     value: string | undefined;
     onSelect: (res: SearchedNote) => void;
   }) => {
-    const noteRepo = useNotesService();
+    const notesService = useNotesService();
 
     const [wasFirstSearchHappened, setWasFirstSearchHappened] = useState(false);
-
-    const [searchResults, setSearchResult] = useState<SearchedNote[]>([]);
-
     const [focusedId, setFocusedId] = useState<string | undefined>(undefined);
+    const itemsRef = useRef<Array<HTMLElement | null>>([]);
 
-    const subject = useMemo(
-      () => new BehaviorSubject<string | undefined>(undefined),
-      [],
+    const searchResult$ = useObservable(
+      ($inputs) => {
+        return $inputs.pipe(
+          distinctUntilChanged((a, b) => isEqual(a, b)),
+          debounce(() => timer(100)),
+          switchMap(([notesService, text]) =>
+            text ? notesService.searchNotesTuples$(text) : [],
+          ),
+          distinctUntilChanged((a, b) => isEqual(a, b)),
+          tap(() => {
+            setWasFirstSearchHappened(true);
+          }),
+        );
+      },
+      [notesService, value],
     );
 
-    const itemsRef = useRef<Array<HTMLElement | null>>([]);
+    const searchResults = useObservableState(searchResult$, []);
     const resultLength = searchResults.length;
     useEffect(() => {
       itemsRef.current = itemsRef.current.slice(0, resultLength);
     }, [resultLength]);
-
-    useEffect(() => {
-      const sub = combineLatest([
-        subject.pipe(
-          distinctUntilChanged(),
-          debounce(() => timer(100)),
-        ),
-        noteRepo.getAllNotesTuples$(),
-      ])
-        .pipe(
-          filter(([val]) => val !== undefined),
-          map((res) => res as [string, SearchedNote[]]),
-          map(([val, tuples]) =>
-            tuples.filter(({ title }) =>
-              title.toLowerCase().includes(val.toLowerCase()),
-            ),
-          ),
-          distinctUntilChanged(isEqual),
-        )
-        .subscribe((res) => {
-          setSearchResult(res);
-          setWasFirstSearchHappened(true);
-        });
-
-      return () => sub.unsubscribe();
-    }, [noteRepo, subject]);
-
-    useEffect(() => {
-      subject.next(value);
-    }, [subject, value]);
 
     useEffect(() => {
       if (!searchResults.find(({ id }) => id === focusedId)) {

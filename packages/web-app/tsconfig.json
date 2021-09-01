@@ -20,6 +20,7 @@
     "importsNotUsedAsValues": "error",
     "experimentalDecorators": true,
     "isolatedModules": true,
-    "esModuleInterop": false
+    "esModuleInterop": false,
+    "noImplicitAny": true
   }
 }
