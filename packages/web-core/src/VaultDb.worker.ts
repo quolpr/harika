@@ -53,14 +53,14 @@ export class FindNoteOrBlockService {
             .where(Q.like('textContent', `%${text}%`))
             .union(
               Q.select(
-                'id noteId',
+                'NULL as noteBlockId',
                 `bm25(${notesFTSTable}) rank`,
                 `'${notesTable}' tableType`,
-                'NULL as noteBlockId',
                 Q.select('title')
                   .as('data')
                   .from(notesTable)
                   .where(Q(`id = ${notesFTSTable}.id`)),
+                'id noteId',
               )
                 .from(notesFTSTable)
                 .where(Q.like('title', `%${text}%`)),

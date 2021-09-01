@@ -458,14 +458,6 @@ export class NotesService {
         () => this.findService.find(content),
         false,
       ),
-    ).pipe(
-      map((rows) =>
-        rows.map((row) => ({
-          id: row.noteId,
-          title: row.data,
-          createdAt: new Date(),
-        })),
-      ),
     );
   }
   getAllNotesTuples$() {

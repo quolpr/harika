@@ -87,13 +87,13 @@ const spawnView = ([
         return {
           actions: [
             ...rows.map(
-              ({ id, title }): IAction => ({
-                id,
-                name: title,
+              ({ noteId, noteBlockId, data }): IAction => ({
+                id: `${noteId}-${noteBlockId}`,
+                name: data,
                 type: 'goToPage',
                 href: paths.vaultNotePath({
                   vaultId: vaultModelId,
-                  noteId: id,
+                  noteId: noteId,
                 }),
                 stackHref:
                   primaryNoteId &&
@@ -101,7 +101,7 @@ const spawnView = ([
                     locationSearch,
                     vaultModelId,
                     primaryNoteId,
-                    id,
+                    noteId,
                   ),
 
                 highlight: toFind,
@@ -403,19 +403,13 @@ export const CommandPaletteModal = ({
                   )}
                   {action.type !== 'dummy' && (
                     <>
-                      {i < 9 && i !== focusedIndex && (
-                        <div className={commandPaletteModalClass('key')}>
-                          ⌘{i + 1}
-                        </div>
-                      )}
-                      {i === focusedIndex && (
+                      {i < 9 && (
                         <div
                           className={commandPaletteModalClass('key', {
-                            enter: true,
                             focused: action.id === focusedActionId,
                           })}
                         >
-                          <ReplyIcon style={{ width: 20 }} />
+                          ⌘{i + 1}
                         </div>
                       )}
                     </>
