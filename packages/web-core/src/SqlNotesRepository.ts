@@ -240,6 +240,13 @@ export class DB {
     SQL.FS.mkdir('/blocked');
     SQL.FS.mount(sqlFS, {}, '/blocked');
 
+    const path = `/blocked/${vaultId}.sqlite`;
+    if (typeof SharedArrayBuffer === 'undefined') {
+      let stream = SQL.FS.open(path, 'a+');
+      await stream.node.contents.readIfFallback();
+      SQL.FS.close(stream);
+    }
+
     this.sqlDb = new SQL.Database(`/blocked/${vaultId}.sqlite`, {
       filename: true,
     });

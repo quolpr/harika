@@ -2697,7 +2697,7 @@ abort-controller@3.0.0:
 
 absurd-sql@quolpr/absurd-sql#withDist:
   version "0.0.53"
-  resolved "https://codeload.github.com/quolpr/absurd-sql/tar.gz/fb0bbc4b37d76456b8a717865ce22bff52b552b4"
+  resolved "https://codeload.github.com/quolpr/absurd-sql/tar.gz/6126a9a4f1a29ceaf6cb1b51a846e49cbf126660"
   dependencies:
     safari-14-idb-fix "^1.0.4"
 
