@@ -38,6 +38,10 @@
     width: 100%;
     text-align: left;
 
+    word-wrap: break-word;
+    white-space: pre-wrap;
+    word-break: break-word;
+
     &--focused {
       @apply bg-pink-800;
     }
