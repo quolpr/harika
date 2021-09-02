@@ -27,13 +27,13 @@ export class ToDomainSyncer {
 
   start() {
     this.changes$.subscribe((evs) => {
-      console.log({ evs });
-
       evs = evs.filter(
         ({ windowId, source }) =>
           // we are going to pick all events except one that came from current mobx
           windowId !== this.currentWindowId || source === 'inDbChanges',
       );
+
+      console.log('New events need handle by mobx', JSON.stringify(evs));
 
       if (evs.length === 0) return;
 

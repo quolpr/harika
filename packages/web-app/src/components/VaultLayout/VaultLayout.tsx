@@ -127,15 +127,19 @@ export const VaultLayout: React.FC<{
 
         return;
       } else {
+        setNotesRepo(repo);
+
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         if ((window as any).__REDUX_DEVTOOLS_EXTENSION__) {
           closeDevtool = await (
             await import('../../connectReduxDevtool')
           ).connect(repo.vault, `Vault ${repo.vault.name}`);
         }
-      }
 
-      setNotesRepo(repo);
+        if (import.meta.env.MODE === 'production') {
+          (await import('../../connectSentry')).connectSentry(repo.vault);
+        }
+      }
     };
 
     cb();
