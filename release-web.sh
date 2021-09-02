@@ -20,5 +20,8 @@ echo "Building release:" $VITE_PUBLIC_PACKAGE_VERSION
 
 NODE_ENV=production yarn web-app build
 
+yarn sentry-cli releases files "$VITE_PUBLIC_PACKAGE_VERSION" upload-sourcemaps packages/web-app/dist/assets \
+    --url-prefix '~/assets'
+
 yarn sentry-cli releases finalize "$VITE_PUBLIC_PACKAGE_VERSION"
 
