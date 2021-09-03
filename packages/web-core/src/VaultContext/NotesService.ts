@@ -73,14 +73,7 @@ export class NotesService {
 
     this.vault.initializeNotesTree(
       (await this.notesRepository.getAll())
-        .filter(
-          ({ dailyNoteDate, title }) =>
-            !dailyNoteDate ||
-            // TODO: remove this hack. Only !dailyNoteDate check will be needed
-            (dailyNoteDate &&
-              dayjs(dailyNoteDate).format('D MMM YYYY') !== title),
-        )
-
+        .filter(({ dailyNoteDate, title }) => !dailyNoteDate)
         .map(({ id, title }) => ({
           id,
           title,
