@@ -24,6 +24,7 @@ import LeftArrow from '../../icons/left-arrow.svg?component';
 import RightArrow from '../../icons/right-arrow.svg?component';
 import { generateStackedNotePath } from '../../hooks/useNoteClick';
 import { paths } from '../../paths';
+import { useMedia } from 'react-use';
 
 export interface IFocusBlockState {
   focusOnBlockId: string;
@@ -141,6 +142,7 @@ const BacklinkedNotes = observer(({ note }: { note: NoteModel }) => {
 const noteClass = bem('note');
 
 const NoteBody = observer(({ note }: { note: NoteModel }) => {
+  const isWide = useMedia('(min-width: 768px)');
   const location = useLocation();
   const vault = useCurrentVault();
   const noteRepo = useNotesService();
@@ -275,7 +277,7 @@ const NoteBody = observer(({ note }: { note: NoteModel }) => {
             inputStyle={{
               fontWeight: 'bold',
               backgroundColor: 'transparent',
-              fontSize: 48,
+              fontSize: isWide ? 48 : 30,
               border: 'none',
               outline: 'none',
               boxShadow: 'none',

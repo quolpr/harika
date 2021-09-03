@@ -50,6 +50,8 @@
   &__key {
     @apply text-gray-500;
     margin-left: auto;
+    flex-shrink: 0;
+    margin-left: 0.2rem;
 
     &--enter {
       margin-right: 3px;

@@ -10,7 +10,16 @@ import { paths } from '../../paths';
 import { useNotesService } from '../../contexts/CurrentNotesServiceContext';
 import { useCurrentVault } from '../../hooks/useCurrentVault';
 import { Modal, modalClass } from '../Modal/Modal';
-import { debounceTime, map, Observable, of, switchMap, tap } from 'rxjs';
+import {
+  debounce,
+  debounceTime,
+  map,
+  Observable,
+  of,
+  switchMap,
+  tap,
+  timer,
+} from 'rxjs';
 import { generateStackedNotePath } from '../../hooks/useNoteClick';
 import { usePrimaryNoteId } from '../../hooks/usePrimaryNote';
 import { useObservable, useObservableState } from 'observable-hooks';
@@ -107,7 +116,10 @@ const spawnView = ([
                 highlight: toFind,
               }),
             ),
-            ...(toFind.length !== 0 ? [createNoteAction] : []),
+            ...(toFind.length === 0 ||
+            rows.find((r) => r.tableType === 'notes' && r.data === toFind)
+              ? []
+              : [createNoteAction]),
           ],
         };
       }),
@@ -160,7 +172,6 @@ export const CommandPaletteModal = ({
           id: uuidv4(),
           name: 'Daily note',
           type: 'goToPage',
-
           href: paths.vaultDailyPath({ vaultId: vault.$modelId }),
         },
         {
@@ -178,14 +189,17 @@ export const CommandPaletteModal = ({
   const searchItemRefs = useRef<Record<string, HTMLElement>>({});
 
   const [focusedActionId, setActionCommandId] = useState<undefined | string>(
-    startView.actions[0].id,
+    startView.actions?.[0]?.id,
   );
   const currentView$ = useObservable(
     ($inputs) => {
+      let wasFirstEmitHappened = false;
+
       return $inputs.pipe(
-        debounceTime(300),
+        debounce(() => timer(wasFirstEmitHappened ? 300 : 0)),
         switchMap((args) => spawnView(args)),
         tap((view) => {
+          wasFirstEmitHappened = true;
           if (view.actions[0]) {
             setActionCommandId(view.actions[0].id);
           } else {

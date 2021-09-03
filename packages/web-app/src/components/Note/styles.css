@@ -10,22 +10,36 @@
     align-items: center;
     justify-content: center;
 
-    @apply text-gray-100 text-3xl pb-4 font-bold;
+    @apply text-gray-100 pb-4 font-bold;
+
+    font-size: 1.875rem;
+
+    @media (min-width: 768px) {
+      font-size: 2rem;
+    }
   }
 
   &__leftArrow {
-    padding: 1rem;
-    margin-right: 3rem;
+    padding: 0.75rem;
+    margin-right: 0.5rem;
+    transform: scale(0.7);
+
+    @media (min-width: 768px) {
+      transform: scale(1);
+      padding: 1rem;
+      margin-right: 3rem;
+    }
   }
 
   &__rightArrow {
-    padding: 1rem;
-    margin-left: 3rem;
-  }
+    padding: 0.75rem;
+    margin-left: 0.5rem;
+    transform: scale(0.7);
 
-  @media (min-width: 768px) {
-    &__header {
-      @apply text-5xl;
+    @media (min-width: 768px) {
+      transform: scale(1);
+      padding: 1rem;
+      margin-left: 3rem;
     }
   }
 
@@ -41,7 +55,10 @@
     align-items: center;
     justify-content: center;
 
-    min-width: 21rem;
+    min-width: 12rem;
+    @media (min-width: 768px) {
+      min-width: 21rem;
+    }
   }
 
   &__linked-references {
