@@ -21,7 +21,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { getObjectDiff } from './dexie-sync/utils';
 import { BroadcastChannel } from 'broadcast-channel';
 import { buffer, debounceTime, Subject } from 'rxjs';
-import { mapValues, maxBy } from 'lodash-es';
+import { chunk, mapValues, maxBy } from 'lodash-es';
 import dayjs from 'dayjs';
 import { v4 } from 'uuid';
 import type { IChangesApplier } from './dexie-sync/ServerSynchronizer';
@@ -482,7 +482,6 @@ export class DB {
         sql,
         params,
         `Time: ${((end - startTime) / 1000).toFixed(4)}s`,
-        res,
       );
 
       return res;
@@ -497,15 +496,19 @@ export class DB {
     objs: Record<string, any>[],
     replace: boolean = false,
   ) {
-    let query = Q.insertInto(table).values(objs);
+    // sqlite max vars = 32766
+    // Let's take table columns count to 20, so 20 * 1000 will fit the restriction
+    chunk(objs, 1000).forEach((chunkObjs) => {
+      let query = Q.insertInto(table).values(chunkObjs);
 
-    if (replace) {
-      query = query.orReplace();
-    }
+      if (replace) {
+        query = query.orReplace();
+      }
 
-    const sql = query.toParams();
+      const sql = query.toParams();
 
-    return this.sqlExec(sql.text, sql.values);
+      this.sqlExec(sql.text, sql.values);
+    });
   }
 
   // TODO: add mapper for better performance
