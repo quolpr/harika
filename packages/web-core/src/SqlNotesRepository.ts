@@ -729,14 +729,14 @@ export class SyncRepository {
 
   createPull(pull: IChangesPullsRow, changes: IServerChangeDoc[]) {
     this.db.transaction(() => {
-      this.db.execQuery(Q.insertInto(serverChangesPullsTable).values(pull));
+      this.db.insertRecords(serverChangesPullsTable, [pull]);
 
       const rows = changes.map((ch): IServerChangeRow => {
         return this.serverChangeDocToRow(ch);
       });
 
       if (rows.length > 0) {
-        this.db.execQuery(Q.insertInto(serverChangesTable).values(rows));
+        this.db.insertRecords(serverChangesTable, rows);
       }
 
       this.updateSyncStatus({
@@ -1080,13 +1080,12 @@ export class SqlNotesBlocksRepository extends BaseSyncRepository<
       () => {
         const res = super.bulkCreate(attrsArray, ctx);
 
-        this.db.execQuery(
-          Q.insertInto(noteBlocksFTSTable).values(
-            res.map((row) => ({
-              id: row.id,
-              textContent: row.content.toLowerCase(),
-            })),
-          ),
+        this.db.insertRecords(
+          noteBlocksFTSTable,
+          res.map((row) => ({
+            id: row.id,
+            textContent: row.content.toLowerCase(),
+          })),
         );
 
         return res;
@@ -1108,13 +1107,13 @@ export class SqlNotesBlocksRepository extends BaseSyncRepository<
             ),
           ),
         );
-        this.db.execQuery(
-          Q.insertInto(noteBlocksFTSTable).values(
-            res.map((row) => ({
-              id: row.id,
-              textContent: row.content.toLowerCase(),
-            })),
-          ),
+
+        this.db.insertRecords(
+          noteBlocksFTSTable,
+          res.map((row) => ({
+            id: row.id,
+            textContent: row.content.toLowerCase(),
+          })),
         );
 
         return res;
@@ -1222,13 +1221,12 @@ export class SqlNotesRepository extends BaseSyncRepository<
       () => {
         const res = super.bulkCreate(attrsArray, ctx);
 
-        this.db.execQuery(
-          Q.insertInto(notesFTSTable).values(
-            res.map((row) => ({
-              id: row.id,
-              title: row.title.toLowerCase(),
-            })),
-          ),
+        this.db.insertRecords(
+          notesFTSTable,
+          res.map((row) => ({
+            id: row.id,
+            title: row.title.toLowerCase(),
+          })),
         );
 
         return res;
@@ -1250,13 +1248,13 @@ export class SqlNotesRepository extends BaseSyncRepository<
             ),
           ),
         );
-        this.db.execQuery(
-          Q.insertInto(notesFTSTable).values(
-            res.map((row) => ({
-              id: row.id,
-              title: row.title.toLowerCase(),
-            })),
-          ),
+
+        this.db.insertRecords(
+          notesFTSTable,
+          res.map((row) => ({
+            id: row.id,
+            title: row.title.toLowerCase(),
+          })),
         );
 
         return res;
