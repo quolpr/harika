@@ -2,7 +2,7 @@ import React, { useCallback, useRef, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 import { CalendarIcon } from '@heroicons/react/solid';
 import './styles.css';
-import * as dayjs from 'dayjs';
+import dayjs from 'dayjs';
 import Calendar from 'react-calendar';
 import clsx from 'clsx';
 import { useClickAway, useKey } from 'react-use';

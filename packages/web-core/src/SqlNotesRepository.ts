@@ -22,7 +22,7 @@ import { getObjectDiff } from './dexie-sync/utils';
 import { BroadcastChannel } from 'broadcast-channel';
 import { buffer, debounceTime, Subject } from 'rxjs';
 import { mapValues, maxBy } from 'lodash-es';
-import * as dayjs from 'dayjs';
+import dayjs from 'dayjs';
 import { v4 } from 'uuid';
 import type { IChangesApplier } from './dexie-sync/ServerSynchronizer';
 import type { Overwrite, Required } from 'utility-types';

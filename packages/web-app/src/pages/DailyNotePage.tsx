@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import * as dayjs from 'dayjs';
+import dayjs from 'dayjs';
 import { useHistory } from 'react-router-dom';
 import { useNotesService } from '../contexts/CurrentNotesServiceContext';
 import { useCurrentVault } from '../hooks/useCurrentVault';

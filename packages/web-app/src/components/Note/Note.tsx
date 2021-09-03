@@ -17,7 +17,7 @@ import { useObservable, useObservableState } from 'observable-hooks';
 import { map, of, switchMap, tap } from 'rxjs';
 import { comparer } from 'mobx';
 import AutosizeInput from 'react-input-autosize';
-import * as dayjs from 'dayjs';
+import dayjs from 'dayjs';
 import { bem } from '../../utils';
 
 import LeftArrow from '../../icons/left-arrow.svg?component';
