@@ -37,6 +37,7 @@ const importSentry = async () => {
       // of transactions for performance monitoring.
       // We recommend adjusting this value in production
       tracesSampleRate: 1.0,
+      normalizeDepth: 10,
     });
   }
 };
