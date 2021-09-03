@@ -31,7 +31,7 @@ export class VaultsService {
 
     console.debug(`Init vaults for dbId ${this.dbId}`);
 
-    const { worker, terminate } = await getDbWorker<UserDbWorker>(
+    const { worker } = await getDbWorker<UserDbWorker>(
       dbName,
       windowId,
       'user',
@@ -137,7 +137,7 @@ export class VaultsService {
 
     const dbName = `vault_${id}`;
 
-    const { worker, terminate } = await getDbWorker<VaultDbWorker>(
+    const { worker } = await getDbWorker<VaultDbWorker>(
       dbName,
       windowId,
       'vault',

@@ -67,3 +67,32 @@ export function useDeepMemo<TKey, TValue>(
 
   return ref.current.value;
 }
+
+export const bem = (block: string) => {
+  return (element?: string, modifications?: Record<string, boolean>) => {
+    let result = block;
+
+    if (element) {
+      return result + `__${element}`;
+    }
+
+    if (modifications) {
+      let tmp = '';
+
+      Object.entries(modifications).forEach(([k, v]) => {
+        if (v) {
+          // kebab case
+          tmp += `${result}--${k} `;
+        }
+      });
+
+      result = ` ${tmp}`.trim();
+    }
+
+    return result;
+  };
+};
+
+export const bemCombine = (...classes: string[]) => {
+  return classes.join(' ');
+};

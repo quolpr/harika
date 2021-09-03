@@ -33,40 +33,46 @@ export class FindNoteOrBlockService {
       tableType: typeof notesTable | typeof noteBlocksTable;
       data: string;
     }>(
+      // Only in nested selects order will work
       Q.select()
         .from(
-          Q.select(
-            'id noteBlockId',
-            `bm25(${noteBlocksFTSTable}) rank`,
-            `'${noteBlocksTable}' tableType`,
-            Q.select('content')
-              .as('data')
-              .from(noteBlocksTable)
-              .where(Q(`id = ${noteBlocksFTSTable}.id`)),
-            Q.select('noteId')
-              .as('noteId')
-              .from(noteBlocksTable)
-              .where(Q(`id = ${noteBlocksFTSTable}.id`)),
-          )
-            .from(noteBlocksFTSTable)
-            // @ts-ignore
-            .where(Q.like('textContent', `%${text}%`))
-            .union(
+          Q.select()
+            .from(
               Q.select(
                 'NULL as noteBlockId',
-                `bm25(${notesFTSTable}) rank`,
                 `'${notesTable}' tableType`,
                 Q.select('title')
                   .as('data')
                   .from(notesTable)
                   .where(Q(`id = ${notesFTSTable}.id`)),
                 'id noteId',
+                `bm25(${notesFTSTable}) rank`,
               )
                 .from(notesFTSTable)
                 .where(Q.like('title', `%${text}%`)),
+            )
+            .union(
+              Q.select().from(
+                Q.select(
+                  'id noteBlockId',
+                  `'${noteBlocksTable}' tableType`,
+                  Q.select('content')
+                    .as('data')
+                    .from(noteBlocksTable)
+                    .where(Q(`id = ${noteBlocksFTSTable}.id`)),
+                  Q.select('noteId')
+                    .as('noteId')
+                    .from(noteBlocksTable)
+                    .where(Q(`id = ${noteBlocksFTSTable}.id`)),
+                  `bm25(${noteBlocksFTSTable}) rank`,
+                )
+                  .from(noteBlocksFTSTable)
+                  // @ts-ignore
+                  .where(Q.like('textContent', `%${text}%`)),
+              ),
             ),
         )
-        .orderBy('rank'),
+        .orderBy(`CASE tableType WHEN '${notesTable}' THEN 0 ELSE 1 END, rank`),
     );
 
     return res;

@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { NoteModel, FocusedBlockState, toObserver } from '@harika/web-core';
 import { computed } from 'mobx';
-import { useHistory } from 'react-router-dom';
+import { useHistory, useLocation } from 'react-router-dom';
 import { LinkIcon } from '@heroicons/react/solid';
 import { useCurrentVault } from '../../hooks/useCurrentVault';
 import { CurrentBlockInputRefContext } from '../../contexts';
@@ -16,6 +16,14 @@ import { uniq } from 'lodash-es';
 import { useObservable, useObservableState } from 'observable-hooks';
 import { map, of, switchMap, tap } from 'rxjs';
 import { comparer } from 'mobx';
+import AutosizeInput from 'react-input-autosize';
+import * as dayjs from 'dayjs';
+import { bem } from '../../utils';
+
+import LeftArrow from '../../icons/left-arrow.svg?component';
+import RightArrow from '../../icons/right-arrow.svg?component';
+import { generateStackedNotePath } from '../../hooks/useNoteClick';
+import { paths } from '../../paths';
 
 export interface IFocusBlockState {
   focusOnBlockId: string;
@@ -130,7 +138,10 @@ const BacklinkedNotes = observer(({ note }: { note: NoteModel }) => {
   );
 });
 
+const noteClass = bem('note');
+
 const NoteBody = observer(({ note }: { note: NoteModel }) => {
+  const location = useLocation();
   const vault = useCurrentVault();
   const noteRepo = useNotesService();
   const history = useHistory<IFocusBlockState>();
@@ -189,20 +200,96 @@ const NoteBody = observer(({ note }: { note: NoteModel }) => {
     }
   });
 
+  const isDailyNote = note.dailyNoteDate !== undefined;
+
+  const handleArrowClick = useCallback(
+    async (ev: React.MouseEvent, direction: 'next' | 'prev') => {
+      if (!note.dailyNoteDate) return;
+
+      const noteDate = dayjs.unix(note.dailyNoteDate / 1000);
+
+      console.log(note.dailyNoteDate, { noteDate });
+
+      const result = await (async () => {
+        if (direction === 'next') {
+          return await noteRepo.getOrCreateDailyNote(noteDate.add(1, 'day'));
+        } else {
+          return await noteRepo.getOrCreateDailyNote(
+            noteDate.subtract(1, 'day'),
+          );
+        }
+      })();
+
+      if (result.status === 'ok') {
+        if ((ev.nativeEvent as MouseEvent).shiftKey && note.$modelId) {
+          history.replace(
+            generateStackedNotePath(
+              location.search,
+              vault.$modelId,
+              note.$modelId,
+              result.data.$modelId,
+            ),
+          );
+        } else {
+          history.replace(
+            paths.vaultNotePath({
+              vaultId: vault.$modelId,
+              noteId: result.data.$modelId,
+            }) + location.search,
+          );
+        }
+      }
+    },
+    [
+      history,
+      location.search,
+      note.$modelId,
+      note.dailyNoteDate,
+      noteRepo,
+      vault.$modelId,
+    ],
+  );
+
   return (
-    <div className="note">
-      <h2 className="note__header">
+    <div className={noteClass()}>
+      <h2 className={noteClass('header')}>
         <label htmlFor={inputId} className="hidden-label">
           Note title
         </label>
-        <input
-          id={inputId}
-          className="note__input"
-          value={noteTitle}
-          onBlur={changeTitle}
-          onChange={handleChange}
-          onKeyDown={handleKeyDown}
-        />
+        {isDailyNote && note.dailyNoteDate && (
+          <button
+            className={noteClass('leftArrow')}
+            onClick={(e) => handleArrowClick(e, 'prev')}
+          >
+            <LeftArrow />
+          </button>
+        )}
+        <div className={noteClass('inputBox')}>
+          <AutosizeInput
+            disabled={isDailyNote}
+            id={inputId}
+            value={noteTitle}
+            onBlur={changeTitle}
+            onChange={handleChange}
+            onKeyDown={handleKeyDown}
+            inputStyle={{
+              fontWeight: 'bold',
+              backgroundColor: 'transparent',
+              fontSize: 48,
+              border: 'none',
+              outline: 'none',
+              boxShadow: 'none',
+            }}
+          />
+        </div>
+        {isDailyNote && (
+          <button
+            className={noteClass('rightArrow')}
+            onClick={(e) => handleArrowClick(e, 'next')}
+          >
+            <RightArrow />
+          </button>
+        )}
       </h2>
 
       {view && <NoteBlocks note={note} view={view} />}

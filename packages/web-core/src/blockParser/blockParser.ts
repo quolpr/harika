@@ -1,6 +1,7 @@
 import { mapTokens } from './astHelpers';
 import { parse as pegParse } from './pegParser';
-import { find, FindResultHash } from 'linkifyjs';
+import { find } from 'linkifyjs';
+import type { FindResultHash } from 'linkifyjs';
 import type { Token } from './types';
 
 declare module 'linkifyjs' {

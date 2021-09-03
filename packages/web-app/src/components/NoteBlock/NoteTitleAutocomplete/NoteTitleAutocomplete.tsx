@@ -1,15 +1,8 @@
 import React, { useRef } from 'react';
 import { isEqual } from 'lodash-es';
-import { useEffect, useMemo, useState } from 'react';
-import { BehaviorSubject, combineLatest, timer } from 'rxjs';
-import {
-  debounce,
-  distinctUntilChanged,
-  filter,
-  map,
-  switchMap,
-  tap,
-} from 'rxjs/operators';
+import { useEffect, useState } from 'react';
+import { timer } from 'rxjs';
+import { debounce, distinctUntilChanged, switchMap, tap } from 'rxjs/operators';
 import { useNotesService } from '../../../contexts/CurrentNotesServiceContext';
 import { cn } from '../../../utils';
 import scrollIntoView from 'scroll-into-view-if-needed';

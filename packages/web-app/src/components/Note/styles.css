@@ -6,7 +6,21 @@
   @apply pb-5 pt-5;
 
   &__header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
     @apply text-gray-100 text-3xl pb-4 font-bold;
+  }
+
+  &__leftArrow {
+    padding: 1rem;
+    margin-right: 3rem;
+  }
+
+  &__rightArrow {
+    padding: 1rem;
+    margin-left: 3rem;
   }
 
   @media (min-width: 768px) {
@@ -22,20 +36,12 @@
   &__bullet {
   }
 
-  &__input {
-    @apply font-bold;
+  &__inputBox {
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
-    width: 100%;
-
-    background-color: transparent;
-
-    border: none;
-    overflow: auto;
-    outline: none;
-
-    box-shadow: none;
-
-    resize: none; /*remove the resize handle on the bottom right*/
+    min-width: 21rem;
   }
 
   &__linked-references {

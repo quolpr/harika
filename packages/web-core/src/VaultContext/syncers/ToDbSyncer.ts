@@ -1,4 +1,4 @@
-import type { Remote, UnproxyOrClone } from 'comlink';
+import type { Remote } from 'comlink';
 import { uniq } from 'lodash-es';
 import type { Patch, Path } from 'mobx-keystone';
 import { Subject } from 'rxjs';

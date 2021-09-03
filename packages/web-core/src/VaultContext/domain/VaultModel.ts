@@ -9,7 +9,7 @@ import { VaultUiState } from './VaultUiState';
 import { newTreeModel, NotesTreeModel } from './NotesTree/NotesTreeModel';
 import type { PartialNote } from './NotesTree/NotesTreeModel';
 import { BlocksTreeHolder, NoteBlockModel } from './NoteBlockModel';
-import dayjs from 'dayjs';
+import * as dayjs from 'dayjs';
 
 @model(vaultModelType)
 export class VaultModel extends Model({

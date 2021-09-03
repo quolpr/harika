@@ -26,7 +26,7 @@ import {
   convertViewToModelAttrs,
 } from './syncers/toDomainModelsConverters';
 import { NotesChangesTrackerService } from './services/notes-tree/NotesChangesTrackerService';
-import dayjs from 'dayjs';
+import * as dayjs from 'dayjs';
 import { toObserver } from '../toObserver';
 import type {
   SqlBlocksViewsRepository,

@@ -13,7 +13,7 @@ import DownloadIcon from '../../icons/download.svgr.svg?component';
 import { NotesTree } from './NotesTree';
 import { useNotesService } from '../../contexts/CurrentNotesServiceContext';
 import download from 'downloadjs';
-import dayjs from 'dayjs';
+import * as dayjs from 'dayjs';
 
 const sidebarClass = cn('sidebar');
 

@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import './styles.css';
-import { ChevronRightIcon, ReplyIcon } from '@heroicons/react/solid';
+import { ChevronRightIcon } from '@heroicons/react/solid';
 import Highlighter from 'react-highlight-words';
 import { Link, useHistory, useLocation } from 'react-router-dom';
 import { cn } from '../../utils';

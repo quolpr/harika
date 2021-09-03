@@ -1,9 +1,6 @@
 import { expect } from '@esm-bundle/chai';
-import {
-  DatabaseChangeType,
-  NoteBlockDocType,
-  VaultDbTables,
-} from '../../../dexieTypes';
+import { DatabaseChangeType, VaultDbTables } from '../../../dexieTypes';
+import type { NoteBlockDocType } from '../../../dexieTypes';
 import type { INoteBlockChangeEvent } from '../../../dexieTypes';
 import { NoteblocksChangesApplier } from './NoteblocksChangesApplier';
 
