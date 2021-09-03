@@ -54,7 +54,7 @@ export const convertNoteDocToModelAttrs = (doc: NoteDocType): NoteData => {
   return {
     $modelId: doc.id,
     title: doc.title,
-    dailyNoteDate: doc.dailyNoteDate ? doc.dailyNoteDate : new Date().getTime(),
+    dailyNoteDate: doc.dailyNoteDate ? doc.dailyNoteDate : undefined,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
   };

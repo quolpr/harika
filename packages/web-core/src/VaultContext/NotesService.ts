@@ -88,6 +88,23 @@ export class NotesService {
     );
   }
 
+  async fixDailyNotes() {
+    await this.notesRepository.bulkUpdate(
+      (
+        await this.notesRepository.getAll()
+      ).map((rec) => {
+        return rec.dailyNoteDate &&
+          dayjs(rec.dailyNoteDate).format('D MMM YYYY') !== rec.title
+          ? { ...rec, dailyNoteDate: null }
+          : rec;
+      }),
+      {
+        shouldRecordChange: true,
+        source: 'inDbChanges',
+      },
+    );
+  }
+
   async updateNoteTitle(noteId: string, newTitle: string) {
     const exists = await this.isNoteExists(newTitle);
 

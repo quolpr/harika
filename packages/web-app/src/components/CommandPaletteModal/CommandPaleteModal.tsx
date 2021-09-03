@@ -117,7 +117,11 @@ const spawnView = ([
               }),
             ),
             ...(toFind.length === 0 ||
-            rows.find((r) => r.tableType === 'notes' && r.data === toFind)
+            rows.find(
+              (r) =>
+                r.tableType === 'notes' &&
+                r.data.toLowerCase() === toFind.toLowerCase(),
+            )
               ? []
               : [createNoteAction]),
           ],
@@ -148,6 +152,8 @@ const spawnView = ([
     );
   }
 };
+
+const emptyView = { actions: [] };
 
 export const CommandPaletteModal = ({
   isOpened,
@@ -199,6 +205,8 @@ export const CommandPaletteModal = ({
         debounce(() => timer(wasFirstEmitHappened ? 300 : 0)),
         switchMap((args) => spawnView(args)),
         tap((view) => {
+          console.log({ view });
+
           wasFirstEmitHappened = true;
           if (view.actions[0]) {
             setActionCommandId(view.actions[0].id);
@@ -218,7 +226,7 @@ export const CommandPaletteModal = ({
     ],
   );
 
-  const view = useObservableState(currentView$, startView);
+  const view = useObservableState(currentView$, emptyView);
   const focusedIndex = view.actions.findIndex((n) => n.id === focusedActionId);
 
   const performAction = useCallback(

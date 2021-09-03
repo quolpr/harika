@@ -1248,7 +1248,7 @@ export class SqlNotesRepository extends BaseSyncRepository<
           ),
         );
         this.db.execQuery(
-          Q.insertInto(noteBlocksFTSTable).values(
+          Q.insertInto(notesFTSTable).values(
             res.map((row) => ({
               id: row.id,
               title: row.title.toLowerCase(),
