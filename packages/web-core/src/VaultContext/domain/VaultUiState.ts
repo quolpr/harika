@@ -1,8 +1,8 @@
 import { model, Model, modelAction, prop } from 'mobx-keystone';
 import type { ModelCreationData } from 'mobx-keystone';
-import { blocksTreeHolderRef } from './NoteBlockModel';
 import type { NoteModel } from './NoteModel';
 import { BlocksViewModel } from './VaultUiState/BlocksViewModel';
+import {blocksTreeHolderRef} from "./BlocksTreeHolder";
 
 export interface EditState {
   isFocused: boolean;

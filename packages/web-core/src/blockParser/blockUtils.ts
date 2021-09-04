@@ -3,7 +3,7 @@ import { NoteBlockModel, VaultModel } from '../VaultContext/NotesService';
 import { BlockContentModel } from '../VaultContext/domain/NoteBlockModel/BlockContentModel';
 import { parseStringToTree } from './parseStringToTree';
 import type { TreeToken } from './parseStringToTree';
-import type { BlocksTreeHolder } from '../VaultContext/domain/NoteBlockModel';
+import {BlocksTreeHolder} from "../VaultContext/domain/BlocksTreeHolder";
 
 export const normalizeBlockTree = (str: string) => {
   const parsed = parseStringToTree(str);

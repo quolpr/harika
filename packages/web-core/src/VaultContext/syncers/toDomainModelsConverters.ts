@@ -1,6 +1,5 @@
 import type { ModelCreationData } from 'mobx-keystone';
 import {
-  blocksTreeHolderRef,
   NoteBlockModel,
   noteBlockRef,
 } from '../domain/NoteBlockModel';
@@ -12,6 +11,7 @@ import type {
 } from '../../dexieTypes';
 import { BlockContentModel } from '../domain/NoteBlockModel/BlockContentModel';
 import type { BlocksViewModel } from '../domain/VaultUiState/BlocksViewModel';
+import {blocksTreeHolderRef} from "../domain/BlocksTreeHolder";
 
 export type NoteData = ModelCreationData<NoteModel> & {
   $modelId: string;

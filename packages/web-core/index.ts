@@ -10,3 +10,6 @@ export * from './src/VaultContext/domain/NotesTree/NotesTreeModel';
 export * from './src/VaultContext/domain/NotesTree/TreeNodeModel';
 export * from './src/VaultContext/domain/NoteBlockModel';
 export * from './src/toObserver';
+export {BlocksTreeHolder} from "./src/VaultContext/domain/BlocksTreeHolder";
+export {blocksTreeHolderRef} from "./src/VaultContext/domain/BlocksTreeHolder";
+export {treeHolderType} from "./src/VaultContext/domain/BlocksTreeHolder";

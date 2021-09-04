@@ -1,7 +1,7 @@
 import { comparer, computed } from 'mobx';
 import { model, Model, modelAction, prop, Ref } from 'mobx-keystone';
 import { normalizeBlockTree } from '../../../blockParser/blockUtils';
-import type { BlocksTreeHolder } from '../NoteBlockModel';
+import {BlocksTreeHolder} from "../BlocksTreeHolder";
 
 @model('harika/BlocksViewModel')
 export class BlocksViewModel extends Model({

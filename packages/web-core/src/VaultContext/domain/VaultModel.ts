@@ -8,8 +8,9 @@ import { BlockContentModel } from './NoteBlockModel/BlockContentModel';
 import { VaultUiState } from './VaultUiState';
 import { newTreeModel, NotesTreeModel } from './NotesTree/NotesTreeModel';
 import type { PartialNote } from './NotesTree/NotesTreeModel';
-import { BlocksTreeHolder, NoteBlockModel } from './NoteBlockModel';
+import { NoteBlockModel } from './NoteBlockModel';
 import dayjs from 'dayjs';
+import {BlocksTreeHolder} from "./BlocksTreeHolder";
 
 @model(vaultModelType)
 export class VaultModel extends Model({
