@@ -280,7 +280,7 @@ export class ToDbSyncer {
     );
 
     await this.blocksViewsRepository.bulkCreateOrUpdate(
-      viewToUpdateIds.map((id) => mapView(this.vault.ui.blocksViewsMap[id])),
+      viewToUpdateIds.map((id) => mapView(this.vault.ui.blocksUiStateMap[id])),
       {
         shouldRecordChange: true,
         source: 'inDomainChanges' as const,

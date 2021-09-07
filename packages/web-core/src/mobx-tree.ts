@@ -6,16 +6,16 @@ export type ITreeNode<T> = T & {
   path: ITreeNode<T>[];
   orderPosition: number;
   siblings: ITreeNode<T>[];
-  move(parent: ITreeNode<T>, pos: number | 'start' | 'end'): void;
-  spliceChild(
-    start: number,
-    deleteCount?: number,
-    ...nodes: ITreeNode<T>[]
-  ): void;
+  // move(parent: ITreeNode<T>, pos: number | 'start' | 'end'): void;
+  // spliceChild(
+  //   start: number,
+  //   deleteCount?: number,
+  //   ...nodes: ITreeNode<T>[]
+  // ): void;
   indent: number;
   hasChildren: boolean;
   isRoot: boolean;
-  textContent: string;
+  // textContent: string;
 
   deepLastRightChild: ITreeNode<T>;
   flattenTree: ITreeNode<T>[];
@@ -30,10 +30,10 @@ export type ITreeNode<T> = T & {
   nearestRightToParent: ITreeNode<T> | undefined;
   allRightSiblings: ITreeNode<T>[];
 
-  getStringTree(includeId: boolean, indent: number): string;
+  // getStringTree(includeId: boolean, indent: number): string;
 
-  mergeToLeftAndDelete(): ITreeNode<T> | undefined;
-  handleMerge(from: ITreeNode<T>, to: ITreeNode<T>): void;
+  // mergeToLeftAndDelete(): ITreeNode<T> | undefined;
+  // handleMerge(from: ITreeNode<T>, to: ITreeNode<T>): void;
 };
 
 // for performance optimization
@@ -71,30 +71,6 @@ export function siblingsFunc<K extends IModel>(
   }
 
   return parent.children;
-}
-
-export function moveFunc<K extends IModel>(
-  node: ITreeNode<K>,
-  parent: ITreeNode<K>,
-  pos: number | 'start' | 'end',
-) {
-  if (!node.parent) {
-    throw new Error("Can't move root block");
-  }
-
-  node.parent.spliceChild(node.orderPosition, 1);
-
-  const newPos = (() => {
-    if (pos === 'start') {
-      return 0;
-    } else if (pos === 'end') {
-      return parent.children.length;
-    } else {
-      return pos;
-    }
-  })();
-
-  node.parent.spliceChild(newPos, node.orderPosition, node);
 }
 
 export function indentFunc<K extends IModel>(node: ITreeNode<K>) {
@@ -177,30 +153,20 @@ export function allRightSiblingsFunc<T extends IModel>(node: ITreeNode<T>) {
   return siblings.slice(index + 1);
 }
 
-export function getStringTreeFunc<T extends IModel>(
-  node: ITreeNode<T>,
-  includeId: boolean,
-  indent: number,
-): string {
-  let str = node.isRoot
-    ? ''
-    : `${'  '.repeat(indent)}- ${node.textContent}${
-        includeId ? ` [#${node.$modelId}]` : ''
-      }\n`;
+// export function getStringTreeFunc<T extends IModel>(
+//   node: ITreeNode<T>,
+//   includeId: boolean,
+//   indent: number,
+// ): string {
+//   let str = node.isRoot
+//     ? ''
+//     : `${'  '.repeat(indent)}- ${node.textContent}${
+//         includeId ? ` [#${node.nodeId}]` : ''
+//       }\n`;
 
-  node.children.forEach((node) => {
-    str += node.getStringTree(includeId, node.isRoot ? 0 : indent + 1);
-  });
+//   node.children.forEach((node) => {
+//     str += node.getStringTree(includeId, node.isRoot ? 0 : indent + 1);
+//   });
 
-  return str;
-}
-
-export function mergeToLeftAndDeleteFunc<T extends IModel>(node: ITreeNode<T>) {
-  const [left] = node.leftAndRight;
-
-  if (!left) return;
-
-  node.handleMerge(node, left);
-
-  return left;
-}
+//   return str;
+// }

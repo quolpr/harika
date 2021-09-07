@@ -416,7 +416,7 @@ export class NotesService {
       docs.map((doc) => convertViewToModelAttrs(doc)),
     );
 
-    this.vault.ui.createViewsByModels(note, models);
+    this.vault.ui.createBlockStateByModels(note, models);
   }
 
   async preloadOrCreateBlocksView(

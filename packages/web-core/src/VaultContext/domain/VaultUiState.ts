@@ -2,7 +2,8 @@ import { model, Model, modelAction, prop } from 'mobx-keystone';
 import type { ModelCreationData } from 'mobx-keystone';
 import type { NoteModel } from './NoteModel';
 import { BlocksViewModel } from './VaultUiState/BlocksViewModel';
-import {blocksTreeHolderRef} from "./BlocksTreeHolder";
+import { blocksTreeHolderRef } from './BlocksTreeHolder';
+import { BlocksUIState } from './BlocksTreeView/BlocksTreeNodeModel';
 
 export interface EditState {
   isFocused: boolean;
@@ -63,18 +64,21 @@ export class FocusedBlock extends Model({
 @model('VaultUiState')
 export class VaultUiState extends Model({
   focusedBlock: prop<FocusedBlock>(() => new FocusedBlock({})),
-  blocksViewsMap: prop<Record<string, BlocksViewModel>>(() => ({})),
+  blocksUiStateMap: prop<Record<string, BlocksUIState>>(() => ({})),
 }) {
-  getView(note: NoteModel, model: { $modelId: string; $modelType: string }) {
+  getBlockState(
+    note: NoteModel,
+    model: { $modelId: string; $modelType: string },
+  ) {
     const key = `${note.$modelId}-${model.$modelType}-${model.$modelId}`;
 
-    if (!this.blocksViewsMap[key]) return undefined;
+    if (!this.blocksUiStateMap[key]) return undefined;
 
-    return this.blocksViewsMap[key];
+    return this.blocksUiStateMap[key];
   }
 
   @modelAction
-  createViewsByModels(
+  createBlockStateByModels(
     note: NoteModel,
     models: { $modelId: string; $modelType: string }[],
   ) {
@@ -88,16 +92,15 @@ export class VaultUiState extends Model({
   ) {
     const key = `${note.$modelId}-${model.$modelType}-${model.$modelId}`;
 
-    if (this.blocksViewsMap[key]) return this.blocksViewsMap[key];
+    if (this.blocksUiStateMap[key]) return this.blocksUiStateMap[key];
 
-    this.blocksViewsMap[key] = new BlocksViewModel({
+    this.blocksUiStateMap[key] = new BlocksUIState({
       $modelId: key,
-      blockTreeHolderRef: blocksTreeHolderRef(note.$modelId),
       scopedModelId: model.$modelId,
       scopedModelType: model.$modelType,
     });
 
-    return this.blocksViewsMap[key];
+    return this.blocksUiStateMap[key];
   }
 
   @modelAction
@@ -107,16 +110,16 @@ export class VaultUiState extends Model({
     })[],
   ) {
     blocksViewAttrs.forEach((attr) => {
-      if (this.blocksViewsMap[attr.$modelId]) {
+      if (this.blocksUiStateMap[attr.$modelId]) {
         if (
           attr.collapsedBlockIds !== undefined &&
           attr.collapsedBlockIds !== null
         ) {
-          this.blocksViewsMap[attr.$modelId].collapsedBlockIds =
+          this.blocksUiStateMap[attr.$modelId].collapsedBlockIds =
             attr.collapsedBlockIds;
         }
       } else {
-        this.blocksViewsMap[attr.$modelId] = new BlocksViewModel(attr);
+        this.blocksUiStateMap[attr.$modelId] = new BlocksViewModel(attr);
       }
     });
   }

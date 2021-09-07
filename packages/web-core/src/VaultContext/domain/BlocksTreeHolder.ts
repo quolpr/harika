@@ -20,9 +20,10 @@ import { NoteBlockModel, noteBlockRef } from './NoteBlockModel';
 import type { TreeToken } from '../../blockParser/parseStringToTree';
 import { addTokensToNoteBlock } from '../../blockParser/blockUtils';
 import type {
-  BlocksViewNodeModel,
-  ViewTreeHolder,
+  BlocksViewModel,
+  BlocksUIState,
 } from './BlocksTreeView/BlocksTreeNodeModel';
+import type { NoteModel } from './NoteModel';
 
 export const treeHolderType = 'harika/BlocksTreeHolder';
 
@@ -84,10 +85,14 @@ export class BlocksTreeHolder extends Model({
 export class NoteBlocksApp extends Model({
   noteId: prop<string>(),
   blockTreeHolder: prop<BlocksTreeHolder>(),
-  viewTreeHolder: prop<ViewTreeHolder>(),
+  blockUIStates: prop<Record<string, BlocksUIState>>(),
 }) {
-  getView(id: string): BlocksViewNodeModel {
-    return this.viewTreeHolder.nodesMap[id];
+  getView(note: NoteModel, model: { $modelId: string; $modelType: string }) {
+    const key = `${note.$modelId}-${model.$modelType}-${model.$modelId}`;
+
+    if (!this.blockUIStates[key]) return undefined;
+
+    return this.blockUIStates[key];
   }
 
   getLinkedBlocksOfNoteId(noteId: string) {
@@ -187,43 +192,5 @@ export class NoteBlocksApp extends Model({
     }
 
     return this.blockTreeHolder.blocksMap[attr.$modelId];
-  }
-
-  @modelAction
-  injectNewTreeTokens(block: NoteBlockModel, tokens: TreeToken[]) {
-    return addTokensToNoteBlock(this.blockTreeHolder, block, tokens);
-  }
-
-  @modelAction
-  injectNewRightBlock(block: NoteBlockModel, content: string) {
-    if (!block.parent) {
-      throw new Error("Can't inject from root block");
-    }
-
-    const { injectTo, parent } = (() => {
-      if (this.getView(block.$modelId).children.length > 0) {
-        return {
-          injectTo: 0,
-          parent: block,
-        };
-      } else {
-        return {
-          injectTo: block.orderPosition + 1,
-          parent: block.parent,
-        };
-      }
-    })();
-
-    const newNoteBlock = this.createBlock(
-      {
-        content: new BlockContentModel({ value: content }),
-        isRoot: false,
-        updatedAt: new Date().getTime(),
-      },
-      parent,
-      injectTo,
-    );
-
-    return newNoteBlock;
   }
 }

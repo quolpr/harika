@@ -12,29 +12,23 @@ import {
 } from 'mobx-keystone';
 import { comparer, computed } from 'mobx';
 import { isEqual } from 'lodash-es';
-import { BlockContentModel } from './NoteBlockModel/BlockContentModel';
-import type { BlocksViewModel } from './VaultUiState/BlocksViewModel';
-import type { TreeToken } from '../../blockParser/parseStringToTree';
-import { addTokensToNoteBlock } from '../../blockParser/blockUtils';
-import { isTodo } from '../../blockParser/astHelpers';
 import type { BlocksTreeHolder } from './BlocksTreeHolder';
 import { treeHolderType } from './BlocksTreeHolder';
 import {
   allRightSiblingsFunc,
   deepLastRightChildFunc,
   flattenTreeFunc,
-  getStringTreeFunc,
   indentFunc,
   ITreeNode,
   leftAndRightFunc,
   leftAndRightSiblingFunc,
-  mergeToLeftAndDeleteFunc,
-  moveFunc,
   nearestRightToParentFunc,
   orderHashFunc,
   pathFunc,
   siblingsFunc,
 } from '../../mobx-tree';
+import type { BlockContentModel } from './NoteBlockModel/BlockContentModel';
+import { isTodo } from '../../blockParser/astHelpers';
 
 const isTreeHolder = (obj: any): obj is BlocksTreeHolder => {
   return obj.$modelType === treeHolderType;
@@ -79,6 +73,11 @@ export class NoteBlockModel
   })
   implements ITreeNode<NoteBlockModel>
 {
+  @computed
+  get nodeId() {
+    return this.$modelId;
+  }
+
   @computed
   get treeHolder() {
     return findParent<BlocksTreeHolder>(this, isTreeHolder)!;
@@ -167,13 +166,6 @@ export class NoteBlockModel
     return allRightSiblingsFunc(this);
   }
 
-  getStringTree(
-    includeId: boolean = false,
-    indent = this.isRoot ? -1 : 0,
-  ): string {
-    return getStringTreeFunc(this, includeId, indent);
-  }
-
   @computed({ equals: comparer.shallow })
   get noteBlockIds() {
     return this.noteBlockRefs.map(({ id }) => id);
@@ -194,12 +186,23 @@ export class NoteBlockModel
 
   @modelAction
   move(parent: NoteBlockModel, pos: number | 'start' | 'end') {
-    moveFunc(this, parent, pos);
-  }
+    if (!this.parent) {
+      throw new Error("Can't move root block");
+    }
 
-  @modelAction
-  mergeToLeftAndDelete(): NoteBlockModel | undefined {
-    return mergeToLeftAndDeleteFunc(this);
+    this.parent.spliceChild(this.orderPosition, 1);
+
+    const newPos = (() => {
+      if (pos === 'start') {
+        return 0;
+      } else if (pos === 'end') {
+        return parent.children.length;
+      } else {
+        return pos;
+      }
+    })();
+
+    this.parent.spliceChild(newPos, this.orderPosition, this);
   }
 
   @modelAction
@@ -230,75 +233,6 @@ export class NoteBlockModel
         ...noteBlockRefs,
       );
     }
-  }
-
-  @modelAction
-  tryMoveLeft() {
-    if (!this.parent) {
-      throw new Error("Can't move root block");
-    }
-
-    const [left] = this.leftAndRight;
-
-    if (!left) return;
-
-    if (!left.parent) {
-      throw new Error("Left couldn't be root block");
-    }
-
-    if (left === this.parent) {
-      // If left block is parent
-
-      this.move(left.parent, left.orderPosition);
-    } else if (left.parent !== this.parent) {
-      // If left is child of child of child...
-
-      this.move(left.parent, left.orderPosition + 1);
-    } else {
-      // if same level
-
-      this.move(this.parent, left.orderPosition);
-    }
-  }
-
-  @modelAction
-  tryMoveRight() {
-    let [, right] = this.leftAndRightSibling;
-
-    if (!right) {
-      right = this.nearestRightToParent;
-    }
-
-    if (!right) return;
-
-    if (!right.parent) {
-      throw new Error("Right couldn't be root block");
-    }
-
-    if (right.noteBlockRefs.length) {
-      this.move(right, 'start');
-    } else {
-      this.move(right.parent, right.orderPosition);
-    }
-  }
-
-  @modelAction
-  tryMoveUp() {
-    const [left] = this.leftAndRightSibling;
-
-    if (left) {
-      this.move(left, 'end');
-    }
-  }
-
-  @modelAction
-  tryMoveDown() {
-    const parentRef = this.parent;
-    const parentOfParent = parentRef?.parent;
-
-    if (!parentRef || !parentOfParent) return;
-
-    this.move(parentOfParent, parentRef.orderPosition + 1);
   }
 
   @modelAction
@@ -356,28 +290,6 @@ export class NoteBlockModel
   }
 
   @modelAction
-  toggleTodo(id: string, toggledIds: string[] = []): string[] {
-    const token = this.content.getTokenById(id);
-
-    if (!token || !isTodo(token)) return [];
-
-    if (this.content.firstTodoToken?.id === id) {
-      this.noteBlockRefs.forEach((blockRef) => {
-        const firstTodo = blockRef.current.content.firstTodoToken;
-
-        if (firstTodo && firstTodo.ref === token.ref)
-          blockRef.current.toggleTodo(firstTodo.id, toggledIds);
-      });
-    }
-
-    this.content.toggleTodo(id);
-
-    toggledIds.push(this.$modelId);
-
-    return toggledIds;
-  }
-
-  @modelAction
   delete(recursively = true, links = true) {
     if (recursively) {
       this.noteBlockRefs.forEach((block) => block.current.delete(true, links));
@@ -403,5 +315,27 @@ export class NoteBlockModel
         this.linkedNoteIds.push(noteId);
       }
     });
+  }
+
+  @modelAction
+  toggleTodo(id: string, toggledIds: string[] = []): string[] {
+    const token = this.content.getTokenById(id);
+
+    if (!token || !isTodo(token)) return [];
+
+    if (this.content.firstTodoToken?.id === id) {
+      this.children.forEach((view) => {
+        const firstTodo = view.content.firstTodoToken;
+
+        if (firstTodo && firstTodo.ref === token.ref)
+          view.toggleTodo(firstTodo.id, toggledIds);
+      });
+    }
+
+    this.content.toggleTodo(id);
+
+    toggledIds.push(this.$modelId);
+
+    return toggledIds;
   }
 }
