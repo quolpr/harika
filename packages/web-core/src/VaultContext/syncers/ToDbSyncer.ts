@@ -9,7 +9,7 @@ import type {
   SqlNotesBlocksRepository,
   SqlNotesRepository,
 } from '../../SqlNotesRepository';
-import type { NoteBlockModel } from '../domain/NoteBlockModel';
+import type { NoteBlockModel } from '../domain/NoteBlocksApp/NoteBlockModel';
 import type { VaultModel } from '../NotesService';
 import { mapNote, mapNoteBlock, mapView } from './toDbDocsConverters';
 
@@ -279,13 +279,15 @@ export class ToDbSyncer {
       mapNoteBlock(this.vault.getNoteBlock(id)!),
     );
 
-    await this.blocksViewsRepository.bulkCreateOrUpdate(
-      viewToUpdateIds.map((id) => mapView(this.vault.ui.blocksUiStateMap[id])),
-      {
-        shouldRecordChange: true,
-        source: 'inDomainChanges' as const,
-      },
-    );
+    // await this.blocksViewsRepository.bulkCreateOrUpdate(
+    //   viewToUpdateIds.map((id) =>
+    //     mapView(this.vault.noteBlocksApp.blocksUiStateMap[id]),
+    //   ),
+    //   {
+    //     shouldRecordChange: true,
+    //     source: 'inDomainChanges' as const,
+    //   },
+    // );
   };
 
   private applier = <T extends Record<string, unknown> & { id: string }>(

@@ -37,11 +37,11 @@ export class ToDomainSyncer {
 
       if (evs.length === 0) return;
 
-      const blockViews = this.getViews(evs);
+      // const blockViews = this.getViews(evs);
 
-      if (blockViews.length > 0) {
-        this.vault.ui.createOrUpdateEntitiesFromAttrs(blockViews);
-      }
+      // if (blockViews.length > 0) {
+      //   this.vault.ui.createOrUpdateEntitiesFromAttrs(blockViews);
+      // }
 
       const notesChanges = this.getNoteChanges(evs);
       const blockChanges = this.getBlockChanges(evs);
@@ -97,7 +97,7 @@ export class ToDomainSyncer {
 
         if (
           ev.type === DatabaseChangeType.Create &&
-          this.vault.isBlockTreeHolderExists(ev.obj.noteId)
+          this.vault.areBlocksOfNoteLoaded(ev.obj.noteId)
         ) {
           return convertNoteBlockDocToModelAttrs(ev.obj);
         } else if (ev.type === DatabaseChangeType.Delete && noteBlock) {
@@ -108,7 +108,7 @@ export class ToDomainSyncer {
         } else if (
           ev.type === DatabaseChangeType.Update &&
           (noteBlock ||
-            (ev.to.noteId && this.vault.isBlockTreeHolderExists(ev.to.noteId)))
+            (ev.to.noteId && this.vault.areBlocksOfNoteLoaded(ev.to.noteId)))
         ) {
           if (!ev.obj) throw new Error('obj should be present');
 

@@ -1,17 +1,13 @@
 import {
-  customRef,
-  detach,
-  findParent,
   model,
   Model,
   modelAction,
   prop,
+  rootRef,
   tProp,
   types,
 } from 'mobx-keystone';
 import type { ModelCreationData } from 'mobx-keystone';
-import { isVault } from './utils';
-import type { VaultModel } from './VaultModel';
 
 export interface INoteLoadStatus {
   areBlockLinksLoaded: boolean;
@@ -19,30 +15,7 @@ export interface INoteLoadStatus {
   areNoteLinksLoaded: boolean;
 }
 
-export const noteRef = customRef<NoteModel>('harika/NoteRef', {
-  // this works, but we will use getRefId() from the Todo class instead
-  // getId(maybeTodo) {
-  //   return maybeTodo instanceof Todo ? maybeTodo.id : undefined
-  // },
-
-  resolve(ref) {
-    const vault = findParent<VaultModel>(this, isVault);
-
-    if (!vault) {
-      return undefined;
-    }
-
-    return vault.notesMap[ref.id];
-  },
-
-  onResolvedValueChange(ref, newTodo, oldTodo) {
-    if (oldTodo && !newTodo) {
-      // if the todo value we were referencing disappeared then remove the reference
-      // from its parent
-      detach(ref);
-    }
-  },
-});
+export const noteRef = rootRef<NoteModel>('harika/NoteRef');
 
 const modelType = 'harika/NoteModel' as const;
 

@@ -1,36 +1,16 @@
 import { computed } from 'mobx';
 import {
-  customRef,
-  detach,
   findParent,
   Model,
   model,
   modelAction,
   prop,
   Ref,
+  rootRef,
 } from 'mobx-keystone';
-import { isNotesTree } from '../utils';
 import { NotesTreeModel, notesTreeModelType } from './NotesTreeModel';
 
-export const nodeRef = customRef<TreeNodeModel>('harika/NotesTree/nodeRef', {
-  resolve(ref) {
-    const notesTree = findParent<NotesTreeModel>(this, isNotesTree);
-
-    if (!notesTree) {
-      return undefined;
-    }
-
-    return notesTree.nodesMap[ref.id];
-  },
-
-  onResolvedValueChange(ref, newTodo, oldTodo) {
-    if (oldTodo && !newTodo) {
-      // if the todo value we were referencing disappeared then remove the reference
-      // from its parent
-      detach(ref);
-    }
-  },
-});
+export const nodeRef = rootRef<TreeNodeModel>('harika/NotesTree/nodeRef');
 
 @model('harika/NotesTree/TreeNodeModel')
 export class TreeNodeModel extends Model({

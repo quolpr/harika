@@ -32,46 +32,35 @@ const LinkedBlock = observer(
     const currentNote = useCurrentNote()!;
     const noteRepo = useNotesService();
 
-    const view = computed(() => {
-      return vault.ui.getView(currentNote, noteBlock);
-    }).get();
+    return <></>;
+    // <div key={noteBlock.$modelId} className="backlinked-note__noteblock-root">
+    //   {path.length > 1 && (
+    //     <div className="backlinked-note__noteblock-path">
+    //       {path.slice(1).map((n, i) => (
+    //         <div
+    //           className={clsx('backlinked-note__noteblock-path-step', {
+    //             'backlinked-note__noteblock-path-step--last':
+    //               i === path.length - 1,
+    //           })}
+    //           key={n.$modelId}
+    //         >
+    //           {n.content.value.trim().length === 0
+    //             ? '[blank]'
+    //             : n.content.value}
+    //         </div>
+    //       ))}
+    //     </div>
+    //   )}
 
-    useEffect(() => {
-      if (!view) {
-        noteRepo.preloadOrCreateBlocksView(currentNote, noteBlock);
-      }
-    });
-
-    return (
-      <div key={noteBlock.$modelId} className="backlinked-note__noteblock-root">
-        {path.length > 1 && (
-          <div className="backlinked-note__noteblock-path">
-            {path.slice(1).map((n, i) => (
-              <div
-                className={clsx('backlinked-note__noteblock-path-step', {
-                  'backlinked-note__noteblock-path-step--last':
-                    i === path.length - 1,
-                })}
-                key={n.$modelId}
-              >
-                {n.content.value.trim().length === 0
-                  ? '[blank]'
-                  : n.content.value}
-              </div>
-            ))}
-          </div>
-        )}
-
-        {view && (
-          <NoteBlocksHandlers
-            note={note}
-            view={view}
-            blocksTreeHolder={treeHolder}
-          />
-        )}
-        {view && <NoteBlock noteBlock={noteBlock} view={view} />}
-      </div>
-    );
+    //   {view && (
+    //     <NoteBlocksHandlers
+    //       note={note}
+    //       view={view}
+    //       blocksTreeHolder={treeHolder}
+    //     />
+    //   )}
+    //   {view && <NoteBlock noteBlock={noteBlock} noteBlock={view} />}
+    // </div>
   },
 );
 

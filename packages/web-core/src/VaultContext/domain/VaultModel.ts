@@ -4,35 +4,27 @@ import { NoteModel } from './NoteModel';
 import type { Optional, Required } from 'utility-types';
 import { vaultModelType } from './consts';
 import { generateId } from '../../generateId';
-import { BlockContentModel } from './NoteBlockModel/BlockContentModel';
-import { VaultUiState } from './VaultUiState';
 import { newTreeModel, NotesTreeModel } from './NotesTree/NotesTreeModel';
 import type { PartialNote } from './NotesTree/NotesTreeModel';
-import { NoteBlockModel } from './NoteBlockModel';
+import type { NoteBlockModel } from './NoteBlocksApp/NoteBlockModel';
 import dayjs from 'dayjs';
-import {BlocksTreeHolder} from "./BlocksTreeHolder";
+import { NoteBlocksApp } from './NoteBlocksApp/NoteBlocksApp';
 
 @model(vaultModelType)
 export class VaultModel extends Model({
   name: prop<string>(),
+  // TODO: notes registry
   notesMap: prop<Record<string, NoteModel>>(() => ({})),
   // Key is noteId
-  blocksTreeHoldersMap: prop<Record<string, BlocksTreeHolder>>(() => ({})),
-  ui: prop<VaultUiState>(() => new VaultUiState({})),
+  noteBlocksApp: prop<NoteBlocksApp>(() => new NoteBlocksApp({})),
   notesTree: prop<NotesTreeModel>(() => newTreeModel()),
 }) {
-  isBlockTreeHolderExists(noteId: string) {
-    return Boolean(this.blocksTreeHoldersMap[noteId]);
+  areBlocksOfNoteLoaded(noteId: string) {
+    return this.noteBlocksApp.areBlocksOfNoteLoaded(noteId);
   }
 
-  getNoteBlock(blockId: string) {
-    for (const treeHolder of Object.values(this.blocksTreeHoldersMap)) {
-      const block = treeHolder.blocksMap[blockId];
-
-      if (block) return block;
-    }
-
-    return undefined;
+  getNoteBlock(id: string) {
+    return this.noteBlocksApp.getNoteBlock(id);
   }
 
   @modelAction
@@ -55,17 +47,6 @@ export class VaultModel extends Model({
 
     const noteId = generateId();
 
-    const rootBlock = new NoteBlockModel({
-      $modelId: generateId(),
-      createdAt: new Date().getTime(),
-      updatedAt: new Date().getTime(),
-      noteId: noteId,
-      noteBlockRefs: [],
-      content: new BlockContentModel({ value: '' }),
-      linkedNoteIds: [],
-      isRoot: true,
-    });
-
     const note = new NoteModel({
       $modelId: noteId,
       createdAt: new Date().getTime(),
@@ -80,21 +61,12 @@ export class VaultModel extends Model({
 
     this.notesMap[note.$modelId] = note;
 
-    const treeHolder = new BlocksTreeHolder({
-      blocksMap: { [rootBlock.$modelId]: rootBlock },
-      noteId: noteId,
-    });
-    this.blocksTreeHoldersMap[treeHolder.noteId] = treeHolder;
+    const treeRegistry = this.noteBlocksApp.createNewRegistry(
+      note.$modelId,
+      options,
+    );
 
-    if (options.addEmptyBlock) {
-      treeHolder.createBlock(
-        { content: new BlockContentModel({ value: '' }), isRoot: false },
-        rootBlock,
-        0,
-      );
-    }
-
-    return { note, treeHolder };
+    return { note, treeRegistry };
   }
 
   @modelAction
@@ -106,7 +78,7 @@ export class VaultModel extends Model({
     blocksAttrs: (ModelCreationData<NoteBlockModel> & {
       $modelId: string;
     })[],
-    createTreeHolder: boolean,
+    createBlocksRegistry: boolean,
   ) {
     // console.debug(
     //   'createOrUpdateEntitiesFromAttrs, notes: ',
@@ -145,51 +117,9 @@ export class VaultModel extends Model({
 
     // // BLOCK
 
-    blocksAttrs.map((attr) => {
-      const existentNoteBlock = this.getNoteBlock(attr.$modelId);
-      if (existentNoteBlock && existentNoteBlock.noteId !== attr.noteId) {
-        existentNoteBlock.delete();
-
-        delete this.blocksTreeHoldersMap[existentNoteBlock.noteId].blocksMap[
-          attr.$modelId
-        ];
-      }
-
-      if (!this.blocksTreeHoldersMap[attr.noteId] && createTreeHolder) {
-        this.blocksTreeHoldersMap[attr.noteId] = new BlocksTreeHolder({
-          noteId: attr.noteId,
-        });
-      }
-
-      if (this.blocksTreeHoldersMap[attr.noteId]) {
-        return this.blocksTreeHoldersMap[attr.noteId].createOrUpdateBlock(attr);
-      }
-
-      return undefined;
-    });
-
-    // blocks.forEach((model) => {
-    //   if (!model) return;
-
-    //   const toRemoveRefs = model.noteBlockRefs
-    //     .map((ref) => {
-    //       if (!this.blocksTreeHoldersMap[model.noteId].blocksMap[ref.id]) {
-    //         return ref;
-    //       }
-
-    //       return false;
-    //     })
-    //     .filter(Boolean) as Ref<NoteBlockModel>[];
-
-    //   toRemoveRefs.forEach((ref) => {
-    //     console.error(
-    //       'removing noteblock ref cause noteblock was not found',
-    //       ref.id,
-    //       JSON.stringify(model.$),
-    //     );
-
-    //     model.noteBlockRefs.splice(model.noteBlockRefs.indexOf(ref), 1);
-    //   });
-    // });
+    this.noteBlocksApp.createOrUpdateEntitiesFromAttrs(
+      blocksAttrs,
+      createBlocksRegistry,
+    );
   }
 }

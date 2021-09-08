@@ -1,11 +1,10 @@
-import type { NoteBlockModel } from '../domain/NoteBlockModel';
+import type { NoteBlockModel } from '../domain/NoteBlocksApp/NoteBlockModel';
 import type {
   BlocksViewDocType,
   NoteBlockDocType,
   NoteDocType,
 } from '../../dexieTypes';
 import type { NoteModel } from '../domain/NoteModel';
-import type { BlocksViewModel } from '../domain/VaultUiState/BlocksViewModel';
 
 export const mapNoteBlock = (model: NoteBlockModel): NoteBlockDocType => {
   return {
@@ -28,7 +27,7 @@ export const mapNote = (model: NoteModel): NoteDocType => {
     updatedAt: model.updatedAt,
   };
 };
-export const mapView = (model: BlocksViewModel): BlocksViewDocType => {
+export const mapView = (model: any): BlocksViewDocType => {
   return {
     id: model.$modelId,
     collapsedBlockIds: [...model.collapsedBlockIds],

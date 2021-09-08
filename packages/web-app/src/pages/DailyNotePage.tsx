@@ -26,7 +26,7 @@ export const DailyNotePage = observer(() => {
     };
 
     toExecute();
-  }, [history, vault.$modelId, noteRepo, vault.ui]);
+  }, [history, vault.$modelId, noteRepo]);
 
   return null;
 });

@@ -2,28 +2,28 @@ import { FocusedBlockState } from '@harika/web-core';
 import type { EditState } from '@harika/web-core';
 import { comparer, computed } from 'mobx';
 import { useCallback } from 'react';
-import { useCurrentVault } from './useCurrentVault';
+import { useBlocksApp } from './useCurrentVault';
 
 export const useCurrentFocusedBlockState = (
+  scopeId: string,
   viewId: string,
-  blockId: string,
 ): [
   EditState,
   (
     block:
       | {
+          scopeId: string;
           viewId: string;
-          blockId: string;
           startAt?: number;
           isEditing?: boolean;
         }
       | undefined,
   ) => void,
 ] => {
-  const vault = useCurrentVault();
+  const blocksApp = useBlocksApp();
 
   const focusState = computed(
-    () => vault.ui.focusedBlock.getFocusState(viewId, blockId),
+    () => blocksApp.focusedBlock.getFocusState(scopeId, viewId),
     { equals: comparer.shallow },
   ).get();
 
@@ -31,27 +31,27 @@ export const useCurrentFocusedBlockState = (
     (
       block:
         | {
+            scopeId: string;
             viewId: string;
-            blockId: string;
             isEditing?: boolean;
             startAt?: number;
           }
         | undefined,
     ) => {
       if (block) {
-        vault.ui.focusedBlock.setState(
+        blocksApp.focusedBlock.setState(
           FocusedBlockState.create(
+            block.scopeId,
             block.viewId,
-            block.blockId,
             block.isEditing,
             block.startAt,
           ),
         );
       } else {
-        vault.ui.focusedBlock.setState(undefined);
+        blocksApp.focusedBlock.setState(undefined);
       }
     },
-    [vault.ui.focusedBlock],
+    [blocksApp.focusedBlock],
   );
 
   return [focusState, setState];

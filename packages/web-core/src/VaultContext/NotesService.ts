@@ -7,9 +7,12 @@ import type { Required } from 'utility-types';
 import type { ICreationResult } from './types';
 import type { VaultModel } from './domain/VaultModel';
 import {
+  concatMap,
   distinctUntilChanged,
   first,
   map,
+  mergeAll,
+  mergeMap,
   switchMap,
   take,
   tap,
@@ -17,7 +20,7 @@ import {
 import { isEqual, uniq } from 'lodash-es';
 import { filterAst } from '../blockParser/astHelpers';
 import type { RefToken, TagToken } from '../blockParser/types';
-import { firstValueFrom, from, Observable, of, Subject } from 'rxjs';
+import { firstValueFrom, from, merge, Observable, of, Subject } from 'rxjs';
 import type { NoteDocType } from '../dexieTypes';
 import { VaultDbTables } from '../dexieTypes';
 import {
@@ -40,10 +43,14 @@ import type {
   FindNoteOrBlockService,
   ImportExportService,
 } from '../VaultDb.worker';
+import type { BlocksScope } from './domain/NoteBlocksApp/BlocksScope/BlocksScope';
 
 export { NoteModel } from './domain/NoteModel';
 export { VaultModel } from './domain/VaultModel';
-export { NoteBlockModel, noteBlockRef } from './domain/NoteBlockModel';
+export {
+  NoteBlockModel,
+  noteBlockRef,
+} from './domain/NoteBlocksApp/NoteBlockModel';
 
 // Document = Dexie doc
 // Model = DDD model
@@ -71,14 +78,14 @@ export class NotesService {
       this.stop$,
     );
 
-    this.vault.initializeNotesTree(
-      (await this.notesRepository.getAll())
-        .filter(({ dailyNoteDate, title }) => !dailyNoteDate)
-        .map(({ id, title }) => ({
-          id,
-          title,
-        })),
-    );
+    // this.vault.initializeNotesTree(
+    //   (await this.notesRepository.getAll())
+    //     .filter(({ dailyNoteDate, title }) => !dailyNoteDate)
+    //     .map(({ id, title }) => ({
+    //       id,
+    //       title,
+    //     })),
+    // );
   }
 
   async fixDailyNotes() {
@@ -111,7 +118,7 @@ export class NotesService {
 
     (
       await firstValueFrom(
-        this.getBlocksTreeHolderByNoteIds$(
+        this.getBlocksRegistryByNoteIds$(
           this.getLinkedNotes$(noteId).pipe(
             map((models) => models.map(({ $modelId }) => $modelId)),
           ),
@@ -192,11 +199,11 @@ export class NotesService {
     return this.findNoteByIds$(noteIds$);
   }
 
-  getBlocksTreeHolderByNoteIds$(notesIds$: Observable<string[]>) {
+  getBlocksRegistryByNoteIds$(notesIds$: Observable<string[]>) {
     const notLoadedNotes$ = notesIds$.pipe(
       switchMap((notesIds) => {
         const notLoadedTreeHolderIds = notesIds.filter(
-          (id) => this.vault.blocksTreeHoldersMap[id] === undefined,
+          (id) => !this.vault.areBlocksOfNoteLoaded(id),
         );
 
         return notLoadedTreeHolderIds.length > 0
@@ -207,8 +214,7 @@ export class NotesService {
                   (
                     await this.notesBlocksRepository.getByNoteIds(
                       notesIds.filter(
-                        (id) =>
-                          this.vault.blocksTreeHoldersMap[id] === undefined,
+                        (id) => !this.vault.areBlocksOfNoteLoaded(id),
                       ),
                     )
                   ).map((m) => convertNoteBlockDocToModelAttrs(m)),
@@ -231,27 +237,44 @@ export class NotesService {
       }),
       switchMap(({ notesIds }) =>
         toObserver(() => {
-          return notesIds.map((id) => this.vault.blocksTreeHoldersMap[id]);
+          return notesIds.map((id) => this.vault.noteBlocksApp.getRegistry(id));
         }),
       ),
       distinctUntilChanged((a, b) => isEqual(a, b)),
     );
   }
 
-  getBlocksTreeHolder$(noteId$: Observable<string>) {
-    return noteId$.pipe(
-      map((noteId) => ({
-        noteId,
-        holder: this.vault.blocksTreeHoldersMap[noteId],
-      })),
-      switchMap(({ holder, noteId }) => {
-        if (!holder) {
-          return this.dbEventsService.liveQuery(
-            [VaultDbTables.NoteBlocks],
-            async () => {
+  getBlocksScopes$(
+    args$: Observable<
+      {
+        noteId: string;
+        scopedBy: { $modelId: string; $modelType: string };
+        rootBlockId?: string;
+      }[]
+    >,
+  ) {
+    return args$.pipe(
+      switchMap((args) =>
+        merge(...args.map((arg) => this.getBlocksScope$(of(arg)))),
+      ),
+    );
+  }
+
+  getBlocksScope$(
+    args$: Observable<{
+      noteId: string;
+      scopedBy: { $modelId: string; $modelType: string };
+      rootBlockId?: string;
+    }>,
+  ) {
+    return args$.pipe(
+      switchMap((args) => {
+        if (!this.vault.noteBlocksApp.areBlocksOfNoteLoaded(args.noteId)) {
+          return from(
+            (async () => {
               const noteBlockAttrs = await Promise.all(
                 (
-                  await this.notesBlocksRepository.getByNoteId(noteId)
+                  await this.notesBlocksRepository.getByNoteId(args.noteId)
                 ).map((m) => convertNoteBlockDocToModelAttrs(m)),
               );
 
@@ -261,17 +284,51 @@ export class NotesService {
                 true,
               );
 
-              return noteId;
-            },
+              return args;
+            })(),
           );
         } else {
-          return of(noteId);
+          return of(args);
         }
       }),
-      switchMap((noteId) =>
-        toObserver(() => this.vault.blocksTreeHoldersMap[noteId]),
-      ),
+      switchMap((args) => {
+        const scope = this.vault.noteBlocksApp.getScope(
+          args.noteId,
+          args.scopedBy,
+        );
+
+        if (!scope) {
+          return from(
+            this.loadScope(args.noteId, args.scopedBy, args.rootBlockId),
+          );
+        } else {
+          return of(scope);
+        }
+      }),
       distinctUntilChanged((a, b) => isEqual(a, b)),
+    );
+  }
+
+  private async loadScope(
+    noteId: string,
+    scopedBy: { $modelId: string; $modelType: string },
+    rootBlockId?: string,
+  ) {
+    const key = `${noteId}-${scopedBy.$modelType}-${scopedBy.$modelId}`;
+    const doc = await this.blocksViewsRepo.getById(key);
+
+    const collapsedBlockIds = doc?.collapsedBlockIds || [];
+    rootBlockId ||= await this.notesBlocksRepository.getRootBlockIdByNoteId(
+      noteId,
+    );
+
+    if (!rootBlockId) throw new Error("Can't find root block!");
+
+    return this.vault.noteBlocksApp.createScope(
+      noteId,
+      scopedBy,
+      collapsedBlockIds,
+      rootBlockId,
     );
   }
 
@@ -402,39 +459,39 @@ export class NotesService {
     );
   }
 
-  async preloadOrCreateBlocksViews(
-    note: NoteModel,
-    models: { $modelId: string; $modelType: string }[],
-  ) {
-    const generateKey = (model: { $modelId: string; $modelType: string }) =>
-      `${note.$modelId}-${model.$modelType}-${model.$modelId}`;
-    const keys = models.map((model) => generateKey(model));
+  // async preloadOrCreateBlocksViews(
+  //   note: NoteModel,
+  //   models: { $modelId: string; $modelType: string }[],
+  // ) {
+  //   const generateKey = (model: { $modelId: string; $modelType: string }) =>
+  //     `${note.$modelId}-${model.$modelType}-${model.$modelId}`;
+  //   const keys = models.map((model) => generateKey(model));
 
-    const docs = await this.blocksViewsRepo.getByIds(keys);
+  //   const docs = await this.blocksViewsRepo.getByIds(keys);
 
-    this.vault.ui.createOrUpdateEntitiesFromAttrs(
-      docs.map((doc) => convertViewToModelAttrs(doc)),
-    );
+  //   // this.vault.ui.createOrUpdateEntitiesFromAttrs(
+  //   //   docs.map((doc) => convertViewToModelAttrs(doc)),
+  //   // );
 
-    this.vault.ui.createBlockStateByModels(note, models);
-  }
+  //   // this.vault.ui.createBlockStateByModels(note, models);
+  // }
 
-  async preloadOrCreateBlocksView(
-    note: NoteModel,
-    model: { $modelId: string; $modelType: string },
-  ) {
-    const key = `${note.$modelId}-${model.$modelType}-${model.$modelId}`;
+  // async preloadOrCreateBlocksView(
+  //   note: NoteModel,
+  //   model: { $modelId: string; $modelType: string },
+  // ) {
+  //   const key = `${note.$modelId}-${model.$modelType}-${model.$modelId}`;
 
-    const doc = await this.blocksViewsRepo.getById(key);
+  //   const doc = await this.blocksViewsRepo.getById(key);
 
-    if (doc) {
-      this.vault.ui.createOrUpdateEntitiesFromAttrs([
-        convertViewToModelAttrs(doc),
-      ]);
-    } else {
-      this.vault.ui.createViewByModel(note, model);
-    }
-  }
+  //   // if (doc) {
+  //   //   this.vault.ui.createOrUpdateEntitiesFromAttrs([
+  //   //     convertViewToModelAttrs(doc),
+  //   //   ]);
+  //   // } else {
+  //   //   this.vault.ui.createViewByModel(note, model);
+  //   // }
+  // }
 
   async isNoteExists(title: string) {
     if (Object.values(this.vault.notesMap).find((note) => note.title === title))

@@ -3,10 +3,9 @@ import './styles.css';
 import clsx from 'clsx';
 import TextareaAutosize from 'react-textarea-autosize';
 import { observer } from 'mobx-react-lite';
-import type { BlocksViewModel, NoteBlockModel } from '@harika/web-core';
+import type { BlocksScope, BlocksViewModel } from '@harika/web-core';
 import { Arrow } from '../Arrow/Arrow';
 import { computed } from 'mobx';
-import type { Ref } from 'mobx-keystone';
 import { TokensRenderer } from './TokensRenderer';
 import {
   useProvideInputToContext,
@@ -22,18 +21,18 @@ import { useCurrentFocusedBlockState } from '../../hooks/useFocusedBlockState';
 const NoteBlockChildren = observer(
   ({
     childBlocks,
-    view,
+    scope,
   }: {
-    childBlocks: Ref<NoteBlockModel>[];
-    view: BlocksViewModel;
+    childBlocks: BlocksViewModel[];
+    scope: BlocksScope;
   }) => {
     return childBlocks.length !== 0 ? (
       <>
         {childBlocks.map((childNoteBlock) => (
           <NoteBlock
-            key={childNoteBlock.current.$modelId}
-            noteBlock={childNoteBlock.current}
-            view={view}
+            key={childNoteBlock.$modelId}
+            noteBlock={childNoteBlock}
+            scope={scope}
           />
         ))}
       </>
@@ -46,18 +45,18 @@ const NoteBlockChildren = observer(
 const NoteBlockBody = observer(
   ({
     noteBlock,
-    view,
+    scope,
     isExpanded,
   }: {
-    noteBlock: NoteBlockModel;
-    view: BlocksViewModel;
+    noteBlock: BlocksViewModel;
+    scope: BlocksScope;
     isExpanded: boolean;
   }) => {
     const noteBlockBodyElRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
     const [editState] = useCurrentFocusedBlockState(
-      view.$modelId,
+      scope.$modelId,
       noteBlock.$modelId,
     );
     const { isEditing } = editState;
@@ -69,11 +68,11 @@ const NoteBlockBody = observer(
       releaseFakeInput,
       handleContentClick,
       handleContentKeyPress,
-    } = useFocusHandler(view, noteBlock, inputRef, noteBlockBodyElRef);
+    } = useFocusHandler(scope, noteBlock, inputRef, noteBlockBodyElRef);
     const { textareaHandlers, noteTitleToSearch, handleSearchSelect } =
       useHandleInput(
+        scope,
         noteBlock,
-        view,
         noteBlockBodyElRef,
         inputRef,
         insertFakeInput,
@@ -81,14 +80,14 @@ const NoteBlockBody = observer(
       );
 
     const handleToggle = useCallback(() => {
-      view.toggleExpand(noteBlock.$modelId);
-    }, [noteBlock.$modelId, view]);
+      noteBlock.toggleExpand();
+    }, [noteBlock]);
 
-    const inputId = `${view.$modelId}-${noteBlock.$modelId}`;
+    const inputId = `${scope.$modelId}-${noteBlock.$modelId}`;
 
     return (
       <>
-        {noteBlock.noteBlockRefs.length !== 0 && (
+        {noteBlock.notCollapsedChildren.length !== 0 && (
           <Arrow
             className="note-block__arrow"
             isExpanded={isExpanded}
@@ -156,23 +155,18 @@ const NoteBlockBody = observer(
 export const NoteBlock = observer(
   ({
     noteBlock,
-    view,
+    scope,
   }: {
-    noteBlock: NoteBlockModel;
-    view: BlocksViewModel;
+    noteBlock: BlocksViewModel;
+    scope: BlocksScope;
   }) => {
-    const isExpanded = computed(() =>
-      view.isExpanded(noteBlock.$modelId),
-    ).get();
-
     const isSelected = computed(() => {
-      return view.selectedIds.includes(noteBlock.$modelId);
+      return scope.selectedIds.includes(noteBlock.$modelId);
     }).get();
 
     return (
       <div
         className="note-block"
-        data-view-id={view.$modelId}
         data-id={noteBlock.$modelId}
         data-order={noteBlock.orderPosition}
         data-type="note-block"
@@ -184,21 +178,18 @@ export const NoteBlock = observer(
         >
           <NoteBlockBody
             noteBlock={noteBlock}
-            view={view}
-            isExpanded={isExpanded}
+            scope={scope}
+            isExpanded={noteBlock.isExpanded}
           />
         </div>
 
-        {isExpanded && noteBlock.noteBlockRefs.length !== 0 && (
+        {noteBlock.children.length !== 0 && (
           <div
             className={clsx('note-block__child-blocks', {
               'note-block__child-blocks--selected': isSelected,
             })}
           >
-            <NoteBlockChildren
-              childBlocks={noteBlock.noteBlockRefs}
-              view={view}
-            />
+            <NoteBlockChildren childBlocks={noteBlock.children} scope={scope} />
           </div>
         )}
       </div>

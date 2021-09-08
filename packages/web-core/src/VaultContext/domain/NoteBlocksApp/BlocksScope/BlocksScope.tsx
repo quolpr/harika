@@ -1,12 +1,12 @@
 import { comparer, computed } from 'mobx';
-import { model, Model, modelAction, prop, Ref } from 'mobx-keystone';
-import { normalizeBlockTree } from '../../../blockParser/blockUtils';
-import {BlocksTreeHolder} from "../BlocksTreeHolder";
+import { model, Model, modelAction, prop } from 'mobx-keystone';
+import { normalizeBlockTree } from '../../../../blockParser/blockUtils';
+import type { ViewRegistry } from './ViewRegistry';
 
-@model('harika/BlocksViewModel')
-export class BlocksViewModel extends Model({
-  collapsedBlockIds: prop<string[]>(() => []),
-  blockTreeHolderRef: prop<Ref<BlocksTreeHolder>>(),
+@model('@harika/BlocksScope')
+export class BlocksScope extends Model({
+  viewRegistry: prop<ViewRegistry>(),
+
   selectionInterval: prop<[string, string] | undefined>(),
   prevSelectionInterval: prop<[string, string] | undefined>(),
   // Is needed to handle when shift+click pressed
@@ -14,33 +14,25 @@ export class BlocksViewModel extends Model({
   scopedModelId: prop<string>(),
   scopedModelType: prop<string>(),
 }) {
-  isExpanded(noteBlockId: string) {
-    return (
-      this.collapsedBlockIds.find((id) => noteBlockId === id) === undefined
-    );
-  }
-
   getStringTreeToCopy() {
     let str = '';
 
     this.selectedIds.forEach((id) => {
-      const block = this.blockTreeHolderRef.current.blocksMap[id];
+      const block = this.viewRegistry.viewsMap[id];
 
-      str += `${'  '.repeat(block.indent - 1)}- ${block.content.value}\n`;
+      str += `${'  '.repeat(block.indent - 1)}- ${block.textContent}\n`;
     });
 
     return normalizeBlockTree(str);
   }
 
-  @modelAction
-  toggleExpand(noteBlockId: string) {
-    if (this.isExpanded(noteBlockId)) {
-      this.collapsedBlockIds = [...this.collapsedBlockIds, noteBlockId];
-    } else {
-      this.collapsedBlockIds = this.collapsedBlockIds.filter(
-        (id) => id !== noteBlockId,
-      );
-    }
+  @computed
+  get rootView() {
+    return this.viewRegistry.rootView;
+  }
+
+  getView(id: string) {
+    return this.viewRegistry.getView(id);
   }
 
   @computed
@@ -54,7 +46,7 @@ export class BlocksViewModel extends Model({
 
     const [fromId, toId] = this.selectionInterval;
 
-    const flattenTree = this.blockTreeHolderRef.current.rootBlock?.flattenTree;
+    const flattenTree = this.viewRegistry.rootView.flattenTree;
 
     if (!flattenTree) return [];
 

@@ -1,9 +1,9 @@
 import { generateId } from '../generateId';
 import { NoteBlockModel, VaultModel } from '../VaultContext/NotesService';
-import { BlockContentModel } from '../VaultContext/domain/NoteBlockModel/BlockContentModel';
+import { BlockContentModel } from '../VaultContext/domain/NoteBlocksApp/NoteBlockModel/BlockContentModel';
 import { parseStringToTree } from './parseStringToTree';
 import type { TreeToken } from './parseStringToTree';
-import type { BlocksTreeHolder } from '../VaultContext/domain/BlocksTreeHolder';
+import type { BlocksRegistry } from '../VaultContext/domain/NoteBlocksApp/BlocksRegistry';
 
 export const normalizeBlockTree = (str: string) => {
   const parsed = parseStringToTree(str);
@@ -20,7 +20,7 @@ export const normalizeBlockTree = (str: string) => {
 };
 
 export const addTokensToNoteBlock = (
-  treeHolder: BlocksTreeHolder,
+  registry: BlocksRegistry,
   noteBlock: NoteBlockModel,
   tokens: TreeToken[],
 ): NoteBlockModel[] => {
@@ -75,7 +75,7 @@ export const addTokensToNoteBlock = (
     addedModels.push(previousBlock.model);
   });
 
-  treeHolder.addBlocks(addedModels);
+  registry.addBlocks(addedModels);
 
   noteBlock.merge(virtualRootBlock);
 
@@ -89,7 +89,7 @@ export const parseToBlocksTree = (str: string) => {
     name: 'Vault',
   });
 
-  const { note, treeHolder } = vault.newNote(
+  const { note, treeRegistry: treeHolder } = vault.newNote(
     { title: 'Note' },
     { addEmptyBlock: false },
   );

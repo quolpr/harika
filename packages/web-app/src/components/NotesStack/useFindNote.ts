@@ -37,7 +37,7 @@ export const useFindNote = (noteId: string) => {
     };
 
     callback();
-  }, [loadingDoneSubject, noteId, notesService, vault.ui]);
+  }, [loadingDoneSubject, noteId, notesService]);
 
   const noteTitle = note?.title;
   const isDeleted = note?.isDeleted;

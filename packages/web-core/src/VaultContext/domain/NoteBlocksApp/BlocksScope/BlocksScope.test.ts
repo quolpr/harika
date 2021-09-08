@@ -2,7 +2,7 @@ import { expect } from '@esm-bundle/chai';
 import {
   normalizeBlockTree,
   parseToBlocksTree,
-} from '../../../blockParser/blockUtils';
+} from '../../../../blockParser/blockUtils';
 
 const getViewModel = () => {
   const { note, vault } = parseToBlocksTree(`

@@ -1,6 +1,6 @@
 import {
+  BlocksScope,
   BlocksViewModel,
-  NoteBlockModel,
   parseStringToTree,
 } from '@harika/web-core';
 import { RefObject, useCallback, useContext, useState } from 'react';
@@ -12,16 +12,16 @@ import type { SearchedNote } from '../NoteTitleAutocomplete/NoteTitleAutocomplet
 import { getTokensAtCursor } from '../utils';
 
 export const useHandleInput = (
-  noteBlock: NoteBlockModel,
-  view: BlocksViewModel,
+  scope: BlocksScope,
+  blockView: BlocksViewModel,
   noteBlockElRef: RefObject<HTMLDivElement | null>,
   inputRef: RefObject<HTMLTextAreaElement | null>,
   insertFakeInput: (el?: HTMLElement) => void,
   releaseFakeInput: () => void,
 ) => {
   const [, setEditState] = useCurrentFocusedBlockState(
-    view.$modelId,
-    noteBlock.$modelId,
+    scope.$modelId,
+    blockView.$modelId,
   );
 
   const [noteTitleToSearch, setNoteTitleToSearch] = useState<
@@ -43,7 +43,7 @@ export const useHandleInput = (
 
         e.preventDefault();
 
-        const content = noteBlock.content.value;
+        const content = blockView.content.value;
 
         let newContent = '';
         let startAt = 0;
@@ -51,24 +51,24 @@ export const useHandleInput = (
         if (start === end && start !== content.length) {
           newContent = content.slice(start, content.length);
 
-          noteBlock.content.update(content.slice(0, start));
+          blockView.content.update(content.slice(0, start));
         }
         if (
-          (noteBlock.content.hasTodo ||
-            (noteBlock.noteBlockRefs.length > 0 &&
-              noteBlock.noteBlockRefs[0].current.content.hasTodo)) &&
+          (blockView.content.hasTodo ||
+            (blockView.children.length > 0 &&
+              blockView.children[0].content.hasTodo)) &&
           newContent.length === 0
         ) {
           newContent = '[[TODO]] ';
           startAt = newContent.length;
         }
 
-        const newBlock = noteBlock.injectNewRightBlock(newContent, view);
+        const newBlock = blockView.injectNewRightBlock(newContent, blockView);
 
         if (!newBlock) return;
 
         if (noteBlockElRef.current) {
-          // New noteBlock is still not available in DOM,
+          // New blockView is still not available in DOM,
           // so lets insert fake input near current block
           insertFakeInput(noteBlockElRef.current);
 
@@ -76,8 +76,8 @@ export const useHandleInput = (
         }
 
         setEditState({
-          viewId: view.$modelId,
-          blockId: newBlock.$modelId,
+          scopeId: scope.$modelId,
+          viewId: newBlock.$modelId,
           isEditing: true,
           startAt,
         });
@@ -85,10 +85,10 @@ export const useHandleInput = (
     },
     [
       isSearching,
-      noteBlock,
-      view,
+      blockView,
       noteBlockElRef,
       setEditState,
+      scope.$modelId,
       insertFakeInput,
       releaseFakeInput,
     ],
@@ -96,14 +96,14 @@ export const useHandleInput = (
 
   const handleKeyDown = useCallback(
     async (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      const content = noteBlock.content.value;
+      const content = blockView.content.value;
       const start = e.currentTarget.selectionStart;
       const end = e.currentTarget.selectionEnd;
 
       if (e.key === 'Escape') {
         setEditState({
-          viewId: view.$modelId,
-          blockId: noteBlock.$modelId,
+          scopeId: scope.$modelId,
+          viewId: blockView.$modelId,
           isEditing: false,
         });
       } else if (e.key === 'Backspace') {
@@ -128,7 +128,7 @@ export const useHandleInput = (
         if (isOnStart) {
           e.preventDefault();
 
-          const mergedTo = noteBlock.mergeToLeftAndDelete();
+          const mergedTo = blockView.mergeToLeftAndDelete();
 
           if (mergedTo) {
             if (noteBlockElRef.current) {
@@ -136,10 +136,10 @@ export const useHandleInput = (
             }
 
             setEditState({
-              viewId: view.$modelId,
-              blockId: mergedTo.$modelId,
+              scopeId: scope.$modelId,
+              viewId: mergedTo.$modelId,
               startAt:
-                mergedTo.content.value.length - noteBlock.content.value.length,
+                mergedTo.content.value.length - blockView.content.value.length,
               isEditing: true,
             });
           }
@@ -149,31 +149,31 @@ export const useHandleInput = (
 
         if (!isSearching) {
           setEditState({
-            viewId: view.$modelId,
-            blockId: noteBlock.$modelId,
+            scopeId: scope.$modelId,
+            viewId: blockView.$modelId,
             startAt: start,
             isEditing: true,
           });
-          noteBlock.tryMoveUp();
+          blockView.moveUp();
         }
       } else if (e.key === 'Tab' && e.shiftKey) {
         e.preventDefault();
 
         setEditState({
-          viewId: view.$modelId,
-          blockId: noteBlock.$modelId,
+          scopeId: scope.$modelId,
+          viewId: blockView.$modelId,
           startAt: start,
           isEditing: true,
         });
-        noteBlock.tryMoveDown();
+        blockView.moveDown();
       } else if (e.key === 'ArrowUp' && e.shiftKey) {
         e.preventDefault();
 
-        if (!isSearching) noteBlock.tryMoveLeft();
+        if (!isSearching) blockView.moveLeft();
       } else if (e.key === 'ArrowDown' && e.shiftKey) {
         e.preventDefault();
 
-        if (!isSearching) noteBlock.tryMoveRight();
+        if (!isSearching) blockView.moveRight();
       } else if (e.key === '[') {
         e.preventDefault();
 
@@ -187,12 +187,12 @@ export const useHandleInput = (
 
             // When cursor moved to the start of the string - it means there is now any rows upper
             if (newStart === 0) {
-              const [left] = noteBlock.leftAndRight;
+              const [left] = blockView.leftAndRight;
 
               if (left) {
                 setEditState({
-                  viewId: view.$modelId,
-                  blockId: left.$modelId,
+                  scopeId: scope.$modelId,
+                  viewId: left.$modelId,
                   isEditing: true,
                   startAt: start,
                 });
@@ -207,16 +207,16 @@ export const useHandleInput = (
           requestAnimationFrame(() => {
             const newStart = target.selectionStart;
 
-            if (newStart === noteBlock.content.value.length) {
-              const [, right] = noteBlock.leftAndRight;
+            if (newStart === blockView.content.value.length) {
+              const [, right] = blockView.leftAndRight;
 
               if (right) {
                 setEditState({
-                  viewId: view.$modelId,
-                  blockId: right.$modelId,
+                  scopeId: scope.$modelId,
+                  viewId: right.$modelId,
                   isEditing: true,
                   startAt:
-                    start === noteBlock.content.value.length
+                    start === blockView.content.value.length
                       ? right.content.value.length
                       : start,
                 });
@@ -231,12 +231,12 @@ export const useHandleInput = (
       }
     },
     [
+      blockView,
+      setEditState,
+      scope.$modelId,
+      noteBlockElRef,
       insertFakeInput,
       isSearching,
-      noteBlock,
-      noteBlockElRef,
-      setEditState,
-      view.$modelId,
     ],
   );
 
@@ -246,14 +246,14 @@ export const useHandleInput = (
       const end = e.currentTarget.selectionEnd;
 
       if (start === end) {
-        const firstToken = getTokensAtCursor(start, noteBlock.content.ast)[0];
+        const firstToken = getTokensAtCursor(start, blockView.content.ast)[0];
 
         if (firstToken?.type !== 'ref' && firstToken?.type !== 'tag') {
           setNoteTitleToSearch(undefined);
         }
       }
     },
-    [noteBlock.content.ast],
+    [blockView.content.ast],
   );
 
   // const [isShiftPressed] = useKeyPress((e) => e.shiftKey);
@@ -276,16 +276,16 @@ export const useHandleInput = (
 
       e.preventDefault();
 
-      const injectedBlocks = noteBlock.injectNewTreeTokens(parsedToTree);
+      const injectedBlocks = blockView.injectNewTreeTokens(parsedToTree);
 
       noteRepo.updateNoteBlockLinks(
-        injectedBlocks.map(({ $modelId }) => $modelId),
+        injectedBlocks.map(({ noteBlockId }) => noteBlockId),
       );
 
       if (injectedBlocks[0]) {
         setEditState({
-          viewId: view.$modelId,
-          blockId: injectedBlocks[0].$modelId,
+          scopeId: scope.$modelId,
+          viewId: injectedBlocks[0].$modelId,
           isEditing: true,
         });
       }
@@ -293,22 +293,22 @@ export const useHandleInput = (
     [
       handleCaretChange,
       isShiftPressedRef,
-      noteBlock,
+      blockView,
       noteRepo,
       setEditState,
-      view.$modelId,
+      scope.$modelId,
     ],
   );
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-      noteBlock.content.update(e.target.value);
+      blockView.content.update(e.target.value);
 
       const start = e.currentTarget.selectionStart;
       const end = e.currentTarget.selectionEnd;
 
       if (start === end) {
-        const firstToken = getTokensAtCursor(start, noteBlock.content.ast)[0];
+        const firstToken = getTokensAtCursor(start, blockView.content.ast)[0];
 
         if (firstToken?.type === 'ref' || firstToken?.type === 'tag') {
           setNoteTitleToSearch(firstToken.ref);
@@ -317,7 +317,7 @@ export const useHandleInput = (
         setNoteTitleToSearch(undefined);
       }
     },
-    [noteBlock],
+    [blockView],
   );
 
   const handleSearchSelect = useCallback(
@@ -327,7 +327,7 @@ export const useHandleInput = (
 
       const start = input.selectionStart;
 
-      const firstToken = getTokensAtCursor(start, noteBlock.content.ast)[0];
+      const firstToken = getTokensAtCursor(start, blockView.content.ast)[0];
 
       if (firstToken?.type === 'ref') {
         const alias = firstToken.alias ? ` | ${firstToken.alias}` : '';
@@ -350,7 +350,7 @@ export const useHandleInput = (
 
       setNoteTitleToSearch(undefined);
     },
-    [inputRef, noteBlock.content.ast],
+    [inputRef, blockView.content.ast],
   );
 
   return {

@@ -2,7 +2,7 @@ import { observer } from 'mobx-react-lite';
 import React, { useCallback, useContext, useEffect, useRef } from 'react';
 import { useCurrentVault } from '../../hooks/useCurrentVault';
 import { cn, insertText } from '../../utils';
-import type { BlocksViewModel } from '@harika/web-core';
+import type { BlocksScope } from '@harika/web-core';
 import {
   ArrowDropDown,
   ArrowDropUp,
@@ -20,7 +20,7 @@ import scrollIntoView from 'scroll-into-view-if-needed';
 
 const toolbarClass = cn('toolbar');
 
-export const Toolbar = observer(({ view }: { view: BlocksViewModel }) => {
+export const Toolbar = observer(({ scope }: { scope: BlocksScope }) => {
   const footerRef = useContext(FooterRefContext);
 
   const vault = useCurrentVault();
@@ -39,8 +39,8 @@ export const Toolbar = observer(({ view }: { view: BlocksViewModel }) => {
     }, 0);
   }, [currentBlockInputRef]);
 
-  const currentBlock = vault.ui.focusedBlock.state?.blockId
-    ? vault.getNoteBlock(vault.ui.focusedBlock.state?.blockId)
+  const currentBlock = vault.noteBlocksApp.focusedBlock.state?.viewId
+    ? scope.getView(vault.noteBlocksApp.focusedBlock.state?.viewId)
     : undefined;
 
   const handleTodoPress = useCallback(
@@ -75,7 +75,7 @@ export const Toolbar = observer(({ view }: { view: BlocksViewModel }) => {
 
       if (!currentBlock) return;
 
-      currentBlock.tryMoveUp();
+      currentBlock.moveUp();
     },
     [currentBlock],
   );
@@ -86,7 +86,7 @@ export const Toolbar = observer(({ view }: { view: BlocksViewModel }) => {
 
       if (!currentBlock) return;
 
-      currentBlock.tryMoveDown();
+      currentBlock.moveDown();
     },
     [currentBlock],
   );
@@ -97,7 +97,7 @@ export const Toolbar = observer(({ view }: { view: BlocksViewModel }) => {
 
       if (!currentBlock) return;
 
-      currentBlock.tryMoveLeft();
+      currentBlock.moveLeft();
 
       scrollToInput();
     },
@@ -110,7 +110,7 @@ export const Toolbar = observer(({ view }: { view: BlocksViewModel }) => {
 
       if (!currentBlock) return;
 
-      currentBlock.tryMoveRight();
+      currentBlock.moveRight();
 
       scrollToInput();
     },

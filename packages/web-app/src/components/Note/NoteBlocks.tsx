@@ -4,48 +4,44 @@ import { useMedia } from 'react-use';
 import { NoteBlock } from '../NoteBlock/NoteBlock';
 import { Toolbar } from './Toolbar';
 import { NoteBlocksHandlers } from './NoteBlocksHandlers';
-import type { BlocksViewModel, NoteModel } from '@harika/web-core';
+import type { NoteModel } from '@harika/web-core';
 import { useNotesService } from '../../contexts/CurrentNotesServiceContext';
 import { useObservable, useObservableState } from 'observable-hooks';
 import { map } from 'rxjs';
 
-export const NoteBlocks = observer(
-  ({ view, note }: { view: BlocksViewModel; note: NoteModel }) => {
-    const noteRepo = useNotesService();
-    const isWide = useMedia('(min-width: 768px)');
+export const NoteBlocks = observer(({ note }: { note: NoteModel }) => {
+  const noteRepo = useNotesService();
+  const isWide = useMedia('(min-width: 768px)');
 
-    const blocksTreeHolder$ = useObservable(
-      ($inputs) => {
-        return noteRepo.getBlocksTreeHolder$($inputs.pipe(map(([id]) => id)));
-      },
-      [note.$modelId],
-    );
+  const scope$ = useObservable(
+    ($inputs) => {
+      return noteRepo.getBlocksScope$(
+        $inputs.pipe(
+          map(([note]) => ({ noteId: note.$modelId, scopedBy: note })),
+        ),
+      );
+    },
+    [note],
+  );
 
-    const blocksTreeHolder = useObservableState(blocksTreeHolder$, undefined);
+  const scope = useObservableState(scope$, undefined);
 
-    return (
-      <>
-        {blocksTreeHolder && (
-          <NoteBlocksHandlers
-            view={view}
-            note={note}
-            blocksTreeHolder={blocksTreeHolder}
-          />
-        )}
+  return (
+    <>
+      {scope && <NoteBlocksHandlers scope={scope} note={note} />}
 
-        <div className="note__body">
-          {blocksTreeHolder &&
-            blocksTreeHolder.rootBlock?.noteBlockRefs.map((noteBlock) => (
-              <NoteBlock
-                key={noteBlock.current.$modelId}
-                noteBlock={noteBlock.current}
-                view={view}
-              />
-            ))}
-        </div>
+      <div className="note__body">
+        {scope &&
+          scope.rootView.children.map((noteBlock) => (
+            <NoteBlock
+              key={noteBlock.$modelId}
+              noteBlock={noteBlock}
+              scope={scope}
+            />
+          ))}
+      </div>
 
-        {!isWide && <Toolbar view={view} />}
-      </>
-    );
-  },
-);
+      {!isWide && scope && <Toolbar scope={scope} />}
+    </>
+  );
+});

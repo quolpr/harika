@@ -1,6 +1,10 @@
 import { useRef, useCallback, useEffect, RefObject } from 'react';
 import { useCurrentFocusedBlockState } from '../../../hooks/useFocusedBlockState';
-import type { BlocksViewModel, NoteBlockModel } from '@harika/web-core';
+import type {
+  BlocksScope,
+  BlocksViewModel,
+  NoteBlockModel,
+} from '@harika/web-core';
 
 // https://stackoverflow.com/a/55652503/3872807
 const useFakeInput = () => {
@@ -73,21 +77,21 @@ const useFakeInput = () => {
 // };
 
 export const useFocusHandler = (
-  view: BlocksViewModel,
-  noteBlock: NoteBlockModel,
+  scope: BlocksScope,
+  blockView: BlocksViewModel,
   inputRef: RefObject<HTMLTextAreaElement | null>,
   noteBlockElRef: RefObject<HTMLDivElement | null>,
 ) => {
   const [editState, setEditState] = useCurrentFocusedBlockState(
-    view.$modelId,
-    noteBlock.$modelId,
+    scope.$modelId,
+    blockView.$modelId,
   );
 
   const { isFocused, startAt, isEditing } = editState;
 
   const { insertFakeInput, releaseFakeInput, fakeInputRef } = useFakeInput();
 
-  const contentLength = noteBlock.content.value.length;
+  const contentLength = blockView.content.value.length;
 
   useEffect(() => {
     if (
@@ -98,7 +102,7 @@ export const useFocusHandler = (
       if (!inputRef.current) return;
 
       const posAt = (() =>
-        startAt !== undefined ? startAt : noteBlock.content.value.length)();
+        startAt !== undefined ? startAt : blockView.content.value.length)();
 
       inputRef.current.focus();
 
@@ -111,7 +115,7 @@ export const useFocusHandler = (
     isFocused,
     isEditing,
     startAt,
-    noteBlock.content.value.length,
+    blockView.content.value.length,
     releaseFakeInput,
     inputRef,
   ]);
@@ -141,8 +145,8 @@ export const useFocusHandler = (
       }
 
       setEditState({
-        viewId: view.$modelId,
-        blockId: noteBlock.$modelId,
+        scopeId: scope.$modelId,
+        viewId: blockView.$modelId,
         isEditing: true,
         startAt,
       });
@@ -150,18 +154,18 @@ export const useFocusHandler = (
     [
       contentLength,
       insertFakeInput,
-      noteBlock.$modelId,
+      blockView.$modelId,
       noteBlockElRef,
+      scope.$modelId,
       setEditState,
-      view,
     ],
   );
 
   const handleContentKeyPress = (e: React.KeyboardEvent<HTMLSpanElement>) => {
     if (e.key === 'Enter' && e.target === e.currentTarget) {
       setEditState({
-        viewId: view.$modelId,
-        blockId: noteBlock.$modelId,
+        scopeId: scope.$modelId,
+        viewId: blockView.$modelId,
         isEditing: true,
         startAt: 0,
       });

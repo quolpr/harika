@@ -2,8 +2,8 @@ import { expect } from '@esm-bundle/chai';
 import {
   normalizeBlockTree,
   parseToBlocksTree,
-} from '../../blockParser/blockUtils';
-import { parseStringToTree } from '../../blockParser/parseStringToTree';
+} from '../../../blockParser/blockUtils';
+import { parseStringToTree } from '../../../blockParser/parseStringToTree';
 
 describe('NoteBlockModel', () => {
   describe('getStringTree', () => {

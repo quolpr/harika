@@ -3,6 +3,7 @@ import reactRefresh from '@vitejs/plugin-react-refresh';
 import crossOriginIsolation from 'vite-plugin-cross-origin-isolation';
 import { injectManifest } from 'rollup-plugin-workbox';
 import { visualizer } from 'rollup-plugin-visualizer';
+import Checker from 'vite-plugin-checker';
 
 const { glob } = require('glob');
 const reactSvgPlugin = require('vite-plugin-react-svg');
@@ -26,5 +27,6 @@ export default defineConfig({
       mode: 'production', // this inlines the module imports when using yarn build
     }),
     visualizer({ open: true, filename: 'dist/stats.html' }),
+    Checker({ typescript: true }),
   ],
 });

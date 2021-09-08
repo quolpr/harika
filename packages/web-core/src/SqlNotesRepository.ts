@@ -1136,6 +1136,14 @@ export class SqlNotesBlocksRepository extends BaseSyncRepository<
     );
   }
 
+  getRootBlockIdByNoteId(noteId: string) {
+    const [res] = this.db.execQuery(
+      Q.select('id').from(this.getTableName()).where({ noteId, isRoot: 1 }),
+    );
+
+    return (res?.values?.[0]?.[0] as string) || undefined;
+  }
+
   getByNoteIds(ids: string[]) {
     const res = this.db.getRecords<NoteBlockRow>(
       Q.select().from(this.getTableName()).where(Q.in('noteId', ids)),

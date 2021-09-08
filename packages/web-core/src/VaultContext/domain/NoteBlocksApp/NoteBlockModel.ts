@@ -1,6 +1,6 @@
 import type { ModelCreationData, Ref } from 'mobx-keystone';
 import {
-  customRef,
+  rootRef,
   detach,
   findParent,
   model,
@@ -12,52 +12,28 @@ import {
 } from 'mobx-keystone';
 import { comparer, computed } from 'mobx';
 import { isEqual } from 'lodash-es';
-import type { BlocksTreeHolder } from './BlocksTreeHolder';
-import { treeHolderType } from './BlocksTreeHolder';
 import {
   allRightSiblingsFunc,
   deepLastRightChildFunc,
   flattenTreeFunc,
   indentFunc,
-  ITreeNode,
   leftAndRightFunc,
   leftAndRightSiblingFunc,
   nearestRightToParentFunc,
   orderHashFunc,
   pathFunc,
   siblingsFunc,
-} from '../../mobx-tree';
-import type { BlockContentModel } from './NoteBlockModel/BlockContentModel';
-import { isTodo } from '../../blockParser/astHelpers';
+} from '../../../mobx-tree';
+import type { ITreeNode } from '../../../mobx-tree';
+import { BlockContentModel } from './NoteBlockModel/BlockContentModel';
+import { isTodo } from '../../../blockParser/astHelpers';
+import { BlocksRegistry, blocksRegistryType } from './BlocksRegistry';
 
-const isTreeHolder = (obj: any): obj is BlocksTreeHolder => {
-  return obj.$modelType === treeHolderType;
+const isRegistry = (obj: any): obj is BlocksRegistry => {
+  return obj.$modelType === blocksRegistryType;
 };
 
-export const noteBlockRef = customRef<NoteBlockModel>('harika/NoteBlockRef', {
-  // this works, but we will use getRefId() from the Todo class instead
-  // getId(maybeTodo) {
-  //   return maybeTodo instanceof Todo ? maybeTodo.id : undefined
-  // },
-
-  resolve(ref) {
-    const rootBlock = findParent<BlocksTreeHolder>(this, isTreeHolder);
-
-    if (!rootBlock) {
-      return undefined;
-    }
-
-    return rootBlock.blocksMap[ref.id];
-  },
-
-  onResolvedValueChange(ref, newTodo, oldTodo) {
-    if (oldTodo && !newTodo) {
-      // if the todo value we were referencing disappeared then remove the reference
-      // from its parent
-      detach(ref);
-    }
-  },
-});
+export const noteBlockRef = rootRef<NoteBlockModel>('harika/NoteBlockRef');
 
 @model('harika/NoteBlockModel')
 export class NoteBlockModel
@@ -74,13 +50,18 @@ export class NoteBlockModel
   implements ITreeNode<NoteBlockModel>
 {
   @computed
+  get id() {
+    return this.$modelId;
+  }
+
+  @computed
   get nodeId() {
     return this.$modelId;
   }
 
   @computed
-  get treeHolder() {
-    return findParent<BlocksTreeHolder>(this, isTreeHolder)!;
+  get treeRegistry() {
+    return findParent<BlocksRegistry>(this, isRegistry)!;
   }
 
   @computed
@@ -95,9 +76,9 @@ export class NoteBlockModel
 
   @computed
   get parent() {
-    const id = this.treeHolder.childParentRelations[this.$modelId];
+    const id = this.treeRegistry.childParentRelations[this.$modelId];
 
-    return id === undefined ? undefined : this.treeHolder.blocksMap[id];
+    return id === undefined ? undefined : this.treeRegistry.blocksMap[id];
   }
 
   @computed({ equals: comparer.shallow })
@@ -172,25 +153,12 @@ export class NoteBlockModel
   }
 
   @modelAction
-  spliceChild(start: number, deleteCount?: number, ...nodes: NoteBlockModel[]) {
-    if (deleteCount) {
-      this.noteBlockRefs.splice(
-        start,
-        deleteCount,
-        ...nodes.map((node) => noteBlockRef(node)),
-      );
-    } else {
-      this.noteBlockRefs.splice(start);
-    }
-  }
-
-  @modelAction
   move(parent: NoteBlockModel, pos: number | 'start' | 'end') {
     if (!this.parent) {
       throw new Error("Can't move root block");
     }
 
-    this.parent.spliceChild(this.orderPosition, 1);
+    this.parent.noteBlockRefs.splice(this.orderPosition, 1);
 
     const newPos = (() => {
       if (pos === 'start') {
@@ -202,7 +170,7 @@ export class NoteBlockModel
       }
     })();
 
-    this.parent.spliceChild(newPos, this.orderPosition, this);
+    parent.noteBlockRefs.splice(newPos, 0, noteBlockRef(this));
   }
 
   @modelAction
@@ -318,24 +286,15 @@ export class NoteBlockModel
   }
 
   @modelAction
-  toggleTodo(id: string, toggledIds: string[] = []): string[] {
-    const token = this.content.getTokenById(id);
-
-    if (!token || !isTodo(token)) return [];
-
-    if (this.content.firstTodoToken?.id === id) {
-      this.children.forEach((view) => {
-        const firstTodo = view.content.firstTodoToken;
-
-        if (firstTodo && firstTodo.ref === token.ref)
-          view.toggleTodo(firstTodo.id, toggledIds);
-      });
-    }
-
-    this.content.toggleTodo(id);
-
-    toggledIds.push(this.$modelId);
-
-    return toggledIds;
+  createChildBlock(content: string, pos: number) {
+    return this.treeRegistry.createBlock(
+      {
+        content: new BlockContentModel({ value: content }),
+        isRoot: false,
+        updatedAt: new Date().getTime(),
+      },
+      this,
+      pos,
+    );
   }
 }

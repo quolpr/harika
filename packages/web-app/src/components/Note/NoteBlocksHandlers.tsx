@@ -1,9 +1,4 @@
-import {
-  BlocksViewModel,
-  NoteModel,
-  FocusedBlockState,
-  BlocksTreeHolder,
-} from '@harika/web-core';
+import { NoteModel, FocusedBlockState, BlocksScope } from '@harika/web-core';
 import { observer } from 'mobx-react-lite';
 import { useEffect } from 'react';
 import { EMPTY, fromEvent, merge } from 'rxjs';
@@ -21,17 +16,11 @@ import { isEqual } from 'lodash-es';
 import { useCurrentVault } from '../../hooks/useCurrentVault';
 
 export const NoteBlocksHandlers = observer(
-  ({
-    view,
-    note,
-    blocksTreeHolder,
-  }: {
-    view: BlocksViewModel;
-    note: NoteModel;
-    blocksTreeHolder: BlocksTreeHolder;
-  }) => {
+  ({ scope, note }: { scope: BlocksScope; note: NoteModel }) => {
     const vault = useCurrentVault();
-    const focusedBlock = vault.ui.focusedBlock;
+    const focusedBlock = vault.noteBlocksApp.focusedBlock;
+
+    const registry = scope.viewRegistry;
 
     useEffect(() => {
       const mouseMove$ = fromEvent<MouseEvent>(document, 'mousemove');
@@ -41,7 +30,7 @@ export const NoteBlocksHandlers = observer(
       const idOnMouseMove$ = mouseMove$.pipe(
         map((e) => {
           const el2 = (e.target as HTMLElement).closest<HTMLDivElement>(
-            `[data-type="note-block"][data-view-id="${view.$modelId}"]`,
+            `[data-type="note-block"][data-view-id="${scope.$modelId}"]`,
           );
 
           return el2?.dataset?.id;
@@ -57,25 +46,25 @@ export const NoteBlocksHandlers = observer(
         .pipe(
           map((e) => {
             const el = (e.target as HTMLElement).closest<HTMLDivElement>(
-              `[data-type="note-block"][data-view-id="${view.$modelId}"]`,
+              `[data-type="note-block"][data-view-id="${scope.$modelId}"]`,
             );
 
             return { fromBlockId: el?.dataset?.id, shiftKey: e.shiftKey };
           }),
           switchMap(({ fromBlockId, shiftKey }) => {
             if (!fromBlockId) {
-              if (view.selectionInterval !== undefined) {
-                view.resetSelection();
+              if (scope.selectionInterval !== undefined) {
+                scope.resetSelection();
               }
 
               return EMPTY;
             }
 
-            const focusedBlockState = vault.ui.focusedBlock.state;
+            const focusedBlockState = vault.noteBlocksApp.focusedBlock.state;
 
             const resetAnySelection$ = mouseMove$.pipe(
               tap(() => {
-                if (view.selectionInterval !== undefined) {
+                if (scope.selectionInterval !== undefined) {
                   window.getSelection()?.removeAllRanges();
                 }
               }),
@@ -85,24 +74,24 @@ export const NoteBlocksHandlers = observer(
             // shift+click handling
             if (
               focusedBlockState &&
-              focusedBlockState.viewId === view.$modelId &&
+              focusedBlockState.scopeId === scope.$modelId &&
               focusedBlockState.isEditing === true &&
-              view.selectionInterval === undefined &&
+              scope.selectionInterval === undefined &&
               shiftKey
             ) {
-              view.setSelectionInterval(focusedBlockState.blockId, fromBlockId);
-              vault.ui.focusedBlock.setState(undefined);
+              scope.setSelectionInterval(focusedBlockState.viewId, fromBlockId);
+              vault.noteBlocksApp.focusedBlock.setState(undefined);
 
               return EMPTY;
             }
 
-            if (view.selectionInterval !== undefined && shiftKey) {
-              view.expandSelection(fromBlockId);
+            if (scope.selectionInterval !== undefined && shiftKey) {
+              scope.expandSelection(fromBlockId);
 
               return merge(
                 idOnMouseMove$.pipe(
                   tap((toId) => {
-                    view.expandSelection(toId);
+                    scope.expandSelection(toId);
                   }),
                   takeUntil(mouseUp$),
                 ),
@@ -119,23 +108,23 @@ export const NoteBlocksHandlers = observer(
                   ),
                   tap((toId) => {
                     if (
-                      view.selectionInterval &&
+                      scope.selectionInterval &&
                       isEqual(
-                        [...view.selectionInterval].sort(),
+                        [...scope.selectionInterval].sort(),
                         [fromBlockId, toId].sort(),
                       )
                     ) {
                       return;
                     }
 
-                    view.setSelectionInterval(fromBlockId, toId);
-                    vault.ui.focusedBlock.setState(undefined);
+                    scope.setSelectionInterval(fromBlockId, toId);
+                    vault.noteBlocksApp.focusedBlock.setState(undefined);
 
                     wasAnyIdSelected = true;
                   }),
                   finalize(() => {
                     if (!wasAnyIdSelected) {
-                      view.resetSelection();
+                      scope.resetSelection();
                     }
                   }),
                   takeUntil(mouseUp$),
@@ -150,36 +139,36 @@ export const NoteBlocksHandlers = observer(
       return () => {
         mouseMoveHandler.unsubscribe();
       };
-    }, [vault.ui.focusedBlock, view]);
+    }, [scope, vault.noteBlocksApp.focusedBlock]);
 
-    const isSelecting = view.selectionInterval !== undefined;
+    const isSelecting = scope.selectionInterval !== undefined;
 
     useEffect(() => {
       if (!isSelecting) return;
 
       const handler = () => {
-        navigator.clipboard.writeText(view.getStringTreeToCopy());
+        navigator.clipboard.writeText(scope.getStringTreeToCopy());
       };
 
       document.addEventListener('copy', handler);
 
       return () => document.removeEventListener('copy', handler);
-    }, [isSelecting, view]);
+    }, [isSelecting, scope]);
 
     useEffect(() => {
       if (!isSelecting) return;
       const handler = () => {
-        const selectedIds = view.selectedIds;
+        const selectedIds = scope.selectedIds;
 
-        navigator.clipboard.writeText(view.getStringTreeToCopy());
+        navigator.clipboard.writeText(scope.getStringTreeToCopy());
 
-        blocksTreeHolder.deleteNoteBlockIds(selectedIds);
+        registry.deleteNoteBlockIds(selectedIds);
       };
 
       document.addEventListener('cut', handler);
 
       return () => document.removeEventListener('cut', handler);
-    }, [blocksTreeHolder, isSelecting, note, vault, view]);
+    }, [isSelecting, note, vault, scope, registry]);
 
     useEffect(() => {
       if (!isSelecting) return;
@@ -187,20 +176,20 @@ export const NoteBlocksHandlers = observer(
       const handler = (e: KeyboardEvent) => {
         if (e.key === 'Backspace') {
           e.preventDefault();
-          blocksTreeHolder.deleteNoteBlockIds(view.selectedIds);
+          registry.deleteNoteBlockIds(scope.selectedIds);
         }
       };
 
       document.addEventListener('keydown', handler);
 
       return () => document.removeEventListener('keydown', handler);
-    }, [blocksTreeHolder, isSelecting, note, view]);
+    }, [isSelecting, note, registry, scope]);
 
     useEffect(() => {
       const handler = (e: MouseEvent) => {
         if (
           focusedBlock.state &&
-          focusedBlock.state.viewId === view.$modelId &&
+          focusedBlock.state.scopeId === scope.$modelId &&
           focusedBlock.state?.isEditing &&
           !(
             e.target instanceof Element &&
@@ -210,7 +199,7 @@ export const NoteBlocksHandlers = observer(
           ) &&
           e.target instanceof Element &&
           (e.target.closest('[data-type="note-block"]') as HTMLElement)?.dataset
-            ?.id !== focusedBlock.state.blockId
+            ?.id !== focusedBlock.state.viewId
         ) {
           focusedBlock.setState(
             new FocusedBlockState({
@@ -224,7 +213,7 @@ export const NoteBlocksHandlers = observer(
       document.addEventListener('mousedown', handler);
 
       return () => document.removeEventListener('mousedown', handler);
-    }, [focusedBlock, view.$modelId]);
+    }, [focusedBlock, scope.$modelId]);
 
     return null;
   },

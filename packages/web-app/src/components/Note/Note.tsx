@@ -32,38 +32,36 @@ export interface IFocusBlockState {
 
 const BacklinkedNoteLoader = observer(
   ({ linkedNote, note }: { linkedNote: NoteModel; note: NoteModel }) => {
-    const noteRepo = useNotesService();
+    // const noteRepo = useNotesService();
+    // const blocksTreeHolder$ = useObservable(
+    //   ($inputs) => {
+    //     return noteRepo.getBlocksTreeHolder$($inputs.pipe(map(([id]) => id)));
+    //   },
+    //   [linkedNote.$modelId],
+    // );
+    // const blocksTreeHolder = useObservableState(blocksTreeHolder$, undefined);
+    // const linkedBlocks = computed(
+    //   () => {
+    //     return blocksTreeHolder
+    //       ? blocksTreeHolder.getLinkedBlocksOfNoteId(note.$modelId)
+    //       : [];
+    //   },
+    //   { equals: comparer.shallow },
+    // ).get();
+    // return (
+    //   <>
+    //     {blocksTreeHolder && (
+    //       <BacklinkedNote
+    //         key={linkedNote.$modelId}
+    //         note={linkedNote}
+    //         blocks={linkedBlocks}
+    //         treeHolder={blocksTreeHolder}
+    //       />
+    //     )}
+    //   </>
+    // );
 
-    const blocksTreeHolder$ = useObservable(
-      ($inputs) => {
-        return noteRepo.getBlocksTreeHolder$($inputs.pipe(map(([id]) => id)));
-      },
-      [linkedNote.$modelId],
-    );
-
-    const blocksTreeHolder = useObservableState(blocksTreeHolder$, undefined);
-
-    const linkedBlocks = computed(
-      () => {
-        return blocksTreeHolder
-          ? blocksTreeHolder.getLinkedBlocksOfNoteId(note.$modelId)
-          : [];
-      },
-      { equals: comparer.shallow },
-    ).get();
-
-    return (
-      <>
-        {blocksTreeHolder && (
-          <BacklinkedNote
-            key={linkedNote.$modelId}
-            note={linkedNote}
-            blocks={linkedBlocks}
-            treeHolder={blocksTreeHolder}
-          />
-        )}
-      </>
-    );
+    return null;
   },
 );
 
@@ -83,24 +81,18 @@ const BacklinkedNotes = observer(({ note }: { note: NoteModel }) => {
         ),
         switchMap(({ linkedNotes, note }) =>
           noteRepo
-            .getBlocksTreeHolderByNoteIds$(
-              of(linkedNotes.map(({ $modelId }) => $modelId)),
-            )
-            .pipe(map((treeHolders) => ({ treeHolders, note, linkedNotes }))),
-        ),
-        switchMap(({ treeHolders, linkedNotes }) =>
-          toObserver(() =>
-            uniq(
-              treeHolders.flatMap((holder) =>
-                holder.getLinkedBlocksOfNoteId(note.$modelId),
+            .getBlocksScopes$(
+              of(
+                linkedNotes.map((linkedNote) => ({
+                  noteId: linkedNote.$modelId,
+                  scopedBy: note,
+                })),
               ),
-            ),
-          ).pipe(map((allBlocks) => ({ linkedNotes, allBlocks }))),
+            )
+            .pipe(map((scopes) => ({ scopes, linkedNotes, note }))),
         ),
-        switchMap(async ({ linkedNotes, allBlocks }) => {
-          await noteRepo.preloadOrCreateBlocksViews(note, allBlocks);
-
-          return { areLoaded: true, linkedNotes, allBlocks };
+        switchMap(async ({ linkedNotes }) => {
+          return { areLoaded: true, linkedNotes };
         }),
       );
     },
@@ -110,15 +102,14 @@ const BacklinkedNotes = observer(({ note }: { note: NoteModel }) => {
   const backlinks = useObservableState(backlinks$, {
     areLoaded: false,
     linkedNotes: [],
-    allBlocks: [],
   });
 
   return (
     <>
       {backlinks.areLoaded ? (
         <div className="note__linked-references">
-          <LinkIcon className="note__link-icon" style={{ width: 16 }} />
-          {backlinks.allBlocks.length} Linked References
+          <LinkIcon className="note__link-icon" style={{ width: 16 }} />0 Linked
+          References
         </div>
       ) : (
         <div className="note__linked-references">
@@ -184,23 +175,13 @@ const NoteBody = observer(({ note }: { note: NoteModel }) => {
 
   useEffect(() => {
     if (focusOnBlockId) {
-      vault.ui.focusedBlock.setState(
+      vault.noteBlocksApp.focusedBlock.setState(
         FocusedBlockState.create(note.$modelId, focusOnBlockId),
       );
     }
-  }, [focusOnBlockId, note.$modelId, vault.ui]);
+  }, [focusOnBlockId, note.$modelId, vault.noteBlocksApp.focusedBlock]);
 
   const inputId = `note-title-input-${note.$modelId}`;
-
-  const view = computed(() => {
-    return vault.ui.getView(note, note);
-  }).get();
-
-  useEffect(() => {
-    if (!view) {
-      noteRepo.preloadOrCreateBlocksView(note, note);
-    }
-  });
 
   const isDailyNote = note.dailyNoteDate !== undefined;
 
@@ -294,7 +275,7 @@ const NoteBody = observer(({ note }: { note: NoteModel }) => {
         )}
       </h2>
 
-      {view && <NoteBlocks note={note} view={view} />}
+      <NoteBlocks note={note} />
 
       <BacklinkedNotes note={note} />
     </div>
