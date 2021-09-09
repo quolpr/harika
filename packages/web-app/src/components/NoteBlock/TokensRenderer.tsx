@@ -38,7 +38,7 @@ const RefRenderer = observer(
         e.stopPropagation();
 
         noteRepo.updateNoteBlockLinks(
-          noteBlock.toggleTodo(token.id).map(({ noteBlockId }) => noteBlockId),
+          noteBlock.toggleTodo(token.id).map(({ $modelId }) => $modelId),
         );
       },
       [noteBlock, noteRepo, token.id],

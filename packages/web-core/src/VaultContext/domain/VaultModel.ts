@@ -9,6 +9,7 @@ import type { PartialNote } from './NotesTree/NotesTreeModel';
 import type { NoteBlockModel } from './NoteBlocksApp/NoteBlockModel';
 import dayjs from 'dayjs';
 import { NoteBlocksApp } from './NoteBlocksApp/NoteBlocksApp';
+import { computed } from 'mobx';
 
 @model(vaultModelType)
 export class VaultModel extends Model({
@@ -19,6 +20,16 @@ export class VaultModel extends Model({
   noteBlocksApp: prop<NoteBlocksApp>(() => new NoteBlocksApp({})),
   notesTree: prop<NotesTreeModel>(() => newTreeModel()),
 }) {
+  @computed
+  get noteRootBlockIdsMap() {
+    return Object.fromEntries(
+      Object.values(this.notesMap).map((note) => [
+        note.$modelId,
+        note.rootBlockId,
+      ]),
+    );
+  }
+
   areBlocksOfNoteLoaded(noteId: string) {
     return this.noteBlocksApp.areBlocksOfNoteLoaded(noteId);
   }
@@ -37,7 +48,7 @@ export class VaultModel extends Model({
     attrs: Required<
       Optional<
         ModelCreationData<NoteModel>,
-        'createdAt' | 'dailyNoteDate' | 'updatedAt'
+        'createdAt' | 'dailyNoteDate' | 'updatedAt' | 'rootBlockId'
       >,
       'title'
     >,
@@ -47,10 +58,16 @@ export class VaultModel extends Model({
 
     const noteId = generateId();
 
+    const { registry, rootBlock } = this.noteBlocksApp.createNewRegistry(
+      noteId,
+      options,
+    );
+
     const note = new NoteModel({
       $modelId: noteId,
       createdAt: new Date().getTime(),
       updatedAt: new Date().getTime(),
+      rootBlockId: rootBlock.$modelId,
       ...(options.isDaily
         ? {
             dailyNoteDate: dayjs().startOf('day').unix(),
@@ -61,12 +78,7 @@ export class VaultModel extends Model({
 
     this.notesMap[note.$modelId] = note;
 
-    const treeRegistry = this.noteBlocksApp.createNewRegistry(
-      note.$modelId,
-      options,
-    );
-
-    return { note, treeRegistry };
+    return { note, treeRegistry: registry };
   }
 
   @modelAction
@@ -119,6 +131,7 @@ export class VaultModel extends Model({
 
     this.noteBlocksApp.createOrUpdateEntitiesFromAttrs(
       blocksAttrs,
+      this.noteRootBlockIdsMap,
       createBlocksRegistry,
     );
   }

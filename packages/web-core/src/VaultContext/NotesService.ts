@@ -137,7 +137,7 @@ export class NotesService {
     attrs: Required<
       Optional<
         ModelCreationData<NoteModel>,
-        'createdAt' | 'updatedAt' | 'dailyNoteDate'
+        'createdAt' | 'updatedAt' | 'dailyNoteDate' | 'rootBlockId'
       >,
       'title'
     >,
@@ -237,7 +237,9 @@ export class NotesService {
       }),
       switchMap(({ notesIds }) =>
         toObserver(() => {
-          return notesIds.map((id) => this.vault.noteBlocksApp.getRegistry(id));
+          return notesIds.map((id) =>
+            this.vault.noteBlocksApp.getBlocksRegistry(id),
+          );
         }),
       ),
       distinctUntilChanged((a, b) => isEqual(a, b)),
@@ -264,7 +266,7 @@ export class NotesService {
     args$: Observable<{
       noteId: string;
       scopedBy: { $modelId: string; $modelType: string };
-      rootBlockId?: string;
+      rootBlockViewId?: string;
     }>,
   ) {
     return args$.pipe(
@@ -277,6 +279,8 @@ export class NotesService {
                   await this.notesBlocksRepository.getByNoteId(args.noteId)
                 ).map((m) => convertNoteBlockDocToModelAttrs(m)),
               );
+
+              console.log({ noteBlockAttrs });
 
               this.vault.createOrUpdateEntitiesFromAttrs(
                 [],
@@ -291,15 +295,25 @@ export class NotesService {
           return of(args);
         }
       }),
+      switchMap(async (args) => {
+        const note = await this.findNote(args.noteId);
+
+        if (!note) {
+          throw new Error('Note not found');
+        }
+
+        return { ...args, note };
+      }),
       switchMap((args) => {
         const scope = this.vault.noteBlocksApp.getScope(
           args.noteId,
           args.scopedBy,
+          args.rootBlockViewId || args.note.rootBlockId,
         );
 
         if (!scope) {
           return from(
-            this.loadScope(args.noteId, args.scopedBy, args.rootBlockId),
+            this.loadScope(args.note, args.scopedBy, args.rootBlockViewId),
           );
         } else {
           return of(scope);
@@ -310,25 +324,20 @@ export class NotesService {
   }
 
   private async loadScope(
-    noteId: string,
+    note: NoteModel,
     scopedBy: { $modelId: string; $modelType: string },
-    rootBlockId?: string,
+    rootBlockViewId?: string,
   ) {
-    const key = `${noteId}-${scopedBy.$modelType}-${scopedBy.$modelId}`;
+    const key = `${note.$modelId}-${scopedBy.$modelType}-${scopedBy.$modelId}`;
     const doc = await this.blocksViewsRepo.getById(key);
 
     const collapsedBlockIds = doc?.collapsedBlockIds || [];
-    rootBlockId ||= await this.notesBlocksRepository.getRootBlockIdByNoteId(
-      noteId,
-    );
-
-    if (!rootBlockId) throw new Error("Can't find root block!");
 
     return this.vault.noteBlocksApp.createScope(
-      noteId,
+      note.$modelId,
       scopedBy,
       collapsedBlockIds,
-      rootBlockId,
+      rootBlockViewId || note.rootBlockId,
     );
   }
 

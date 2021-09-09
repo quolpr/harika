@@ -1,11 +1,3 @@
-import {
-  findParent,
-  Model,
-  model,
-  modelAction,
-  prop,
-  Ref,
-} from 'mobx-keystone';
 import type { NoteBlockModel } from '../NoteBlockModel';
 import {
   allRightSiblingsFunc,
@@ -20,22 +12,28 @@ import {
   siblingsFunc,
 } from '../../../../mobx-tree';
 import type { ITreeNode } from '../../../../mobx-tree';
-import { comparer, computed } from 'mobx';
-import { isViewRegistry, ViewRegistry } from './ViewRegistry';
+import { comparer, computed, makeObservable, observable } from 'mobx';
+import type { ViewRegistry } from './ViewRegistry';
 import type { TreeToken } from '../../../../blockParser/parseStringToTree';
 import { addTokensToNoteBlock } from '../../../../blockParser/blockUtils';
 import { isTodo } from '../../../../blockParser/astHelpers';
+import { BlockContentModel } from '../NoteBlockModel/BlockContentModel';
+import { getSnapshot } from 'mobx-keystone';
 
-@model('harika/BlocksTreeNodeModel')
-export class BlocksViewModel
-  extends Model({
-    noteBlockRef: prop<Ref<NoteBlockModel>>(),
-  })
-  implements ITreeNode<BlocksViewModel>
-{
+export class BlocksViewModel implements ITreeNode<BlocksViewModel> {
+  @observable noteBlock: NoteBlockModel;
+  @observable cachedChildren: Record<string, NoteBlockModel> = {};
+  $modelId: string;
+
+  constructor(noteBlock: NoteBlockModel, private treeRegistry: ViewRegistry) {
+    makeObservable(this);
+    this.$modelId = noteBlock.$modelId;
+    this.noteBlock = noteBlock;
+  }
+
   @computed
-  get noteBlockId() {
-    return this.noteBlockRef.id;
+  get noteId() {
+    return this.noteBlock.noteId;
   }
 
   @computed
@@ -45,7 +43,7 @@ export class BlocksViewModel
 
   @computed
   get content() {
-    return this.noteBlockRef.current.content;
+    return this.noteBlock.content;
   }
 
   @computed
@@ -54,13 +52,8 @@ export class BlocksViewModel
   }
 
   @computed
-  get treeRegistry() {
-    return findParent<ViewRegistry>(this, isViewRegistry)!;
-  }
-
-  @computed
   get isCollapsed() {
-    return this.treeRegistry.collapsedBlockIds.has(this.noteBlockRef.id);
+    return this.treeRegistry.collapsedBlockIds.has(this.noteBlock.$modelId);
   }
 
   @computed
@@ -72,20 +65,15 @@ export class BlocksViewModel
   get parent() {
     if (this.treeRegistry.rootView === this) return undefined;
 
-    const parentBlock = this.noteBlockRef.current.parent;
+    const parentBlock = this.noteBlock.parent;
 
-    return (
-      parentBlock &&
-      this.treeRegistry.viewsMap[
-        this.treeRegistry.blockViewIdsMap[parentBlock.$modelId]
-      ]
-    );
+    return parentBlock && this.treeRegistry.getOrCreateView(parentBlock);
   }
 
   @computed({ equals: comparer.shallow })
   get notCollapsedChildren(): BlocksViewModel[] {
-    return this.noteBlockRef.current.noteBlockRefs.map(({ id }) => {
-      return this.treeRegistry.viewsMap[this.treeRegistry.blockViewIdsMap[id]];
+    return this.noteBlock.noteBlockRefs.map(({ current }) => {
+      return this.treeRegistry.getOrCreateView(current);
     });
   }
 
@@ -168,7 +156,7 @@ export class BlocksViewModel
     let str = this.isRoot
       ? ''
       : `${'  '.repeat(indent)}- ${this.textContent}${
-          includeId ? ` [#${this.noteBlockRef.id}]` : ''
+          includeId ? ` [#${this.$modelId}]` : ''
         }\n`;
 
     this.children.forEach((node) => {
@@ -180,19 +168,17 @@ export class BlocksViewModel
 
   @computed
   get linkedNoteIds() {
-    return this.noteBlockRef.current.linkedNoteIds;
+    return this.noteBlock.linkedNoteIds;
   }
 
-  @modelAction
   toggleExpand() {
     if (this.isCollapsed) {
-      this.treeRegistry.collapsedBlockIds.delete(this.noteBlockId);
+      this.treeRegistry.collapsedBlockIds.delete(this.$modelId);
     } else {
-      this.treeRegistry.collapsedBlockIds.add(this.noteBlockId);
+      this.treeRegistry.collapsedBlockIds.add(this.$modelId);
     }
   }
 
-  @modelAction
   toggleTodo(
     id: string,
     toggledModels: BlocksViewModel[] = [],
@@ -218,7 +204,6 @@ export class BlocksViewModel
   }
 
   // TODO: rename all like moveLeft to tryMoveLeft
-  @modelAction
   moveLeft() {
     if (!this.parent) {
       throw new Error("Can't move root block");
@@ -235,28 +220,18 @@ export class BlocksViewModel
     if (left === this.parent) {
       // If left block is parent
 
-      this.noteBlockRef.current.move(
-        left.parent.noteBlockRef.current,
-        left.orderPosition,
-      );
+      this.noteBlock.move(left.parent.noteBlock, left.orderPosition);
     } else if (left.parent !== this.parent) {
       // If left is child of child of child...
 
-      this.noteBlockRef.current.move(
-        left.parent.noteBlockRef.current,
-        left.orderPosition + 1,
-      );
+      this.noteBlock.move(left.parent.noteBlock, left.orderPosition + 1);
     } else {
       // if same level
 
-      this.noteBlockRef.current.move(
-        left.parent.noteBlockRef.current,
-        left.orderPosition,
-      );
+      this.noteBlock.move(left.parent.noteBlock, left.orderPosition);
     }
   }
 
-  @modelAction
   moveRight() {
     let [, right] = this.leftAndRightSibling;
 
@@ -271,55 +246,42 @@ export class BlocksViewModel
     }
 
     if (right.children.length) {
-      this.noteBlockRef.current.move(
-        right.parent.noteBlockRef.current,
-        'start',
-      );
+      this.noteBlock.move(right.parent.noteBlock, 'start');
     } else {
-      this.noteBlockRef.current.move(
-        right.parent.noteBlockRef.current,
-        right.orderPosition,
-      );
+      this.noteBlock.move(right.parent.noteBlock, right.orderPosition);
     }
   }
 
-  @modelAction
   moveUp() {
     const [left] = this.leftAndRightSibling;
 
+    // Don't handle such case otherwise current block will be hidden
+    if (left?.notCollapsedChildren.length !== 0 && left?.isCollapsed) return;
+
     if (left) {
-      this.noteBlockRef.current.move(left.noteBlockRef.current, 'end');
+      this.noteBlock.move(left.noteBlock, 'end');
     }
   }
 
-  @modelAction
   moveDown() {
     const parentRef = this.parent;
     const parentOfParent = parentRef?.parent;
 
     if (!parentRef || !parentOfParent) return;
 
-    this.noteBlockRef.current.move(
-      parentOfParent.noteBlockRef.current,
-      parentRef.orderPosition + 1,
-    );
+    this.noteBlock.move(parentOfParent.noteBlock, parentRef.orderPosition + 1);
   }
 
-  @modelAction
   mergeToLeftAndDelete() {
     const [left] = this.leftAndRight;
 
     if (!left) return;
 
-    this.noteBlockRef.current.handleMerge(
-      this.noteBlockRef.current,
-      left.noteBlockRef.current,
-    );
+    this.noteBlock.handleMerge(this.noteBlock, left.noteBlock);
 
     return left;
   }
 
-  @modelAction
   injectNewRightBlock(content: string, blockView: BlocksViewModel) {
     if (!this.parent) {
       throw new Error("Can't inject from root block");
@@ -329,35 +291,31 @@ export class BlocksViewModel
       if (this.children.length > 0) {
         return {
           injectTo: 0,
-          parentBlock: this.noteBlockRef.current,
+          parentBlock: this,
         };
       } else {
         return {
           injectTo: this.orderPosition + 1,
-          parentBlock: this.parent.noteBlockRef.current,
+          parentBlock: this.parent,
         };
       }
     })();
 
-    const newNoteBlock = parentBlock.createChildBlock(content, injectTo);
-
-    return this.treeRegistry.viewsMap[
-      this.treeRegistry.blockViewIdsMap[newNoteBlock.$modelId]
-    ];
+    return this.treeRegistry.createBlock(
+      {
+        content: new BlockContentModel({ value: content }),
+        updatedAt: new Date().getTime(),
+      },
+      parentBlock,
+      injectTo,
+    );
   }
 
-  @modelAction
   injectNewTreeTokens(tokens: TreeToken[]): BlocksViewModel[] {
-    const noteBlocks = addTokensToNoteBlock(
-      this.noteBlockRef.current.treeRegistry,
-      this.noteBlockRef.current,
-      tokens,
-    );
+    const noteBlocks = addTokensToNoteBlock(this.treeRegistry, this, tokens);
 
     return noteBlocks.map((block) => {
-      return this.treeRegistry.viewsMap[
-        this.treeRegistry.blockViewIdsMap[block.id]
-      ];
+      return this.treeRegistry.getOrCreateView(block);
     });
   }
 }

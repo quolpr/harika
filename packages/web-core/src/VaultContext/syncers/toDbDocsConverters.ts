@@ -25,6 +25,7 @@ export const mapNote = (model: NoteModel): NoteDocType => {
     title: model.title,
     createdAt: model.createdAt,
     updatedAt: model.updatedAt,
+    rootBlockId: model.rootBlockId,
   };
 };
 export const mapView = (model: any): BlocksViewDocType => {

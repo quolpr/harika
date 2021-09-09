@@ -12,21 +12,7 @@ import {
 } from 'mobx-keystone';
 import { comparer, computed } from 'mobx';
 import { isEqual } from 'lodash-es';
-import {
-  allRightSiblingsFunc,
-  deepLastRightChildFunc,
-  flattenTreeFunc,
-  indentFunc,
-  leftAndRightFunc,
-  leftAndRightSiblingFunc,
-  nearestRightToParentFunc,
-  orderHashFunc,
-  pathFunc,
-  siblingsFunc,
-} from '../../../mobx-tree';
-import type { ITreeNode } from '../../../mobx-tree';
-import { BlockContentModel } from './NoteBlockModel/BlockContentModel';
-import { isTodo } from '../../../blockParser/astHelpers';
+import type { BlockContentModel } from './NoteBlockModel/BlockContentModel';
 import { BlocksRegistry, blocksRegistryType } from './BlocksRegistry';
 
 const isRegistry = (obj: any): obj is BlocksRegistry => {
@@ -36,42 +22,23 @@ const isRegistry = (obj: any): obj is BlocksRegistry => {
 export const noteBlockRef = rootRef<NoteBlockModel>('harika/NoteBlockRef');
 
 @model('harika/NoteBlockModel')
-export class NoteBlockModel
-  extends Model({
-    noteId: prop<string>(),
-    content: prop<BlockContentModel>(),
-    noteBlockRefs: prop<Ref<NoteBlockModel>[]>(),
-    linkedNoteIds: prop<string[]>(),
-    createdAt: tProp(types.dateTimestamp),
-    updatedAt: tProp(types.dateTimestamp),
-    isDeleted: prop<boolean>(false),
-    isRoot: prop<boolean>(),
-  })
-  implements ITreeNode<NoteBlockModel>
-{
+export class NoteBlockModel extends Model({
+  noteId: prop<string>(),
+  content: prop<BlockContentModel>(),
+  noteBlockRefs: prop<Ref<NoteBlockModel>[]>(),
+  linkedNoteIds: prop<string[]>(),
+  createdAt: tProp(types.dateTimestamp),
+  updatedAt: tProp(types.dateTimestamp),
+  isDeleted: prop<boolean>(false),
+}) {
   @computed
-  get id() {
-    return this.$modelId;
-  }
-
-  @computed
-  get nodeId() {
-    return this.$modelId;
+  get isRoot() {
+    return this.treeRegistry.rootBlockId === this.$modelId;
   }
 
   @computed
   get treeRegistry() {
     return findParent<BlocksRegistry>(this, isRegistry)!;
-  }
-
-  @computed
-  get textContent() {
-    return this.content.value;
-  }
-
-  @computed({ equals: comparer.shallow })
-  get children() {
-    return this.noteBlockRefs.map(({ current }) => current);
   }
 
   @computed
@@ -81,75 +48,18 @@ export class NoteBlockModel
     return id === undefined ? undefined : this.treeRegistry.blocksMap[id];
   }
 
-  @computed({ equals: comparer.shallow })
-  get flattenTree(): NoteBlockModel[] {
-    return flattenTreeFunc(this);
-  }
-
-  @computed
-  get indent(): number {
-    return indentFunc(this);
-  }
-
-  @computed({ equals: comparer.shallow })
-  get orderHash(): Record<string, number> {
-    return orderHashFunc(this);
-  }
-
-  @computed
-  get orderPosition() {
-    return this.parent ? this.parent.orderHash[this.$modelId] : 0;
-  }
-
   @computed
   get hasChildren() {
-    return this.children.length !== 0;
-  }
-
-  @computed({ equals: comparer.shallow })
-  get path(): NoteBlockModel[] {
-    return pathFunc(this);
-  }
-
-  @computed({ equals: comparer.shallow })
-  get siblings(): NoteBlockModel[] {
-    return siblingsFunc(this);
-  }
-
-  @computed({ equals: comparer.shallow })
-  get leftAndRightSibling(): [
-    left: NoteBlockModel | undefined,
-    right: NoteBlockModel | undefined,
-  ] {
-    return leftAndRightSiblingFunc(this);
-  }
-
-  @computed
-  get deepLastRightChild(): NoteBlockModel {
-    return deepLastRightChildFunc(this);
-  }
-
-  @computed
-  get nearestRightToParent(): NoteBlockModel | undefined {
-    return nearestRightToParentFunc(this);
-  }
-
-  @computed({ equals: comparer.shallow })
-  get leftAndRight(): [
-    left: NoteBlockModel | undefined,
-    right: NoteBlockModel | undefined,
-  ] {
-    return leftAndRightFunc(this);
-  }
-
-  @computed({ equals: comparer.shallow })
-  get allRightSiblings(): NoteBlockModel[] {
-    return allRightSiblingsFunc(this);
+    return this.noteBlockRefs.length !== 0;
   }
 
   @computed({ equals: comparer.shallow })
   get noteBlockIds() {
     return this.noteBlockRefs.map(({ id }) => id);
+  }
+
+  get orderPosition() {
+    return this.parent?.noteBlockRefs.findIndex((n) => n.id === this.$modelId)!;
   }
 
   @modelAction
@@ -164,7 +74,7 @@ export class NoteBlockModel
       if (pos === 'start') {
         return 0;
       } else if (pos === 'end') {
-        return parent.children.length;
+        return parent.noteBlockRefs.length;
       } else {
         return pos;
       }
@@ -180,11 +90,6 @@ export class NoteBlockModel
     to.linkedNoteIds.push(...from.linkedNoteIds);
 
     from.delete(false, false);
-  }
-
-  @modelAction
-  appendChildBlock(block: NoteBlockModel) {
-    this.noteBlockRefs.push(noteBlockRef(block));
   }
 
   @modelAction
@@ -219,10 +124,6 @@ export class NoteBlockModel
 
     if (data.createdAt && data.createdAt !== this.createdAt) {
       this.createdAt = data.createdAt;
-    }
-
-    if (data.isRoot !== undefined && data.isRoot !== this.isRoot) {
-      this.isRoot = data.isRoot;
     }
 
     if (
@@ -283,18 +184,5 @@ export class NoteBlockModel
         this.linkedNoteIds.push(noteId);
       }
     });
-  }
-
-  @modelAction
-  createChildBlock(content: string, pos: number) {
-    return this.treeRegistry.createBlock(
-      {
-        content: new BlockContentModel({ value: content }),
-        isRoot: false,
-        updatedAt: new Date().getTime(),
-      },
-      this,
-      pos,
-    );
   }
 }

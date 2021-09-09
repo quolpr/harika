@@ -43,7 +43,6 @@ export const convertNoteBlockDocToModelAttrs = (
       .filter((v) => Boolean(v))
       .map((id) => noteBlockRef(id)),
     linkedNoteIds: doc.linkedNoteIds.filter((v) => Boolean(v)),
-    isRoot: Boolean(doc.isRoot),
   };
 };
 
@@ -52,6 +51,7 @@ export const convertNoteDocToModelAttrs = (doc: NoteDocType): NoteData => {
     $modelId: doc.id,
     title: doc.title,
     dailyNoteDate: doc.dailyNoteDate ? doc.dailyNoteDate : undefined,
+    rootBlockId: doc.rootBlockId,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
   };

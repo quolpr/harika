@@ -4,6 +4,8 @@ import { BlockContentModel } from '../VaultContext/domain/NoteBlocksApp/NoteBloc
 import { parseStringToTree } from './parseStringToTree';
 import type { TreeToken } from './parseStringToTree';
 import type { BlocksRegistry } from '../VaultContext/domain/NoteBlocksApp/BlocksRegistry';
+import type { ViewRegistry } from '../VaultContext/domain/NoteBlocksApp/BlocksScope/ViewRegistry';
+import type { BlocksViewModel } from '../VaultContext/domain/NoteBlocksApp/BlocksScope/BlocksViewModel';
 
 export const normalizeBlockTree = (str: string) => {
   const parsed = parseStringToTree(str);
@@ -20,8 +22,8 @@ export const normalizeBlockTree = (str: string) => {
 };
 
 export const addTokensToNoteBlock = (
-  registry: BlocksRegistry,
-  noteBlock: NoteBlockModel,
+  registry: ViewRegistry,
+  view: BlocksViewModel,
   tokens: TreeToken[],
 ): NoteBlockModel[] => {
   const addedModels: NoteBlockModel[] = [];
@@ -29,11 +31,10 @@ export const addTokensToNoteBlock = (
   const virtualRootBlock = new NoteBlockModel({
     createdAt: new Date().getTime(),
     updatedAt: new Date().getTime(),
-    noteId: noteBlock.noteId,
+    noteId: view.noteId,
     noteBlockRefs: [],
     linkedNoteIds: [],
     content: new BlockContentModel({ value: '' }),
-    isRoot: true,
   });
 
   tokens = tokens.map((token) => ({ ...token, indent: token.indent + 1 }));
@@ -61,23 +62,22 @@ export const addTokensToNoteBlock = (
       $modelId: token.id ? token.id : generateId(),
       createdAt: new Date().getTime(),
       updatedAt: new Date().getTime(),
-      noteId: noteBlock.noteId,
+      noteId: view.noteId,
       noteBlockRefs: [],
       linkedNoteIds: [],
       content: new BlockContentModel({ value: token.content }),
-      isRoot: false,
     });
 
-    parentBlock.model.appendChildBlock(newBlock);
+    // parentBlock.model.appendChildBlock(newBlock);
 
     previousBlock = { model: newBlock, indent: currentPath.length };
 
     addedModels.push(previousBlock.model);
   });
 
-  registry.addBlocks(addedModels);
+  // registry.addBlocks(addedModels);
 
-  noteBlock.merge(virtualRootBlock);
+  // view.merge(virtualRootBlock);
 
   return addedModels;
 };
@@ -98,7 +98,7 @@ export const parseToBlocksTree = (str: string) => {
     throw new Error('Root block is not present!');
   }
 
-  addTokensToNoteBlock(treeHolder, treeHolder.rootBlock, tokens);
+  // addTokensToNoteBlock(treeHolder, treeHolder.rootBlock, tokens);
 
   return { vault, note };
 };

@@ -1,8 +1,8 @@
 import { ArraySet, Model, model, modelAction, prop } from 'mobx-keystone';
 import type { ModelCreationData, Ref } from 'mobx-keystone';
 import { BlocksViewModel } from './BlocksViewModel';
-import { computed } from 'mobx';
-import { NoteBlockModel, noteBlockRef } from '../NoteBlockModel';
+import { action, computed, observable } from 'mobx';
+import type { NoteBlockModel } from '../NoteBlockModel';
 import type { Optional } from 'utility-types';
 import type { BlocksRegistry } from '../BlocksRegistry';
 
@@ -11,43 +11,42 @@ export const isViewRegistry = (obj: any): obj is ViewRegistry => {
   return obj.$modelType === viewRegistryType;
 };
 
-type BlockId = string;
-type ViewId = string;
-
 @model(viewRegistryType)
 export class ViewRegistry extends Model({
-  viewsMap: prop<Record<ViewId, BlocksViewModel>>(() => ({})),
-  blockViewIdsMap: prop<Record<BlockId, ViewId>>(() => ({})),
-  rootViewBlockId: prop<BlockId>(),
   blocksRegistryRef: prop<Ref<BlocksRegistry>>(),
-
-  collapsedBlockIds: prop<ArraySet<BlockId>>(),
+  collapsedBlockIds: prop<ArraySet<string>>(),
+  rootViewId: prop<string>(),
 }) {
-  createView(blockId: BlockId) {
-    const newView = new BlocksViewModel({
-      noteBlockRef: noteBlockRef(blockId),
-    });
+  @observable viewsMap: Record<string, BlocksViewModel> = {};
 
+  @action
+  createView(block: NoteBlockModel) {
+    const newView = new BlocksViewModel(block, this);
     this.viewsMap[newView.$modelId] = newView;
-    this.blockViewIdsMap[blockId] = newView.$modelId;
-
     return newView;
   }
 
-  removeBlock(blockId: BlockId) {
-    const viewId = this.blockViewIdsMap[blockId];
-
-    delete this.viewsMap[viewId];
-    delete this.blockViewIdsMap[blockId];
+  @action
+  getOrCreateView(block: NoteBlockModel) {
+    if (this.viewsMap[block.$modelId]) {
+      return this.viewsMap[block.$modelId];
+    } else {
+      return this.createView(block);
+    }
   }
 
-  getView(id: ViewId) {
+  @action
+  removeView(block: NoteBlockModel) {
+    delete this.viewsMap[block.$modelId];
+  }
+
+  getView(id: string) {
     return this.viewsMap[id];
   }
 
   @computed
   get rootView() {
-    return this.viewsMap[this.blockViewIdsMap[this.rootViewBlockId]];
+    return this.viewsMap[this.rootViewId];
   }
 
   @modelAction
@@ -61,18 +60,15 @@ export class ViewRegistry extends Model({
   ) {
     const block = this.blocksRegistryRef.current.createBlock(
       attrs,
-      parent.noteBlockRef.current,
+      parent.noteBlock,
       pos,
     );
 
-    return this.createView(block.$modelId);
+    return this.getOrCreateView(block);
   }
 
   @modelAction
-  addBlocks(blocks: NoteBlockModel[]) {
-    this.blocksRegistryRef.current.addBlocks(blocks);
+  deleteNoteBlockIds(ids: string[]) {
+    this.blocksRegistryRef.current.deleteNoteBlockIds(ids);
   }
-
-  @modelAction
-  deleteNoteBlockIds(ids: string[]) {}
 }

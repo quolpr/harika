@@ -30,6 +30,7 @@ export class NoteModel extends Model({
   updatedAt: tProp(types.dateTimestamp),
   createdAt: tProp(types.dateTimestamp),
   isDeleted: prop<boolean>(false),
+  rootBlockId: prop<string>(),
 }) {
   @modelAction
   updateTitle(newTitle: string) {

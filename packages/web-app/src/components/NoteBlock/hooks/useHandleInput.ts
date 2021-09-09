@@ -279,7 +279,7 @@ export const useHandleInput = (
       const injectedBlocks = blockView.injectNewTreeTokens(parsedToTree);
 
       noteRepo.updateNoteBlockLinks(
-        injectedBlocks.map(({ noteBlockId }) => noteBlockId),
+        injectedBlocks.map(({ $modelId }) => $modelId),
       );
 
       if (injectedBlocks[0]) {

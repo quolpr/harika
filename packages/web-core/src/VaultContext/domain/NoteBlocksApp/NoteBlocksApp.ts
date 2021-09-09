@@ -30,7 +30,7 @@ export class NoteBlocksApp extends Model({
   focusedBlock: prop<FocusedBlock>(() => new FocusedBlock({})),
 }) {
   areBlocksOfNoteLoaded(noteId: string) {
-    return this.blocksRegistries[noteId];
+    return !!this.blocksRegistries[noteId];
   }
 
   getNoteBlock(blockId: string) {
@@ -57,25 +57,25 @@ export class NoteBlocksApp extends Model({
       noteBlockRefs: [],
       content: new BlockContentModel({ value: '' }),
       linkedNoteIds: [],
-      isRoot: true,
     });
 
     const registry = new BlocksRegistry({
       blocksMap: { [rootBlock.$modelId]: rootBlock },
       noteId: noteId,
+      rootBlockId: rootBlock.$modelId,
     });
 
     this.blocksRegistries[noteId] = registry;
 
     if (options.addEmptyBlock) {
       registry.createBlock(
-        { content: new BlockContentModel({ value: '' }), isRoot: false },
+        { content: new BlockContentModel({ value: '' }) },
         rootBlock,
         0,
       );
     }
 
-    return registry;
+    return { registry, rootBlock };
   }
 
   @modelAction
@@ -83,19 +83,20 @@ export class NoteBlocksApp extends Model({
     noteId: string,
     model: { $modelId: string; $modelType: string },
     collapsedBlockIds: string[],
-    rootViewBlockId: string,
+    rootViewId: string,
   ) {
-    const key = `${noteId}-${model.$modelType}-${model.$modelId}`;
+    const key = `${noteId}-${model.$modelType}-${model.$modelId}-${rootViewId}`;
 
     if (!this.areBlocksOfNoteLoaded(noteId)) {
       throw new Error('You need to load blocks first');
     }
 
     const blocksScope = new BlocksScope({
+      rootViewId: rootViewId,
       viewRegistry: new ViewRegistry({
-        blocksRegistryRef: blocksRegistryRef(noteId),
+        blocksRegistryRef: blocksRegistryRef(this.blocksRegistries[noteId]),
         collapsedBlockIds: arraySet(collapsedBlockIds),
-        rootViewBlockId: rootViewBlockId,
+        rootViewId: rootViewId,
       }),
       scopedModelId: model.$modelId,
       scopedModelType: model.$modelType,
@@ -103,15 +104,15 @@ export class NoteBlocksApp extends Model({
 
     this.blocksScopes[key] = blocksScope;
 
+    // TODO: load only partial from root, block views
     onChildAttachedTo(
       () => this.blocksRegistries[noteId].blocksMap,
       (ch) => {
         if (ch instanceof NoteBlockModel) {
-          console.log({ ch });
-          blocksScope.viewRegistry.createView(ch.$modelId);
+          blocksScope.viewRegistry.createView(ch);
 
           return () => {
-            blocksScope.viewRegistry.removeBlock(ch.$modelId);
+            blocksScope.viewRegistry.removeView(ch);
           };
         }
       },
@@ -120,15 +121,19 @@ export class NoteBlocksApp extends Model({
     return this.blocksScopes[key];
   }
 
-  getScope(noteId: string, model: { $modelId: string; $modelType: string }) {
-    const key = `${noteId}-${model.$modelType}-${model.$modelId}`;
+  getScope(
+    noteId: string,
+    model: { $modelId: string; $modelType: string },
+    rootViewId: string,
+  ) {
+    const key = `${noteId}-${model.$modelType}-${model.$modelId}-${rootViewId}`;
 
     if (!this.blocksScopes[key]) return undefined;
 
     return this.blocksScopes[key];
   }
 
-  getRegistry(noteId: string) {
+  getBlocksRegistry(noteId: string) {
     return this.blocksRegistries[noteId];
   }
 
@@ -138,6 +143,7 @@ export class NoteBlocksApp extends Model({
     blocksAttrs: (ModelCreationData<NoteBlockModel> & {
       $modelId: string;
     })[],
+    noteIdRootIdMap: Record<string, string>,
     createBlocksRegistry: boolean,
   ) {
     blocksAttrs.map((attr) => {
@@ -150,9 +156,15 @@ export class NoteBlocksApp extends Model({
         ];
       }
 
+      // TODO: fix
       if (!this.blocksRegistries[attr.noteId] && createBlocksRegistry) {
+        if (!noteIdRootIdMap[attr.noteId]) {
+          throw new Error(`Root block not found for noteId=${attr.noteId}`);
+        }
+
         this.blocksRegistries[attr.noteId] = new BlocksRegistry({
           noteId: attr.noteId,
+          rootBlockId: noteIdRootIdMap[attr.noteId],
         });
       }
 

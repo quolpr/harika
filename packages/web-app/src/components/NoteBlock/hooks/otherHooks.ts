@@ -31,7 +31,7 @@ export const useUpdateBlockLinks = (
 
   useEffect(() => {
     if (!editState.isEditing && wasEditing) {
-      noteRepo.updateNoteBlockLinks([blockView.noteBlockId]);
+      noteRepo.updateNoteBlockLinks([blockView.$modelId]);
     }
   }, [editState.isEditing, blockView, noteRepo, wasEditing]);
 };

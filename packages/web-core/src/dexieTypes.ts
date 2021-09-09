@@ -73,6 +73,7 @@ export type NoteDocType = {
   dailyNoteDate: number | null;
   createdAt: number;
   updatedAt: number;
+  rootBlockId: string;
 };
 
 export type NoteBlockDocType = {

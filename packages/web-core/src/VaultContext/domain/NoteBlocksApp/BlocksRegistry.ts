@@ -1,7 +1,7 @@
 import { Model, model, modelAction, prop, rootRef } from 'mobx-keystone';
 import type { ModelCreationData } from 'mobx-keystone';
 import { NoteBlockModel, noteBlockRef } from './NoteBlockModel';
-import { computed } from 'mobx';
+import { comparer, computed } from 'mobx';
 import type { Optional } from 'utility-types';
 import { generateId } from '../../../generateId';
 import { omit } from 'lodash-es';
@@ -12,17 +12,17 @@ export const blocksRegistryRef = rootRef<BlocksRegistry>(blocksRegistryType);
 
 @model(blocksRegistryType)
 export class BlocksRegistry extends Model({
+  rootBlockId: prop<string>(),
   blocksMap: prop<Record<string, NoteBlockModel>>(() => ({})),
   noteId: prop<string>(),
 }) {
-  // TODO: optimize
   @computed
   get rootBlock(): NoteBlockModel | undefined {
-    return Object.values(this.blocksMap).find((block) => block.isRoot)!;
+    return this.blocksMap[this.rootBlockId];
   }
 
   // TODO: optimize
-  @computed
+  @computed({ equals: comparer.shallow })
   get childParentRelations() {
     const relations: Record<string, string> = {};
 
@@ -100,7 +100,6 @@ export class BlocksRegistry extends Model({
       this.createBlock(
         {
           content: new BlockContentModel({ value: '' }),
-          isRoot: false,
           updatedAt: new Date().getTime(),
         },
         this.rootBlock,

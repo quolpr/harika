@@ -11,7 +11,7 @@ import type {
 } from '../../SqlNotesRepository';
 import type { NoteBlockModel } from '../domain/NoteBlocksApp/NoteBlockModel';
 import type { VaultModel } from '../NotesService';
-import { mapNote, mapNoteBlock, mapView } from './toDbDocsConverters';
+import { mapNote, mapNoteBlock } from './toDbDocsConverters';
 
 // TODO: type rootKey
 const zipPatches = (selector: (path: Path) => boolean, patches: Patch[]) => {
@@ -173,22 +173,14 @@ const getBlocksPatches = (
   const toDeleteIds = new Set<string>();
 
   patches.forEach((patch) => {
-    if (
-      patch.path.length === 2 &&
-      patch.path[0] === 'blocksTreeHoldersMap' &&
-      patch.op === 'add'
-    ) {
+    if (patch.path.length === 3 && patch.op === 'add') {
       Object.keys(patch.value.blocksMap).forEach((v) => {
         toCreateIds.add(v);
       });
-    } else if (
-      patch.path.length >= 4 &&
-      patch.path[0] === 'blocksTreeHoldersMap' &&
-      patch.path[2] === 'blocksMap'
-    ) {
-      const id = patch.path[3] as string;
+    } else if (patch.path.length >= 5) {
+      const id = patch.path[4] as string;
 
-      if (patch.op === 'add' && patch.path.length === 4) {
+      if (patch.op === 'add' && patch.path.length === 5) {
         toCreateIds.add(id);
       } else {
         const noteBlock = getNoteBlock(id);
@@ -199,7 +191,7 @@ const getBlocksPatches = (
           toUpdateIds.add(id);
         }
       }
-    } else if (patch.path[0] === 'blocksTreeHoldersMap') {
+    } else {
       console.error(patch, 'Unknown patch');
     }
   });
@@ -241,34 +233,51 @@ export class ToDbSyncer {
     });
   };
 
-  private applyPatches = async (patches: Patch[]) => {
-    patches = patches.filter(
+  private applyPatches = async (allPatches: Patch[]) => {
+    const blocksPatches = allPatches.filter(
       ({ path }) =>
-        ['blocksTreeHoldersMap', 'notesMap'].includes(path[0] as string) ||
-        (path[0] === 'ui' && path[1] === 'blocksViewsMap'),
+        path[0] === 'noteBlocksApp' && path[1] === 'blocksRegistries',
+    );
+    const notesPatches = allPatches.filter(
+      ({ path }) => path[0] === 'notesMap',
+    );
+    const viewPatches = allPatches.filter(
+      ({ path }) => path[0] === 'ui' && path[1] === 'blocksViewsMap',
     );
 
-    if (patches.length === 0) return;
+    if (
+      blocksPatches.length === 0 &&
+      notesPatches.length === 0 &&
+      viewPatches.length === 0
+    )
+      return;
+
+    console.log('patches to handle', {
+      blocksPatches,
+      notesPatches,
+      viewPatches,
+    });
 
     const blocksResult = getBlocksPatches(
       (id) => this.vault.getNoteBlock(id),
-      patches,
+      blocksPatches,
     );
 
-    const noteResult = zipPatches((p) => p[0] === 'notesMap', patches);
-    const viewToUpdateIds = patches
-      .map((p) =>
-        p.path.length > 2 &&
-        p.path[0] === 'ui' &&
-        p.path[1] === 'blocksViewsMap'
-          ? p.path[2]
-          : undefined,
-      )
-      .filter((id) => id !== undefined) as string[];
+    const noteResult = zipPatches((p) => p[0] === 'notesMap', notesPatches);
+
+    // const viewToUpdateIds = patches
+    //   .map((p) =>
+    //     p.path.length > 2 &&
+    //     p.path[0] === 'ui' &&
+    //     p.path[1] === 'blocksViewsMap'
+    //       ? p.path[2]
+    //       : undefined,
+    //   )
+    //   .filter((id) => id !== undefined) as string[];
 
     console.debug(
       'Applying patches from mobx',
-      JSON.stringify({ blocksResult, noteResult, viewToUpdateIds }, null, 2),
+      JSON.stringify({ blocksResult, noteResult }, null, 2),
     );
 
     await this.applier(noteResult, this.notesRepository, (id) =>

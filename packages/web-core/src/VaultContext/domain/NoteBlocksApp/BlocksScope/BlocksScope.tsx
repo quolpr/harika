@@ -11,6 +11,8 @@ export class BlocksScope extends Model({
   prevSelectionInterval: prop<[string, string] | undefined>(),
   // Is needed to handle when shift+click pressed
   addableSelectionId: prop<string | undefined>(),
+
+  rootViewId: prop<string>(),
   scopedModelId: prop<string>(),
   scopedModelType: prop<string>(),
 }) {

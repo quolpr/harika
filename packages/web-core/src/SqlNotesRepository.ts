@@ -155,12 +155,12 @@ export type NoteRow = {
   dailyNoteDate: number | null;
   createdAt: number;
   updatedAt: number | null;
+  rootBlockId: string;
 };
 
 export type NoteBlockRow = {
   id: string;
   noteId: string;
-  isRoot: 0 | 1;
   noteBlockIds: string;
   linkedNoteIds: string;
   content: string;
@@ -277,6 +277,7 @@ export class DB {
         id varchar(20) PRIMARY KEY,
         title varchar(255) NOT NULL,
         dailyNoteDate INTEGER,
+        rootBlockId varchar(20) NOT NULL,
         updatedAt INTEGER NOT NULL,
         createdAt INTEGER NOT NULL
       );
@@ -337,7 +338,6 @@ export class DB {
       CREATE TABLE IF NOT EXISTS ${noteBlocksTable} (
         id varchar(20) PRIMARY KEY,
         noteId varchar(20) NOT NULL,
-        isRoot BOOLEAN NOT NULL CHECK (isRoot IN (0, 1)),
         noteBlockIds TEXT NOT NULL,
         linkedNoteIds TEXT NOT NULL,
         content TEXT NOT NULL,
@@ -1136,14 +1136,6 @@ export class SqlNotesBlocksRepository extends BaseSyncRepository<
     );
   }
 
-  getRootBlockIdByNoteId(noteId: string) {
-    const [res] = this.db.execQuery(
-      Q.select('id').from(this.getTableName()).where({ noteId, isRoot: 1 }),
-    );
-
-    return (res?.values?.[0]?.[0] as string) || undefined;
-  }
-
   getByNoteIds(ids: string[]) {
     const res = this.db.getRecords<NoteBlockRow>(
       Q.select().from(this.getTableName()).where(Q.in('noteId', ids)),
@@ -1202,7 +1194,6 @@ export class SqlNotesBlocksRepository extends BaseSyncRepository<
       ...super.toRow(doc),
       noteBlockIds: JSON.stringify(doc.noteBlockIds),
       linkedNoteIds: JSON.stringify(doc.linkedNoteIds),
-      isRoot: doc.isRoot ? (1 as const) : (0 as const),
     };
 
     return res;
@@ -1213,7 +1204,6 @@ export class SqlNotesBlocksRepository extends BaseSyncRepository<
       ...super.toDoc(row),
       noteBlockIds: JSON.parse(row['noteBlockIds'] as string),
       linkedNoteIds: JSON.parse(row['linkedNoteIds'] as string),
-      isRoot: Boolean(row.isRoot),
     };
 
     return res;
