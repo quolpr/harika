@@ -82,7 +82,6 @@ export class VaultModel extends Model({
   }
 
   @modelAction
-  @transaction
   createOrUpdateEntitiesFromAttrs(
     noteAttrs: (ModelCreationData<NoteModel> & {
       $modelId: string;

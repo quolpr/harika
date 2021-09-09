@@ -12,13 +12,13 @@ import {
   siblingsFunc,
 } from '../../../../mobx-tree';
 import type { ITreeNode } from '../../../../mobx-tree';
-import { comparer, computed, makeObservable, observable } from 'mobx';
+import { action, comparer, computed, makeObservable, observable } from 'mobx';
 import type { ViewRegistry } from './ViewRegistry';
 import type { TreeToken } from '../../../../blockParser/parseStringToTree';
 import { addTokensToNoteBlock } from '../../../../blockParser/blockUtils';
 import { isTodo } from '../../../../blockParser/astHelpers';
 import { BlockContentModel } from '../NoteBlockModel/BlockContentModel';
-import { getSnapshot } from 'mobx-keystone';
+import { getSnapshot, modelAction } from 'mobx-keystone';
 
 export class BlocksViewModel implements ITreeNode<BlocksViewModel> {
   @observable noteBlock: NoteBlockModel;
@@ -72,9 +72,11 @@ export class BlocksViewModel implements ITreeNode<BlocksViewModel> {
 
   @computed({ equals: comparer.shallow })
   get notCollapsedChildren(): BlocksViewModel[] {
-    return this.noteBlock.noteBlockRefs.map(({ current }) => {
-      return this.treeRegistry.getOrCreateView(current);
-    });
+    return this.noteBlock.noteBlockRefs
+      .map(({ current }) => {
+        return this.treeRegistry.getOrCreateView(current);
+      })
+      .filter((v) => !!v);
   }
 
   @computed({ equals: comparer.shallow })
@@ -246,7 +248,7 @@ export class BlocksViewModel implements ITreeNode<BlocksViewModel> {
     }
 
     if (right.children.length) {
-      this.noteBlock.move(right.parent.noteBlock, 'start');
+      this.noteBlock.move(right.noteBlock, 'start');
     } else {
       this.noteBlock.move(right.parent.noteBlock, right.orderPosition);
     }
@@ -311,11 +313,8 @@ export class BlocksViewModel implements ITreeNode<BlocksViewModel> {
     );
   }
 
+  @action
   injectNewTreeTokens(tokens: TreeToken[]): BlocksViewModel[] {
-    const noteBlocks = addTokensToNoteBlock(this.treeRegistry, this, tokens);
-
-    return noteBlocks.map((block) => {
-      return this.treeRegistry.getOrCreateView(block);
-    });
+    return addTokensToNoteBlock(this.treeRegistry, this, tokens);
   }
 }

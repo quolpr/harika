@@ -30,7 +30,7 @@ export const NoteBlocksHandlers = observer(
       const idOnMouseMove$ = mouseMove$.pipe(
         map((e) => {
           const el2 = (e.target as HTMLElement).closest<HTMLDivElement>(
-            `[data-type="note-block"][data-view-id="${scope.$modelId}"]`,
+            `[data-type="note-block"][data-scope-id="${scope.$modelId}"]`,
           );
 
           return el2?.dataset?.id;
@@ -46,7 +46,7 @@ export const NoteBlocksHandlers = observer(
         .pipe(
           map((e) => {
             const el = (e.target as HTMLElement).closest<HTMLDivElement>(
-              `[data-type="note-block"][data-view-id="${scope.$modelId}"]`,
+              `[data-type="note-block"][data-scope-id="${scope.$modelId}"]`,
             );
 
             return { fromBlockId: el?.dataset?.id, shiftKey: e.shiftKey };

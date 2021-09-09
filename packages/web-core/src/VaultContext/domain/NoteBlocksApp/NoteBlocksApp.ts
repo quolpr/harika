@@ -109,13 +109,14 @@ export class NoteBlocksApp extends Model({
       () => this.blocksRegistries[noteId].blocksMap,
       (ch) => {
         if (ch instanceof NoteBlockModel) {
-          blocksScope.viewRegistry.createView(ch);
+          blocksScope.viewRegistry.getOrCreateView(ch);
 
           return () => {
             blocksScope.viewRegistry.removeView(ch);
           };
         }
       },
+      { fireForCurrentChildren: false },
     );
 
     return this.blocksScopes[key];
@@ -133,12 +134,10 @@ export class NoteBlocksApp extends Model({
     return this.blocksScopes[key];
   }
 
-  getBlocksRegistry(noteId: string) {
+  getBlocksRegistryByNoteId(noteId: string) {
     return this.blocksRegistries[noteId];
   }
 
-  @modelAction
-  @transaction
   createOrUpdateEntitiesFromAttrs(
     blocksAttrs: (ModelCreationData<NoteBlockModel> & {
       $modelId: string;

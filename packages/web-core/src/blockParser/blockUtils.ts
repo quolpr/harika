@@ -25,24 +25,15 @@ export const addTokensToNoteBlock = (
   registry: ViewRegistry,
   view: BlocksViewModel,
   tokens: TreeToken[],
-): NoteBlockModel[] => {
-  const addedModels: NoteBlockModel[] = [];
-
-  const virtualRootBlock = new NoteBlockModel({
-    createdAt: new Date().getTime(),
-    updatedAt: new Date().getTime(),
-    noteId: view.noteId,
-    noteBlockRefs: [],
-    linkedNoteIds: [],
-    content: new BlockContentModel({ value: '' }),
-  });
+): BlocksViewModel[] => {
+  const addedModels: BlocksViewModel[] = [];
 
   tokens = tokens.map((token) => ({ ...token, indent: token.indent + 1 }));
 
-  let previousBlock: { model: NoteBlockModel; indent: number } | undefined =
+  let previousBlock: { model: BlocksViewModel; indent: number } | undefined =
     undefined;
-  let currentPath: { model: NoteBlockModel; indent: number }[] = [
-    { model: virtualRootBlock, indent: 0 },
+  let currentPath: { model: BlocksViewModel; indent: number }[] = [
+    { model: view, indent: 0 },
   ];
 
   tokens.forEach((token) => {
@@ -56,28 +47,26 @@ export const addTokensToNoteBlock = (
       }
     }
 
-    const parentBlock = currentPath[currentPath.length - 1];
+    const parentView = currentPath[currentPath.length - 1];
 
-    const newBlock = new NoteBlockModel({
-      $modelId: token.id ? token.id : generateId(),
-      createdAt: new Date().getTime(),
-      updatedAt: new Date().getTime(),
-      noteId: view.noteId,
-      noteBlockRefs: [],
-      linkedNoteIds: [],
-      content: new BlockContentModel({ value: token.content }),
-    });
-
-    // parentBlock.model.appendChildBlock(newBlock);
+    const newBlock = registry.createBlock(
+      {
+        $modelId: token.id ? token.id : generateId(),
+        createdAt: new Date().getTime(),
+        updatedAt: new Date().getTime(),
+        noteId: view.noteId,
+        noteBlockRefs: [],
+        linkedNoteIds: [],
+        content: new BlockContentModel({ value: token.content }),
+      },
+      parentView.model,
+      'append',
+    );
 
     previousBlock = { model: newBlock, indent: currentPath.length };
 
-    addedModels.push(previousBlock.model);
+    addedModels.push(newBlock);
   });
-
-  // registry.addBlocks(addedModels);
-
-  // view.merge(virtualRootBlock);
 
   return addedModels;
 };

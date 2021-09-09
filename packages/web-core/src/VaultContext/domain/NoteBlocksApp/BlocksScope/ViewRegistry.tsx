@@ -20,18 +20,13 @@ export class ViewRegistry extends Model({
   @observable viewsMap: Record<string, BlocksViewModel> = {};
 
   @action
-  createView(block: NoteBlockModel) {
-    const newView = new BlocksViewModel(block, this);
-    this.viewsMap[newView.$modelId] = newView;
-    return newView;
-  }
-
-  @action
   getOrCreateView(block: NoteBlockModel) {
     if (this.viewsMap[block.$modelId]) {
       return this.viewsMap[block.$modelId];
     } else {
-      return this.createView(block);
+      const newView = new BlocksViewModel(block, this);
+      this.viewsMap[newView.$modelId] = newView;
+      return newView;
     }
   }
 
@@ -56,7 +51,7 @@ export class ViewRegistry extends Model({
       'createdAt' | 'noteId' | 'noteBlockRefs' | 'linkedNoteIds' | 'updatedAt'
     >,
     parent: BlocksViewModel,
-    pos: number,
+    pos: number | 'append',
   ) {
     const block = this.blocksRegistryRef.current.createBlock(
       attrs,

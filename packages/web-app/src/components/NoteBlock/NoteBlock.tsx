@@ -170,6 +170,7 @@ export const NoteBlock = observer(
         data-id={noteBlock.$modelId}
         data-order={noteBlock.orderPosition}
         data-type="note-block"
+        data-scope-id={scope.$modelId}
       >
         <div
           className={clsx('note-block__body', {

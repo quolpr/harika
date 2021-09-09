@@ -1,12 +1,4 @@
-import {
-  model,
-  Model,
-  modelAction,
-  prop,
-  rootRef,
-  tProp,
-  types,
-} from 'mobx-keystone';
+import { model, Model, modelAction, prop, tProp, types } from 'mobx-keystone';
 import type { ModelCreationData } from 'mobx-keystone';
 
 export interface INoteLoadStatus {
@@ -14,8 +6,6 @@ export interface INoteLoadStatus {
   areChildrenLoaded: boolean;
   areNoteLinksLoaded: boolean;
 }
-
-export const noteRef = rootRef<NoteModel>('harika/NoteRef');
 
 const modelType = 'harika/NoteModel' as const;
 

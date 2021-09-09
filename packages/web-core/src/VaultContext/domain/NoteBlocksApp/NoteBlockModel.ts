@@ -1,6 +1,6 @@
 import type { ModelCreationData, Ref } from 'mobx-keystone';
 import {
-  rootRef,
+  customRef,
   detach,
   findParent,
   model,
@@ -14,12 +14,31 @@ import { comparer, computed } from 'mobx';
 import { isEqual } from 'lodash-es';
 import type { BlockContentModel } from './NoteBlockModel/BlockContentModel';
 import { BlocksRegistry, blocksRegistryType } from './BlocksRegistry';
+import { isBlocksApp, NoteBlocksApp } from './NoteBlocksApp';
 
 const isRegistry = (obj: any): obj is BlocksRegistry => {
   return obj.$modelType === blocksRegistryType;
 };
 
-export const noteBlockRef = rootRef<NoteBlockModel>('harika/NoteBlockRef');
+export const noteBlockRef = customRef<NoteBlockModel>('harika/NoteBlockRef', {
+  resolve(ref) {
+    const app = findParent<NoteBlocksApp>(this, isBlocksApp);
+
+    if (!app) {
+      return undefined;
+    }
+
+    return app.getNoteBlock(ref.id);
+  },
+
+  onResolvedValueChange(ref, newTodo, oldTodo) {
+    if (oldTodo && !newTodo) {
+      // if the todo value we were referencing disappeared then remove the reference
+      // from its parent
+      detach(ref);
+    }
+  },
+});
 
 @model('harika/NoteBlockModel')
 export class NoteBlockModel extends Model({

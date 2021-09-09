@@ -21,6 +21,10 @@ export class BlocksRegistry extends Model({
     return this.blocksMap[this.rootBlockId];
   }
 
+  getBlockById(id: string) {
+    return this.blocksMap[id];
+  }
+
   // TODO: optimize
   @computed({ equals: comparer.shallow })
   get childParentRelations() {
@@ -54,7 +58,7 @@ export class BlocksRegistry extends Model({
       'createdAt' | 'noteId' | 'noteBlockRefs' | 'linkedNoteIds' | 'updatedAt'
     >,
     parent: NoteBlockModel,
-    pos: number,
+    pos: number | 'append',
   ) {
     const newNoteBlock = new NoteBlockModel({
       $modelId: attrs.$modelId ? attrs.$modelId : generateId(),
@@ -68,7 +72,11 @@ export class BlocksRegistry extends Model({
 
     this.blocksMap[newNoteBlock.$modelId] = newNoteBlock;
 
-    parent.noteBlockRefs.splice(pos, 0, noteBlockRef(newNoteBlock));
+    if (pos === 'append') {
+      parent.noteBlockRefs.push(noteBlockRef(newNoteBlock));
+    } else {
+      parent.noteBlockRefs.splice(pos, 0, noteBlockRef(newNoteBlock));
+    }
 
     return newNoteBlock;
   }
@@ -115,7 +123,6 @@ export class BlocksRegistry extends Model({
     });
   }
 
-  @modelAction
   createOrUpdateBlock(
     attr: ModelCreationData<NoteBlockModel> & {
       $modelId: string;
