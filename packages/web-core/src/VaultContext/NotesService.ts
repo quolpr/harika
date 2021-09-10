@@ -11,6 +11,7 @@ import {
   distinctUntilChanged,
   first,
   map,
+  mapTo,
   mergeAll,
   mergeMap,
   switchMap,
@@ -44,6 +45,7 @@ import type {
   ImportExportService,
 } from '../VaultDb.worker';
 import type { BlocksScope } from './domain/NoteBlocksApp/BlocksScope/BlocksScope';
+import { getScopeKey } from './domain/NoteBlocksApp/NoteBlocksApp';
 
 export { NoteModel } from './domain/NoteModel';
 export { VaultModel } from './domain/VaultModel';
@@ -119,8 +121,8 @@ export class NotesService {
     (
       await firstValueFrom(
         this.getBlocksRegistryByNoteIds$(
-          this.getLinkedNotes$(noteId).pipe(
-            map((models) => models.map(({ $modelId }) => $modelId)),
+          this.getLinksOfNote$(noteId).pipe(
+            map((links) => links.map(({ note: { $modelId } }) => $modelId)),
           ),
         ),
       )
@@ -187,16 +189,27 @@ export class NotesService {
     );
   }
 
-  getLinkedNotes$(noteId: string) {
-    const noteIds$ = from(
+  getLinksOfNote$(noteId: string) {
+    const links$ = from(
       this.dbEventsService.liveQuery(
         [VaultDbTables.Notes, VaultDbTables.NoteBlocks],
-        () => this.notesBlocksRepository.getLinkedNoteIdsOfNoteId(noteId),
+        () => this.notesBlocksRepository.getLinksOfNoteId(noteId),
         false,
       ),
     ).pipe(distinctUntilChanged((a, b) => isEqual(a, b)));
 
-    return this.findNoteByIds$(noteIds$);
+    return links$.pipe(
+      switchMap((links) => {
+        return this.findNoteByIds$(of(Object.keys(links))).pipe(
+          map((notes) =>
+            notes.map((note) => ({
+              note,
+              linkedBlockIds: links[note.$modelId],
+            })),
+          ),
+        );
+      }),
+    );
   }
 
   getBlocksRegistryByNoteIds$(notesIds$: Observable<string[]>) {
@@ -238,11 +251,23 @@ export class NotesService {
       switchMap(({ notesIds }) =>
         toObserver(() => {
           return notesIds.map((id) =>
-            this.vault.noteBlocksApp.getBlocksRegistry(id),
+            this.vault.noteBlocksApp.getBlocksRegistryByNoteId(id),
           );
         }),
       ),
       distinctUntilChanged((a, b) => isEqual(a, b)),
+    );
+  }
+
+  getBlocksScope$(
+    arg$: Observable<{
+      noteId: string;
+      scopedBy: { $modelId: string; $modelType: string };
+      rootBlockViewId?: string;
+    }>,
+  ) {
+    return this.getBlocksScopes$(arg$.pipe(map((arg) => [arg]))).pipe(
+      map((scopes) => scopes[0]),
     );
   }
 
@@ -251,36 +276,45 @@ export class NotesService {
       {
         noteId: string;
         scopedBy: { $modelId: string; $modelType: string };
-        rootBlockId?: string;
+        rootBlockViewId?: string;
       }[]
     >,
   ) {
     return args$.pipe(
-      switchMap((args) =>
-        merge(...args.map((arg) => this.getBlocksScope$(of(arg)))),
-      ),
-    );
-  }
-
-  getBlocksScope$(
-    args$: Observable<{
-      noteId: string;
-      scopedBy: { $modelId: string; $modelType: string };
-      rootBlockViewId?: string;
-    }>,
-  ) {
-    return args$.pipe(
       switchMap((args) => {
-        if (!this.vault.noteBlocksApp.areBlocksOfNoteLoaded(args.noteId)) {
+        return this.findNoteByIds$(of(args.map(({ noteId }) => noteId))).pipe(
+          map((notes) => {
+            return args.map((arg) => {
+              const note = notes.find((n) => n.$modelId === arg.noteId);
+
+              if (!note) throw new Error('Note not found');
+
+              return {
+                noteId: arg.noteId,
+                scopedBy: arg.scopedBy,
+                rootBlockViewId: arg.rootBlockViewId || note.rootBlockId,
+              };
+            });
+          }),
+        );
+      }),
+      switchMap((args) => {
+        const notLoadedBlocksOfNotesIds = args
+          .map(({ noteId }) => noteId)
+          .filter(
+            (noteId) => !this.vault.noteBlocksApp.areBlocksOfNoteLoaded(noteId),
+          );
+
+        if (notLoadedBlocksOfNotesIds.length > 0) {
           return from(
             (async () => {
               const noteBlockAttrs = await Promise.all(
                 (
-                  await this.notesBlocksRepository.getByNoteId(args.noteId)
+                  await this.notesBlocksRepository.getByNoteIds(
+                    notLoadedBlocksOfNotesIds,
+                  )
                 ).map((m) => convertNoteBlockDocToModelAttrs(m)),
               );
-
-              console.log({ noteBlockAttrs });
 
               this.vault.createOrUpdateEntitiesFromAttrs(
                 [],
@@ -295,49 +329,13 @@ export class NotesService {
           return of(args);
         }
       }),
-      switchMap(async (args) => {
-        const note = await this.findNote(args.noteId);
-
-        if (!note) {
-          throw new Error('Note not found');
-        }
-
-        return { ...args, note };
-      }),
-      switchMap((args) => {
-        const scope = this.vault.noteBlocksApp.getScope(
-          args.noteId,
-          args.scopedBy,
-          args.rootBlockViewId || args.note.rootBlockId,
+      map((args) => {
+        // TODO: load collapsedBlockIds from DB
+        return this.vault.noteBlocksApp.getOrCreateScopes(
+          args.map((arg) => ({ ...arg, collapsedBlockIds: [] })),
         );
-
-        if (!scope) {
-          return from(
-            this.loadScope(args.note, args.scopedBy, args.rootBlockViewId),
-          );
-        } else {
-          return of(scope);
-        }
       }),
       distinctUntilChanged((a, b) => isEqual(a, b)),
-    );
-  }
-
-  private async loadScope(
-    note: NoteModel,
-    scopedBy: { $modelId: string; $modelType: string },
-    rootBlockViewId?: string,
-  ) {
-    const key = `${note.$modelId}-${scopedBy.$modelType}-${scopedBy.$modelId}`;
-    const doc = await this.blocksViewsRepo.getById(key);
-
-    const collapsedBlockIds = doc?.collapsedBlockIds || [];
-
-    return this.vault.noteBlocksApp.createScope(
-      note.$modelId,
-      scopedBy,
-      collapsedBlockIds,
-      rootBlockViewId || note.rootBlockId,
     );
   }
 

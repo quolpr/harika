@@ -3,19 +3,16 @@ import './styles.css';
 import { useEffect } from 'react';
 import { useState } from 'react';
 import { observer } from 'mobx-react-lite';
-import { NoteModel, FocusedBlockState, toObserver } from '@harika/web-core';
-import { computed } from 'mobx';
+import { NoteModel, FocusedBlockState } from '@harika/web-core';
 import { useHistory, useLocation } from 'react-router-dom';
 import { LinkIcon } from '@heroicons/react/solid';
 import { useCurrentVault } from '../../hooks/useCurrentVault';
 import { CurrentBlockInputRefContext } from '../../contexts';
 import { useNotesService } from '../../contexts/CurrentNotesServiceContext';
 import { NoteBlocks } from './NoteBlocks';
-import { BacklinkedNote } from './BacklinkedNote';
-import { uniq } from 'lodash-es';
+import { groupBy } from 'lodash-es';
 import { useObservable, useObservableState } from 'observable-hooks';
 import { map, of, switchMap, tap } from 'rxjs';
-import { comparer } from 'mobx';
 import AutosizeInput from 'react-input-autosize';
 import dayjs from 'dayjs';
 import { bem } from '../../utils';
@@ -25,45 +22,11 @@ import RightArrow from '../../icons/right-arrow.svg?component';
 import { generateStackedNotePath } from '../../hooks/useNoteClick';
 import { paths } from '../../paths';
 import { useMedia } from 'react-use';
+import { BacklinkedNote } from './BacklinkedNote';
 
 export interface IFocusBlockState {
   focusOnBlockId: string;
 }
-
-const BacklinkedNoteLoader = observer(
-  ({ linkedNote, note }: { linkedNote: NoteModel; note: NoteModel }) => {
-    // const noteRepo = useNotesService();
-    // const blocksTreeHolder$ = useObservable(
-    //   ($inputs) => {
-    //     return noteRepo.getBlocksTreeHolder$($inputs.pipe(map(([id]) => id)));
-    //   },
-    //   [linkedNote.$modelId],
-    // );
-    // const blocksTreeHolder = useObservableState(blocksTreeHolder$, undefined);
-    // const linkedBlocks = computed(
-    //   () => {
-    //     return blocksTreeHolder
-    //       ? blocksTreeHolder.getLinkedBlocksOfNoteId(note.$modelId)
-    //       : [];
-    //   },
-    //   { equals: comparer.shallow },
-    // ).get();
-    // return (
-    //   <>
-    //     {blocksTreeHolder && (
-    //       <BacklinkedNote
-    //         key={linkedNote.$modelId}
-    //         note={linkedNote}
-    //         blocks={linkedBlocks}
-    //         treeHolder={blocksTreeHolder}
-    //       />
-    //     )}
-    //   </>
-    // );
-
-    return null;
-  },
-);
 
 const BacklinkedNotes = observer(({ note }: { note: NoteModel }) => {
   const noteRepo = useNotesService();
@@ -76,23 +39,38 @@ const BacklinkedNotes = observer(({ note }: { note: NoteModel }) => {
         }),
         switchMap(([note]) =>
           noteRepo
-            .getLinkedNotes$(note.$modelId)
-            .pipe(map((linkedNotes) => ({ linkedNotes, note }))),
+            .getLinksOfNote$(note.$modelId)
+            .pipe(map((noteLinks) => ({ noteLinks: noteLinks, note }))),
         ),
-        switchMap(({ linkedNotes, note }) =>
+        switchMap(({ noteLinks, note }) =>
           noteRepo
             .getBlocksScopes$(
               of(
-                linkedNotes.map((linkedNote) => ({
-                  noteId: linkedNote.$modelId,
-                  scopedBy: note,
-                })),
+                noteLinks.flatMap((linkedNote) =>
+                  linkedNote.linkedBlockIds.map((blockId) => ({
+                    noteId: linkedNote.note.$modelId,
+                    scopedBy: note,
+                    rootBlockViewId: blockId,
+                  })),
+                ),
               ),
             )
-            .pipe(map((scopes) => ({ scopes, linkedNotes, note }))),
+            .pipe(
+              map((scopes) => ({
+                referencesCount: scopes.length,
+                groupedScopes: groupBy(scopes, 'noteId'),
+                noteLinks: noteLinks,
+                note,
+              })),
+            ),
         ),
-        switchMap(async ({ linkedNotes }) => {
-          return { areLoaded: true, linkedNotes };
+        switchMap(async ({ noteLinks, referencesCount, groupedScopes }) => {
+          return {
+            areLoaded: true,
+            noteLinks: noteLinks,
+            referencesCount,
+            groupedScopes,
+          };
         }),
       );
     },
@@ -101,15 +79,17 @@ const BacklinkedNotes = observer(({ note }: { note: NoteModel }) => {
 
   const backlinks = useObservableState(backlinks$, {
     areLoaded: false,
-    linkedNotes: [],
+    noteLinks: [],
+    groupedScopes: {},
+    referencesCount: 0,
   });
 
   return (
     <>
       {backlinks.areLoaded ? (
         <div className="note__linked-references">
-          <LinkIcon className="note__link-icon" style={{ width: 16 }} />0 Linked
-          References
+          <LinkIcon className="note__link-icon" style={{ width: 16 }} />
+          {backlinks.referencesCount} Linked References
         </div>
       ) : (
         <div className="note__linked-references">
@@ -119,11 +99,11 @@ const BacklinkedNotes = observer(({ note }: { note: NoteModel }) => {
       )}
 
       {backlinks.areLoaded &&
-        backlinks.linkedNotes.map((linkedNote) => (
-          <BacklinkedNoteLoader
-            key={linkedNote.$modelId}
-            linkedNote={linkedNote}
-            note={note}
+        backlinks.noteLinks.map((link) => (
+          <BacklinkedNote
+            key={link.note.$modelId}
+            note={link.note}
+            scopes={backlinks.groupedScopes[link.note.$modelId]}
           />
         ))}
     </>

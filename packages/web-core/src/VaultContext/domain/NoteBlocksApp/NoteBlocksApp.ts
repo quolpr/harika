@@ -22,6 +22,15 @@ export const isBlocksApp = (obj: any): obj is NoteBlocksApp => {
   return obj.$modelType === blocksApp;
 };
 
+export const getScopeKey = (
+  noteId: string,
+  scopedModelId: string,
+  scopedModelType: string,
+  rootBlockViewId: string,
+) => {
+  return `${noteId}-${scopedModelType}-${scopedModelId}-${rootBlockViewId}`;
+};
+
 @model(blocksApp)
 export class NoteBlocksApp extends Model({
   // key === noteId
@@ -77,29 +86,78 @@ export class NoteBlocksApp extends Model({
 
     return { registry, rootBlock };
   }
+  @modelAction
+  getOrCreateScopes(
+    args: {
+      noteId: string;
+      scopedBy: { $modelId: string; $modelType: string };
+      collapsedBlockIds: string[];
+      rootBlockViewId: string;
+    }[],
+  ) {
+    return args.map((arg) => {
+      const key = getScopeKey(
+        arg.noteId,
+        arg.scopedBy.$modelType,
+        arg.scopedBy.$modelId,
+        arg.rootBlockViewId,
+      );
+
+      return (
+        this.blocksScopes[key] ||
+        this.createScope(
+          arg.noteId,
+          arg.scopedBy,
+          arg.collapsedBlockIds,
+          arg.rootBlockViewId,
+        )
+      );
+    });
+  }
+
+  @modelAction
+  isScopeCreated(
+    noteId: string,
+    scopedBy: { $modelId: string; $modelType: string },
+    rootBlockViewId: string,
+  ) {
+    const key = getScopeKey(
+      noteId,
+      scopedBy.$modelType,
+      scopedBy.$modelId,
+      rootBlockViewId,
+    );
+
+    return !!this.blocksScopes[key];
+  }
 
   @modelAction
   createScope(
     noteId: string,
-    model: { $modelId: string; $modelType: string },
+    scopedBy: { $modelId: string; $modelType: string },
     collapsedBlockIds: string[],
-    rootViewId: string,
+    rootBlcokViewId: string,
   ) {
-    const key = `${noteId}-${model.$modelType}-${model.$modelId}-${rootViewId}`;
+    const key = getScopeKey(
+      noteId,
+      scopedBy.$modelType,
+      scopedBy.$modelId,
+      rootBlcokViewId,
+    );
 
     if (!this.areBlocksOfNoteLoaded(noteId)) {
       throw new Error('You need to load blocks first');
     }
 
     const blocksScope = new BlocksScope({
-      rootViewId: rootViewId,
+      rootViewId: rootBlcokViewId,
       viewRegistry: new ViewRegistry({
         blocksRegistryRef: blocksRegistryRef(this.blocksRegistries[noteId]),
         collapsedBlockIds: arraySet(collapsedBlockIds),
-        rootViewId: rootViewId,
+        rootViewId: rootBlcokViewId,
       }),
-      scopedModelId: model.$modelId,
-      scopedModelType: model.$modelType,
+      scopedModelId: scopedBy.$modelId,
+      scopedModelType: scopedBy.$modelType,
     });
 
     this.blocksScopes[key] = blocksScope;

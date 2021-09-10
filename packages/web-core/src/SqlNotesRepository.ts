@@ -21,7 +21,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { getObjectDiff } from './dexie-sync/utils';
 import { BroadcastChannel } from 'broadcast-channel';
 import { buffer, debounceTime, Subject } from 'rxjs';
-import { chunk, mapValues, maxBy } from 'lodash-es';
+import { chunk, groupBy, mapValues, maxBy } from 'lodash-es';
 import dayjs from 'dayjs';
 import { v4 } from 'uuid';
 import type { IChangesApplier } from './dexie-sync/ServerSynchronizer';
@@ -1175,10 +1175,10 @@ export class SqlNotesBlocksRepository extends BaseSyncRepository<
     );
   }
 
-  getLinkedNoteIdsOfNoteId(id: string): string[] {
-    const [res] = this.db.execQuery(
+  getLinksOfNoteId(id: string): Record<string, string[]> {
+    const res = this.db.getRecords<{ noteId: string; noteBlockId: string }>(
       Q.select()
-        .distinct('joined.noteId')
+        .distinct('joined.noteId noteId, joined.id noteBlockId')
         .from(noteBlocksNotesTable)
         .leftJoin(`${this.getTableName()} joined`, {
           [`${noteBlocksNotesTable}.noteBlockId`]: `joined.id`,
@@ -1186,7 +1186,14 @@ export class SqlNotesBlocksRepository extends BaseSyncRepository<
         .where({ [`${noteBlocksNotesTable}.noteId`]: id }),
     );
 
-    return res?.values?.map(([val]) => val as string) || [];
+    const grouped: Record<string, string[]> = {};
+
+    res.forEach(({ noteId, noteBlockId }) => {
+      grouped[noteId] ||= [];
+      grouped[noteId].push(noteBlockId);
+    });
+
+    return grouped;
   }
 
   toRow(doc: NoteBlockDocType): NoteBlockRow {

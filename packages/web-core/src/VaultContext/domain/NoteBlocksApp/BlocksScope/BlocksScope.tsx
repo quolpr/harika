@@ -29,6 +29,11 @@ export class BlocksScope extends Model({
   }
 
   @computed
+  get noteId() {
+    return this.viewRegistry.noteId;
+  }
+
+  @computed
   get rootView() {
     return this.viewRegistry.rootView;
   }

@@ -44,6 +44,11 @@ export class ViewRegistry extends Model({
     return this.viewsMap[this.rootViewId];
   }
 
+  @computed
+  get noteId() {
+    return this.blocksRegistryRef.current.noteId;
+  }
+
   @modelAction
   createBlock(
     attrs: Optional<
