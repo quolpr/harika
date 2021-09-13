@@ -1,6 +1,6 @@
 import {
   BlocksScope,
-  BlocksViewModel,
+  BlockView,
   parseStringToTree,
 } from '@harika/web-core';
 import { RefObject, useCallback, useContext, useState } from 'react';
@@ -13,7 +13,7 @@ import { getTokensAtCursor } from '../utils';
 
 export const useHandleInput = (
   scope: BlocksScope,
-  blockView: BlocksViewModel,
+  blockView: BlockView,
   noteBlockElRef: RefObject<HTMLDivElement | null>,
   inputRef: RefObject<HTMLTextAreaElement | null>,
   insertFakeInput: (el?: HTMLElement) => void,

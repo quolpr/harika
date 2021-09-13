@@ -1,11 +1,11 @@
 import { vaultModelType } from './consts';
-import { NotesTreeModel, notesTreeModelType } from './NotesTree/NotesTreeModel';
-import type { VaultModel } from './VaultModel';
+import { NotesTreeRegistry, notesTreeRegistryModelType } from './NotesApp/views/NotesTree/NotesTreeRegistry';
+import type { Vault } from './Vault';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const isVault = (model: any): model is VaultModel =>
+export const isVault = (model: any): model is Vault =>
   '$modelType' in model && model.$modelType === vaultModelType;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const isNotesTree = (model: any): model is NotesTreeModel =>
-  '$modelType' in model && model.$modelType === notesTreeModelType;
+export const isNotesTree = (model: any): model is NotesTreeRegistry =>
+  '$modelType' in model && model.$modelType === notesTreeRegistryModelType;

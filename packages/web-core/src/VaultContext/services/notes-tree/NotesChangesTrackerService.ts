@@ -5,15 +5,15 @@ import type { INoteChangeEvent } from '../../../dexieTypes';
 import type { ITransmittedChange } from '../../../SqlNotesRepository';
 import type {
   INoteTitleChange,
-  NotesTreeModel,
-} from '../../domain/NotesTree/NotesTreeModel';
+  NotesTreeRegistry,
+} from '../../domain/NotesApp/views/NotesTree/NotesTreeRegistry';
 
 export class NotesChangesTrackerService {
   private bufferedChanges: INoteChangeEvent[] = [];
 
   constructor(
     private changes$: Observable<ITransmittedChange[]>,
-    private treeModel: NotesTreeModel,
+    private treeModel: NotesTreeRegistry,
     stop$: Observable<unknown>,
   ) {
     this.changes$

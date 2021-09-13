@@ -8,14 +8,14 @@ import {
   Ref,
   rootRef,
 } from 'mobx-keystone';
-import { NotesTreeModel, notesTreeModelType } from './NotesTreeModel';
+import { NotesTreeRegistry, notesTreeRegistryModelType } from './NotesTreeRegistry';
 
-export const nodeRef = rootRef<TreeNodeModel>('harika/NotesTree/nodeRef');
+export const notesTreeNoteRef = rootRef<NotesTreeNote>('harika/NotesTree/noteRef');
 
-@model('harika/NotesTree/TreeNodeModel')
-export class TreeNodeModel extends Model({
+@model('harika/NotesTree/NotesTreeNote')
+export class NotesTreeNote extends Model({
   title: prop<string>(),
-  nodeRefs: prop<Ref<TreeNodeModel>[]>(() => []),
+  nodeRefs: prop<Ref<NotesTreeNote>[]>(() => []),
   noteId: prop<string | undefined>(() => undefined),
   isExpanded: prop<boolean>(() => false),
 }) {
@@ -56,9 +56,9 @@ export class TreeNodeModel extends Model({
 
   @computed
   get treeModel() {
-    return findParent<NotesTreeModel>(
+    return findParent<NotesTreeRegistry>(
       this,
-      (obj) => (obj as any).$modelType === notesTreeModelType,
+      (obj) => (obj as any).$modelType === notesTreeRegistryModelType,
     )!;
   }
 
@@ -75,7 +75,7 @@ export class TreeNodeModel extends Model({
   @computed
   get path() {
     let parent = this.parent;
-    const nodes: TreeNodeModel[] = [];
+    const nodes: NotesTreeNote[] = [];
 
     while (parent) {
       nodes.push(parent);

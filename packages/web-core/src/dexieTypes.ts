@@ -79,7 +79,6 @@ export type NoteDocType = {
 export type NoteBlockDocType = {
   id: string;
   noteId: string;
-  isRoot: boolean;
 
   noteBlockIds: string[];
   linkedNoteIds: string[];

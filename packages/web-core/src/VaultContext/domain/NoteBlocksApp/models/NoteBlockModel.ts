@@ -12,9 +12,9 @@ import {
 } from 'mobx-keystone';
 import { comparer, computed } from 'mobx';
 import { isEqual } from 'lodash-es';
-import type { BlockContentModel } from './NoteBlockModel/BlockContentModel';
+import type { BlockContentModel } from './BlockContentModel';
 import { BlocksRegistry, blocksRegistryType } from './BlocksRegistry';
-import { isBlocksApp, NoteBlocksApp } from './NoteBlocksApp';
+import { isBlocksApp, NoteBlocksApp } from '../NoteBlocksApp';
 
 const isRegistry = (obj: any): obj is BlocksRegistry => {
   return obj.$modelType === blocksRegistryType;
@@ -77,6 +77,7 @@ export class NoteBlockModel extends Model({
     return this.noteBlockRefs.map(({ id }) => id);
   }
 
+  @computed
   get orderPosition() {
     return this.parent?.noteBlockRefs.findIndex((n) => n.id === this.$modelId)!;
   }
@@ -103,28 +104,12 @@ export class NoteBlockModel extends Model({
   }
 
   @modelAction
-  handleMerge(from: NoteBlockModel, to: NoteBlockModel) {
-    to.content.update(to.content.value + from.content.value);
-    to.noteBlockRefs.push(...from.noteBlockRefs.map((r) => noteBlockRef(r.id)));
-    to.linkedNoteIds.push(...from.linkedNoteIds);
+  mergeToAndDelete(to: NoteBlockModel) {
+    to.content.update(to.content.value + this.content.value);
+    to.noteBlockRefs.push(...this.noteBlockRefs.map((r) => noteBlockRef(r.id)));
+    to.linkedNoteIds.push(...this.linkedNoteIds);
 
-    from.delete(false, false);
-  }
-
-  @modelAction
-  merge(rootBlock: NoteBlockModel) {
-    const noteBlockRefs = rootBlock.noteBlockRefs;
-    rootBlock.noteBlockRefs = [];
-
-    if (this.isRoot) {
-      this.noteBlockRefs.splice(0, 0, ...noteBlockRefs);
-    } else {
-      this.parent!.noteBlockRefs.splice(
-        this.orderPosition + 1,
-        0,
-        ...noteBlockRefs,
-      );
-    }
+    this.delete(false, false);
   }
 
   @modelAction

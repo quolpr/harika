@@ -2,7 +2,7 @@ import { useRef, useCallback, useEffect, RefObject } from 'react';
 import { useCurrentFocusedBlockState } from '../../../hooks/useFocusedBlockState';
 import type {
   BlocksScope,
-  BlocksViewModel,
+  BlockView,
   NoteBlockModel,
 } from '@harika/web-core';
 
@@ -45,7 +45,7 @@ const useFakeInput = () => {
 
 // Handle iOS DONE button on keyboard
 // const useHandleDoneIosButton = (
-//   view: BlocksViewModel,
+//   view: BlockView,
 //   noteBlock: NoteBlockModel,
 // ) => {
 //   const [wasBlurred, setWasBlurred] = useState(false);
@@ -78,7 +78,7 @@ const useFakeInput = () => {
 
 export const useFocusHandler = (
   scope: BlocksScope,
-  blockView: BlocksViewModel,
+  blockView: BlockView,
   inputRef: RefObject<HTMLTextAreaElement | null>,
   noteBlockElRef: RefObject<HTMLDivElement | null>,
 ) => {

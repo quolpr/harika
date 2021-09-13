@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import type { ModelCreationData } from 'mobx-keystone';
 import type { Dayjs } from 'dayjs';
-import type { NoteModel } from './domain/NoteModel';
+import type { NoteModel } from './domain/NotesApp/models/NoteModel';
 import type { Optional } from 'utility-types';
 import type { Required } from 'utility-types';
 import type { ICreationResult } from './types';
-import type { VaultModel } from './domain/VaultModel';
+import type { Vault } from './domain/Vault';
 import {
   concatMap,
   distinctUntilChanged,
@@ -44,15 +44,15 @@ import type {
   FindNoteOrBlockService,
   ImportExportService,
 } from '../VaultDb.worker';
-import type { BlocksScope } from './domain/NoteBlocksApp/BlocksScope/BlocksScope';
+import type { BlocksScope } from './domain/NoteBlocksApp/views/BlocksScope';
 import { getScopeKey } from './domain/NoteBlocksApp/NoteBlocksApp';
 
-export { NoteModel } from './domain/NoteModel';
-export { VaultModel } from './domain/VaultModel';
+export { NoteModel } from './domain/NotesApp/models/NoteModel';
+export { Vault } from './domain/Vault';
 export {
   NoteBlockModel,
   noteBlockRef,
-} from './domain/NoteBlocksApp/NoteBlockModel';
+} from './domain/NoteBlocksApp/models/NoteBlockModel';
 
 // Document = Dexie doc
 // Model = DDD model
@@ -70,7 +70,7 @@ export class NotesService {
     private importExportService: Remote<ImportExportService>,
     private deleteNoteService: Remote<DeleteNoteService>,
     private findService: Remote<FindNoteOrBlockService>,
-    public vault: VaultModel,
+    public vault: Vault,
   ) {}
 
   async initialize() {
@@ -287,7 +287,7 @@ export class NotesService {
             return args.map((arg) => {
               const note = notes.find((n) => n.$modelId === arg.noteId);
 
-              if (!note) throw new Error('Note not found');
+              if (!note) throw new Error('NoteModel not found');
 
               return {
                 noteId: arg.noteId,

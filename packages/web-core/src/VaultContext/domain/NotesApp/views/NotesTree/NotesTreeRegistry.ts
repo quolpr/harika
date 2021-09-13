@@ -1,13 +1,13 @@
 import { computed } from 'mobx';
 import { model, Model, modelAction, prop, Ref } from 'mobx-keystone';
-import { nodeRef, TreeNodeModel } from './TreeNodeModel';
+import { notesTreeNoteRef, NotesTreeNote } from './NotesTreeNote';
 
 export interface PartialNote {
   id: string;
   title: string;
 }
 
-export const notesTreeModelType = 'harika/NotesTreeModel' as const;
+export const notesTreeRegistryModelType = 'harika/NotesTreeRegistry' as const;
 
 type INoteRename = {
   type: 'rename';
@@ -19,14 +19,14 @@ type INewNote = { type: 'create'; id: string; title: string };
 
 export type INoteTitleChange = INewNote | INoteDelete | INoteRename;
 
-@model(notesTreeModelType)
-export class NotesTreeModel extends Model({
-  nodesMap: prop<Record<string, TreeNodeModel>>(() => ({})),
-  rootNodeRef: prop<Ref<TreeNodeModel>>(),
+@model(notesTreeRegistryModelType)
+export class NotesTreeRegistry extends Model({
+  nodesMap: prop<Record<string, NotesTreeNote>>(() => ({})),
+  rootNodeRef: prop<Ref<NotesTreeNote>>(),
   isInitialized: prop<boolean>(() => false),
 }) {
   @computed
-  get noteIdsMap(): Record<string, TreeNodeModel> {
+  get noteIdsMap(): Record<string, NotesTreeNote> {
     return Object.fromEntries(
       Object.values(this.nodesMap)
         .filter(({ noteId }) => noteId !== undefined)
@@ -37,7 +37,7 @@ export class NotesTreeModel extends Model({
   }
 
   @computed
-  get parentIdsMap(): Record<string, TreeNodeModel> {
+  get parentIdsMap(): Record<string, NotesTreeNote> {
     return Object.fromEntries(
       Object.values(this.nodesMap).flatMap((parentNode) => {
         return parentNode.nodeRefs.map((nodeRef) => [
@@ -129,25 +129,25 @@ export class NotesTreeModel extends Model({
     delete this.nodesMap[node.$modelId];
   }
 
-  private findOrCreateNode(parentNode: TreeNodeModel, title: string) {
+  private findOrCreateNode(parentNode: NotesTreeNote, title: string) {
     const foundNode = parentNode.getChildWithTitle(title);
 
     if (foundNode) return foundNode.current;
 
-    const newNode = new TreeNodeModel({ title });
+    const newNode = new NotesTreeNote({ title });
 
     this.nodesMap[newNode.$modelId] = newNode;
 
-    parentNode.nodeRefs.push(nodeRef(newNode));
+    parentNode.nodeRefs.push(notesTreeNoteRef(newNode));
 
     return newNode;
   }
 }
 
 export const newTreeModel = () => {
-  const rootNode = new TreeNodeModel({ title: 'root' });
-  return new NotesTreeModel({
-    rootNodeRef: nodeRef(rootNode),
+  const rootNode = new NotesTreeNote({ title: 'root' });
+  return new NotesTreeRegistry({
+    rootNodeRef: notesTreeNoteRef(rootNode),
     nodesMap: {
       [rootNode.$modelId]: rootNode,
     },

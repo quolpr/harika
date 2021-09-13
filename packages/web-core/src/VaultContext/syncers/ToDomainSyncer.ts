@@ -6,7 +6,7 @@ import type {
   IBlocksViewChangeEvent,
 } from '../../dexieTypes';
 import type { ITransmittedChange } from '../../SqlNotesRepository';
-import type { VaultModel } from '../domain/VaultModel';
+import type { Vault } from '../domain/Vault';
 import {
   convertNoteDocToModelAttrs,
   convertNoteBlockDocToModelAttrs,
@@ -21,7 +21,7 @@ import type {
 export class ToDomainSyncer {
   constructor(
     private changes$: Observable<ITransmittedChange[]>,
-    private vault: VaultModel,
+    private vault: Vault,
     private currentWindowId: string,
   ) {}
 

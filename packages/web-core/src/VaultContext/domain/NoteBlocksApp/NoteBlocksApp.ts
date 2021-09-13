@@ -8,13 +8,13 @@ import {
   transaction,
 } from 'mobx-keystone';
 import type { ModelCreationData } from 'mobx-keystone';
-import { BlocksScope } from './BlocksScope/BlocksScope';
-import { BlocksRegistry, blocksRegistryRef } from './BlocksRegistry';
-import { FocusedBlock } from './FocusedBlock';
-import { NoteBlockModel } from './NoteBlockModel';
+import { BlocksScope } from './views/BlocksScope';
+import { BlocksRegistry, blocksRegistryRef } from './models/BlocksRegistry';
+import { FocusedBlock } from './views/FocusedBlock';
+import { NoteBlockModel } from './models/NoteBlockModel';
 import { generateId } from '../../../generateId';
-import { BlockContentModel } from './NoteBlockModel/BlockContentModel';
-import { ViewRegistry } from './BlocksScope/ViewRegistry';
+import { BlockContentModel } from './models/BlockContentModel';
+import { BlocksViewRegistry } from './views/BlocksViewRegistry';
 
 const blocksApp = '@harika/NoteBlocksApp';
 
@@ -115,7 +115,6 @@ export class NoteBlocksApp extends Model({
     });
   }
 
-  @modelAction
   isScopeCreated(
     noteId: string,
     scopedBy: { $modelId: string; $modelType: string },
@@ -131,18 +130,17 @@ export class NoteBlocksApp extends Model({
     return !!this.blocksScopes[key];
   }
 
-  @modelAction
-  createScope(
+  private createScope(
     noteId: string,
     scopedBy: { $modelId: string; $modelType: string },
     collapsedBlockIds: string[],
-    rootBlcokViewId: string,
+    rootBlockViewId: string,
   ) {
     const key = getScopeKey(
       noteId,
       scopedBy.$modelType,
       scopedBy.$modelId,
-      rootBlcokViewId,
+      rootBlockViewId,
     );
 
     if (!this.areBlocksOfNoteLoaded(noteId)) {
@@ -150,11 +148,11 @@ export class NoteBlocksApp extends Model({
     }
 
     const blocksScope = new BlocksScope({
-      rootViewId: rootBlcokViewId,
-      viewRegistry: new ViewRegistry({
+      rootViewId: rootBlockViewId,
+      viewRegistry: new BlocksViewRegistry({
         blocksRegistryRef: blocksRegistryRef(this.blocksRegistries[noteId]),
         collapsedBlockIds: arraySet(collapsedBlockIds),
-        rootViewId: rootBlcokViewId,
+        rootViewId: rootBlockViewId,
       }),
       scopedModelId: scopedBy.$modelId,
       scopedModelType: scopedBy.$modelType,
@@ -163,6 +161,7 @@ export class NoteBlocksApp extends Model({
     this.blocksScopes[key] = blocksScope;
 
     // TODO: load only partial from root, block views
+    // TODO: dispose
     onChildAttachedTo(
       () => this.blocksRegistries[noteId].blocksMap,
       (ch) => {
@@ -174,7 +173,6 @@ export class NoteBlocksApp extends Model({
           };
         }
       },
-      { fireForCurrentChildren: false },
     );
 
     return this.blocksScopes[key];
@@ -213,7 +211,6 @@ export class NoteBlocksApp extends Model({
         ];
       }
 
-      // TODO: fix
       if (!this.blocksRegistries[attr.noteId] && createBlocksRegistry) {
         if (!noteIdRootIdMap[attr.noteId]) {
           throw new Error(`Root block not found for noteId=${attr.noteId}`);

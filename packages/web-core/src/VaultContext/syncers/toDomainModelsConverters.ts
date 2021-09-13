@@ -2,14 +2,14 @@ import type { ModelCreationData } from 'mobx-keystone';
 import {
   NoteBlockModel,
   noteBlockRef,
-} from '../domain/NoteBlocksApp/NoteBlockModel';
-import type { NoteModel } from '../domain/NoteModel';
+} from '../domain/NoteBlocksApp/models/NoteBlockModel';
+import type { NoteModel } from '../domain/NotesApp/models/NoteModel';
 import type {
   NoteDocType,
   NoteBlockDocType,
   BlocksViewDocType,
 } from '../../dexieTypes';
-import { BlockContentModel } from '../domain/NoteBlocksApp/NoteBlockModel/BlockContentModel';
+import { BlockContentModel } from '../domain/NoteBlocksApp/models/BlockContentModel';
 
 export type NoteData = ModelCreationData<NoteModel> & {
   $modelId: string;

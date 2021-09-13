@@ -3,7 +3,7 @@ import './styles.css';
 import clsx from 'clsx';
 import TextareaAutosize from 'react-textarea-autosize';
 import { observer } from 'mobx-react-lite';
-import type { BlocksScope, BlocksViewModel } from '@harika/web-core';
+import type { BlocksScope, BlockView } from '@harika/web-core';
 import { Arrow } from '../Arrow/Arrow';
 import { computed } from 'mobx';
 import { TokensRenderer } from './TokensRenderer';
@@ -23,7 +23,7 @@ const NoteBlockChildren = observer(
     childBlocks,
     scope,
   }: {
-    childBlocks: BlocksViewModel[];
+    childBlocks: BlockView[];
     scope: BlocksScope;
   }) => {
     return childBlocks.length !== 0 ? (
@@ -48,7 +48,7 @@ const NoteBlockBody = observer(
     scope,
     isExpanded,
   }: {
-    noteBlock: BlocksViewModel;
+    noteBlock: BlockView;
     scope: BlocksScope;
     isExpanded: boolean;
   }) => {
@@ -112,7 +112,7 @@ const NoteBlockBody = observer(
           })}
         >
           <label htmlFor={inputId} className="hidden-label">
-            Note block content
+            NoteModel block content
           </label>
 
           <TextareaAutosize
@@ -137,7 +137,7 @@ const NoteBlockBody = observer(
             'note-block__content--hidden': isEditing,
           })}
           role="textbox"
-          aria-label="Note block content"
+          aria-label="NoteModel block content"
           tabIndex={0}
           onKeyPress={handleContentKeyPress}
         >
@@ -157,7 +157,7 @@ export const NoteBlock = observer(
     noteBlock,
     scope,
   }: {
-    noteBlock: BlocksViewModel;
+    noteBlock: BlockView;
     scope: BlocksScope;
   }) => {
     const isSelected = computed(() => {

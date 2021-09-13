@@ -1,4 +1,4 @@
-import type { NoteBlockModel } from '../NoteBlockModel';
+import type { NoteBlockModel } from '../models/NoteBlockModel';
 import {
   allRightSiblingsFunc,
   deepLastRightChildFunc,
@@ -13,19 +13,17 @@ import {
 } from '../../../../mobx-tree';
 import type { ITreeNode } from '../../../../mobx-tree';
 import { action, comparer, computed, makeObservable, observable } from 'mobx';
-import type { ViewRegistry } from './ViewRegistry';
+import type { BlocksViewRegistry } from './BlocksViewRegistry';
 import type { TreeToken } from '../../../../blockParser/parseStringToTree';
 import { addTokensToNoteBlock } from '../../../../blockParser/blockUtils';
 import { isTodo } from '../../../../blockParser/astHelpers';
-import { BlockContentModel } from '../NoteBlockModel/BlockContentModel';
-import { getSnapshot, modelAction } from 'mobx-keystone';
+import { BlockContentModel } from '../models/BlockContentModel';
 
-export class BlocksViewModel implements ITreeNode<BlocksViewModel> {
+export class BlockView implements ITreeNode<BlockView> {
   @observable noteBlock: NoteBlockModel;
-  @observable cachedChildren: Record<string, NoteBlockModel> = {};
   $modelId: string;
 
-  constructor(noteBlock: NoteBlockModel, private treeRegistry: ViewRegistry) {
+  constructor(noteBlock: NoteBlockModel, private treeRegistry: BlocksViewRegistry) {
     makeObservable(this);
     this.$modelId = noteBlock.$modelId;
     this.noteBlock = noteBlock;
@@ -71,7 +69,7 @@ export class BlocksViewModel implements ITreeNode<BlocksViewModel> {
   }
 
   @computed({ equals: comparer.shallow })
-  get notCollapsedChildren(): BlocksViewModel[] {
+  get notCollapsedChildren(): BlockView[] {
     return this.noteBlock.noteBlockRefs
       .map(({ current }) => {
         return this.treeRegistry.getOrCreateView(current);
@@ -80,7 +78,7 @@ export class BlocksViewModel implements ITreeNode<BlocksViewModel> {
   }
 
   @computed({ equals: comparer.shallow })
-  get children(): BlocksViewModel[] {
+  get children(): BlockView[] {
     if (this.isCollapsed) {
       return [];
     } else {
@@ -94,7 +92,7 @@ export class BlocksViewModel implements ITreeNode<BlocksViewModel> {
   }
 
   @computed({ equals: comparer.shallow })
-  get path(): BlocksViewModel[] {
+  get path(): BlockView[] {
     return pathFunc(this);
   }
 
@@ -104,12 +102,12 @@ export class BlocksViewModel implements ITreeNode<BlocksViewModel> {
   }
 
   @computed({ equals: comparer.shallow })
-  get siblings(): BlocksViewModel[] {
+  get siblings(): BlockView[] {
     return siblingsFunc(this);
   }
 
   @computed({ equals: comparer.shallow })
-  get flattenTree(): BlocksViewModel[] {
+  get flattenTree(): BlockView[] {
     return flattenTreeFunc(this);
   }
 
@@ -125,32 +123,32 @@ export class BlocksViewModel implements ITreeNode<BlocksViewModel> {
 
   @computed({ equals: comparer.shallow })
   get leftAndRightSibling(): [
-    left: BlocksViewModel | undefined,
-    right: BlocksViewModel | undefined,
+    left: BlockView | undefined,
+    right: BlockView | undefined,
   ] {
     return leftAndRightSiblingFunc(this);
   }
 
   @computed
-  get deepLastRightChild(): BlocksViewModel {
+  get deepLastRightChild(): BlockView {
     return deepLastRightChildFunc(this);
   }
 
   @computed
-  get nearestRightToParent(): BlocksViewModel | undefined {
+  get nearestRightToParent(): BlockView | undefined {
     return nearestRightToParentFunc(this);
   }
 
   @computed({ equals: comparer.shallow })
   get leftAndRight(): [
-    left: BlocksViewModel | undefined,
-    right: BlocksViewModel | undefined,
+    left: BlockView | undefined,
+    right: BlockView | undefined,
   ] {
     return leftAndRightFunc(this);
   }
 
   @computed({ equals: comparer.shallow })
-  get allRightSiblings(): BlocksViewModel[] {
+  get allRightSiblings(): BlockView[] {
     return allRightSiblingsFunc(this);
   }
 
@@ -183,8 +181,8 @@ export class BlocksViewModel implements ITreeNode<BlocksViewModel> {
 
   toggleTodo(
     id: string,
-    toggledModels: BlocksViewModel[] = [],
-  ): BlocksViewModel[] {
+    toggledModels: BlockView[] = [],
+  ): BlockView[] {
     const token = this.content.getTokenById(id);
 
     if (!token || !isTodo(token)) return [];
@@ -279,12 +277,12 @@ export class BlocksViewModel implements ITreeNode<BlocksViewModel> {
 
     if (!left) return;
 
-    this.noteBlock.handleMerge(this.noteBlock, left.noteBlock);
+    this.noteBlock.mergeToAndDelete(left.noteBlock);
 
     return left;
   }
 
-  injectNewRightBlock(content: string, blockView: BlocksViewModel) {
+  injectNewRightBlock(content: string, blockView: BlockView) {
     if (!this.parent) {
       throw new Error("Can't inject from root block");
     }
@@ -314,7 +312,7 @@ export class BlocksViewModel implements ITreeNode<BlocksViewModel> {
   }
 
   @action
-  injectNewTreeTokens(tokens: TreeToken[]): BlocksViewModel[] {
+  injectNewTreeTokens(tokens: TreeToken[]): BlockView[] {
     return addTokensToNoteBlock(this.treeRegistry, this, tokens);
   }
 }

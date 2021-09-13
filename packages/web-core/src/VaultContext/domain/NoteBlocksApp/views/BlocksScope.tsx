@@ -1,11 +1,11 @@
 import { comparer, computed } from 'mobx';
 import { model, Model, modelAction, prop } from 'mobx-keystone';
 import { normalizeBlockTree } from '../../../../blockParser/blockUtils';
-import type { ViewRegistry } from './ViewRegistry';
+import type { BlocksViewRegistry } from './BlocksViewRegistry';
 
 @model('@harika/BlocksScope')
 export class BlocksScope extends Model({
-  viewRegistry: prop<ViewRegistry>(),
+  viewRegistry: prop<BlocksViewRegistry>(),
 
   selectionInterval: prop<[string, string] | undefined>(),
   prevSelectionInterval: prop<[string, string] | undefined>(),

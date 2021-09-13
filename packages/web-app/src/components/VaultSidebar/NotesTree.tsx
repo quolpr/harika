@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import { useCurrentVault } from '../../hooks/useCurrentVault';
-import type { TreeNodeModel } from '@harika/web-core';
+import type { NotesTreeNote } from '@harika/web-core';
 import { cn } from '../../utils';
 import { Link, useHistory } from 'react-router-dom';
 import { paths } from '../../paths';
@@ -18,7 +18,7 @@ const NoteNode = observer(
     node,
     onNavClick,
   }: {
-    node: TreeNodeModel;
+    node: NotesTreeNote;
     onNavClick: (e: React.MouseEvent) => void;
   }) => {
     const vault = useCurrentVault();

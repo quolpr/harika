@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { getSnapshot, setGlobalConfig } from 'mobx-keystone';
-import { newTreeModel } from './NotesTreeModel';
+import { newTreeModel } from './NotesTreeRegistry';
 
 // TODO: add util to string method, and compare just string tree instaed of full state
 
@@ -55,7 +55,7 @@ describe('NotesTreeModel', () => {
             ],
             isExpanded: true,
             $modelId: 'id-1',
-            $modelType: 'harika/NotesTree/TreeNodeModel',
+            $modelType: 'harika/NotesTree/NotesTreeNote',
           },
           'id-4': {
             title: 'Home',
@@ -78,7 +78,7 @@ describe('NotesTreeModel', () => {
             ],
             noteId: '123',
             $modelId: 'id-4',
-            $modelType: 'harika/NotesTree/TreeNodeModel',
+            $modelType: 'harika/NotesTree/NotesTreeNote',
             isExpanded: true,
           },
           'id-6': {
@@ -92,7 +92,7 @@ describe('NotesTreeModel', () => {
             ],
             noteId: '234',
             $modelId: 'id-6',
-            $modelType: 'harika/NotesTree/TreeNodeModel',
+            $modelType: 'harika/NotesTree/NotesTreeNote',
             isExpanded: true,
           },
           'id-8': {
@@ -100,7 +100,7 @@ describe('NotesTreeModel', () => {
             nodeRefs: [],
             noteId: '345',
             $modelId: 'id-8',
-            $modelType: 'harika/NotesTree/TreeNodeModel',
+            $modelType: 'harika/NotesTree/NotesTreeNote',
             isExpanded: true,
           },
           'id-10': {
@@ -108,7 +108,7 @@ describe('NotesTreeModel', () => {
             nodeRefs: [],
             noteId: '456',
             $modelId: 'id-10',
-            $modelType: 'harika/NotesTree/TreeNodeModel',
+            $modelType: 'harika/NotesTree/NotesTreeNote',
             isExpanded: true,
           },
           'id-12': {
@@ -116,7 +116,7 @@ describe('NotesTreeModel', () => {
             nodeRefs: [],
             noteId: '567',
             $modelId: 'id-12',
-            $modelType: 'harika/NotesTree/TreeNodeModel',
+            $modelType: 'harika/NotesTree/NotesTreeNote',
             isExpanded: true,
           },
           'id-14': {
@@ -130,7 +130,7 @@ describe('NotesTreeModel', () => {
               },
             ],
             $modelId: 'id-14',
-            $modelType: 'harika/NotesTree/TreeNodeModel',
+            $modelType: 'harika/NotesTree/NotesTreeNote',
             isExpanded: true,
           },
           'id-16': {
@@ -138,12 +138,12 @@ describe('NotesTreeModel', () => {
             nodeRefs: [],
             noteId: '678',
             $modelId: 'id-16',
-            $modelType: 'harika/NotesTree/TreeNodeModel',
+            $modelType: 'harika/NotesTree/NotesTreeNote',
             isExpanded: true,
           },
         },
         $modelId: 'id-3',
-        $modelType: 'harika/NotesTreeModel',
+        $modelType: 'harika/NotesTreeRegistry',
       });
     });
 
@@ -175,7 +175,7 @@ describe('NotesTreeModel', () => {
                 isExpanded: true,
                 noteId: undefined,
                 $modelId: 'id-1',
-                $modelType: 'harika/NotesTree/TreeNodeModel',
+                $modelType: 'harika/NotesTree/NotesTreeNote',
               },
               'id-4': {
                 title: 'Home',
@@ -189,7 +189,7 @@ describe('NotesTreeModel', () => {
                 isExpanded: true,
                 noteId: undefined,
                 $modelId: 'id-4',
-                $modelType: 'harika/NotesTree/TreeNodeModel',
+                $modelType: 'harika/NotesTree/NotesTreeNote',
               },
               'id-6': {
                 title: 'To Buy',
@@ -197,12 +197,12 @@ describe('NotesTreeModel', () => {
                 noteId: '123',
                 isExpanded: true,
                 $modelId: 'id-6',
-                $modelType: 'harika/NotesTree/TreeNodeModel',
+                $modelType: 'harika/NotesTree/NotesTreeNote',
               },
             },
             isInitialized: false,
             $modelId: 'id-3',
-            $modelType: 'harika/NotesTreeModel',
+            $modelType: 'harika/NotesTreeRegistry',
           });
         });
       });
@@ -227,7 +227,7 @@ describe('NotesTreeModel', () => {
 
     //   expect(getSnapshot(treeNode)).to.deep.equal({
     //     $modelId: 'id-3',
-    //     $modelType: 'harika/NotesTreeModel',
+    //     $modelType: 'harika/NotesTreeRegistry',
     //     isInitialized: true,
     //     rootNodeRef: {
     //       id: 'id-1',
@@ -240,7 +240,7 @@ describe('NotesTreeModel', () => {
     //         noteId: undefined,
     //         nodeRefs: [],
     //         $modelId: 'id-1',
-    //         $modelType: 'harika/NotesTree/TreeNodeModel',
+    //         $modelType: 'harika/NotesTree/NotesTreeNote',
     //         isExpanded: true,
     //       },
 

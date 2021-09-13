@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { fromSnapshot, setGlobalConfig } from 'mobx-keystone';
-import { newTreeModel, NotesTreeModel } from './NotesTreeModel';
+import { newTreeModel, NotesTreeRegistry } from './NotesTreeRegistry';
 
 let id = 1;
 
@@ -46,7 +46,7 @@ const initData = () => {
         ],
         isExpanded: true,
         $modelId: 'id-1',
-        $modelType: 'harika/NotesTree/TreeNodeModel',
+        $modelType: 'harika/NotesTree/NotesTreeNote',
       },
       'id-4': {
         title: 'Home',
@@ -60,7 +60,7 @@ const initData = () => {
         noteId: '123',
         isExpanded: true,
         $modelId: 'id-4',
-        $modelType: 'harika/NotesTree/TreeNodeModel',
+        $modelType: 'harika/NotesTree/NotesTreeNote',
       },
       'id-6': {
         title: 'To Buy',
@@ -73,7 +73,7 @@ const initData = () => {
         ],
         isExpanded: true,
         $modelId: 'id-6',
-        $modelType: 'harika/NotesTree/TreeNodeModel',
+        $modelType: 'harika/NotesTree/NotesTreeNote',
       },
       'id-8': {
         title: 'Urgent',
@@ -81,7 +81,7 @@ const initData = () => {
         noteId: '345',
         isExpanded: true,
         $modelId: 'id-8',
-        $modelType: 'harika/NotesTree/TreeNodeModel',
+        $modelType: 'harika/NotesTree/NotesTreeNote',
       },
       'id-10': {
         title: 'Work',
@@ -94,7 +94,7 @@ const initData = () => {
         ],
         isExpanded: true,
         $modelId: 'id-10',
-        $modelType: 'harika/NotesTree/TreeNodeModel',
+        $modelType: 'harika/NotesTree/NotesTreeNote',
       },
       'id-12': {
         title: 'TODO',
@@ -102,15 +102,15 @@ const initData = () => {
         noteId: '678',
         isExpanded: true,
         $modelId: 'id-12',
-        $modelType: 'harika/NotesTree/TreeNodeModel',
+        $modelType: 'harika/NotesTree/NotesTreeNote',
       },
     },
     isInitialized: true,
     $modelId: 'id-3',
-    $modelType: 'harika/NotesTreeModel',
+    $modelType: 'harika/NotesTreeRegistry',
   };
 
-  const tree = fromSnapshot<NotesTreeModel>(snapshot);
+  const tree = fromSnapshot<NotesTreeRegistry>(snapshot);
 
   // Home/To Buy/Urgent
   return { tree, testNode: tree.noteIdsMap['345'] };

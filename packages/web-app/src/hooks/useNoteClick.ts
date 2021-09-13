@@ -1,4 +1,4 @@
-import type { VaultModel } from '@harika/web-core';
+import type { Vault } from '@harika/web-core';
 import queryString from 'query-string';
 import { useHistory, useLocation } from 'react-router-dom';
 import { paths } from '../paths';
@@ -29,7 +29,7 @@ export const generateStackedNotePath = (
 };
 
 export const useHandleClick = (
-  vault: VaultModel,
+  vault: Vault,
   currentNoteId: string | undefined,
   nextNoteId: string | undefined,
 ) => {

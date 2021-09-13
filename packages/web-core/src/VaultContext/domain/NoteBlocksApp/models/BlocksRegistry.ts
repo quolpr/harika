@@ -3,9 +3,9 @@ import type { ModelCreationData } from 'mobx-keystone';
 import { NoteBlockModel, noteBlockRef } from './NoteBlockModel';
 import { comparer, computed } from 'mobx';
 import type { Optional } from 'utility-types';
-import { generateId } from '../../../generateId';
+import { generateId } from '../../../../generateId';
 import { omit } from 'lodash-es';
-import { BlockContentModel } from './NoteBlockModel/BlockContentModel';
+import { BlockContentModel } from './BlockContentModel';
 
 export const blocksRegistryType = 'harika/BlockRegistry';
 export const blocksRegistryRef = rootRef<BlocksRegistry>(blocksRegistryType);
@@ -39,18 +39,6 @@ export class BlocksRegistry extends Model({
     return relations;
   }
 
-  getLinkedBlocksOfNoteId(noteId: string) {
-    const linkedBlocks: NoteBlockModel[] = [];
-
-    Object.values(this.blocksMap).forEach((block) => {
-      if (block.linkedNoteIds.includes(noteId)) {
-        linkedBlocks.push(block);
-      }
-    });
-
-    return linkedBlocks;
-  }
-
   @modelAction
   createBlock(
     attrs: Optional<
@@ -82,23 +70,6 @@ export class BlocksRegistry extends Model({
   }
 
   @modelAction
-  buildBlock(
-    attrs: Optional<
-      ModelCreationData<NoteBlockModel>,
-      'createdAt' | 'noteId' | 'noteBlockRefs' | 'linkedNoteIds'
-    >,
-  ) {
-    return new NoteBlockModel({
-      $modelId: attrs.$modelId ? attrs.$modelId : generateId(),
-      createdAt: new Date().getTime(),
-      noteId: this.noteId,
-      noteBlockRefs: [],
-      linkedNoteIds: [],
-      ...omit(attrs, '$modelId'),
-    });
-  }
-
-  @modelAction
   deleteNoteBlockIds(ids: string[]) {
     ids.forEach((id) => {
       this.blocksMap[id].delete(false, true);
@@ -114,13 +85,6 @@ export class BlocksRegistry extends Model({
         0,
       );
     }
-  }
-
-  @modelAction
-  addBlocks(blocks: NoteBlockModel[]) {
-    blocks.forEach((block) => {
-      this.blocksMap[block.$modelId] = block;
-    });
   }
 
   createOrUpdateBlock(

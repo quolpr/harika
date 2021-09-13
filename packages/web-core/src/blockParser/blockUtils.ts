@@ -1,11 +1,11 @@
 import { generateId } from '../generateId';
-import { NoteBlockModel, VaultModel } from '../VaultContext/NotesService';
-import { BlockContentModel } from '../VaultContext/domain/NoteBlocksApp/NoteBlockModel/BlockContentModel';
+import { NoteBlockModel, Vault } from '../VaultContext/NotesService';
+import { BlockContentModel } from '../VaultContext/domain/NoteBlocksApp/models/BlockContentModel';
 import { parseStringToTree } from './parseStringToTree';
 import type { TreeToken } from './parseStringToTree';
-import type { BlocksRegistry } from '../VaultContext/domain/NoteBlocksApp/BlocksRegistry';
-import type { ViewRegistry } from '../VaultContext/domain/NoteBlocksApp/BlocksScope/ViewRegistry';
-import type { BlocksViewModel } from '../VaultContext/domain/NoteBlocksApp/BlocksScope/BlocksViewModel';
+import type { BlocksRegistry } from '../VaultContext/domain/NoteBlocksApp/models/BlocksRegistry';
+import type { BlocksViewRegistry } from '../VaultContext/domain/NoteBlocksApp/views/BlocksViewRegistry';
+import type { BlockView } from '../VaultContext/domain/NoteBlocksApp/views/BlockView';
 
 export const normalizeBlockTree = (str: string) => {
   const parsed = parseStringToTree(str);
@@ -22,17 +22,17 @@ export const normalizeBlockTree = (str: string) => {
 };
 
 export const addTokensToNoteBlock = (
-  registry: ViewRegistry,
-  view: BlocksViewModel,
+  registry: BlocksViewRegistry,
+  view: BlockView,
   tokens: TreeToken[],
-): BlocksViewModel[] => {
-  const addedModels: BlocksViewModel[] = [];
+): BlockView[] => {
+  const addedModels: BlockView[] = [];
 
   tokens = tokens.map((token) => ({ ...token, indent: token.indent + 1 }));
 
-  let previousBlock: { model: BlocksViewModel; indent: number } | undefined =
+  let previousBlock: { model: BlockView; indent: number } | undefined =
     undefined;
-  let currentPath: { model: BlocksViewModel; indent: number }[] = [
+  let currentPath: { model: BlockView; indent: number }[] = [
     { model: view, indent: 0 },
   ];
 
@@ -74,7 +74,7 @@ export const addTokensToNoteBlock = (
 export const parseToBlocksTree = (str: string) => {
   const tokens = parseStringToTree(str);
 
-  const vault = new VaultModel({
+  const vault = new Vault({
     name: 'Vault',
   });
 

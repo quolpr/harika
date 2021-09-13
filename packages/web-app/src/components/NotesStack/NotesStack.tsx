@@ -26,7 +26,7 @@ const SimpleNote = observer(({ noteId }: { noteId: string }) => {
           <Note note={note} />
         </CurrentNoteContext.Provider>
       )}
-      {!note && !isLoading && 'Note not found :('}
+      {!note && !isLoading && 'NoteModel not found :('}
     </>
   );
 });
@@ -101,7 +101,7 @@ const NoteStack = observer(
             <Note note={note} />
           </CurrentNoteContext.Provider>
         )}
-        {!note && !isLoading && 'Note not found :('}
+        {!note && !isLoading && 'NoteModel not found :('}
       </div>
     );
   },

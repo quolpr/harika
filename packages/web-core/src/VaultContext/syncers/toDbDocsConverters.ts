@@ -1,10 +1,10 @@
-import type { NoteBlockModel } from '../domain/NoteBlocksApp/NoteBlockModel';
+import type { NoteBlockModel } from '../domain/NoteBlocksApp/models/NoteBlockModel';
 import type {
   BlocksViewDocType,
   NoteBlockDocType,
   NoteDocType,
 } from '../../dexieTypes';
-import type { NoteModel } from '../domain/NoteModel';
+import type { NoteModel } from '../domain/NotesApp/models/NoteModel';
 
 export const mapNoteBlock = (model: NoteBlockModel): NoteBlockDocType => {
   return {
@@ -14,7 +14,6 @@ export const mapNoteBlock = (model: NoteBlockModel): NoteBlockDocType => {
     createdAt: model.createdAt,
     noteBlockIds: model.noteBlockRefs.map(({ id }) => id),
     linkedNoteIds: [...model.linkedNoteIds],
-    isRoot: model.isRoot,
     updatedAt: model.updatedAt,
   };
 };

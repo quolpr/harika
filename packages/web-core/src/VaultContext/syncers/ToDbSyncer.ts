@@ -9,8 +9,8 @@ import type {
   SqlNotesBlocksRepository,
   SqlNotesRepository,
 } from '../../SqlNotesRepository';
-import type { NoteBlockModel } from '../domain/NoteBlocksApp/NoteBlockModel';
-import type { VaultModel } from '../NotesService';
+import type { NoteBlockModel } from '../domain/NoteBlocksApp/models/NoteBlockModel';
+import type { Vault } from '../NotesService';
 import { mapNote, mapNoteBlock } from './toDbDocsConverters';
 
 // TODO: type rootKey
@@ -159,7 +159,7 @@ const zipPatches = (selector: (path: Path) => boolean, patches: Patch[]) => {
 //         scopedModelId: '85CekeoPoieyk9tkx25Q',
 //         scopedModelType: 'harika/NoteModel',
 //         collapsedBlockIds: [],
-//         $modelType: 'harika/BlocksViewModel',
+//         $modelType: 'harika/BlockView',
 //       },
 //     },
 //   ],
@@ -213,7 +213,7 @@ export class ToDbSyncer {
     private notesBlocksRepository: Remote<SqlNotesBlocksRepository>,
     private blocksViewsRepository: Remote<SqlBlocksViewsRepository>,
     private windowId: string,
-    private vault: VaultModel,
+    private vault: Vault,
     onPatchesApplied?: () => void,
   ) {
     this.patchesSubject = new Subject<Patch>();

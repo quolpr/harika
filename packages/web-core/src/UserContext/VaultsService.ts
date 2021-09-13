@@ -1,4 +1,4 @@
-import { VaultModel } from '../VaultContext/domain/VaultModel';
+import { Vault } from '../VaultContext/domain/Vault';
 import { syncMiddleware } from '../VaultContext/domain/syncable';
 import { NotesService } from '../VaultContext/NotesService';
 import { initSync } from '../dexie-sync/init';
@@ -130,7 +130,7 @@ export class VaultsService {
 
     if (!vaultDoc) return;
 
-    const vault = new VaultModel({
+    const vault = new Vault({
       name: vaultDoc.name,
       $modelId: id,
     });

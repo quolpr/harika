@@ -7,7 +7,7 @@ import type {
   Token,
   TagToken,
   NoteModel,
-  BlocksViewModel,
+  BlockView,
 } from '@harika/web-core';
 import { useNotesService } from '../../contexts/CurrentNotesServiceContext';
 import { useCurrentVault } from '../../hooks/useCurrentVault';
@@ -25,7 +25,7 @@ const RefRenderer = observer(
     linkedNotes,
   }: {
     token: RefToken;
-    noteBlock: BlocksViewModel;
+    noteBlock: BlockView;
     linkedNotes: NoteModel[];
   }) => {
     const location = useLocation();
@@ -143,7 +143,7 @@ const TokenRenderer = observer(
     token,
     linkedNotes,
   }: {
-    noteBlock: BlocksViewModel;
+    noteBlock: BlockView;
     token: Token;
     linkedNotes: NoteModel[];
   }) => {
@@ -261,7 +261,7 @@ const TokenRenderer = observer(
 );
 
 export const TokensRenderer = observer(
-  ({ noteBlock, tokens }: { noteBlock: BlocksViewModel; tokens: Token[] }) => {
+  ({ noteBlock, tokens }: { noteBlock: BlockView; tokens: Token[] }) => {
     const noteRepo = useNotesService();
 
     const linkedNoteIds = useDeepMemo(

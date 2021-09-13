@@ -116,22 +116,40 @@ export class ImportExportService {
       source: 'inDbChanges',
     };
 
+    const rootBlockIds = Object.fromEntries(
+      importData.data.data
+        .find(({ tableName }) => tableName === noteBlocksTable)
+        ?.rows.filter(({ isRoot }) => isRoot)
+        .map((block) => [block.noteId, block.id]) || [],
+    );
+
     this.notesRepo.transaction(() => {
       importData.data.data.forEach(({ rows, tableName }) => {
         if (tableName === notesTable) {
           this.notesRepo.bulkCreate(
             rows
               .filter(({ title }) => title !== undefined)
-              .map(
-                (doc) =>
-                  ({
-                    id: doc.id,
-                    title: doc.title,
-                    dailyNoteDate: doc.dailyNoteDate ? doc.dailyNoteDate : null,
-                    createdAt: doc.createdAt ? doc.createdAt : null,
-                    updatedAt: doc.updatedAt || new Date().getTime(),
-                  } as NoteDocType),
-              ),
+              .map((doc) => {
+                const rootBlockId = doc.rootBlockId || rootBlockIds[doc.id];
+
+                if (rootBlockId === undefined) {
+                  console.error('Root block not found for note', doc);
+
+                  return undefined;
+                }
+
+                const noteDoc: NoteDocType = {
+                  id: doc.id,
+                  title: doc.title,
+                  dailyNoteDate: doc.dailyNoteDate ? doc.dailyNoteDate : null,
+                  createdAt: doc.createdAt ? doc.createdAt : null,
+                  updatedAt: doc.updatedAt || new Date().getTime(),
+                  rootBlockId: doc.rootBlockId || rootBlockIds[doc.id],
+                };
+
+                return noteDoc;
+              })
+              .filter((v) => !!v) as NoteDocType[],
             ctx,
           );
         } else if (tableName === noteBlocksTable) {
@@ -151,7 +169,7 @@ export class ImportExportService {
                         (v: string | null) => Boolean(v),
                       ),
                     },
-                    ['parentBlockId'],
+                    ['parentBlockId', 'isRoot'],
                   ) as NoteBlockDocType,
               ),
             ctx,

@@ -1,24 +1,24 @@
 import { Model, model, modelAction, prop, transaction } from 'mobx-keystone';
 import type { ModelCreationData } from 'mobx-keystone';
-import { NoteModel } from './NoteModel';
+import { NoteModel } from './NotesApp/models/NoteModel';
 import type { Optional, Required } from 'utility-types';
 import { vaultModelType } from './consts';
 import { generateId } from '../../generateId';
-import { newTreeModel, NotesTreeModel } from './NotesTree/NotesTreeModel';
-import type { PartialNote } from './NotesTree/NotesTreeModel';
-import type { NoteBlockModel } from './NoteBlocksApp/NoteBlockModel';
+import { newTreeModel, NotesTreeRegistry } from './NotesApp/views/NotesTree/NotesTreeRegistry';
+import type { PartialNote } from './NotesApp/views/NotesTree/NotesTreeRegistry';
+import type { NoteBlockModel } from './NoteBlocksApp/models/NoteBlockModel';
 import dayjs from 'dayjs';
 import { NoteBlocksApp } from './NoteBlocksApp/NoteBlocksApp';
 import { computed } from 'mobx';
 
 @model(vaultModelType)
-export class VaultModel extends Model({
+export class Vault extends Model({
   name: prop<string>(),
   // TODO: notes registry
   notesMap: prop<Record<string, NoteModel>>(() => ({})),
   // Key is noteId
   noteBlocksApp: prop<NoteBlocksApp>(() => new NoteBlocksApp({})),
-  notesTree: prop<NotesTreeModel>(() => newTreeModel()),
+  notesTree: prop<NotesTreeRegistry>(() => newTreeModel()),
 }) {
   @computed
   get noteRootBlockIdsMap() {
