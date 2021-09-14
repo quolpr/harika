@@ -1,6 +1,6 @@
 import { useEffect, MutableRefObject, useContext } from 'react';
 import { CurrentBlockInputRefContext } from '../../../contexts';
-import type { BlockView, EditState } from '@harika/web-core';
+import type { ScopedBlock, EditState } from '@harika/web-core';
 import { useNotesService } from '../../../contexts/CurrentNotesServiceContext';
 import { usePrevious } from 'react-use';
 
@@ -22,7 +22,7 @@ export const useProvideInputToContext = (
 };
 
 export const useUpdateBlockLinks = (
-  blockView: BlockView,
+  blockView: ScopedBlock,
   editState: EditState,
 ) => {
   const noteRepo = useNotesService();

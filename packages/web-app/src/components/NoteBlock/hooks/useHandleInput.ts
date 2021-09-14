@@ -1,6 +1,6 @@
 import {
   BlocksScope,
-  BlockView,
+  ScopedBlock,
   parseStringToTree,
 } from '@harika/web-core';
 import { RefObject, useCallback, useContext, useState } from 'react';
@@ -13,7 +13,7 @@ import { getTokensAtCursor } from '../utils';
 
 export const useHandleInput = (
   scope: BlocksScope,
-  blockView: BlockView,
+  blockView: ScopedBlock,
   noteBlockElRef: RefObject<HTMLDivElement | null>,
   inputRef: RefObject<HTMLTextAreaElement | null>,
   insertFakeInput: (el?: HTMLElement) => void,
@@ -77,7 +77,7 @@ export const useHandleInput = (
 
         setEditState({
           scopeId: scope.$modelId,
-          viewId: newBlock.$modelId,
+          scopedBlockId: newBlock.$modelId,
           isEditing: true,
           startAt,
         });
@@ -103,7 +103,7 @@ export const useHandleInput = (
       if (e.key === 'Escape') {
         setEditState({
           scopeId: scope.$modelId,
-          viewId: blockView.$modelId,
+          scopedBlockId: blockView.$modelId,
           isEditing: false,
         });
       } else if (e.key === 'Backspace') {
@@ -137,7 +137,7 @@ export const useHandleInput = (
 
             setEditState({
               scopeId: scope.$modelId,
-              viewId: mergedTo.$modelId,
+              scopedBlockId: mergedTo.$modelId,
               startAt:
                 mergedTo.content.value.length - blockView.content.value.length,
               isEditing: true,
@@ -150,7 +150,7 @@ export const useHandleInput = (
         if (!isSearching) {
           setEditState({
             scopeId: scope.$modelId,
-            viewId: blockView.$modelId,
+            scopedBlockId: blockView.$modelId,
             startAt: start,
             isEditing: true,
           });
@@ -161,7 +161,7 @@ export const useHandleInput = (
 
         setEditState({
           scopeId: scope.$modelId,
-          viewId: blockView.$modelId,
+          scopedBlockId: blockView.$modelId,
           startAt: start,
           isEditing: true,
         });
@@ -192,7 +192,7 @@ export const useHandleInput = (
               if (left) {
                 setEditState({
                   scopeId: scope.$modelId,
-                  viewId: left.$modelId,
+                  scopedBlockId: left.$modelId,
                   isEditing: true,
                   startAt: start,
                 });
@@ -213,7 +213,7 @@ export const useHandleInput = (
               if (right) {
                 setEditState({
                   scopeId: scope.$modelId,
-                  viewId: right.$modelId,
+                  scopedBlockId: right.$modelId,
                   isEditing: true,
                   startAt:
                     start === blockView.content.value.length
@@ -285,7 +285,7 @@ export const useHandleInput = (
       if (injectedBlocks[0]) {
         setEditState({
           scopeId: scope.$modelId,
-          viewId: injectedBlocks[0].$modelId,
+          scopedBlockId: injectedBlocks[0].$modelId,
           isEditing: true,
         });
       }

@@ -13,10 +13,10 @@ import {
 import { comparer, computed } from 'mobx';
 import { isEqual } from 'lodash-es';
 import type { BlockContentModel } from './BlockContentModel';
-import { BlocksRegistry, blocksRegistryType } from './BlocksRegistry';
+import { BlockModelsRegistry, blocksRegistryType } from './BlockModelsRegistry';
 import { isBlocksApp, NoteBlocksApp } from '../NoteBlocksApp';
 
-const isRegistry = (obj: any): obj is BlocksRegistry => {
+const isRegistry = (obj: any): obj is BlockModelsRegistry => {
   return obj.$modelType === blocksRegistryType;
 };
 
@@ -57,7 +57,7 @@ export class NoteBlockModel extends Model({
 
   @computed
   get treeRegistry() {
-    return findParent<BlocksRegistry>(this, isRegistry)!;
+    return findParent<BlockModelsRegistry>(this, isRegistry)!;
   }
 
   @computed

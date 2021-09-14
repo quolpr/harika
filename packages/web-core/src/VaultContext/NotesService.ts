@@ -215,11 +215,11 @@ export class NotesService {
   getBlocksRegistryByNoteIds$(notesIds$: Observable<string[]>) {
     const notLoadedNotes$ = notesIds$.pipe(
       switchMap((notesIds) => {
-        const notLoadedTreeHolderIds = notesIds.filter(
+        const notLoadedTreeRegistryIds = notesIds.filter(
           (id) => !this.vault.areBlocksOfNoteLoaded(id),
         );
 
-        return notLoadedTreeHolderIds.length > 0
+        return notLoadedTreeRegistryIds.length > 0
           ? from(
               this.dbEventsService.liveQuery(
                 [VaultDbTables.NoteBlocks],
@@ -504,9 +504,7 @@ export class NotesService {
     if (Object.values(this.vault.notesMap).find((note) => note.title === title))
       return true;
 
-    if (await this.notesRepository.findBy({ title })) return true;
-
-    return false;
+    return !!(await this.notesRepository.findBy({title}));
   }
 
   // TODO: better Rx way, put title to pipe

@@ -3,9 +3,9 @@ import { NoteBlockModel, Vault } from '../VaultContext/NotesService';
 import { BlockContentModel } from '../VaultContext/domain/NoteBlocksApp/models/BlockContentModel';
 import { parseStringToTree } from './parseStringToTree';
 import type { TreeToken } from './parseStringToTree';
-import type { BlocksRegistry } from '../VaultContext/domain/NoteBlocksApp/models/BlocksRegistry';
-import type { BlocksViewRegistry } from '../VaultContext/domain/NoteBlocksApp/views/BlocksViewRegistry';
-import type { BlockView } from '../VaultContext/domain/NoteBlocksApp/views/BlockView';
+import type { BlockModelsRegistry } from '../VaultContext/domain/NoteBlocksApp/models/BlockModelsRegistry';
+import type { ScopedBlocksRegistry } from '../VaultContext/domain/NoteBlocksApp/views/ScopedBlocksRegistry';
+import type { ScopedBlock } from '../VaultContext/domain/NoteBlocksApp/views/ScopedBlock';
 
 export const normalizeBlockTree = (str: string) => {
   const parsed = parseStringToTree(str);
@@ -22,17 +22,17 @@ export const normalizeBlockTree = (str: string) => {
 };
 
 export const addTokensToNoteBlock = (
-  registry: BlocksViewRegistry,
-  view: BlockView,
+  registry: ScopedBlocksRegistry,
+  view: ScopedBlock,
   tokens: TreeToken[],
-): BlockView[] => {
-  const addedModels: BlockView[] = [];
+): ScopedBlock[] => {
+  const addedModels: ScopedBlock[] = [];
 
   tokens = tokens.map((token) => ({ ...token, indent: token.indent + 1 }));
 
-  let previousBlock: { model: BlockView; indent: number } | undefined =
+  let previousBlock: { model: ScopedBlock; indent: number } | undefined =
     undefined;
-  let currentPath: { model: BlockView; indent: number }[] = [
+  let currentPath: { model: ScopedBlock; indent: number }[] = [
     { model: view, indent: 0 },
   ];
 
@@ -78,16 +78,16 @@ export const parseToBlocksTree = (str: string) => {
     name: 'Vault',
   });
 
-  const { note, treeRegistry: treeHolder } = vault.newNote(
+  const { note, treeRegistry  } = vault.newNote(
     { title: 'Note' },
     { addEmptyBlock: false },
   );
 
-  if (!treeHolder.rootBlock) {
+  if (!treeRegistry.rootBlock) {
     throw new Error('Root block is not present!');
   }
 
-  // addTokensToNoteBlock(treeHolder, treeHolder.rootBlock, tokens);
+  // addTokensToNoteBlock(treeRegistry, treeRegistry.rootBlock, tokens);
 
   return { vault, note };
 };

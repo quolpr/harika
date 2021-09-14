@@ -6,14 +6,14 @@ import { useBlocksApp } from './useCurrentVault';
 
 export const useCurrentFocusedBlockState = (
   scopeId: string,
-  viewId: string,
+  scopedBlockId: string,
 ): [
   EditState,
   (
     block:
       | {
           scopeId: string;
-          viewId: string;
+          scopedBlockId: string;
           startAt?: number;
           isEditing?: boolean;
         }
@@ -23,7 +23,7 @@ export const useCurrentFocusedBlockState = (
   const blocksApp = useBlocksApp();
 
   const focusState = computed(
-    () => blocksApp.focusedBlock.getFocusState(scopeId, viewId),
+    () => blocksApp.focusedBlock.getFocusState(scopeId, scopedBlockId),
     { equals: comparer.shallow },
   ).get();
 
@@ -32,7 +32,7 @@ export const useCurrentFocusedBlockState = (
       block:
         | {
             scopeId: string;
-            viewId: string;
+            scopedBlockId: string;
             isEditing?: boolean;
             startAt?: number;
           }
@@ -42,7 +42,7 @@ export const useCurrentFocusedBlockState = (
         blocksApp.focusedBlock.setState(
           FocusedBlockState.create(
             block.scopeId,
-            block.viewId,
+            block.scopedBlockId,
             block.isEditing,
             block.startAt,
           ),

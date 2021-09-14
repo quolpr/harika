@@ -39,8 +39,8 @@ export const Toolbar = observer(({ scope }: { scope: BlocksScope }) => {
     }, 0);
   }, [currentBlockInputRef]);
 
-  const currentBlock = vault.noteBlocksApp.focusedBlock.state?.viewId
-    ? scope.getView(vault.noteBlocksApp.focusedBlock.state?.viewId)
+  const currentBlock = vault.noteBlocksApp.focusedBlock.state?.scopedBlockId
+    ? scope.getView(vault.noteBlocksApp.focusedBlock.state?.scopedBlockId)
     : undefined;
 
   const handleTodoPress = useCallback(

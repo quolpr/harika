@@ -100,7 +100,7 @@ const zipPatches = (selector: (path: Path) => boolean, patches: Patch[]) => {
 //         },
 //         noteId: '85CekeoPoieyk9tkx25Q',
 //         $modelId: '6a-cbfqhhPueUIdU7_nNMN5j',
-//         $modelType: 'harika/BlocksTreeHolder',
+//         $modelType: 'harika/BlockModelsRegistry',
 //       },
 //     },
 //     {
@@ -159,7 +159,7 @@ const zipPatches = (selector: (path: Path) => boolean, patches: Patch[]) => {
 //         scopedModelId: '85CekeoPoieyk9tkx25Q',
 //         scopedModelType: 'harika/NoteModel',
 //         collapsedBlockIds: [],
-//         $modelType: 'harika/BlockView',
+//         $modelType: 'harika/ScopedBlock',
 //       },
 //     },
 //   ],

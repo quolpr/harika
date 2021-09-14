@@ -3,7 +3,7 @@ import './styles.css';
 import clsx from 'clsx';
 import TextareaAutosize from 'react-textarea-autosize';
 import { observer } from 'mobx-react-lite';
-import type { BlocksScope, BlockView } from '@harika/web-core';
+import type { BlocksScope, ScopedBlock } from '@harika/web-core';
 import { Arrow } from '../Arrow/Arrow';
 import { computed } from 'mobx';
 import { TokensRenderer } from './TokensRenderer';
@@ -23,7 +23,7 @@ const NoteBlockChildren = observer(
     childBlocks,
     scope,
   }: {
-    childBlocks: BlockView[];
+    childBlocks: ScopedBlock[];
     scope: BlocksScope;
   }) => {
     return childBlocks.length !== 0 ? (
@@ -48,7 +48,7 @@ const NoteBlockBody = observer(
     scope,
     isExpanded,
   }: {
-    noteBlock: BlockView;
+    noteBlock: ScopedBlock;
     scope: BlocksScope;
     isExpanded: boolean;
   }) => {
@@ -157,7 +157,7 @@ export const NoteBlock = observer(
     noteBlock,
     scope,
   }: {
-    noteBlock: BlockView;
+    noteBlock: ScopedBlock;
     scope: BlocksScope;
   }) => {
     const isSelected = computed(() => {

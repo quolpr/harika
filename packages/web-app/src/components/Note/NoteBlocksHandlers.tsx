@@ -20,7 +20,7 @@ export const NoteBlocksHandlers = observer(
     const vault = useCurrentVault();
     const focusedBlock = vault.noteBlocksApp.focusedBlock;
 
-    const registry = scope.viewRegistry;
+    const registry = scope.scopedBlocksRegistry;
 
     useEffect(() => {
       const mouseMove$ = fromEvent<MouseEvent>(document, 'mousemove');
@@ -79,7 +79,7 @@ export const NoteBlocksHandlers = observer(
               scope.selectionInterval === undefined &&
               shiftKey
             ) {
-              scope.setSelectionInterval(focusedBlockState.viewId, fromBlockId);
+              scope.setSelectionInterval(focusedBlockState.scopedBlockId, fromBlockId);
               vault.noteBlocksApp.focusedBlock.setState(undefined);
 
               return EMPTY;
@@ -199,7 +199,7 @@ export const NoteBlocksHandlers = observer(
           ) &&
           e.target instanceof Element &&
           (e.target.closest('[data-type="note-block"]') as HTMLElement)?.dataset
-            ?.id !== focusedBlock.state.viewId
+            ?.id !== focusedBlock.state.scopedBlockId
         ) {
           focusedBlock.setState(
             new FocusedBlockState({

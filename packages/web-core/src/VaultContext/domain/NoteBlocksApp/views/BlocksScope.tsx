@@ -1,18 +1,18 @@
 import { comparer, computed } from 'mobx';
 import { model, Model, modelAction, prop } from 'mobx-keystone';
 import { normalizeBlockTree } from '../../../../blockParser/blockUtils';
-import type { BlocksViewRegistry } from './BlocksViewRegistry';
+import type { ScopedBlocksRegistry } from './ScopedBlocksRegistry';
 
 @model('@harika/BlocksScope')
 export class BlocksScope extends Model({
-  viewRegistry: prop<BlocksViewRegistry>(),
+  scopedBlocksRegistry: prop<ScopedBlocksRegistry>(),
 
   selectionInterval: prop<[string, string] | undefined>(),
   prevSelectionInterval: prop<[string, string] | undefined>(),
   // Is needed to handle when shift+click pressed
   addableSelectionId: prop<string | undefined>(),
 
-  rootViewId: prop<string>(),
+  rootScopedBlockId: prop<string>(),
   scopedModelId: prop<string>(),
   scopedModelType: prop<string>(),
 }) {
@@ -20,7 +20,7 @@ export class BlocksScope extends Model({
     let str = '';
 
     this.selectedIds.forEach((id) => {
-      const block = this.viewRegistry.viewsMap[id];
+      const block = this.scopedBlocksRegistry.getScopedBlock(id);
 
       str += `${'  '.repeat(block.indent - 1)}- ${block.textContent}\n`;
     });
@@ -30,16 +30,16 @@ export class BlocksScope extends Model({
 
   @computed
   get noteId() {
-    return this.viewRegistry.noteId;
+    return this.scopedBlocksRegistry.noteId;
   }
 
   @computed
-  get rootView() {
-    return this.viewRegistry.rootView;
+  get rootScopedBlock() {
+    return this.scopedBlocksRegistry.rootScopedBlock;
   }
 
   getView(id: string) {
-    return this.viewRegistry.getView(id);
+    return this.scopedBlocksRegistry.getScopedBlock(id);
   }
 
   @computed
@@ -53,7 +53,7 @@ export class BlocksScope extends Model({
 
     const [fromId, toId] = this.selectionInterval;
 
-    const flattenTree = this.viewRegistry.rootView.flattenTree;
+    const flattenTree = this.scopedBlocksRegistry.rootScopedBlock.flattenTree;
 
     if (!flattenTree) return [];
 

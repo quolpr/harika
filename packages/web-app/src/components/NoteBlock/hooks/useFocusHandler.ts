@@ -2,7 +2,7 @@ import { useRef, useCallback, useEffect, RefObject } from 'react';
 import { useCurrentFocusedBlockState } from '../../../hooks/useFocusedBlockState';
 import type {
   BlocksScope,
-  BlockView,
+  ScopedBlock,
   NoteBlockModel,
 } from '@harika/web-core';
 
@@ -45,7 +45,7 @@ const useFakeInput = () => {
 
 // Handle iOS DONE button on keyboard
 // const useHandleDoneIosButton = (
-//   view: BlockView,
+//   view: ScopedBlock,
 //   noteBlock: NoteBlockModel,
 // ) => {
 //   const [wasBlurred, setWasBlurred] = useState(false);
@@ -65,7 +65,7 @@ const useFakeInput = () => {
 //   useEffect(() => {
 //     if (wasBlurred && isEditing) {
 //       // setEditState({
-//       //   viewId: view.$modelId,
+//       //   scopedBlockId: view.$modelId,
 //       //   blockId: noteBlock.$modelId,
 //       //   isEditing: false,
 //       // });
@@ -78,7 +78,7 @@ const useFakeInput = () => {
 
 export const useFocusHandler = (
   scope: BlocksScope,
-  blockView: BlockView,
+  blockView: ScopedBlock,
   inputRef: RefObject<HTMLTextAreaElement | null>,
   noteBlockElRef: RefObject<HTMLDivElement | null>,
 ) => {
@@ -146,7 +146,7 @@ export const useFocusHandler = (
 
       setEditState({
         scopeId: scope.$modelId,
-        viewId: blockView.$modelId,
+        scopedBlockId: blockView.$modelId,
         isEditing: true,
         startAt,
       });
@@ -165,7 +165,7 @@ export const useFocusHandler = (
     if (e.key === 'Enter' && e.target === e.currentTarget) {
       setEditState({
         scopeId: scope.$modelId,
-        viewId: blockView.$modelId,
+        scopedBlockId: blockView.$modelId,
         isEditing: true,
         startAt: 0,
       });

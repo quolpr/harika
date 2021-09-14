@@ -13,17 +13,23 @@ import {
 } from '../../../../mobx-tree';
 import type { ITreeNode } from '../../../../mobx-tree';
 import { action, comparer, computed, makeObservable, observable } from 'mobx';
-import type { BlocksViewRegistry } from './BlocksViewRegistry';
+import type { ScopedBlocksRegistry } from './ScopedBlocksRegistry';
 import type { TreeToken } from '../../../../blockParser/parseStringToTree';
 import { addTokensToNoteBlock } from '../../../../blockParser/blockUtils';
 import { isTodo } from '../../../../blockParser/astHelpers';
 import { BlockContentModel } from '../models/BlockContentModel';
 
-export class BlockView implements ITreeNode<BlockView> {
+// It is not usual mobx-keystone model, it is just mobx model
+// We don't need to store and serialize the state in global state
+// so for performance & memory reasons plain mobx model is used
+export class ScopedBlock implements ITreeNode<ScopedBlock> {
   @observable noteBlock: NoteBlockModel;
   $modelId: string;
 
-  constructor(noteBlock: NoteBlockModel, private treeRegistry: BlocksViewRegistry) {
+  constructor(
+    noteBlock: NoteBlockModel,
+    private treeRegistry: ScopedBlocksRegistry,
+  ) {
     makeObservable(this);
     this.$modelId = noteBlock.$modelId;
     this.noteBlock = noteBlock;
@@ -46,7 +52,7 @@ export class BlockView implements ITreeNode<BlockView> {
 
   @computed
   get isRoot() {
-    return this.treeRegistry.rootView === this;
+    return this.treeRegistry.rootScopedBlock === this;
   }
 
   @computed
@@ -61,24 +67,24 @@ export class BlockView implements ITreeNode<BlockView> {
 
   @computed
   get parent() {
-    if (this.treeRegistry.rootView === this) return undefined;
+    if (this.treeRegistry.rootScopedBlock === this) return undefined;
 
     const parentBlock = this.noteBlock.parent;
 
-    return parentBlock && this.treeRegistry.getOrCreateView(parentBlock);
+    return parentBlock && this.treeRegistry.getOrCreateScopedBlock(parentBlock);
   }
 
   @computed({ equals: comparer.shallow })
-  get notCollapsedChildren(): BlockView[] {
+  get notCollapsedChildren(): ScopedBlock[] {
     return this.noteBlock.noteBlockRefs
       .map(({ current }) => {
-        return this.treeRegistry.getOrCreateView(current);
+        return this.treeRegistry.getOrCreateScopedBlock(current);
       })
       .filter((v) => !!v);
   }
 
   @computed({ equals: comparer.shallow })
-  get children(): BlockView[] {
+  get children(): ScopedBlock[] {
     if (this.isCollapsed) {
       return [];
     } else {
@@ -92,7 +98,7 @@ export class BlockView implements ITreeNode<BlockView> {
   }
 
   @computed({ equals: comparer.shallow })
-  get path(): BlockView[] {
+  get path(): ScopedBlock[] {
     return pathFunc(this);
   }
 
@@ -102,12 +108,12 @@ export class BlockView implements ITreeNode<BlockView> {
   }
 
   @computed({ equals: comparer.shallow })
-  get siblings(): BlockView[] {
+  get siblings(): ScopedBlock[] {
     return siblingsFunc(this);
   }
 
   @computed({ equals: comparer.shallow })
-  get flattenTree(): BlockView[] {
+  get flattenTree(): ScopedBlock[] {
     return flattenTreeFunc(this);
   }
 
@@ -123,32 +129,32 @@ export class BlockView implements ITreeNode<BlockView> {
 
   @computed({ equals: comparer.shallow })
   get leftAndRightSibling(): [
-    left: BlockView | undefined,
-    right: BlockView | undefined,
+    left: ScopedBlock | undefined,
+    right: ScopedBlock | undefined,
   ] {
     return leftAndRightSiblingFunc(this);
   }
 
   @computed
-  get deepLastRightChild(): BlockView {
+  get deepLastRightChild(): ScopedBlock {
     return deepLastRightChildFunc(this);
   }
 
   @computed
-  get nearestRightToParent(): BlockView | undefined {
+  get nearestRightToParent(): ScopedBlock | undefined {
     return nearestRightToParentFunc(this);
   }
 
   @computed({ equals: comparer.shallow })
   get leftAndRight(): [
-    left: BlockView | undefined,
-    right: BlockView | undefined,
+    left: ScopedBlock | undefined,
+    right: ScopedBlock | undefined,
   ] {
     return leftAndRightFunc(this);
   }
 
   @computed({ equals: comparer.shallow })
-  get allRightSiblings(): BlockView[] {
+  get allRightSiblings(): ScopedBlock[] {
     return allRightSiblingsFunc(this);
   }
 
@@ -179,20 +185,17 @@ export class BlockView implements ITreeNode<BlockView> {
     }
   }
 
-  toggleTodo(
-    id: string,
-    toggledModels: BlockView[] = [],
-  ): BlockView[] {
+  toggleTodo(id: string, toggledModels: ScopedBlock[] = []): ScopedBlock[] {
     const token = this.content.getTokenById(id);
 
     if (!token || !isTodo(token)) return [];
 
     if (this.content.firstTodoToken?.id === id) {
-      this.children.forEach((view) => {
-        const firstTodo = view.content.firstTodoToken;
+      this.children.forEach((block) => {
+        const firstTodo = block.content.firstTodoToken;
 
         if (firstTodo && firstTodo.ref === token.ref)
-          view.toggleTodo(firstTodo.id, toggledModels);
+          block.toggleTodo(firstTodo.id, toggledModels);
       });
     }
 
@@ -282,7 +285,7 @@ export class BlockView implements ITreeNode<BlockView> {
     return left;
   }
 
-  injectNewRightBlock(content: string, blockView: BlockView) {
+  injectNewRightBlock(content: string, blockView: ScopedBlock) {
     if (!this.parent) {
       throw new Error("Can't inject from root block");
     }
@@ -312,7 +315,7 @@ export class BlockView implements ITreeNode<BlockView> {
   }
 
   @action
-  injectNewTreeTokens(tokens: TreeToken[]): BlockView[] {
+  injectNewTreeTokens(tokens: TreeToken[]): ScopedBlock[] {
     return addTokensToNoteBlock(this.treeRegistry, this, tokens);
   }
 }

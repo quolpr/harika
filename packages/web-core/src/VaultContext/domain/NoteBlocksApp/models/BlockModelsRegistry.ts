@@ -7,11 +7,11 @@ import { generateId } from '../../../../generateId';
 import { omit } from 'lodash-es';
 import { BlockContentModel } from './BlockContentModel';
 
-export const blocksRegistryType = 'harika/BlockRegistry';
-export const blocksRegistryRef = rootRef<BlocksRegistry>(blocksRegistryType);
+export const blocksRegistryType = 'harika/BlockModelsRegistry';
+export const blocksRegistryRef = rootRef<BlockModelsRegistry>(blocksRegistryType);
 
 @model(blocksRegistryType)
-export class BlocksRegistry extends Model({
+export class BlockModelsRegistry extends Model({
   rootBlockId: prop<string>(),
   blocksMap: prop<Record<string, NoteBlockModel>>(() => ({})),
   noteId: prop<string>(),
@@ -23,6 +23,18 @@ export class BlocksRegistry extends Model({
 
   getBlockById(id: string) {
     return this.blocksMap[id];
+  }
+
+  getLinkedBlocksOfNoteId(noteId: string) {
+    const linkedBlocks: NoteBlockModel[] = [];
+
+    Object.values(this.blocksMap).forEach((block) => {
+      if (block.linkedNoteIds.includes(noteId)) {
+        linkedBlocks.push(block);
+      }
+    });
+
+    return linkedBlocks;
   }
 
   // TODO: optimize

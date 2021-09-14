@@ -58,7 +58,7 @@ export class Vault extends Model({
 
     const noteId = generateId();
 
-    const { registry, rootBlock } = this.noteBlocksApp.createNewRegistry(
+    const { registry, rootBlock } = this.noteBlocksApp.createNewBlocksTree(
       noteId,
       options,
     );
