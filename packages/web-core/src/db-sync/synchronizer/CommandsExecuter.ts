@@ -8,7 +8,7 @@ import {
   take,
   tap,
 } from 'rxjs/operators';
-import type { ClientCommands } from '../dexieTypes';
+import type { ClientCommands } from '../../dexieTypes';
 import type Phoenix from 'phoenix';
 import snakecaseKeys from 'snakecase-keys';
 import camelcaseKeys from 'camelcase-keys';

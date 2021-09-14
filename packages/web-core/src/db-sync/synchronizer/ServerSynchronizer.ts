@@ -1,6 +1,6 @@
 import { merge, Subject, of, Observable } from 'rxjs';
 import { concatMap, finalize, mapTo, switchMap } from 'rxjs/operators';
-import type { IDatabaseChange } from '../dexieTypes';
+import type { IDatabaseChange } from '../../dexieTypes';
 import type { CommandsExecuter } from './CommandsExecuter';
 import type { ServerConnector } from './connection/ServerConnector';
 import { ServerChangesReceiver } from './ServerSynchronizer/ServerChangesReceiver';

@@ -1,6 +1,6 @@
 import { groupBy, uniq } from 'lodash-es';
-import type { IConsistencyResolver } from '../../../dexie-sync/ServerSynchronizer';
-import type { NoteBlockDocType, NoteDocType } from '../../../dexieTypes';
+import type { IConsistencyResolver } from '../../../../db-sync/synchronizer/ServerSynchronizer';
+import type { NoteBlockDocType, NoteDocType } from '../../../../dexieTypes';
 import type { VaultDexieDatabase } from '../DexieDb';
 
 export class VaultDbConsistencyResolver implements IConsistencyResolver {

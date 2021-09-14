@@ -3,7 +3,7 @@ import type {
   IDeleteChange,
   IUpdateChange,
   NoteDocType,
-} from '../../../dexieTypes';
+} from '../../../../dexieTypes';
 import { BaseChangesApplier } from './BaseChangesApplier';
 
 export class NotesChangesApplier extends BaseChangesApplier<

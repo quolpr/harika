@@ -1,26 +1,30 @@
 import { expose, proxy } from 'comlink';
+import { omit } from 'lodash-es';
+import Q from 'sql-bricks';
 import {
   ApplyChangesService,
-  BaseDbWorker,
-  blocksViewsTable,
   DbChangesWriterService,
+} from '../../db-sync/persistence/ApplyChangesService';
+import { BaseDbSyncWorker } from '../../db-sync/persistence/BaseDbSyncWorker';
+import type {
+  IInternalSyncCtx,
+  ISyncCtx,
+} from '../../db-sync/persistence/syncCtx';
+import type { DB } from '../../db/DB';
+import {
+  NoteBlockDocType,
   noteBlocksFTSTable,
   noteBlocksTable,
   notesFTSTable,
-  notesTable,
-  SqlBlocksViewsRepository,
   SqlNotesBlocksRepository,
-  SqlNotesRepository,
-} from './SqlNotesRepository';
-import { VaultChangesApplier } from './VaultContext/persistence/sync/VaultChangesApplier/VaultChangesApplier';
-import type { NoteBlockDocType, NoteDocType } from './dexieTypes';
-import { omit } from 'lodash-es';
-import Q from 'sql-bricks';
-import {DB, ISyncCtx} from "./db/DB";
+} from './NotesBlocksRepository';
+import { NoteDocType, notesTable, SqlNotesRepository } from './NotesRepository';
+import { SqlBlocksViewsRepository, blocksViewsTable } from './ScopesRepository';
+import { VaultChangesApplier } from './sync/VaultChangesApplier/VaultChangesApplier';
 
 export class FindNoteOrBlockService {
   constructor(
-    private db: DB, // private notesRepo: SqlNotesRepository, // private notesBlocksRepo: SqlNotesBlocksRepository,
+    private db: DB<IInternalSyncCtx>, // private notesRepo: SqlNotesRepository, // private notesBlocksRepo: SqlNotesBlocksRepository,
   ) {}
 
   find(text: string) {
@@ -225,7 +229,7 @@ export class DeleteNoteService {
   }
 }
 
-export class VaultDbWorker extends BaseDbWorker {
+export class VaultDbWorker extends BaseDbSyncWorker {
   getNotesRepo() {
     return proxy(this.getNotesRepoWithoutProxy());
   }

@@ -1,0 +1,55 @@
+import { proxy, ProxyMarked } from 'comlink';
+import { Subject, buffer, debounceTime } from 'rxjs';
+import { DB } from '../../db/DB';
+import type { ApplyChangesService } from './ApplyChangesService';
+import { ITransmittedChange, SyncRepository } from './SyncRepository';
+import { BroadcastChannel } from 'broadcast-channel';
+import type { IInternalSyncCtx } from './syncCtx';
+
+export abstract class BaseDbSyncWorker {
+  protected db!: DB<IInternalSyncCtx>;
+  protected syncRepo!: SyncRepository;
+  protected eventsSubject$: Subject<ITransmittedChange[]> = new Subject();
+  protected onNewSyncPull$: Subject<void> = new Subject();
+
+  constructor(protected dbName: string, protected windowId: string) {
+    const eventsChannel = new BroadcastChannel(this.dbName, {
+      webWorkerSupport: true,
+    });
+
+    this.eventsSubject$
+      .pipe(buffer(this.eventsSubject$.pipe(debounceTime(200))))
+      .subscribe((evs) => {
+        eventsChannel.postMessage(evs.flat());
+      });
+
+    const newSyncPullsChannel = new BroadcastChannel(
+      `${this.dbName}_syncPull`,
+      {
+        webWorkerSupport: true,
+      },
+    );
+    this.onNewSyncPull$.subscribe(() => newSyncPullsChannel.postMessage(''));
+  }
+
+  async initialize() {
+    if (!this.db) {
+      this.db = new DB();
+      await this.db.init(this.dbName);
+
+      this.syncRepo = new SyncRepository(
+        this.db,
+        (e) => {
+          this.eventsSubject$.next(e);
+        },
+        () => this.onNewSyncPull$.next(),
+      );
+    }
+  }
+
+  getSyncRepo() {
+    return proxy(this.syncRepo);
+  }
+
+  abstract getApplyChangesService(): ApplyChangesService & ProxyMarked;
+}

@@ -1,5 +1,5 @@
-import { CommandTypesFromClient, DatabaseChangeType } from '../../dexieTypes';
-import type { ApplyNewChangesFromClientCommand } from '../../dexieTypes';
+import { CommandTypesFromClient, DatabaseChangeType } from '../../../dexieTypes';
+import type { ApplyNewChangesFromClientCommand } from '../../../dexieTypes';
 import type { CommandsExecuter } from '../CommandsExecuter';
 import {
   filter,

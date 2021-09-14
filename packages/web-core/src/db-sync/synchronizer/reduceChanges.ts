@@ -1,9 +1,9 @@
-import { DatabaseChangeType } from '../dexieTypes';
+import { DatabaseChangeType } from '../../dexieTypes';
 import type {
   ICreateChange,
   IDatabaseChange,
   IUpdateChange,
-} from '../dexieTypes';
+} from '../../dexieTypes';
 import { cloneDeep, set } from 'lodash-es';
 
 export function reduceChanges(changes: IDatabaseChange[]) {

@@ -1,17 +1,17 @@
 import type { Channel } from 'phoenix';
 import { concatMap, map, merge, Observable, of, pipe, switchMap } from 'rxjs';
-import { CommandTypesFromClient } from '../../dexieTypes';
+import { CommandTypesFromClient } from '../../../dexieTypes';
 import type {
   GetChangesClientCommand,
   GetChangesResponse,
-} from '../../dexieTypes';
+} from '../../../dexieTypes';
 import type { CommandsExecuter } from '../CommandsExecuter';
 import { v4 } from 'uuid';
 import type {
-  ISyncStatus,
   SyncRepository,
 } from '../../SqlNotesRepository';
 import type { Remote } from 'comlink';
+import type {ISyncStatus} from "../../../db/DB";
 
 export interface IChangePullRow {
   id: string;

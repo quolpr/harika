@@ -1,13 +1,13 @@
-import { expose, proxy } from 'comlink';
+import { proxy, expose } from 'comlink';
 import {
-  BaseDbWorker,
   ApplyChangesService,
-  SqlVaultsRepository,
   DbChangesWriterService,
-} from './SqlNotesRepository';
-import { UserDbChangesApplier } from './UserContext/persistence/UserDbChangesApplier';
+} from '../../db-sync/persistence/ApplyChangesService';
+import { BaseDbSyncWorker } from '../../db-sync/persistence/BaseDbSyncWorker';
+import { UserDbChangesApplier } from './UserDbChangesApplier';
+import { SqlVaultsRepository } from './VaultsRepository';
 
-export class UserDbWorker extends BaseDbWorker {
+export class UserDbWorker extends BaseDbSyncWorker {
   getVaultsRepo() {
     return proxy(
       new SqlVaultsRepository(this.syncRepo, this.db, this.windowId),

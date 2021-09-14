@@ -20,14 +20,14 @@
 // } from '../../../SqlNotesRepository';
 // import type { ISyncCtx } from '../../../SqlNotesRepository';
 
-import type { IChangesApplier } from '../../../dexie-sync/ServerSynchronizer';
-import { VaultDbTables } from '../../../dexieTypes';
+import type { IChangesApplier } from '../../../../db-sync/synchronizer/ServerSynchronizer';
+import { VaultDbTables } from '../../../../dexieTypes';
 import type {
   IBlocksViewChangeEvent,
   INoteChangeEvent,
   INoteBlockChangeEvent,
   IDatabaseChange,
-} from '../../../dexieTypes';
+} from '../../../../dexieTypes';
 import {
   blocksViewsTable,
   DbChangesWriterService,
@@ -36,11 +36,11 @@ import {
   SqlBlocksViewsRepository,
   SqlNotesBlocksRepository,
   SqlNotesRepository,
-} from '../../../SqlNotesRepository';
-import type { ISyncCtx } from '../../../SqlNotesRepository';
+} from '../../../../SqlNotesRepository';
 import { BlocksViewsChangesConflictResolver } from './BlocksViewsChangesApplier';
 import { NotesChangesApplier } from './NotesChangesApplier';
 import { NoteblocksChangesApplier } from './NoteblocksChangesApplier';
+import type {ISyncCtx} from "../../../../db/DB";
 
 export class VaultChangesApplier implements IChangesApplier {
   // private consistencyResolver: VaultDbConsistencyResolver;

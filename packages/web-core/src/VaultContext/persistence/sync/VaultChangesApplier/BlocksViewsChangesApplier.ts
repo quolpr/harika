@@ -4,7 +4,7 @@ import type {
   IDeleteChange,
   IUpdateChange,
   VaultDbTables,
-} from '../../../dexieTypes';
+} from '../../../../dexieTypes';
 import { BaseChangesApplier } from './BaseChangesApplier';
 
 export class BlocksViewsChangesConflictResolver extends BaseChangesApplier<

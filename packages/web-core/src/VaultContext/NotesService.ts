@@ -38,7 +38,7 @@ import type {
   SqlNotesRepository,
 } from '../SqlNotesRepository';
 import type { Remote } from 'comlink';
-import type { DbEventsService } from '../DbEventsService';
+import type { DbEventsService } from '../db-sync/DbEventsService';
 import type {
   DeleteNoteService,
   FindNoteOrBlockService,

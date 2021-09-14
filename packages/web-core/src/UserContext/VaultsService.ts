@@ -1,17 +1,20 @@
 import { Vault } from '../VaultContext/domain/Vault';
 import { syncMiddleware } from '../VaultContext/domain/syncable';
 import { NotesService } from '../VaultContext/NotesService';
-import { initSync } from '../dexie-sync/init';
+import { initSync } from '../db-sync/synchronizer/init';
 import { map } from 'rxjs/operators';
 import { generateId } from '../generateId';
 import { ToDbSyncer } from '../VaultContext/syncers/ToDbSyncer';
 import { ToDomainSyncer } from '../VaultContext/syncers/ToDomainSyncer';
 import { getDbWorker } from '../getDbWorker';
-import { DbEventsService } from '../DbEventsService';
+import { DbEventsService } from '../db-sync/DbEventsService';
 import type { VaultDbWorker } from '../VaultDb.worker';
-import { SqlVaultsRepository, vaultsTable } from '../SqlNotesRepository';
-import type { UserDbWorker } from '../UserDb.worker';
 import type { Remote } from 'comlink';
+import {
+  SqlVaultsRepository,
+  vaultsTable,
+} from './persistence/VaultsRepository';
+import type { UserDbWorker } from './UserDb.worker';
 
 const windowId = generateId();
 

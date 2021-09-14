@@ -1,10 +1,10 @@
-import { DatabaseChangeType } from '../../../dexieTypes';
-import type { NoteBlockDocType } from '../../../dexieTypes';
+import { DatabaseChangeType } from '../../../../dexieTypes';
+import type { NoteBlockDocType } from '../../../../dexieTypes';
 import type {
   ICreateChange,
   IDeleteChange,
   IUpdateChange,
-} from '../../../dexieTypes';
+} from '../../../../dexieTypes';
 import { difference, set, uniq, cloneDeep } from 'lodash-es';
 import { BaseChangesApplier } from './BaseChangesApplier';
 import { v4 } from 'uuid';
