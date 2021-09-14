@@ -12,14 +12,17 @@ import type {
 } from '../../db-sync/persistence/syncCtx';
 import type { DB } from '../../db/DB';
 import {
-  NoteBlockDocType,
+  BlocksScopesRepository,
+  blocksScopesTable,
+} from './BlockScopesRepository';
+import {
+  NoteBlockDoc,
   noteBlocksFTSTable,
   noteBlocksTable,
   notesFTSTable,
   SqlNotesBlocksRepository,
 } from './NotesBlocksRepository';
 import { NoteDocType, notesTable, SqlNotesRepository } from './NotesRepository';
-import { SqlBlocksViewsRepository, blocksViewsTable } from './ScopesRepository';
 import { VaultChangesApplier } from './sync/VaultChangesApplier/VaultChangesApplier';
 
 export class FindNoteOrBlockService {
@@ -108,7 +111,7 @@ export class ImportExportService {
   constructor(
     private notesRepo: SqlNotesRepository,
     private notesBlocksRepo: SqlNotesBlocksRepository,
-    private blocksViewsRepo: SqlBlocksViewsRepository,
+    private blocksScopesRepo: BlocksScopesRepository,
   ) {}
 
   importData(importData: {
@@ -173,12 +176,12 @@ export class ImportExportService {
                       ),
                     },
                     ['parentBlockId', 'isRoot'],
-                  ) as NoteBlockDocType,
+                  ) as NoteBlockDoc,
               ),
             ctx,
           );
-        } else if (tableName === blocksViewsTable) {
-          this.blocksViewsRepo.bulkCreate(rows, ctx);
+        } else if (tableName === blocksScopesTable) {
+          this.blocksScopesRepo.bulkCreate(rows, ctx);
         }
       });
     });
@@ -190,7 +193,10 @@ export class ImportExportService {
         data: [
           { tableName: notesTable, rows: this.notesRepo.getAll() },
           { tableName: noteBlocksTable, rows: this.notesBlocksRepo.getAll() },
-          { tableName: blocksViewsTable, rows: this.blocksViewsRepo.getAll() },
+          {
+            tableName: blocksScopesTable,
+            rows: this.blocksScopesRepo.getAll(),
+          },
         ],
       },
     });
@@ -265,7 +271,7 @@ export class VaultDbWorker extends BaseDbSyncWorker {
   }
 
   private getBlocksViewRepoWithoutProxy() {
-    return new SqlBlocksViewsRepository(this.syncRepo, this.db, this.windowId);
+    return new BlocksScopesRepository(this.syncRepo, this.db, this.windowId);
   }
 
   private getNotesRepoWithoutProxy() {

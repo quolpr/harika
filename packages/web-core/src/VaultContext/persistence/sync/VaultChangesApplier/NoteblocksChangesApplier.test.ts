@@ -1,7 +1,7 @@
 import { expect } from '@esm-bundle/chai';
-import { DatabaseChangeType, VaultDbTables } from '../../../../dexieTypes';
-import type { NoteBlockDocType } from '../../../../dexieTypes';
-import type { INoteBlockChangeEvent } from '../../../../dexieTypes';
+import { DatabaseChangeType } from '../../../../db-sync/synchronizer/types';
+import { NoteBlockDoc, noteBlocksTable } from '../../NotesBlocksRepository';
+import type { INoteBlockChangeEvent } from '../../NotesBlocksRepository';
 import { NoteblocksChangesApplier } from './NoteblocksChangesApplier';
 
 const updateChange = (
@@ -11,7 +11,7 @@ const updateChange = (
 ): INoteBlockChangeEvent => {
   return {
     id: '123',
-    table: VaultDbTables.NoteBlocks,
+    table: noteBlocksTable,
     type: DatabaseChangeType.Update,
     from,
     to,
@@ -21,11 +21,11 @@ const updateChange = (
 
 const deleteChange = (
   key: string,
-  obj: NoteBlockDocType,
+  obj: NoteBlockDoc,
 ): INoteBlockChangeEvent => {
   return {
     id: '123',
-    table: VaultDbTables.NoteBlocks,
+    table: noteBlocksTable,
     type: DatabaseChangeType.Delete,
     key,
     obj,
@@ -34,11 +34,11 @@ const deleteChange = (
 
 const createChange = (
   key: string,
-  obj: NoteBlockDocType,
+  obj: NoteBlockDoc,
 ): INoteBlockChangeEvent => {
   return {
     id: '123',
-    table: VaultDbTables.NoteBlocks,
+    table: noteBlocksTable,
     type: DatabaseChangeType.Create,
     key,
     obj,

@@ -1,16 +1,18 @@
 import { initBackend } from 'absurd-sql/dist/indexeddb-main-thread';
 import { wrap } from 'comlink';
 import type { Remote } from 'comlink';
-import type { BaseDbWorker } from './SqlNotesRepository';
-import VaultWorker from './VaultDb.worker?worker';
-import UserWorker from './UserDb.worker?worker';
+import type {BaseDbSyncWorker} from "./db-sync/persistence/BaseDbSyncWorker";
+// @ts-ignore
+import UserDbWorker from "./UserContext/persistence/UserDb.worker?worker";
+// @ts-ignore
+import VaultDbWorker from "./VaultContext/persistence/VaultDb.worker?worker";
 
-export const getDbWorker = async <T extends BaseDbWorker>(
+export const getDbWorker = async <T extends BaseDbSyncWorker>(
   dbName: string,
   windowId: string,
   type: 'vault' | 'user',
 ): Promise<{ worker: Remote<T>; terminate: () => void }> => {
-  let worker = type === 'vault' ? new VaultWorker() : new UserWorker();
+  let worker = type === 'vault' ? new VaultDbWorker() : new UserDbWorker();
 
   console.log('Got worker', type, worker);
   // This is only required because Safari doesn't support nested
@@ -18,7 +20,7 @@ export const getDbWorker = async <T extends BaseDbWorker>(
   // workers through the main thread
   initBackend(worker);
 
-  const Klass = wrap<BaseDbWorker>(worker) as unknown as new (
+  const Klass = wrap<BaseDbSyncWorker>(worker) as unknown as new (
     dbName: string,
     windowId: string,
   ) => Promise<Remote<T>>;

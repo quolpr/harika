@@ -1,10 +1,5 @@
-import { DatabaseChangeType } from '../../dexieTypes';
-import type {
-  ICreateChange,
-  IDatabaseChange,
-  IUpdateChange,
-} from '../../dexieTypes';
 import { cloneDeep, set } from 'lodash-es';
+import {DatabaseChangeType, ICreateChange, IDatabaseChange, IUpdateChange} from "./types";
 
 export function reduceChanges(changes: IDatabaseChange[]) {
   // Converts an Array of change objects to a set of change objects based on its unique combination of (table ":" key).

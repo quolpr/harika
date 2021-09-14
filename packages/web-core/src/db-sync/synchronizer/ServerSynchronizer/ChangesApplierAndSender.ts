@@ -1,5 +1,3 @@
-import { CommandTypesFromClient, DatabaseChangeType } from '../../../dexieTypes';
-import type { ApplyNewChangesFromClientCommand } from '../../../dexieTypes';
 import type { CommandsExecuter } from '../CommandsExecuter';
 import {
   filter,
@@ -14,10 +12,10 @@ import {
 } from 'rxjs';
 import { omit } from 'lodash-es';
 import type { Remote } from 'comlink';
-import type {
-  ApplyChangesService,
-  SyncRepository,
-} from '../../SqlNotesRepository';
+import type {ApplyNewChangesFromClientCommand} from "../types";
+import {CommandTypesFromClient, DatabaseChangeType} from "../types";
+import type {SyncRepository} from "../../persistence/SyncRepository";
+import type {ApplyChangesService} from "../../persistence/ApplyChangesService";
 
 export class ChangesApplierAndSender {
   constructor(

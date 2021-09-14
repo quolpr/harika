@@ -5,7 +5,6 @@ export { ScopedBlock } from './src/VaultContext/domain/NoteBlocksApp/views/Scope
 export { BlocksScope } from './src/VaultContext/domain/NoteBlocksApp/views/BlocksScope';
 export * from './src/blockParser/parseStringToTree';
 export * from './src/generateId';
-export * from './src/dexieTypes';
 export * from './src/VaultContext/domain/NotesApp/views/NotesTree/NotesTreeRegistry';
 export * from './src/VaultContext/domain/NotesApp/views/NotesTree/NotesTreeNote';
 export * from './src/VaultContext/domain/NoteBlocksApp/models/NoteBlockModel';

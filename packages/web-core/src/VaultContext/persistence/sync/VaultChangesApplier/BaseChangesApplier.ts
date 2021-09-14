@@ -1,10 +1,10 @@
-import { DatabaseChangeType } from '../../../../dexieTypes';
-import type {
-  IDatabaseChange,
-  IDeleteChange,
-  IUpdateChange,
-} from '../../../../dexieTypes';
 import { reduceChanges } from '../../../../db-sync/synchronizer/reduceChanges';
+import {
+  IDatabaseChange,
+  DatabaseChangeType,
+  IUpdateChange,
+  IDeleteChange,
+} from '../../../../db-sync/synchronizer/types';
 
 export abstract class BaseChangesApplier<
   T extends string,

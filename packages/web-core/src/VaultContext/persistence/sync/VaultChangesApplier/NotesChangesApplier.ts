@@ -1,26 +1,26 @@
 import type {
-  IDatabaseChange,
-  IDeleteChange,
   IUpdateChange,
-  NoteDocType,
-} from '../../../../dexieTypes';
+  IDeleteChange,
+  IDatabaseChange,
+} from '../../../../db-sync/synchronizer/types';
+import type { NoteDocType, notesTable } from '../../NotesRepository';
 import { BaseChangesApplier } from './BaseChangesApplier';
 
 export class NotesChangesApplier extends BaseChangesApplier<
-  'notes',
+  typeof notesTable,
   NoteDocType
 > {
   protected resolveUpdateUpdate(
-    change1: IUpdateChange<'notes', NoteDocType>,
-    _change2: IUpdateChange<'notes', NoteDocType>,
-  ): IUpdateChange<'notes', NoteDocType> {
+    change1: IUpdateChange<typeof notesTable, NoteDocType>,
+    _change2: IUpdateChange<typeof notesTable, NoteDocType>,
+  ): IUpdateChange<typeof notesTable, NoteDocType> {
     return change1;
   }
 
   protected resolveUpdateDelete(
-    _change1: IUpdateChange<'notes', NoteDocType>,
-    change2: IDeleteChange<'notes', NoteDocType>,
-  ): IDatabaseChange<'notes', NoteDocType> {
+    _change1: IUpdateChange<typeof notesTable, NoteDocType>,
+    change2: IDeleteChange<typeof notesTable, NoteDocType>,
+  ): IDatabaseChange<typeof notesTable, NoteDocType> {
     return change2;
   }
 }

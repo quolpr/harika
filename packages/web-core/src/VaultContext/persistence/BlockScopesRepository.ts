@@ -1,6 +1,7 @@
 import { BaseSyncRepository } from '../../db-sync/persistence/BaseSyncRepository';
+import type { IDatabaseChange } from '../../db-sync/synchronizer/types';
 
-export const blocksViewsTable = 'blocksScopes' as const;
+export const blocksScopesTable = 'blocksScopes' as const;
 
 export type BlocksScopesRow = {
   id: string;
@@ -18,12 +19,17 @@ export type BlocksScopeDoc = {
   scopedModelType: string;
 };
 
-export class SqlBlocksViewsRepository extends BaseSyncRepository<
+export type IBlocksScopesChangeEvent = IDatabaseChange<
+  typeof blocksScopesTable,
+  BlocksScopeDoc
+>;
+
+export class BlocksScopesRepository extends BaseSyncRepository<
   BlocksScopeDoc,
   BlocksScopesRow
 > {
   getTableName() {
-    return blocksViewsTable;
+    return blocksScopesTable;
   }
 
   toDoc(row: BlocksScopesRow): BlocksScopeDoc {

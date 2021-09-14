@@ -1,15 +1,13 @@
 import { merge, Subject, of, Observable } from 'rxjs';
 import { concatMap, finalize, mapTo, switchMap } from 'rxjs/operators';
-import type { IDatabaseChange } from '../../dexieTypes';
 import type { CommandsExecuter } from './CommandsExecuter';
 import type { ServerConnector } from './connection/ServerConnector';
 import { ServerChangesReceiver } from './ServerSynchronizer/ServerChangesReceiver';
 import { ChangesApplierAndSender } from './ServerSynchronizer/ChangesApplierAndSender';
 import type { Remote } from 'comlink';
-import type {
-  ApplyChangesService,
-  SyncRepository,
-} from '../SqlNotesRepository';
+import type {IDatabaseChange} from "./types";
+import type {SyncRepository} from "../persistence/SyncRepository";
+import type {ApplyChangesService} from "../persistence/ApplyChangesService";
 
 export interface IConsistencyResolver {
   resolve(): Promise<void>;

@@ -1,22 +1,16 @@
 import type { Observable } from 'rxjs';
-import { VaultDbTables, DatabaseChangeType } from '../../dexieTypes';
-import type {
-  INoteChangeEvent,
-  INoteBlockChangeEvent,
-  IBlocksViewChangeEvent,
-} from '../../dexieTypes';
-import type { ITransmittedChange } from '../../SqlNotesRepository';
 import type { Vault } from '../domain/Vault';
 import {
   convertNoteDocToModelAttrs,
   convertNoteBlockDocToModelAttrs,
-  convertViewToModelAttrs,
 } from './toDomainModelsConverters';
-import type {
-  NoteData,
-  NoteBlockData,
-  ViewData,
-} from './toDomainModelsConverters';
+import type { NoteData, NoteBlockData } from './toDomainModelsConverters';
+import type { ITransmittedChange } from '../../db-sync/persistence/SyncRepository';
+import { DatabaseChangeType } from '../../db-sync/synchronizer/types';
+import { noteBlocksTable } from '../persistence/NotesBlocksRepository';
+import type { INoteBlockChangeEvent } from '../persistence/NotesBlocksRepository';
+import type { INoteChangeEvent } from '../persistence/NotesRepository';
+import { notesTable } from '../persistence/NotesRepository';
 
 export class ToDomainSyncer {
   constructor(
@@ -54,33 +48,33 @@ export class ToDomainSyncer {
     });
   }
 
-  private getViews(evs: ITransmittedChange[]) {
-    const viewEvents = evs.filter(
-      (ev) => ev.table === VaultDbTables.BlocksViews,
-    ) as IBlocksViewChangeEvent[];
+  // private getViews(evs: ITransmittedChange[]) {
+  //   const viewEvents = evs.filter(
+  //     (ev) => ev.table === blocksViewsTable,
+  //   ) as IBlocksViewChangeEvent[];
 
-    const latestDedupedEvents: Record<string, IBlocksViewChangeEvent> = {};
+  //   const latestDedupedEvents: Record<string, IBlocksViewChangeEvent> = {};
 
-    viewEvents.reverse().forEach((ev) => {
-      if (!latestDedupedEvents[ev.key]) {
-        latestDedupedEvents[ev.key] = ev;
-      }
-    });
+  //   viewEvents.reverse().forEach((ev) => {
+  //     if (!latestDedupedEvents[ev.key]) {
+  //       latestDedupedEvents[ev.key] = ev;
+  //     }
+  //   });
 
-    return viewEvents
-      .map((ev) => {
-        if (!ev.obj) return undefined;
+  //   return viewEvents
+  //     .map((ev) => {
+  //       if (!ev.obj) return undefined;
 
-        return convertViewToModelAttrs(ev.obj);
-      })
-      .filter((n) => !!n) as ViewData[];
-  }
+  //       return convertViewToModelAttrs(ev.obj);
+  //     })
+  //     .filter((n) => !!n) as ViewData[];
+  // }
 
   // TODO refactor notes and noteblocks to one method
 
   private getBlockChanges(evs: ITransmittedChange[]) {
     const blockEvents = evs.filter(
-      (ev) => ev.table === VaultDbTables.NoteBlocks,
+      (ev) => ev.table === noteBlocksTable,
     ) as INoteBlockChangeEvent[];
 
     const latestDedupedEvents: Record<string, INoteBlockChangeEvent> = {};
@@ -123,7 +117,7 @@ export class ToDomainSyncer {
 
   private getNoteChanges(evs: ITransmittedChange[]) {
     const noteEvents = evs.filter(
-      (ev) => ev.table === VaultDbTables.Notes,
+      (ev) => ev.table === notesTable,
     ) as INoteChangeEvent[];
 
     const latestDedupedEvents: Record<string, INoteChangeEvent> = {};

@@ -22,30 +22,27 @@ import { isEqual, uniq } from 'lodash-es';
 import { filterAst } from '../blockParser/astHelpers';
 import type { RefToken, TagToken } from '../blockParser/types';
 import { firstValueFrom, from, merge, Observable, of, Subject } from 'rxjs';
-import type { NoteDocType } from '../dexieTypes';
-import { VaultDbTables } from '../dexieTypes';
 import {
   convertNoteBlockDocToModelAttrs,
   convertNoteDocToModelAttrs,
-  convertViewToModelAttrs,
 } from './syncers/toDomainModelsConverters';
 import { NotesChangesTrackerService } from './services/notes-tree/NotesChangesTrackerService';
 import dayjs from 'dayjs';
 import { toObserver } from '../toObserver';
-import type {
-  SqlBlocksViewsRepository,
-  SqlNotesBlocksRepository,
-  SqlNotesRepository,
-} from '../SqlNotesRepository';
 import type { Remote } from 'comlink';
 import type { DbEventsService } from '../db-sync/DbEventsService';
+import {
+  noteBlocksTable,
+  SqlNotesBlocksRepository,
+} from './persistence/NotesBlocksRepository';
+import { SqlNotesRepository, notesTable } from './persistence/NotesRepository';
+import type { NoteDocType } from './persistence/NotesRepository';
 import type {
+  ImportExportService,
   DeleteNoteService,
   FindNoteOrBlockService,
-  ImportExportService,
-} from '../VaultDb.worker';
-import type { BlocksScope } from './domain/NoteBlocksApp/views/BlocksScope';
-import { getScopeKey } from './domain/NoteBlocksApp/NoteBlocksApp';
+} from './persistence/VaultDb.worker';
+import type { BlocksScopesRepository } from './persistence/BlockScopesRepository';
 
 export { NoteModel } from './domain/NotesApp/models/NoteModel';
 export { Vault } from './domain/Vault';
@@ -65,7 +62,7 @@ export class NotesService {
   constructor(
     private notesRepository: Remote<SqlNotesRepository>,
     private notesBlocksRepository: Remote<SqlNotesBlocksRepository>,
-    private blocksViewsRepo: Remote<SqlBlocksViewsRepository>,
+    private blocksViewsRepo: Remote<BlocksScopesRepository>,
     private dbEventsService: DbEventsService,
     private importExportService: Remote<ImportExportService>,
     private deleteNoteService: Remote<DeleteNoteService>,
@@ -192,7 +189,7 @@ export class NotesService {
   getLinksOfNote$(noteId: string) {
     const links$ = from(
       this.dbEventsService.liveQuery(
-        [VaultDbTables.Notes, VaultDbTables.NoteBlocks],
+        [notesTable, noteBlocksTable],
         () => this.notesBlocksRepository.getLinksOfNoteId(noteId),
         false,
       ),
@@ -221,16 +218,14 @@ export class NotesService {
 
         return notLoadedTreeRegistryIds.length > 0
           ? from(
-              this.dbEventsService.liveQuery(
-                [VaultDbTables.NoteBlocks],
-                async () =>
-                  (
-                    await this.notesBlocksRepository.getByNoteIds(
-                      notesIds.filter(
-                        (id) => !this.vault.areBlocksOfNoteLoaded(id),
-                      ),
-                    )
-                  ).map((m) => convertNoteBlockDocToModelAttrs(m)),
+              this.dbEventsService.liveQuery([noteBlocksTable], async () =>
+                (
+                  await this.notesBlocksRepository.getByNoteIds(
+                    notesIds.filter(
+                      (id) => !this.vault.areBlocksOfNoteLoaded(id),
+                    ),
+                  )
+                ).map((m) => convertNoteBlockDocToModelAttrs(m)),
               ),
             ).pipe(
               first(),
@@ -343,7 +338,7 @@ export class NotesService {
     return ids$.pipe(
       switchMap((ids) =>
         // TODO: load only not loaded
-        this.dbEventsService.liveQuery([VaultDbTables.Notes], async () => {
+        this.dbEventsService.liveQuery([notesTable], async () => {
           const toLoadIds = ids.filter(
             (id) => !Boolean(this.vault.notesMap[id]),
           );
@@ -394,7 +389,7 @@ export class NotesService {
 
   getNoteIdByTitle$(title: string) {
     return from(
-      this.dbEventsService.liveQuery([VaultDbTables.Notes], () =>
+      this.dbEventsService.liveQuery([notesTable], () =>
         this.notesRepository.getByTitles([title]),
       ) as Observable<NoteDocType[]>,
     ).pipe(
@@ -504,13 +499,13 @@ export class NotesService {
     if (Object.values(this.vault.notesMap).find((note) => note.title === title))
       return true;
 
-    return !!(await this.notesRepository.findBy({title}));
+    return !!(await this.notesRepository.findBy({ title }));
   }
 
   // TODO: better Rx way, put title to pipe
   searchNotesTuples$(title: string) {
     return from(
-      this.dbEventsService.liveQuery([VaultDbTables.Notes], () =>
+      this.dbEventsService.liveQuery([notesTable], () =>
         this.findService.findNote(title),
       ),
     ).pipe(
@@ -526,7 +521,7 @@ export class NotesService {
   findNotesOrBlocks$(content: string) {
     return from(
       this.dbEventsService.liveQuery(
-        [VaultDbTables.Notes, VaultDbTables.NoteBlocks],
+        [notesTable, noteBlocksTable],
         () => this.findService.find(content),
         false,
       ),
@@ -534,7 +529,7 @@ export class NotesService {
   }
   getAllNotesTuples$() {
     return from(
-      this.dbEventsService.liveQuery([VaultDbTables.Notes], () =>
+      this.dbEventsService.liveQuery([notesTable], () =>
         this.notesRepository.getAll(),
       ),
     ).pipe(

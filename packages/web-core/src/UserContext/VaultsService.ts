@@ -8,13 +8,13 @@ import { ToDbSyncer } from '../VaultContext/syncers/ToDbSyncer';
 import { ToDomainSyncer } from '../VaultContext/syncers/ToDomainSyncer';
 import { getDbWorker } from '../getDbWorker';
 import { DbEventsService } from '../db-sync/DbEventsService';
-import type { VaultDbWorker } from '../VaultDb.worker';
-import type { Remote } from 'comlink';
 import {
   SqlVaultsRepository,
   vaultsTable,
 } from './persistence/VaultsRepository';
-import type { UserDbWorker } from './UserDb.worker';
+import type { Remote } from 'comlink';
+import type { VaultDbWorker } from '../VaultContext/persistence/VaultDb.worker';
+import type { UserDbWorker } from './persistence/UserDb.worker';
 
 const windowId = generateId();
 

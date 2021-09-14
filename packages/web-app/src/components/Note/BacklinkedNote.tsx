@@ -13,7 +13,7 @@ import { NoteBlocksHandlers } from './NoteBlocksHandlers';
 
 const LinkedBlock = observer(
   ({ note, scope }: { note: NoteModel; scope: BlocksScope }): JSX.Element => {
-    const rootView = scope.rootView;
+    const rootView = scope.rootScopedBlock;
     const path = rootView.path;
 
     return (

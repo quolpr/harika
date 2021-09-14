@@ -1,26 +1,27 @@
-import { DatabaseChangeType } from '../../../../dexieTypes';
-import type { NoteBlockDocType } from '../../../../dexieTypes';
+import { difference, set, uniq, cloneDeep } from 'lodash-es';
+import { BaseChangesApplier } from './BaseChangesApplier';
+import { v4 } from 'uuid';
+import type { NoteBlockDoc } from '../../NotesBlocksRepository';
+import { noteBlocksTable } from '../../NotesBlocksRepository';
+import { DatabaseChangeType } from '../../../../db-sync/synchronizer/types';
 import type {
   ICreateChange,
   IDeleteChange,
   IUpdateChange,
-} from '../../../../dexieTypes';
-import { difference, set, uniq, cloneDeep } from 'lodash-es';
-import { BaseChangesApplier } from './BaseChangesApplier';
-import { v4 } from 'uuid';
+} from '../../../../db-sync/synchronizer/types';
 
 export class NoteblocksChangesApplier extends BaseChangesApplier<
-  'noteBlocks',
-  NoteBlockDocType
+  typeof noteBlocksTable,
+  NoteBlockDoc
 > {
   constructor(private idGenerator: () => string = v4) {
     super();
   }
 
   resolveUpdateUpdate(
-    change1: IUpdateChange<'noteBlocks', NoteBlockDocType>,
-    change2: IUpdateChange<'noteBlocks', NoteBlockDocType>,
-  ): IUpdateChange<'noteBlocks', NoteBlockDocType> {
+    change1: IUpdateChange<typeof noteBlocksTable, NoteBlockDoc>,
+    change2: IUpdateChange<typeof noteBlocksTable, NoteBlockDoc>,
+  ): IUpdateChange<typeof noteBlocksTable, NoteBlockDoc> {
     let finalMods = {};
 
     const noteBlockIds = this.resolveIds(
@@ -73,9 +74,9 @@ export class NoteblocksChangesApplier extends BaseChangesApplier<
   }
 
   resolveUpdateDelete(
-    change1: IUpdateChange<'noteBlocks', NoteBlockDocType>,
-    change2: IDeleteChange<'noteBlocks', NoteBlockDocType>,
-  ): ICreateChange<'noteBlocks', NoteBlockDocType> {
+    change1: IUpdateChange<typeof noteBlocksTable, NoteBlockDoc>,
+    change2: IDeleteChange<typeof noteBlocksTable, NoteBlockDoc>,
+  ): ICreateChange<typeof noteBlocksTable, NoteBlockDoc> {
     const obj = cloneDeep(change2.obj);
 
     Object.entries(change1.to).forEach(function ([keyPath, val]) {
@@ -84,7 +85,7 @@ export class NoteblocksChangesApplier extends BaseChangesApplier<
 
     return {
       id: this.idGenerator(),
-      table: 'noteBlocks',
+      table: noteBlocksTable,
       type: DatabaseChangeType.Create,
       key: change1.key,
       obj: obj,

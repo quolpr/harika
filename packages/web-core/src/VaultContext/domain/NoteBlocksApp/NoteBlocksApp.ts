@@ -5,7 +5,6 @@ import {
   modelAction,
   onChildAttachedTo,
   prop,
-  transaction,
 } from 'mobx-keystone';
 import type { ModelCreationData } from 'mobx-keystone';
 import { BlocksScope } from './views/BlocksScope';
@@ -172,7 +171,7 @@ export class NoteBlocksApp extends Model({
           blocksScope.scopedBlocksRegistry.getOrCreateScopedBlock(ch);
 
           return () => {
-            blocksScope.scopedBlocksRegistry.removeScopedBlock(ch);
+            blocksScope.scopedBlocksRegistry.removeScopedBlock(ch.$modelId);
           };
         }
       },

@@ -1,12 +1,13 @@
 import { autorun } from 'mobx';
 import { filter, map, Observable, takeUntil } from 'rxjs';
-import { DatabaseChangeType, VaultDbTables } from '../../../dexieTypes';
-import type { INoteChangeEvent } from '../../../dexieTypes';
-import type { ITransmittedChange } from '../../../SqlNotesRepository';
+import type { ITransmittedChange } from '../../../db-sync/persistence/SyncRepository';
+import { DatabaseChangeType } from '../../../db-sync/synchronizer/types';
 import type {
   INoteTitleChange,
   NotesTreeRegistry,
 } from '../../domain/NotesApp/views/NotesTree/NotesTreeRegistry';
+import { notesTable } from '../../persistence/NotesRepository';
+import type { INoteChangeEvent } from '../../persistence/NotesRepository';
 
 export class NotesChangesTrackerService {
   private bufferedChanges: INoteChangeEvent[] = [];
@@ -20,9 +21,7 @@ export class NotesChangesTrackerService {
       .pipe(
         map(
           (chs) =>
-            chs.filter(
-              (ch) => ch.table === VaultDbTables.Notes,
-            ) as INoteChangeEvent[],
+            chs.filter((ch) => ch.table === notesTable) as INoteChangeEvent[],
         ),
         filter((chs) => chs.length !== 0),
         takeUntil(stop$),

@@ -32,7 +32,7 @@ export const NoteBlocks = observer(({ note }: { note: NoteModel }) => {
 
       <div className="note__body">
         {scope &&
-          scope.rootView.children.map((noteBlock) => (
+          scope.rootScopedBlock.children.map((noteBlock) => (
             <NoteBlock
               key={noteBlock.$modelId}
               noteBlock={noteBlock}

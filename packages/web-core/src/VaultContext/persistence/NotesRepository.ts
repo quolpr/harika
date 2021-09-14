@@ -1,7 +1,8 @@
 import dayjs from 'dayjs';
 import Q from 'sql-bricks';
 import { BaseSyncRepository } from '../../db-sync/persistence/BaseSyncRepository';
-import type { ISyncCtx } from '../../db/ctx';
+import type { ISyncCtx } from '../../db-sync/persistence/syncCtx';
+import type { IDatabaseChange } from '../../db-sync/synchronizer/types';
 import { notesFTSTable } from './NotesBlocksRepository';
 
 export type NoteRow = {
@@ -21,6 +22,8 @@ export type NoteDocType = {
   updatedAt: number;
   rootBlockId: string;
 };
+
+export type INoteChangeEvent = IDatabaseChange<typeof notesTable, NoteDocType>;
 
 export class SqlNotesRepository extends BaseSyncRepository<
   NoteDocType,

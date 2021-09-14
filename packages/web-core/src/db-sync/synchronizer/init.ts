@@ -1,14 +1,14 @@
 import type { Remote } from 'comlink';
 import { Subject } from 'rxjs';
 import type { DbEventsService } from '../DbEventsService';
-import type { BaseDbWorker } from '../SqlNotesRepository';
 import { CommandsExecuter } from './CommandsExecuter';
 import { ServerConnector } from './connection/ServerConnector';
 import { ServerSynchronizer } from './ServerSynchronizer';
+import type {BaseDbSyncWorker} from "../persistence/BaseDbSyncWorker";
 
 export const initSync = async (
   dbName: string,
-  dbWorker: Remote<BaseDbWorker>,
+  dbWorker: Remote<BaseDbSyncWorker>,
   url: string,
   authToken: string,
   eventsService: DbEventsService,

@@ -1,46 +1,22 @@
-// import { VaultDbTables } from '../../../dexieTypes';
-// import type {
-//   IBlocksViewChangeEvent,
-//   IDatabaseChange,
-//   INoteBlockChangeEvent,
-//   INoteChangeEvent,
-// } from '../../../dexieTypes';
-// import type { IChangesApplier } from '../../../dexie-sync/ServerSynchronizer';
-// import { NoteblocksChangesApplier } from './NoteblocksChangesApplier';
-// import { NotesChangesApplier } from './NotesChangesApplier';
-// import { BlocksViewsChangesConflictResolver } from './BlocksViewsChangesApplier';
-// import {
-//   blocksViewsTable,
-//   DbChangesWriterService,
-//   noteBlocksTable,
-//   notesTable,
-//   SqlBlocksViewsRepository,
-//   SqlNotesBlocksRepository,
-//   SqlNotesRepository,
-// } from '../../../SqlNotesRepository';
-// import type { ISyncCtx } from '../../../SqlNotesRepository';
-
+import type { DbChangesWriterService } from '../../../../db-sync/persistence/ApplyChangesService';
+import type { ISyncCtx } from '../../../../db-sync/persistence/syncCtx';
 import type { IChangesApplier } from '../../../../db-sync/synchronizer/ServerSynchronizer';
-import { VaultDbTables } from '../../../../dexieTypes';
-import type {
-  IBlocksViewChangeEvent,
-  INoteChangeEvent,
-  INoteBlockChangeEvent,
-  IDatabaseChange,
-} from '../../../../dexieTypes';
+import type { IDatabaseChange } from '../../../../db-sync/synchronizer/types';
 import {
-  blocksViewsTable,
-  DbChangesWriterService,
-  noteBlocksTable,
-  notesTable,
-  SqlBlocksViewsRepository,
+  BlocksScopesRepository,
+  blocksScopesTable,
+  IBlocksScopesChangeEvent,
+} from '../../BlockScopesRepository';
+import {
   SqlNotesBlocksRepository,
-  SqlNotesRepository,
-} from '../../../../SqlNotesRepository';
-import { BlocksViewsChangesConflictResolver } from './BlocksViewsChangesApplier';
-import { NotesChangesApplier } from './NotesChangesApplier';
+  noteBlocksTable,
+} from '../../NotesBlocksRepository';
+import type { INoteBlockChangeEvent } from '../../NotesBlocksRepository';
+import { SqlNotesRepository, notesTable } from '../../NotesRepository';
+import type { INoteChangeEvent } from '../../NotesRepository';
+import { BlocksScopesChangesConflictResolver } from './BlocksScopesChangesApplier';
 import { NoteblocksChangesApplier } from './NoteblocksChangesApplier';
-import type {ISyncCtx} from "../../../../db/DB";
+import { NotesChangesApplier } from './NotesChangesApplier';
 
 export class VaultChangesApplier implements IChangesApplier {
   // private consistencyResolver: VaultDbConsistencyResolver;
@@ -48,7 +24,7 @@ export class VaultChangesApplier implements IChangesApplier {
   constructor(
     private noteRepo: SqlNotesRepository,
     private noteBlocksRepo: SqlNotesBlocksRepository,
-    private blocksViewsRepo: SqlBlocksViewsRepository,
+    private blocksScopesRepo: BlocksScopesRepository,
     private dbChangesWriter: DbChangesWriterService,
   ) {
     // this.consistencyResolver = new VaultDbConsistencyResolver(db);
@@ -67,39 +43,39 @@ export class VaultChangesApplier implements IChangesApplier {
       } else {
         const noteblocksResolver = new NoteblocksChangesApplier();
         const notesResolver = new NotesChangesApplier();
-        const viewsResolver = new BlocksViewsChangesConflictResolver();
+        const scopesResolver = new BlocksScopesChangesConflictResolver();
 
         const noteBlocksFilter = ({ table }: { table: string }) =>
-          table === VaultDbTables.NoteBlocks;
+          table === noteBlocksTable;
         const newBlocksChanges = noteblocksResolver.resolveConflicts(
           clientChanges.filter(noteBlocksFilter) as INoteBlockChangeEvent[],
           serverChanges.filter(noteBlocksFilter) as INoteBlockChangeEvent[],
         );
 
         const notesFilter = ({ table }: { table: string }) =>
-          table === VaultDbTables.Notes;
+          table === notesTable;
         const notesChanges = notesResolver.resolveConflicts(
           clientChanges.filter(notesFilter) as INoteChangeEvent[],
           serverChanges.filter(notesFilter) as INoteChangeEvent[],
         );
 
-        const viewsFilter = ({ table }: { table: string }) =>
-          table === VaultDbTables.BlocksViews;
-        const viewsChanges = viewsResolver.resolveConflicts(
-          clientChanges.filter(viewsFilter) as IBlocksViewChangeEvent[],
-          serverChanges.filter(viewsFilter) as IBlocksViewChangeEvent[],
+        const scopesFilter = ({ table }: { table: string }) =>
+          table === blocksScopesTable;
+        const scopesChanges = scopesResolver.resolveConflicts(
+          clientChanges.filter(scopesFilter) as IBlocksScopesChangeEvent[],
+          serverChanges.filter(scopesFilter) as IBlocksScopesChangeEvent[],
         );
 
         const conflictedChanges = [
           ...notesChanges.conflictedChanges,
           ...newBlocksChanges.conflictedChanges,
-          ...viewsChanges.conflictedChanges,
+          ...scopesChanges.conflictedChanges,
         ];
 
         const notConflictedServerChanges = [
           ...notesChanges.notConflictedServerChanges,
           ...newBlocksChanges.notConflictedServerChanges,
-          ...viewsChanges.notConflictedServerChanges,
+          ...scopesChanges.notConflictedServerChanges,
         ];
 
         return { conflictedChanges, notConflictedServerChanges };
@@ -123,8 +99,8 @@ export class VaultChangesApplier implements IChangesApplier {
         const noteBlocksChanges = chs.filter(
           ({ table }) => table === noteBlocksTable,
         );
-        const viewsChanges = chs.filter(
-          ({ table }) => table === blocksViewsTable,
+        const scopesChanges = chs.filter(
+          ({ table }) => table === blocksScopesTable,
         );
 
         this.dbChangesWriter.writeChanges(notesChanges, this.noteRepo, ctx);
@@ -134,8 +110,8 @@ export class VaultChangesApplier implements IChangesApplier {
           ctx,
         );
         this.dbChangesWriter.writeChanges(
-          viewsChanges,
-          this.blocksViewsRepo,
+          scopesChanges,
+          this.blocksScopesRepo,
           ctx,
         );
       });

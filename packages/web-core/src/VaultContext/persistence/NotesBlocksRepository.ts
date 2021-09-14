@@ -1,6 +1,6 @@
-import type { ISyncCtx } from '../../db/ctx';
 import Q from 'sql-bricks';
 import { BaseSyncRepository } from '../../db-sync/persistence/BaseSyncRepository';
+import type { ISyncCtx } from '../../db-sync/persistence/syncCtx';
 import type { IDatabaseChange } from '../../db-sync/synchronizer/types';
 
 export type NoteBlockRow = {
@@ -12,7 +12,7 @@ export type NoteBlockRow = {
   createdAt: number;
   updatedAt: number | null;
 };
-export type NoteBlockDocType = {
+export type NoteBlockDoc = {
   id: string;
   noteId: string;
 
@@ -31,14 +31,14 @@ export const noteBlocksFTSTable = 'noteBlocksFTS' as const;
 
 export type INoteBlockChangeEvent = IDatabaseChange<
   typeof noteBlocksTable,
-  NoteBlockDocType
+  NoteBlockDoc
 >;
 
 export class SqlNotesBlocksRepository extends BaseSyncRepository<
-  NoteBlockDocType,
+  NoteBlockDoc,
   NoteBlockRow
 > {
-  bulkCreate(attrsArray: NoteBlockDocType[], ctx: ISyncCtx) {
+  bulkCreate(attrsArray: NoteBlockDoc[], ctx: ISyncCtx) {
     return this.db.transaction(
       () => {
         const res = super.bulkCreate(attrsArray, ctx);
@@ -57,7 +57,7 @@ export class SqlNotesBlocksRepository extends BaseSyncRepository<
     );
   }
 
-  bulkUpdate(records: NoteBlockDocType[], ctx: ISyncCtx) {
+  bulkUpdate(records: NoteBlockDoc[], ctx: ISyncCtx) {
     return this.db.transaction(
       () => {
         const res = super.bulkUpdate(records, ctx);
@@ -115,7 +115,7 @@ export class SqlNotesBlocksRepository extends BaseSyncRepository<
     return res?.values?.map(([val]) => val as string) || [];
   }
 
-  getByNoteId(id: string): NoteBlockDocType[] {
+  getByNoteId(id: string): NoteBlockDoc[] {
     return this.getByNoteIds([id]);
   }
 
@@ -123,7 +123,7 @@ export class SqlNotesBlocksRepository extends BaseSyncRepository<
     return noteBlocksTable;
   }
 
-  getLinkedBlocksOfNoteId(id: string): NoteBlockDocType[] {
+  getLinkedBlocksOfNoteId(id: string): NoteBlockDoc[] {
     return (
       this.db
         .getRecords<NoteBlockRow>(
@@ -159,7 +159,7 @@ export class SqlNotesBlocksRepository extends BaseSyncRepository<
     return grouped;
   }
 
-  toRow(doc: NoteBlockDocType): NoteBlockRow {
+  toRow(doc: NoteBlockDoc): NoteBlockRow {
     const res = {
       ...super.toRow(doc),
       noteBlockIds: JSON.stringify(doc.noteBlockIds),
@@ -169,7 +169,7 @@ export class SqlNotesBlocksRepository extends BaseSyncRepository<
     return res;
   }
 
-  toDoc(row: NoteBlockRow): NoteBlockDocType {
+  toDoc(row: NoteBlockRow): NoteBlockDoc {
     const res = {
       ...super.toDoc(row),
       noteBlockIds: JSON.parse(row['noteBlockIds'] as string),

@@ -3,14 +3,12 @@ import { uniq } from 'lodash-es';
 import type { Patch, Path } from 'mobx-keystone';
 import { Subject } from 'rxjs';
 import { buffer, concatMap, debounceTime, tap } from 'rxjs/operators';
-import type {
-  BaseSyncRepository,
-  SqlBlocksViewsRepository,
-  SqlNotesBlocksRepository,
-  SqlNotesRepository,
-} from '../../SqlNotesRepository';
+import type { BaseSyncRepository } from '../../db-sync/persistence/BaseSyncRepository';
 import type { NoteBlockModel } from '../domain/NoteBlocksApp/models/NoteBlockModel';
 import type { Vault } from '../NotesService';
+import type { BlocksScopesRepository } from '../persistence/BlockScopesRepository';
+import type { SqlNotesBlocksRepository } from '../persistence/NotesBlocksRepository';
+import type { SqlNotesRepository } from '../persistence/NotesRepository';
 import { mapNote, mapNoteBlock } from './toDbDocsConverters';
 
 // TODO: type rootKey
@@ -211,7 +209,7 @@ export class ToDbSyncer {
   constructor(
     private notesRepository: Remote<SqlNotesRepository>,
     private notesBlocksRepository: Remote<SqlNotesBlocksRepository>,
-    private blocksViewsRepository: Remote<SqlBlocksViewsRepository>,
+    private blocksViewsRepository: Remote<BlocksScopesRepository>,
     private windowId: string,
     private vault: Vault,
     onPatchesApplied?: () => void,
