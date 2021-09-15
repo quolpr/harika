@@ -1,8 +1,10 @@
-import { proxy, ProxyMarked } from 'comlink';
+import { proxy } from 'comlink';
+import type { ProxyMarked } from 'comlink';
 import { Subject, buffer, debounceTime } from 'rxjs';
 import { DB } from '../../db/DB';
 import type { ApplyChangesService } from './ApplyChangesService';
-import { ITransmittedChange, SyncRepository } from './SyncRepository';
+import type { ITransmittedChange } from './SyncRepository';
+import { SyncRepository } from './SyncRepository';
 import { BroadcastChannel } from 'broadcast-channel';
 import type { IInternalSyncCtx } from './syncCtx';
 

@@ -5,8 +5,8 @@ import type { IDatabaseChange } from '../../../../db-sync/synchronizer/types';
 import {
   BlocksScopesRepository,
   blocksScopesTable,
-  IBlocksScopesChangeEvent,
 } from '../../BlockScopesRepository';
+import type { IBlocksScopesChangeEvent } from '../../BlockScopesRepository';
 import {
   SqlNotesBlocksRepository,
   noteBlocksTable,

@@ -1,10 +1,10 @@
 import { reduceChanges } from '../../../../db-sync/synchronizer/reduceChanges';
-import {
+import type {
   IDatabaseChange,
-  DatabaseChangeType,
   IUpdateChange,
   IDeleteChange,
 } from '../../../../db-sync/synchronizer/types';
+import { DatabaseChangeType } from '../../../../db-sync/synchronizer/types';
 
 export abstract class BaseChangesApplier<
   T extends string,

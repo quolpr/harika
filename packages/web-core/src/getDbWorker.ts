@@ -1,11 +1,11 @@
 import { initBackend } from 'absurd-sql/dist/indexeddb-main-thread';
 import { wrap } from 'comlink';
 import type { Remote } from 'comlink';
-import type {BaseDbSyncWorker} from "./db-sync/persistence/BaseDbSyncWorker";
+import type { BaseDbSyncWorker } from './db-sync/persistence/BaseDbSyncWorker';
 // @ts-ignore
-import UserDbWorker from "./UserContext/persistence/UserDb.worker?worker";
+import UserDbWorker from './UserContext/persistence/UserDb.worker?worker';
 // @ts-ignore
-import VaultDbWorker from "./VaultContext/persistence/VaultDb.worker?worker";
+import VaultDbWorker from './VaultContext/persistence/VaultDb.worker?worker';
 
 export const getDbWorker = async <T extends BaseDbSyncWorker>(
   dbName: string,

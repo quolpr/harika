@@ -3,14 +3,14 @@ import type { Overwrite, Required } from 'utility-types';
 import { v4 as uuidv4 } from 'uuid';
 import { getCtxStrict } from '../../db/ctx';
 import type { DB } from '../../db/DB';
-import {
-  DatabaseChangeType,
+import type {
   ICreateChange,
   IDeleteChange,
   IUpdateChange,
 } from '../synchronizer/types';
+import { DatabaseChangeType } from '../synchronizer/types';
 import { getObjectDiff } from '../synchronizer/utils';
-import type { IInternalSyncCtx, ISyncCtx } from './syncCtx';
+import type { IInternalSyncCtx } from './syncCtx';
 
 export const clientChangesTable = 'clientChanges' as const;
 export const syncStatusTable = 'syncStatus' as const;

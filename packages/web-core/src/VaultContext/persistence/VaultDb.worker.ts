@@ -15,14 +15,15 @@ import {
   BlocksScopesRepository,
   blocksScopesTable,
 } from './BlockScopesRepository';
+import type { NoteBlockDoc } from './NotesBlocksRepository';
 import {
-  NoteBlockDoc,
   noteBlocksFTSTable,
   noteBlocksTable,
   notesFTSTable,
   SqlNotesBlocksRepository,
 } from './NotesBlocksRepository';
-import { NoteDocType, notesTable, SqlNotesRepository } from './NotesRepository';
+import type { NoteDocType } from './NotesRepository';
+import { notesTable, SqlNotesRepository } from './NotesRepository';
 import { VaultChangesApplier } from './sync/VaultChangesApplier/VaultChangesApplier';
 
 export class FindNoteOrBlockService {
