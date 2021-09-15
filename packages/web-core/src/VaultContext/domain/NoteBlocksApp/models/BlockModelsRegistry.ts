@@ -8,7 +8,8 @@ import { omit } from 'lodash-es';
 import { BlockContentModel } from './BlockContentModel';
 
 export const blocksRegistryType = 'harika/BlockModelsRegistry';
-export const blocksRegistryRef = rootRef<BlockModelsRegistry>(blocksRegistryType);
+export const blocksRegistryRef =
+  rootRef<BlockModelsRegistry>(blocksRegistryType);
 
 @model(blocksRegistryType)
 export class BlockModelsRegistry extends Model({

@@ -11,7 +11,7 @@ import {
 import type Phoenix from 'phoenix';
 import snakecaseKeys from 'snakecase-keys';
 import camelcaseKeys from 'camelcase-keys';
-import type {ClientCommands} from "./types";
+import type { ClientCommands } from './types';
 
 export class CommandsExecuter {
   private i = 0;

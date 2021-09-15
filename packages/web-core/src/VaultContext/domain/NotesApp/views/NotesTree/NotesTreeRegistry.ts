@@ -7,7 +7,8 @@ export interface PartialNote {
   title: string;
 }
 
-export const notesTreeRegistryModelType = 'harika/NotesTree/NotesTreeRegistry' as const;
+export const notesTreeRegistryModelType =
+  'harika/NotesTree/NotesTreeRegistry' as const;
 
 type INoteRename = {
   type: 'rename';

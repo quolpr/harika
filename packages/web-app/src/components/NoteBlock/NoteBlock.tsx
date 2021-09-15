@@ -153,13 +153,7 @@ const NoteBlockBody = observer(
 );
 
 export const NoteBlock = observer(
-  ({
-    noteBlock,
-    scope,
-  }: {
-    noteBlock: ScopedBlock;
-    scope: BlocksScope;
-  }) => {
+  ({ noteBlock, scope }: { noteBlock: ScopedBlock; scope: BlocksScope }) => {
     const isSelected = computed(() => {
       return scope.selectedIds.includes(noteBlock.$modelId);
     }).get();

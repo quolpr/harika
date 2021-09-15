@@ -12,10 +12,10 @@ import {
 } from 'rxjs';
 import { omit } from 'lodash-es';
 import type { Remote } from 'comlink';
-import type {ApplyNewChangesFromClientCommand} from "../types";
-import {CommandTypesFromClient, DatabaseChangeType} from "../types";
-import type {SyncRepository} from "../../persistence/SyncRepository";
-import type {ApplyChangesService} from "../../persistence/ApplyChangesService";
+import type { ApplyNewChangesFromClientCommand } from '../types';
+import { CommandTypesFromClient, DatabaseChangeType } from '../types';
+import type { SyncRepository } from '../../persistence/SyncRepository';
+import type { ApplyChangesService } from '../../persistence/ApplyChangesService';
 
 export class ChangesApplierAndSender {
   constructor(

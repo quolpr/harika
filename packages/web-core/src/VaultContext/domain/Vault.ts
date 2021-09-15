@@ -4,7 +4,10 @@ import { NoteModel } from './NotesApp/models/NoteModel';
 import type { Optional, Required } from 'utility-types';
 import { vaultModelType } from './consts';
 import { generateId } from '../../generateId';
-import { newTreeModel, NotesTreeRegistry } from './NotesApp/views/NotesTree/NotesTreeRegistry';
+import {
+  newTreeModel,
+  NotesTreeRegistry,
+} from './NotesApp/views/NotesTree/NotesTreeRegistry';
 import type { PartialNote } from './NotesApp/views/NotesTree/NotesTreeRegistry';
 import type { NoteBlockModel } from './NoteBlocksApp/models/NoteBlockModel';
 import dayjs from 'dayjs';

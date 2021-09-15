@@ -4,7 +4,7 @@ import type { DbEventsService } from '../DbEventsService';
 import { CommandsExecuter } from './CommandsExecuter';
 import { ServerConnector } from './connection/ServerConnector';
 import { ServerSynchronizer } from './ServerSynchronizer';
-import type {BaseDbSyncWorker} from "../persistence/BaseDbSyncWorker";
+import type { BaseDbSyncWorker } from '../persistence/BaseDbSyncWorker';
 
 export const initSync = async (
   dbName: string,

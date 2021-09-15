@@ -1,8 +1,4 @@
-import {
-  BlocksScope,
-  ScopedBlock,
-  parseStringToTree,
-} from '@harika/web-core';
+import { BlocksScope, ScopedBlock, parseStringToTree } from '@harika/web-core';
 import { RefObject, useCallback, useContext, useState } from 'react';
 import { useNotesService } from '../../../contexts/CurrentNotesServiceContext';
 import { ShiftPressedContext } from '../../../contexts/ShiftPressedContext';

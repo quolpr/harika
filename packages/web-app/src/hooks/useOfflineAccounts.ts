@@ -14,7 +14,7 @@ const storageKey = 'offlineAccounts';
 
 export const useOfflineAccounts = (): [
   accounts: OfflineAccounts,
-  addOfflineAccount: (id: string, dbId: string) => void
+  addOfflineAccount: (id: string, dbId: string) => void,
 ] => {
   const emptyAccounts = useMemo(() => ({ accounts: [] }), []);
 
@@ -28,7 +28,7 @@ export const useOfflineAccounts = (): [
 
       writeStorage(storageKey, offlineAccounts);
     },
-    [offlineAccounts]
+    [offlineAccounts],
   );
 
   return [offlineAccounts, addAccount];

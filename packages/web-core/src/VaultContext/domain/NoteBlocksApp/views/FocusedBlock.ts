@@ -38,7 +38,8 @@ export class FocusedBlock extends Model({
 }) {
   getFocusState(scopeId: string, scopeBlockId: string): EditState {
     const isFocused =
-      this.state?.scopeId === scopeId && this.state?.scopedBlockId === scopeBlockId;
+      this.state?.scopeId === scopeId &&
+      this.state?.scopedBlockId === scopeBlockId;
 
     return isFocused
       ? {

@@ -8,9 +8,14 @@ import {
   Ref,
   rootRef,
 } from 'mobx-keystone';
-import { NotesTreeRegistry, notesTreeRegistryModelType } from './NotesTreeRegistry';
+import {
+  NotesTreeRegistry,
+  notesTreeRegistryModelType,
+} from './NotesTreeRegistry';
 
-export const notesTreeNoteRef = rootRef<NotesTreeNote>('harika/NotesTree/noteRef');
+export const notesTreeNoteRef = rootRef<NotesTreeNote>(
+  'harika/NotesTree/noteRef',
+);
 
 @model('harika/NotesTree/NotesTreeNote')
 export class NotesTreeNote extends Model({

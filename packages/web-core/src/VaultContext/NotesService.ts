@@ -37,12 +37,10 @@ import {
 } from './persistence/NotesBlocksRepository';
 import { SqlNotesRepository, notesTable } from './persistence/NotesRepository';
 import type { NoteDocType } from './persistence/NotesRepository';
-import type {
-  ImportExportService,
-  DeleteNoteService,
-  FindNoteOrBlockService,
-} from './persistence/VaultDb.worker';
 import type { BlocksScopesRepository } from './persistence/BlockScopesRepository';
+import type { FindNoteOrBlockService } from './persistence/services/FindNoteOrBlockService';
+import type { ImportExportService } from './persistence/services/ImportExportService';
+import type { DeleteNoteService } from './persistence/services/DeleteNoteService';
 
 export { NoteModel } from './domain/NotesApp/models/NoteModel';
 export { Vault } from './domain/Vault';

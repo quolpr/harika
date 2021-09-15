@@ -3,9 +3,12 @@ import { concatMap, map, merge, Observable, of, pipe, switchMap } from 'rxjs';
 import type { CommandsExecuter } from '../CommandsExecuter';
 import { v4 } from 'uuid';
 import type { Remote } from 'comlink';
-import type {ISyncStatus, SyncRepository} from "../../persistence/SyncRepository";
-import type {GetChangesClientCommand, GetChangesResponse} from "../types";
-import {CommandTypesFromClient} from "../types";
+import type {
+  ISyncStatus,
+  SyncRepository,
+} from '../../persistence/SyncRepository';
+import type { GetChangesClientCommand, GetChangesResponse } from '../types';
+import { CommandTypesFromClient } from '../types';
 
 export interface IChangePullRow {
   id: string;

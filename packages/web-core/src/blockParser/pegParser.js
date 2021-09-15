@@ -2,8 +2,6 @@
 //
 // https://peggyjs.org/
 
-
-
 function peg$subclass(child, parent) {
   function C() {
     this.constructor = child;

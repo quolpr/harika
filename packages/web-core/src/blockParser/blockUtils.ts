@@ -78,7 +78,7 @@ export const parseToBlocksTree = (str: string) => {
     name: 'Vault',
   });
 
-  const { note, treeRegistry  } = vault.newNote(
+  const { note, treeRegistry } = vault.newNote(
     { title: 'Note' },
     { addEmptyBlock: false },
   );

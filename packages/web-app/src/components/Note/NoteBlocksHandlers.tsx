@@ -79,7 +79,10 @@ export const NoteBlocksHandlers = observer(
               scope.selectionInterval === undefined &&
               shiftKey
             ) {
-              scope.setSelectionInterval(focusedBlockState.scopedBlockId, fromBlockId);
+              scope.setSelectionInterval(
+                focusedBlockState.scopedBlockId,
+                fromBlockId,
+              );
               vault.noteBlocksApp.focusedBlock.setState(undefined);
 
               return EMPTY;

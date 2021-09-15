@@ -4,7 +4,10 @@ import {
   convertNoteDocToModelAttrs,
   convertNoteBlockDocToModelAttrs,
 } from '../converters/toDomainModelsConverters';
-import type { NoteData, NoteBlockData } from '../converters/toDomainModelsConverters';
+import type {
+  NoteData,
+  NoteBlockData,
+} from '../converters/toDomainModelsConverters';
 import type { ITransmittedChange } from '../../db-sync/persistence/SyncRepository';
 import { DatabaseChangeType } from '../../db-sync/synchronizer/types';
 import { noteBlocksTable } from '../persistence/NotesBlocksRepository';
