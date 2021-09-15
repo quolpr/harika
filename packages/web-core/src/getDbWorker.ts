@@ -6,6 +6,8 @@ import type { BaseDbSyncWorker } from './db-sync/persistence/BaseDbSyncWorker';
 import UserDbWorker from './UserContext/persistence/UserDb.worker?worker';
 // @ts-ignore
 import VaultDbWorker from './VaultContext/persistence/VaultDb.worker?worker';
+// Looks like vite bug. Just force wasm output
+import '@harika-org/sql.js/dist/sql-wasm.wasm?url';
 
 export const getDbWorker = async <T extends BaseDbSyncWorker>(
   dbName: string,
