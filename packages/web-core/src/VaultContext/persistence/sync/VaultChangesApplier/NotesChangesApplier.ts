@@ -3,24 +3,24 @@ import type {
   IDeleteChange,
   IDatabaseChange,
 } from '../../../../db-sync/synchronizer/types';
-import type { NoteDocType, notesTable } from '../../NotesRepository';
+import type { NoteDoc, notesTable } from '../../NotesRepository';
 import { BaseChangesApplier } from './BaseChangesApplier';
 
 export class NotesChangesApplier extends BaseChangesApplier<
   typeof notesTable,
-  NoteDocType
+  NoteDoc
 > {
   protected resolveUpdateUpdate(
-    change1: IUpdateChange<typeof notesTable, NoteDocType>,
-    _change2: IUpdateChange<typeof notesTable, NoteDocType>,
-  ): IUpdateChange<typeof notesTable, NoteDocType> {
+    change1: IUpdateChange<typeof notesTable, NoteDoc>,
+    _change2: IUpdateChange<typeof notesTable, NoteDoc>,
+  ): IUpdateChange<typeof notesTable, NoteDoc> {
     return change1;
   }
 
   protected resolveUpdateDelete(
-    _change1: IUpdateChange<typeof notesTable, NoteDocType>,
-    change2: IDeleteChange<typeof notesTable, NoteDocType>,
-  ): IDatabaseChange<typeof notesTable, NoteDocType> {
+    _change1: IUpdateChange<typeof notesTable, NoteDoc>,
+    change2: IDeleteChange<typeof notesTable, NoteDoc>,
+  ): IDatabaseChange<typeof notesTable, NoteDoc> {
     return change2;
   }
 }

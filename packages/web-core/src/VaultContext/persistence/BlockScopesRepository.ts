@@ -9,6 +9,7 @@ export type BlocksScopesRow = {
   noteId: string;
   scopedModelId: string;
   scopedModelType: string;
+  rootBlockId: string;
 };
 
 export type BlocksScopeDoc = {
@@ -17,6 +18,7 @@ export type BlocksScopeDoc = {
   noteId: string;
   scopedModelId: string;
   scopedModelType: string;
+  rootBlockId: string;
 };
 
 export type IBlocksScopesChangeEvent = IDatabaseChange<

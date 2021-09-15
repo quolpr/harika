@@ -6,7 +6,7 @@ import {
 import type { NoteModel } from '../domain/NotesApp/models/NoteModel';
 import { BlockContentModel } from '../domain/NoteBlocksApp/models/BlockContentModel';
 import type { NoteBlockDoc } from '../persistence/NotesBlocksRepository';
-import type { NoteDocType } from '../persistence/NotesRepository';
+import type { NoteDoc } from '../persistence/NotesRepository';
 
 export type NoteData = ModelCreationData<NoteModel> & {
   $modelId: string;
@@ -17,15 +17,6 @@ export type NoteBlockData = ModelCreationData<NoteBlockModel> & {
 export type ViewData = any & {
   $modelId: string;
 };
-
-// export const convertViewToModelAttrs = (doc: BlocksViewDocType): ViewData => {
-//   return {
-//     $modelId: doc.id,
-//     collapsedBlockIds: doc.collapsedBlockIds,
-//     scopedModelId: doc.scopedModelId,
-//     scopedModelType: doc.scopedModelType,
-//   };
-// };
 
 export const convertNoteBlockDocToModelAttrs = (
   doc: NoteBlockDoc,
@@ -43,7 +34,7 @@ export const convertNoteBlockDocToModelAttrs = (
   };
 };
 
-export const convertNoteDocToModelAttrs = (doc: NoteDocType): NoteData => {
+export const convertNoteDocToModelAttrs = (doc: NoteDoc): NoteData => {
   return {
     $modelId: doc.id,
     title: doc.title,

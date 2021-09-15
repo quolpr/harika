@@ -1,7 +1,9 @@
 import type { NoteBlockModel } from '../domain/NoteBlocksApp/models/NoteBlockModel';
+import type { BlocksScope } from '../domain/NoteBlocksApp/views/BlocksScope';
 import type { NoteModel } from '../domain/NotesApp/models/NoteModel';
+import type { BlocksScopeDoc } from '../persistence/BlockScopesRepository';
 import type { NoteBlockDoc } from '../persistence/NotesBlocksRepository';
-import type { NoteDocType } from '../persistence/NotesRepository';
+import type { NoteDoc } from '../persistence/NotesRepository';
 
 export const mapNoteBlock = (model: NoteBlockModel): NoteBlockDoc => {
   return {
@@ -14,7 +16,7 @@ export const mapNoteBlock = (model: NoteBlockModel): NoteBlockDoc => {
     updatedAt: model.updatedAt,
   };
 };
-export const mapNote = (model: NoteModel): NoteDocType => {
+export const mapNote = (model: NoteModel): NoteDoc => {
   return {
     id: model.$modelId,
     dailyNoteDate: model.dailyNoteDate ? model.dailyNoteDate : null,
@@ -24,12 +26,14 @@ export const mapNote = (model: NoteModel): NoteDocType => {
     rootBlockId: model.rootBlockId,
   };
 };
-// export const mapView = (model: any): BlocksViewDocType => {
-//   return {
-//     id: model.$modelId,
-//     collapsedBlockIds: [...model.collapsedBlockIds],
-//     noteId: model.blockTreeHolderRef.id,
-//     scopedModelId: model.scopedModelId,
-//     scopedModelType: model.scopedModelType,
-//   };
-// };
+
+export const mapBlocksScope = (model: BlocksScope): BlocksScopeDoc => {
+  return {
+    id: model.$modelId,
+    collapsedBlockIds: Array.from(model.scopedBlocksRegistry.collapsedBlockIds),
+    noteId: model.noteId,
+    scopedModelId: model.scopedModelId,
+    scopedModelType: model.scopedModelType,
+    rootBlockId: model.rootScopedBlockId,
+  };
+};

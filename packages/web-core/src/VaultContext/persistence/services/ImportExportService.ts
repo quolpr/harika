@@ -1,5 +1,5 @@
 import { notesTable, SqlNotesRepository } from '../NotesRepository';
-import type { NoteDocType } from '../NotesRepository';
+import type { NoteDoc } from '../NotesRepository';
 import {
   noteBlocksTable,
   SqlNotesBlocksRepository,
@@ -49,7 +49,7 @@ export class ImportExportService {
                   return undefined;
                 }
 
-                const noteDoc: NoteDocType = {
+                const noteDoc: NoteDoc = {
                   id: doc.id,
                   title: doc.title,
                   dailyNoteDate: doc.dailyNoteDate ? doc.dailyNoteDate : null,
@@ -60,7 +60,7 @@ export class ImportExportService {
 
                 return noteDoc;
               })
-              .filter((v) => !!v) as NoteDocType[],
+              .filter((v) => !!v) as NoteDoc[],
             ctx,
           );
         } else if (tableName === noteBlocksTable) {

@@ -9,7 +9,11 @@ import type { Vault } from '../NotesService';
 import type { BlocksScopesRepository } from '../persistence/BlockScopesRepository';
 import type { SqlNotesBlocksRepository } from '../persistence/NotesBlocksRepository';
 import type { SqlNotesRepository } from '../persistence/NotesRepository';
-import { mapNote, mapNoteBlock } from '../converters/toDbDocsConverters';
+import {
+  mapBlocksScope,
+  mapNote,
+  mapNoteBlock,
+} from '../converters/toDbDocsConverters';
 
 // TODO: type rootKey
 const zipPatches = (selector: (path: Path) => boolean, patches: Patch[]) => {
@@ -61,107 +65,6 @@ const zipPatches = (selector: (path: Path) => boolean, patches: Patch[]) => {
   };
 };
 
-// const patches = {
-//   patches: [
-//     {
-//       op: 'add',
-//       path: ['notesMap', '85CekeoPoieyk9tkx25Q'],
-//       value: {
-//         $modelId: '85CekeoPoieyk9tkx25Q',
-//         createdAt: 1628489061599,
-//         rootBlockId: 'KpSs6ORPj15mXbR7zaS9',
-//         dailyNoteDate: 1634158800000,
-//         title: '14 Oct 2021',
-//         isDeleted: false,
-//         $modelType: 'harika/NoteModel',
-//       },
-//     },
-//     {
-//       op: 'add',
-//       path: ['blocksTreeHoldersMap', '85CekeoPoieyk9tkx25Q'],
-//       value: {
-//         blocksMap: {
-//           KpSs6ORPj15mXbR7zaS9: {
-//             $modelId: 'KpSs6ORPj15mXbR7zaS9',
-//             createdAt: 1628489061598,
-//             noteId: '85CekeoPoieyk9tkx25Q',
-//             noteBlockRefs: [],
-//             content: {
-//               value: '',
-//               $modelId: '69-cbfqhhPueUIdU7_nNMN5j',
-//               $modelType: 'harika/ContentManagerModel',
-//             },
-//             linkedNoteIds: [],
-//             isDeleted: false,
-//             $modelType: 'harika/NoteBlockModel',
-//           },
-//         },
-//         noteId: '85CekeoPoieyk9tkx25Q',
-//         $modelId: '6a-cbfqhhPueUIdU7_nNMN5j',
-//         $modelType: 'harika/BlockModelsRegistry',
-//       },
-//     },
-//     {
-//       op: 'add',
-//       path: [
-//         'blocksTreeHoldersMap',
-//         '85CekeoPoieyk9tkx25Q',
-//         'blocksMap',
-//         'U5SDzRMWUlHWcwhfMV6F',
-//       ],
-//       value: {
-//         $modelId: 'U5SDzRMWUlHWcwhfMV6F',
-//         createdAt: 1628489061602,
-//         noteId: '85CekeoPoieyk9tkx25Q',
-//         noteBlockRefs: [],
-//         linkedNoteIds: [],
-//         content: {
-//           value: '',
-//           $modelId: '6b-cbfqhhPueUIdU7_nNMN5j',
-//           $modelType: 'harika/ContentManagerModel',
-//         },
-//         isDeleted: false,
-//         $modelType: 'harika/NoteBlockModel',
-//       },
-//     },
-//     {
-//       op: 'add',
-//       path: [
-//         'blocksTreeHoldersMap',
-//         '85CekeoPoieyk9tkx25Q',
-//         'blocksMap',
-//         'KpSs6ORPj15mXbR7zaS9',
-//         'noteBlockRefs',
-//         0,
-//       ],
-//       value: {
-//         id: 'U5SDzRMWUlHWcwhfMV6F',
-//         $modelId: '6c-cbfqhhPueUIdU7_nNMN5j',
-//         $modelType: 'harika/NoteBlockRef',
-//       },
-//     },
-//     {
-//       op: 'add',
-//       path: [
-//         'ui',
-//         'blocksViewsMap',
-//         '85CekeoPoieyk9tkx25Q-harika/NoteModel-85CekeoPoieyk9tkx25Q',
-//       ],
-//       value: {
-//         $modelId: '85CekeoPoieyk9tkx25Q-harika/NoteModel-85CekeoPoieyk9tkx25Q',
-//         blockTreeHolderRef: {
-//           id: '85CekeoPoieyk9tkx25Q',
-//           $modelId: '6d-cbfqhhPueUIdU7_nNMN5j',
-//           $modelType: 'harika/BlocksTreeHolderRef',
-//         },
-//         scopedModelId: '85CekeoPoieyk9tkx25Q',
-//         scopedModelType: 'harika/NoteModel',
-//         collapsedBlockIds: [],
-//         $modelType: 'harika/ScopedBlock',
-//       },
-//     },
-//   ],
-// };
 const getBlocksPatches = (
   getNoteBlock: (id: string) => NoteBlockModel | undefined,
   patches: Patch[],
@@ -239,21 +142,21 @@ export class ToDbSyncer {
     const notesPatches = allPatches.filter(
       ({ path }) => path[0] === 'notesMap',
     );
-    const viewPatches = allPatches.filter(
-      ({ path }) => path[0] === 'ui' && path[1] === 'blocksViewsMap',
+    const scopesPatches = allPatches.filter(
+      ({ path }) => path[0] === 'noteBlocksApp' && path[1] === 'blocksScopes',
     );
 
     if (
       blocksPatches.length === 0 &&
       notesPatches.length === 0 &&
-      viewPatches.length === 0
+      scopesPatches.length === 0
     )
       return;
 
     console.log('patches to handle', {
       blocksPatches,
       notesPatches,
-      viewPatches,
+      scopesPatches,
     });
 
     const blocksResult = getBlocksPatches(
@@ -263,15 +166,9 @@ export class ToDbSyncer {
 
     const noteResult = zipPatches((p) => p[0] === 'notesMap', notesPatches);
 
-    // const viewToUpdateIds = patches
-    //   .map((p) =>
-    //     p.path.length > 2 &&
-    //     p.path[0] === 'ui' &&
-    //     p.path[1] === 'blocksViewsMap'
-    //       ? p.path[2]
-    //       : undefined,
-    //   )
-    //   .filter((id) => id !== undefined) as string[];
+    const scopeToUpdateIds = scopesPatches
+      .map((p) => (p.path.length > 2 ? p.path[2] : undefined))
+      .filter((id) => id !== undefined) as string[];
 
     console.debug(
       'Applying patches from mobx',
@@ -286,15 +183,15 @@ export class ToDbSyncer {
       mapNoteBlock(this.vault.getNoteBlock(id)!),
     );
 
-    // await this.blocksViewsRepository.bulkCreateOrUpdate(
-    //   viewToUpdateIds.map((id) =>
-    //     mapView(this.vault.noteBlocksApp.blocksUiStateMap[id]),
-    //   ),
-    //   {
-    //     shouldRecordChange: true,
-    //     source: 'inDomainChanges' as const,
-    //   },
-    // );
+    await this.blocksViewsRepository.bulkCreateOrUpdate(
+      scopeToUpdateIds.map((id) =>
+        mapBlocksScope(this.vault.noteBlocksApp.getScopeById(id)),
+      ),
+      {
+        shouldRecordChange: true,
+        source: 'inDomainChanges' as const,
+      },
+    );
   };
 
   private applier = <T extends Record<string, unknown> & { id: string }>(

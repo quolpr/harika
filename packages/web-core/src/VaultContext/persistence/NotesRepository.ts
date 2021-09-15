@@ -14,7 +14,7 @@ export type NoteRow = {
   rootBlockId: string;
 };
 export const notesTable = 'notes' as const;
-export type NoteDocType = {
+export type NoteDoc = {
   id: string;
   title: string;
   dailyNoteDate: number | null;
@@ -23,13 +23,10 @@ export type NoteDocType = {
   rootBlockId: string;
 };
 
-export type INoteChangeEvent = IDatabaseChange<typeof notesTable, NoteDocType>;
+export type INoteChangeEvent = IDatabaseChange<typeof notesTable, NoteDoc>;
 
-export class SqlNotesRepository extends BaseSyncRepository<
-  NoteDocType,
-  NoteRow
-> {
-  bulkCreate(attrsArray: NoteDocType[], ctx: ISyncCtx) {
+export class SqlNotesRepository extends BaseSyncRepository<NoteDoc, NoteRow> {
+  bulkCreate(attrsArray: NoteDoc[], ctx: ISyncCtx) {
     return this.db.transaction(
       () => {
         const res = super.bulkCreate(attrsArray, ctx);
@@ -48,7 +45,7 @@ export class SqlNotesRepository extends BaseSyncRepository<
     );
   }
 
-  bulkUpdate(records: NoteDocType[], ctx: ISyncCtx) {
+  bulkUpdate(records: NoteDoc[], ctx: ISyncCtx) {
     return this.db.transaction(
       () => {
         const res = super.bulkUpdate(records, ctx);
@@ -89,22 +86,30 @@ export class SqlNotesRepository extends BaseSyncRepository<
     );
   }
   // TODO: move to getBy
-  getByTitles(titles: string[]): NoteDocType[] {
+  getByTitles(titles: string[]): NoteDoc[] {
     return this.db
-      .getRecords<NoteDocType>(
+      .getRecords<NoteDoc>(
         Q.select().from(this.getTableName()).where(Q.in('title', titles)),
       )
       .map((row) => this.toDoc(row));
   }
 
-  findInTitle(title: string): NoteDocType[] {
+  findInTitle(title: string): NoteDoc[] {
     return this.db
-      .getRecords<NoteDocType>(
+      .getRecords<NoteDoc>(
         Q.select()
           .from(this.getTableName())
           .where(Q.like('title', `%${title}%`)),
       )
       .map((row) => this.toDoc(row));
+  }
+
+  getTuplesWithoutDailyNotes() {
+    return this.db.getRecords<{ id: string; title: string }>(
+      Q.select('id, title')
+        .from(this.getTableName())
+        .where(Q.eq('dailyNoteDate', null)),
+    );
   }
 
   getIsExistsByTitle(title: string): boolean {

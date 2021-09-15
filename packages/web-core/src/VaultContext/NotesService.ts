@@ -9,6 +9,7 @@ import type { Vault } from './domain/Vault';
 import {
   concatMap,
   distinctUntilChanged,
+  filter,
   first,
   map,
   mapTo,
@@ -36,11 +37,12 @@ import {
   SqlNotesBlocksRepository,
 } from './persistence/NotesBlocksRepository';
 import { SqlNotesRepository, notesTable } from './persistence/NotesRepository';
-import type { NoteDocType } from './persistence/NotesRepository';
+import type { NoteDoc } from './persistence/NotesRepository';
 import type { BlocksScopesRepository } from './persistence/BlockScopesRepository';
 import type { FindNoteOrBlockService } from './persistence/services/FindNoteOrBlockService';
 import type { ImportExportService } from './persistence/services/ImportExportService';
 import type { DeleteNoteService } from './persistence/services/DeleteNoteService';
+import { getScopeKey } from './domain/NoteBlocksApp/NoteBlocksApp';
 
 export { NoteModel } from './domain/NotesApp/models/NoteModel';
 export { Vault } from './domain/Vault';
@@ -49,10 +51,6 @@ export {
   noteBlockRef,
 } from './domain/NoteBlocksApp/models/NoteBlockModel';
 
-// Document = Dexie doc
-// Model = DDD model
-// Tuple = plain object data, used for fast data getting
-
 export class NotesService {
   private stopSubject = new Subject<unknown>();
   private stop$ = this.stopSubject.pipe(take(1));
@@ -60,7 +58,7 @@ export class NotesService {
   constructor(
     private notesRepository: Remote<SqlNotesRepository>,
     private notesBlocksRepository: Remote<SqlNotesBlocksRepository>,
-    private blocksViewsRepo: Remote<BlocksScopesRepository>,
+    private blocksScopesRepo: Remote<BlocksScopesRepository>,
     private dbEventsService: DbEventsService,
     private importExportService: Remote<ImportExportService>,
     private deleteNoteService: Remote<DeleteNoteService>,
@@ -75,14 +73,12 @@ export class NotesService {
       this.stop$,
     );
 
-    // this.vault.initializeNotesTree(
-    //   (await this.notesRepository.getAll())
-    //     .filter(({ dailyNoteDate, title }) => !dailyNoteDate)
-    //     .map(({ id, title }) => ({
-    //       id,
-    //       title,
-    //     })),
-    // );
+    // Don't freeze the startup
+    setTimeout(async () => {
+      this.vault.initializeNotesTree(
+        await this.notesRepository.getTuplesWithoutDailyNotes(),
+      );
+    }, 200);
   }
 
   async fixDailyNotes() {
@@ -322,10 +318,35 @@ export class NotesService {
           return of(args);
         }
       }),
-      map((args) => {
-        // TODO: load collapsedBlockIds from DB
+      switchMap(async (args) => {
+        const scopesFromDb = Object.fromEntries(
+          (
+            await this.blocksScopesRepo.getByIds(
+              args.map((arg) =>
+                getScopeKey(
+                  arg.noteId,
+                  arg.scopedBy.$modelType,
+                  arg.scopedBy.$modelId,
+                  arg.rootBlockViewId,
+                ),
+              ),
+            )
+          ).map((doc) => [doc.id, doc]),
+        );
+
         return this.vault.noteBlocksApp.getOrCreateScopes(
-          args.map((arg) => ({ ...arg, collapsedBlockIds: [] })),
+          args.map((arg) => ({
+            ...arg,
+            collapsedBlockIds:
+              scopesFromDb[
+                getScopeKey(
+                  arg.noteId,
+                  arg.scopedBy.$modelType,
+                  arg.scopedBy.$modelId,
+                  arg.rootBlockViewId,
+                )
+              ]?.collapsedBlockIds || [],
+          })),
         );
       }),
       distinctUntilChanged((a, b) => isEqual(a, b)),
@@ -389,7 +410,7 @@ export class NotesService {
     return from(
       this.dbEventsService.liveQuery([notesTable], () =>
         this.notesRepository.getByTitles([title]),
-      ) as Observable<NoteDocType[]>,
+      ) as Observable<NoteDoc[]>,
     ).pipe(
       map((docs) => docs[0]?.id),
       distinctUntilChanged(),
@@ -458,40 +479,6 @@ export class NotesService {
       }),
     );
   }
-
-  // async preloadOrCreateBlocksViews(
-  //   note: NoteModel,
-  //   models: { $modelId: string; $modelType: string }[],
-  // ) {
-  //   const generateKey = (model: { $modelId: string; $modelType: string }) =>
-  //     `${note.$modelId}-${model.$modelType}-${model.$modelId}`;
-  //   const keys = models.map((model) => generateKey(model));
-
-  //   const docs = await this.blocksViewsRepo.getByIds(keys);
-
-  //   // this.vault.ui.createOrUpdateEntitiesFromAttrs(
-  //   //   docs.map((doc) => convertViewToModelAttrs(doc)),
-  //   // );
-
-  //   // this.vault.ui.createBlockStateByModels(note, models);
-  // }
-
-  // async preloadOrCreateBlocksView(
-  //   note: NoteModel,
-  //   model: { $modelId: string; $modelType: string },
-  // ) {
-  //   const key = `${note.$modelId}-${model.$modelType}-${model.$modelId}`;
-
-  //   const doc = await this.blocksViewsRepo.getById(key);
-
-  //   // if (doc) {
-  //   //   this.vault.ui.createOrUpdateEntitiesFromAttrs([
-  //   //     convertViewToModelAttrs(doc),
-  //   //   ]);
-  //   // } else {
-  //   //   this.vault.ui.createViewByModel(note, model);
-  //   // }
-  // }
 
   async isNoteExists(title: string) {
     if (Object.values(this.vault.notesMap).find((note) => note.title === title))

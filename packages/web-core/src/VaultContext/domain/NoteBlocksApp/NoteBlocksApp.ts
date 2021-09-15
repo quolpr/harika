@@ -150,6 +150,7 @@ export class NoteBlocksApp extends Model({
     }
 
     const blocksScope = new BlocksScope({
+      $modelId: key,
       rootScopedBlockId: rootBlockViewId,
       scopedBlocksRegistry: new ScopedBlocksRegistry({
         blocksRegistryRef: blocksRegistryRef(this.blocksRegistries[noteId]),
@@ -180,6 +181,10 @@ export class NoteBlocksApp extends Model({
     return this.blocksScopes[key];
   }
 
+  getScopeById(id: string) {
+    return this.blocksScopes[id];
+  }
+
   getScope(
     noteId: string,
     model: { $modelId: string; $modelType: string },
@@ -194,6 +199,18 @@ export class NoteBlocksApp extends Model({
 
   getBlocksRegistryByNoteId(noteId: string) {
     return this.blocksRegistries[noteId];
+  }
+
+  @modelAction
+  createOrUpdateScopesFromAttrs(
+    scopes: { id: string; collapsedBlockIds: string[] }[],
+  ) {
+    scopes.forEach(({ id, collapsedBlockIds }) => {
+      if (this.blocksScopes[id]) {
+        this.blocksScopes[id].scopedBlocksRegistry.collapsedBlockIds =
+          arraySet(collapsedBlockIds);
+      }
+    });
   }
 
   createOrUpdateEntitiesFromAttrs(

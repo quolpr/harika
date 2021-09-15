@@ -34,35 +34,34 @@ const BacklinkedNotes = observer(({ note }: { note: NoteModel }) => {
   const backlinks$ = useObservable(
     ($inputs) => {
       return $inputs.pipe(
-        tap(([note]) => {
-          console.log({ note });
-        }),
         switchMap(([note]) =>
           noteRepo
             .getLinksOfNote$(note.$modelId)
             .pipe(map((noteLinks) => ({ noteLinks: noteLinks, note }))),
         ),
         switchMap(({ noteLinks, note }) =>
-          noteRepo
-            .getBlocksScopes$(
-              of(
-                noteLinks.flatMap((linkedNote) =>
-                  linkedNote.linkedBlockIds.map((blockId) => ({
-                    noteId: linkedNote.note.$modelId,
-                    scopedBy: note,
-                    rootBlockViewId: blockId,
+          noteLinks.length
+            ? noteRepo
+                .getBlocksScopes$(
+                  of(
+                    noteLinks.flatMap((linkedNote) =>
+                      linkedNote.linkedBlockIds.map((blockId) => ({
+                        noteId: linkedNote.note.$modelId,
+                        scopedBy: note,
+                        rootBlockViewId: blockId,
+                      })),
+                    ),
+                  ),
+                )
+                .pipe(
+                  map((scopes) => ({
+                    referencesCount: scopes.length,
+                    groupedScopes: groupBy(scopes, 'noteId'),
+                    noteLinks: noteLinks,
+                    note,
                   })),
-                ),
-              ),
-            )
-            .pipe(
-              map((scopes) => ({
-                referencesCount: scopes.length,
-                groupedScopes: groupBy(scopes, 'noteId'),
-                noteLinks: noteLinks,
-                note,
-              })),
-            ),
+                )
+            : of({ referencesCount: 0, groupedScopes: {}, noteLinks, note }),
         ),
         switchMap(async ({ noteLinks, referencesCount, groupedScopes }) => {
           return {

@@ -1,6 +1,11 @@
 import { actionTrackingMiddleware, patchRecorder } from 'mobx-keystone';
 import type { PatchRecorder, SimpleActionContext, Patch } from 'mobx-keystone';
 
+const actionNamesToIgnore = [
+  'createOrUpdateScopesFromAttrs',
+  'createOrUpdateEntitiesFromAttrs',
+];
+
 export function syncMiddleware(
   subtreeRoot: object,
   applyPatches: (patches: Patch[]) => void,
@@ -32,31 +37,28 @@ export function syncMiddleware(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const middlewareDisposer = actionTrackingMiddleware(subtreeRoot, {
     onStart(ctx) {
-      if (ctx.rootContext.actionName === 'createOrUpdateEntitiesFromAttrs')
-        return;
+      if (actionNamesToIgnore.includes(ctx.rootContext.actionName)) return;
+
       if (!getPatchRecorderData(ctx)) {
         initPatchRecorder(ctx);
       }
     },
     onResume(ctx) {
-      if (ctx.rootContext.actionName === 'createOrUpdateEntitiesFromAttrs')
-        return;
+      if (actionNamesToIgnore.includes(ctx.rootContext.actionName)) return;
       const patchRecorderData = getPatchRecorderData(ctx);
       patchRecorderData.recorderStack++;
       patchRecorderData.recorder.recording =
         patchRecorderData.recorderStack > 0;
     },
     onSuspend(ctx) {
-      if (ctx.rootContext.actionName === 'createOrUpdateEntitiesFromAttrs')
-        return;
+      if (actionNamesToIgnore.includes(ctx.rootContext.actionName)) return;
       const patchRecorderData = getPatchRecorderData(ctx);
       patchRecorderData.recorderStack--;
       patchRecorderData.recorder.recording =
         patchRecorderData.recorderStack > 0;
     },
     onFinish(ctx) {
-      if (ctx.rootContext.actionName === 'createOrUpdateEntitiesFromAttrs')
-        return;
+      if (actionNamesToIgnore.includes(ctx.rootContext.actionName)) return;
       const patchRecorderData = getPatchRecorderData(ctx);
       if (patchRecorderData && patchRecorderData.undoRootContext === ctx) {
         const patchRecorder = patchRecorderData.recorder;

@@ -14,6 +14,8 @@ import { noteBlocksTable } from '../persistence/NotesBlocksRepository';
 import type { INoteBlockChangeEvent } from '../persistence/NotesBlocksRepository';
 import type { INoteChangeEvent } from '../persistence/NotesRepository';
 import { notesTable } from '../persistence/NotesRepository';
+import { blocksScopesTable } from '../persistence/BlockScopesRepository';
+import type { IBlocksScopesChangeEvent } from '../persistence/BlockScopesRepository';
 
 export class ToDomainSyncer {
   constructor(
@@ -34,11 +36,11 @@ export class ToDomainSyncer {
 
       if (evs.length === 0) return;
 
-      // const blockViews = this.getViews(evs);
+      const scopes = this.getScopes(evs);
 
-      // if (blockViews.length > 0) {
-      //   this.vault.ui.createOrUpdateEntitiesFromAttrs(blockViews);
-      // }
+      if (scopes.length > 0) {
+        this.vault.noteBlocksApp.createOrUpdateScopesFromAttrs(scopes);
+      }
 
       const notesChanges = this.getNoteChanges(evs);
       const blockChanges = this.getBlockChanges(evs);
@@ -51,27 +53,30 @@ export class ToDomainSyncer {
     });
   }
 
-  // private getViews(evs: ITransmittedChange[]) {
-  //   const viewEvents = evs.filter(
-  //     (ev) => ev.table === blocksViewsTable,
-  //   ) as IBlocksViewChangeEvent[];
+  private getScopes(evs: ITransmittedChange[]) {
+    const scopedEvents = evs.filter(
+      (ev) => ev.table === blocksScopesTable,
+    ) as IBlocksScopesChangeEvent[];
 
-  //   const latestDedupedEvents: Record<string, IBlocksViewChangeEvent> = {};
+    const latestDedupedEvents: Record<string, IBlocksScopesChangeEvent> = {};
 
-  //   viewEvents.reverse().forEach((ev) => {
-  //     if (!latestDedupedEvents[ev.key]) {
-  //       latestDedupedEvents[ev.key] = ev;
-  //     }
-  //   });
+    scopedEvents.reverse().forEach((ev) => {
+      if (!latestDedupedEvents[ev.key]) {
+        latestDedupedEvents[ev.key] = ev;
+      }
+    });
 
-  //   return viewEvents
-  //     .map((ev) => {
-  //       if (!ev.obj) return undefined;
-
-  //       return convertViewToModelAttrs(ev.obj);
-  //     })
-  //     .filter((n) => !!n) as ViewData[];
-  // }
+    return scopedEvents
+      .map(({ obj }) =>
+        obj
+          ? {
+              id: obj.id,
+              collapsedBlockIds: obj.collapsedBlockIds,
+            }
+          : undefined,
+      )
+      .filter((v) => !!v) as { id: string; collapsedBlockIds: string[] }[];
+  }
 
   // TODO refactor notes and noteblocks to one method
 
