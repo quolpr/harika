@@ -14,7 +14,6 @@ export const getDbWorker = async <T extends BaseDbSyncWorker>(
 ): Promise<{ worker: Remote<T>; terminate: () => void }> => {
   let worker = type === 'vault' ? new VaultDbWorker() : new UserDbWorker();
 
-  console.log('Got worker', type, worker);
   // This is only required because Safari doesn't support nested
   // workers. This installs a handler that will proxy creating web
   // workers through the main thread
@@ -25,7 +24,6 @@ export const getDbWorker = async <T extends BaseDbSyncWorker>(
     windowId: string,
   ) => Promise<Remote<T>>;
   const obj = await new Klass(dbName, windowId);
-  console.log('Got worker 2', type, worker);
 
   await obj.initialize();
 

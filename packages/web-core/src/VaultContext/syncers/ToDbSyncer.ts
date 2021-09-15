@@ -9,7 +9,7 @@ import type { Vault } from '../NotesService';
 import type { BlocksScopesRepository } from '../persistence/BlockScopesRepository';
 import type { SqlNotesBlocksRepository } from '../persistence/NotesBlocksRepository';
 import type { SqlNotesRepository } from '../persistence/NotesRepository';
-import { mapNote, mapNoteBlock } from './toDbDocsConverters';
+import { mapNote, mapNoteBlock } from '../converters/toDbDocsConverters';
 
 // TODO: type rootKey
 const zipPatches = (selector: (path: Path) => boolean, patches: Patch[]) => {

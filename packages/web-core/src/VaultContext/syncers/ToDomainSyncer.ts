@@ -3,8 +3,8 @@ import type { Vault } from '../domain/Vault';
 import {
   convertNoteDocToModelAttrs,
   convertNoteBlockDocToModelAttrs,
-} from './toDomainModelsConverters';
-import type { NoteData, NoteBlockData } from './toDomainModelsConverters';
+} from '../converters/toDomainModelsConverters';
+import type { NoteData, NoteBlockData } from '../converters/toDomainModelsConverters';
 import type { ITransmittedChange } from '../../db-sync/persistence/SyncRepository';
 import { DatabaseChangeType } from '../../db-sync/synchronizer/types';
 import { noteBlocksTable } from '../persistence/NotesBlocksRepository';

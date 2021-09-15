@@ -25,7 +25,7 @@ import { firstValueFrom, from, merge, Observable, of, Subject } from 'rxjs';
 import {
   convertNoteBlockDocToModelAttrs,
   convertNoteDocToModelAttrs,
-} from './syncers/toDomainModelsConverters';
+} from './converters/toDomainModelsConverters';
 import { NotesChangesTrackerService } from './services/notes-tree/NotesChangesTrackerService';
 import dayjs from 'dayjs';
 import { toObserver } from '../toObserver';
