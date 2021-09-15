@@ -12,7 +12,7 @@ import { useNotesService } from '../../contexts/CurrentNotesServiceContext';
 import { NoteBlocks } from './NoteBlocks';
 import { groupBy } from 'lodash-es';
 import { useObservable, useObservableState } from 'observable-hooks';
-import { map, of, switchMap, tap } from 'rxjs';
+import { map, of, switchMap } from 'rxjs';
 import AutosizeInput from 'react-input-autosize';
 import dayjs from 'dayjs';
 import { bem } from '../../utils';

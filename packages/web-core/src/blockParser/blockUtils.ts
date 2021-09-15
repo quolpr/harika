@@ -1,9 +1,8 @@
 import { generateId } from '../generateId';
-import { NoteBlockModel, Vault } from '../VaultContext/NotesService';
+import { Vault } from '../VaultContext/NotesService';
 import { BlockContentModel } from '../VaultContext/domain/NoteBlocksApp/models/BlockContentModel';
 import { parseStringToTree } from './parseStringToTree';
 import type { TreeToken } from './parseStringToTree';
-import type { BlockModelsRegistry } from '../VaultContext/domain/NoteBlocksApp/models/BlockModelsRegistry';
 import type { ScopedBlocksRegistry } from '../VaultContext/domain/NoteBlocksApp/views/ScopedBlocksRegistry';
 import type { ScopedBlock } from '../VaultContext/domain/NoteBlocksApp/views/ScopedBlock';
 
@@ -72,7 +71,7 @@ export const addTokensToNoteBlock = (
 };
 
 export const parseToBlocksTree = (str: string) => {
-  const tokens = parseStringToTree(str);
+  // const tokens = parseStringToTree(str);
 
   const vault = new Vault({
     name: 'Vault',

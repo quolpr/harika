@@ -1,4 +1,4 @@
-import { Model, model, modelAction, prop, transaction } from 'mobx-keystone';
+import { Model, model, modelAction, prop } from 'mobx-keystone';
 import type { ModelCreationData } from 'mobx-keystone';
 import { NoteModel } from './NotesApp/models/NoteModel';
 import type { Optional, Required } from 'utility-types';

@@ -10,16 +10,7 @@ import { paths } from '../../paths';
 import { useNotesService } from '../../contexts/CurrentNotesServiceContext';
 import { useCurrentVault } from '../../hooks/useCurrentVault';
 import { Modal, modalClass } from '../Modal/Modal';
-import {
-  debounce,
-  debounceTime,
-  map,
-  Observable,
-  of,
-  switchMap,
-  tap,
-  timer,
-} from 'rxjs';
+import { debounce, map, Observable, of, switchMap, tap, timer } from 'rxjs';
 import { generateStackedNotePath } from '../../hooks/useNoteClick';
 import { usePrimaryNoteId } from '../../hooks/usePrimaryNote';
 import { useObservable, useObservableState } from 'observable-hooks';

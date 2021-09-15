@@ -3,7 +3,6 @@ import React, { useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import type {
   RefToken,
-  NoteBlockModel,
   Token,
   TagToken,
   NoteModel,
