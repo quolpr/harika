@@ -9,7 +9,7 @@ import { getTokensAtCursor } from '../utils';
 
 export const useHandleInput = (
   scope: BlocksScope,
-  blockView: ScopedBlock,
+  block: ScopedBlock,
   noteBlockElRef: RefObject<HTMLDivElement | null>,
   inputRef: RefObject<HTMLTextAreaElement | null>,
   insertFakeInput: (el?: HTMLElement) => void,
@@ -17,7 +17,7 @@ export const useHandleInput = (
 ) => {
   const [, setEditState] = useCurrentFocusedBlockState(
     scope.$modelId,
-    blockView.$modelId,
+    block.$modelId,
   );
 
   const [noteTitleToSearch, setNoteTitleToSearch] = useState<
@@ -31,7 +31,6 @@ export const useHandleInput = (
   const handleKeyPress = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
       const start = e.currentTarget.selectionStart;
-      const end = e.currentTarget.selectionEnd;
 
       // on ios sometime shiftKey === caps lock
       if (e.key === 'Enter' && (isIOS || !e.shiftKey)) {
@@ -39,29 +38,7 @@ export const useHandleInput = (
 
         e.preventDefault();
 
-        const content = blockView.content.value;
-
-        let newContent = '';
-        let startAt = 0;
-
-        if (start === end && start !== content.length) {
-          newContent = content.slice(start, content.length);
-
-          blockView.content.update(content.slice(0, start));
-        }
-        if (
-          (blockView.content.hasTodo ||
-            (blockView.children.length > 0 &&
-              blockView.children[0].content.hasTodo)) &&
-          newContent.length === 0
-        ) {
-          newContent = '[[TODO]] ';
-          startAt = newContent.length;
-        }
-
-        const newBlock = blockView.injectNewRightBlock(newContent, blockView);
-
-        if (!newBlock) return;
+        const { focusOn, focusStartAt } = block.handleEnterPress(start);
 
         if (noteBlockElRef.current) {
           // New blockView is still not available in DOM,
@@ -71,17 +48,19 @@ export const useHandleInput = (
           setTimeout(releaseFakeInput, 0);
         }
 
-        setEditState({
-          scopeId: scope.$modelId,
-          scopedBlockId: newBlock.$modelId,
-          isEditing: true,
-          startAt,
-        });
+        if (focusOn) {
+          setEditState({
+            scopeId: scope.$modelId,
+            scopedBlockId: focusOn.$modelId,
+            isEditing: true,
+            startAt: focusStartAt,
+          });
+        }
       }
     },
     [
       isSearching,
-      blockView,
+      block,
       noteBlockElRef,
       setEditState,
       scope.$modelId,
@@ -92,14 +71,14 @@ export const useHandleInput = (
 
   const handleKeyDown = useCallback(
     async (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      const content = blockView.content.value;
+      const content = block.content.value;
       const start = e.currentTarget.selectionStart;
       const end = e.currentTarget.selectionEnd;
 
       if (e.key === 'Escape') {
         setEditState({
           scopeId: scope.$modelId,
-          scopedBlockId: blockView.$modelId,
+          scopedBlockId: block.$modelId,
           isEditing: false,
         });
       } else if (e.key === 'Backspace') {
@@ -124,7 +103,7 @@ export const useHandleInput = (
         if (isOnStart) {
           e.preventDefault();
 
-          const mergedTo = blockView.mergeToLeftAndDelete();
+          const mergedTo = block.mergeToLeftAndDelete();
 
           if (mergedTo) {
             if (noteBlockElRef.current) {
@@ -135,7 +114,7 @@ export const useHandleInput = (
               scopeId: scope.$modelId,
               scopedBlockId: mergedTo.$modelId,
               startAt:
-                mergedTo.content.value.length - blockView.content.value.length,
+                mergedTo.content.value.length - block.content.value.length,
               isEditing: true,
             });
           }
@@ -146,30 +125,30 @@ export const useHandleInput = (
         if (!isSearching) {
           setEditState({
             scopeId: scope.$modelId,
-            scopedBlockId: blockView.$modelId,
+            scopedBlockId: block.$modelId,
             startAt: start,
             isEditing: true,
           });
-          blockView.moveUp();
+          block.moveUp();
         }
       } else if (e.key === 'Tab' && e.shiftKey) {
         e.preventDefault();
 
         setEditState({
           scopeId: scope.$modelId,
-          scopedBlockId: blockView.$modelId,
+          scopedBlockId: block.$modelId,
           startAt: start,
           isEditing: true,
         });
-        blockView.moveDown();
+        block.moveDown();
       } else if (e.key === 'ArrowUp' && e.shiftKey) {
         e.preventDefault();
 
-        if (!isSearching) blockView.moveLeft();
+        if (!isSearching) block.moveLeft();
       } else if (e.key === 'ArrowDown' && e.shiftKey) {
         e.preventDefault();
 
-        if (!isSearching) blockView.moveRight();
+        if (!isSearching) block.moveRight();
       } else if (e.key === '[') {
         e.preventDefault();
 
@@ -183,7 +162,7 @@ export const useHandleInput = (
 
             // When cursor moved to the start of the string - it means there is now any rows upper
             if (newStart === 0) {
-              const [left] = blockView.leftAndRight;
+              const [left] = block.leftAndRight;
 
               if (left) {
                 setEditState({
@@ -203,8 +182,8 @@ export const useHandleInput = (
           requestAnimationFrame(() => {
             const newStart = target.selectionStart;
 
-            if (newStart === blockView.content.value.length) {
-              const [, right] = blockView.leftAndRight;
+            if (newStart === block.content.value.length) {
+              const [, right] = block.leftAndRight;
 
               if (right) {
                 setEditState({
@@ -212,7 +191,7 @@ export const useHandleInput = (
                   scopedBlockId: right.$modelId,
                   isEditing: true,
                   startAt:
-                    start === blockView.content.value.length
+                    start === block.content.value.length
                       ? right.content.value.length
                       : start,
                 });
@@ -227,7 +206,7 @@ export const useHandleInput = (
       }
     },
     [
-      blockView,
+      block,
       setEditState,
       scope.$modelId,
       noteBlockElRef,
@@ -242,14 +221,14 @@ export const useHandleInput = (
       const end = e.currentTarget.selectionEnd;
 
       if (start === end) {
-        const firstToken = getTokensAtCursor(start, blockView.content.ast)[0];
+        const firstToken = getTokensAtCursor(start, block.content.ast)[0];
 
         if (firstToken?.type !== 'ref' && firstToken?.type !== 'tag') {
           setNoteTitleToSearch(undefined);
         }
       }
     },
-    [blockView.content.ast],
+    [block.content.ast],
   );
 
   // const [isShiftPressed] = useKeyPress((e) => e.shiftKey);
@@ -272,7 +251,7 @@ export const useHandleInput = (
 
       e.preventDefault();
 
-      const injectedBlocks = blockView.injectNewTreeTokens(parsedToTree);
+      const injectedBlocks = block.injectNewTreeTokens(parsedToTree);
 
       noteRepo.updateNoteBlockLinks(
         injectedBlocks.map(({ $modelId }) => $modelId),
@@ -289,7 +268,7 @@ export const useHandleInput = (
     [
       handleCaretChange,
       isShiftPressedRef,
-      blockView,
+      block,
       noteRepo,
       setEditState,
       scope.$modelId,
@@ -298,13 +277,13 @@ export const useHandleInput = (
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-      blockView.content.update(e.target.value);
+      block.content.update(e.target.value);
 
       const start = e.currentTarget.selectionStart;
       const end = e.currentTarget.selectionEnd;
 
       if (start === end) {
-        const firstToken = getTokensAtCursor(start, blockView.content.ast)[0];
+        const firstToken = getTokensAtCursor(start, block.content.ast)[0];
 
         if (firstToken?.type === 'ref' || firstToken?.type === 'tag') {
           setNoteTitleToSearch(firstToken.ref);
@@ -313,7 +292,7 @@ export const useHandleInput = (
         setNoteTitleToSearch(undefined);
       }
     },
-    [blockView],
+    [block],
   );
 
   const handleSearchSelect = useCallback(
@@ -323,7 +302,7 @@ export const useHandleInput = (
 
       const start = input.selectionStart;
 
-      const firstToken = getTokensAtCursor(start, blockView.content.ast)[0];
+      const firstToken = getTokensAtCursor(start, block.content.ast)[0];
 
       if (firstToken?.type === 'ref') {
         const alias = firstToken.alias ? ` | ${firstToken.alias}` : '';
@@ -346,7 +325,7 @@ export const useHandleInput = (
 
       setNoteTitleToSearch(undefined);
     },
-    [inputRef, blockView.content.ast],
+    [inputRef, block.content.ast],
   );
 
   return {

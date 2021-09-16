@@ -128,18 +128,6 @@ export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
 
               <div className={sidebarClass('menu-link-title')}>Import DB</div>
             </label>
-
-            <button
-              className={sidebarClass('menu-link sidebar-item')}
-              onClick={async () => {
-                await notesService.fixDailyNotes();
-                alert('Fixed!');
-              }}
-            >
-              <div className={sidebarClass('menu-link-title')}>
-                Fix daily notes
-              </div>
-            </button>
           </div>
 
           <div className={sidebarClass('notes-tree-title')}>Notes Tree</div>

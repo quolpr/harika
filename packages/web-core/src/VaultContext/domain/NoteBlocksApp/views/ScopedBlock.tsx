@@ -285,13 +285,76 @@ export class ScopedBlock implements ITreeNode<ScopedBlock> {
     return left;
   }
 
-  injectNewRightBlock(content: string, blockView: ScopedBlock) {
+  injectNewLeftBlock(content: string) {
+    if (!this.parent) {
+      throw new Error("Can't inject from root block");
+    }
+
+    return this.treeRegistry.createBlock(
+      {
+        content: new BlockContentModel({ value: content }),
+        updatedAt: new Date().getTime(),
+      },
+      this.parent,
+      this.orderPosition,
+    );
+  }
+
+  handleEnterPress(caretPosStart: number) {
+    const content = this.content.value;
+
+    let newContent = '';
+    let startAt = 0;
+    let newBlock: ScopedBlock | undefined = undefined;
+    let focusOn: ScopedBlock | undefined = undefined;
+
+    if (caretPosStart === 0 && content.length !== 0) {
+      newBlock = this.injectNewLeftBlock(newContent);
+      focusOn = newBlock;
+    } else if (
+      caretPosStart > 0 &&
+      caretPosStart !== content.length &&
+      this.children.length > 0
+    ) {
+      newBlock = this.injectNewLeftBlock(content.slice(0, caretPosStart));
+      this.content.update(content.slice(caretPosStart, content.length));
+
+      focusOn = this;
+    } else {
+      if (caretPosStart !== content.length) {
+        newContent = content.slice(caretPosStart, content.length);
+
+        this.content.update(content.slice(0, caretPosStart));
+      }
+
+      if (
+        (this.content.hasTodo ||
+          (this.children.length > 0 && this.children[0].content.hasTodo)) &&
+        newContent.length === 0
+      ) {
+        newContent = '[[TODO]] ';
+        startAt = newContent.length;
+      }
+
+      newBlock = this.injectNewRightBlock(newContent);
+      focusOn = newBlock;
+    }
+
+    return { focusStartAt: startAt, focusOn, newBlock };
+  }
+
+  injectNewRightBlock(content: string) {
     if (!this.parent) {
       throw new Error("Can't inject from root block");
     }
 
     const { injectTo, parentBlock } = (() => {
-      if (this.children.length > 0) {
+      if (this.children.length > 0 && content.length === 0) {
+        return {
+          injectTo: 0,
+          parentBlock: this,
+        };
+      } else if (this.children.length > 0 && content.length !== 0) {
         return {
           injectTo: 0,
           parentBlock: this,
