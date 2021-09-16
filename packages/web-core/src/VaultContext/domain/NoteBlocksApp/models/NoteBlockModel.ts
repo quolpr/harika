@@ -61,7 +61,7 @@ export class NoteBlockModel extends Model({
   }
 
   @computed
-  get parent() {
+  get parent(): NoteBlockModel | undefined {
     const id = this.treeRegistry.childParentRelations[this.$modelId];
 
     return id === undefined ? undefined : this.treeRegistry.blocksMap[id];

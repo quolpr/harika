@@ -66,7 +66,7 @@ export class ScopedBlock implements ITreeNode<ScopedBlock> {
   }
 
   @computed
-  get parent() {
+  get parent(): ScopedBlock | undefined {
     if (this.treeRegistry.rootScopedBlock === this) return undefined;
 
     const parentBlock = this.noteBlock.parent;

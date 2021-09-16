@@ -68,7 +68,7 @@ export class NotesTreeNote extends Model({
   }
 
   @computed
-  get fullTitle() {
+  get fullTitle(): string {
     return [...this.path.slice(1), this].map(({ title }) => title).join('/');
   }
 

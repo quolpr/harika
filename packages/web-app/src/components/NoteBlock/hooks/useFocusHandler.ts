@@ -132,7 +132,8 @@ export const useFocusHandler = (
 
         if (e.target.dataset.offsetStart) {
           startAt =
-            parseInt(e.target.dataset.offsetStart, 10) + range.startOffset;
+            parseInt(e.target.dataset.offsetStart, 10) +
+            (range?.startOffset || 0);
         }
 
         if (noteBlockElRef.current) {
