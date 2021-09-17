@@ -80,8 +80,8 @@ const NoteBlockBody = observer(
       );
 
     const handleToggle = useCallback(() => {
-      noteBlock.toggleExpand();
-    }, [noteBlock]);
+      scope.toggleExpand(noteBlock.$modelId);
+    }, [noteBlock.$modelId, scope]);
 
     const inputId = `${scope.$modelId}-${noteBlock.$modelId}`;
 

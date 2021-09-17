@@ -1,7 +1,18 @@
 import { comparer, computed } from 'mobx';
-import { model, Model, modelAction, prop } from 'mobx-keystone';
+import {
+  arraySet,
+  ArraySet,
+  createContext,
+  model,
+  Model,
+  modelAction,
+  prop,
+} from 'mobx-keystone';
 import { normalizeBlockTree } from '../../../../blockParser/blockUtils';
 import type { ScopedBlocksRegistry } from './ScopedBlocksRegistry';
+
+export const collapsedBlockIdsCtx = createContext<ArraySet<string>>(arraySet());
+export const rootScopedBlockIdCtx = createContext<string>('');
 
 @model('@harika/BlocksScope')
 export class BlocksScope extends Model({
@@ -12,7 +23,9 @@ export class BlocksScope extends Model({
   // Is needed to handle when shift+click pressed
   addableSelectionId: prop<string | undefined>(),
 
+  collapsedBlockIds: prop<ArraySet<string>>(),
   rootScopedBlockId: prop<string>(),
+
   scopedModelId: prop<string>(),
   scopedModelType: prop<string>(),
 }) {
@@ -112,5 +125,19 @@ export class BlocksScope extends Model({
   @modelAction
   expandSelection(id: string) {
     this.addableSelectionId = id;
+  }
+
+  @modelAction
+  toggleExpand(blockId: string) {
+    if (this.collapsedBlockIds.has(blockId)) {
+      this.collapsedBlockIds.delete(blockId);
+    } else {
+      this.collapsedBlockIds.add(blockId);
+    }
+  }
+
+  onInit() {
+    collapsedBlockIdsCtx.setComputed(this, () => this.collapsedBlockIds);
+    rootScopedBlockIdCtx.setComputed(this, () => this.rootScopedBlockId);
   }
 }

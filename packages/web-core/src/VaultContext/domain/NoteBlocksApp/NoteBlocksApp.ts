@@ -152,10 +152,9 @@ export class NoteBlocksApp extends Model({
     const blocksScope = new BlocksScope({
       $modelId: key,
       rootScopedBlockId: rootBlockViewId,
+      collapsedBlockIds: arraySet(collapsedBlockIds),
       scopedBlocksRegistry: new ScopedBlocksRegistry({
         blocksRegistryRef: blocksRegistryRef(this.blocksRegistries[noteId]),
-        collapsedBlockIds: arraySet(collapsedBlockIds),
-        rootScopedBlockId: rootBlockViewId,
       }),
       scopedModelId: scopedBy.$modelId,
       scopedModelType: scopedBy.$modelType,
@@ -169,7 +168,7 @@ export class NoteBlocksApp extends Model({
       () => this.blocksRegistries[noteId].blocksMap,
       (ch) => {
         if (ch instanceof NoteBlockModel) {
-          blocksScope.scopedBlocksRegistry.getOrCreateScopedBlock(ch);
+          blocksScope.scopedBlocksRegistry.getOrCreateScopedBlock(ch.$modelId);
 
           return () => {
             blocksScope.scopedBlocksRegistry.removeScopedBlock(ch.$modelId);
@@ -207,8 +206,7 @@ export class NoteBlocksApp extends Model({
   ) {
     scopes.forEach(({ id, collapsedBlockIds }) => {
       if (this.blocksScopes[id]) {
-        this.blocksScopes[id].scopedBlocksRegistry.collapsedBlockIds =
-          arraySet(collapsedBlockIds);
+        this.blocksScopes[id].collapsedBlockIds = arraySet(collapsedBlockIds);
       }
     });
   }

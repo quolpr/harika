@@ -12,12 +12,12 @@ import {
   siblingsFunc,
 } from '../../../../mobx-tree';
 import type { ITreeNode } from '../../../../mobx-tree';
-import { action, comparer, computed, makeObservable, observable } from 'mobx';
-import type { ScopedBlocksRegistry } from './ScopedBlocksRegistry';
-import type { TreeToken } from '../../../../blockParser/parseStringToTree';
-import { addTokensToNoteBlock } from '../../../../blockParser/blockUtils';
+import { comparer, computed, makeObservable, observable } from 'mobx';
+import type { IComputedValue } from 'mobx';
 import { isTodo } from '../../../../blockParser/astHelpers';
 import { BlockContentModel } from '../models/BlockContentModel';
+import type { ArraySet, ModelCreationData } from 'mobx-keystone';
+import type { Optional } from 'utility-types';
 
 // It is not usual mobx-keystone model, it is just mobx model
 // We don't need to store and serialize the state in global state
@@ -28,7 +28,17 @@ export class ScopedBlock implements ITreeNode<ScopedBlock> {
 
   constructor(
     noteBlock: NoteBlockModel,
-    private treeRegistry: ScopedBlocksRegistry,
+    private collapsedBlockIds: IComputedValue<ArraySet<string>>,
+    private rootScopedBlock: IComputedValue<ScopedBlock>,
+    private getOrCreateScopedBlock: (blockId: string) => ScopedBlock,
+    private createBlock: (
+      attrs: Optional<
+        ModelCreationData<NoteBlockModel>,
+        'createdAt' | 'noteId' | 'noteBlockRefs' | 'linkedNoteIds' | 'updatedAt'
+      >,
+      parent: ScopedBlock,
+      pos: number | 'append',
+    ) => ScopedBlock,
   ) {
     makeObservable(this);
     this.$modelId = noteBlock.$modelId;
@@ -52,12 +62,12 @@ export class ScopedBlock implements ITreeNode<ScopedBlock> {
 
   @computed
   get isRoot() {
-    return this.treeRegistry.rootScopedBlock === this;
+    return this.rootScopedBlock.get() === this;
   }
 
   @computed
   get isCollapsed() {
-    return this.treeRegistry.collapsedBlockIds.has(this.noteBlock.$modelId);
+    return !!this.collapsedBlockIds.get()?.has(this.noteBlock.$modelId);
   }
 
   @computed
@@ -67,18 +77,18 @@ export class ScopedBlock implements ITreeNode<ScopedBlock> {
 
   @computed
   get parent(): ScopedBlock | undefined {
-    if (this.treeRegistry.rootScopedBlock === this) return undefined;
+    if (this.rootScopedBlock.get() === this) return undefined;
 
     const parentBlock = this.noteBlock.parent;
 
-    return parentBlock && this.treeRegistry.getOrCreateScopedBlock(parentBlock);
+    return parentBlock && this.getOrCreateScopedBlock(parentBlock.$modelId);
   }
 
   @computed({ equals: comparer.shallow })
   get notCollapsedChildren(): ScopedBlock[] {
     return this.noteBlock.noteBlockRefs
-      .map(({ current }) => {
-        return this.treeRegistry.getOrCreateScopedBlock(current);
+      .map(({ id }) => {
+        return this.getOrCreateScopedBlock(id);
       })
       .filter((v) => !!v);
   }
@@ -175,14 +185,6 @@ export class ScopedBlock implements ITreeNode<ScopedBlock> {
   @computed
   get linkedNoteIds() {
     return this.noteBlock.linkedNoteIds;
-  }
-
-  toggleExpand() {
-    if (this.isCollapsed) {
-      this.treeRegistry.collapsedBlockIds.delete(this.$modelId);
-    } else {
-      this.treeRegistry.collapsedBlockIds.add(this.$modelId);
-    }
   }
 
   toggleTodo(id: string, toggledModels: ScopedBlock[] = []): ScopedBlock[] {
@@ -290,7 +292,7 @@ export class ScopedBlock implements ITreeNode<ScopedBlock> {
       throw new Error("Can't inject from root block");
     }
 
-    return this.treeRegistry.createBlock(
+    return this.createBlock(
       {
         content: new BlockContentModel({ value: content }),
         updatedAt: new Date().getTime(),
@@ -367,7 +369,7 @@ export class ScopedBlock implements ITreeNode<ScopedBlock> {
       }
     })();
 
-    return this.treeRegistry.createBlock(
+    return this.createBlock(
       {
         content: new BlockContentModel({ value: content }),
         updatedAt: new Date().getTime(),
@@ -375,10 +377,5 @@ export class ScopedBlock implements ITreeNode<ScopedBlock> {
       parentBlock,
       injectTo,
     );
-  }
-
-  @action
-  injectNewTreeTokens(tokens: TreeToken[]): ScopedBlock[] {
-    return addTokensToNoteBlock(this.treeRegistry, this, tokens);
   }
 }

@@ -30,7 +30,7 @@ export const mapNote = (model: NoteModel): NoteDoc => {
 export const mapBlocksScope = (model: BlocksScope): BlocksScopeDoc => {
   return {
     id: model.$modelId,
-    collapsedBlockIds: Array.from(model.scopedBlocksRegistry.collapsedBlockIds),
+    collapsedBlockIds: Array.from(model.collapsedBlockIds),
     noteId: model.noteId,
     scopedModelId: model.scopedModelId,
     scopedModelType: model.scopedModelType,

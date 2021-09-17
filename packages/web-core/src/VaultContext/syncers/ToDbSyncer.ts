@@ -112,7 +112,7 @@ export class ToDbSyncer {
   constructor(
     private notesRepository: Remote<SqlNotesRepository>,
     private notesBlocksRepository: Remote<SqlNotesBlocksRepository>,
-    private blocksViewsRepository: Remote<BlocksScopesRepository>,
+    private blocksScopesRepository: Remote<BlocksScopesRepository>,
     private windowId: string,
     private vault: Vault,
     onPatchesApplied?: () => void,
@@ -183,7 +183,7 @@ export class ToDbSyncer {
       mapNoteBlock(this.vault.getNoteBlock(id)!),
     );
 
-    await this.blocksViewsRepository.bulkCreateOrUpdate(
+    await this.blocksScopesRepository.bulkCreateOrUpdate(
       scopeToUpdateIds.map((id) =>
         mapBlocksScope(this.vault.noteBlocksApp.getScopeById(id)),
       ),
