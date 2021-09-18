@@ -1,4 +1,9 @@
-import { BlocksScope, ScopedBlock, parseStringToTree } from '@harika/web-core';
+import {
+  BlocksScope,
+  ScopedBlock,
+  parseStringToTree,
+  Token,
+} from '@harika/web-core';
 import { RefObject, useCallback, useContext, useState } from 'react';
 import { useNotesService } from '../../../contexts/CurrentNotesServiceContext';
 import { ShiftPressedContext } from '../../../contexts/ShiftPressedContext';
@@ -10,6 +15,9 @@ import { getTokensAtCursor } from '../utils';
 export const useHandleInput = (
   scope: BlocksScope,
   block: ScopedBlock,
+  editingContent: string,
+  setEditingContent: (val: string) => void,
+  editingAst: Token[],
   noteBlockElRef: RefObject<HTMLDivElement | null>,
   inputRef: RefObject<HTMLTextAreaElement | null>,
   insertFakeInput: (el?: HTMLElement) => void,
@@ -71,7 +79,6 @@ export const useHandleInput = (
 
   const handleKeyDown = useCallback(
     async (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      const content = block.content.value;
       const start = e.currentTarget.selectionStart;
       const end = e.currentTarget.selectionEnd;
 
@@ -85,8 +92,8 @@ export const useHandleInput = (
         const isOnStart = start === end && start === 0;
 
         if (start === end) {
-          const prevChar = content[start - 1];
-          const nextChar = content[start];
+          const prevChar = editingContent[start - 1];
+          const nextChar = editingContent[start];
 
           if (nextChar === ']' && prevChar === '[') {
             e.preventDefault();
@@ -182,7 +189,7 @@ export const useHandleInput = (
           requestAnimationFrame(() => {
             const newStart = target.selectionStart;
 
-            if (newStart === block.content.value.length) {
+            if (newStart === editingContent.length) {
               const [, right] = block.leftAndRight;
 
               if (right) {
@@ -191,7 +198,7 @@ export const useHandleInput = (
                   scopedBlockId: right.$modelId,
                   isEditing: true,
                   startAt:
-                    start === block.content.value.length
+                    start === editingContent.length
                       ? right.content.value.length
                       : start,
                 });
@@ -206,9 +213,10 @@ export const useHandleInput = (
       }
     },
     [
-      block,
       setEditState,
       scope.$modelId,
+      block,
+      editingContent,
       noteBlockElRef,
       insertFakeInput,
       isSearching,
@@ -221,14 +229,14 @@ export const useHandleInput = (
       const end = e.currentTarget.selectionEnd;
 
       if (start === end) {
-        const firstToken = getTokensAtCursor(start, block.content.ast)[0];
+        const firstToken = getTokensAtCursor(start, editingAst)[0];
 
         if (firstToken?.type !== 'ref' && firstToken?.type !== 'tag') {
           setNoteTitleToSearch(undefined);
         }
       }
     },
-    [block.content.ast],
+    [editingAst],
   );
 
   // const [isShiftPressed] = useKeyPress((e) => e.shiftKey);
@@ -277,13 +285,13 @@ export const useHandleInput = (
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-      block.content.update(e.target.value);
+      setEditingContent(e.target.value);
 
       const start = e.currentTarget.selectionStart;
       const end = e.currentTarget.selectionEnd;
 
       if (start === end) {
-        const firstToken = getTokensAtCursor(start, block.content.ast)[0];
+        const firstToken = getTokensAtCursor(start, editingAst)[0];
 
         if (firstToken?.type === 'ref' || firstToken?.type === 'tag') {
           setNoteTitleToSearch(firstToken.ref);
@@ -292,7 +300,7 @@ export const useHandleInput = (
         setNoteTitleToSearch(undefined);
       }
     },
-    [block],
+    [editingAst, setEditingContent],
   );
 
   const handleSearchSelect = useCallback(
@@ -302,7 +310,7 @@ export const useHandleInput = (
 
       const start = input.selectionStart;
 
-      const firstToken = getTokensAtCursor(start, block.content.ast)[0];
+      const firstToken = getTokensAtCursor(start, editingAst)[0];
 
       if (firstToken?.type === 'ref') {
         const alias = firstToken.alias ? ` | ${firstToken.alias}` : '';
@@ -325,7 +333,7 @@ export const useHandleInput = (
 
       setNoteTitleToSearch(undefined);
     },
-    [inputRef, block.content.ast],
+    [inputRef, editingAst],
   );
 
   return {

@@ -114,6 +114,14 @@ export const VaultLayout: React.FC<{
     setIsSidebarOpened(!isSidebarOpened);
   }, [isSidebarOpened]);
 
+  // Used for debug
+  useEffect(() => {
+    console.log('opening!', vaultService, vaultId, history);
+    return () => {
+      console.log('closing!', vaultService, vaultId, history);
+    };
+  }, [vaultService, vaultId, history]);
+
   useEffect(() => {
     let closeDevtool = () => {};
 

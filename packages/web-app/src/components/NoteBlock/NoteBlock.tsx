@@ -15,6 +15,7 @@ import { useFocusHandler } from './hooks/useFocusHandler';
 import { useHandleInput } from './hooks/useHandleInput';
 import { NoteTitleAutocomplete } from './NoteTitleAutocomplete/NoteTitleAutocomplete';
 import { useCurrentFocusedBlockState } from '../../hooks/useFocusedBlockState';
+import { useBlockContentState } from './hooks/useBlockContentState';
 
 // IMPORTANT: don't use any global handlers in <NoteBlock /> (document.addEventListener) cause it is slow down note blocks tree a lot
 
@@ -60,19 +61,33 @@ const NoteBlockBody = observer(
       noteBlock.$modelId,
     );
     const { isEditing } = editState;
+
+    const { editingContent, setEditingContent, editingAst } =
+      useBlockContentState(noteBlock, isEditing);
+
     useProvideInputToContext(inputRef, isEditing);
     useUpdateBlockLinks(noteBlock, editState);
+
     const {
       handleInputBlur,
       insertFakeInput,
       releaseFakeInput,
       handleContentClick,
       handleContentKeyPress,
-    } = useFocusHandler(scope, noteBlock, inputRef, noteBlockBodyElRef);
+    } = useFocusHandler(
+      scope,
+      noteBlock,
+      editingContent,
+      inputRef,
+      noteBlockBodyElRef,
+    );
     const { textareaHandlers, noteTitleToSearch, handleSearchSelect } =
       useHandleInput(
         scope,
         noteBlock,
+        editingContent,
+        setEditingContent,
+        editingAst,
         noteBlockBodyElRef,
         inputRef,
         insertFakeInput,
@@ -119,7 +134,7 @@ const NoteBlockBody = observer(
             id={inputId}
             ref={inputRef}
             className={clsx('note-block__content', {})}
-            value={noteBlock.content.value}
+            value={editingContent}
             onBlur={handleInputBlur}
             {...textareaHandlers}
           />
@@ -131,21 +146,23 @@ const NoteBlockBody = observer(
           )}
         </div>
 
-        <span
-          onMouseDown={handleContentClick}
-          className={clsx('note-block__content', {
-            'note-block__content--hidden': isEditing,
-          })}
-          role="textbox"
-          aria-label="NoteModel block content"
-          tabIndex={0}
-          onKeyPress={handleContentKeyPress}
-        >
-          <TokensRenderer
-            noteBlock={noteBlock}
-            tokens={noteBlock.content.ast}
-          />
-        </span>
+        {!isEditing && (
+          <span
+            onMouseDown={handleContentClick}
+            className={clsx('note-block__content', {
+              'note-block__content--hidden': isEditing,
+            })}
+            role="textbox"
+            aria-label="NoteModel block content"
+            tabIndex={0}
+            onKeyPress={handleContentKeyPress}
+          >
+            <TokensRenderer
+              noteBlock={noteBlock}
+              tokens={noteBlock.content.ast}
+            />
+          </span>
+        )}
         {/* </div> */}
       </>
     );

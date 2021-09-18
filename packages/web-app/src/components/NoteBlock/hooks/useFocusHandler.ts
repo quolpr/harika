@@ -75,6 +75,7 @@ const useFakeInput = () => {
 export const useFocusHandler = (
   scope: BlocksScope,
   blockView: ScopedBlock,
+  editingContent: string,
   inputRef: RefObject<HTMLTextAreaElement | null>,
   noteBlockElRef: RefObject<HTMLDivElement | null>,
 ) => {
@@ -87,7 +88,7 @@ export const useFocusHandler = (
 
   const { insertFakeInput, releaseFakeInput, fakeInputRef } = useFakeInput();
 
-  const contentLength = blockView.content.value.length;
+  const contentLength = editingContent.length;
 
   useEffect(() => {
     if (
@@ -97,8 +98,7 @@ export const useFocusHandler = (
     ) {
       if (!inputRef.current) return;
 
-      const posAt = (() =>
-        startAt !== undefined ? startAt : blockView.content.value.length)();
+      const posAt = (() => (startAt !== undefined ? startAt : contentLength))();
 
       inputRef.current.focus();
 
@@ -111,7 +111,7 @@ export const useFocusHandler = (
     isFocused,
     isEditing,
     startAt,
-    blockView.content.value.length,
+    contentLength,
     releaseFakeInput,
     inputRef,
   ]);
