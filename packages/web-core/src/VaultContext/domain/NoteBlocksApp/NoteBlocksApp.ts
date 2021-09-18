@@ -1,11 +1,4 @@
-import {
-  arraySet,
-  Model,
-  model,
-  modelAction,
-  onChildAttachedTo,
-  prop,
-} from 'mobx-keystone';
+import { arraySet, Model, model, modelAction, prop } from 'mobx-keystone';
 import type { ModelCreationData } from 'mobx-keystone';
 import { BlocksScope } from './views/BlocksScope';
 import {
@@ -16,7 +9,6 @@ import { FocusedBlock } from './views/FocusedBlock';
 import { NoteBlockModel } from './models/NoteBlockModel';
 import { generateId } from '../../../generateId';
 import { BlockContentModel } from './models/BlockContentModel';
-import { ScopedBlocksRegistry } from './views/ScopedBlocksRegistry';
 
 const blocksApp = '@harika/NoteBlocksApp';
 
@@ -46,7 +38,7 @@ export class NoteBlocksApp extends Model({
 
   getNoteBlock(blockId: string) {
     for (const registry of Object.values(this.blocksRegistries)) {
-      const block = registry.blocksMap[blockId];
+      const block = registry.getBlockById(blockId);
 
       if (block) return block;
     }
@@ -71,10 +63,11 @@ export class NoteBlocksApp extends Model({
     });
 
     const registry = new BlockModelsRegistry({
-      blocksMap: { [rootBlock.$modelId]: rootBlock },
       noteId: noteId,
       rootBlockId: rootBlock.$modelId,
     });
+
+    registry.registerNewBlock(rootBlock);
 
     this.blocksRegistries[noteId] = registry;
 
@@ -153,29 +146,12 @@ export class NoteBlocksApp extends Model({
       $modelId: key,
       rootScopedBlockId: rootBlockViewId,
       collapsedBlockIds: arraySet(collapsedBlockIds),
-      scopedBlocksRegistry: new ScopedBlocksRegistry({
-        blocksRegistryRef: blocksRegistryRef(this.blocksRegistries[noteId]),
-      }),
+      blocksRegistryRef: blocksRegistryRef(this.blocksRegistries[noteId]),
       scopedModelId: scopedBy.$modelId,
       scopedModelType: scopedBy.$modelType,
     });
 
     this.blocksScopes[key] = blocksScope;
-
-    // TODO: load only partial from root, block views
-    // TODO: dispose
-    onChildAttachedTo(
-      () => this.blocksRegistries[noteId].blocksMap,
-      (ch) => {
-        if (ch instanceof NoteBlockModel) {
-          blocksScope.scopedBlocksRegistry.getOrCreateScopedBlock(ch.$modelId);
-
-          return () => {
-            blocksScope.scopedBlocksRegistry.removeScopedBlock(ch.$modelId);
-          };
-        }
-      },
-    );
 
     return this.blocksScopes[key];
   }

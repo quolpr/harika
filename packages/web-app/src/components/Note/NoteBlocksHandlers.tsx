@@ -20,8 +20,6 @@ export const NoteBlocksHandlers = observer(
     const vault = useCurrentVault();
     const focusedBlock = vault.noteBlocksApp.focusedBlock;
 
-    const registry = scope.scopedBlocksRegistry;
-
     useEffect(() => {
       const mouseMove$ = fromEvent<MouseEvent>(document, 'mousemove');
       const mouseUp$ = fromEvent<MouseEvent>(document, 'mouseup');
@@ -165,13 +163,13 @@ export const NoteBlocksHandlers = observer(
 
         navigator.clipboard.writeText(scope.getStringTreeToCopy());
 
-        registry.deleteNoteBlockIds(selectedIds);
+        scope.deleteNoteBlockIds(selectedIds);
       };
 
       document.addEventListener('cut', handler);
 
       return () => document.removeEventListener('cut', handler);
-    }, [isSelecting, note, vault, scope, registry]);
+    }, [isSelecting, note, vault, scope]);
 
     useEffect(() => {
       if (!isSelecting) return;
@@ -179,14 +177,14 @@ export const NoteBlocksHandlers = observer(
       const handler = (e: KeyboardEvent) => {
         if (e.key === 'Backspace') {
           e.preventDefault();
-          registry.deleteNoteBlockIds(scope.selectedIds);
+          scope.deleteNoteBlockIds(scope.selectedIds);
         }
       };
 
       document.addEventListener('keydown', handler);
 
       return () => document.removeEventListener('keydown', handler);
-    }, [isSelecting, note, registry, scope]);
+    }, [isSelecting, note, scope]);
 
     useEffect(() => {
       const handler = (e: MouseEvent) => {

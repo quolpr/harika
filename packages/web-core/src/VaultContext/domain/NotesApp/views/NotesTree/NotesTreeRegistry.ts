@@ -88,7 +88,6 @@ export class NotesTreeRegistry extends Model({
     });
   }
 
-  @modelAction
   insertNoteTitle(id: string, noteTitle: string) {
     let previousNode = this.rootNodeRef.current;
 

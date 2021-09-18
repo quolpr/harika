@@ -30,7 +30,7 @@ export class ScopedBlock implements ITreeNode<ScopedBlock> {
     noteBlock: NoteBlockModel,
     private collapsedBlockIds: IComputedValue<ArraySet<string>>,
     private rootScopedBlock: IComputedValue<ScopedBlock>,
-    private getOrCreateScopedBlock: (blockId: string) => ScopedBlock,
+    private getScopedBlock: (blockId: string) => ScopedBlock,
     private createBlock: (
       attrs: Optional<
         ModelCreationData<NoteBlockModel>,
@@ -81,14 +81,14 @@ export class ScopedBlock implements ITreeNode<ScopedBlock> {
 
     const parentBlock = this.noteBlock.parent;
 
-    return parentBlock && this.getOrCreateScopedBlock(parentBlock.$modelId);
+    return parentBlock && this.getScopedBlock(parentBlock.$modelId);
   }
 
   @computed({ equals: comparer.shallow })
   get notCollapsedChildren(): ScopedBlock[] {
     return this.noteBlock.noteBlockRefs
       .map(({ id }) => {
-        return this.getOrCreateScopedBlock(id);
+        return this.getScopedBlock(id);
       })
       .filter((v) => !!v);
   }

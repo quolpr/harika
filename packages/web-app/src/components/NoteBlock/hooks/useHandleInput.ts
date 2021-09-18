@@ -251,10 +251,7 @@ export const useHandleInput = (
 
       e.preventDefault();
 
-      const injectedBlocks = scope.scopedBlocksRegistry.injectNewTreeTokens(
-        block,
-        parsedToTree,
-      );
+      const injectedBlocks = scope.injectNewTreeTokens(block, parsedToTree);
 
       noteRepo.updateNoteBlockLinks(
         injectedBlocks.map(({ $modelId }) => $modelId),
@@ -271,8 +268,7 @@ export const useHandleInput = (
     [
       handleCaretChange,
       isShiftPressedRef,
-      scope.scopedBlocksRegistry,
-      scope.$modelId,
+      scope,
       block,
       noteRepo,
       setEditState,

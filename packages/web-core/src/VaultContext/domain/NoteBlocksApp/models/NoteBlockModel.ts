@@ -1,4 +1,4 @@
-import type { ModelCreationData, Ref } from 'mobx-keystone';
+import { createContext, ModelCreationData, Ref } from 'mobx-keystone';
 import {
   customRef,
   detach,
@@ -13,12 +13,7 @@ import {
 import { comparer, computed } from 'mobx';
 import { isEqual } from 'lodash-es';
 import type { BlockContentModel } from './BlockContentModel';
-import { BlockModelsRegistry, blocksRegistryType } from './BlockModelsRegistry';
 import { isBlocksApp, NoteBlocksApp } from '../NoteBlocksApp';
-
-const isRegistry = (obj: any): obj is BlockModelsRegistry => {
-  return obj.$modelType === blocksRegistryType;
-};
 
 export const noteBlockRef = customRef<NoteBlockModel>('harika/NoteBlockRef', {
   resolve(ref) {
@@ -40,6 +35,9 @@ export const noteBlockRef = customRef<NoteBlockModel>('harika/NoteBlockRef', {
   },
 });
 
+export const rootBlockIdCtx = createContext<string>('');
+export const parentBlockCtx = createContext<NoteBlockModel | undefined>();
+
 @model('harika/NoteBlockModel')
 export class NoteBlockModel extends Model({
   noteId: prop<string>(),
@@ -52,19 +50,12 @@ export class NoteBlockModel extends Model({
 }) {
   @computed
   get isRoot() {
-    return this.treeRegistry.rootBlockId === this.$modelId;
-  }
-
-  @computed
-  get treeRegistry() {
-    return findParent<BlockModelsRegistry>(this, isRegistry)!;
+    return rootBlockIdCtx.get(this) === this.$modelId;
   }
 
   @computed
   get parent(): NoteBlockModel | undefined {
-    const id = this.treeRegistry.childParentRelations[this.$modelId];
-
-    return id === undefined ? undefined : this.treeRegistry.blocksMap[id];
+    return parentBlockCtx.get(this);
   }
 
   @computed

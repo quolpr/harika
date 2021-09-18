@@ -3,8 +3,8 @@ import { Vault } from '../VaultContext/NotesService';
 import { BlockContentModel } from '../VaultContext/domain/NoteBlocksApp/models/BlockContentModel';
 import { parseStringToTree } from './parseStringToTree';
 import type { TreeToken } from './parseStringToTree';
-import type { ScopedBlocksRegistry } from '../VaultContext/domain/NoteBlocksApp/views/ScopedBlocksRegistry';
 import type { ScopedBlock } from '../VaultContext/domain/NoteBlocksApp/views/ScopedBlock';
+import { BlocksScope } from '../VaultContext/domain/NoteBlocksApp/views/BlocksScope';
 
 export const normalizeBlockTree = (str: string) => {
   const parsed = parseStringToTree(str);
@@ -21,8 +21,8 @@ export const normalizeBlockTree = (str: string) => {
 };
 
 export const addTokensToNoteBlock = (
-  registry: ScopedBlocksRegistry,
-  view: ScopedBlock,
+  scope: BlocksScope,
+  block: ScopedBlock,
   tokens: TreeToken[],
 ): ScopedBlock[] => {
   const addedModels: ScopedBlock[] = [];
@@ -32,7 +32,7 @@ export const addTokensToNoteBlock = (
   let previousBlock: { model: ScopedBlock; indent: number } | undefined =
     undefined;
   let currentPath: { model: ScopedBlock; indent: number }[] = [
-    { model: view, indent: 0 },
+    { model: block, indent: 0 },
   ];
 
   tokens.forEach((token) => {
@@ -46,19 +46,19 @@ export const addTokensToNoteBlock = (
       }
     }
 
-    const parentView = currentPath[currentPath.length - 1];
+    const parentBlock = currentPath[currentPath.length - 1];
 
-    const newBlock = registry.createBlock(
+    const newBlock = scope.createBlock(
       {
         $modelId: token.id ? token.id : generateId(),
         createdAt: new Date().getTime(),
         updatedAt: new Date().getTime(),
-        noteId: view.noteId,
+        noteId: block.noteId,
         noteBlockRefs: [],
         linkedNoteIds: [],
         content: new BlockContentModel({ value: token.content }),
       },
-      parentView.model,
+      parentBlock.model,
       'append',
     );
 

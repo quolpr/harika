@@ -1,22 +1,28 @@
 import { comparer, computed } from 'mobx';
 import {
-  arraySet,
   ArraySet,
-  createContext,
   model,
   Model,
   modelAction,
+  ModelCreationData,
+  onChildAttachedTo,
   prop,
+  Ref,
 } from 'mobx-keystone';
-import { normalizeBlockTree } from '../../../../blockParser/blockUtils';
-import type { ScopedBlocksRegistry } from './ScopedBlocksRegistry';
-
-export const collapsedBlockIdsCtx = createContext<ArraySet<string>>(arraySet());
-export const rootScopedBlockIdCtx = createContext<string>('');
+import { Optional } from 'utility-types';
+import {
+  addTokensToNoteBlock,
+  normalizeBlockTree,
+} from '../../../../blockParser/blockUtils';
+import { TreeToken } from '../../../../blockParser/parseStringToTree';
+import { BlockModelsRegistry } from '../models/BlockModelsRegistry';
+import { NoteBlockModel } from '../models/NoteBlockModel';
+import { ScopedBlock } from './ScopedBlock';
+import { ScopedBlocksRegistry } from './ScopedBlocksRegistry';
 
 @model('@harika/BlocksScope')
 export class BlocksScope extends Model({
-  scopedBlocksRegistry: prop<ScopedBlocksRegistry>(),
+  blocksRegistryRef: prop<Ref<BlockModelsRegistry>>(),
 
   selectionInterval: prop<[string, string] | undefined>(),
   prevSelectionInterval: prop<[string, string] | undefined>(),
@@ -29,6 +35,8 @@ export class BlocksScope extends Model({
   scopedModelId: prop<string>(),
   scopedModelType: prop<string>(),
 }) {
+  private scopedBlocksRegistry = new ScopedBlocksRegistry();
+
   getStringTreeToCopy() {
     let str = '';
 
@@ -43,12 +51,12 @@ export class BlocksScope extends Model({
 
   @computed
   get noteId() {
-    return this.scopedBlocksRegistry.noteId;
+    return this.blocksRegistryRef.current.noteId;
   }
 
   @computed
   get rootScopedBlock() {
-    return this.scopedBlocksRegistry.rootScopedBlock;
+    return this.scopedBlocksRegistry.getScopedBlock(this.rootScopedBlockId);
   }
 
   getView(id: string) {
@@ -66,7 +74,7 @@ export class BlocksScope extends Model({
 
     const [fromId, toId] = this.selectionInterval;
 
-    const flattenTree = this.scopedBlocksRegistry.rootScopedBlock.flattenTree;
+    const flattenTree = this.rootScopedBlock.flattenTree;
 
     if (!flattenTree) return [];
 
@@ -136,8 +144,66 @@ export class BlocksScope extends Model({
     }
   }
 
+  @modelAction
+  getOrCreateScopedBlock = (blockId: string) => {
+    if (this.scopedBlocksRegistry.getScopedBlock(blockId)) {
+      return this.scopedBlocksRegistry.getScopedBlock(blockId);
+    } else {
+      const newBlock: ScopedBlock = new ScopedBlock(
+        this.blocksRegistryRef.current.getBlockById(blockId),
+        computed(() => {
+          return this.collapsedBlockIds;
+        }),
+        computed(() => this.rootScopedBlock),
+        this.scopedBlocksRegistry.getScopedBlock,
+        this.createBlock,
+      );
+      this.scopedBlocksRegistry.addScopedBlock(newBlock);
+
+      return newBlock;
+    }
+  };
+
+  @modelAction
+  createBlock = (
+    attrs: Optional<
+      ModelCreationData<NoteBlockModel>,
+      'createdAt' | 'noteId' | 'noteBlockRefs' | 'linkedNoteIds' | 'updatedAt'
+    >,
+    parent: ScopedBlock,
+    pos: number | 'append',
+  ) => {
+    const block = this.blocksRegistryRef.current.createBlock(
+      attrs,
+      parent.noteBlock,
+      pos,
+    );
+
+    return this.getOrCreateScopedBlock(block.$modelId);
+  };
+
+  @modelAction
+  deleteNoteBlockIds(ids: string[]) {
+    this.blocksRegistryRef.current.deleteNoteBlockIds(ids);
+  }
+
+  @modelAction
+  injectNewTreeTokens(block: ScopedBlock, tokens: TreeToken[]): ScopedBlock[] {
+    return addTokensToNoteBlock(this, block, tokens);
+  }
+
   onInit() {
-    collapsedBlockIdsCtx.setComputed(this, () => this.collapsedBlockIds);
-    rootScopedBlockIdCtx.setComputed(this, () => this.rootScopedBlockId);
+    onChildAttachedTo(
+      () => this.blocksRegistryRef.current.blocksMap,
+      (ch) => {
+        if (ch instanceof NoteBlockModel) {
+          this.getOrCreateScopedBlock(ch.$modelId);
+
+          return () => {
+            this.scopedBlocksRegistry.removeScopedBlock(ch.$modelId);
+          };
+        }
+      },
+    );
   }
 }

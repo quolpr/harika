@@ -3,6 +3,7 @@ import type { EditState } from '@harika/web-core';
 import { comparer, computed } from 'mobx';
 import { useCallback } from 'react';
 import { useBlocksApp } from './useCurrentVault';
+import { isEqual } from 'lodash-es';
 
 export const useCurrentFocusedBlockState = (
   scopeId: string,
@@ -39,6 +40,8 @@ export const useCurrentFocusedBlockState = (
         | undefined,
     ) => {
       if (block) {
+        if (isEqual(blocksApp.focusedBlock.state, block)) return;
+
         blocksApp.focusedBlock.setState(
           FocusedBlockState.create(
             block.scopeId,

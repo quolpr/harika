@@ -1,6 +1,11 @@
 import { Model, model, modelAction, prop, rootRef } from 'mobx-keystone';
 import type { ModelCreationData } from 'mobx-keystone';
-import { NoteBlockModel, noteBlockRef } from './NoteBlockModel';
+import {
+  NoteBlockModel,
+  noteBlockRef,
+  parentBlockCtx,
+  rootBlockIdCtx,
+} from './NoteBlockModel';
 import { comparer, computed } from 'mobx';
 import type { Optional } from 'utility-types';
 import { generateId } from '../../../../generateId';
@@ -21,6 +26,15 @@ export class BlockModelsRegistry extends Model({
   @computed
   get rootBlock(): NoteBlockModel | undefined {
     return this.blocksMap[this.rootBlockId];
+  }
+
+  registerNewBlock(block: NoteBlockModel) {
+    this.blocksMap[block.$modelId] = block;
+    parentBlockCtx.setComputed(block, () =>
+      this.childParentRelations[block.$modelId]
+        ? this.blocksMap[this.childParentRelations[block.$modelId]]
+        : undefined,
+    );
   }
 
   getBlockById(id: string) {
@@ -72,7 +86,7 @@ export class BlockModelsRegistry extends Model({
       ...omit(attrs, '$modelId'),
     });
 
-    this.blocksMap[newNoteBlock.$modelId] = newNoteBlock;
+    this.registerNewBlock(newNoteBlock);
 
     if (pos === 'append') {
       parent.noteBlockRefs.push(noteBlockRef(newNoteBlock));
@@ -106,12 +120,16 @@ export class BlockModelsRegistry extends Model({
       $modelId: string;
     },
   ) {
-    if (!this.blocksMap[attr.$modelId]) {
-      this.blocksMap[attr.$modelId] = new NoteBlockModel(attr);
+    if (!this.getBlockById(attr.$modelId)) {
+      this.registerNewBlock(new NoteBlockModel(attr));
     } else {
-      this.blocksMap[attr.$modelId].updateAttrs(attr);
+      this.getBlockById(attr.$modelId).updateAttrs(attr);
     }
 
-    return this.blocksMap[attr.$modelId];
+    return this.getBlockById(attr.$modelId);
+  }
+
+  onInit() {
+    rootBlockIdCtx.setComputed(this, () => this.rootBlockId);
   }
 }
