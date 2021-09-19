@@ -34,6 +34,7 @@ export const SyncState = () => {
   return (
     <>
       <Tippy
+        touch="hold"
         interactive
         content={
           <div className={syncStateClass('info')}>
