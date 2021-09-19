@@ -14,6 +14,7 @@ import { useCurrentVault } from '../../hooks/useCurrentVault';
 import { cn } from '../../utils';
 import { generateStackedNotePath } from '../../hooks/useNoteClick';
 import { usePrimaryNote } from '../../hooks/usePrimaryNote';
+import { SyncState } from '../SyncState/SyncState';
 
 const vaultHeaderClass = cn('header');
 
@@ -31,7 +32,7 @@ export const VaultHeader = observer(
   }) => {
     const location = useLocation();
     const vault = useCurrentVault();
-    const noteRepo = useNotesService();
+    const noteService = useNotesService();
     const history = useHistory();
 
     const primaryNote = usePrimaryNote();
@@ -64,7 +65,7 @@ export const VaultHeader = observer(
       async (date: Date | Date[], ev: React.ChangeEvent<HTMLInputElement>) => {
         if (Array.isArray(date)) return;
 
-        const result = await noteRepo.getOrCreateDailyNote(dayjs(date));
+        const result = await noteService.getOrCreateDailyNote(dayjs(date));
 
         if (result.status === 'ok') {
           if ((ev.nativeEvent as MouseEvent).shiftKey && primaryNoteId) {
@@ -86,7 +87,7 @@ export const VaultHeader = observer(
           }
         }
       },
-      [noteRepo, primaryNoteId, history, location.search, vault.$modelId],
+      [noteService, primaryNoteId, history, location.search, vault.$modelId],
     );
 
     return (
@@ -125,22 +126,25 @@ export const VaultHeader = observer(
           </svg>
         </button>
 
-        <button
-          onClick={() => {
-            setIsModalOpened(!isModalOpened);
-          }}
-          className={vaultHeaderClass('command-palette')}
-        >
-          Find Or Create
-          <span className={vaultHeaderClass('command-palette-hotkey')}>
-            <kbd className="font-sans">
-              <abbr title="Command" className="no-underline">
-                ⌘
-              </abbr>
-            </kbd>
-            <kbd className="font-sans">K</kbd>
-          </span>
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <SyncState />
+          <button
+            onClick={() => {
+              setIsModalOpened(!isModalOpened);
+            }}
+            className={vaultHeaderClass('command-palette')}
+          >
+            Find Or Create
+            <span className={vaultHeaderClass('command-palette-hotkey')}>
+              <kbd className="font-sans">
+                <abbr title="Command" className="no-underline">
+                  ⌘
+                </abbr>
+              </kbd>
+              <kbd className="font-sans">K</kbd>
+            </span>
+          </button>
+        </div>
 
         <div className={vaultHeaderClass('right')}>
           {isModalOpened && (

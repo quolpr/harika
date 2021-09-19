@@ -1,5 +1,12 @@
-import { merge, Subject, of, Observable } from 'rxjs';
-import { concatMap, finalize, mapTo, switchMap } from 'rxjs/operators';
+import { merge, Subject, of, Observable, BehaviorSubject } from 'rxjs';
+import {
+  concatMap,
+  finalize,
+  mapTo,
+  switchMap,
+  takeUntil,
+  tap,
+} from 'rxjs/operators';
 import type { CommandsExecuter } from './CommandsExecuter';
 import type { ServerConnector } from './connection/ServerConnector';
 import { ServerChangesReceiver } from './ServerSynchronizer/ServerChangesReceiver';
@@ -24,9 +31,10 @@ export class ServerSynchronizer {
   private triggerGetChangesSubject = new Subject<unknown>();
   private serverChangesReceiver: ServerChangesReceiver;
   private changesApplierAndSender: ChangesApplierAndSender;
+  public isSyncing$ = new BehaviorSubject<boolean>(false);
 
   constructor(
-    syncRepo: Remote<SyncRepository>,
+    private syncRepo: Remote<SyncRepository>,
     applyChangesService: Remote<ApplyChangesService>,
     commandExecuter: CommandsExecuter,
     private serverConnector: ServerConnector,
@@ -51,7 +59,7 @@ export class ServerSynchronizer {
     );
   }
 
-  async start() {
+  start() {
     this.serverConnector.isConnectedAndReadyToUse$
       .pipe(
         switchMap((isConnectedAndInitialized) => {
@@ -61,6 +69,7 @@ export class ServerSynchronizer {
             return of(null);
           }
         }),
+        takeUntil(this.stop$),
       )
       .subscribe();
   }
@@ -69,7 +78,7 @@ export class ServerSynchronizer {
     let i = 0;
 
     const changesEmitter = this.serverChangesReceiver.emitter(
-      this.serverConnector.channel$,
+      this.serverConnector.channelSubject,
       this.triggerGetChangesSubject,
     );
     const changesPipe = this.serverChangesReceiver.pipe();
@@ -82,6 +91,9 @@ export class ServerSynchronizer {
       changesEmitter.pipe(mapTo('getChanges' as const)),
       changesApplyAndSendEmitter.pipe(mapTo('applyChangesAndSend' as const)),
     ).pipe(
+      tap(() => {
+        this.isSyncing$.next(true);
+      }),
       concatMap((command) => {
         const id = i++;
 
@@ -91,6 +103,7 @@ export class ServerSynchronizer {
           return of(null).pipe(
             changesPipe,
             finalize(() => {
+              this.isSyncing$.next(false);
               this.log(`[${id}] Done executing`);
             }),
           );
@@ -98,6 +111,7 @@ export class ServerSynchronizer {
           return of(null).pipe(
             changesApplyAndSendPipe,
             finalize(() => {
+              this.isSyncing$.next(false);
               this.log(`[${id}] Done executing`);
             }),
           );

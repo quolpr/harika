@@ -22,7 +22,15 @@ import {
 import { isEqual, uniq } from 'lodash-es';
 import { filterAst } from '../blockParser/astHelpers';
 import type { RefToken, TagToken } from '../blockParser/types';
-import { firstValueFrom, from, merge, Observable, of, Subject } from 'rxjs';
+import {
+  BehaviorSubject,
+  firstValueFrom,
+  from,
+  merge,
+  Observable,
+  of,
+  Subject,
+} from 'rxjs';
 import {
   convertNoteBlockDocToModelAttrs,
   convertNoteDocToModelAttrs,
@@ -43,6 +51,8 @@ import type { FindNoteOrBlockService } from './persistence/services/FindNoteOrBl
 import type { ImportExportService } from './persistence/services/ImportExportService';
 import type { DeleteNoteService } from './persistence/services/DeleteNoteService';
 import { getScopeKey } from './domain/NoteBlocksApp/NoteBlocksApp';
+import { initSync, ISyncState } from '../db-sync/synchronizer/init';
+import { BaseDbSyncWorker } from '../db-sync/persistence/BaseDbSyncWorker';
 
 export { NoteModel } from './domain/NotesApp/models/NoteModel';
 export { Vault } from './domain/Vault';
@@ -54,6 +64,13 @@ export {
 export class NotesService {
   private stopSubject = new Subject<unknown>();
   private stop$ = this.stopSubject.pipe(take(1));
+  syncState$ = new BehaviorSubject({
+    isSyncing: false,
+    pendingClientChangesCount: 0,
+    pendingServerChangesCount: 0,
+    isConnected: false,
+    isConnectedAndReadyToUse: false,
+  });
 
   constructor(
     private notesRepository: Remote<SqlNotesRepository>,
@@ -66,7 +83,24 @@ export class NotesService {
     public vault: Vault,
   ) {}
 
-  async initialize() {
+  async initSync(
+    dbName: string,
+    worker: Remote<BaseDbSyncWorker>,
+    wsUrl: string,
+    authToken: string,
+  ) {
+    const { syncState$ } = await initSync(
+      dbName,
+      worker,
+      wsUrl,
+      authToken,
+      this.dbEventsService,
+    );
+
+    syncState$.subscribe((val) => this.syncState$.next(val));
+  }
+
+  async initialize(withSync: boolean) {
     new NotesChangesTrackerService(
       this.dbEventsService.changesChannel$(),
       this.vault.notesTree,

@@ -1,10 +1,30 @@
 import type { Remote } from 'comlink';
-import { Subject } from 'rxjs';
+import {
+  distinctUntilChanged,
+  interval,
+  merge,
+  Observable,
+  ReplaySubject,
+  share,
+  startWith,
+  Subject,
+  switchMap,
+  withLatestFrom,
+} from 'rxjs';
 import type { DbEventsService } from '../DbEventsService';
 import { CommandsExecuter } from './CommandsExecuter';
 import { ServerConnector } from './connection/ServerConnector';
 import { ServerSynchronizer } from './ServerSynchronizer';
 import type { BaseDbSyncWorker } from '../persistence/BaseDbSyncWorker';
+import { isEqual } from 'lodash-es';
+
+export interface ISyncState {
+  isSyncing: boolean;
+  pendingClientChangesCount: number;
+  pendingServerChangesCount: number;
+  isConnected: boolean;
+  isConnectedAndReadyToUse: boolean;
+}
 
 export const initSync = async (
   dbName: string,
@@ -31,8 +51,8 @@ export const initSync = async (
     stop$,
   );
   const commandExecuter = new CommandsExecuter(
-    serverConnector.socket$,
-    serverConnector.channel$,
+    serverConnector.socketSubject,
+    serverConnector.channelSubject,
     log,
     stop$,
   );
@@ -49,4 +69,53 @@ export const initSync = async (
   );
 
   syncer.start();
+
+  const syncState$: Observable<ISyncState> = merge(
+    eventsService.changesChannel$(),
+    eventsService.newSyncPullsChannel$(),
+    syncer.isSyncing$,
+    serverConnector.isConnected$,
+    serverConnector.isConnectedAndReadyToUse$,
+    interval(10_000),
+  ).pipe(
+    startWith(null),
+    switchMap(async () => {
+      const [serverCount, clientCount] =
+        await syncRepo.getServerAndClientChangesCount();
+
+      return {
+        isSyncing: syncer.isSyncing$.value,
+        pendingClientChangesCount: clientCount,
+        pendingServerChangesCount: serverCount,
+      };
+    }),
+    withLatestFrom(
+      serverConnector.isConnected$,
+      (partialState, isConnected) => ({ ...partialState, isConnected }),
+    ),
+    withLatestFrom(
+      serverConnector.isConnectedAndReadyToUse$,
+      (partialState, isConnectedAndReadyToUse) => ({
+        ...partialState,
+        isConnectedAndReadyToUse,
+      }),
+    ),
+    distinctUntilChanged((a, b) => isEqual(a, b)),
+    share({
+      connector: () => new ReplaySubject(1),
+    }),
+  );
+
+  syncState$.subscribe((state) => {
+    console.log(
+      `%c[${dbName}] New sync state: ${JSON.stringify(state)}`,
+      'color:cyan;border:1px solid dodgerblue',
+    );
+  });
+
+  return {
+    isConnected$: serverConnector.isConnected$,
+    isConnectedAndReadyToUse$: serverConnector.isConnectedAndReadyToUse$,
+    syncState$,
+  };
 };

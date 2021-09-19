@@ -175,15 +175,14 @@ export class VaultsService {
     );
 
     // Don't need to await
-    service.initialize();
+    service.initialize(this.sync);
 
     if (this.sync) {
-      initSync(
+      service.initSync(
         dbName,
         worker,
         this.config.wsUrl,
         this.config.authToken,
-        eventsService,
       );
     }
 

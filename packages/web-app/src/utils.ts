@@ -68,25 +68,42 @@ export function useDeepMemo<TKey, TValue>(
   return ref.current.value;
 }
 
+const modificationsToString = (
+  toModify: string,
+  modifications: Record<string, boolean>,
+) => {
+  let tmp = '';
+
+  Object.entries(modifications).forEach(([k, v]) => {
+    if (v) {
+      // kebab case
+      tmp += `${toModify}--${k} `;
+    }
+  });
+
+  return tmp.trim();
+};
+
 export const bem = (block: string) => {
-  return (element?: string, modifications?: Record<string, boolean>) => {
+  return (
+    elementOrModifications?: string | Record<string, boolean>,
+    modifications?: Record<string, boolean>,
+  ) => {
     let result = block;
 
-    if (element) {
-      return result + `__${element}`;
-    }
+    if (!elementOrModifications) return block;
 
-    if (modifications) {
-      let tmp = '';
+    if (typeof elementOrModifications !== 'string') {
+      return `${result} ${modificationsToString(
+        result,
+        elementOrModifications,
+      )}`;
+    } else {
+      result += `__${elementOrModifications}`;
 
-      Object.entries(modifications).forEach(([k, v]) => {
-        if (v) {
-          // kebab case
-          tmp += `${result}--${k} `;
-        }
-      });
-
-      result = ` ${tmp}`.trim();
+      if (modifications) {
+        result = `${result} ${modificationsToString(result, modifications)}`;
+      }
     }
 
     return result;

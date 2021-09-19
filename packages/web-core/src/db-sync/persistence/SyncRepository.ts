@@ -259,6 +259,20 @@ export class SyncRepository {
     );
   }
 
+  getServerAndClientChangesCount() {
+    const [serverResult] = this.db.execQuery(
+      Q.select('COUNT(*)').from(serverChangesTable),
+    );
+    const [clientResult] = this.db.execQuery(
+      Q.select('COUNT(*)').from(clientChangesTable),
+    );
+
+    return [
+      serverResult.values[0][0] as number,
+      clientResult.values[0][0] as number,
+    ];
+  }
+
   getServerChangesByPullIds(pullIds: string[]): IServerChangeDoc[] {
     return this.db
       .getRecords<IServerChangeRow>(

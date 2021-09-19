@@ -10,7 +10,6 @@ import { useHistory, useLocation, useParams } from 'react-router-dom';
 import { useClickAway, useMedia } from 'react-use';
 import { NotesServiceContext } from '../../contexts/CurrentNotesServiceContext';
 import { CurrentVaultContext } from '../../contexts/CurrentVaultContext';
-import { cn } from '../../utils';
 import { VaultHeader } from '../VaultHeader/VaultHeader';
 import { VaultSidebar } from '../VaultSidebar/VaultSidebar';
 
@@ -20,8 +19,9 @@ import { FooterRefContext } from '../../contexts/FooterRefContext';
 import { LoadingDoneSubjectContext } from '../../contexts';
 import { Observable } from 'rxjs';
 import { mapTo, switchMap, take, tap } from 'rxjs/operators';
+import { bem } from '../../utils';
 
-const layoutClass = cn('vault-layout');
+const layoutClass = bem('vault-layout');
 
 // const Syncher: React.FC = ({ children }) => {
 //   const vault = useCurrentVault();

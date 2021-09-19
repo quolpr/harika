@@ -1,8 +1,8 @@
-import { merge, Subject, Observable, of } from 'rxjs';
+import { merge, Subject, Observable, of, ReplaySubject } from 'rxjs';
 import {
   distinctUntilChanged,
   mapTo,
-  shareReplay,
+  share,
   switchMap,
   takeUntil,
 } from 'rxjs/operators';
@@ -11,22 +11,10 @@ import type Phoenix from 'phoenix';
 import { Socket } from 'phoenix';
 
 export class ServerConnector {
-  private socketSubject = new Subject<Phoenix.Socket>();
-  private channelSubject = new Subject<Phoenix.Channel>();
+  socketSubject = new ReplaySubject<Phoenix.Socket>(1);
+  channelSubject = new ReplaySubject<Phoenix.Channel>(1);
   isConnected$: Observable<boolean>;
   isConnectedAndReadyToUse$: Observable<boolean>;
-  socket$ = this.socketSubject.pipe(
-    shareReplay({
-      bufferSize: 1,
-      refCount: true,
-    }),
-  );
-  channel$ = this.channelSubject.pipe(
-    shareReplay({
-      bufferSize: 1,
-      refCount: true,
-    }),
-  );
 
   constructor(
     private dbName: string,
@@ -36,7 +24,7 @@ export class ServerConnector {
     private log: (str: string) => void,
     private stop$: Subject<void>,
   ) {
-    const connect$ = this.socket$.pipe(
+    const connect$ = this.socketSubject.pipe(
       switchMap(
         (socket) =>
           new Observable((observer) => {
@@ -47,7 +35,7 @@ export class ServerConnector {
       ),
     );
 
-    const disconnect$ = this.socket$.pipe(
+    const disconnect$ = this.socketSubject.pipe(
       switchMap(
         (socket) =>
           new Observable((observer) => {
@@ -67,15 +55,17 @@ export class ServerConnector {
       disconnect$.pipe(mapTo(false)),
     ).pipe(
       distinctUntilChanged(),
-      takeUntil(this.stop$),
-      shareReplay({
-        refCount: true,
+      share({
+        connector: () => new ReplaySubject(1),
       }),
+      takeUntil(this.stop$),
     );
 
-    const isJoined$ = this.channel$.pipe(
+    const isJoined$ = this.channelSubject.pipe(
       switchMap((channel) => {
         return new Observable<boolean>((observer) => {
+          console.log('joining channel!');
+          // On timeout/error phoenix will try to reconnect, so no need to handle such case
           channel
             .join()
             .receive('ok', () => {
@@ -95,12 +85,14 @@ export class ServerConnector {
             });
         });
       }),
-      distinctUntilChanged(),
+      share({
+        connector: () => new ReplaySubject(1),
+        resetOnRefCountZero: false,
+        resetOnComplete: false,
+        resetOnError: false,
+      }),
       takeUntil(this.stop$),
-      shareReplay({ refCount: false, bufferSize: 1 }),
     );
-
-    isJoined$.subscribe();
 
     this.isConnectedAndReadyToUse$ = this.isConnected$.pipe(
       switchMap((isConnected) => {
@@ -108,17 +100,12 @@ export class ServerConnector {
       }),
       distinctUntilChanged(),
       takeUntil(this.stop$),
+      share({
+        connector: () => new ReplaySubject(1),
+      }),
     );
 
     this.connectWhenElected();
-
-    this.isConnected$.subscribe((isConnected) => {
-      this.log(JSON.stringify({ isConnected }));
-    });
-
-    this.isConnectedAndReadyToUse$.subscribe((isConnectedAndReadyToUse) => {
-      this.log(JSON.stringify({ isConnectedAndReadyToUse }));
-    });
   }
 
   private connectWhenElected() {
