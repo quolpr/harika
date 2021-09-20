@@ -120,11 +120,16 @@ export function connectSentry(target: object) {
     }
 
     if (ctx.parentContext) {
-      const parentName = getActionContextNameAndTypePath(
-        ctx.parentContext,
-        getRootPath(ctx.parentContext.target),
-        undefined,
-      );
+      let parentName: string | undefined = undefined;
+
+      try {
+        parentName = getActionContextNameAndTypePath(
+          ctx.parentContext,
+          getRootPath(ctx.parentContext.target),
+          undefined,
+        );
+      } catch {}
+
       if (parentName) {
         name = `${parentName} >>> ${name}`;
       }
