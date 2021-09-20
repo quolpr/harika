@@ -22,18 +22,23 @@ export class ServerChangesReceiver {
     private commandExecuter: CommandsExecuter,
   ) {}
 
-  emitter(channel$: Observable<Channel>, getChange$: Observable<unknown>) {
+  emitter(
+    channel$: Observable<Channel | undefined>,
+    getChange$: Observable<unknown>,
+  ) {
     return merge(
       of(null),
       channel$.pipe(
         switchMap((channel) => {
-          return new Observable((observer) => {
-            const ref = channel.on('revision_was_changed', () => {
-              observer.next();
-            });
+          return channel
+            ? new Observable((observer) => {
+                const ref = channel.on('revision_was_changed', () => {
+                  observer.next();
+                });
 
-            return () => channel.off('revision_was_changed', ref);
-          });
+                return () => channel.off('revision_was_changed', ref);
+              })
+            : of();
         }),
       ),
       getChange$,

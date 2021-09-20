@@ -16,8 +16,8 @@ import type { ClientCommands } from './types';
 export class CommandsExecuter {
   private i = 0;
   constructor(
-    private socket$: Observable<Phoenix.Socket>,
-    private channel$: Observable<Phoenix.Channel>,
+    private socket$: Observable<Phoenix.Socket | undefined>,
+    private channel$: Observable<Phoenix.Channel | undefined>,
     private log: (str: string) => void,
     private stop$: Subject<void>,
   ) {}
@@ -38,6 +38,13 @@ export class CommandsExecuter {
               2,
             )}`,
           );
+
+          if (!channel) {
+            observer.error('Channel is not set. Is new leader elected?');
+
+            return;
+          }
+
           channel
             .push(commandType, snakecaseKeys(command, { deep: true }), 20_000)
             .receive('ok', (msg) => {
@@ -77,8 +84,8 @@ export class CommandsExecuter {
 
         return this.socket$.pipe(
           tap((socket) => {
-            socket.disconnect();
-            socket.connect();
+            socket?.disconnect();
+            socket?.connect();
           }),
           first(),
           mapTo(null),

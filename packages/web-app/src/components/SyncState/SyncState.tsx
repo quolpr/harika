@@ -32,7 +32,7 @@ export const SyncState = () => {
   const isSynced = syncState.isConnectedAndReadyToUse && !isSyncing;
 
   return (
-    <>
+    <div>
       <Tippy
         touch="hold"
         interactive
@@ -69,6 +69,9 @@ export const SyncState = () => {
             )}{' '}
             to the sync channel.
             <br />
+            This tab is{' '}
+            <b>{syncState.isLeader ? 'a leader' : 'not a leader'}</b>.
+            <br />
             <br />
             <b>{syncState.pendingClientChangesCount}</b> pending client changes.
             <br />
@@ -85,6 +88,6 @@ export const SyncState = () => {
           ></div>
         </div>
       </Tippy>
-    </>
+    </div>
   );
 };

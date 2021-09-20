@@ -1,4 +1,11 @@
-import { merge, Subject, Observable, of, ReplaySubject } from 'rxjs';
+import {
+  merge,
+  Subject,
+  Observable,
+  of,
+  ReplaySubject,
+  BehaviorSubject,
+} from 'rxjs';
 import {
   distinctUntilChanged,
   mapTo,
@@ -11,8 +18,8 @@ import type Phoenix from 'phoenix';
 import { Socket } from 'phoenix';
 
 export class ServerConnector {
-  socketSubject = new ReplaySubject<Phoenix.Socket>(1);
-  channelSubject = new ReplaySubject<Phoenix.Channel>(1);
+  socketSubject = new BehaviorSubject<Phoenix.Socket | undefined>(undefined);
+  channelSubject = new BehaviorSubject<Phoenix.Channel | undefined>(undefined);
   isConnected$: Observable<boolean>;
   isConnectedAndReadyToUse$: Observable<boolean>;
 
@@ -21,17 +28,41 @@ export class ServerConnector {
     private clientId: string,
     private url: string,
     private authToken: string,
+    private isLeader$: Observable<boolean>,
     private log: (str: string) => void,
     private stop$: Subject<void>,
   ) {
+    isLeader$.subscribe((isLeader) => {
+      if (isLeader) {
+        const socket = new Socket(this.url, {
+          params: { token: this.authToken },
+        });
+        socket.connect();
+
+        const phoenixChannel = socket.channel('db_changes:' + this.dbName, {
+          client_id: this.clientId,
+        });
+
+        this.socketSubject.next(socket);
+        this.channelSubject.next(phoenixChannel);
+      } else {
+        this.channelSubject.value?.leave();
+        this.socketSubject.value?.disconnect();
+
+        this.socketSubject.next(undefined);
+        this.channelSubject.next(undefined);
+      }
+    });
+
     const connect$ = this.socketSubject.pipe(
-      switchMap(
-        (socket) =>
-          new Observable((observer) => {
-            socket.onOpen(() => {
-              observer.next();
-            });
-          }),
+      switchMap((socket) =>
+        socket
+          ? new Observable((observer) => {
+              socket.onOpen(() => {
+                observer.next();
+              });
+            })
+          : of(),
       ),
     );
 
@@ -39,6 +70,11 @@ export class ServerConnector {
       switchMap(
         (socket) =>
           new Observable((observer) => {
+            if (!socket) {
+              observer.next();
+              return;
+            }
+
             socket.onClose(() => {
               observer.next();
             });
@@ -63,27 +99,28 @@ export class ServerConnector {
 
     const isJoined$ = this.channelSubject.pipe(
       switchMap((channel) => {
-        return new Observable<boolean>((observer) => {
-          console.log('joining channel!');
-          // On timeout/error phoenix will try to reconnect, so no need to handle such case
-          channel
-            .join()
-            .receive('ok', () => {
-              this.log('Joined channel');
+        return channel
+          ? new Observable<boolean>((observer) => {
+              // On timeout/error phoenix will try to reconnect, so no need to handle such case
+              channel
+                .join()
+                .receive('ok', () => {
+                  this.log('Joined channel');
 
-              observer.next(true);
+                  observer.next(true);
+                })
+                .receive('error', ({ reason }) => {
+                  this.log(`Channel error - ${JSON.stringify(reason)}`);
+
+                  observer.next(false);
+                })
+                .receive('timeout', () => {
+                  this.log('Channel timeout');
+
+                  observer.next(false);
+                });
             })
-            .receive('error', ({ reason }) => {
-              this.log(`Channel error - ${JSON.stringify(reason)}`);
-
-              observer.next(false);
-            })
-            .receive('timeout', () => {
-              this.log('Channel timeout');
-
-              observer.next(false);
-            });
-        });
+          : of(false);
       }),
       share({
         connector: () => new ReplaySubject(1),

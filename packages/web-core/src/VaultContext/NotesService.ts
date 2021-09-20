@@ -51,7 +51,11 @@ import type { FindNoteOrBlockService } from './persistence/services/FindNoteOrBl
 import type { ImportExportService } from './persistence/services/ImportExportService';
 import type { DeleteNoteService } from './persistence/services/DeleteNoteService';
 import { getScopeKey } from './domain/NoteBlocksApp/NoteBlocksApp';
-import { initSync, ISyncState } from '../db-sync/synchronizer/init';
+import {
+  defaultSyncState,
+  initSync,
+  ISyncState,
+} from '../db-sync/synchronizer/init';
 import { BaseDbSyncWorker } from '../db-sync/persistence/BaseDbSyncWorker';
 
 export { NoteModel } from './domain/NotesApp/models/NoteModel';
@@ -64,13 +68,7 @@ export {
 export class NotesService {
   private stopSubject = new Subject<unknown>();
   private stop$ = this.stopSubject.pipe(take(1));
-  syncState$ = new BehaviorSubject({
-    isSyncing: false,
-    pendingClientChangesCount: 0,
-    pendingServerChangesCount: 0,
-    isConnected: false,
-    isConnectedAndReadyToUse: false,
-  });
+  syncState$ = new BehaviorSubject<ISyncState>(defaultSyncState);
 
   constructor(
     private notesRepository: Remote<SqlNotesRepository>,
