@@ -415,7 +415,7 @@ export class NotesService {
         false,
       );
 
-      console.debug(`Loading Note#${id} from dexie`);
+      console.debug(`Loading Note#${id} from DB`);
 
       return this.vault.notesMap[id];
     }

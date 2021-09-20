@@ -167,7 +167,11 @@ export class ToDbSyncer {
     const noteResult = zipPatches((p) => p[0] === 'notesMap', notesPatches);
 
     const scopeToUpdateIds = scopesPatches
-      .map((p) => (p.path.length > 2 ? p.path[2] : undefined))
+      .map((p) =>
+        p.path.length > 4 && p.path[3] === 'collapsedBlockIds'
+          ? p.path[2]
+          : undefined,
+      )
       .filter((id) => id !== undefined) as string[];
 
     console.debug(

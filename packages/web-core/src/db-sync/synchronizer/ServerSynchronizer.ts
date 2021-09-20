@@ -2,7 +2,7 @@ import { merge, Subject, of, Observable, BehaviorSubject } from 'rxjs';
 import {
   concatMap,
   finalize,
-  mapTo,
+  map,
   switchMap,
   takeUntil,
   tap,
@@ -34,7 +34,7 @@ export class ServerSynchronizer {
   public isSyncing$ = new BehaviorSubject<boolean>(false);
 
   constructor(
-    private syncRepo: Remote<SyncRepository>,
+    syncRepo: Remote<SyncRepository>,
     applyChangesService: Remote<ApplyChangesService>,
     commandExecuter: CommandsExecuter,
     private serverConnector: ServerConnector,
@@ -77,45 +77,40 @@ export class ServerSynchronizer {
   handleOneCommandAtTimePipe() {
     let i = 0;
 
-    const changesEmitter = this.serverChangesReceiver.emitter(
-      this.serverConnector.channelSubject,
-      this.triggerGetChangesSubject,
-    );
-    const changesPipe = this.serverChangesReceiver.pipe();
-
-    const changesApplyAndSendEmitter = this.changesApplierAndSender.emitter();
-    const changesApplyAndSendPipe = this.changesApplierAndSender.pipe();
-
     // Only one command at once
     return merge(
-      changesEmitter.pipe(mapTo('getChanges' as const)),
-      changesApplyAndSendEmitter.pipe(mapTo('applyChangesAndSend' as const)),
+      this.changesApplierAndSender.get$().pipe(
+        map((observer) => ({
+          observer,
+          commandName: 'applyChangesAndSend' as const,
+        })),
+      ),
+      this.serverChangesReceiver
+        .get$(
+          this.serverConnector.channelSubject,
+          this.triggerGetChangesSubject,
+        )
+        .pipe(
+          map((observer) => ({
+            observer,
+            commandName: 'getChanges' as const,
+          })),
+        ),
     ).pipe(
       tap(() => {
         this.isSyncing$.next(true);
       }),
-      concatMap((command) => {
+      concatMap(({ observer, commandName }) => {
         const id = i++;
 
-        this.log(`[${id}] Executing command ${command}`);
+        this.log(`[${id}] Executing command ${commandName}`);
 
-        if (command === 'getChanges') {
-          return of(null).pipe(
-            changesPipe,
-            finalize(() => {
-              this.isSyncing$.next(false);
-              this.log(`[${id}] Done executing`);
-            }),
-          );
-        } else {
-          return of(null).pipe(
-            changesApplyAndSendPipe,
-            finalize(() => {
-              this.isSyncing$.next(false);
-              this.log(`[${id}] Done executing`);
-            }),
-          );
-        }
+        return observer.pipe(
+          finalize(() => {
+            this.isSyncing$.next(false);
+            this.log(`[${id}] Done executing`);
+          }),
+        );
       }),
     );
   }

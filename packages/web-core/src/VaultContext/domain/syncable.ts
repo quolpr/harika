@@ -1,9 +1,12 @@
 import { actionTrackingMiddleware, patchRecorder } from 'mobx-keystone';
 import type { PatchRecorder, SimpleActionContext, Patch } from 'mobx-keystone';
 
+// TODO: make withoutSync(() => ...) instead of ignore list
+
 const actionNamesToIgnore = [
   'createOrUpdateScopesFromAttrs',
   'createOrUpdateEntitiesFromAttrs',
+  'getOrCreateScopes',
 ];
 
 export function syncMiddleware(

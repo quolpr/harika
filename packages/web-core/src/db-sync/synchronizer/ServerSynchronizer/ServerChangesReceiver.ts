@@ -22,56 +22,53 @@ export class ServerChangesReceiver {
     private commandExecuter: CommandsExecuter,
   ) {}
 
-  emitter(
+  get$(
     channel$: Observable<Channel | undefined>,
     getChange$: Observable<unknown>,
-  ) {
-    return merge(
-      of(null),
-      channel$.pipe(
-        switchMap((channel) => {
-          return channel
-            ? new Observable((observer) => {
-                const ref = channel.on('revision_was_changed', () => {
-                  observer.next();
-                });
+  ): Observable<Observable<unknown>> {
+    const onNewChangeEvent$ = channel$.pipe(
+      switchMap((channel) => {
+        return channel
+          ? new Observable((observer) => {
+              const ref = channel.on('revision_was_changed', () => {
+                observer.next();
+              });
 
-                return () => channel.off('revision_was_changed', ref);
-              })
-            : of();
-        }),
-      ),
-      getChange$,
+              return () => channel.off('revision_was_changed', ref);
+            })
+          : of();
+      }),
     );
-  }
 
-  pipe() {
-    return pipe(
-      switchMap(() => this.syncRepo.getSyncStatus()),
-      switchMap((status) =>
-        this.commandExecuter
-          .send<GetChangesClientCommand>(CommandTypesFromClient.GetChanges, {
-            fromRevision: status.lastReceivedRemoteRevision,
-            includeSelf: false,
-          })
-          .pipe(map((res) => ({ res, syncStatus: status }))),
-      ),
-      concatMap(({ res, syncStatus }) => {
-        if (res === null) {
-          console.error('Failed to get changes');
+    return merge(of(null), onNewChangeEvent$, getChange$).pipe(
+      map(() => {
+        return of(null).pipe(
+          switchMap(() => this.syncRepo.getSyncStatus()),
+          switchMap((status) => this.getChanges(status)),
+          concatMap(({ res }) => {
+            if (res === null) {
+              console.error('Failed to get changes');
 
-          return of();
-        }
+              return of();
+            }
 
-        return this.storeReceivedChanges(res, syncStatus);
+            return this.storeReceivedChanges(res);
+          }),
+        );
       }),
     );
   }
 
-  private storeReceivedChanges = async (
-    res: GetChangesResponse,
-    syncStatus: ISyncStatus,
-  ) => {
+  private getChanges = (syncStatus: ISyncStatus) => {
+    return this.commandExecuter
+      .send<GetChangesClientCommand>(CommandTypesFromClient.GetChanges, {
+        fromRevision: syncStatus.lastReceivedRemoteRevision,
+        includeSelf: false,
+      })
+      .pipe(map((res) => ({ res, syncStatus })));
+  };
+
+  private storeReceivedChanges = async (res: GetChangesResponse) => {
     const pullId = v4();
 
     if (res.currentRevision !== null) {

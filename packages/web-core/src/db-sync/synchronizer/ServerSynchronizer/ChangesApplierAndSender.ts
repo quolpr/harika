@@ -6,7 +6,6 @@ import {
   merge,
   Observable,
   of,
-  pipe,
   Subject,
   switchMap,
 } from 'rxjs';
@@ -28,14 +27,14 @@ export class ChangesApplierAndSender {
     private onNewPull$: Observable<unknown>,
   ) {}
 
-  emitter() {
-    return merge(this.onNewChange$, of(null), this.onNewPull$);
-  }
-
-  pipe() {
-    return pipe(
-      switchMap(() => this.applyServerChanges()),
-      switchMap(() => this.sendChanges()),
+  get$(): Observable<Observable<unknown>> {
+    return merge(this.onNewChange$, of(null), this.onNewPull$).pipe(
+      map(() => {
+        return of(null).pipe(
+          switchMap(() => this.applyServerChanges()),
+          switchMap(() => this.sendChanges()),
+        );
+      }),
     );
   }
 

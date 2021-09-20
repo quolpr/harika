@@ -13,7 +13,6 @@ import {
   switchMap,
   takeUntil,
 } from 'rxjs/operators';
-import { BroadcastChannel, createLeaderElection } from 'broadcast-channel';
 import type Phoenix from 'phoenix';
 import { Socket } from 'phoenix';
 
@@ -141,27 +140,5 @@ export class ServerConnector {
         connector: () => new ReplaySubject(1),
       }),
     );
-
-    this.connectWhenElected();
-  }
-
-  private connectWhenElected() {
-    const channel = new BroadcastChannel(`dexieSync-${this.dbName}`);
-    // TODO: what to do with leader duplication?
-    const elector = createLeaderElection(channel);
-
-    elector.awaitLeadership().then(async () => {
-      const socket = new Socket(this.url, {
-        params: { token: this.authToken },
-      });
-      socket.connect();
-
-      const phoenixChannel = socket.channel('db_changes:' + this.dbName, {
-        client_id: this.clientId,
-      });
-
-      this.socketSubject.next(socket);
-      this.channelSubject.next(phoenixChannel);
-    });
   }
 }
