@@ -97,24 +97,16 @@ export class ToDomainSyncer {
       .map((ev) => {
         const noteBlock = this.vault.getNoteBlock(ev.key);
 
-        if (
-          ev.type === DatabaseChangeType.Create &&
-          this.vault.areBlocksOfNoteLoaded(ev.obj.noteId)
-        ) {
+        if (ev.type === DatabaseChangeType.Create) {
           return convertNoteBlockDocToModelAttrs(ev.obj);
         } else if (ev.type === DatabaseChangeType.Delete && noteBlock) {
           return {
-            ...noteBlock.$,
+            ...convertNoteBlockDocToModelAttrs(ev.obj),
             isDeleted: true,
           };
-        } else if (
-          ev.type === DatabaseChangeType.Update &&
-          (noteBlock ||
-            (ev.to.noteId && this.vault.areBlocksOfNoteLoaded(ev.to.noteId)))
-        ) {
+        } else if (ev.type === DatabaseChangeType.Update) {
           if (!ev.obj) throw new Error('obj should be present');
 
-          // Any changes we will load to mobx cause they may have refs
           return convertNoteBlockDocToModelAttrs(ev.obj);
         }
 
