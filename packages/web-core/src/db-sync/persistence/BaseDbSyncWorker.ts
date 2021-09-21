@@ -57,7 +57,7 @@ export abstract class BaseDbSyncWorker {
   isHealthOk() {
     const [result] = this.db.sqlExec('SELECT id, isOk FROM health_check;');
 
-    return isEqual(result.values, [['1', 1]]);
+    return isEqual(result.values, [[1, 1]]);
   }
 
   abstract getApplyChangesService(): ApplyChangesService & ProxyMarked;
