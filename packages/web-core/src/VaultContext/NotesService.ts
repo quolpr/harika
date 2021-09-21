@@ -104,7 +104,13 @@ export class NotesService {
 
     interval(5000)
       .pipe(
-        switchMap(() => worker.isHealthOk()),
+        switchMap(async () => {
+          try {
+            return worker.isHealthOk();
+          } catch {
+            return false;
+          }
+        }),
         takeUntil(this.stop$),
       )
       .subscribe((isOk) => {
