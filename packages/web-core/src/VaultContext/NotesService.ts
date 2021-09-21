@@ -17,6 +17,7 @@ import {
   mergeMap,
   switchMap,
   take,
+  takeUntil,
   tap,
 } from 'rxjs/operators';
 import { isEqual, uniq } from 'lodash-es';
@@ -26,6 +27,7 @@ import {
   BehaviorSubject,
   firstValueFrom,
   from,
+  interval,
   merge,
   Observable,
   of,
@@ -57,6 +59,7 @@ import {
   ISyncState,
 } from '../db-sync/synchronizer/init';
 import { BaseDbSyncWorker } from '../db-sync/persistence/BaseDbSyncWorker';
+import { VaultDbWorker } from './persistence/VaultDb.worker';
 
 export { NoteModel } from './domain/NotesApp/models/NoteModel';
 export { Vault } from './domain/Vault';
@@ -68,7 +71,10 @@ export {
 export class NotesService {
   private stopSubject = new Subject<unknown>();
   private stop$ = this.stopSubject.pipe(take(1));
+
   syncState$ = new BehaviorSubject<ISyncState>(defaultSyncState);
+  isSyncServerConnectionAllowed$ = new BehaviorSubject<boolean>(true);
+  isDbHealthOk$ = new BehaviorSubject<boolean>(true);
 
   constructor(
     private notesRepository: Remote<SqlNotesRepository>,
@@ -83,7 +89,7 @@ export class NotesService {
 
   async initSync(
     dbName: string,
-    worker: Remote<BaseDbSyncWorker>,
+    worker: Remote<VaultDbWorker>,
     wsUrl: string,
     authToken: string,
   ) {
@@ -93,7 +99,17 @@ export class NotesService {
       wsUrl,
       authToken,
       this.dbEventsService,
+      this.isSyncServerConnectionAllowed$,
     );
+
+    interval(5000)
+      .pipe(
+        switchMap(() => worker.isHealthOk()),
+        takeUntil(this.stop$),
+      )
+      .subscribe((isOk) => {
+        this.isDbHealthOk$.next(isOk);
+      });
 
     syncState$.subscribe((val) => this.syncState$.next(val));
   }

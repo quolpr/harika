@@ -65,6 +65,7 @@ export const initSync = async (
   url: string,
   authToken: string,
   eventsService: DbEventsService,
+  isServerConnectionAllowed$: Observable<boolean>,
 ) => {
   const stop$: Subject<void> = new Subject();
   const isLeader$ = getIsLeader$(dbName);
@@ -82,6 +83,7 @@ export const initSync = async (
     url,
     authToken,
     isLeader$,
+    isServerConnectionAllowed$,
     log,
     stop$,
   );
@@ -108,68 +110,64 @@ export const initSync = async (
   const getSyncState$ = (): Observable<ISyncState> => {
     const storageKey = `sync-state-${dbName}`;
 
-    const stateFormer = () => {
-      return merge(
-        eventsService.changesChannel$(),
-        eventsService.newSyncPullsChannel$(),
-        syncer.isSyncing$,
+    const stateFormer = merge(
+      eventsService.changesChannel$(),
+      eventsService.newSyncPullsChannel$(),
+      syncer.isSyncing$,
+      serverConnector.isConnected$,
+      serverConnector.isConnectedAndReadyToUse$,
+      interval(10_000),
+    ).pipe(
+      startWith(null),
+      switchMap(async () => {
+        const [serverCount, clientCount] =
+          await syncRepo.getServerAndClientChangesCount();
+
+        return {
+          isSyncing: syncer.isSyncing$.value,
+          pendingClientChangesCount: clientCount,
+          pendingServerChangesCount: serverCount,
+        };
+      }),
+      withLatestFrom(
         serverConnector.isConnected$,
+        (partialState, isConnected) => ({ ...partialState, isConnected }),
+      ),
+      withLatestFrom(
         serverConnector.isConnectedAndReadyToUse$,
-        interval(10_000),
-      ).pipe(
-        startWith(null),
-        switchMap(async () => {
-          const [serverCount, clientCount] =
-            await syncRepo.getServerAndClientChangesCount();
-
-          return {
-            isSyncing: syncer.isSyncing$.value,
-            pendingClientChangesCount: clientCount,
-            pendingServerChangesCount: serverCount,
-          };
+        (partialState, isConnectedAndReadyToUse) => ({
+          ...partialState,
+          isConnectedAndReadyToUse,
         }),
-        withLatestFrom(
-          serverConnector.isConnected$,
-          (partialState, isConnected) => ({ ...partialState, isConnected }),
-        ),
-        withLatestFrom(
-          serverConnector.isConnectedAndReadyToUse$,
-          (partialState, isConnectedAndReadyToUse) => ({
-            ...partialState,
-            isConnectedAndReadyToUse,
-          }),
-        ),
-        distinctUntilChanged((a, b) => isEqual(a, b)),
-        tap((state) => {
-          localStorage.setItem(storageKey, JSON.stringify(state));
-        }),
-        share({
-          connector: () => new ReplaySubject(1),
-        }),
-      );
-    };
+      ),
+      distinctUntilChanged((a, b) => isEqual(a, b)),
+      tap((state) => {
+        localStorage.setItem(storageKey, JSON.stringify(state));
+      }),
+      share({
+        connector: () => new ReplaySubject(1),
+      }),
+    );
 
-    const stateGetter = () => {
-      return new Observable<string | null>((obs) => {
-        console.log('start listening!');
-        const callback = () => {
-          obs.next(localStorage.getItem(storageKey));
-        };
-        window.addEventListener('storage', callback);
-
+    const stateGetter = new Observable<string | null>((obs) => {
+      console.log('start listening!');
+      const callback = () => {
         obs.next(localStorage.getItem(storageKey));
-        return () => {
-          window.removeEventListener('storage', callback);
-        };
-      }).pipe(
-        distinctUntilChanged(),
-        map((val): ISyncState => (val ? JSON.parse(val) : defaultSyncState)),
-      );
-    };
+      };
+      window.addEventListener('storage', callback);
+
+      obs.next(localStorage.getItem(storageKey));
+      return () => {
+        window.removeEventListener('storage', callback);
+      };
+    }).pipe(
+      distinctUntilChanged(),
+      map((val): ISyncState => (val ? JSON.parse(val) : defaultSyncState)),
+    );
 
     return isLeader$.pipe(
       switchMap((isLeader) => {
-        return isLeader ? stateFormer() : stateGetter();
+        return isLeader ? stateFormer : stateGetter;
       }),
       withLatestFrom(isLeader$, (partialState, isLeader) => ({
         ...partialState,

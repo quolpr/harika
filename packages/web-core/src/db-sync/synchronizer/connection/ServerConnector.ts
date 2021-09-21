@@ -5,6 +5,7 @@ import {
   of,
   ReplaySubject,
   BehaviorSubject,
+  combineLatest,
 } from 'rxjs';
 import {
   distinctUntilChanged,
@@ -27,31 +28,34 @@ export class ServerConnector {
     private clientId: string,
     private url: string,
     private authToken: string,
-    private isLeader$: Observable<boolean>,
+    isLeader$: Observable<boolean>,
+    isServerConnectionAllowed$: Observable<boolean>,
     private log: (str: string) => void,
     private stop$: Subject<void>,
   ) {
-    isLeader$.subscribe((isLeader) => {
-      if (isLeader) {
-        const socket = new Socket(this.url, {
-          params: { token: this.authToken },
-        });
-        socket.connect();
+    combineLatest([isLeader$, isServerConnectionAllowed$]).subscribe(
+      ([isLeader, isServerConnectionAllowed]) => {
+        if (isLeader && isServerConnectionAllowed) {
+          const socket = new Socket(this.url, {
+            params: { token: this.authToken },
+          });
+          socket.connect();
 
-        const phoenixChannel = socket.channel('db_changes:' + this.dbName, {
-          client_id: this.clientId,
-        });
+          const phoenixChannel = socket.channel('db_changes:' + this.dbName, {
+            client_id: this.clientId,
+          });
 
-        this.socketSubject.next(socket);
-        this.channelSubject.next(phoenixChannel);
-      } else {
-        this.channelSubject.value?.leave();
-        this.socketSubject.value?.disconnect();
+          this.socketSubject.next(socket);
+          this.channelSubject.next(phoenixChannel);
+        } else {
+          this.channelSubject.value?.leave();
+          this.socketSubject.value?.disconnect();
 
-        this.socketSubject.next(undefined);
-        this.channelSubject.next(undefined);
-      }
-    });
+          this.socketSubject.next(undefined);
+          this.channelSubject.next(undefined);
+        }
+      },
+    );
 
     const connect$ = this.socketSubject.pipe(
       switchMap((socket) =>

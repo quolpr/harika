@@ -15,6 +15,7 @@ import {
 import type { Remote } from 'comlink';
 import type { VaultDbWorker } from '../VaultContext/persistence/VaultDb.worker';
 import type { UserDbWorker } from './persistence/UserDb.worker';
+import { BehaviorSubject } from 'rxjs';
 
 const windowId = generateId();
 
@@ -52,6 +53,7 @@ export class VaultsService {
         this.config.wsUrl,
         this.config.authToken,
         this.dbEventsService,
+        new BehaviorSubject(true),
       );
     }
   }

@@ -12,6 +12,10 @@ export const SyncState = () => {
   const noteService = useNotesService();
 
   const syncState = useObservableEagerState(noteService.syncState$);
+  const isConnectionAllowed = useObservableEagerState(
+    noteService.isSyncServerConnectionAllowed$,
+  );
+  const isDbHealthOk = useObservableEagerState(noteService.isDbHealthOk$);
 
   const [isSyncing, setIsSyncing] = useState(syncState.isSyncing);
 
@@ -69,6 +73,16 @@ export const SyncState = () => {
             )}{' '}
             to the sync channel.
             <br />
+            DB health is{' '}
+            <b>
+              {isDbHealthOk ? (
+                <span style={{ color: 'green' }}>ok</span>
+              ) : (
+                <span style={{ color: 'red' }}>bad</span>
+              )}
+            </b>
+            .
+            <br />
             This tab is{' '}
             <b>{syncState.isLeader ? 'a leader' : 'not a leader'}</b>.
             <br />
@@ -76,6 +90,22 @@ export const SyncState = () => {
             <b>{syncState.pendingClientChangesCount}</b> pending client changes.
             <br />
             <b>{syncState.pendingServerChangesCount}</b> pending server changes.
+            <br />
+            <br />
+            <label>
+              <input
+                type="checkbox"
+                checked={isConnectionAllowed}
+                onChange={() => {
+                  noteService.isSyncServerConnectionAllowed$.next(
+                    !isConnectionAllowed,
+                  );
+                }}
+              />
+              <span style={{ marginLeft: 4, marginBottom: 2 }}>
+                Sync server connection allowed
+              </span>
+            </label>
           </div>
         }
       >

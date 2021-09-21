@@ -7,6 +7,7 @@ import type { ITransmittedChange } from './SyncRepository';
 import { SyncRepository } from './SyncRepository';
 import { BroadcastChannel } from 'broadcast-channel';
 import type { IInternalSyncCtx } from './syncCtx';
+import { isEqual } from 'lodash-es';
 
 export abstract class BaseDbSyncWorker {
   protected db!: DB<IInternalSyncCtx>;
@@ -51,6 +52,12 @@ export abstract class BaseDbSyncWorker {
 
   getSyncRepo() {
     return proxy(this.syncRepo);
+  }
+
+  isHealthOk() {
+    const [result] = this.db.sqlExec('SELECT id, isOk FROM health_check;');
+
+    return isEqual(result.values, [['1', 1]]);
   }
 
   abstract getApplyChangesService(): ApplyChangesService & ProxyMarked;

@@ -60,8 +60,11 @@ export class DB<Ctx extends object> {
 
   private inTransaction: boolean = false;
   private transactionCtx: Ctx | undefined;
+  private dbName: string = '';
 
-  async init(vaultId: string) {
+  async init(dbName: string) {
+    this.dbName = dbName;
+
     let SQL = await initSqlJs({
       locateFile: () => sqlWasmUrl,
     });
@@ -72,14 +75,14 @@ export class DB<Ctx extends object> {
     SQL.FS.mkdir('/blocked');
     SQL.FS.mount(sqlFS, {}, '/blocked');
 
-    const path = `/blocked/${vaultId}.sqlite`;
+    const path = `/blocked/${dbName}.sqlite`;
     if (typeof SharedArrayBuffer === 'undefined') {
       let stream = SQL.FS.open(path, 'a+');
       await stream.node.contents.readIfFallback();
       SQL.FS.close(stream);
     }
 
-    this.sqlDb = new SQL.Database(`/blocked/${vaultId}.sqlite`, {
+    this.sqlDb = new SQL.Database(`/blocked/${dbName}.sqlite`, {
       filename: true,
     });
 
@@ -243,6 +246,15 @@ export class DB<Ctx extends object> {
 
       CREATE INDEX IF NOT EXISTS idx_change_from_server_pullId ON ${serverChangesTable}(pullId);
     `);
+
+    this.sqlDb.exec(`
+      CREATE TABLE IF NOT EXISTS health_check (
+        id INTEGER PRIMARY KEY,
+        isOk BOOLEAN NOT NULL CHECK (isOk IN (0, 1))
+      );
+
+      INSERT OR REPLACE INTO health_check VALUES (1, 1);
+    `);
   }
 
   transaction<T extends any>(func: () => T, ctx?: Ctx): T {
@@ -278,7 +290,7 @@ export class DB<Ctx extends object> {
       const end = performance.now();
 
       console.debug(
-        'Done executing',
+        `[${this.dbName}] Done executing`,
         sql,
         params,
         `Time: ${((end - startTime) / 1000).toFixed(4)}s`,
@@ -286,7 +298,7 @@ export class DB<Ctx extends object> {
 
       return res;
     } catch (e) {
-      console.log('Failed execute', sql, params);
+      console.log(`[${this.dbName}] Failed execute`, sql, params);
       throw e;
     }
   }
