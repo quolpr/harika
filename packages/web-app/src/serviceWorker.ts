@@ -1,10 +1,6 @@
 import { ExpirationPlugin } from 'workbox-expiration';
 import { registerRoute } from 'workbox-routing';
-import {
-  CacheFirst,
-  NetworkOnly,
-  StaleWhileRevalidate,
-} from 'workbox-strategies';
+import { CacheFirst, NetworkOnly } from 'workbox-strategies';
 import { precacheAndRoute, PrecacheFallbackPlugin } from 'workbox-precaching';
 import { CacheableResponsePlugin } from 'workbox-cacheable-response';
 
@@ -13,13 +9,14 @@ import { CacheableResponsePlugin } from 'workbox-cacheable-response';
 // eslint-disable-next-line no-restricted-globals
 precacheAndRoute(self.__WB_MANIFEST);
 
+// Not sure why but it doesn't work
 // Cache the Google Fonts stylesheets with a stale-while-revalidate strategy.
-registerRoute(
-  ({ url }) => url.origin === 'https://fonts.googleapis.com',
-  new StaleWhileRevalidate({
-    cacheName: 'google-fonts-stylesheets',
-  }),
-);
+// registerRoute(
+//   ({ url }) => url.origin === 'https://fonts.googleapis.com',
+//   new StaleWhileRevalidate({
+//     cacheName: 'google-fonts-stylesheets',
+//   }),
+// );
 
 // Cache the underlying font files with a cache-first strategy for 1 year.
 registerRoute(
