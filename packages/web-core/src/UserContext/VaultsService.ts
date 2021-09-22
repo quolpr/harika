@@ -154,8 +154,7 @@ export class VaultsService {
 
     syncMiddleware(
       vault,
-      new ToDbSyncer(notesRepo, blocksRepo, viewsRepo, windowId, vault)
-        .handlePatch,
+      new ToDbSyncer(notesRepo, blocksRepo, viewsRepo, vault).handlePatch,
     );
     const eventsService = new DbEventsService(dbName);
 

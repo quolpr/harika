@@ -39,7 +39,8 @@ registerRoute(
 );
 
 registerRoute(
-  ({ request }) => request.mode === 'navigate',
+  ({ request, url }) =>
+    request.mode === 'navigate' && /harika\.io$/.test(url.host),
   new NetworkOnly({
     plugins: [
       new PrecacheFallbackPlugin({

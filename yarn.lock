@@ -2947,6 +2947,11 @@ backo2@^1.0.2:
   resolved "https://registry.yarnpkg.com/backo2/-/backo2-1.0.2.tgz#31ab1ac8b129363463e35b3ebb69f4dfcfba7947"
   integrity sha1-MasayLEpNjRj41s+u2n038+6eUc=
 
+backoff-rxjs@^6.5.7:
+  version "6.5.7"
+  resolved "https://registry.yarnpkg.com/backoff-rxjs/-/backoff-rxjs-6.5.7.tgz#876e8652487b5b5fdba7ddad7b4d2fff92bf4c96"
+  integrity sha512-j3pEcM5ivIxZhkZ+CcF8LVb5/jORNT4HCEnzavFfBkXSEJfx/WMtq79NKKp8Z0IDThgXxnlvzf41Gvajb4C2NQ==
+
 balanced-match@^1.0.0:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/balanced-match/-/balanced-match-1.0.2.tgz#e83e3a7e3f300b34cb9d87f615fa0cbf357690ee"

@@ -3,6 +3,10 @@ import ReactDOM from 'react-dom';
 import { Workbox } from 'workbox-window';
 import { App } from './App';
 
+window.addEventListener('error', function (e) {
+  alert(`Unhandled error happened "${e.message}" — please, restart the app.`);
+});
+
 if (import.meta.env.MODE === 'production' && 'serviceWorker' in navigator) {
   console.log('Starting service worker');
 

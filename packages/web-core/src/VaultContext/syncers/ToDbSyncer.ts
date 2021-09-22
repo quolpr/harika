@@ -1,8 +1,8 @@
 import type { Remote } from 'comlink';
 import { uniq } from 'lodash-es';
 import type { Patch, Path } from 'mobx-keystone';
-import { Subject } from 'rxjs';
-import { buffer, concatMap, debounceTime, tap } from 'rxjs/operators';
+import { BehaviorSubject, defer } from 'rxjs';
+import { buffer, concatMap, debounceTime, map } from 'rxjs/operators';
 import type { BaseSyncRepository } from '../../db-sync/persistence/BaseSyncRepository';
 import type { NoteBlockModel } from '../domain/NoteBlocksApp/models/NoteBlockModel';
 import type { Vault } from '../NotesService';
@@ -14,6 +14,7 @@ import {
   mapNote,
   mapNoteBlock,
 } from '../converters/toDbDocsConverters';
+import { retryBackoff } from 'backoff-rxjs';
 
 // TODO: type rootKey
 const zipPatches = (selector: (path: Path) => boolean, patches: Patch[]) => {
@@ -107,31 +108,42 @@ const getBlocksPatches = (
 };
 
 export class ToDbSyncer {
-  patchesSubject: Subject<Patch>;
+  private onwNewPatch: BehaviorSubject<true> = new BehaviorSubject(true);
+  private currentPatches: Patch[] = [];
 
   constructor(
     private notesRepository: Remote<SqlNotesRepository>,
     private notesBlocksRepository: Remote<SqlNotesBlocksRepository>,
     private blocksScopesRepository: Remote<BlocksScopesRepository>,
-    private windowId: string,
     private vault: Vault,
-    onPatchesApplied?: () => void,
   ) {
-    this.patchesSubject = new Subject<Patch>();
-
-    this.patchesSubject
+    this.onwNewPatch
       .pipe(
-        buffer(this.patchesSubject.pipe(debounceTime(400))),
-        concatMap((patches) => this.applyPatches(patches)),
-        tap(() => onPatchesApplied?.()),
+        buffer(this.onwNewPatch.pipe(debounceTime(400))),
+        map(() => [...this.currentPatches]),
+        concatMap((patches) => {
+          return defer(() => this.applyPatches(patches)).pipe(
+            retryBackoff({
+              initialInterval: 500,
+              maxRetries: 5,
+              // 👇 resets retries count and delays between them to init values
+              resetOnSuccess: true,
+            }),
+          );
+        }),
       )
-      .subscribe();
+      .subscribe({
+        error: (e: unknown) => {
+          console.error('Failed to save changes to db!');
+
+          throw e;
+        },
+      });
   }
 
   handlePatch = (patches: Patch[]) => {
-    patches.forEach((patch) => {
-      this.patchesSubject.next(patch);
-    });
+    this.currentPatches.push(...patches);
+    this.onwNewPatch.next(true);
   };
 
   private applyPatches = async (allPatches: Patch[]) => {
