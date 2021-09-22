@@ -1,7 +1,7 @@
 import type { Remote } from 'comlink';
 import { uniq } from 'lodash-es';
 import type { Patch, Path } from 'mobx-keystone';
-import { BehaviorSubject, defer } from 'rxjs';
+import { BehaviorSubject, defer, Subject } from 'rxjs';
 import { buffer, concatMap, debounceTime, map } from 'rxjs/operators';
 import type { BaseSyncRepository } from '../../db-sync/persistence/BaseSyncRepository';
 import type { NoteBlockModel } from '../domain/NoteBlocksApp/models/NoteBlockModel';
@@ -108,8 +108,7 @@ const getBlocksPatches = (
 };
 
 export class ToDbSyncer {
-  private onwNewPatch: BehaviorSubject<true> = new BehaviorSubject(true);
-  private currentPatches: Patch[] = [];
+  private patches$: Subject<Patch[]> = new Subject();
 
   constructor(
     private notesRepository: Remote<SqlNotesRepository>,
@@ -117,16 +116,15 @@ export class ToDbSyncer {
     private blocksScopesRepository: Remote<BlocksScopesRepository>,
     private vault: Vault,
   ) {
-    this.onwNewPatch
+    this.patches$
       .pipe(
-        buffer(this.onwNewPatch.pipe(debounceTime(400))),
-        map(() => [...this.currentPatches]),
+        buffer(this.patches$.pipe(debounceTime(400))),
+        map((patches) => patches.flat()),
         concatMap((patches) => {
           return defer(() => this.applyPatches(patches)).pipe(
             retryBackoff({
               initialInterval: 500,
               maxRetries: 5,
-              // 👇 resets retries count and delays between them to init values
               resetOnSuccess: true,
             }),
           );
@@ -142,8 +140,7 @@ export class ToDbSyncer {
   }
 
   handlePatch = (patches: Patch[]) => {
-    this.currentPatches.push(...patches);
-    this.onwNewPatch.next(true);
+    this.patches$.next(patches);
   };
 
   private applyPatches = async (allPatches: Patch[]) => {

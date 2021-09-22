@@ -40,7 +40,7 @@ export const SyncState = () => {
       <Tippy
         touch="hold"
         interactive
-        delay={[0, 500]}
+        delay={[0, 200]}
         content={
           <div className={syncStateClass('info')}>
             {isSynced

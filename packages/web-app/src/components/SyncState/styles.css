@@ -10,6 +10,7 @@
 .syncState__info {
   font-size: 1rem;
   padding: 5px;
+  min-width: 300px;
 }
 
 .syncState__dot {
