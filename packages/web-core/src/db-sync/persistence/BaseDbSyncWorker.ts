@@ -8,6 +8,7 @@ import { SyncRepository } from './SyncRepository';
 import { BroadcastChannel } from 'broadcast-channel';
 import type { IInternalSyncCtx } from './syncCtx';
 import { isEqual } from 'lodash-es';
+import { suppressLog } from '../../db/suppressLog';
 
 export abstract class BaseDbSyncWorker {
   protected db!: DB<IInternalSyncCtx>;
@@ -55,7 +56,9 @@ export abstract class BaseDbSyncWorker {
   }
 
   isHealthOk() {
-    const [result] = this.db.sqlExec('SELECT id, isOk FROM health_check;');
+    const [result] = suppressLog(() =>
+      this.db.sqlExec('SELECT id, isOk FROM health_check;'),
+    );
 
     return isEqual(result.values, [[1, 1]]);
   }

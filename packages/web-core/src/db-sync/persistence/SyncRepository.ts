@@ -3,6 +3,7 @@ import type { Overwrite, Required } from 'utility-types';
 import { v4 as uuidv4 } from 'uuid';
 import { getCtxStrict } from '../../db/ctx';
 import type { DB } from '../../db/DB';
+import { suppressLog } from '../../db/suppressLog';
 import type {
   ICreateChange,
   IDeleteChange,
@@ -260,17 +261,19 @@ export class SyncRepository {
   }
 
   getServerAndClientChangesCount() {
-    const [serverResult] = this.db.execQuery(
-      Q.select('COUNT(*)').from(serverChangesTable),
-    );
-    const [clientResult] = this.db.execQuery(
-      Q.select('COUNT(*)').from(clientChangesTable),
-    );
+    return suppressLog(() => {
+      const [serverResult] = this.db.execQuery(
+        Q.select('COUNT(*)').from(serverChangesTable),
+      );
+      const [clientResult] = this.db.execQuery(
+        Q.select('COUNT(*)').from(clientChangesTable),
+      );
 
-    return [
-      serverResult.values[0][0] as number,
-      clientResult.values[0][0] as number,
-    ];
+      return [
+        serverResult.values[0][0] as number,
+        clientResult.values[0][0] as number,
+      ];
+    });
   }
 
   getServerChangesByPullIds(pullIds: string[]): IServerChangeDoc[] {

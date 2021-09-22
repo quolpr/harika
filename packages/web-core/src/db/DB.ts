@@ -25,6 +25,7 @@ import {
   syncStatusTable,
 } from '../db-sync/persistence/SyncRepository';
 import { blocksScopesTable } from '../VaultContext/persistence/BlockScopesRepository';
+import { getIsLogSuppressing } from './suppressLog';
 
 // @ts-ignore
 Q.update.defineClause('or', '{{#if _or}}OR {{_or}}{{/if}}', {
@@ -291,12 +292,14 @@ export class DB<Ctx extends object> {
       const res = this.sqlDb.exec(sql, params);
       const end = performance.now();
 
-      console.debug(
-        `[${this.dbName}] Done executing`,
-        sql,
-        params,
-        `Time: ${((end - startTime) / 1000).toFixed(4)}s`,
-      );
+      if (!getIsLogSuppressing()) {
+        console.debug(
+          `[${this.dbName}] Done executing`,
+          sql,
+          params,
+          `Time: ${((end - startTime) / 1000).toFixed(4)}s`,
+        );
+      }
 
       return res;
     } catch (e) {
