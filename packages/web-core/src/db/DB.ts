@@ -196,6 +196,7 @@ export class DB<Ctx extends object> {
 
     const sql = `
       CREATE TRIGGER IF NOT EXISTS populateNoteBlocksNotesTable_insert AFTER INSERT ON ${noteBlocksTable} BEGIN
+        DELETE FROM ${noteBlocksNotesTable} WHERE noteBlockId = new.id;
         INSERT INTO ${noteBlocksNotesTable}(noteId, noteBlockId) SELECT j.value, new.id FROM json_each(new.linkedNoteIds) AS j;
       END;
 
