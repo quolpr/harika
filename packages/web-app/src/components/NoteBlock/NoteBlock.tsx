@@ -1,20 +1,14 @@
 import React, { useCallback, useRef } from 'react';
 import './styles.css';
 import clsx from 'clsx';
-import TextareaAutosize from 'react-textarea-autosize';
 import { observer } from 'mobx-react-lite';
 import type { BlocksScope, ScopedBlock } from '@harika/web-core';
 import { Arrow } from '../Arrow/Arrow';
 import { computed } from 'mobx';
 import { TokensRenderer } from './TokensRenderer';
-import {
-  useProvideInputToContext,
-  useUpdateBlockLinks,
-} from './hooks/otherHooks';
-import { useFocusHandler } from './hooks/useFocusHandler';
-import { useHandleInput } from './hooks/useHandleInput';
-import { NoteTitleAutocomplete } from './NoteTitleAutocomplete/NoteTitleAutocomplete';
+import { useFakeInput } from './BlockEditor/hooks/useFocusHandler';
 import { useCurrentFocusedBlockState } from '../../hooks/useFocusedBlockState';
+import { BlockEditor } from './BlockEditor/BlockEditor';
 
 // IMPORTANT: don't use any global handlers in <NoteBlock /> (document.addEventListener) cause it is slow down note blocks tree a lot
 
@@ -53,37 +47,74 @@ const NoteBlockBody = observer(
     isExpanded: boolean;
   }) => {
     const noteBlockBodyElRef = useRef<HTMLDivElement>(null);
-    const inputRef = useRef<HTMLTextAreaElement | null>(null);
+    const fakeInputHolderRef = useRef<HTMLDivElement | null>(null);
 
-    const [editState] = useCurrentFocusedBlockState(
+    const { insertFakeInput, releaseFakeInput } =
+      useFakeInput(fakeInputHolderRef);
+
+    const [editState, setEditState] = useCurrentFocusedBlockState(
       scope.$modelId,
       noteBlock.$modelId,
     );
     const { isEditing } = editState;
-    useProvideInputToContext(inputRef, isEditing);
-    useUpdateBlockLinks(noteBlock, editState);
-    const {
-      handleInputBlur,
-      insertFakeInput,
-      releaseFakeInput,
-      handleContentClick,
-      handleContentKeyPress,
-    } = useFocusHandler(scope, noteBlock, inputRef, noteBlockBodyElRef);
-    const { textareaHandlers, noteTitleToSearch, handleSearchSelect } =
-      useHandleInput(
-        scope,
-        noteBlock,
-        noteBlockBodyElRef,
-        inputRef,
-        insertFakeInput,
-        releaseFakeInput,
-      );
 
     const handleToggle = useCallback(() => {
       scope.toggleExpand(noteBlock.$modelId);
     }, [noteBlock.$modelId, scope]);
 
-    const inputId = `${scope.$modelId}-${noteBlock.$modelId}`;
+    const contentLength = noteBlock.content.value.length;
+
+    const handleContentClick = useCallback(
+      (e: React.MouseEvent<HTMLDivElement>) => {
+        e.preventDefault();
+
+        if (e.shiftKey) return;
+
+        let startAt = contentLength;
+
+        if (e.target instanceof HTMLElement) {
+          if (e.target.dataset.notEditable) return;
+
+          // TODO: no FF support
+          const range = document.caretRangeFromPoint(e.clientX, e.clientY);
+
+          if (e.target.dataset.offsetStart) {
+            startAt =
+              parseInt(e.target.dataset.offsetStart, 10) +
+              (range?.startOffset || 0);
+          }
+
+          if (noteBlockBodyElRef.current) {
+            insertFakeInput();
+          }
+        }
+
+        setEditState({
+          scopeId: scope.$modelId,
+          scopedBlockId: noteBlock.$modelId,
+          isEditing: true,
+          startAt,
+        });
+      },
+      [
+        contentLength,
+        setEditState,
+        scope.$modelId,
+        noteBlock.$modelId,
+        insertFakeInput,
+      ],
+    );
+
+    const handleContentKeyPress = (e: React.KeyboardEvent<HTMLSpanElement>) => {
+      if (e.key === 'Enter' && e.target === e.currentTarget) {
+        setEditState({
+          scopeId: scope.$modelId,
+          scopedBlockId: noteBlock.$modelId,
+          isEditing: true,
+          startAt: 0,
+        });
+      }
+    };
 
     return (
       <>
@@ -106,30 +137,13 @@ const NoteBlockBody = observer(
         {/*     'note-block__outline--show': isFocused, */}
         {/*   })} */}
         {/* > */}
-        <div
-          className={clsx('note-block__input-container', {
-            'note-block__input-container--hidden': !isEditing,
-          })}
-        >
-          <label htmlFor={inputId} className="hidden-label">
-            NoteModel block content
-          </label>
 
-          <TextareaAutosize
-            id={inputId}
-            ref={inputRef}
-            className={clsx('note-block__content', {})}
-            value={noteBlock.content.value}
-            onBlur={handleInputBlur}
-            {...textareaHandlers}
-          />
-          {noteTitleToSearch && (
-            <NoteTitleAutocomplete
-              value={noteTitleToSearch}
-              onSelect={handleSearchSelect}
-            />
-          )}
-        </div>
+        <BlockEditor
+          scope={scope}
+          noteBlock={noteBlock}
+          insertFakeInput={insertFakeInput}
+          releaseFakeInput={releaseFakeInput}
+        />
 
         <span
           onMouseDown={handleContentClick}

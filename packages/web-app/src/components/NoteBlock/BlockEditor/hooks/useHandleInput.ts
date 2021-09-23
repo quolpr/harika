@@ -1,18 +1,17 @@
 import { BlocksScope, ScopedBlock, parseStringToTree } from '@harika/web-core';
 import { RefObject, useCallback, useContext, useState } from 'react';
-import { useNotesService } from '../../../contexts/CurrentNotesServiceContext';
-import { ShiftPressedContext } from '../../../contexts/ShiftPressedContext';
-import { useCurrentFocusedBlockState } from '../../../hooks/useFocusedBlockState';
-import { isIOS, insertText } from '../../../utils';
+import { useNotesService } from '../../../../contexts/CurrentNotesServiceContext';
+import { ShiftPressedContext } from '../../../../contexts/ShiftPressedContext';
+import { useCurrentFocusedBlockState } from '../../../../hooks/useFocusedBlockState';
+import { isIOS, insertText } from '../../../../utils';
 import type { SearchedNote } from '../NoteTitleAutocomplete/NoteTitleAutocomplete';
-import { getTokensAtCursor } from '../utils';
+import { getTokensAtCursor } from '../../utils';
 
 export const useHandleInput = (
   scope: BlocksScope,
   block: ScopedBlock,
-  noteBlockElRef: RefObject<HTMLDivElement | null>,
   inputRef: RefObject<HTMLTextAreaElement | null>,
-  insertFakeInput: (el?: HTMLElement) => void,
+  insertFakeInput: () => void,
   releaseFakeInput: () => void,
 ) => {
   const [, setEditState] = useCurrentFocusedBlockState(
@@ -40,13 +39,10 @@ export const useHandleInput = (
 
         const { focusOn, focusStartAt } = block.handleEnterPress(start);
 
-        if (noteBlockElRef.current) {
-          // New blockView is still not available in DOM,
-          // so lets insert fake input near current block
-          insertFakeInput(noteBlockElRef.current);
-
-          setTimeout(releaseFakeInput, 0);
-        }
+        // New blockView is still not available in DOM,
+        // so lets insert fake input near current block
+        insertFakeInput();
+        setTimeout(releaseFakeInput, 0);
 
         if (focusOn) {
           setEditState({
@@ -61,7 +57,6 @@ export const useHandleInput = (
     [
       isSearching,
       block,
-      noteBlockElRef,
       setEditState,
       scope.$modelId,
       insertFakeInput,
@@ -106,9 +101,7 @@ export const useHandleInput = (
           const mergedTo = block.mergeToLeftAndDelete();
 
           if (mergedTo) {
-            if (noteBlockElRef.current) {
-              insertFakeInput();
-            }
+            insertFakeInput();
 
             setEditState({
               scopeId: scope.$modelId,
@@ -205,14 +198,7 @@ export const useHandleInput = (
         e.currentTarget.blur();
       }
     },
-    [
-      block,
-      setEditState,
-      scope.$modelId,
-      noteBlockElRef,
-      insertFakeInput,
-      isSearching,
-    ],
+    [block, setEditState, scope.$modelId, insertFakeInput, isSearching],
   );
 
   const handleCaretChange = useCallback(

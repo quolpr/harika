@@ -24,6 +24,7 @@
     "@tippyjs/react": "^4.2.5",
     "buffer": "^6.0.3",
     "bufferutil": "^4.0.3",
+    "caret-pos": "^2.0.0",
     "clsx": "^1.1.1",
     "downloadjs": "^1.4.7",
     "graphql": "^15.5.3",
