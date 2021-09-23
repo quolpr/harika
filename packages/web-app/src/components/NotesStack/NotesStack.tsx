@@ -1,5 +1,5 @@
 import { observer } from 'mobx-react-lite';
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useContext, useEffect, useRef } from 'react';
 import { useMedia } from 'react-use';
 import { CurrentNoteContext } from '../../hooks/useCurrentNote';
 import { cn } from '../../utils';
@@ -12,6 +12,7 @@ import { useFindNote } from './useFindNote';
 import { useHistory, useLocation } from 'react-router-dom';
 import { paths } from '../../paths';
 import { useCurrentVault } from '../../hooks/useCurrentVault';
+import { ContainerElRefContext } from '../../contexts/ContainerElRefContext';
 
 const notesStackClass = cn('notes-stack');
 
@@ -47,6 +48,8 @@ const NoteStack = observer(
     const history = useHistory();
     const vaultId = useCurrentVault().$modelId;
     const { note, isLoading } = useFindNote(noteId);
+
+    const rowRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
       setTimeout(() => {
@@ -85,23 +88,25 @@ const NoteStack = observer(
     }, [history, isLast, location.pathname, location.search, noteId, vaultId]);
 
     return (
-      <div className={notesStackClass('row')}>
-        {!isSingle && (
-          <button
-            className={notesStackClass('close-btn')}
-            onClick={handleClose}
-          >
-            <XIcon style={{ width: 20 }} />
-          </button>
-        )}
+      <div className={notesStackClass('row')} ref={rowRef}>
+        <ContainerElRefContext.Provider value={rowRef}>
+          {!isSingle && (
+            <button
+              className={notesStackClass('close-btn')}
+              onClick={handleClose}
+            >
+              <XIcon style={{ width: 20 }} />
+            </button>
+          )}
 
-        {isLoading && 'Loading...'}
-        {note && !isLoading && (
-          <CurrentNoteContext.Provider value={note}>
-            <Note note={note} />
-          </CurrentNoteContext.Provider>
-        )}
-        {!note && !isLoading && 'NoteModel not found :('}
+          {isLoading && 'Loading...'}
+          {note && !isLoading && (
+            <CurrentNoteContext.Provider value={note}>
+              <Note note={note} />
+            </CurrentNoteContext.Provider>
+          )}
+          {!note && !isLoading && 'NoteModel not found :('}
+        </ContainerElRefContext.Provider>
       </div>
     );
   },

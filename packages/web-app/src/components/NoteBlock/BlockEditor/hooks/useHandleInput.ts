@@ -6,6 +6,7 @@ import { useCurrentFocusedBlockState } from '../../../../hooks/useFocusedBlockSt
 import { isIOS, insertText } from '../../../../utils';
 import type { SearchedNote } from '../NoteTitleAutocomplete/NoteTitleAutocomplete';
 import { getTokensAtCursor } from '../../utils';
+import { Pos, position } from 'caret-pos';
 
 export const useHandleInput = (
   scope: BlocksScope,
@@ -14,6 +15,8 @@ export const useHandleInput = (
   insertFakeInput: () => void,
   releaseFakeInput: () => void,
 ) => {
+  const [caretPos, setCaretPos] = useState<Pos | undefined>();
+
   const [, setEditState] = useCurrentFocusedBlockState(
     scope.$modelId,
     block.$modelId,
@@ -277,6 +280,8 @@ export const useHandleInput = (
       } else {
         setNoteTitleToSearch(undefined);
       }
+
+      setCaretPos(position(e.target));
     },
     [block],
   );
@@ -332,5 +337,6 @@ export const useHandleInput = (
     handleChange,
     noteTitleToSearch,
     handleSearchSelect,
+    caretPos,
   };
 };
