@@ -208,7 +208,7 @@ const TokenRenderer = observer(
           </pre>
         );
       case 'codeBlock':
-        const trimmedStart = token.content.trimStart();
+        const trimmedStart = token.content.replace(/^\n/g, '');
 
         return (
           <pre
