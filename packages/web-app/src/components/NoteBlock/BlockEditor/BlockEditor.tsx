@@ -74,7 +74,7 @@ export const BlockEditor = observer(
             value={noteTitleToSearch}
             onSelect={handleSearchSelect}
             caretPos={caretPos}
-            wrapperRef={wrapperRef}
+            holderRef={wrapperRef}
           />
         )}
       </div>
