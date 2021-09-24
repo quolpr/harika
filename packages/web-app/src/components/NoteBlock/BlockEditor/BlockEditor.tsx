@@ -11,6 +11,7 @@ import {
 } from './hooks/otherHooks';
 import { useHandleInput } from './hooks/useHandleInput';
 import { observer } from 'mobx-react-lite';
+import { EditorCommandsDropdown } from './EditorCommandsDropdown/EditorCommandsDropdown';
 
 export const BlockEditor = observer(
   ({
@@ -38,7 +39,9 @@ export const BlockEditor = observer(
     const {
       textareaHandlers,
       noteTitleToSearch,
+      commandToSearch,
       handleSearchSelect,
+      handleCommandSelect,
       caretPos,
     } = useHandleInput(
       scope,
@@ -73,6 +76,14 @@ export const BlockEditor = observer(
           <NoteTitleAutocomplete
             value={noteTitleToSearch}
             onSelect={handleSearchSelect}
+            caretPos={caretPos}
+            holderRef={wrapperRef}
+          />
+        )}
+        {commandToSearch !== undefined && (
+          <EditorCommandsDropdown
+            value={commandToSearch}
+            onSelect={handleCommandSelect}
             caretPos={caretPos}
             holderRef={wrapperRef}
           />

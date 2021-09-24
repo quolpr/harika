@@ -71,7 +71,7 @@ export const initSync = async (
   const isLeader$ = getIsLeader$(dbName);
 
   const log = (msg: string) => {
-    console.debug(`[${dbName}] ${msg}`);
+    // console.debug(`[${dbName}] ${msg}`);
   };
 
   const syncRepo = await dbWorker.getSyncRepo();

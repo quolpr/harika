@@ -7,6 +7,18 @@ import { isIOS, insertText } from '../../../../utils';
 import type { SearchedNote } from '../NoteTitleAutocomplete/NoteTitleAutocomplete';
 import { getTokensAtCursor } from '../../utils';
 import { Pos, position } from 'caret-pos';
+import dayjs from 'dayjs';
+import { ICommand } from '../EditorCommandsDropdown/EditorCommandsDropdown';
+
+const symmetricCommands: { [P in ICommand['id']]?: string } = {
+  pageRef: '[[]]',
+  bold: '****',
+  italics: '____',
+  highlight: '^^^^',
+  strikethrough: '~~~~',
+  codeInline: '``',
+  codeBlock: '```\n\n```',
+};
 
 export const useHandleInput = (
   scope: BlocksScope,
@@ -26,6 +38,15 @@ export const useHandleInput = (
     string | undefined
   >(undefined);
 
+  const [commandToSearch, setCommandToSearch] = useState<string | undefined>(
+    undefined,
+  );
+  const [commandToSearchStartPos, setCommandToSearchStartPos] = useState<
+    number | undefined
+  >(undefined);
+
+  // TODO: add commandToSearch support here
+  // add isSearchDisplayedRef
   const isSearching = Boolean(noteTitleToSearch);
 
   const noteRepo = useNotesService();
@@ -33,6 +54,18 @@ export const useHandleInput = (
   const handleKeyPress = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
       const start = e.currentTarget.selectionStart;
+
+      // if (e.key === '/' && commandToSearch === undefined) {
+      //   setCommandToSearch('');
+      // } else {
+      //   setCommandToSearch((current) => {
+      //     if (current === undefined) return current;
+
+      //     if (/^[a-z0-9 ]$/i.test(e.key)) {
+      //       return current + e.key;
+      //     }
+      //   });
+      // }
 
       // on ios sometime shiftKey === caps lock
       if (e.key === 'Enter' && (isIOS || !e.shiftKey)) {
@@ -60,10 +93,10 @@ export const useHandleInput = (
     [
       isSearching,
       block,
-      setEditState,
-      scope.$modelId,
       insertFakeInput,
       releaseFakeInput,
+      setEditState,
+      scope.$modelId,
     ],
   );
 
@@ -281,6 +314,22 @@ export const useHandleInput = (
         setNoteTitleToSearch(undefined);
       }
 
+      const splited = block.content.value.slice(0, end).split('/');
+
+      if (splited.length >= 2) {
+        setCommandToSearch(splited[splited.length - 1]);
+        setCommandToSearchStartPos(
+          splited.reduce((sum, chunk, i) => {
+            return sum + (i === splited.length - 1 ? 0 : chunk.length);
+          }, 0) +
+            splited.length -
+            1,
+        );
+      } else {
+        setCommandToSearch(undefined);
+        setCommandToSearchStartPos(undefined);
+      }
+
       setCaretPos(position(e.target));
     },
     [block],
@@ -319,6 +368,42 @@ export const useHandleInput = (
     [inputRef, block.content.ast],
   );
 
+  const handleCommandSelect = useCallback(
+    (command: ICommand) => {
+      if (
+        !inputRef.current ||
+        commandToSearch === undefined ||
+        commandToSearchStartPos === undefined
+      )
+        return;
+      const input = inputRef.current;
+
+      const symmetricToInsert = symmetricCommands[command.id];
+
+      if (symmetricToInsert) {
+        insertText(input, symmetricToInsert, symmetricToInsert.length / 2, {
+          start: commandToSearchStartPos - 1,
+          end: commandToSearchStartPos + commandToSearch.length,
+        });
+      } else if (command.id === 'todo') {
+        const toInsert = '[[TODO]] ';
+
+        insertText(input, toInsert, toInsert.length, {
+          start: commandToSearchStartPos - 1,
+          end: commandToSearchStartPos + commandToSearch.length,
+        });
+      } else if (command.id === 'currentTime') {
+        const toInsert = `${dayjs().format('HH:mm')} `;
+
+        insertText(input, toInsert, toInsert.length, {
+          start: commandToSearchStartPos - 1,
+          end: commandToSearchStartPos + commandToSearch.length,
+        });
+      }
+    },
+    [commandToSearch, commandToSearchStartPos, inputRef],
+  );
+
   return {
     textareaHandlers: {
       onKeyUp: handleCaretChange,
@@ -336,7 +421,9 @@ export const useHandleInput = (
     },
     handleChange,
     noteTitleToSearch,
+    commandToSearch,
     handleSearchSelect,
+    handleCommandSelect,
     caretPos,
   };
 };

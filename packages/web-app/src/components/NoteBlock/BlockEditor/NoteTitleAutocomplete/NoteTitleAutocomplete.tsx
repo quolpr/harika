@@ -12,7 +12,7 @@ import {
   EditorDropdown,
   editorDropdownClass,
   IDropdownItem,
-} from '../../../EditorDropdown/EditorDropdown';
+} from '../EditorDropdown/EditorDropdown';
 
 export type SearchedNote = { id: string; title: string };
 export const noteAutocompleteClass = cn('note-autocomplete');

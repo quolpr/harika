@@ -56,6 +56,19 @@ export const Toolbar = observer(({ scope }: { scope: BlocksScope }) => {
     [currentBlockInputRef],
   );
 
+  const handleCommandPress = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+
+      const el = currentBlockInputRef.current;
+
+      if (el) {
+        insertText(el, '/');
+      }
+    },
+    [currentBlockInputRef],
+  );
+
   const handleBracketPress = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();
@@ -168,6 +181,27 @@ export const Toolbar = observer(({ scope }: { scope: BlocksScope }) => {
         <div className={toolbarClass()} ref={elRef}>
           <div className={toolbarClass('content')}>
             <button
+              className={toolbarClass('button')}
+              onMouseDown={handleCommandPress}
+              aria-label="Show editor command"
+            >
+              /
+            </button>
+            <button
+              className={toolbarClass('button')}
+              onMouseDown={handleTodoPress}
+              aria-label="Add TODO"
+            >
+              <CheckBox />
+            </button>
+            <button
+              className={toolbarClass('button')}
+              onMouseDown={handleBracketPress}
+              aria-label="Add note ref"
+            >
+              [[
+            </button>
+            <button
               onMouseDown={handleMoveDownPress}
               className={toolbarClass('button')}
               aria-label="Increase indent"
@@ -196,29 +230,13 @@ export const Toolbar = observer(({ scope }: { scope: BlocksScope }) => {
               <ArrowDropUp />
             </button>
 
-            <button
-              className={toolbarClass('button')}
-              onMouseDown={handleBracketPress}
-              aria-label="Add note ref"
-            >
-              [[
-            </button>
-
-            <button
-              className={toolbarClass('button')}
-              onMouseDown={handleTodoPress}
-              aria-label="Add TODO"
-            >
-              <CheckBox />
-            </button>
-
-            <button
-              className={toolbarClass('button')}
-              data-defocus
-              aria-label="Hide keyboard"
-            >
-              <KeyboardHide />
-            </button>
+            {/* <button */}
+            {/*   className={toolbarClass('button')} */}
+            {/*   data-defocus */}
+            {/*   aria-label="Hide keyboard" */}
+            {/* > */}
+            {/*   <KeyboardHide /> */}
+            {/* </button> */}
           </div>
         </div>,
         footerRef.current,

@@ -3,7 +3,7 @@ import React from 'react';
 import { MutableRefObject, useEffect, useRef, useState } from 'react';
 import scrollIntoView from 'scroll-into-view-if-needed';
 import useResizeObserver from 'use-resize-observer';
-import { bem } from '../../utils';
+import { bem } from '../../../../utils';
 import './styles.css';
 
 export type IDropdownItem = {
@@ -13,7 +13,7 @@ export type IDropdownItem = {
 
 export const editorDropdownClass = bem('editorDropdown');
 
-export const EditorDropdown = ({
+export const EditorDropdown = <T extends IDropdownItem>({
   items,
   holderRef,
   onClick,
@@ -21,12 +21,12 @@ export const EditorDropdown = ({
   caretPos,
   onEmpty,
 }: {
-  items: IDropdownItem[];
+  items: T[];
   holderRef: MutableRefObject<HTMLDivElement | null>;
-  onClick: (item: IDropdownItem) => void;
-  onTabOrEnterPress: (e: Event, item: IDropdownItem | undefined) => void;
+  onClick: (item: T) => void;
+  onTabOrEnterPress: (e: Event, item: T | undefined) => void;
   caretPos: Pos | undefined;
-  onEmpty: React.ReactNode;
+  onEmpty?: React.ReactNode;
 }) => {
   const mainElRef = useRef<HTMLDivElement | null>(null);
   const containerElRef = useRef<HTMLDivElement | null>(null);
@@ -67,7 +67,7 @@ export const EditorDropdown = ({
           e.preventDefault();
 
           const newIndex =
-            focusedIdx - 1 > 0 ? focusedIdx - 1 : items.length - 1;
+            focusedIdx - 1 >= 0 ? focusedIdx - 1 : items.length - 1;
 
           handleNewIndexSet(newIndex);
         }
@@ -85,16 +85,28 @@ export const EditorDropdown = ({
     };
   }, [focusedIdx, items, onTabOrEnterPress]);
 
-  const { width: containerWidth = 0 } = useResizeObserver<HTMLDivElement>({
-    ref: containerElRef,
-  });
-  const { width: wrapperWidth = 0 } = useResizeObserver<HTMLDivElement>({
-    ref: holderRef,
-  });
-  const [containerLeftPos, setContainerLeftPos] = useState(0);
+  const { width: containerWidth = undefined } =
+    useResizeObserver<HTMLDivElement>({
+      ref: containerElRef,
+    });
+  const { width: wrapperWidth = undefined } = useResizeObserver<HTMLDivElement>(
+    {
+      ref: holderRef,
+    },
+  );
+  const [containerLeftPos, setContainerLeftPos] = useState<undefined | number>(
+    undefined,
+  );
 
   useEffect(() => {
-    if (!mainElRef.current || !containerElRef.current || !caretPos) return;
+    if (
+      !mainElRef.current ||
+      !containerElRef.current ||
+      !caretPos ||
+      !containerWidth ||
+      !wrapperWidth
+    )
+      return;
 
     if (caretPos.left + containerWidth > wrapperWidth) {
       setContainerLeftPos(wrapperWidth - containerWidth);
@@ -116,7 +128,8 @@ export const EditorDropdown = ({
       <div
         className={editorDropdownClass('container')}
         style={{
-          transform: `translateX(${containerLeftPos}px) translateY(${
+          visibility: containerLeftPos === undefined ? 'hidden' : 'visible',
+          transform: `translateX(${containerLeftPos || 0}px) translateY(${
             (caretPos?.top || 0) + (caretPos?.height || 0)
           }px)`,
         }}
