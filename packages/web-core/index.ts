@@ -1,6 +1,6 @@
 export * from './src/VaultContext/NotesService';
 export * from './src/UserContext/VaultsService';
-export type { Token, RefToken, TagToken } from './src/blockParser/types';
+export type { Token, NoteRefToken, TagToken } from './src/blockParser/types';
 export { ScopedBlock } from './src/VaultContext/domain/NoteBlocksApp/views/ScopedBlock';
 export { BlocksScope } from './src/VaultContext/domain/NoteBlocksApp/views/BlocksScope';
 export * from './src/blockParser/parseStringToTree';

@@ -18,7 +18,7 @@ const astToString = (ast: Token[]): string => {
       // eslint-disable-next-line array-callback-return
       .map((t): string => {
         switch (t.type) {
-          case 'ref':
+          case 'noteRef':
             return `[[${t.content}]]`;
 
           case 'tag':
@@ -104,7 +104,7 @@ export class BlockContentModel extends Model({
   @modelAction
   toggleTodo(id: string) {
     const newAst = mapTokens(this.ast, (token) => {
-      if (token.id === id && token.type === 'ref') {
+      if (token.id === id && token.type === 'noteRef') {
         const ref = token.ref === 'TODO' ? 'DONE' : 'TODO';
         return {
           ...token,
@@ -122,7 +122,7 @@ export class BlockContentModel extends Model({
     return Boolean(
       findFirst(
         this.ast,
-        (t) => t.type === 'ref' && (t.ref === 'TODO' || t.ref === 'DONE'),
+        (t) => t.type === 'noteRef' && (t.ref === 'TODO' || t.ref === 'DONE'),
       ),
     );
   }

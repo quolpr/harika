@@ -22,7 +22,7 @@ import {
 } from 'rxjs/operators';
 import { isEqual, uniq } from 'lodash-es';
 import { filterAst } from '../blockParser/astHelpers';
-import type { RefToken, TagToken } from '../blockParser/types';
+import type { NoteRefToken, TagToken } from '../blockParser/types';
 import {
   BehaviorSubject,
   firstValueFrom,
@@ -469,9 +469,9 @@ export class NotesService {
           ...(
             filterAst(
               noteBlock.content.ast,
-              (t) => t.type === 'ref',
-            ) as RefToken[]
-          ).map((t: RefToken) => t.ref),
+              (t) => t.type === 'noteRef',
+            ) as NoteRefToken[]
+          ).map((t: NoteRefToken) => t.ref),
           ...(
             filterAst(
               noteBlock.content.ast,

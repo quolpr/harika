@@ -6,7 +6,7 @@ describe('filterAst', () => {
   it('works', () => {
     const parsedData = parse('google.com [[my link]]', () => () => '123');
 
-    expect(filterAst(parsedData, (t) => t.type === 'ref')).to.deep.eq([
+    expect(filterAst(parsedData, (t) => t.type === 'noteRef')).to.deep.eq([
       {
         content: 'my link',
         ref: 'my link',
@@ -14,7 +14,7 @@ describe('filterAst', () => {
         id: '123',
         offsetEnd: 22,
         offsetStart: 11,
-        type: 'ref',
+        type: 'noteRef',
       },
     ]);
   });
@@ -25,13 +25,13 @@ describe('filterAst', () => {
       () => () => '123',
     );
 
-    expect(filterAst(parsedData, (t) => t.type === 'ref')).to.deep.eq([
+    expect(filterAst(parsedData, (t) => t.type === 'noteRef')).to.deep.eq([
       {
         content: 'wow',
         id: '123',
         offsetEnd: 22,
         offsetStart: 15,
-        type: 'ref',
+        type: 'noteRef',
         alias: undefined,
         ref: 'wow',
       },
@@ -46,12 +46,12 @@ describe('findFirst', () => {
   );
 
   it('works', () => {
-    expect(findFirst(parsedData, (t) => t.type === 'ref')).to.deep.eq({
+    expect(findFirst(parsedData, (t) => t.type === 'noteRef')).to.deep.eq({
       content: 'my link',
       id: '123',
       offsetEnd: 24,
       offsetStart: 13,
-      type: 'ref',
+      type: 'noteRef',
       alias: undefined,
       ref: 'my link',
     });
@@ -86,7 +86,7 @@ describe('mapTokens', () => {
         content: [
           {
             id: '123',
-            type: 'ref',
+            type: 'noteRef',
             content: 'my link',
             offsetStart: 13,
             offsetEnd: 24,
@@ -100,7 +100,7 @@ describe('mapTokens', () => {
       { id: '123', type: 'str', content: ' ', offsetStart: 26, offsetEnd: 27 },
       {
         id: '123',
-        type: 'ref',
+        type: 'noteRef',
         content: 'wow2',
         ref: 'wow2',
         alias: undefined,

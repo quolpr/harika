@@ -245,7 +245,7 @@ export const useHandleInput = (
       if (start === end) {
         const firstToken = getTokensAtCursor(start, block.content.ast)[0];
 
-        if (firstToken?.type !== 'ref' && firstToken?.type !== 'tag') {
+        if (firstToken?.type !== 'noteRef' && firstToken?.type !== 'tag') {
           setNoteTitleToSearch(undefined);
         }
       }
@@ -307,7 +307,7 @@ export const useHandleInput = (
       if (start === end) {
         const firstToken = getTokensAtCursor(start, block.content.ast)[0];
 
-        if (firstToken?.type === 'ref' || firstToken?.type === 'tag') {
+        if (firstToken?.type === 'noteRef' || firstToken?.type === 'tag') {
           setNoteTitleToSearch(firstToken.ref);
         }
       } else {
@@ -344,7 +344,7 @@ export const useHandleInput = (
 
       const firstToken = getTokensAtCursor(start, block.content.ast)[0];
 
-      if (firstToken?.type === 'ref') {
+      if (firstToken?.type === 'noteRef') {
         const alias = firstToken.alias ? ` | ${firstToken.alias}` : '';
         const toInsert = `[[${res.title}${alias}]] `;
 

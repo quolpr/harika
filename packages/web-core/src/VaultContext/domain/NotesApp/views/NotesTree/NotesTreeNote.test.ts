@@ -27,7 +27,7 @@ const initData = () => {
     rootNodeRef: {
       id: 'id-1',
       $modelId: 'id-2',
-      $modelType: 'harika/NotesTree/nodeRef',
+      $modelType: 'harika/NotesTree/noteRef',
     },
     nodesMap: {
       'id-1': {
@@ -36,12 +36,12 @@ const initData = () => {
           {
             id: 'id-4',
             $modelId: 'id-5',
-            $modelType: 'harika/NotesTree/nodeRef',
+            $modelType: 'harika/NotesTree/noteRef',
           },
           {
             id: 'id-10',
             $modelId: 'id-11',
-            $modelType: 'harika/NotesTree/nodeRef',
+            $modelType: 'harika/NotesTree/noteRef',
           },
         ],
         isExpanded: true,
@@ -54,7 +54,7 @@ const initData = () => {
           {
             id: 'id-6',
             $modelId: 'id-7',
-            $modelType: 'harika/NotesTree/nodeRef',
+            $modelType: 'harika/NotesTree/noteRef',
           },
         ],
         noteId: '123',
@@ -68,7 +68,7 @@ const initData = () => {
           {
             id: 'id-8',
             $modelId: 'id-9',
-            $modelType: 'harika/NotesTree/nodeRef',
+            $modelType: 'harika/NotesTree/noteRef',
           },
         ],
         isExpanded: true,
@@ -89,7 +89,7 @@ const initData = () => {
           {
             id: 'id-12',
             $modelId: 'id-13',
-            $modelType: 'harika/NotesTree/nodeRef',
+            $modelType: 'harika/NotesTree/noteRef',
           },
         ],
         isExpanded: true,
@@ -107,7 +107,7 @@ const initData = () => {
     },
     isInitialized: true,
     $modelId: 'id-3',
-    $modelType: 'harika/NotesTreeRegistry',
+    $modelType: 'harika/NotesTree/NotesTreeRegistry',
   };
 
   const tree = fromSnapshot<NotesTreeRegistry>(snapshot);

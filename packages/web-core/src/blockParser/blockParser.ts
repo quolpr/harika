@@ -79,7 +79,7 @@ export const parse = (data: string, idGenerator = newIdGenerator): Token[] => {
       } else {
         return t;
       }
-    } else if (t.type === 'ref') {
+    } else if (t.type === 'noteRef') {
       let [ref, alias] = t.content.split('|', 2) as [
         string,
         string | undefined,

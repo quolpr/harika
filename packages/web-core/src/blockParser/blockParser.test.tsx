@@ -2,7 +2,29 @@ import { expect } from '@esm-bundle/chai';
 import { parse } from './blockParser';
 
 describe('Parser', () => {
-  describe('ref parser', () => {
+  describe('block ref parser', () => {
+    it('parses block ref', () => {
+      const parsedData = parse('hee! ((world))', () => () => '123');
+
+      expect(parsedData).to.deep.eq([
+        {
+          id: '123',
+          type: 'str',
+          content: 'hee! ',
+          offsetStart: 0,
+          offsetEnd: 5,
+        },
+        {
+          id: '123',
+          type: 'noteBlockRef',
+          content: 'world',
+          offsetStart: 5,
+          offsetEnd: 14,
+        },
+      ]);
+    });
+  });
+  describe('note ref parser', () => {
     it('parses ref', () => {
       const parsedData = parse('hee! [[world]]', () => () => '123');
 
@@ -16,7 +38,7 @@ describe('Parser', () => {
         },
         {
           id: '123',
-          type: 'ref',
+          type: 'noteRef',
           content: 'world',
           ref: 'world',
           alias: undefined,
@@ -32,7 +54,7 @@ describe('Parser', () => {
       expect(parsedData).to.deep.eq([
         {
           id: '123',
-          type: 'ref',
+          type: 'noteRef',
           content: 'world | test',
 
           ref: 'world',
@@ -49,7 +71,7 @@ describe('Parser', () => {
       expect(parsedData).to.deep.eq([
         {
           id: '123',
-          type: 'ref',
+          type: 'noteRef',
           content: 'world |  ',
           ref: 'world',
           alias: undefined,
@@ -312,7 +334,7 @@ describe('Parser', () => {
               ref: 'world',
               alias: undefined,
               id: '123',
-              type: 'ref',
+              type: 'noteRef',
               content: 'world',
               offsetStart: 7,
               offsetEnd: 16,
@@ -352,7 +374,7 @@ describe('Parser', () => {
             },
             {
               id: '123',
-              type: 'ref',
+              type: 'noteRef',
               content: 'world',
               offsetStart: 12,
               offsetEnd: 21,
@@ -387,7 +409,7 @@ describe('Parser', () => {
         },
         {
           id: '123',
-          type: 'ref',
+          type: 'noteRef',
           content: 'world',
           offsetStart: 18,
           offsetEnd: 27,

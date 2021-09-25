@@ -2,7 +2,7 @@ import { observer } from 'mobx-react-lite';
 import React, { useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import type {
-  RefToken,
+  NoteRefToken,
   Token,
   TagToken,
   NoteModel,
@@ -23,7 +23,7 @@ const RefRenderer = observer(
     noteBlock,
     linkedNotes,
   }: {
-    token: RefToken;
+    token: NoteRefToken;
     noteBlock: ScopedBlock;
     linkedNotes: NoteModel[];
   }) => {
@@ -149,7 +149,7 @@ const TokenRenderer = observer(
     switch (token.type) {
       case 'tag':
         return <TagRenderer token={token} linkedNotes={linkedNotes} />;
-      case 'ref':
+      case 'noteRef':
         return (
           <RefRenderer
             token={token}
