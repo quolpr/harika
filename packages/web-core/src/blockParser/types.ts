@@ -21,7 +21,7 @@ export interface TodoRefToken extends NoteRefToken {
 
 export interface NoteBlockRef extends BaseToken {
   id: string;
-  type: 'blockRef';
+  type: 'noteBlockRef';
   content: string;
 }
 
@@ -95,6 +95,7 @@ interface LinkToken extends BaseToken {
 
 export type Token =
   | NoteRefToken
+  | NoteBlockRef
   | TagToken
   | BoldToken
   | ItalicToken

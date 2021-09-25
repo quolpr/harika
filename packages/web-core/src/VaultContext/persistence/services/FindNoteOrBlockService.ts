@@ -67,7 +67,7 @@ export class FindNoteOrBlockService {
     return res;
   }
 
-  findNote(text: string) {
+  findNotes(text: string) {
     text = text.toLowerCase().trim();
 
     const res = this.db.getRecords<{
@@ -83,6 +83,28 @@ export class FindNoteOrBlockService {
       )
         .from(notesFTSTable)
         .where(Q.like('title', `%${text}%`))
+        .orderBy('rank'),
+    );
+
+    return res;
+  }
+
+  findBlocks(text: string) {
+    text = text.toLowerCase().trim();
+
+    const res = this.db.getRecords<{
+      id: string;
+      content: string;
+    }>(
+      Q.select(
+        'id',
+        Q.select('content')
+          .as('content')
+          .from(noteBlocksTable)
+          .where(Q(`id = ${noteBlocksFTSTable}.id`)),
+      )
+        .from(noteBlocksFTSTable)
+        .where(Q.like('textContent', `%${text}%`))
         .orderBy('rank'),
     );
 

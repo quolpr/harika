@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import clsx from 'clsx';
 import { BlocksScope, ScopedBlock } from '@harika/web-core';
 import { TextareaAutosize } from '@material-ui/core';
@@ -12,6 +12,7 @@ import {
 import { useHandleInput } from './hooks/useHandleInput';
 import { observer } from 'mobx-react-lite';
 import { EditorCommandsDropdown } from './EditorCommandsDropdown/EditorCommandsDropdown';
+import { FindBlockDropdown } from './FindBlockDropdown/FindBlockDropdown';
 
 export const BlockEditor = observer(
   ({
@@ -36,12 +37,25 @@ export const BlockEditor = observer(
 
     const { isEditing } = editState;
 
+    const isTitleDropdownShownRef = useRef(false);
+    const isCommandsDropdownShownRef = useRef(false);
+    const isBlockDropdownShownRef = useRef(false);
+    const isAnyDropdownShown = useCallback(() => {
+      return (
+        isTitleDropdownShownRef.current ||
+        isCommandsDropdownShownRef.current ||
+        isBlockDropdownShownRef.current
+      );
+    }, []);
+
     const {
       textareaHandlers,
       noteTitleToSearch,
+      blockToSearch,
       commandToSearch,
       handleSearchSelect,
       handleCommandSelect,
+      handleBlockSelect,
       caretPos,
     } = useHandleInput(
       scope,
@@ -49,10 +63,13 @@ export const BlockEditor = observer(
       inputRef,
       insertFakeInput,
       releaseFakeInput,
+      isAnyDropdownShown,
     );
     useHandleFocus(editState, noteBlock, inputRef, releaseFakeInput);
     useUpdateBlockLinks(noteBlock, editState);
     useProvideInputToContext(inputRef, isEditing);
+
+    console.log(blockToSearch);
 
     return (
       <div
@@ -72,8 +89,9 @@ export const BlockEditor = observer(
           value={noteBlock.content.value}
           {...textareaHandlers}
         />
-        {noteTitleToSearch && (
+        {noteTitleToSearch !== undefined && (
           <NoteTitleAutocomplete
+            isShownRef={isTitleDropdownShownRef}
             value={noteTitleToSearch}
             onSelect={handleSearchSelect}
             caretPos={caretPos}
@@ -82,8 +100,18 @@ export const BlockEditor = observer(
         )}
         {commandToSearch !== undefined && (
           <EditorCommandsDropdown
+            isShownRef={isCommandsDropdownShownRef}
             value={commandToSearch}
             onSelect={handleCommandSelect}
+            caretPos={caretPos}
+            holderRef={wrapperRef}
+          />
+        )}
+        {blockToSearch !== undefined && (
+          <FindBlockDropdown
+            isShownRef={isBlockDropdownShownRef}
+            value={blockToSearch}
+            onSelect={handleBlockSelect}
             caretPos={caretPos}
             holderRef={wrapperRef}
           />

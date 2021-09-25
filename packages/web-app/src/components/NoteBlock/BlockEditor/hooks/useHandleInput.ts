@@ -11,7 +11,8 @@ import dayjs from 'dayjs';
 import { ICommand } from '../EditorCommandsDropdown/EditorCommandsDropdown';
 
 const symmetricCommands: { [P in ICommand['id']]?: string } = {
-  pageRef: '[[]]',
+  blockRef: '(())',
+  noteRef: '[[]]',
   bold: '****',
   italics: '____',
   highlight: '^^^^',
@@ -26,6 +27,7 @@ export const useHandleInput = (
   inputRef: RefObject<HTMLTextAreaElement | null>,
   insertFakeInput: () => void,
   releaseFakeInput: () => void,
+  isAnyDropdownShown: () => boolean,
 ) => {
   const [caretPos, setCaretPos] = useState<Pos | undefined>();
 
@@ -38,16 +40,16 @@ export const useHandleInput = (
     string | undefined
   >(undefined);
 
+  const [blockToSearch, setBlockToSearch] = useState<string | undefined>(
+    undefined,
+  );
+
   const [commandToSearch, setCommandToSearch] = useState<string | undefined>(
     undefined,
   );
   const [commandToSearchStartPos, setCommandToSearchStartPos] = useState<
     number | undefined
   >(undefined);
-
-  // TODO: add commandToSearch support here
-  // add isSearchDisplayedRef
-  const isSearching = Boolean(noteTitleToSearch);
 
   const noteRepo = useNotesService();
 
@@ -69,7 +71,7 @@ export const useHandleInput = (
 
       // on ios sometime shiftKey === caps lock
       if (e.key === 'Enter' && (isIOS || !e.shiftKey)) {
-        if (isSearching) return;
+        if (isAnyDropdownShown()) return;
 
         e.preventDefault();
 
@@ -91,7 +93,7 @@ export const useHandleInput = (
       }
     },
     [
-      isSearching,
+      isAnyDropdownShown,
       block,
       insertFakeInput,
       releaseFakeInput,
@@ -119,7 +121,10 @@ export const useHandleInput = (
           const prevChar = content[start - 1];
           const nextChar = content[start];
 
-          if (nextChar === ']' && prevChar === '[') {
+          if (
+            (nextChar === ']' && prevChar === '[') ||
+            (nextChar === ')' && prevChar === '(')
+          ) {
             e.preventDefault();
 
             insertText(e.currentTarget, '', 0, {
@@ -151,7 +156,7 @@ export const useHandleInput = (
       } else if (e.key === 'Tab' && !e.shiftKey) {
         e.preventDefault();
 
-        if (!isSearching) {
+        if (!isAnyDropdownShown()) {
           setEditState({
             scopeId: scope.$modelId,
             scopedBlockId: block.$modelId,
@@ -173,19 +178,23 @@ export const useHandleInput = (
       } else if (e.key === 'ArrowUp' && e.shiftKey) {
         e.preventDefault();
 
-        if (!isSearching) block.moveLeft();
+        if (!isAnyDropdownShown()) block.moveLeft();
       } else if (e.key === 'ArrowDown' && e.shiftKey) {
         e.preventDefault();
 
-        if (!isSearching) block.moveRight();
+        if (!isAnyDropdownShown()) block.moveRight();
       } else if (e.key === '[') {
         e.preventDefault();
 
         insertText(e.currentTarget, '[]', 1);
+      } else if (e.key === '(') {
+        e.preventDefault();
+
+        insertText(e.currentTarget, '()', 1);
       } else if (e.key === 'ArrowUp') {
         const target = e.currentTarget;
 
-        if (!isSearching) {
+        if (!isAnyDropdownShown()) {
           requestAnimationFrame(() => {
             const newStart = target.selectionStart;
 
@@ -207,7 +216,7 @@ export const useHandleInput = (
       } else if (e.key === 'ArrowDown') {
         const target = e.currentTarget;
 
-        if (!isSearching) {
+        if (!isAnyDropdownShown()) {
           requestAnimationFrame(() => {
             const newStart = target.selectionStart;
 
@@ -234,7 +243,7 @@ export const useHandleInput = (
         e.currentTarget.blur();
       }
     },
-    [block, setEditState, scope.$modelId, insertFakeInput, isSearching],
+    [block, setEditState, scope.$modelId, insertFakeInput, isAnyDropdownShown],
   );
 
   const handleCaretChange = useCallback(
@@ -247,6 +256,10 @@ export const useHandleInput = (
 
         if (firstToken?.type !== 'noteRef' && firstToken?.type !== 'tag') {
           setNoteTitleToSearch(undefined);
+        }
+
+        if (firstToken?.type !== 'noteBlockRef') {
+          setBlockToSearch(undefined);
         }
       }
     },
@@ -309,9 +322,16 @@ export const useHandleInput = (
 
         if (firstToken?.type === 'noteRef' || firstToken?.type === 'tag') {
           setNoteTitleToSearch(firstToken.ref);
+        } else if (firstToken?.type === 'noteBlockRef') {
+          if (firstToken.content[0] !== '~') {
+            setBlockToSearch(firstToken.content);
+          } else {
+            setBlockToSearch(undefined);
+          }
         }
       } else {
         setNoteTitleToSearch(undefined);
+        setBlockToSearch(undefined);
       }
 
       const splited = block.content.value.slice(0, end).split('/');
@@ -333,6 +353,28 @@ export const useHandleInput = (
       setCaretPos(position(e.target));
     },
     [block],
+  );
+  const handleBlockSelect = useCallback(
+    (res: { id: string }) => {
+      if (!inputRef.current) return;
+      const input = inputRef.current;
+      const start = input.selectionStart;
+      const firstToken = getTokensAtCursor(start, block.content.ast)[0];
+
+      if (firstToken?.type === 'noteBlockRef') {
+        const toInsert = `((~${res.id})) `;
+
+        insertText(input, toInsert, toInsert.length, {
+          start: firstToken.offsetStart,
+          end: firstToken.offsetEnd,
+        });
+      } else {
+        console.error("Can't complete block ref - token not found");
+      }
+
+      setBlockToSearch(undefined);
+    },
+    [block.content.ast, inputRef],
   );
 
   const handleSearchSelect = useCallback(
@@ -361,6 +403,8 @@ export const useHandleInput = (
           start: firstToken.offsetStart,
           end: firstToken.offsetEnd,
         });
+      } else {
+        console.error("Can't complete note ref - token found");
       }
 
       setNoteTitleToSearch(undefined);
@@ -421,9 +465,11 @@ export const useHandleInput = (
     },
     handleChange,
     noteTitleToSearch,
+    blockToSearch,
     commandToSearch,
     handleSearchSelect,
     handleCommandSelect,
+    handleBlockSelect,
     caretPos,
   };
 };

@@ -524,18 +524,18 @@ export class NotesService {
     return !!(await this.notesRepository.findBy({ title }));
   }
 
-  // TODO: better Rx way, put title to pipe
   searchNotesTuples$(title: string) {
     return from(
       this.dbEventsService.liveQuery([notesTable], () =>
-        this.findService.findNote(title),
+        this.findService.findNotes(title),
       ),
-    ).pipe(
-      map((rows) =>
-        rows.map((row) => ({
-          id: row.id,
-          title: row.title,
-        })),
+    );
+  }
+
+  searchBlocksTuples$(title: string) {
+    return from(
+      this.dbEventsService.liveQuery([noteBlocksTable], () =>
+        this.findService.findBlocks(title),
       ),
     );
   }

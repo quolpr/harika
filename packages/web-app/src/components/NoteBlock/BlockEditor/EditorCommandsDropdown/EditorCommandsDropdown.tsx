@@ -1,5 +1,10 @@
 import { Pos } from 'caret-pos';
-import React, { MutableRefObject, useCallback, useMemo } from 'react';
+import React, {
+  MutableRefObject,
+  useCallback,
+  useEffect,
+  useMemo,
+} from 'react';
 import { EditorDropdown } from '../EditorDropdown/EditorDropdown';
 
 const todoCommand = {
@@ -11,9 +16,14 @@ const currentTimeCommand = {
   title: 'Current time',
 };
 
-const pageRefCommand = {
-  id: 'pageRef' as const,
-  title: 'Page Reference',
+const noteRefCommand = {
+  id: 'noteRef' as const,
+  title: 'Note Reference',
+};
+
+const blockRefCommand = {
+  id: 'blockRef' as const,
+  title: 'Block Reference',
 };
 
 const boldCommand = {
@@ -49,7 +59,8 @@ const codeBlockCommand = {
 export type ICommand =
   | typeof currentTimeCommand
   | typeof todoCommand
-  | typeof pageRefCommand
+  | typeof noteRefCommand
+  | typeof blockRefCommand
   | typeof boldCommand
   | typeof italicsCommand
   | typeof highlightCommand
@@ -60,7 +71,8 @@ export type ICommand =
 const commands: ICommand[] = [
   todoCommand,
   currentTimeCommand,
-  pageRefCommand,
+  noteRefCommand,
+  blockRefCommand,
   boldCommand,
   italicsCommand,
   highlightCommand,
@@ -74,11 +86,13 @@ export const EditorCommandsDropdown = ({
   onSelect,
   caretPos,
   holderRef,
+  isShownRef,
 }: {
   value: string | undefined;
   onSelect: (res: ICommand) => void;
   caretPos: Pos | undefined;
   holderRef: MutableRefObject<HTMLDivElement | null>;
+  isShownRef: MutableRefObject<boolean>;
 }) => {
   const handleClick = useCallback(
     (command: ICommand) => {
@@ -109,7 +123,14 @@ export const EditorCommandsDropdown = ({
     [value],
   );
 
-  return filteredCommands.length > 0 ? (
+  useEffect(() => {
+    return () => {
+      isShownRef.current = false;
+    };
+  }, [isShownRef]);
+
+  isShownRef.current = filteredCommands.length > 0;
+  return isShownRef.current ? (
     <EditorDropdown
       items={filteredCommands}
       holderRef={holderRef}

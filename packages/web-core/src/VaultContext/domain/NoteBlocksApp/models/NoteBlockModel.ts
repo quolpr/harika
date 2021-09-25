@@ -43,7 +43,10 @@ export class NoteBlockModel extends Model({
   noteId: prop<string>(),
   content: prop<BlockContentModel>(),
   noteBlockRefs: prop<Ref<NoteBlockModel>[]>(),
-  linkedNoteIds: prop<string[]>(),
+  // It is important here that we are using ids instead of refs,
+  // it means that this data could not be in the registry and should be preloaded from the DB
+  linkedNoteIds: prop<string[]>(() => []),
+  linkedBlockIds: prop<string[]>(() => []),
   createdAt: tProp(types.dateTimestamp),
   updatedAt: tProp(types.dateTimestamp),
   isDeleted: prop<boolean>(false),

@@ -10,7 +10,7 @@
   }
 
   &__content {
-    max-height: calc(1.75rem * 4);
+    max-height: calc(1.75rem * 8);
     width: 15rem;
 
     overflow-y: auto;
