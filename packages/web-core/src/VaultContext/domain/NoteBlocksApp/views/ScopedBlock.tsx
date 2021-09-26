@@ -52,7 +52,7 @@ export class ScopedBlock implements ITreeNode<ScopedBlock> {
 
   @computed
   get textContent() {
-    return this.content.value;
+    return this.content.currentValue;
   }
 
   @computed
@@ -294,7 +294,7 @@ export class ScopedBlock implements ITreeNode<ScopedBlock> {
 
     return this.createBlock(
       {
-        content: new BlockContentModel({ value: content }),
+        content: new BlockContentModel({ _value: content }),
         updatedAt: new Date().getTime(),
       },
       this.parent,
@@ -303,7 +303,7 @@ export class ScopedBlock implements ITreeNode<ScopedBlock> {
   }
 
   handleEnterPress(caretPosStart: number) {
-    const content = this.content.value;
+    const content = this.content.currentValue;
 
     let newContent = '';
     let startAt = 0;
@@ -371,7 +371,7 @@ export class ScopedBlock implements ITreeNode<ScopedBlock> {
 
     return this.createBlock(
       {
-        content: new BlockContentModel({ value: content }),
+        content: new BlockContentModel({ _value: content }),
         updatedAt: new Date().getTime(),
       },
       parentBlock,

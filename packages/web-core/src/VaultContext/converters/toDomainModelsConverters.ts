@@ -23,7 +23,7 @@ export const convertNoteBlockDocToModelAttrs = (
 ): NoteBlockData => {
   return {
     $modelId: doc.id,
-    content: new BlockContentModel({ value: doc.content }),
+    content: new BlockContentModel({ _value: doc.content }),
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
     noteId: doc.noteId,

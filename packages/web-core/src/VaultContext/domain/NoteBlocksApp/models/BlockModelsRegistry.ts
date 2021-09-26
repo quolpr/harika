@@ -106,7 +106,7 @@ export class BlockModelsRegistry extends Model({
     if (this.rootBlock && !this.rootBlock?.hasChildren) {
       this.createBlock(
         {
-          content: new BlockContentModel({ value: '' }),
+          content: new BlockContentModel({ _value: '' }),
           updatedAt: new Date().getTime(),
         },
         this.rootBlock,

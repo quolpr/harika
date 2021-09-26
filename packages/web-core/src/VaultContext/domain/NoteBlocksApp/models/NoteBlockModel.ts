@@ -99,7 +99,7 @@ export class NoteBlockModel extends Model({
 
   @modelAction
   mergeToAndDelete(to: NoteBlockModel) {
-    to.content.update(to.content.value + this.content.value);
+    to.content.update(to.content.currentValue + this.content.currentValue);
     to.noteBlockRefs.push(...this.noteBlockRefs.map((r) => noteBlockRef(r.id)));
     to.linkedNoteIds.push(...this.linkedNoteIds);
 
@@ -111,7 +111,7 @@ export class NoteBlockModel extends Model({
     if (
       data.content !== undefined &&
       data.content !== null &&
-      data.content.value !== this.content.value
+      data.content.currentValue !== this.content.currentValue
     ) {
       this.content = data.content;
     }

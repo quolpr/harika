@@ -62,7 +62,7 @@ const NoteBlockBody = observer(
       scope.toggleExpand(noteBlock.$modelId);
     }, [noteBlock.$modelId, scope]);
 
-    const contentLength = noteBlock.content.value.length;
+    const contentLength = noteBlock.content.currentValue.length;
 
     const handleContentClick = useCallback(
       (e: React.MouseEvent<HTMLDivElement>) => {

@@ -58,7 +58,7 @@ export class NoteBlocksApp extends Model({
       updatedAt: new Date().getTime(),
       noteId: noteId,
       noteBlockRefs: [],
-      content: new BlockContentModel({ value: '' }),
+      content: new BlockContentModel({ _value: '' }),
       linkedNoteIds: [],
     });
 
@@ -73,7 +73,7 @@ export class NoteBlocksApp extends Model({
 
     if (options.addEmptyBlock) {
       registry.createBlock(
-        { content: new BlockContentModel({ value: '' }) },
+        { content: new BlockContentModel({ _value: '' }) },
         rootBlock,
         0,
       );

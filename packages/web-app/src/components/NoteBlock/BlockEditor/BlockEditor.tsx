@@ -7,7 +7,7 @@ import { useCurrentFocusedBlockState } from '../../../hooks/useFocusedBlockState
 import {
   useHandleFocus,
   useProvideInputToContext,
-  useUpdateBlockLinks,
+  useUpdateBlockValues,
 } from './hooks/otherHooks';
 import { useHandleInput } from './hooks/useHandleInput';
 import { observer } from 'mobx-react-lite';
@@ -66,10 +66,8 @@ export const BlockEditor = observer(
       isAnyDropdownShown,
     );
     useHandleFocus(editState, noteBlock, inputRef, releaseFakeInput);
-    useUpdateBlockLinks(noteBlock, editState);
+    useUpdateBlockValues(noteBlock, editState);
     useProvideInputToContext(inputRef, isEditing);
-
-    console.log(blockToSearch);
 
     return (
       <div
@@ -86,7 +84,7 @@ export const BlockEditor = observer(
           id={inputId}
           ref={inputRef}
           className={clsx('note-block__content', {})}
-          value={noteBlock.content.value}
+          value={noteBlock.content.currentValue}
           {...textareaHandlers}
         />
         {noteTitleToSearch !== undefined && (

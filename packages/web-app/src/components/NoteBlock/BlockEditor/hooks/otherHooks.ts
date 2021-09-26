@@ -1,8 +1,8 @@
-import {MutableRefObject, useContext, useEffect} from 'react';
-import {CurrentBlockInputRefContext} from '../../../../contexts';
-import type {EditState, ScopedBlock} from '@harika/web-core';
-import {useNotesService} from '../../../../contexts/CurrentNotesServiceContext';
-import {usePrevious} from 'react-use';
+import { MutableRefObject, useContext, useEffect } from 'react';
+import { CurrentBlockInputRefContext } from '../../../../contexts';
+import type { EditState, ScopedBlock } from '@harika/web-core';
+import { useNotesService } from '../../../../contexts/CurrentNotesServiceContext';
+import { usePrevious } from 'react-use';
 
 export const useProvideInputToContext = (
   inputRef: MutableRefObject<HTMLTextAreaElement | null>,
@@ -21,7 +21,7 @@ export const useProvideInputToContext = (
   }, [currentBlockInputRef, inputRef, isEditing]);
 };
 
-export const useUpdateBlockLinks = (
+export const useUpdateBlockValues = (
   blockView: ScopedBlock,
   editState: EditState,
 ) => {
@@ -31,6 +31,7 @@ export const useUpdateBlockLinks = (
 
   useEffect(() => {
     if (!editState.isEditing && wasEditing) {
+      blockView.content.dumpValue();
       noteRepo.updateNoteBlockLinks([blockView.$modelId]);
     }
   }, [editState.isEditing, blockView, noteRepo, wasEditing]);
@@ -42,7 +43,7 @@ export const useHandleFocus = (
   inputRef: MutableRefObject<HTMLTextAreaElement | null>,
   releaseFakeInput: () => void,
 ) => {
-  const {isEditing, startAt} = editState;
+  const { isEditing, startAt } = editState;
 
   useEffect(() => {
     if (
@@ -53,7 +54,9 @@ export const useHandleFocus = (
       if (!inputRef.current) return;
 
       const posAt = (() =>
-        startAt !== undefined ? startAt : noteBlock.content.value.length)();
+        startAt !== undefined
+          ? startAt
+          : noteBlock.content.currentValue.length)();
 
       inputRef.current.focus();
 
@@ -67,6 +70,6 @@ export const useHandleFocus = (
     startAt,
     releaseFakeInput,
     inputRef,
-    noteBlock.content.value.length,
+    noteBlock.content.currentValue.length,
   ]);
 };

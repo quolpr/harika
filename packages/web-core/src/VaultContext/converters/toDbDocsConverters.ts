@@ -9,7 +9,7 @@ export const mapNoteBlock = (model: NoteBlockModel): NoteBlockDoc => {
   return {
     id: model.$modelId,
     noteId: model.noteId,
-    content: model.content.value,
+    content: model.content._value,
     createdAt: model.createdAt,
     noteBlockIds: model.noteBlockRefs.map(({ id }) => id),
     linkedNoteIds: [...model.linkedNoteIds],

@@ -28,9 +28,9 @@ const LinkedBlock = observer(
                 })}
                 key={n.$modelId}
               >
-                {n.content.value.trim().length === 0
+                {n.content.currentValue.trim().length === 0
                   ? '[blank]'
-                  : n.content.value}
+                  : n.content.currentValue}
               </div>
             ))}
           </div>

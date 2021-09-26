@@ -104,7 +104,7 @@ export const useHandleInput = (
 
   const handleKeyDown = useCallback(
     async (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      const content = block.content.value;
+      const content = block.content.currentValue;
       const start = e.currentTarget.selectionStart;
       const end = e.currentTarget.selectionEnd;
 
@@ -148,7 +148,8 @@ export const useHandleInput = (
               scopeId: scope.$modelId,
               scopedBlockId: mergedTo.$modelId,
               startAt:
-                mergedTo.content.value.length - block.content.value.length,
+                mergedTo.content.currentValue.length -
+                block.content.currentValue.length,
               isEditing: true,
             });
           }
@@ -220,7 +221,7 @@ export const useHandleInput = (
           requestAnimationFrame(() => {
             const newStart = target.selectionStart;
 
-            if (newStart === block.content.value.length) {
+            if (newStart === block.content.currentValue.length) {
               const [, right] = block.leftAndRight;
 
               if (right) {
@@ -229,8 +230,8 @@ export const useHandleInput = (
                   scopedBlockId: right.$modelId,
                   isEditing: true,
                   startAt:
-                    start === block.content.value.length
-                      ? right.content.value.length
+                    start === block.content.currentValue.length
+                      ? right.content.currentValue.length
                       : start,
                 });
               }
@@ -334,7 +335,7 @@ export const useHandleInput = (
         setBlockToSearch(undefined);
       }
 
-      const splited = block.content.value.slice(0, end).split('/');
+      const splited = block.content.currentValue.slice(0, end).split('/');
 
       if (splited.length >= 2) {
         setCommandToSearch(splited[splited.length - 1]);

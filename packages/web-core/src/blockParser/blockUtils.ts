@@ -56,7 +56,7 @@ export const addTokensToNoteBlock = (
         noteId: block.noteId,
         noteBlockRefs: [],
         linkedNoteIds: [],
-        content: new BlockContentModel({ value: token.content }),
+        content: new BlockContentModel({ _value: token.content }),
       },
       parentBlock.model,
       'append',

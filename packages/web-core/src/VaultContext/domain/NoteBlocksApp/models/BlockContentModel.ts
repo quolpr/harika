@@ -1,4 +1,5 @@
-import { computed } from 'mobx';
+import { debounce } from 'lodash-es';
+import { computed, observable, reaction } from 'mobx';
 import { model, Model, modelAction, prop } from 'mobx-keystone';
 import {
   findFirst,
@@ -54,6 +55,9 @@ const astToString = (ast: Token[]): string => {
               t.withTrailingEOL ? `\n` : ''
             }`;
 
+          case 'noteBlockRef':
+            return `((${t.content}))`;
+
           default:
             assertUnreachable(t);
         }
@@ -64,11 +68,14 @@ const astToString = (ast: Token[]): string => {
 
 @model('harika/BlockContentModel')
 export class BlockContentModel extends Model({
-  value: prop<string>(),
+  _value: prop<string>(),
 }) {
+  // We are debouncing input here to avoid too frequent sync calls with the server + for the better undo/redo
+  @observable currentValue = '';
+
   @computed
   get ast() {
-    return parse(this.value);
+    return parse(this.currentValue);
   }
 
   @computed
@@ -93,12 +100,14 @@ export class BlockContentModel extends Model({
 
   @modelAction
   update(value: string) {
-    this.value = value;
+    this.currentValue = value;
   }
 
   @modelAction
   updateTitle(title: string, newTitle: string) {
-    this.value = this.value.split(`[[${title}]]`).join(`[[${newTitle}]]`);
+    this.currentValue = this.currentValue
+      .split(`[[${title}]]`)
+      .join(`[[${newTitle}]]`);
   }
 
   @modelAction
@@ -118,6 +127,7 @@ export class BlockContentModel extends Model({
     this.update(astToString(newAst));
   }
 
+  @computed
   get hasTodo() {
     return Boolean(
       findFirst(
@@ -125,5 +135,27 @@ export class BlockContentModel extends Model({
         (t) => t.type === 'noteRef' && (t.ref === 'TODO' || t.ref === 'DONE'),
       ),
     );
+  }
+
+  @modelAction
+  dumpValue() {
+    this._value = this.currentValue;
+  }
+
+  @modelAction
+  private updatePrivateValue(newVal: string) {
+    this._value = newVal;
+  }
+
+  onInit() {
+    this.currentValue = this._value;
+
+    const debounced = debounce((val: string) => {
+      if (val !== this._value) {
+        this.updatePrivateValue(val);
+      }
+    }, 2000);
+
+    reaction(() => this.currentValue, debounced);
   }
 }
