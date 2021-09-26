@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import type { ModelCreationData } from 'mobx-keystone';
+import { ModelCreationData, withoutUndo } from 'mobx-keystone';
 import type { Dayjs } from 'dayjs';
 import type { NoteModel } from './domain/NotesApp/models/NoteModel';
 import type { Optional } from 'utility-types';
@@ -268,11 +268,13 @@ export class NotesService {
 
     return notLoadedNotes$.pipe(
       tap(({ unloadedBlocksAttrs }) => {
-        this.vault.createOrUpdateEntitiesFromAttrs(
-          [],
-          unloadedBlocksAttrs,
-          true,
-        );
+        withoutUndo(() => {
+          this.vault.createOrUpdateEntitiesFromAttrs(
+            [],
+            unloadedBlocksAttrs,
+            true,
+          );
+        });
       }),
       switchMap(({ notesIds }) =>
         toObserver(() => {
@@ -342,11 +344,13 @@ export class NotesService {
                 ).map((m) => convertNoteBlockDocToModelAttrs(m)),
               );
 
-              this.vault.createOrUpdateEntitiesFromAttrs(
-                [],
-                noteBlockAttrs,
-                true,
-              );
+              withoutUndo(() => {
+                this.vault.createOrUpdateEntitiesFromAttrs(
+                  [],
+                  noteBlockAttrs,
+                  true,
+                );
+              });
 
               return args;
             })(),
@@ -404,11 +408,13 @@ export class NotesService {
               ? await this.notesRepository.getByIds(toLoadIds)
               : [];
 
-          this.vault.createOrUpdateEntitiesFromAttrs(
-            noteDocs.map((doc) => convertNoteDocToModelAttrs(doc)),
-            [],
-            true,
-          );
+          withoutUndo(() => {
+            this.vault.createOrUpdateEntitiesFromAttrs(
+              noteDocs.map((doc) => convertNoteDocToModelAttrs(doc)),
+              [],
+              true,
+            );
+          });
 
           return ids
             .map((id) => this.vault.notesMap[id])
@@ -431,11 +437,13 @@ export class NotesService {
         return;
       }
 
-      this.vault.createOrUpdateEntitiesFromAttrs(
-        [convertNoteDocToModelAttrs(noteDoc)],
-        [],
-        false,
-      );
+      withoutUndo(() => {
+        this.vault.createOrUpdateEntitiesFromAttrs(
+          [convertNoteDocToModelAttrs(noteDoc)],
+          [],
+          false,
+        );
+      });
 
       console.debug(`Loading Note#${id} from DB`);
 

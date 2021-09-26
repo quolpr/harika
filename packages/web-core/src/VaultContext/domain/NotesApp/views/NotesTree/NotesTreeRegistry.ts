@@ -1,5 +1,6 @@
 import { computed } from 'mobx';
 import { model, Model, modelAction, prop, Ref } from 'mobx-keystone';
+import { withoutUndoAction } from '../../../../../utils';
 import { notesTreeNoteRef, NotesTreeNote } from './NotesTreeNote';
 
 export interface PartialNote {
@@ -49,6 +50,7 @@ export class NotesTreeRegistry extends Model({
     );
   }
 
+  @withoutUndoAction
   @modelAction
   initializeTree(partialNotes: PartialNote[]): void {
     partialNotes.forEach(({ title: noteTitle, id }) => {
@@ -58,6 +60,7 @@ export class NotesTreeRegistry extends Model({
     this.isInitialized = true;
   }
 
+  @withoutUndoAction
   @modelAction
   handleNotesChanges(changes: INoteTitleChange[]) {
     changes.forEach((ch) => {
@@ -107,6 +110,7 @@ export class NotesTreeRegistry extends Model({
     });
   }
 
+  @withoutUndoAction
   @modelAction
   private deleteEmptyNodes() {
     Object.values(this.nodesMap).forEach((node) => {
@@ -120,6 +124,7 @@ export class NotesTreeRegistry extends Model({
     });
   }
 
+  @withoutUndoAction
   @modelAction
   private removeNode(id: string) {
     const node = this.nodesMap[id];

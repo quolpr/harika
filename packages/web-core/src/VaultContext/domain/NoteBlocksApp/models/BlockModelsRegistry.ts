@@ -1,4 +1,11 @@
-import { Model, model, modelAction, prop, rootRef } from 'mobx-keystone';
+import {
+  Model,
+  model,
+  modelAction,
+  onChildAttachedTo,
+  prop,
+  rootRef,
+} from 'mobx-keystone';
 import type { ModelCreationData } from 'mobx-keystone';
 import {
   NoteBlockModel,
@@ -30,11 +37,6 @@ export class BlockModelsRegistry extends Model({
 
   registerNewBlock(block: NoteBlockModel) {
     this.blocksMap[block.$modelId] = block;
-    parentBlockCtx.setComputed(block, () =>
-      this.childParentRelations[block.$modelId]
-        ? this.blocksMap[this.childParentRelations[block.$modelId]]
-        : undefined,
-    );
   }
 
   getBlockById(id: string) {
@@ -131,5 +133,18 @@ export class BlockModelsRegistry extends Model({
 
   onInit() {
     rootBlockIdCtx.setComputed(this, () => this.rootBlockId);
+
+    onChildAttachedTo(
+      () => this.blocksMap,
+      (block) => {
+        if (block instanceof NoteBlockModel) {
+          parentBlockCtx.setComputed(block, () =>
+            this.childParentRelations[block.$modelId]
+              ? this.blocksMap[this.childParentRelations[block.$modelId]]
+              : undefined,
+          );
+        }
+      },
+    );
   }
 }

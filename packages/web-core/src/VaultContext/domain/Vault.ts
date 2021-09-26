@@ -13,6 +13,7 @@ import type { NoteBlockModel } from './NoteBlocksApp/models/NoteBlockModel';
 import dayjs from 'dayjs';
 import { NoteBlocksApp } from './NoteBlocksApp/NoteBlocksApp';
 import { computed } from 'mobx';
+import { withoutUndoAction } from '../../utils';
 
 @model(vaultModelType)
 export class Vault extends Model({
@@ -46,6 +47,7 @@ export class Vault extends Model({
     this.notesTree.initializeTree(partialNotes);
   }
 
+  @withoutUndoAction
   @modelAction
   newNote(
     attrs: Required<

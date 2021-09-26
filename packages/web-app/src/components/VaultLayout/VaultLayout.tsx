@@ -20,6 +20,7 @@ import { LoadingDoneSubjectContext } from '../../contexts';
 import { Observable } from 'rxjs';
 import { mapTo, switchMap, take, tap } from 'rxjs/operators';
 import { bem } from '../../utils';
+import { UndoRedoManagerProvider } from '../UndoRedoManagerProvider';
 
 const layoutClass = bem('vault-layout');
 
@@ -103,7 +104,7 @@ export const VaultLayout: React.FC<{
   const history = useHistory();
   const { vaultId } = useParams<{ vaultId: string }>();
   const isWide = useMedia('(min-width: 768px)');
-  const [notesRepo, setNotesRepo] = useState<NotesService | undefined>();
+  const [notesService, setNotesRepo] = useState<NotesService | undefined>();
   const [isSidebarOpened, setIsSidebarOpened] = useState(isWide);
 
   const togglerRef = useRef<HTMLDivElement>(null);
@@ -171,56 +172,58 @@ export const VaultLayout: React.FC<{
 
   const { mainRef, handleScroll } = useKeepScroll();
 
-  if (!notesRepo) return null;
+  if (!notesService) return null;
 
   return (
-    <CurrentVaultContext.Provider value={notesRepo.vault}>
-      <NotesServiceContext.Provider value={notesRepo}>
+    <CurrentVaultContext.Provider value={notesService.vault}>
+      <NotesServiceContext.Provider value={notesService}>
         <FooterRefContext.Provider value={footerRef}>
-          <div className={layoutClass()}>
-            <VaultSidebar
-              ref={sidebarRef}
-              className={layoutClass('sidebar', {
-                closed: !isSidebarOpened,
-              })}
-              isOpened={isSidebarOpened}
-              onNavClick={closeSidebar}
-            />
-
-            <div
-              className={layoutClass('container', {
-                'with-padding': isSidebarOpened,
-              })}
-            >
-              <div className={layoutClass('header-wrapper')}>
-                <VaultHeader
-                  className={layoutClass('header')}
-                  onTogglerClick={handleTogglerClick}
-                  isTogglerToggled={isSidebarOpened}
-                  togglerRef={togglerRef}
-                />
-              </div>
+          <UndoRedoManagerProvider notesService={notesService}>
+            <div className={layoutClass()}>
+              <VaultSidebar
+                ref={sidebarRef}
+                className={layoutClass('sidebar', {
+                  closed: !isSidebarOpened,
+                })}
+                isOpened={isSidebarOpened}
+                onNavClick={closeSidebar}
+              />
 
               <div
-                className={layoutClass('main-wrapper')}
-                onScroll={handleScroll}
-                ref={mainRef}
+                className={layoutClass('container', {
+                  'with-padding': isSidebarOpened,
+                })}
               >
-                <section
-                  className={layoutClass('main', {
-                    'sidebar-opened': isSidebarOpened,
-                  })}
-                >
-                  {children}
-                </section>
-              </div>
+                <div className={layoutClass('header-wrapper')}>
+                  <VaultHeader
+                    className={layoutClass('header')}
+                    onTogglerClick={handleTogglerClick}
+                    isTogglerToggled={isSidebarOpened}
+                    togglerRef={togglerRef}
+                  />
+                </div>
 
-              <div
-                className={layoutClass('footer-wrapper')}
-                ref={footerRef}
-              ></div>
+                <div
+                  className={layoutClass('main-wrapper')}
+                  onScroll={handleScroll}
+                  ref={mainRef}
+                >
+                  <section
+                    className={layoutClass('main', {
+                      'sidebar-opened': isSidebarOpened,
+                    })}
+                  >
+                    {children}
+                  </section>
+                </div>
+
+                <div
+                  className={layoutClass('footer-wrapper')}
+                  ref={footerRef}
+                ></div>
+              </div>
             </div>
-          </div>
+          </UndoRedoManagerProvider>
         </FooterRefContext.Provider>
       </NotesServiceContext.Provider>
     </CurrentVaultContext.Provider>

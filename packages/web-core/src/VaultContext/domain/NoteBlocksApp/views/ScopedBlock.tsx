@@ -16,7 +16,7 @@ import { comparer, computed, makeObservable, observable } from 'mobx';
 import type { IComputedValue } from 'mobx';
 import { isTodo } from '../../../../blockParser/astHelpers';
 import { BlockContentModel } from '../models/BlockContentModel';
-import type { ArraySet, ModelCreationData } from 'mobx-keystone';
+import { ArraySet, getSnapshot, ModelCreationData } from 'mobx-keystone';
 import type { Optional } from 'utility-types';
 
 // It is not usual mobx-keystone model, it is just mobx model
@@ -80,6 +80,14 @@ export class ScopedBlock implements ITreeNode<ScopedBlock> {
     if (this.rootScopedBlock.get() === this) return undefined;
 
     const parentBlock = this.noteBlock.parent;
+
+    if (parentBlock === undefined) {
+      throw new Error(
+        `Parent block not found for block ${JSON.stringify(
+          getSnapshot(this.noteBlock),
+        )}`,
+      );
+    }
 
     return parentBlock && this.getScopedBlock(parentBlock.$modelId);
   }

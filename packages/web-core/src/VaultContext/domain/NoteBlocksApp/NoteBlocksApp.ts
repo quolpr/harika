@@ -9,6 +9,7 @@ import { FocusedBlock } from './views/FocusedBlock';
 import { NoteBlockModel } from './models/NoteBlockModel';
 import { generateId } from '../../../generateId';
 import { BlockContentModel } from './models/BlockContentModel';
+import { withoutUndoAction } from '../../../utils';
 
 const blocksApp = '@harika/NoteBlocksApp';
 
@@ -81,7 +82,9 @@ export class NoteBlocksApp extends Model({
 
     return { registry, rootBlock };
   }
+
   @modelAction
+  @withoutUndoAction
   getOrCreateScopes(
     args: {
       noteId: string;

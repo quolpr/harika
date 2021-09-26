@@ -157,5 +157,13 @@ export class BlockContentModel extends Model({
     }, 2000);
 
     reaction(() => this.currentValue, debounced);
+    reaction(
+      () => this._value,
+      (val) => {
+        if (val !== this.currentValue) {
+          this.update(val);
+        }
+      },
+    );
   }
 }

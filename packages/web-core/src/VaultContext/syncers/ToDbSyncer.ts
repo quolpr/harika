@@ -87,7 +87,7 @@ const getBlocksPatches = (
       } else {
         const noteBlock = getNoteBlock(id);
 
-        if (!noteBlock || noteBlock.isDeleted) {
+        if (!noteBlock) {
           toDeleteIds.add(id);
         } else {
           toUpdateIds.add(id);

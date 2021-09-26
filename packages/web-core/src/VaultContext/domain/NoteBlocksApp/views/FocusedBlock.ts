@@ -1,4 +1,5 @@
 import { Model, model, modelAction, prop } from 'mobx-keystone';
+import { withoutUndoAction } from '../../../../utils';
 
 export interface EditState {
   isFocused: boolean;
@@ -50,6 +51,7 @@ export class FocusedBlock extends Model({
       : { isFocused: false, isEditing: false };
   }
 
+  @withoutUndoAction
   @modelAction
   setState(state: FocusedBlockState | undefined) {
     this.state = state;

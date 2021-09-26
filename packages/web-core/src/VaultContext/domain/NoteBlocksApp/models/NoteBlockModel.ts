@@ -49,7 +49,6 @@ export class NoteBlockModel extends Model({
   linkedBlockIds: prop<string[]>(() => []),
   createdAt: tProp(types.dateTimestamp),
   updatedAt: tProp(types.dateTimestamp),
-  isDeleted: prop<boolean>(false),
 }) {
   @computed
   get isRoot() {
@@ -166,7 +165,7 @@ export class NoteBlockModel extends Model({
       this.parent.noteBlockRefs.splice(this.orderPosition, 1);
     }
 
-    this.isDeleted = true;
+    detach(this);
   }
 
   @modelAction

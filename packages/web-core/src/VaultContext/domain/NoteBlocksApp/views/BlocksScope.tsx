@@ -8,6 +8,7 @@ import {
   onChildAttachedTo,
   prop,
   Ref,
+  withoutUndo,
 } from 'mobx-keystone';
 import { Optional } from 'utility-types';
 import {
@@ -15,6 +16,7 @@ import {
   normalizeBlockTree,
 } from '../../../../blockParser/blockUtils';
 import { TreeToken } from '../../../../blockParser/parseStringToTree';
+import { withoutUndoAction } from '../../../../utils';
 import { BlockModelsRegistry } from '../models/BlockModelsRegistry';
 import { NoteBlockModel } from '../models/NoteBlockModel';
 import { ScopedBlock } from './ScopedBlock';
@@ -119,23 +121,27 @@ export class BlocksScope extends Model({
   }
 
   @modelAction
+  @withoutUndoAction
   setSelectionInterval(fromId: string, toId: string) {
     this.selectionInterval = [fromId, toId];
     this.addableSelectionId = undefined;
   }
 
   @modelAction
+  @withoutUndoAction
   resetSelection() {
     this.selectionInterval = undefined;
     this.addableSelectionId = undefined;
   }
 
   @modelAction
+  @withoutUndoAction
   expandSelection(id: string) {
     this.addableSelectionId = id;
   }
 
   @modelAction
+  @withoutUndoAction
   toggleExpand(blockId: string) {
     if (this.collapsedBlockIds.has(blockId)) {
       this.collapsedBlockIds.delete(blockId);

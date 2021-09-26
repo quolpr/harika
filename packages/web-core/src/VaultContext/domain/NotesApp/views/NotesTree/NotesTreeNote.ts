@@ -8,6 +8,7 @@ import {
   Ref,
   rootRef,
 } from 'mobx-keystone';
+import { withoutUndoAction } from '../../../../../utils';
 import {
   NotesTreeRegistry,
   notesTreeRegistryModelType,
@@ -102,21 +103,25 @@ export class NotesTreeNote extends Model({
     });
   }
 
+  @withoutUndoAction
   @modelAction
   setNoteId(noteId: string) {
     this.noteId = noteId;
   }
 
+  @withoutUndoAction
   @modelAction
   removeFromParent() {
     this.parent.removeChildById(this.$modelId);
   }
 
+  @withoutUndoAction
   @modelAction
   removeChildById(id: string) {
     this.nodeRefs = this.nodeRefs.filter((ref) => ref.id !== id);
   }
 
+  @withoutUndoAction
   @modelAction
   toggleExpand() {
     this.isExpanded = !this.isExpanded;
