@@ -323,7 +323,7 @@ export const useHandleInput = (
         if (firstToken?.type === 'noteRef' || firstToken?.type === 'tag') {
           setNoteTitleToSearch(firstToken.ref);
         } else if (firstToken?.type === 'noteBlockRef') {
-          if (firstToken.content[0] !== '~') {
+          if (!firstToken.blockId) {
             setBlockToSearch(firstToken.content);
           } else {
             setBlockToSearch(undefined);

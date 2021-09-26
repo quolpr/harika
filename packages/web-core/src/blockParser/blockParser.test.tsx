@@ -16,10 +16,36 @@ describe('Parser', () => {
         },
         {
           id: '123',
+          blockId: undefined,
           type: 'noteBlockRef',
           content: 'world',
           offsetStart: 5,
           offsetEnd: 14,
+        },
+      ]);
+    });
+
+    it('parses id of black ref', () => {
+      const parsedData = parse(
+        'hee! ((~bI5EHviEQZBbr7q93rVX))',
+        () => () => '123',
+      );
+
+      expect(parsedData).to.deep.eq([
+        {
+          id: '123',
+          type: 'str',
+          content: 'hee! ',
+          offsetStart: 0,
+          offsetEnd: 5,
+        },
+        {
+          id: '123',
+          content: '~bI5EHviEQZBbr7q93rVX',
+          blockId: 'bI5EHviEQZBbr7q93rVX',
+          offsetEnd: 30,
+          offsetStart: 5,
+          type: 'noteBlockRef',
         },
       ]);
     });

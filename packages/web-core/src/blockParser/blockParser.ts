@@ -3,6 +3,7 @@ import { parse as pegParse } from './pegParser';
 import { find } from 'linkifyjs';
 import type { FindResultHash } from 'linkifyjs';
 import type { Token } from './types';
+import { dictionary } from '../generateId';
 
 declare module 'linkifyjs' {
   interface FindResultHash {
@@ -89,6 +90,14 @@ export const parse = (data: string, idGenerator = newIdGenerator): Token[] => {
       alias = alias?.trim();
 
       return { ...t, ref: ref, alias: alias?.length === 0 ? undefined : alias };
+    } else if (t.type === 'noteBlockRef') {
+      const matchResult = t.content.match(
+        new RegExp(`^~([${dictionary}]{20})$`),
+      );
+
+      const [, id] = matchResult || [];
+
+      return { ...t, blockId: id };
     }
 
     return t;

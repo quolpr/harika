@@ -23,6 +23,7 @@ export interface NoteBlockRef extends BaseToken {
   id: string;
   type: 'noteBlockRef';
   content: string;
+  blockId: string | undefined;
 }
 
 export interface TagToken extends BaseToken {
