@@ -9,6 +9,7 @@ import { BroadcastChannel } from 'broadcast-channel';
 import type { IInternalSyncCtx } from './syncCtx';
 import { isEqual } from 'lodash-es';
 import { suppressLog } from '../../db/suppressLog';
+import { IMigration } from '../../db/types';
 
 export abstract class BaseDbSyncWorker {
   protected db!: DB<IInternalSyncCtx>;
@@ -39,7 +40,7 @@ export abstract class BaseDbSyncWorker {
   async initialize() {
     if (!this.db) {
       this.db = new DB();
-      await this.db.init(this.dbName);
+      await this.db.init(this.dbName, this.migrations());
 
       this.syncRepo = new SyncRepository(
         this.db,
@@ -64,4 +65,6 @@ export abstract class BaseDbSyncWorker {
   }
 
   abstract getApplyChangesService(): ApplyChangesService & ProxyMarked;
+
+  abstract migrations(): IMigration[];
 }

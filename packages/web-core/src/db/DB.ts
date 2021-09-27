@@ -10,22 +10,8 @@ import initSqlJs, {
 import { SQLiteFS } from 'absurd-sql';
 import IndexedDBBackend from 'absurd-sql/dist/indexeddb-backend';
 import { shareCtx } from './ctx';
-import { vaultsTable } from '../UserContext/persistence/VaultsRepository';
-import {
-  noteBlocksNotesTable,
-  noteBlocksTable,
-  noteBlocksFTSTable,
-  notesFTSTable,
-} from '../VaultContext/persistence/NotesBlocksRepository';
-import { notesTable } from '../VaultContext/persistence/NotesRepository';
-import {
-  clientChangesTable,
-  serverChangesPullsTable,
-  serverChangesTable,
-  syncStatusTable,
-} from '../db-sync/persistence/SyncRepository';
-import { blocksScopesTable } from '../VaultContext/persistence/BlockScopesRepository';
 import { getIsLogSuppressing } from './suppressLog';
+import { IMigration } from './types';
 
 // @ts-ignore
 Q.update.defineClause('or', '{{#if _or}}OR {{_or}}{{/if}}', {
@@ -56,14 +42,16 @@ Q['match'] = function (name: string, col: number, val: string) {
   return new Q.Binary('MATCH', col, val);
 }.bind(null, 'match');
 
+export const migrationsTable = 'migrations';
+
 export class DB<Ctx extends object> {
-  sqlDb!: Database;
+  private sqlDb!: Database;
 
   private inTransaction: boolean = false;
   private transactionCtx: Ctx | undefined;
   private dbName: string = '';
 
-  async init(dbName: string) {
+  async init(dbName: string, migrations: IMigration[]) {
     this.dbName = dbName;
 
     let SQL = await initSqlJs({
@@ -87,170 +75,14 @@ export class DB<Ctx extends object> {
       filename: true,
     });
 
-    this.sqlDb.exec(`
+    this.sqlExec(`
       PRAGMA journal_mode=MEMORY;
       PRAGMA page_size=8192;
       PRAGMA cache_size=-${10 * 1024};
       PRAGMA foreign_keys=ON;
     `);
 
-    // TODO: migrations
-    this.sqlDb.exec(`
-      CREATE TABLE IF NOT EXISTS ${vaultsTable} (
-        id varchar(20) PRIMARY KEY,
-        name varchar(255) NOT NULL,
-        updatedAt INTEGER NOT NULL,
-        createdAt INTEGER NOT NULL
-      );
-    `);
-
-    this.sqlDb.exec(`
-      CREATE TABLE IF NOT EXISTS incrementTable (value INT, tableName TEXT);
-      CREATE UNIQUE INDEX IF NOT EXISTS idx_incrementTable ON incrementTable(tableName);
-      INSERT OR IGNORE INTO incrementTable VALUES (0, '${clientChangesTable}');
-    `);
-
-    this.sqlDb.exec(`
-      CREATE TABLE IF NOT EXISTS ${notesTable} (
-        id varchar(20) PRIMARY KEY,
-        title varchar(255) NOT NULL,
-        dailyNoteDate INTEGER,
-        rootBlockId varchar(20) NOT NULL,
-        updatedAt INTEGER NOT NULL,
-        createdAt INTEGER NOT NULL
-      );
-
-      CREATE INDEX IF NOT EXISTS idx_notes_title ON ${notesTable}(title);
-      CREATE INDEX IF NOT EXISTS idx_notes_date ON ${notesTable}(dailyNoteDate);
-    `);
-
-    this.sqlDb.exec(`
-      CREATE TABLE IF NOT EXISTS ${clientChangesTable} (
-        id varchar(36) PRIMARY KEY,
-        type varchar(10) NOT NULL,
-        inTable varchar(10) NOT NULL,
-        key varchar(36) NOT NULL,
-        obj TEXT NOT NULL,
-        changeFrom TEXT,
-        changeTo TEXT,
-        rev INTEGER NOT NULL DEFAULT 0
-      );
-
-      CREATE TRIGGER IF NOT EXISTS setRev_${clientChangesTable} AFTER INSERT ON ${clientChangesTable} BEGIN
-          UPDATE  incrementTable
-          SET     value = value + 1
-          WHERE   tableName = '${clientChangesTable}';
-
-          UPDATE  ${clientChangesTable}
-          SET     rev = (
-                      SELECT value
-                      FROM incrementTable
-                      WHERE tableName = '${clientChangesTable}')
-          WHERE   id = new.id;
-      END;
-    `);
-
-    this.sqlDb.exec(`
-      CREATE TABLE IF NOT EXISTS ${blocksScopesTable} (
-        id varchar(100) PRIMARY KEY,
-        collapsedBlockIds TEXT NOT NULL,
-        noteId varchar(20) NOT NULL,
-        rootBlockId varchar(20) NOT NULL,
-        scopedModelId varchar(50) NOT NULL,
-        scopedModelType varchar(50) NOT NULL
-      );
-
-      CREATE INDEX IF NOT EXISTS idx_${blocksScopesTable}_noteId ON ${blocksScopesTable}(noteId);
-    `);
-
-    this.sqlDb.exec(`
-      CREATE TABLE IF NOT EXISTS ${noteBlocksNotesTable} (
-        noteId varchar(20) NOT NULL,
-        noteBlockId varchar(20) NOT NULL
-      );
-
-      CREATE INDEX IF NOT EXISTS idx_notes_note_blocks_noteId ON ${noteBlocksNotesTable}(noteId);
-      CREATE INDEX IF NOT EXISTS idx_notes_note_blocks_noteBlockId ON ${noteBlocksNotesTable}(noteBlockId);
-    `);
-
-    this.sqlDb.exec(`
-      CREATE TABLE IF NOT EXISTS ${noteBlocksTable} (
-        id varchar(20) PRIMARY KEY,
-        noteId varchar(20) NOT NULL,
-        noteBlockIds TEXT NOT NULL,
-        linkedNoteIds TEXT NOT NULL,
-        content TEXT NOT NULL,
-        updatedAt INTEGER NOT NULL,
-        createdAt INTEGER NOT NULL
-      );
-
-      CREATE INDEX IF NOT EXISTS idx_note_blocks_noteId ON ${noteBlocksTable}(noteId);
-    `);
-
-    this.sqlDb.exec(`
-      CREATE VIRTUAL TABLE IF NOT EXISTS ${noteBlocksFTSTable} USING fts5(id UNINDEXED, textContent, tokenize="trigram");
-    `);
-
-    this.sqlDb.exec(`
-      CREATE VIRTUAL TABLE IF NOT EXISTS ${notesFTSTable} USING fts5(id UNINDEXED, title, tokenize="trigram");
-    `);
-
-    const sql = `
-      CREATE TRIGGER IF NOT EXISTS populateNoteBlocksNotesTable_insert AFTER INSERT ON ${noteBlocksTable} BEGIN
-        DELETE FROM ${noteBlocksNotesTable} WHERE noteBlockId = new.id;
-        INSERT INTO ${noteBlocksNotesTable}(noteId, noteBlockId) SELECT j.value, new.id FROM json_each(new.linkedNoteIds) AS j;
-      END;
-
-      -- after delete trigger on notes table is not required cause noteBlocks table is source of truth
-      CREATE TRIGGER IF NOT EXISTS populateNoteBlocksNotesTable_deleteBlock AFTER DELETE ON ${noteBlocksTable} BEGIN
-        DELETE FROM ${noteBlocksNotesTable} WHERE noteBlockId = old.id;
-      END;
-
-      CREATE TRIGGER IF NOT EXISTS populateNoteBlocksNotesTable_update AFTER UPDATE ON ${noteBlocksTable} BEGIN
-        DELETE FROM ${noteBlocksNotesTable} WHERE noteBlockId = old.id;
-        INSERT INTO ${noteBlocksNotesTable}(noteId, noteBlockId) SELECT j.value, new.id FROM json_each(new.linkedNoteIds) AS j;
-      END;
-    `;
-
-    this.sqlDb.exec(sql);
-
-    this.sqlDb.exec(`
-      CREATE TABLE IF NOT EXISTS ${syncStatusTable} (
-        id varchar(20) PRIMARY KEY,
-        lastReceivedRemoteRevision INTEGER,
-        lastAppliedRemoteRevision INTEGER,
-        clientId varchar(36) NOT NULL
-      )
-    `);
-
-    this.sqlDb.exec(`
-      CREATE TABLE IF NOT EXISTS ${serverChangesPullsTable} (
-        id varchar(36) PRIMARY KEY,
-        serverRevision INTEGER NOT NULL
-      );
-    `);
-
-    this.sqlDb.exec(`
-      CREATE TABLE IF NOT EXISTS ${serverChangesTable} (
-        id varchar(36) PRIMARY KEY,
-
-        pullId varchar(36) NOT NULL,
-        rev INTEGER NOT NULL,
-
-        type varchar(10) NOT NULL,
-        inTable varchar(10) NOT NULL,
-        key varchar(36) NOT NULL,
-        obj TEXT,
-        changeFrom TEXT,
-        changeTo TEXT,
-
-        FOREIGN KEY(pullId) REFERENCES ${serverChangesPullsTable}(id) ON DELETE CASCADE
-      );
-
-      CREATE INDEX IF NOT EXISTS idx_change_from_server_pullId ON ${serverChangesTable}(pullId);
-    `);
-
-    this.sqlDb.exec(`
+    this.sqlExec(`
       CREATE TABLE IF NOT EXISTS health_check (
         id INTEGER PRIMARY KEY,
         isOk BOOLEAN NOT NULL CHECK (isOk IN (0, 1))
@@ -258,6 +90,46 @@ export class DB<Ctx extends object> {
 
       INSERT OR REPLACE INTO health_check VALUES (1, 1);
     `);
+
+    this.sqlExec(`
+      CREATE TABLE IF NOT EXISTS ${migrationsTable} (
+        id INTEGER PRIMARY KEY,
+        name varchar(20) NOT NULL,
+        migratedAt INTEGER NOT NULL
+      )
+    `);
+
+    this.sqlDb.run('BEGIN TRANSACTION;');
+
+    const migratedMigrations = this.getRecords<{ id: number; name: string }>(
+      Q.select('*').from(migrationsTable),
+    );
+
+    try {
+      migrations
+        .sort((a, b) => a.id - b.id)
+        .forEach((migration) => {
+          if (migratedMigrations.find(({ id }) => id === migration.id)) return;
+
+          migration.up(this);
+
+          this.execQuery(
+            Q.insertInto(migrationsTable).values({
+              id: migration.id,
+              name: migration.name,
+              migratedAt: new Date().getTime(),
+            }),
+          );
+        });
+    } catch (e) {
+      this.sqlDb.run('ROLLBACK;');
+
+      throw e;
+    }
+
+    this.sqlDb.run('COMMIT;');
+
+    // TODO: migrations
   }
 
   transaction<T extends any>(func: () => T, ctx?: Ctx): T {

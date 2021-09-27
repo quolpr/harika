@@ -11,6 +11,10 @@ import { VaultChangesApplier } from './sync/VaultChangesApplier/VaultChangesAppl
 import { FindNoteOrBlockService } from './services/FindNoteOrBlockService';
 import { ImportExportService } from './services/ImportExportService';
 import { DeleteNoteService } from './services/DeleteNoteService';
+import { IMigration } from '../../db/types';
+import { initSyncTables } from '../../db-migrations/initSyncTables';
+import { initVaultsTables } from '../../db-migrations/initVaultsTables';
+import { addBlockIdsToNoteBlocksTables } from '../../db-migrations/addBlockIdsToNoteBlocksTable';
 
 export class VaultDbWorker extends BaseDbSyncWorker {
   getNotesRepo() {
@@ -71,6 +75,10 @@ export class VaultDbWorker extends BaseDbSyncWorker {
         this.syncRepo,
       ),
     );
+  }
+
+  migrations(): IMigration[] {
+    return [initSyncTables, initVaultsTables, addBlockIdsToNoteBlocksTables];
   }
 }
 
