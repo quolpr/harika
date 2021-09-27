@@ -9,6 +9,16 @@
     }
   }
 
+  &__linkedBlocksCounter {
+    display: flex;
+    background-color: #353739;
+    align-self: start;
+
+    padding: 0.1rem 0.4rem;
+    margin-left: 0.4rem;
+    border-radius: 3px;
+  }
+
   &__dot {
     @apply flex items-start justify-end w-9;
 

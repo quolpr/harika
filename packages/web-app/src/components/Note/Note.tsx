@@ -29,19 +29,19 @@ export interface IFocusBlockState {
 }
 
 const BacklinkedNotes = observer(({ note }: { note: NoteModel }) => {
-  const noteRepo = useNotesService();
+  const notesService = useNotesService();
 
   const backlinks$ = useObservable(
     ($inputs) => {
       return $inputs.pipe(
         switchMap(([note]) =>
-          noteRepo
+          notesService
             .getLinksOfNote$(note.$modelId)
             .pipe(map((noteLinks) => ({ noteLinks: noteLinks, note }))),
         ),
         switchMap(({ noteLinks, note }) =>
           noteLinks.length
-            ? noteRepo
+            ? notesService
                 .getBlocksScopes$(
                   of(
                     noteLinks.flatMap((linkedNote) =>

@@ -8,6 +8,7 @@ export type NoteBlockRow = {
   noteId: string;
   noteBlockIds: string;
   linkedNoteIds: string;
+  linkedBlockIds: string;
   content: string;
   createdAt: number;
   updatedAt: number | null;
@@ -18,6 +19,7 @@ export type NoteBlockDoc = {
 
   noteBlockIds: string[];
   linkedNoteIds: string[];
+  linkedBlockIds: string[];
 
   content: string;
   createdAt: number;
@@ -27,6 +29,7 @@ export type NoteBlockDoc = {
 export const noteBlocksTable = 'noteBlocks' as const;
 export const notesFTSTable = 'notesFTS' as const;
 export const noteBlocksNotesTable = 'noteBlocksNotes' as const;
+export const noteBlocksBlocksTable = 'noteBlocksBlocks' as const;
 export const noteBlocksFTSTable = 'noteBlocksFTS' as const;
 
 export type INoteBlockChangeEvent = IDatabaseChange<
@@ -159,11 +162,57 @@ export class SqlNotesBlocksRepository extends BaseSyncRepository<
     return grouped;
   }
 
+  getLinkedBlocksOfBlocksOfNote(
+    noteId: string,
+  ): Record<string, { noteId: string; blockId: string }[]> {
+    const result = this.db.getRecords<{
+      linkedToBlockId: string;
+      noteId: string;
+      blockId: string;
+    }>(
+      Q.select(
+        '*',
+        Q.select('noteId')
+          .as('noteId')
+          .from(noteBlocksTable)
+          .where(
+            Q.eq(
+              `${noteBlocksBlocksTable}.blockId`,
+              Q(`${noteBlocksTable}.id`),
+            ),
+          ),
+      )
+        .distinct('noteId, blockId, linkedToBlockId')
+        .from(noteBlocksBlocksTable)
+        .where(
+          Q.in(
+            'linkedToBlockId',
+            Q.select('id').from(noteBlocksTable).where({ noteId }),
+          ),
+        ),
+    );
+
+    const obj: Record<string, { noteId: string; blockId: string }[]> = {};
+
+    result.forEach((res) => {
+      const toPush = { blockId: res.blockId, noteId: res.noteId };
+
+      if (obj[res.linkedToBlockId] !== undefined) {
+        obj[res.linkedToBlockId].push(toPush);
+      } else {
+        obj[res.linkedToBlockId] = [toPush];
+      }
+    });
+
+    return obj;
+  }
+
   toRow(doc: NoteBlockDoc): NoteBlockRow {
     const res = {
       ...super.toRow(doc),
       noteBlockIds: JSON.stringify(doc.noteBlockIds),
       linkedNoteIds: JSON.stringify(doc.linkedNoteIds),
+      linkedBlockIds: JSON.stringify(doc.linkedBlockIds),
     };
 
     return res;
@@ -174,6 +223,7 @@ export class SqlNotesBlocksRepository extends BaseSyncRepository<
       ...super.toDoc(row),
       noteBlockIds: JSON.parse(row['noteBlockIds'] as string),
       linkedNoteIds: JSON.parse(row['linkedNoteIds'] as string),
+      linkedBlockIds: JSON.parse(row['linkedBlockIds'] as string),
     };
 
     return res;

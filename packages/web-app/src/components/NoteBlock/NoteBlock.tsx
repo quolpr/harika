@@ -9,6 +9,10 @@ import { TokensRenderer } from './TokensRenderer';
 import { useFakeInput } from './BlockEditor/hooks/useFocusHandler';
 import { useCurrentFocusedBlockState } from '../../hooks/useFocusedBlockState';
 import { BlockEditor } from './BlockEditor/BlockEditor';
+import {
+  useBacklinkedBlocks,
+  useBacklinkedBlocksCount,
+} from '../LinkedBlocksOfBlocksContext';
 
 // IMPORTANT: don't use any global handlers in <NoteBlock /> (document.addEventListener) cause it is slow down note blocks tree a lot
 
@@ -172,6 +176,8 @@ export const NoteBlock = observer(
       return scope.selectedIds.includes(noteBlock.$modelId);
     }).get();
 
+    const backlinksCount = useBacklinkedBlocksCount(noteBlock.$modelId);
+
     return (
       <div
         className="note-block"
@@ -190,6 +196,12 @@ export const NoteBlock = observer(
             scope={scope}
             isExpanded={noteBlock.isExpanded}
           />
+
+          {backlinksCount > 0 && (
+            <div className="note-block__linkedBlocksCounter">
+              {backlinksCount}
+            </div>
+          )}
         </div>
 
         {noteBlock.children.length !== 0 && (

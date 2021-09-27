@@ -31,6 +31,7 @@ export const convertNoteBlockDocToModelAttrs = (
       .filter((v) => Boolean(v))
       .map((id) => noteBlockRef(id)),
     linkedNoteIds: doc.linkedNoteIds.filter((v) => Boolean(v)),
+    linkedBlockIds: doc.linkedBlockIds.filter((v) => Boolean(v)),
   };
 };
 

@@ -33,6 +33,7 @@ export const useUpdateBlockValues = (
     if (!editState.isEditing && wasEditing) {
       blockView.content.dumpValue();
       noteRepo.updateNoteBlockLinks([blockView.$modelId]);
+      noteRepo.updateBlockBlockLinks([blockView.$modelId]);
     }
   }, [editState.isEditing, blockView, noteRepo, wasEditing]);
 };

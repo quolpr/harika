@@ -22,7 +22,11 @@ import {
 } from 'rxjs/operators';
 import { isEqual, uniq } from 'lodash-es';
 import { filterAst } from '../blockParser/astHelpers';
-import type { NoteRefToken, TagToken } from '../blockParser/types';
+import type {
+  NoteBlockRef,
+  NoteRefToken,
+  TagToken,
+} from '../blockParser/types';
 import {
   BehaviorSubject,
   firstValueFrom,
@@ -287,6 +291,18 @@ export class NotesService {
     );
   }
 
+  getLinkedBlocksOfBlocksOfNote$(
+    noteId: string,
+  ): Observable<Record<string, { noteId: string; blockId: string }[]>> {
+    return from(
+      this.dbEventsService.liveQuery(
+        [noteBlocksTable],
+        () => this.notesBlocksRepository.getLinkedBlocksOfBlocksOfNote(noteId),
+        false,
+      ),
+    );
+  }
+
   getBlocksScope$(
     arg$: Observable<{
       noteId: string;
@@ -471,22 +487,16 @@ export class NotesService {
           console.error('noteBlock note found');
           return;
         }
-        console.debug('Updating links');
+        console.debug('Updating block note links');
 
-        const titles = uniq([
-          ...(
+        const titles = uniq(
+          (
             filterAst(
               noteBlock.content.ast,
-              (t) => t.type === 'noteRef',
-            ) as NoteRefToken[]
-          ).map((t: NoteRefToken) => t.ref),
-          ...(
-            filterAst(
-              noteBlock.content.ast,
-              (t) => t.type === 'tag',
-            ) as TagToken[]
-          ).map((t: TagToken) => t.ref),
-        ]);
+              (t) => t.type === 'noteRef' || t.type === 'tag',
+            ) as (NoteRefToken | TagToken)[]
+          ).map((t: NoteRefToken | TagToken) => t.ref),
+        );
 
         const existingNotesIndexed = Object.fromEntries(
           (titles.length > 0
@@ -518,8 +528,36 @@ export class NotesService {
           )
         ).flatMap((n) => (n ? [n] : []));
 
-        noteBlock.updateLinks(
+        noteBlock.updateNoteLinks(
           allParsedLinkedNotes.map(({ $modelId }) => $modelId),
+        );
+      }),
+    );
+  }
+
+  async updateBlockBlockLinks(noteBlockIds: string[]) {
+    return Promise.all(
+      noteBlockIds.map(async (id) => {
+        const noteBlock = this.vault.getNoteBlock(id);
+
+        if (!noteBlock) {
+          console.error('noteBlock note found');
+          return;
+        }
+
+        console.debug('Updating block block links');
+
+        noteBlock.updateBlockLinks(
+          uniq(
+            (
+              filterAst(
+                noteBlock.content.ast,
+                (t) => t.type === 'noteBlockRef',
+              ) as NoteBlockRef[]
+            )
+              .map((t) => t.blockId)
+              .filter((id) => !!id) as string[],
+          ),
         );
       }),
     );

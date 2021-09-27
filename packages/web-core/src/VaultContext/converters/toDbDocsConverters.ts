@@ -13,6 +13,7 @@ export const mapNoteBlock = (model: NoteBlockModel): NoteBlockDoc => {
     createdAt: model.createdAt,
     noteBlockIds: model.noteBlockRefs.map(({ id }) => id),
     linkedNoteIds: [...model.linkedNoteIds],
+    linkedBlockIds: [...model.linkedBlockIds],
     updatedAt: model.updatedAt,
   };
 };

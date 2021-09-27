@@ -76,6 +76,7 @@ export class ImportExportService {
                       linkedNoteIds: doc.linkedNoteIds.filter(
                         (v: string | null) => Boolean(v),
                       ),
+                      linkedBlockIds: doc.linkedBlockIds || [],
                       noteBlockIds: doc.noteBlockIds.filter(
                         (v: string | null) => Boolean(v),
                       ),

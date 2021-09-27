@@ -8,6 +8,7 @@ import type { NoteModel } from '@harika/web-core';
 import { useNotesService } from '../../contexts/CurrentNotesServiceContext';
 import { useObservable, useObservableState } from 'observable-hooks';
 import { map } from 'rxjs';
+import { LinkedBlocksOfBlocksProvider } from '../LinkedBlocksOfBlocksContext';
 
 export const NoteBlocks = observer(({ note }: { note: NoteModel }) => {
   const noteRepo = useNotesService();
@@ -27,7 +28,7 @@ export const NoteBlocks = observer(({ note }: { note: NoteModel }) => {
   const scope = useObservableState(scope$, undefined);
 
   return (
-    <>
+    <LinkedBlocksOfBlocksProvider noteId={note.$modelId}>
       {scope && <NoteBlocksHandlers scope={scope} note={note} />}
 
       <div className="note__body">
@@ -42,6 +43,6 @@ export const NoteBlocks = observer(({ note }: { note: NoteModel }) => {
       </div>
 
       {!isWide && scope && <Toolbar scope={scope} />}
-    </>
+    </LinkedBlocksOfBlocksProvider>
   );
 });

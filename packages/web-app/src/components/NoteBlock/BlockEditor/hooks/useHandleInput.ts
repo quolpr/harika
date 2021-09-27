@@ -289,9 +289,9 @@ export const useHandleInput = (
 
       const injectedBlocks = scope.injectNewTreeTokens(block, parsedToTree);
 
-      noteRepo.updateNoteBlockLinks(
-        injectedBlocks.map(({ $modelId }) => $modelId),
-      );
+      const ids = injectedBlocks.map(({ $modelId }) => $modelId);
+      noteRepo.updateNoteBlockLinks(ids);
+      noteRepo.updateBlockBlockLinks(ids);
 
       if (injectedBlocks[0]) {
         setEditState({
