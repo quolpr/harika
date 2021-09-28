@@ -57,6 +57,7 @@ import {
   ISyncState,
 } from '../db-sync/synchronizer/init';
 import { VaultDbWorker } from './persistence/VaultDb.worker';
+import dayjs from 'dayjs';
 
 export { NoteModel } from './domain/NotesApp/models/NoteModel';
 export { Vault } from './domain/Vault';
@@ -190,6 +191,23 @@ export class NotesService {
       status: 'ok',
       data: this.vault.newNote(attrs, options).note,
     } as ICreationResult<NoteModel>;
+  }
+
+  getTodayDailyNote$() {
+    return interval(1000).pipe(
+      map(() => dayjs().startOf('day')),
+      distinctUntilChanged((a, b) => a.unix() === b.unix()),
+      switchMap((date) => this.getDailyNote$(date)),
+      distinctUntilChanged(),
+    );
+  }
+
+  getDailyNote$(date: Dayjs) {
+    return from(
+      this.dbEventsService.liveQuery([notesTable], () =>
+        this.notesRepository.getDailyNote(date.unix()),
+      ),
+    ).pipe(switchMap((row) => (row ? this.getNote(row.id) : of(undefined))));
   }
 
   async getOrCreateDailyNote(this: NotesService, date: Dayjs) {

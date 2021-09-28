@@ -14,6 +14,10 @@ import { NotesTree } from './NotesTree';
 import { useNotesService } from '../../contexts/CurrentNotesServiceContext';
 import download from 'downloadjs';
 import dayjs from 'dayjs';
+import { useObservable, useObservableState } from 'observable-hooks';
+import { switchMap } from 'rxjs';
+import { useHandleClick } from '../../hooks/useNoteClick';
+import { usePrimaryNoteId } from '../../hooks/usePrimaryNote';
 
 const sidebarClass = cn('sidebar');
 
@@ -27,6 +31,7 @@ export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
   ({ className, isOpened, onNavClick }: IProps, ref) => {
     const vault = useCurrentVault();
     const notesService = useNotesService();
+    const primaryNoteId = usePrimaryNoteId();
 
     const handleDownloadClick = useCallback(async () => {
       const str = await notesService.export();
@@ -65,6 +70,30 @@ export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
       [notesService],
     );
 
+    const dailyNote$ = useObservable(
+      (args$) => {
+        return args$.pipe(
+          switchMap(([notesService]) => notesService.getTodayDailyNote$()),
+        );
+      },
+      [notesService],
+    );
+    const dailyNote = useObservableState(dailyNote$, undefined);
+
+    const handleClick = useHandleClick(
+      vault,
+      primaryNoteId,
+      dailyNote?.$modelId,
+    );
+
+    const onDailyNoteClick = useCallback(
+      (e: React.MouseEvent) => {
+        handleClick(e);
+        onNavClick(e);
+      },
+      [handleClick, onNavClick],
+    );
+
     return (
       <div
         ref={ref}
@@ -83,7 +112,7 @@ export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
             <Link
               className={sidebarClass('menu-link sidebar-item')}
               to={paths.vaultDailyPath({ vaultId: vault.$modelId })}
-              onClick={onNavClick}
+              onClick={onDailyNoteClick}
             >
               <div className={sidebarClass('menu-link-icon')}>
                 <DailyNoteIcon />

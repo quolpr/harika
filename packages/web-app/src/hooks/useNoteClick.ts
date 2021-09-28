@@ -45,9 +45,11 @@ export const useHandleClick = (
       if (e.target !== e.currentTarget) {
         if (!(e.target instanceof HTMLElement)) return;
         if (e.target instanceof HTMLAnchorElement) return;
+        if (e.target instanceof HTMLLabelElement) return;
+        if (e.target instanceof HTMLInputElement) return;
 
         const closestLink = e.target.closest('[role="link"]');
-        if (closestLink !== e.currentTarget) return;
+        if (closestLink && closestLink !== e.currentTarget) return;
       }
 
       e.preventDefault();

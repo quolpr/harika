@@ -176,7 +176,7 @@ export class VaultsService {
     );
 
     // Don't need to await
-    service.initialize(this.sync);
+    service.initialize();
 
     if (this.sync) {
       service.initSync(
