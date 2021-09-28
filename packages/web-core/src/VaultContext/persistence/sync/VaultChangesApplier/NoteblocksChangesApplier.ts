@@ -36,10 +36,17 @@ export class NoteblocksChangesApplier extends BaseChangesApplier<
       change2.to.linkedNoteIds,
     );
 
+    const linkedBlockIds = this.resolveIds(
+      change1.from.linkedBlockIds || change2.from.linkedBlockIds,
+      change1.to.linkedBlockIds,
+      change2.to.linkedBlockIds,
+    );
+
     finalMods = {
       ...finalMods,
       ...(linkedNoteIds === undefined ? {} : { linkedNoteIds }),
       ...(noteBlockIds === undefined ? {} : { noteBlockIds }),
+      ...(linkedBlockIds === undefined ? {} : { linkedBlockIds }),
       ...this.resolveContent(change1.to.content, change2.to.content),
     };
 
