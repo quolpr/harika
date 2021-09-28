@@ -22,6 +22,8 @@ import { NoteBlockModel } from '../models/NoteBlockModel';
 import { ScopedBlock } from './ScopedBlock';
 import { ScopedBlocksRegistry } from './ScopedBlocksRegistry';
 
+// TODO: rename scopedModelType to scopeType scopeId
+// cause modelType could be not mobx model type
 @model('@harika/BlocksScope')
 export class BlocksScope extends Model({
   blocksRegistryRef: prop<Ref<BlockModelsRegistry>>(),

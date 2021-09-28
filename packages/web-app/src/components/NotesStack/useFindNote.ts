@@ -22,7 +22,7 @@ export const useFindNote = (noteId: string) => {
 
   useEffect(() => {
     const callback = async () => {
-      const note = await notesService.findNote(noteId);
+      const note = await notesService.getNote(noteId);
 
       if (!note) {
         setIsLoading(false);

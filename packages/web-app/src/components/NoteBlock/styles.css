@@ -91,8 +91,6 @@
 
     display: inline;
 
-    overflow: hidden;
-
     width: 100%;
     background: transparent;
     resize: none;
@@ -154,4 +152,14 @@
     border-radius: 6px;
     font-size: 85%;
   }
+}
+
+.blockRef {
+  border-bottom: 0.1px solid;
+  @apply border-blue-500;
+
+  cursor: alias;
+  padding: 2px 0;
+
+  display: inline;
 }

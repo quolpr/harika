@@ -7,14 +7,10 @@ import type { Required } from 'utility-types';
 import type { ICreationResult } from './types';
 import type { Vault } from './domain/Vault';
 import {
-  concatMap,
   distinctUntilChanged,
   filter,
   first,
   map,
-  mapTo,
-  mergeAll,
-  mergeMap,
   switchMap,
   take,
   takeUntil,
@@ -32,7 +28,6 @@ import {
   firstValueFrom,
   from,
   interval,
-  merge,
   Observable,
   of,
   Subject,
@@ -42,7 +37,6 @@ import {
   convertNoteDocToModelAttrs,
 } from './converters/toDomainModelsConverters';
 import { NotesChangesTrackerService } from './services/notes-tree/NotesChangesTrackerService';
-import dayjs from 'dayjs';
 import { toObserver } from '../toObserver';
 import type { Remote } from 'comlink';
 import type { DbEventsService } from '../db-sync/DbEventsService';
@@ -62,7 +56,6 @@ import {
   initSync,
   ISyncState,
 } from '../db-sync/synchronizer/init';
-import { BaseDbSyncWorker } from '../db-sync/persistence/BaseDbSyncWorker';
 import { VaultDbWorker } from './persistence/VaultDb.worker';
 
 export { NoteModel } from './domain/NotesApp/models/NoteModel';
@@ -124,7 +117,7 @@ export class NotesService {
     syncState$.subscribe((val) => this.syncState$.next(val));
   }
 
-  async initialize(withSync: boolean) {
+  async initialize() {
     new NotesChangesTrackerService(
       this.dbEventsService.changesChannel$(),
       this.vault.notesTree,
@@ -144,7 +137,7 @@ export class NotesService {
 
     if (exists) return 'exists' as const;
 
-    const note = await this.findNote(noteId);
+    const note = await this.getNote(noteId);
 
     if (!note) return;
 
@@ -205,7 +198,7 @@ export class NotesService {
     if (noteRow) {
       return {
         status: 'ok',
-        data: await this.findNote(noteRow.id),
+        data: await this.getNote(noteRow.id),
       } as ICreationResult<NoteModel>;
     }
 
@@ -299,6 +292,30 @@ export class NotesService {
         [noteBlocksTable],
         () => this.notesBlocksRepository.getLinkedBlocksOfBlocksOfNote(noteId),
         false,
+      ),
+    );
+  }
+
+  getScopedBlockById$(
+    blockId: string,
+    scopedBy: { $modelId: string; $modelType: string },
+    rootBlockViewId?: string,
+  ) {
+    return from(
+      this.dbEventsService.liveQuery([noteBlocksTable], () =>
+        this.notesBlocksRepository.getNoteIdByBlockId(blockId),
+      ),
+    ).pipe(
+      switchMap((noteId) => (noteId ? this.getNote$(noteId) : of(undefined))),
+      switchMap((note) =>
+        note
+          ? this.getBlocksScope$(
+              of({ noteId: note.$modelId, scopedBy, rootBlockViewId }),
+            )
+          : of(undefined),
+      ),
+      map((blocksScope) =>
+        blocksScope ? blocksScope.rootScopedBlock : undefined,
       ),
     );
   }
@@ -441,7 +458,13 @@ export class NotesService {
     );
   }
 
-  async findNote(id: string) {
+  getNote$(id: string) {
+    return from(
+      this.dbEventsService.liveQuery([notesTable], () => this.getNote(id)),
+    );
+  }
+
+  async getNote(id: string) {
     if (this.vault.notesMap[id]) {
       return this.vault.notesMap[id];
     } else {
@@ -522,7 +545,7 @@ export class NotesService {
               } else {
                 const existing = existingNotesIndexed[name];
 
-                return this.findNote(existing.id);
+                return this.getNote(existing.id);
               }
             }),
           )

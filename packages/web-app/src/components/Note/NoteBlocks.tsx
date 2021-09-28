@@ -11,12 +11,12 @@ import { map } from 'rxjs';
 import { LinkedBlocksOfBlocksProvider } from '../LinkedBlocksOfBlocksContext';
 
 export const NoteBlocks = observer(({ note }: { note: NoteModel }) => {
-  const noteRepo = useNotesService();
+  const notesService = useNotesService();
   const isWide = useMedia('(min-width: 768px)');
 
   const scope$ = useObservable(
     ($inputs) => {
-      return noteRepo.getBlocksScope$(
+      return notesService.getBlocksScope$(
         $inputs.pipe(
           map(([note]) => ({ noteId: note.$modelId, scopedBy: note })),
         ),

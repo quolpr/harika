@@ -23,7 +23,7 @@ export const usePrimaryNote = () => {
     const callback = async () => {
       if (!primaryNoteId) return;
 
-      setPrimaryNote(await repo.findNote(primaryNoteId));
+      setPrimaryNote(await repo.getNote(primaryNoteId));
     };
 
     callback();

@@ -77,7 +77,7 @@ const NoteBlockBody = observer(
         let startAt = contentLength;
 
         if (e.target instanceof HTMLElement) {
-          if (e.target.dataset.notEditable) return;
+          if (e.target.closest('[data-not-editable]')) return;
 
           // TODO: no FF support
           const range = document.caretRangeFromPoint(e.clientX, e.clientY);

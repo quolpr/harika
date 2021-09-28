@@ -14,10 +14,11 @@ import { useCurrentNote } from '../../hooks/useCurrentNote';
 import { useHandleClick } from '../../hooks/useNoteClick';
 import { paths } from '../../paths';
 import { useObservable, useObservableState } from 'observable-hooks';
-import { map } from 'rxjs';
+import { map, of, switchMap } from 'rxjs';
 import { useDeepMemo } from '../../utils';
+import { NoteBlockRef } from '@harika/web-core/src/blockParser/types';
 
-const RefRenderer = observer(
+const NoteRefRenderer = observer(
   ({
     token,
     noteBlock,
@@ -99,6 +100,66 @@ const RefRenderer = observer(
     );
   },
 );
+const BlockRefRenderer = observer(
+  ({ token, noteBlock }: { token: NoteBlockRef; noteBlock: ScopedBlock }) => {
+    const notesService = useNotesService();
+    const vault = useCurrentVault();
+    const currentNote = useCurrentNote();
+
+    const linkedBlock$ = useObservable(
+      ($inputs) => {
+        return $inputs.pipe(
+          switchMap(([token, modelId]) =>
+            token.blockId
+              ? notesService.getScopedBlockById$(
+                  token.blockId,
+                  {
+                    $modelId: modelId,
+                    $modelType: 'BlockRef',
+                  },
+                  token.blockId,
+                )
+              : of(undefined),
+          ),
+        );
+      },
+      [token, noteBlock.$modelId],
+    );
+
+    const block = useObservableState(linkedBlock$, undefined);
+
+    const handleClick = useHandleClick(
+      vault,
+      currentNote?.$modelId,
+      block?.noteId,
+      true,
+    );
+
+    const handleEnterPress = useCallback(
+      (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') {
+          handleClick(e);
+        }
+      },
+      [handleClick],
+    );
+
+    return (
+      <span
+        className="blockRef"
+        onClick={handleClick}
+        role="link"
+        tabIndex={0}
+        data-not-editable
+        onKeyPress={handleEnterPress}
+      >
+        {block && (
+          <TokensRenderer noteBlock={block} tokens={block.content.ast} />
+        )}
+      </span>
+    );
+  },
+);
 
 const TagRenderer = observer(
   ({ token, linkedNotes }: { token: TagToken; linkedNotes: NoteModel[] }) => {
@@ -151,7 +212,7 @@ const TokenRenderer = observer(
         return <TagRenderer token={token} linkedNotes={linkedNotes} />;
       case 'noteRef':
         return (
-          <RefRenderer
+          <NoteRefRenderer
             token={token}
             noteBlock={noteBlock}
             linkedNotes={linkedNotes}
@@ -253,6 +314,8 @@ const TokenRenderer = observer(
             <TokensRenderer noteBlock={noteBlock} tokens={token.content} />
           </blockquote>
         );
+      case 'noteBlockRef':
+        return <BlockRefRenderer token={token} noteBlock={noteBlock} />;
       default:
         return <span></span>;
     }
