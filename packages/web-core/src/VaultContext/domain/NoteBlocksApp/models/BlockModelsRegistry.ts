@@ -55,6 +55,7 @@ export class BlockModelsRegistry extends Model({
     return linkedBlocks;
   }
 
+  // TODO: maybe move to blocksScope
   // TODO: optimize
   @computed({ equals: comparer.shallow })
   get childParentRelations() {

@@ -24,6 +24,7 @@ import { ScopedBlocksRegistry } from './ScopedBlocksRegistry';
 
 // TODO: rename scopedModelType to scopeType scopeId
 // cause modelType could be not mobx model type
+// TODO: move selection to separate class
 @model('@harika/BlocksScope')
 export class BlocksScope extends Model({
   blocksRegistryRef: prop<Ref<BlockModelsRegistry>>(),
@@ -51,6 +52,18 @@ export class BlocksScope extends Model({
     });
 
     return normalizeBlockTree(str);
+  }
+
+  @computed({ equals: comparer.shallow })
+  get blocksWithoutParent() {
+    const registry = this.blocksRegistryRef.current;
+
+    return this.scopedBlocksRegistry.allBlocks.filter((block) => {
+      return (
+        !registry.childParentRelations[block.$modelId] &&
+        block.$modelId !== this.rootScopedBlockId
+      );
+    });
   }
 
   @computed
@@ -171,6 +184,11 @@ export class BlocksScope extends Model({
       return newBlock;
     }
   };
+
+  @modelAction
+  moveToRoot(block: ScopedBlock) {
+    block.move(this.rootScopedBlock, 'end');
+  }
 
   @modelAction
   createBlock = (

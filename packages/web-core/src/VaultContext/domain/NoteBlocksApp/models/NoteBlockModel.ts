@@ -77,11 +77,11 @@ export class NoteBlockModel extends Model({
 
   @modelAction
   move(parent: NoteBlockModel, pos: number | 'start' | 'end') {
-    if (!this.parent) {
+    if (this.isRoot) {
       throw new Error("Can't move root block");
     }
 
-    this.parent.noteBlockRefs.splice(this.orderPosition, 1);
+    this.parent?.noteBlockRefs.splice(this.orderPosition, 1);
 
     const newPos = (() => {
       if (pos === 'start') {

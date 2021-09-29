@@ -1,11 +1,16 @@
 import { ScopedBlock } from './ScopedBlock';
-import { action, makeObservable, observable } from 'mobx';
+import { action, computed, makeObservable, observable } from 'mobx';
 
 export class ScopedBlocksRegistry {
   @observable scopedBlocksMap: Record<string, ScopedBlock> = {};
 
   constructor() {
     makeObservable(this);
+  }
+
+  @computed
+  get allBlocks() {
+    return Object.values(this.scopedBlocksMap);
   }
 
   @action

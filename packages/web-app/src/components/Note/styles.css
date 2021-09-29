@@ -44,7 +44,7 @@
   }
 
   &__body {
-    @apply pb-8;
+    padding-bottom: 0rem;
   }
 
   &__bullet {
@@ -66,10 +66,37 @@
 
     display: flex;
     align-items: center;
+
+    margin-top: rem(30px);
   }
 
   &__link-icon {
     @apply mr-2;
+  }
+
+  &__conflictedBlocksTitle {
+    @apply text-gray-400;
+
+    margin-top: rem(20px);
+    margin-bottom: rem(20px);
+    font-size: rem(20px);
+  }
+
+  &__conflictedActions {
+    display: flex;
+
+    margin-top: rem(8px);
+    margin-bottom: rem(8px);
+
+    gap: rem(4px);
+  }
+
+  &__conflictedActionBtn {
+    @apply bg-gray-800 hover:bg-gray-700;
+
+    padding: rem(6px) rem(8px);
+
+    border-radius: 3px;
   }
 }
 
