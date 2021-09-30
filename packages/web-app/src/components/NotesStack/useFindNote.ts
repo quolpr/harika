@@ -29,10 +29,8 @@ export const useFindNote = (noteId: string) => {
       } else {
         setNote(note);
 
-        if (!note.isDeleted) {
-          setIsLoading(false);
-          loadingDoneSubject.next();
-        }
+        setIsLoading(false);
+        loadingDoneSubject.next();
       }
     };
 
@@ -40,11 +38,11 @@ export const useFindNote = (noteId: string) => {
   }, [loadingDoneSubject, noteId, notesService]);
 
   const noteTitle = note?.title;
-  const isDeleted = note?.isDeleted;
-  useEffect(() => {
-    if (!noteTitle || !noteId || isDeleted === undefined) return;
 
-    if (isDeleted) {
+  useEffect(() => {
+    if (!noteTitle || !noteId) return;
+
+    if (!note) {
       // In case conflict resolving. We wait for n seconds for new id of note title to appear
       const flow = race(
         notesService.getNoteIdByTitle$(noteTitle).pipe(
@@ -75,7 +73,7 @@ export const useFindNote = (noteId: string) => {
 
       return () => flow.unsubscribe();
     }
-  }, [history, isDeleted, noteId, notesService, noteTitle, vault.$modelId]);
+  }, [history, noteId, notesService, noteTitle, vault.$modelId, note]);
 
   return { note, isLoading };
 };

@@ -16,7 +16,9 @@ import type { INoteChangeEvent } from '../persistence/NotesRepository';
 import { notesTable } from '../persistence/NotesRepository';
 import { blocksScopesTable } from '../persistence/BlockScopesRepository';
 import type { IBlocksScopesChangeEvent } from '../persistence/BlockScopesRepository';
+import { withoutSync } from '../domain/syncable';
 
+// TODO: better deletion
 export class ToDomainSyncer {
   constructor(
     private changes$: Observable<ITransmittedChange[]>,
@@ -100,10 +102,9 @@ export class ToDomainSyncer {
         if (ev.type === DatabaseChangeType.Create) {
           return convertNoteBlockDocToModelAttrs(ev.obj);
         } else if (ev.type === DatabaseChangeType.Delete && noteBlock) {
-          return {
-            ...convertNoteBlockDocToModelAttrs(ev.obj),
-            isDeleted: true,
-          };
+          withoutSync(() => {
+            noteBlock.delete(false, false);
+          });
         } else if (ev.type === DatabaseChangeType.Update) {
           if (!ev.obj) throw new Error('obj should be present');
 
@@ -135,7 +136,11 @@ export class ToDomainSyncer {
         if (!note) return undefined;
 
         if (ev.type === DatabaseChangeType.Delete) {
-          return { ...note.$, isDeleted: true };
+          withoutSync(() => {
+            note.delete();
+          });
+
+          return undefined;
         } else {
           if (!ev.obj) throw new Error('obj should be present');
 

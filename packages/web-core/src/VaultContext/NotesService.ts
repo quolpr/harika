@@ -8,7 +8,6 @@ import type { ICreationResult } from './types';
 import type { Vault } from './domain/Vault';
 import {
   distinctUntilChanged,
-  filter,
   first,
   map,
   switchMap,
@@ -58,6 +57,8 @@ import {
 } from '../db-sync/synchronizer/init';
 import { VaultDbWorker } from './persistence/VaultDb.worker';
 import dayjs from 'dayjs';
+import { withoutSync } from './domain/syncable';
+import { ToDbSyncer } from './syncers/ToDbSyncer';
 
 export { NoteModel } from './domain/NotesApp/models/NoteModel';
 export { Vault } from './domain/Vault';
@@ -83,7 +84,14 @@ export class NotesService {
     private deleteNoteService: Remote<DeleteNoteService>,
     private findService: Remote<FindNoteOrBlockService>,
     public vault: Vault,
-  ) {}
+  ) {
+    new ToDbSyncer(
+      notesRepository,
+      notesBlocksRepository,
+      blocksScopesRepo,
+      this.stop$,
+    );
+  }
 
   async initSync(
     dbName: string,
@@ -426,20 +434,42 @@ export class NotesService {
           ).map((doc) => [doc.id, doc]),
         );
 
-        return this.vault.noteBlocksApp.getOrCreateScopes(
-          args.map((arg) => ({
-            ...arg,
-            collapsedBlockIds:
-              scopesFromDb[
-                getScopeKey(
-                  arg.noteId,
-                  arg.scopedBy.$modelType,
-                  arg.scopedBy.$modelId,
-                  arg.rootBlockViewId,
-                )
-              ]?.collapsedBlockIds || [],
-          })),
-        );
+        const argsWithKey = args.map((arg) => ({
+          ...arg,
+          key: getScopeKey(
+            arg.noteId,
+            arg.scopedBy.$modelType,
+            arg.scopedBy.$modelId,
+            arg.rootBlockViewId,
+          ),
+        }));
+
+        const inDb = withoutSync(() => {
+          return this.vault.noteBlocksApp.getOrCreateScopes(
+            argsWithKey
+              .filter((arg) => scopesFromDb[arg.key])
+              .map((arg) => {
+                return {
+                  ...arg,
+                  collapsedBlockIds: scopesFromDb[arg.key].collapsedBlockIds,
+                };
+              }),
+          );
+        });
+        const notInDb = (() => {
+          return this.vault.noteBlocksApp.getOrCreateScopes(
+            argsWithKey
+              .filter((arg) => !scopesFromDb[arg.key])
+              .map((arg) => {
+                return {
+                  ...arg,
+                  collapsedBlockIds: [],
+                };
+              }),
+          );
+        })();
+
+        return [...inDb, ...notInDb];
       }),
       distinctUntilChanged((a, b) => isEqual(a, b)),
     );

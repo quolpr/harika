@@ -9,12 +9,8 @@ export function withoutUndoAction(
 
   //wrapping the original method
   descriptor.value = function (...args: any[]) {
-    let result: any;
-
-    withoutUndoFunc(() => {
-      result = originalMethod.apply(this, args);
+    return withoutUndoFunc(() => {
+      return originalMethod.apply(this, args);
     });
-
-    return result;
   };
 }

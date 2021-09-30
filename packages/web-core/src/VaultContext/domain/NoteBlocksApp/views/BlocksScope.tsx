@@ -17,15 +17,19 @@ import {
 } from '../../../../blockParser/blockUtils';
 import { TreeToken } from '../../../../blockParser/parseStringToTree';
 import { withoutUndoAction } from '../../../../utils';
+import { syncable } from '../../syncable';
 import { BlockModelsRegistry } from '../models/BlockModelsRegistry';
 import { NoteBlockModel } from '../models/NoteBlockModel';
 import { ScopedBlock } from './ScopedBlock';
 import { ScopedBlocksRegistry } from './ScopedBlocksRegistry';
 
+export const blocksScopeType = '@harika/BlocksScope';
+
 // TODO: rename scopedModelType to scopeType scopeId
 // cause modelType could be not mobx model type
 // TODO: move selection to separate class
-@model('@harika/BlocksScope')
+@syncable
+@model(blocksScopeType)
 export class BlocksScope extends Model({
   blocksRegistryRef: prop<Ref<BlockModelsRegistry>>(),
 
@@ -135,28 +139,28 @@ export class BlocksScope extends Model({
     return Array.from(ids);
   }
 
-  @modelAction
   @withoutUndoAction
+  @modelAction
   setSelectionInterval(fromId: string, toId: string) {
     this.selectionInterval = [fromId, toId];
     this.addableSelectionId = undefined;
   }
 
-  @modelAction
   @withoutUndoAction
+  @modelAction
   resetSelection() {
     this.selectionInterval = undefined;
     this.addableSelectionId = undefined;
   }
 
-  @modelAction
   @withoutUndoAction
+  @modelAction
   expandSelection(id: string) {
     this.addableSelectionId = id;
   }
 
-  @modelAction
   @withoutUndoAction
+  @modelAction
   toggleExpand(blockId: string) {
     if (this.collapsedBlockIds.has(blockId)) {
       this.collapsedBlockIds.delete(blockId);

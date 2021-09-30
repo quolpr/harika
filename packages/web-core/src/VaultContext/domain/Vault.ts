@@ -14,6 +14,7 @@ import dayjs from 'dayjs';
 import { NoteBlocksApp } from './NoteBlocksApp/NoteBlocksApp';
 import { computed } from 'mobx';
 import { withoutUndoAction } from '../../utils';
+import { withoutSyncAction } from './syncable';
 
 @model(vaultModelType)
 export class Vault extends Model({
@@ -86,6 +87,7 @@ export class Vault extends Model({
     return { note, treeRegistry: registry };
   }
 
+  @withoutSyncAction
   @modelAction
   createOrUpdateEntitiesFromAttrs(
     noteAttrs: (ModelCreationData<NoteModel> & {
@@ -96,31 +98,6 @@ export class Vault extends Model({
     })[],
     createBlocksRegistry: boolean,
   ) {
-    // console.debug(
-    //   'createOrUpdateEntitiesFromAttrs, notes: ',
-    //   JSON.stringify(
-    //     {
-    //       noteAttrs: noteAttrs.map(
-    //         ({
-    //           $modelId,
-    //           title,
-    //           areNoteLinksLoaded: areBacklinksLoaded,
-    //           areChildrenLoaded,
-    //           areBlockLinksLoaded: areLinksLoaded,
-    //         }) => ({
-    //           $modelId,
-    //           title,
-    //           areBacklinksLoaded,
-    //           areChildrenLoaded,
-    //           areLinksLoaded,
-    //         }),
-    //       ),
-    //       blocksAttrs: blocksAttrs,
-    //     },
-    //     null,
-    //     2,
-    //   ),
-    // );
     // NOTE
 
     noteAttrs.forEach((attr) => {

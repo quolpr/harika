@@ -14,6 +14,7 @@ import { comparer, computed } from 'mobx';
 import { isEqual } from 'lodash-es';
 import type { BlockContentModel } from './BlockContentModel';
 import { isBlocksApp, NoteBlocksApp } from '../NoteBlocksApp';
+import { syncable } from '../../syncable';
 
 export const noteBlockRef = customRef<NoteBlockModel>('harika/NoteBlockRef', {
   resolve(ref) {
@@ -26,19 +27,18 @@ export const noteBlockRef = customRef<NoteBlockModel>('harika/NoteBlockRef', {
     return app.getNoteBlock(ref.id);
   },
 
-  onResolvedValueChange(ref, newTodo, oldTodo) {
-    if (oldTodo && !newTodo) {
-      // if the todo value we were referencing disappeared then remove the reference
-      // from its parent
-      detach(ref);
-    }
+  onResolvedValueChange() {
+    // don't detach ref, we will do it NoteBlockModel code
   },
 });
 
 export const rootBlockIdCtx = createContext<string>('');
 export const parentBlockCtx = createContext<NoteBlockModel | undefined>();
 
+export const blockModelType = 'harika/NoteBlockModel';
+
 @model('harika/NoteBlockModel')
+@syncable
 export class NoteBlockModel extends Model({
   noteId: prop<string>(),
   content: prop<BlockContentModel>(),
@@ -156,12 +156,12 @@ export class NoteBlockModel extends Model({
   }
 
   @modelAction
-  delete(recursively = true, links = true) {
+  delete(recursively = true, spliceParent = true) {
     if (recursively) {
-      this.noteBlockRefs.forEach((block) => block.current.delete(true, links));
+      this.noteBlockRefs.forEach((block) => block.current.delete(true));
     }
 
-    if (this.parent) {
+    if (spliceParent && this.parent) {
       this.parent.noteBlockRefs.splice(this.orderPosition, 1);
     }
 

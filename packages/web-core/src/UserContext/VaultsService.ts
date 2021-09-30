@@ -1,10 +1,8 @@
 import { Vault } from '../VaultContext/domain/Vault';
-import { syncMiddleware } from '../VaultContext/domain/syncable';
 import { NotesService } from '../VaultContext/NotesService';
 import { initSync } from '../db-sync/synchronizer/init';
 import { map } from 'rxjs/operators';
 import { generateId } from '../generateId';
-import { ToDbSyncer } from '../VaultContext/syncers/ToDbSyncer';
 import { ToDomainSyncer } from '../VaultContext/syncers/ToDomainSyncer';
 import { getDbWorker } from '../getDbWorker';
 import { DbEventsService } from '../db-sync/DbEventsService';
@@ -16,6 +14,7 @@ import type { Remote } from 'comlink';
 import type { VaultDbWorker } from '../VaultContext/persistence/VaultDb.worker';
 import type { UserDbWorker } from './persistence/UserDb.worker';
 import { BehaviorSubject } from 'rxjs';
+import { registerRootStore } from 'mobx-keystone';
 
 const windowId = generateId();
 
@@ -140,6 +139,8 @@ export class VaultsService {
       $modelId: id,
     });
 
+    registerRootStore(vault);
+
     const dbName = `vault_${id}`;
 
     const { worker } = await getDbWorker<VaultDbWorker>(
@@ -152,10 +153,6 @@ export class VaultsService {
     const blocksRepo = await worker.getNotesBlocksRepo();
     const viewsRepo = await worker.getBlocksViewsRepo();
 
-    syncMiddleware(
-      vault,
-      new ToDbSyncer(notesRepo, blocksRepo, viewsRepo, vault).handlePatch,
-    );
     const eventsService = new DbEventsService(dbName);
 
     new ToDomainSyncer(

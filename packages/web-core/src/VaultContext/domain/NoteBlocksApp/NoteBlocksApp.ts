@@ -10,6 +10,7 @@ import { NoteBlockModel } from './models/NoteBlockModel';
 import { generateId } from '../../../generateId';
 import { BlockContentModel } from './models/BlockContentModel';
 import { withoutUndoAction } from '../../../utils';
+import { withoutSyncAction } from '../syncable';
 
 const blocksApp = '@harika/NoteBlocksApp';
 
@@ -83,8 +84,8 @@ export class NoteBlocksApp extends Model({
     return { registry, rootBlock };
   }
 
-  @modelAction
   @withoutUndoAction
+  @modelAction
   getOrCreateScopes(
     args: {
       noteId: string;
@@ -179,6 +180,7 @@ export class NoteBlocksApp extends Model({
     return this.blocksRegistries[noteId];
   }
 
+  @withoutSyncAction
   @modelAction
   createOrUpdateScopesFromAttrs(
     scopes: { id: string; collapsedBlockIds: string[] }[],
@@ -224,29 +226,5 @@ export class NoteBlocksApp extends Model({
 
       return undefined;
     });
-
-    // blocks.forEach((model) => {
-    //   if (!model) return;
-
-    //   const toRemoveRefs = model.noteBlockRefs
-    //     .map((ref) => {
-    //       if (!this.blocksTreeHoldersMap[model.noteId].blocksMap[ref.id]) {
-    //         return ref;
-    //       }
-
-    //       return false;
-    //     })
-    //     .filter(Boolean) as Ref<NoteBlockModel>[];
-
-    //   toRemoveRefs.forEach((ref) => {
-    //     console.error(
-    //       'removing noteblock ref cause noteblock was not found',
-    //       ref.id,
-    //       JSON.stringify(model.$),
-    //     );
-
-    //     model.noteBlockRefs.splice(model.noteBlockRefs.indexOf(ref), 1);
-    //   });
-    // });
   }
 }

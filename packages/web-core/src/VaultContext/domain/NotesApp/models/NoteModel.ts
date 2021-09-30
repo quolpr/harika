@@ -1,5 +1,14 @@
-import { model, Model, modelAction, prop, tProp, types } from 'mobx-keystone';
-import type { ModelCreationData } from 'mobx-keystone';
+import {
+  detach,
+  model,
+  Model,
+  modelAction,
+  ModelCreationData,
+  prop,
+  tProp,
+  types,
+} from 'mobx-keystone';
+import { syncable } from '../../syncable';
 
 export interface INoteLoadStatus {
   areBlockLinksLoaded: boolean;
@@ -7,19 +16,19 @@ export interface INoteLoadStatus {
   areNoteLinksLoaded: boolean;
 }
 
-const modelType = 'harika/NoteModel' as const;
+export const noteModelType = 'harika/NoteModel' as const;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const isNoteModel = (model: any): model is NoteModel =>
-  '$modelType' in model && model.$modelType === modelType;
+  '$modelType' in model && model.$modelType === noteModelType;
 
-@model(modelType)
+@syncable
+@model(noteModelType)
 export class NoteModel extends Model({
   title: prop<string>(),
   dailyNoteDate: tProp(types.maybe(types.dateTimestamp)),
   updatedAt: tProp(types.dateTimestamp),
   createdAt: tProp(types.dateTimestamp),
-  isDeleted: prop<boolean>(false),
   rootBlockId: prop<string>(),
 }) {
   @modelAction
@@ -27,17 +36,14 @@ export class NoteModel extends Model({
     this.title = newTitle;
   }
 
+  @modelAction
+  delete() {
+    detach(this);
+  }
+
   updateAttrs(attrs: ModelCreationData<NoteModel>) {
     this.title = attrs.title;
     this.dailyNoteDate = attrs.dailyNoteDate;
     this.createdAt = attrs.createdAt;
-
-    if (
-      attrs.isDeleted !== undefined &&
-      attrs.isDeleted !== null &&
-      attrs.isDeleted !== this.isDeleted
-    ) {
-      this.isDeleted = attrs.isDeleted;
-    }
   }
 }

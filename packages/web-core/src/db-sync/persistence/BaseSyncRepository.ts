@@ -1,6 +1,6 @@
 import type { SyncRepository } from './SyncRepository';
 import Q from 'sql-bricks';
-import { mapValues } from 'lodash-es';
+import { isEqual, mapValues } from 'lodash-es';
 import type { DB } from '../../db/DB';
 import type { IInternalSyncCtx, ISyncCtx } from './syncCtx';
 
@@ -123,18 +123,22 @@ export abstract class BaseSyncRepository<
           ]),
         );
 
-        const changes = records.map((record) => {
-          if (!prevRecordsMap[record.id])
-            throw new Error(
-              `Prev record for ${JSON.stringify(record)} not found!`,
-            );
+        const changes = records
+          .map((record) => {
+            if (!prevRecordsMap[record.id])
+              throw new Error(
+                `Prev record for ${JSON.stringify(record)} not found!`,
+              );
 
-          return { from: prevRecordsMap[record.id], to: record };
-        });
+            return { from: prevRecordsMap[record.id], to: record };
+          })
+          .filter((ch) => {
+            return !isEqual(ch.to, ch.from);
+          });
 
         this.db.insertRecords(
           this.getTableName(),
-          records.map((r) => this.toRow(r)),
+          changes.map(({ to }) => this.toRow(to)),
           true,
         );
 

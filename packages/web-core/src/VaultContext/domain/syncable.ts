@@ -1,85 +1,88 @@
-import { actionTrackingMiddleware, patchRecorder } from 'mobx-keystone';
-import type { PatchRecorder, SimpleActionContext, Patch } from 'mobx-keystone';
+import { onPatches } from 'mobx-keystone';
+import { Subject } from 'rxjs';
 
-// TODO: make withoutSync(() => ...) instead of ignore list
+let withoutSyncVal = false;
 
-const actionNamesToIgnore = [
-  'createOrUpdateScopesFromAttrs',
-  'createOrUpdateEntitiesFromAttrs',
-  'getOrCreateScopes',
-];
+export const withoutSync = <T extends any>(func: () => T): T => {
+  const prevValue = withoutSyncVal;
+  withoutSyncVal = true;
 
-export function syncMiddleware(
-  subtreeRoot: object,
-  applyPatches: (patches: Patch[]) => void,
+  try {
+    return func();
+  } finally {
+    withoutSyncVal = prevValue;
+  }
+};
+
+export function withoutSyncAction(
+  _target: any,
+  _propertyKey: string,
+  descriptor: PropertyDescriptor,
 ) {
-  interface PatchRecorderData {
-    recorder: PatchRecorder;
-    recorderStack: number;
-    undoRootContext: SimpleActionContext;
-  }
+  let originalMethod = descriptor.value;
 
-  const patchRecorderSymbol = Symbol('patchRecorder');
-
-  function initPatchRecorder(ctx: SimpleActionContext) {
-    ctx.rootContext.data[patchRecorderSymbol] = {
-      recorder: patchRecorder(subtreeRoot, {
-        recording: false,
-      }),
-      recorderStack: 0,
-      undoRootContext: ctx,
-    } as PatchRecorderData;
-  }
-
-  function getPatchRecorderData(ctx: SimpleActionContext): PatchRecorderData {
-    return ctx.rootContext.data[patchRecorderSymbol];
-  }
-
-  // TODO: dispose
-  // TODO: make custom decorator instead of hardcoding of method name
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const middlewareDisposer = actionTrackingMiddleware(subtreeRoot, {
-    onStart(ctx) {
-      if (actionNamesToIgnore.includes(ctx.rootContext.actionName)) return;
-
-      if (!getPatchRecorderData(ctx)) {
-        initPatchRecorder(ctx);
-      }
-    },
-    onResume(ctx) {
-      if (actionNamesToIgnore.includes(ctx.rootContext.actionName)) return;
-      const patchRecorderData = getPatchRecorderData(ctx);
-      patchRecorderData.recorderStack++;
-      patchRecorderData.recorder.recording =
-        patchRecorderData.recorderStack > 0;
-    },
-    onSuspend(ctx) {
-      if (actionNamesToIgnore.includes(ctx.rootContext.actionName)) return;
-      const patchRecorderData = getPatchRecorderData(ctx);
-      patchRecorderData.recorderStack--;
-      patchRecorderData.recorder.recording =
-        patchRecorderData.recorderStack > 0;
-    },
-    onFinish(ctx) {
-      if (actionNamesToIgnore.includes(ctx.rootContext.actionName)) return;
-      const patchRecorderData = getPatchRecorderData(ctx);
-      if (patchRecorderData && patchRecorderData.undoRootContext === ctx) {
-        const patchRecorder = patchRecorderData.recorder;
-
-        if (patchRecorder.events.length > 0) {
-          const patches: Patch[] = [];
-          const inversePatches: Patch[] = [];
-
-          for (const event of patchRecorder.events) {
-            patches.push(...event.patches);
-            inversePatches.push(...event.inversePatches);
-          }
-
-          applyPatches(patches);
-        }
-
-        patchRecorder.dispose();
-      }
-    },
-  });
+  //wrapping the original method
+  descriptor.value = function (...args: any[]) {
+    return withoutSync(() => {
+      return originalMethod.apply(this, args);
+    });
+  };
 }
+
+export enum SyncableModelChangeType {
+  Create = 'create',
+  Update = 'update',
+  Delete = 'delete',
+}
+
+export type ISyncableModel<T> = T & {
+  $modelId: string;
+  $modelType: string;
+};
+
+export type ISyncableModelChange<T extends any = any> = {
+  type: SyncableModelChangeType;
+  model: ISyncableModel<T>;
+};
+
+export const syncableModelChangesPipe$ = new Subject<ISyncableModelChange>();
+
+export const syncable = (constructor: Function) => {
+  const originalAttached = constructor.prototype.onAttachedToRootStore;
+
+  constructor.prototype.onAttachedToRootStore = function () {
+    const model = this;
+
+    const disposer = originalAttached?.();
+
+    if (!withoutSyncVal) {
+      syncableModelChangesPipe$.next({
+        type: SyncableModelChangeType.Create,
+        model,
+      });
+    }
+
+    // TODO: not sure that such thing will be good for performance,
+    // but somehow we need to react only on the whole state tree value changes
+    const patchesDisposer = onPatches(model, () => {
+      if (withoutSyncVal) return;
+
+      syncableModelChangesPipe$.next({
+        type: SyncableModelChangeType.Update,
+        model,
+      });
+    });
+
+    return () => {
+      patchesDisposer();
+      disposer?.();
+
+      if (withoutSyncVal) return;
+
+      syncableModelChangesPipe$.next({
+        type: SyncableModelChangeType.Delete,
+        model,
+      });
+    };
+  };
+};

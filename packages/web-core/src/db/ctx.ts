@@ -6,11 +6,11 @@ export const shareCtx = <T extends any, C extends any>(
   const prevCtx = currentCtx;
   currentCtx = ctx;
 
-  const result = func();
-
-  currentCtx = prevCtx;
-
-  return result;
+  try {
+    return func();
+  } finally {
+    currentCtx = prevCtx;
+  }
 };
 
 export const getCtxStrict = <C extends any>(): C => {
