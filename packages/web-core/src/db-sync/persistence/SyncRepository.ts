@@ -157,7 +157,9 @@ export class SyncRepository {
         );
       }
 
-      this.onChange(changeEvents);
+      if (changeEvents.length > 0) {
+        this.onChange(changeEvents);
+      }
     });
   }
 
@@ -207,7 +209,9 @@ export class SyncRepository {
         );
       }
 
-      this.onChange(changeEvents);
+      if (changeEvents.length > 0) {
+        this.onChange(changeEvents);
+      }
     });
   }
 
@@ -250,7 +254,9 @@ export class SyncRepository {
         );
       }
 
-      this.onChange(changeEvents);
+      if (changeEvents.length > 0) {
+        this.onChange(changeEvents);
+      }
     });
   }
 
