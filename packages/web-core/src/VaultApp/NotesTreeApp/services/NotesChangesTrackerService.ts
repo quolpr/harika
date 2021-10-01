@@ -6,8 +6,8 @@ import type {
   INoteTitleChange,
   NotesTreeRegistry,
 } from '../models/NotesTreeRegistry';
-import { notesTable } from '../../Note/repositories/NotesRepository';
-import type { INoteChangeEvent } from '../../Note/repositories/NotesRepository';
+import { notesTable } from '../../NotesApp/repositories/NotesRepository';
+import type { INoteChangeEvent } from '../../NotesApp/repositories/NotesRepository';
 
 export class NotesChangesTrackerService {
   private bufferedChanges: INoteChangeEvent[] = [];

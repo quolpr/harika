@@ -1,17 +1,17 @@
 import { Model, model, modelAction, prop } from 'mobx-keystone';
 import type { ModelCreationData } from 'mobx-keystone';
-import { NoteModel } from './Note/models/NoteModel';
+import { NoteModel } from './NotesApp/models/NoteModel';
 import type { Optional, Required } from 'utility-types';
 import { vaultModelType } from './utils/consts';
 import { generateId } from '../generateId';
 import {
   newTreeModel,
   NotesTreeRegistry,
-} from './NotesTree/models/NotesTreeRegistry';
-import type { PartialNote } from './NotesTree/models/NotesTreeRegistry';
-import type { NoteBlockModel } from './NoteBlock/models/NoteBlockModel';
+} from './NotesTreeApp/models/NotesTreeRegistry';
+import type { PartialNote } from './NotesTreeApp/models/NotesTreeRegistry';
+import type { NoteBlockModel } from './NoteBlocksApp/models/NoteBlockModel';
 import dayjs from 'dayjs';
-import { NoteBlocksApp } from './NoteBlock/NoteBlocksApp';
+import { NoteBlocksApp } from './NoteBlocksApp/NoteBlocksApp';
 import { computed } from 'mobx';
 import { withoutUndoAction } from '../utils';
 import { withoutSyncAction } from './utils/syncable';

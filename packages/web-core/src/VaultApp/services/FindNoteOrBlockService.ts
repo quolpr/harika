@@ -1,11 +1,11 @@
 import type { DB } from '../../db/core/DB';
 import type { IInternalSyncCtx } from '../../db/sync/persistence/syncCtx';
-import { notesTable } from '../Note/repositories/NotesRepository';
+import { notesTable } from '../NotesApp/repositories/NotesRepository';
 import {
   noteBlocksFTSTable,
   noteBlocksTable,
   notesFTSTable,
-} from '../NoteBlock/repositories/NotesBlocksRepository';
+} from '../NoteBlocksApp/repositories/NotesBlocksRepository';
 import Q from 'sql-bricks';
 
 export class FindNoteOrBlockService {

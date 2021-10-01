@@ -2,7 +2,7 @@ import { vaultModelType } from './consts';
 import {
   NotesTreeRegistry,
   notesTreeRegistryModelType,
-} from '../NotesTree/models/NotesTreeRegistry';
+} from '../NotesTreeApp/models/NotesTreeRegistry';
 import type { Vault } from '../Vault';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

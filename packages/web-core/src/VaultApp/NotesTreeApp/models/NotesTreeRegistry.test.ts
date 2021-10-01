@@ -35,7 +35,7 @@ describe('NotesTreeModel', () => {
         rootNodeRef: {
           id: 'id-1',
           $modelId: 'id-2',
-          $modelType: 'harika/NotesTree/noteRef',
+          $modelType: 'harika/NotesTreeApp/noteRef',
         },
         nodesMap: {
           'id-1': {
@@ -45,17 +45,17 @@ describe('NotesTreeModel', () => {
               {
                 id: 'id-4',
                 $modelId: 'id-5',
-                $modelType: 'harika/NotesTree/noteRef',
+                $modelType: 'harika/NotesTreeApp/noteRef',
               },
               {
                 id: 'id-14',
                 $modelId: 'id-15',
-                $modelType: 'harika/NotesTree/noteRef',
+                $modelType: 'harika/NotesTreeApp/noteRef',
               },
             ],
             isExpanded: false,
             $modelId: 'id-1',
-            $modelType: 'harika/NotesTree/NotesTreeNote',
+            $modelType: 'harika/NotesTreeApp/NotesTreeNote',
           },
           'id-4': {
             title: 'Home',
@@ -63,22 +63,22 @@ describe('NotesTreeModel', () => {
               {
                 id: 'id-6',
                 $modelId: 'id-7',
-                $modelType: 'harika/NotesTree/noteRef',
+                $modelType: 'harika/NotesTreeApp/noteRef',
               },
               {
                 id: 'id-10',
                 $modelId: 'id-11',
-                $modelType: 'harika/NotesTree/noteRef',
+                $modelType: 'harika/NotesTreeApp/noteRef',
               },
               {
                 id: 'id-12',
                 $modelId: 'id-13',
-                $modelType: 'harika/NotesTree/noteRef',
+                $modelType: 'harika/NotesTreeApp/noteRef',
               },
             ],
             noteId: '123',
             $modelId: 'id-4',
-            $modelType: 'harika/NotesTree/NotesTreeNote',
+            $modelType: 'harika/NotesTreeApp/NotesTreeNote',
             isExpanded: false,
           },
           'id-6': {
@@ -87,12 +87,12 @@ describe('NotesTreeModel', () => {
               {
                 id: 'id-8',
                 $modelId: 'id-9',
-                $modelType: 'harika/NotesTree/noteRef',
+                $modelType: 'harika/NotesTreeApp/noteRef',
               },
             ],
             noteId: '234',
             $modelId: 'id-6',
-            $modelType: 'harika/NotesTree/NotesTreeNote',
+            $modelType: 'harika/NotesTreeApp/NotesTreeNote',
             isExpanded: false,
           },
           'id-8': {
@@ -100,7 +100,7 @@ describe('NotesTreeModel', () => {
             nodeRefs: [],
             noteId: '345',
             $modelId: 'id-8',
-            $modelType: 'harika/NotesTree/NotesTreeNote',
+            $modelType: 'harika/NotesTreeApp/NotesTreeNote',
             isExpanded: false,
           },
           'id-10': {
@@ -108,7 +108,7 @@ describe('NotesTreeModel', () => {
             nodeRefs: [],
             noteId: '456',
             $modelId: 'id-10',
-            $modelType: 'harika/NotesTree/NotesTreeNote',
+            $modelType: 'harika/NotesTreeApp/NotesTreeNote',
             isExpanded: false,
           },
           'id-12': {
@@ -116,7 +116,7 @@ describe('NotesTreeModel', () => {
             nodeRefs: [],
             noteId: '567',
             $modelId: 'id-12',
-            $modelType: 'harika/NotesTree/NotesTreeNote',
+            $modelType: 'harika/NotesTreeApp/NotesTreeNote',
             isExpanded: false,
           },
           'id-14': {
@@ -126,11 +126,11 @@ describe('NotesTreeModel', () => {
               {
                 id: 'id-16',
                 $modelId: 'id-17',
-                $modelType: 'harika/NotesTree/noteRef',
+                $modelType: 'harika/NotesTreeApp/noteRef',
               },
             ],
             $modelId: 'id-14',
-            $modelType: 'harika/NotesTree/NotesTreeNote',
+            $modelType: 'harika/NotesTreeApp/NotesTreeNote',
             isExpanded: false,
           },
           'id-16': {
@@ -138,12 +138,12 @@ describe('NotesTreeModel', () => {
             nodeRefs: [],
             noteId: '678',
             $modelId: 'id-16',
-            $modelType: 'harika/NotesTree/NotesTreeNote',
+            $modelType: 'harika/NotesTreeApp/NotesTreeNote',
             isExpanded: false,
           },
         },
         $modelId: 'id-3',
-        $modelType: 'harika/NotesTree/NotesTreeRegistry',
+        $modelType: 'harika/NotesTreeApp/NotesTreeRegistry',
       });
     });
 
@@ -160,7 +160,7 @@ describe('NotesTreeModel', () => {
             rootNodeRef: {
               id: 'id-1',
               $modelId: 'id-2',
-              $modelType: 'harika/NotesTree/noteRef',
+              $modelType: 'harika/NotesTreeApp/noteRef',
             },
             nodesMap: {
               'id-1': {
@@ -169,13 +169,13 @@ describe('NotesTreeModel', () => {
                   {
                     id: 'id-4',
                     $modelId: 'id-5',
-                    $modelType: 'harika/NotesTree/noteRef',
+                    $modelType: 'harika/NotesTreeApp/noteRef',
                   },
                 ],
                 isExpanded: false,
                 noteId: undefined,
                 $modelId: 'id-1',
-                $modelType: 'harika/NotesTree/NotesTreeNote',
+                $modelType: 'harika/NotesTreeApp/NotesTreeNote',
               },
               'id-4': {
                 title: 'Home',
@@ -183,13 +183,13 @@ describe('NotesTreeModel', () => {
                   {
                     id: 'id-6',
                     $modelId: 'id-7',
-                    $modelType: 'harika/NotesTree/noteRef',
+                    $modelType: 'harika/NotesTreeApp/noteRef',
                   },
                 ],
                 isExpanded: false,
                 noteId: undefined,
                 $modelId: 'id-4',
-                $modelType: 'harika/NotesTree/NotesTreeNote',
+                $modelType: 'harika/NotesTreeApp/NotesTreeNote',
               },
               'id-6': {
                 title: 'To Buy',
@@ -197,12 +197,12 @@ describe('NotesTreeModel', () => {
                 noteId: '123',
                 isExpanded: false,
                 $modelId: 'id-6',
-                $modelType: 'harika/NotesTree/NotesTreeNote',
+                $modelType: 'harika/NotesTreeApp/NotesTreeNote',
               },
             },
             isInitialized: false,
             $modelId: 'id-3',
-            $modelType: 'harika/NotesTree/NotesTreeRegistry',
+            $modelType: 'harika/NotesTreeApp/NotesTreeRegistry',
           });
         });
       });
@@ -232,7 +232,7 @@ describe('NotesTreeModel', () => {
     //     rootNodeRef: {
     //       id: 'id-1',
     //       $modelId: 'id-2',
-    //       $modelType: 'harika/NotesTree/nodeRef',
+    //       $modelType: 'harika/NotesTreeApp/nodeRef',
     //     },
     //     nodesMap: {
     //       'id-1': {
@@ -240,7 +240,7 @@ describe('NotesTreeModel', () => {
     //         noteId: undefined,
     //         nodeRefs: [],
     //         $modelId: 'id-1',
-    //         $modelType: 'harika/NotesTree/NotesTreeNote',
+    //         $modelType: 'harika/NotesTreeApp/NotesTreeNote',
     //         isExpanded: true,
     //       },
 

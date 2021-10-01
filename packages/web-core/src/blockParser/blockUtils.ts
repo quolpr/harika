@@ -1,10 +1,10 @@
 import { generateId } from '../generateId';
 import { Vault } from '../VaultApp/VaultApp';
-import { BlockContentModel } from '../VaultApp/NoteBlock/models/BlockContentModel';
+import { BlockContentModel } from '../VaultApp/NoteBlocksApp/models/BlockContentModel';
 import { parseStringToTree } from './parseStringToTree';
 import type { TreeToken } from './parseStringToTree';
-import type { ScopedBlock } from '../VaultApp/NoteBlock/views/ScopedBlock';
-import { BlocksScope } from '../VaultApp/NoteBlock/views/BlocksScope';
+import type { ScopedBlock } from '../VaultApp/NoteBlocksApp/views/ScopedBlock';
+import { BlocksScope } from '../VaultApp/NoteBlocksApp/views/BlocksScope';
 
 export const normalizeBlockTree = (str: string) => {
   const parsed = parseStringToTree(str);
@@ -78,7 +78,7 @@ export const parseToBlocksTree = (str: string) => {
   });
 
   const { note, treeRegistry } = vault.newNote(
-    { title: 'Note' },
+    { title: 'NotesApp' },
     { addEmptyBlock: false },
   );
 

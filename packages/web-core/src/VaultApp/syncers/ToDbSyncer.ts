@@ -11,14 +11,14 @@ import type { BaseSyncRepository } from '../../db/sync/persistence/BaseSyncRepos
 import {
   blockModelType,
   NoteBlockModel,
-} from '../NoteBlock/models/NoteBlockModel';
-import type { BlocksScopesRepository } from '../NoteBlock/repositories/BlockScopesRepository';
-import type { SqlNotesBlocksRepository } from '../NoteBlock/repositories/NotesBlocksRepository';
-import type { SqlNotesRepository } from '../Note/repositories/NotesRepository';
+} from '../NoteBlocksApp/models/NoteBlockModel';
+import type { BlocksScopesRepository } from '../NoteBlocksApp/repositories/BlockScopesRepository';
+import type { SqlNotesBlocksRepository } from '../NoteBlocksApp/repositories/NotesBlocksRepository';
+import type { SqlNotesRepository } from '../NotesApp/repositories/NotesRepository';
 import {
   mapNote,
 
-} from '../Note/converters/toDbDocs';
+} from '../NotesApp/converters/toDbDocs';
 import { retryBackoff } from 'backoff-rxjs';
 import {
   ISyncableModel,
@@ -26,12 +26,12 @@ import {
   syncableModelChangesPipe$,
   SyncableModelChangeType,
 } from '../utils/syncable';
-import { NoteModel, noteModelType } from '../Note/models/NoteModel';
+import { NoteModel, noteModelType } from '../NotesApp/models/NoteModel';
 import {
   BlocksScope,
   blocksScopeType,
-} from '../NoteBlock/views/BlocksScope';
-import {mapBlocksScope, mapNoteBlock} from "../NoteBlock/converters/toDbDocs";
+} from '../NoteBlocksApp/views/BlocksScope';
+import {mapBlocksScope, mapNoteBlock} from "../NoteBlocksApp/converters/toDbDocs";
 
 const compressChanges = <T>(chs: ISyncableModelChange<T>[]) => {
   const modelsMap: Record<string, T> = {};

@@ -27,7 +27,7 @@ const initData = () => {
     rootNodeRef: {
       id: 'id-1',
       $modelId: 'id-2',
-      $modelType: 'harika/NotesTree/noteRef',
+      $modelType: 'harika/NotesTreeApp/noteRef',
     },
     nodesMap: {
       'id-1': {
@@ -36,17 +36,17 @@ const initData = () => {
           {
             id: 'id-4',
             $modelId: 'id-5',
-            $modelType: 'harika/NotesTree/noteRef',
+            $modelType: 'harika/NotesTreeApp/noteRef',
           },
           {
             id: 'id-10',
             $modelId: 'id-11',
-            $modelType: 'harika/NotesTree/noteRef',
+            $modelType: 'harika/NotesTreeApp/noteRef',
           },
         ],
         isExpanded: true,
         $modelId: 'id-1',
-        $modelType: 'harika/NotesTree/NotesTreeNote',
+        $modelType: 'harika/NotesTreeApp/NotesTreeNote',
       },
       'id-4': {
         title: 'Home',
@@ -54,13 +54,13 @@ const initData = () => {
           {
             id: 'id-6',
             $modelId: 'id-7',
-            $modelType: 'harika/NotesTree/noteRef',
+            $modelType: 'harika/NotesTreeApp/noteRef',
           },
         ],
         noteId: '123',
         isExpanded: true,
         $modelId: 'id-4',
-        $modelType: 'harika/NotesTree/NotesTreeNote',
+        $modelType: 'harika/NotesTreeApp/NotesTreeNote',
       },
       'id-6': {
         title: 'To Buy',
@@ -68,12 +68,12 @@ const initData = () => {
           {
             id: 'id-8',
             $modelId: 'id-9',
-            $modelType: 'harika/NotesTree/noteRef',
+            $modelType: 'harika/NotesTreeApp/noteRef',
           },
         ],
         isExpanded: true,
         $modelId: 'id-6',
-        $modelType: 'harika/NotesTree/NotesTreeNote',
+        $modelType: 'harika/NotesTreeApp/NotesTreeNote',
       },
       'id-8': {
         title: 'Urgent',
@@ -81,7 +81,7 @@ const initData = () => {
         noteId: '345',
         isExpanded: true,
         $modelId: 'id-8',
-        $modelType: 'harika/NotesTree/NotesTreeNote',
+        $modelType: 'harika/NotesTreeApp/NotesTreeNote',
       },
       'id-10': {
         title: 'Work',
@@ -89,12 +89,12 @@ const initData = () => {
           {
             id: 'id-12',
             $modelId: 'id-13',
-            $modelType: 'harika/NotesTree/noteRef',
+            $modelType: 'harika/NotesTreeApp/noteRef',
           },
         ],
         isExpanded: true,
         $modelId: 'id-10',
-        $modelType: 'harika/NotesTree/NotesTreeNote',
+        $modelType: 'harika/NotesTreeApp/NotesTreeNote',
       },
       'id-12': {
         title: 'TODO',
@@ -102,12 +102,12 @@ const initData = () => {
         noteId: '678',
         isExpanded: true,
         $modelId: 'id-12',
-        $modelType: 'harika/NotesTree/NotesTreeNote',
+        $modelType: 'harika/NotesTreeApp/NotesTreeNote',
       },
     },
     isInitialized: true,
     $modelId: 'id-3',
-    $modelType: 'harika/NotesTree/NotesTreeRegistry',
+    $modelType: 'harika/NotesTreeApp/NotesTreeRegistry',
   };
 
   const tree = fromSnapshot<NotesTreeRegistry>(snapshot);

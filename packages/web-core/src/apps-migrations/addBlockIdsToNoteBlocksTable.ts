@@ -3,7 +3,7 @@ import { IMigration } from '../db/core/types';
 import {
   noteBlocksBlocksTable,
   noteBlocksTable,
-} from '../VaultApp/NoteBlock/repositories/NotesBlocksRepository';
+} from '../VaultApp/NoteBlocksApp/repositories/NotesBlocksRepository';
 
 const up = (db: DB<any>) => {
   db.sqlExec(`

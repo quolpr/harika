@@ -4,13 +4,13 @@ import {
   DbChangesWriterService,
 } from '../db/sync/persistence/ApplyChangesService';
 import { BaseDbSyncWorker } from '../db/sync/persistence/BaseDbSyncWorker';
-import { BlocksScopesRepository } from './NoteBlock/repositories/BlockScopesRepository';
-import { SqlNotesBlocksRepository } from './NoteBlock/repositories/NotesBlocksRepository';
-import { SqlNotesRepository } from './Note/repositories/NotesRepository';
+import { BlocksScopesRepository } from './NoteBlocksApp/repositories/BlockScopesRepository';
+import { SqlNotesBlocksRepository } from './NoteBlocksApp/repositories/NotesBlocksRepository';
+import { SqlNotesRepository } from './NotesApp/repositories/NotesRepository';
 import { VaultChangesApplier } from './services/sync/VaultChangesApplier/VaultChangesApplier';
 import { FindNoteOrBlockService } from './services/FindNoteOrBlockService';
 import { ImportExportService } from './services/ImportExportService';
-import { DeleteNoteService } from './Note/services/DeleteNoteService';
+import { DeleteNoteService } from './NotesApp/services/DeleteNoteService';
 import { IMigration } from '../db/core/types';
 import { initSyncTables } from '../apps-migrations/initSyncTables';
 import { initVaultsTables } from '../apps-migrations/initVaultsTables';

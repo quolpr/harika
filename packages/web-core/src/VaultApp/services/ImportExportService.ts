@@ -1,14 +1,14 @@
-import { notesTable, SqlNotesRepository } from '../Note/repositories/NotesRepository';
-import type { NoteDoc } from '../Note/repositories/NotesRepository';
+import { notesTable, SqlNotesRepository } from '../NotesApp/repositories/NotesRepository';
+import type { NoteDoc } from '../NotesApp/repositories/NotesRepository';
 import {
   noteBlocksTable,
   SqlNotesBlocksRepository,
-} from '../NoteBlock/repositories/NotesBlocksRepository';
-import type { NoteBlockDoc } from '../NoteBlock/repositories/NotesBlocksRepository';
+} from '../NoteBlocksApp/repositories/NotesBlocksRepository';
+import type { NoteBlockDoc } from '../NoteBlocksApp/repositories/NotesBlocksRepository';
 import {
   BlocksScopesRepository,
   blocksScopesTable,
-} from '../NoteBlock/repositories/BlockScopesRepository';
+} from '../NoteBlocksApp/repositories/BlockScopesRepository';
 import type { ISyncCtx } from '../../db/sync/persistence/syncCtx';
 import { omit } from 'lodash-es';
 

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { ModelCreationData, withoutUndo } from 'mobx-keystone';
 import type { Dayjs } from 'dayjs';
-import type { NoteModel } from './Note/models/NoteModel';
+import type { NoteModel } from './NotesApp/models/NoteModel';
 import type { Optional } from 'utility-types';
 import type { Required } from 'utility-types';
 import type { ICreationResult } from './types';
@@ -33,22 +33,22 @@ import {
 } from 'rxjs';
 import {
   convertNoteDocToModelAttrs,
-} from './Note/converters/toModels';
-import { NotesChangesTrackerService } from './NotesTree/services/NotesChangesTrackerService';
+} from './NotesApp/converters/toModels';
+import { NotesChangesTrackerService } from './NotesTreeApp/services/NotesChangesTrackerService';
 import { toObserver } from '../toObserver';
 import type { Remote } from 'comlink';
 import type { DbEventsService } from '../db/sync/DbEventsService';
 import {
   noteBlocksTable,
   SqlNotesBlocksRepository,
-} from './NoteBlock/repositories/NotesBlocksRepository';
-import { SqlNotesRepository, notesTable } from './Note/repositories/NotesRepository';
-import type { NoteDoc } from './Note/repositories/NotesRepository';
-import type { BlocksScopesRepository } from './NoteBlock/repositories/BlockScopesRepository';
+} from './NoteBlocksApp/repositories/NotesBlocksRepository';
+import { SqlNotesRepository, notesTable } from './NotesApp/repositories/NotesRepository';
+import type { NoteDoc } from './NotesApp/repositories/NotesRepository';
+import type { BlocksScopesRepository } from './NoteBlocksApp/repositories/BlockScopesRepository';
 import type { FindNoteOrBlockService } from './services/FindNoteOrBlockService';
 import type { ImportExportService } from './services/ImportExportService';
-import type { DeleteNoteService } from './Note/services/DeleteNoteService';
-import { getScopeKey } from './NoteBlock/NoteBlocksApp';
+import type { DeleteNoteService } from './NotesApp/services/DeleteNoteService';
+import { getScopeKey } from './NoteBlocksApp/NoteBlocksApp';
 import {
   defaultSyncState,
   initSync,
@@ -58,14 +58,14 @@ import { VaultAppDbWorker } from './VaultAppDb.worker';
 import dayjs from 'dayjs';
 import { withoutSync } from './utils/syncable';
 import { ToDbSyncer } from './syncers/ToDbSyncer';
-import {convertNoteBlockDocToModelAttrs} from "./NoteBlock/converters/toModels";
+import {convertNoteBlockDocToModelAttrs} from "./NoteBlocksApp/converters/toModels";
 
-export { NoteModel } from './Note/models/NoteModel';
+export { NoteModel } from './NotesApp/models/NoteModel';
 export { Vault } from './Vault';
 export {
   NoteBlockModel,
   noteBlockRef,
-} from './NoteBlock/models/NoteBlockModel';
+} from './NoteBlocksApp/models/NoteBlockModel';
 
 export class VaultApp {
   private stopSubject = new Subject<unknown>();

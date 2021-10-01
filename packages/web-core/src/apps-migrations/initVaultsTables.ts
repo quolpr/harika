@@ -1,13 +1,13 @@
 import { DB } from '../db/core/DB';
 import { IMigration } from '../db/core/types';
-import { blocksScopesTable } from '../VaultApp/NoteBlock/repositories/BlockScopesRepository';
+import { blocksScopesTable } from '../VaultApp/NoteBlocksApp/repositories/BlockScopesRepository';
 import {
   noteBlocksNotesTable,
   noteBlocksTable,
   noteBlocksFTSTable,
   notesFTSTable,
-} from '../VaultApp/NoteBlock/repositories/NotesBlocksRepository';
-import { notesTable } from '../VaultApp/Note/repositories/NotesRepository';
+} from '../VaultApp/NoteBlocksApp/repositories/NotesBlocksRepository';
+import { notesTable } from '../VaultApp/NotesApp/repositories/NotesRepository';
 
 const up = (db: DB<any>) => {
   db.sqlExec(`

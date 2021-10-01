@@ -18,7 +18,7 @@ const currentTimeCommand = {
 
 const noteRefCommand = {
   id: 'noteRef' as const,
-  title: 'Note Reference',
+  title: 'NotesApp Reference',
 };
 
 const blockRefCommand = {

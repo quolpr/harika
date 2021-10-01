@@ -15,10 +15,10 @@ import {
 } from './NotesTreeRegistry';
 
 export const notesTreeNoteRef = rootRef<NotesTreeNote>(
-  'harika/NotesTree/noteRef',
+  'harika/NotesTreeApp/noteRef',
 );
 
-@model('harika/NotesTree/NotesTreeNote')
+@model('harika/NotesTreeApp/NotesTreeNote')
 export class NotesTreeNote extends Model({
   title: prop<string>(),
   nodeRefs: prop<Ref<NotesTreeNote>[]>(() => []),

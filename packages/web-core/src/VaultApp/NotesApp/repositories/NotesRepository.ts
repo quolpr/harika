@@ -3,7 +3,7 @@ import Q from 'sql-bricks';
 import { BaseSyncRepository } from '../../../db/sync/persistence/BaseSyncRepository';
 import type { ISyncCtx } from '../../../db/sync/persistence/syncCtx';
 import type { IDatabaseChange } from '../../../db/sync/synchronizer/types';
-import { notesFTSTable } from '../../NoteBlock/repositories/NotesBlocksRepository';
+import { notesFTSTable } from '../../NoteBlocksApp/repositories/NotesBlocksRepository';
 
 export type NoteRow = {
   id: string;

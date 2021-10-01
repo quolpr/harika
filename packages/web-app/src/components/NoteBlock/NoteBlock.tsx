@@ -14,7 +14,7 @@ import {
   useBacklinkedBlocksCount,
 } from '../LinkedBlocksOfBlocksContext';
 
-// IMPORTANT: don't use any global handlers in <NoteBlock /> (document.addEventListener) cause it is slow down note blocks tree a lot
+// IMPORTANT: don't use any global handlers in <NoteBlocksApp /> (document.addEventListener) cause it is slow down note blocks tree a lot
 
 const NoteBlockChildren = observer(
   ({

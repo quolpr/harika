@@ -1,5 +1,5 @@
 import type { SqlNotesRepository } from '../repositories/NotesRepository';
-import type { SqlNotesBlocksRepository } from '../../NoteBlock/repositories/NotesBlocksRepository';
+import type { SqlNotesBlocksRepository } from '../../NoteBlocksApp/repositories/NotesBlocksRepository';
 import type { ISyncCtx } from '../../../db/sync/persistence/syncCtx';
 
 export class DeleteNoteService {
