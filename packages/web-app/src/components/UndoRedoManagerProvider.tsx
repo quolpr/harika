@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { NotesService } from '@harika/web-core';
+import { VaultApp } from '@harika/web-core';
 import { UndoManager, undoMiddleware } from 'mobx-keystone';
 import { createContext, useMemo } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
@@ -12,7 +12,7 @@ interface AttachedState {
   currentPath: string;
 }
 
-export const UndoRedoManagerProvider: React.FC<{ notesService: NotesService }> =
+export const UndoRedoManagerProvider: React.FC<{ notesService: VaultApp }> =
   ({ notesService, children }) => {
     let history = useHistory();
     let location = useLocation();

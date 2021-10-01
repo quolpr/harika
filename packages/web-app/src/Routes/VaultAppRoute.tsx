@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Switch, Route } from 'react-router-dom';
 import { VaultLayout } from '../components/VaultLayout/VaultLayout';
 import { PATHS, VAULT_PREFIX } from '../paths';
-import { VaultsService } from '@harika/web-core';
+import { UserApp } from '@harika/web-core';
 import { useAuthState } from '../hooks/useAuthState';
 import { OnlyAuthed } from '../components/OnlyAuthed';
 import { DailyNotePage } from '../pages/DailyNotePage';
@@ -12,7 +12,7 @@ import { VaultsPage } from '../pages/VaultsPage/VaultsPage';
 
 export const VaultAppRoute = () => {
   const [authInfo] = useAuthState();
-  const [vaultService, setVaultService] = useState<VaultsService | undefined>();
+  const [vaultService, setVaultService] = useState<UserApp | undefined>();
 
   const userId = authInfo?.userId;
   const isOffline = authInfo?.isOffline;
@@ -21,10 +21,10 @@ export const VaultAppRoute = () => {
   useEffect(() => {
     if (!userId || isOffline === undefined || !authToken) return;
 
-    let service: VaultsService | undefined = undefined;
+    let service: UserApp | undefined = undefined;
 
     const cb = async () => {
-      service = new VaultsService(userId, !isOffline, {
+      service = new UserApp(userId, !isOffline, {
         wsUrl: import.meta.env.VITE_PUBLIC_WS_URL as string,
         authToken: authToken,
       });

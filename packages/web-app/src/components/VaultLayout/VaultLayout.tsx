@@ -1,4 +1,4 @@
-import type { VaultsService, NotesService } from '@harika/web-core';
+import type { UserApp, VaultApp } from '@harika/web-core';
 import React, {
   useCallback,
   useContext,
@@ -99,12 +99,12 @@ const useKeepScroll = () => {
 };
 
 export const VaultLayout: React.FC<{
-  vaultService: VaultsService;
+  vaultService: UserApp;
 }> = ({ children, vaultService }) => {
   const history = useHistory();
   const { vaultId } = useParams<{ vaultId: string }>();
   const isWide = useMedia('(min-width: 768px)');
-  const [notesService, setNotesRepo] = useState<NotesService | undefined>();
+  const [notesService, setNotesRepo] = useState<VaultApp | undefined>();
   const [isSidebarOpened, setIsSidebarOpened] = useState(isWide);
 
   const togglerRef = useRef<HTMLDivElement>(null);

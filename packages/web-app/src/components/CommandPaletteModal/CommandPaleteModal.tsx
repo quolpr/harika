@@ -14,7 +14,7 @@ import { debounce, map, Observable, of, switchMap, tap, timer } from 'rxjs';
 import { generateStackedNotePath } from '../../hooks/useNoteClick';
 import { usePrimaryNoteId } from '../../hooks/usePrimaryNote';
 import { useObservable, useObservableState } from 'observable-hooks';
-import type { NotesService } from '@harika/web-core';
+import type { VaultApp } from '@harika/web-core';
 
 // Command executes on each user type and as result gives list of actions
 // Commands are start with `!`. If no `!` present - then search happen between all start view actions names
@@ -62,7 +62,7 @@ const spawnView = ([
 ]: [
   string,
   string,
-  NotesService,
+  VaultApp,
   IView,
   string,
   string | undefined,

@@ -1,11 +1,11 @@
 import { initBackend } from 'absurd-sql/dist/indexeddb-main-thread';
 import { wrap } from 'comlink';
 import type { Remote } from 'comlink';
-import type { BaseDbSyncWorker } from './db-sync/persistence/BaseDbSyncWorker';
+import type { BaseDbSyncWorker } from './db/sync/persistence/BaseDbSyncWorker';
 // @ts-ignore
-import UserDbWorker from './UserContext/persistence/UserDb.worker?worker';
+import UserDbWorker from './UserApp/UserDb.worker?worker';
 // @ts-ignore
-import VaultDbWorker from './VaultContext/persistence/VaultDb.worker?worker';
+import VaultDbWorker from './VaultApp/VaultAppDb.worker?worker';
 // Looks like vite bug. Just force wasm output
 import '@harika-org/sql.js/dist/sql-wasm.wasm?url';
 
