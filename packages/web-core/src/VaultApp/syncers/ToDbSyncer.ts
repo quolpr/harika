@@ -14,7 +14,7 @@ import {
 } from '../NoteBlock/models/NoteBlockModel';
 import type { BlocksScopesRepository } from '../NoteBlock/repositories/BlockScopesRepository';
 import type { SqlNotesBlocksRepository } from '../NoteBlock/repositories/NotesBlocksRepository';
-import type { SqlNotesRepository } from '../NotesTree/repositories/NotesRepository';
+import type { SqlNotesRepository } from '../Note/repositories/NotesRepository';
 import {
   mapNote,
 

@@ -1,5 +1,5 @@
 import type {NoteModel} from '../models/NoteModel';
-import type {NoteDoc} from '../../NotesTree/repositories/NotesRepository';
+import type {NoteDoc} from '../repositories/NotesRepository';
 
 export const mapNote = (model: NoteModel): NoteDoc => {
   return {

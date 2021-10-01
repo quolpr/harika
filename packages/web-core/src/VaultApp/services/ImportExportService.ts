@@ -1,5 +1,5 @@
-import { notesTable, SqlNotesRepository } from '../NotesTree/repositories/NotesRepository';
-import type { NoteDoc } from '../NotesTree/repositories/NotesRepository';
+import { notesTable, SqlNotesRepository } from '../Note/repositories/NotesRepository';
+import type { NoteDoc } from '../Note/repositories/NotesRepository';
 import {
   noteBlocksTable,
   SqlNotesBlocksRepository,

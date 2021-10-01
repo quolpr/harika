@@ -1,4 +1,4 @@
-import type { SqlNotesRepository } from '../../NotesTree/repositories/NotesRepository';
+import type { SqlNotesRepository } from '../repositories/NotesRepository';
 import type { SqlNotesBlocksRepository } from '../../NoteBlock/repositories/NotesBlocksRepository';
 import type { ISyncCtx } from '../../../db/sync/persistence/syncCtx';
 

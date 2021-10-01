@@ -12,8 +12,8 @@ import {
   noteBlocksTable,
 } from '../../../NoteBlock/repositories/NotesBlocksRepository';
 import type { INoteBlockChangeEvent } from '../../../NoteBlock/repositories/NotesBlocksRepository';
-import { SqlNotesRepository, notesTable } from '../../../NotesTree/repositories/NotesRepository';
-import type { INoteChangeEvent } from '../../../NotesTree/repositories/NotesRepository';
+import { SqlNotesRepository, notesTable } from '../../../Note/repositories/NotesRepository';
+import type { INoteChangeEvent } from '../../../Note/repositories/NotesRepository';
 import { BlocksScopesChangesConflictResolver } from '../../../NoteBlock/services/sync/BlocksScopesChangesApplier';
 import { NoteblocksChangesApplier } from '../../../NoteBlock/services/sync/NoteblocksChangesApplier';
 import { NotesChangesApplier } from '../../../Note/services/sync/NotesChangesApplier';

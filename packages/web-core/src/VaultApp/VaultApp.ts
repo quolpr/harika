@@ -42,8 +42,8 @@ import {
   noteBlocksTable,
   SqlNotesBlocksRepository,
 } from './NoteBlock/repositories/NotesBlocksRepository';
-import { SqlNotesRepository, notesTable } from './NotesTree/repositories/NotesRepository';
-import type { NoteDoc } from './NotesTree/repositories/NotesRepository';
+import { SqlNotesRepository, notesTable } from './Note/repositories/NotesRepository';
+import type { NoteDoc } from './Note/repositories/NotesRepository';
 import type { BlocksScopesRepository } from './NoteBlock/repositories/BlockScopesRepository';
 import type { FindNoteOrBlockService } from './services/FindNoteOrBlockService';
 import type { ImportExportService } from './services/ImportExportService';

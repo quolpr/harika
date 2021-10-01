@@ -12,8 +12,8 @@ import type { ITransmittedChange } from '../../db/sync/persistence/SyncRepositor
 import { DatabaseChangeType } from '../../db/sync/synchronizer/types';
 import { noteBlocksTable } from '../NoteBlock/repositories/NotesBlocksRepository';
 import type { INoteBlockChangeEvent } from '../NoteBlock/repositories/NotesBlocksRepository';
-import type { INoteChangeEvent } from '../NotesTree/repositories/NotesRepository';
-import { notesTable } from '../NotesTree/repositories/NotesRepository';
+import type { INoteChangeEvent } from '../Note/repositories/NotesRepository';
+import { notesTable } from '../Note/repositories/NotesRepository';
 import { blocksScopesTable } from '../NoteBlock/repositories/BlockScopesRepository';
 import type { IBlocksScopesChangeEvent } from '../NoteBlock/repositories/BlockScopesRepository';
 import { withoutSync } from '../utils/syncable';

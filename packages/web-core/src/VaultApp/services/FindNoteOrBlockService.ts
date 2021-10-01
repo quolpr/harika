@@ -1,6 +1,6 @@
 import type { DB } from '../../db/core/DB';
 import type { IInternalSyncCtx } from '../../db/sync/persistence/syncCtx';
-import { notesTable } from '../NotesTree/repositories/NotesRepository';
+import { notesTable } from '../Note/repositories/NotesRepository';
 import {
   noteBlocksFTSTable,
   noteBlocksTable,
