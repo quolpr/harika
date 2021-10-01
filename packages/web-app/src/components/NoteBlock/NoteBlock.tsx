@@ -76,21 +76,42 @@ const NoteBlockBody = observer(
 
         let startAt = contentLength;
 
-        if (e.target instanceof HTMLElement) {
-          if (e.target.closest('[data-not-editable]')) return;
+        let { offset, node }: { offset: number; node: HTMLElement } = (() => {
+          if ('caretRangeFromPoint' in document) {
+            const range = document.caretRangeFromPoint(e.clientX, e.clientY);
 
-          // TODO: no FF support
-          const range = document.caretRangeFromPoint(e.clientX, e.clientY);
+            return {
+              offset: range?.startOffset || 0,
+              node: range?.startContainer || e.target,
+            };
+          } else if ('caretPositionFromPoint' in document) {
+            // @ts-ignore
+            const range = document.caretPositionFromPoint(e.clientX, e.clientY);
 
-          if (e.target.dataset.offsetStart) {
-            startAt =
-              parseInt(e.target.dataset.offsetStart, 10) +
-              (range?.startOffset || 0);
+            return {
+              offset: range?.offset || 0,
+              node: range?.offsetNode || e.target,
+            };
+          } else {
+            return {
+              offset: 0,
+              node: e.target,
+            };
           }
+        })();
 
-          if (noteBlockBodyElRef.current) {
-            insertFakeInput();
-          }
+        if (node.nodeType === Node.TEXT_NODE) {
+          node = node.parentNode as HTMLElement;
+        }
+
+        if (node.closest('[data-not-editable]')) return;
+
+        if (node.dataset.offsetStart) {
+          startAt = parseInt(node.dataset.offsetStart, 10) + offset;
+        }
+
+        if (noteBlockBodyElRef.current) {
+          insertFakeInput();
         }
 
         setEditState({

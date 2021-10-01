@@ -305,7 +305,11 @@ const TokenRenderer = observer(
               userSelect: 'text',
             }}
           >
-            {token.content}
+            {/** '\n' append is needed to math the behavior of textarea */}
+
+            {token.content[token.content.length - 1] === '\n'
+              ? token.content + '\n'
+              : token.content}
           </span>
         );
       case 'quote':
