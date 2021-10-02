@@ -9,10 +9,7 @@ import { TokensRenderer } from './TokensRenderer';
 import { useFakeInput } from './BlockEditor/hooks/useFocusHandler';
 import { useCurrentFocusedBlockState } from '../../hooks/useFocusedBlockState';
 import { BlockEditor } from './BlockEditor/BlockEditor';
-import {
-  useBacklinkedBlocks,
-  useBacklinkedBlocksCount,
-} from '../LinkedBlocksOfBlocksContext';
+import { useBacklinkedBlocksCount } from '../LinkedBlocksOfBlocksContext';
 
 // IMPORTANT: don't use any global handlers in <NoteBlocksApp /> (document.addEventListener) cause it is slow down note blocks tree a lot
 
@@ -104,7 +101,11 @@ const NoteBlockBody = observer(
           node = node.parentNode as HTMLElement;
         }
 
-        if (node.closest('[data-not-editable]')) return;
+        if (
+          e.target instanceof HTMLElement &&
+          e.target.closest('[data-not-editable]')
+        )
+          return;
 
         if (node.dataset.offsetStart) {
           startAt = parseInt(node.dataset.offsetStart, 10) + offset;

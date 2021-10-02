@@ -202,7 +202,7 @@ export class NoteBlocksApp extends Model({
     blocksAttrs.map((attr) => {
       const existentNoteBlock = this.getNoteBlock(attr.$modelId);
       if (existentNoteBlock && existentNoteBlock.noteId !== attr.noteId) {
-        existentNoteBlock.delete();
+        existentNoteBlock.delete(false, false);
 
         delete this.blocksRegistries[existentNoteBlock.noteId].blocksMap[
           attr.$modelId

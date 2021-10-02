@@ -1,4 +1,9 @@
-import { createContext, ModelCreationData, Ref } from 'mobx-keystone';
+import {
+  createContext,
+  getSnapshot,
+  ModelCreationData,
+  Ref,
+} from 'mobx-keystone';
 import {
   customRef,
   detach,
@@ -102,7 +107,7 @@ export class NoteBlockModel extends Model({
     to.noteBlockRefs.push(...this.noteBlockRefs.map((r) => noteBlockRef(r.id)));
     to.linkedNoteIds.push(...this.linkedNoteIds);
 
-    this.delete(false, false);
+    this.delete(true, false);
   }
 
   @modelAction
@@ -156,9 +161,11 @@ export class NoteBlockModel extends Model({
   }
 
   @modelAction
-  delete(recursively = true, spliceParent = true) {
+  delete(spliceParent = true, recursively = true) {
     if (recursively) {
-      this.noteBlockRefs.forEach((block) => block.current.delete(true));
+      this.noteBlockRefs.forEach((block) =>
+        block.current.delete(spliceParent, recursively),
+      );
     }
 
     if (spliceParent && this.parent) {

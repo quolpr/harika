@@ -335,6 +335,48 @@ describe('Parser', () => {
         },
       ]);
     });
+
+    it('handles other tokens before str', () => {
+      const parsedData = parse(
+        '[[test]] \nhttp://google.com yepp',
+        () => () => '123',
+      );
+
+      expect(parsedData).to.deep.eq([
+        {
+          id: '123',
+          type: 'noteRef',
+          content: 'test',
+          offsetStart: 0,
+          offsetEnd: 8,
+          ref: 'test',
+          alias: undefined,
+        },
+        {
+          id: '123',
+          type: 'str',
+          content: ' \n',
+          offsetStart: 8,
+          offsetEnd: 10,
+        },
+        {
+          id: '123',
+          type: 'link',
+          linkType: 'url',
+          content: 'http://google.com',
+          href: 'http://google.com',
+          offsetStart: 10,
+          offsetEnd: 27,
+        },
+        {
+          id: '123',
+          type: 'str',
+          content: ' yepp',
+          offsetStart: 27,
+          offsetEnd: 32,
+        },
+      ]);
+    });
   });
 
   describe('quote parser', () => {

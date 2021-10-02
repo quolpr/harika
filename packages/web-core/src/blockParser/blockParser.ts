@@ -76,7 +76,11 @@ export const parse = (data: string, idGenerator = newIdGenerator): Token[] => {
           prevLink = link;
         });
 
-        return newTokens;
+        return newTokens.map((token) => ({
+          ...token,
+          offsetStart: t.offsetStart + token.offsetStart,
+          offsetEnd: t.offsetStart + token.offsetEnd,
+        }));
       } else {
         return t;
       }

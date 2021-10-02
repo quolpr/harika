@@ -152,6 +152,8 @@ const BlockRefRenderer = observer(
         tabIndex={0}
         data-not-editable
         onKeyPress={handleEnterPress}
+        data-offset-start={token.offsetStart}
+        data-offset-end={token.offsetEnd}
       >
         {block && (
           <TokensRenderer noteBlock={block} tokens={block.content.ast} />
@@ -190,6 +192,10 @@ const TagRenderer = observer(
         onClick={handleClick}
         className="link link--darker"
         data-not-editable
+        data-offset-start={
+          token.withBrackets ? token.offsetStart + 5 : token.offsetStart + 1
+        }
+        data-offset-end={token.offsetEnd}
       >
         #{token.ref}
       </Link>
@@ -292,6 +298,8 @@ const TokenRenderer = observer(
             target="_blank"
             rel="noopener noreferrer"
             data-not-editable
+            data-offset-start={token.offsetStart}
+            data-offset-end={token.offsetEnd}
           >
             {token.content}
           </a>
@@ -307,9 +315,7 @@ const TokenRenderer = observer(
           >
             {/** '\n' append is needed to math the behavior of textarea */}
 
-            {token.content[token.content.length - 1] === '\n'
-              ? token.content + '\n'
-              : token.content}
+            {token.content}
           </span>
         );
       case 'quote':
@@ -345,13 +351,15 @@ export const TokensRenderer = observer(
 
     return (
       <>
-        {tokens.map((token) => (
-          <TokenRenderer
-            key={`${token.offsetStart}${token.offsetEnd}`}
-            noteBlock={noteBlock}
-            token={token}
-            linkedNotes={linkedNotes}
-          />
+        {tokens.map((token, i) => (
+          <>
+            <TokenRenderer
+              key={`${token.offsetStart}${token.offsetEnd}`}
+              noteBlock={noteBlock}
+              token={token}
+              linkedNotes={linkedNotes}
+            />
+          </>
         ))}
       </>
     );
