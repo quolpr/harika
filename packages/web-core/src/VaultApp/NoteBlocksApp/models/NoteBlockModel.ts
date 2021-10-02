@@ -1,9 +1,4 @@
-import {
-  createContext,
-  getSnapshot,
-  ModelCreationData,
-  Ref,
-} from 'mobx-keystone';
+import { createContext, ModelCreationData, Ref } from 'mobx-keystone';
 import {
   customRef,
   detach,
@@ -203,5 +198,12 @@ export class NoteBlockModel extends Model({
         this.linkedBlockIds.push(blockId);
       }
     });
+  }
+
+  @modelAction
+  removeChildRef(id: string) {
+    this.noteBlockRefs = this.noteBlockRefs.filter(
+      ({ id: refId }) => refId !== id,
+    );
   }
 }

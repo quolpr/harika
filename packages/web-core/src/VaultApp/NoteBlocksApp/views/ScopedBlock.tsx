@@ -110,6 +110,13 @@ export class ScopedBlock implements ITreeNode<ScopedBlock> {
     }
   }
 
+  @computed({ equals: comparer.structural })
+  get withEmptyChildren(): { id: string; block: ScopedBlock | undefined }[] {
+    return this.noteBlock.noteBlockRefs.map(({ id }) => {
+      return { id, block: this.getScopedBlock(id) };
+    });
+  }
+
   @computed({ equals: comparer.shallow })
   get orderHash(): Record<string, number> {
     return orderHashFunc(this);
@@ -393,5 +400,9 @@ export class ScopedBlock implements ITreeNode<ScopedBlock> {
 
   delete(recursively = true, links = true) {
     this.noteBlock.delete(recursively, links);
+  }
+
+  removeChildRef(id: string) {
+    this.noteBlock.removeChildRef(id);
   }
 }

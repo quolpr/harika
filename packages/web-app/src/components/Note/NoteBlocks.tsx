@@ -1,7 +1,7 @@
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useMedia } from 'react-use';
-import { NoteBlock } from '../NoteBlock/NoteBlock';
+import { NoteBlock, NoteBlockChildren } from '../NoteBlock/NoteBlock';
 import { Toolbar } from './Toolbar';
 import { NoteBlocksHandlers } from './NoteBlocksHandlers';
 import type { NoteModel } from '@harika/web-core';
@@ -35,14 +35,13 @@ export const NoteBlocks = observer(({ note }: { note: NoteModel }) => {
       {scope && <NoteBlocksHandlers scope={scope} note={note} />}
 
       <div className={noteClass('body')}>
-        {scope &&
-          scope.rootScopedBlock.children.map((noteBlock) => (
-            <NoteBlock
-              key={noteBlock.$modelId}
-              noteBlock={noteBlock}
-              scope={scope}
-            />
-          ))}
+        {scope && (
+          <NoteBlockChildren
+            parent={scope.rootScopedBlock}
+            scope={scope}
+            childBlocks={scope.rootScopedBlock.withEmptyChildren}
+          />
+        )}
       </div>
 
       {!isWide && scope && <Toolbar scope={scope} />}

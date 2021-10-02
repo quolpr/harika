@@ -13,23 +13,39 @@ import { useBacklinkedBlocksCount } from '../LinkedBlocksOfBlocksContext';
 
 // IMPORTANT: don't use any global handlers in <NoteBlocksApp /> (document.addEventListener) cause it is slow down note blocks tree a lot
 
-const NoteBlockChildren = observer(
+export const NoteBlockChildren = observer(
   ({
+    parent,
     childBlocks,
     scope,
   }: {
-    childBlocks: ScopedBlock[];
+    parent: ScopedBlock;
+    childBlocks: { id: string; block: ScopedBlock | undefined }[];
     scope: BlocksScope;
   }) => {
     return childBlocks.length !== 0 ? (
       <>
-        {childBlocks.map((childNoteBlock) => (
-          <NoteBlock
-            key={childNoteBlock.$modelId}
-            noteBlock={childNoteBlock}
-            scope={scope}
-          />
-        ))}
+        {childBlocks.map(({ block: childNoteBlock, id }) =>
+          childNoteBlock ? (
+            <NoteBlock
+              key={childNoteBlock.$modelId}
+              noteBlock={childNoteBlock}
+              scope={scope}
+            />
+          ) : (
+            <div className="text-red-500 ml-2 my-2">
+              [Broken child node]
+              <button
+                className="ml-1.5 text-gray-200 bg-gray-600 hover:bg-gray-500 rounded px-2 py-0.5"
+                onClick={() => {
+                  parent.removeChildRef(id);
+                }}
+              >
+                Remove it
+              </button>
+            </div>
+          ),
+        )}
       </>
     ) : null;
   },
@@ -232,7 +248,11 @@ export const NoteBlock = observer(
               'note-block__child-blocks--selected': isSelected,
             })}
           >
-            <NoteBlockChildren childBlocks={noteBlock.children} scope={scope} />
+            <NoteBlockChildren
+              parent={noteBlock}
+              childBlocks={noteBlock.withEmptyChildren}
+              scope={scope}
+            />
           </div>
         )}
       </div>
