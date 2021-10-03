@@ -10,7 +10,7 @@
     "test": "web-test-runner \"src/**/*.test.{ts,tsx}\"",
     "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx}\"",
     "lint": "eslint \"src/**/*.{tsx,ts}\"",
-    "gen-block-parser": "peggy -o src/blockParser/pegParser.js --cache src/blockParser/pegParser.pegjs"
+    "gen-block-parser": "peggy -o src/lib/blockParser/pegParser.js --cache src/blockParser/pegParser.pegjs"
   },
   "dependencies": {
     "@harika-org/sql.js": "^1.6.6",
