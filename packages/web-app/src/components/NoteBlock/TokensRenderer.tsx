@@ -16,7 +16,7 @@ import { paths } from '../../paths';
 import { useObservable, useObservableState } from 'observable-hooks';
 import { map, of, switchMap } from 'rxjs';
 import { useDeepMemo } from '../../utils';
-import { NoteBlockRef } from '@harika/web-core/src/blockParser/types';
+import { NoteBlockRef } from '@harika/web-core/src/lib/blockParser/types';
 
 const NoteRefRenderer = observer(
   ({

@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import { chunk } from 'lodash-es';
 import Q from 'sql-bricks';
 // @ts-ignore
@@ -12,6 +13,8 @@ import IndexedDBBackend from 'absurd-sql/dist/indexeddb-backend';
 import { shareCtx } from './ctx';
 import { getIsLogSuppressing } from './suppressLog';
 import { IMigration } from './types';
+import { inject, injectable } from 'inversify';
+import { DB_NAME } from '../types';
 
 // @ts-ignore
 Q.update.defineClause('or', '{{#if _or}}OR {{_or}}{{/if}}', {
@@ -44,16 +47,16 @@ Q['match'] = function (name: string, col: number, val: string) {
 
 export const migrationsTable = 'migrations';
 
+@injectable()
 export class DB<Ctx extends object> {
   private sqlDb!: Database;
-
   private inTransaction: boolean = false;
-  private transactionCtx: Ctx | undefined;
-  private dbName: string = '';
 
-  async init(dbName: string, migrations: IMigration[]) {
-    this.dbName = dbName;
+  constructor(@inject(DB_NAME) private dbName: string) {
+    console.log('new!', dbName);
+  }
 
+  async init(migrations: IMigration[]) {
     let SQL = await initSqlJs({
       locateFile: () => sqlWasmUrl,
     });
@@ -64,14 +67,14 @@ export class DB<Ctx extends object> {
     SQL.FS.mkdir('/blocked');
     SQL.FS.mount(sqlFS, {}, '/blocked');
 
-    const path = `/blocked/${dbName}.sqlite`;
+    const path = `/blocked/${this.dbName}.sqlite`;
     if (typeof SharedArrayBuffer === 'undefined') {
       let stream = SQL.FS.open(path, 'a+');
       await stream.node.contents.readIfFallback();
       SQL.FS.close(stream);
     }
 
-    this.sqlDb = new SQL.Database(`/blocked/${dbName}.sqlite`, {
+    this.sqlDb = new SQL.Database(`/blocked/${this.dbName}.sqlite`, {
       filename: true,
     });
 

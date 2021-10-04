@@ -14,7 +14,7 @@ export default defineConfig({
     sourcemap: true,
   },
   plugins: [
-    reactRefresh(),
+    // reactRefresh(),
     crossOriginIsolation(),
     reactSvgPlugin(),
     injectManifest({

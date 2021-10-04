@@ -1,8 +1,10 @@
+import 'reflect-metadata';
+import { inject, injectable } from 'inversify';
 import Q from 'sql-bricks';
 import type { Overwrite, Required } from 'utility-types';
 import { v4 as uuidv4 } from 'uuid';
 import { getCtxStrict } from '../../core/ctx';
-import type { DB } from '../../core/DB';
+import { DB } from '../../core/DB';
 import { suppressLog } from '../../core/suppressLog';
 import type {
   ICreateChange,
@@ -107,12 +109,20 @@ export interface ISyncStatus {
 }
 
 // TODO: emit events after transaction finish
+@injectable()
 export class SyncRepository {
-  constructor(
-    private db: DB<IInternalSyncCtx>,
-    private onChange: (ch: ITransmittedChange[]) => void,
-    private onNewPull: () => void,
-  ) {}
+  private onChangeCallback: ((ch: ITransmittedChange[]) => void) | undefined;
+  private onNewPullCallback: (() => void) | undefined;
+
+  constructor(@inject(DB) private db: DB<IInternalSyncCtx>) {}
+
+  onChange(callback: (ch: ITransmittedChange[]) => void) {
+    this.onChangeCallback = callback;
+  }
+
+  onNewPull(callback: () => void) {
+    this.onNewPullCallback = callback;
+  }
 
   transaction<T extends any>(func: () => T, ctx?: IInternalSyncCtx): T {
     return this.db.transaction(func, ctx);
@@ -158,7 +168,7 @@ export class SyncRepository {
       }
 
       if (changeEvents.length > 0) {
-        this.onChange(changeEvents);
+        this.onChangeCallback?.(changeEvents);
       }
     });
   }
@@ -210,7 +220,7 @@ export class SyncRepository {
       }
 
       if (changeEvents.length > 0) {
-        this.onChange(changeEvents);
+        this.onChangeCallback?.(changeEvents);
       }
     });
   }
@@ -255,7 +265,7 @@ export class SyncRepository {
       }
 
       if (changeEvents.length > 0) {
-        this.onChange(changeEvents);
+        this.onChangeCallback?.(changeEvents);
       }
     });
   }
@@ -330,7 +340,7 @@ export class SyncRepository {
       });
     });
 
-    this.onNewPull();
+    this.onNewPullCallback?.();
   }
 
   getSyncStatus(): ISyncStatus {

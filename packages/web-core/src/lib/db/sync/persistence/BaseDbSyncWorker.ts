@@ -39,16 +39,16 @@ export abstract class BaseDbSyncWorker {
 
   async initialize() {
     if (!this.db) {
-      this.db = new DB();
-      await this.db.init(this.dbName, this.migrations());
+      this.db = new DB(this.dbName);
+      await this.db.init(this.migrations());
 
-      this.syncRepo = new SyncRepository(
-        this.db,
-        (e) => {
-          this.eventsSubject$.next(e);
-        },
-        () => this.onNewSyncPull$.next(),
-      );
+      this.syncRepo = new SyncRepository(this.db);
+
+      this.syncRepo.onChange((e) => {
+        this.eventsSubject$.next(e);
+      });
+
+      this.syncRepo.onNewPull(() => this.onNewSyncPull$.next());
     }
   }
 

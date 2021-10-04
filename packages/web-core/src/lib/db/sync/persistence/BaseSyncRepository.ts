@@ -1,9 +1,13 @@
-import type { SyncRepository } from './SyncRepository';
+import 'reflect-metadata';
+import { SyncRepository } from './SyncRepository';
 import Q from 'sql-bricks';
 import { isEqual, mapValues } from 'lodash-es';
-import type { DB } from '../../core/DB';
+import { DB } from '../../core/DB';
 import type { IInternalSyncCtx, ISyncCtx } from './syncCtx';
+import { inject, injectable } from 'inversify';
+import { WINDOW_ID } from '../../../types';
 
+@injectable()
 export abstract class BaseSyncRepository<
   Doc extends Record<string, unknown> & { id: string } = Record<
     string,
@@ -15,9 +19,9 @@ export abstract class BaseSyncRepository<
   > & { id: string },
 > {
   constructor(
-    protected syncRepository: SyncRepository,
-    protected db: DB<IInternalSyncCtx>,
-    protected windowId: string,
+    @inject(SyncRepository) protected syncRepository: SyncRepository,
+    @inject(DB) protected db: DB<IInternalSyncCtx>,
+    @inject(WINDOW_ID) protected windowId: string,
   ) {}
 
   transaction<T extends any>(func: () => T, ctx?: IInternalSyncCtx): T {
