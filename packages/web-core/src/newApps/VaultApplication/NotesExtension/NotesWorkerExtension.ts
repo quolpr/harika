@@ -4,7 +4,7 @@ import { toRemoteName } from '../../../framework/utils';
 import { initNotesTable } from './migrations/createNotesTable';
 import { NotesRepository } from './repositories/NotesRepository';
 
-export default class NotesWorkerProvider extends BaseExtension {
+export default class NotesWorkerExtension extends BaseExtension {
   async register() {
     this.container.bind(NotesRepository).toSelf();
     this.container.bind(MIGRATIONS).toConstantValue(initNotesTable);
