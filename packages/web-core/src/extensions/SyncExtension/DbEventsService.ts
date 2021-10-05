@@ -1,13 +1,16 @@
 import { BroadcastChannel } from 'broadcast-channel';
+import { inject, injectable } from 'inversify';
 import type { ObservableInput } from 'rxjs';
 import { Observable, switchMap } from 'rxjs';
+import { DB_NAME } from '../DbExtension/types';
 import type { ITransmittedChange } from './persistence/SyncRepository';
 
+@injectable()
 export class DbEventsService {
   dbEventsChannel: BroadcastChannel;
   newSyncPullsChannel: BroadcastChannel;
 
-  constructor(dbName: string) {
+  constructor(@inject(DB_NAME) private dbName: string) {
     this.dbEventsChannel = new BroadcastChannel(dbName, {
       webWorkerSupport: true,
     });

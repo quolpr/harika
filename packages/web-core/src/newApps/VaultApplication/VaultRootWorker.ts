@@ -5,8 +5,8 @@ export class VaultRootWorker extends RootWorker {
   async getExtensions() {
     return (
       await Promise.all([
-        import('../../extensions/DbExtension/DbExtension'),
-        import('../../extensions/SyncExtension/SyncExtension'),
+        import('../../extensions/DbExtension/DbWorkerExtension'),
+        import('../../extensions/SyncExtension/SyncWorkerExtension'),
         import('./NotesExtension/NotesWorkerExtension'),
       ])
     ).map((res) => res.default);
