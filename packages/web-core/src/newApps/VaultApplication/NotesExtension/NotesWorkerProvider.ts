@@ -1,14 +1,17 @@
-import { BaseWorkerProvider } from '../../../lib/BaseWorkerProvider';
+import { BaseExtension } from '../../../framework/BaseExtension';
+import { toRemoteName } from '../../../framework/utils';
 import { MIGRATIONS } from '../../../lib/db/types';
 import { initNotesTable } from './migrations/createNotesTable';
 import { NotesRepository } from './repositories/NotesRepository';
 
-export default class NotesWorkerProvider extends BaseWorkerProvider {
+export default class NotesWorkerProvider extends BaseExtension {
   async register() {
-    this.workerContainer.bind(NotesRepository).toSelf();
-    this.workerContainer.bind(MIGRATIONS).toConstantValue(initNotesTable);
+    this.container.bind(NotesRepository).toSelf();
+    this.container.bind(MIGRATIONS).toConstantValue(initNotesTable);
 
-    this.registerRemote(NotesRepository);
+    this.container
+      .bind(toRemoteName(NotesRepository))
+      .toDynamicValue(() => this.container.get(NotesRepository));
   }
 
   async onReady() {

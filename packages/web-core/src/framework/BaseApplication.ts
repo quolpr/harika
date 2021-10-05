@@ -2,9 +2,16 @@ import { initBackend } from 'absurd-sql/dist/indexeddb-main-thread';
 import { Remote, wrap } from 'comlink';
 import { Container } from 'inversify';
 import { BaseExtension } from './BaseExtension';
-import { generateId } from './generateId';
+import { generateId } from '../lib/generateId';
 import { RootWorker } from './RootWorker';
-import { APPLICATION_ID, APPLICATION_NAME, WINDOW_ID } from './types';
+import {
+  APPLICATION_ID,
+  APPLICATION_NAME,
+  ROOT_WORKER,
+  WINDOW_ID,
+} from './types';
+import { RemoteRegister } from './RemoteRegister';
+import { ExtensionsRegister } from './ExtensionsRegister';
 
 const windowId = generateId();
 
@@ -18,28 +25,26 @@ export abstract class BaseApplication {
     this.container.bind(WINDOW_ID).toConstantValue(windowId);
     this.container.bind(APPLICATION_NAME).toConstantValue(this.applicationName);
     this.container.bind(APPLICATION_ID).toConstantValue(this.applicationId);
+    this.container.bind(Container).toConstantValue(this.container);
 
     this.worker = await this.loadWorker();
 
     await this.worker.registerProviders();
 
-    const extensions = this.extensions.map((ext) => {
-      return new ext(this, this.container, this.worker);
-    });
+    this.container.bind(ROOT_WORKER).toConstantValue(this.worker);
+    this.container
+      .bind(RemoteRegister)
+      .toConstantValue(new RemoteRegister(this.worker, this.container));
 
-    await Promise.all(
-      extensions.map(async (ext) => {
-        await ext.register();
-      }),
+    const extensionsRegister = new ExtensionsRegister(
+      this.container,
+      this.extensions,
     );
 
-    await Promise.all(
-      extensions.map(async (ext) => {
-        await ext.onReady();
-      }),
-    );
+    await extensionsRegister.register();
 
     await this.onReady();
+
     return this.container;
   }
 
@@ -60,11 +65,7 @@ export abstract class BaseApplication {
   abstract get workerClass(): any;
   abstract get applicationName(): string;
   abstract get extensions(): {
-    new (
-      application: BaseApplication,
-      container: Container,
-      rootWorker: Remote<RootWorker>,
-    ): BaseExtension;
+    new (...args: any): BaseExtension;
   }[];
 
   async onReady() {}

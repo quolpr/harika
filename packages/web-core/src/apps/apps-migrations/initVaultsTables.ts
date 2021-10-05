@@ -1,5 +1,5 @@
-import { DB } from '../../lib/db/core/DB';
-import { IMigration } from '../../lib/db/core/types';
+import { DB } from '../../extensions/DbExtension/DB';
+import { IMigration } from '../../extensions/DbExtension/types';
 import { blocksScopesTable } from '../VaultApp/NoteBlocksApp/repositories/BlockScopesRepository';
 import {
   noteBlocksNotesTable,

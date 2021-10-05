@@ -14,7 +14,7 @@ import { shareCtx } from './ctx';
 import { getIsLogSuppressing } from './suppressLog';
 import { IMigration } from './types';
 import { inject, injectable } from 'inversify';
-import { DB_NAME } from '../types';
+import { DB_NAME } from '../../lib/db/types';
 
 // @ts-ignore
 Q.update.defineClause('or', '{{#if _or}}OR {{_or}}{{/if}}', {

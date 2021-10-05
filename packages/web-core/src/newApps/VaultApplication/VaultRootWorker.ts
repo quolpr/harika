@@ -1,14 +1,14 @@
 import { expose } from 'comlink';
-import { RootWorker } from '../../lib/RootWorker';
+import { RootWorker } from '../../framework/RootWorker';
 
 export class VaultRootWorker extends RootWorker {
-  async getProviders() {
+  async getExtensions() {
     return (
       await Promise.all([
         import('./VaultWorkerProvider'),
         import('./NotesExtension/NotesWorkerProvider'),
       ])
-    ).map((res) => new res.default(this.workerContainer));
+    ).map((res) => res.default);
   }
 }
 

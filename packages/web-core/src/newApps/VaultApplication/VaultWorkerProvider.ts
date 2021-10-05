@@ -1,29 +1,27 @@
 import { initSyncTables } from '../../apps/apps-migrations/initSyncTables';
-import { BaseWorkerProvider } from '../../lib/BaseWorkerProvider';
-import { DB } from '../../lib/db/core/DB';
+import { DB } from '../../extensions/DbExtension/DB';
 import { SyncRepository } from '../../lib/db/sync/persistence/SyncRepository';
 import { DB_NAME, MIGRATIONS } from '../../lib/db/types';
-import { APPLICATION_ID, APPLICATION_NAME } from '../../lib/types';
+import { APPLICATION_ID, APPLICATION_NAME } from '../../framework/types';
+import { BaseExtension } from '../../framework/BaseExtension';
 
-export default class VaultWorkerProvider extends BaseWorkerProvider {
+export default class VaultWorkerProvider extends BaseExtension {
   async register() {
-    this.workerContainer
+    this.container
       .bind(DB_NAME)
       .toConstantValue(
-        `${this.workerContainer.get(
-          APPLICATION_NAME,
-        )}_${this.workerContainer.get(APPLICATION_ID)}`,
+        `${this.container.get(APPLICATION_NAME)}_${this.container.get(
+          APPLICATION_ID,
+        )}`,
       );
 
-    this.workerContainer.bind(DB).toSelf();
-    this.workerContainer.bind(SyncRepository).toSelf();
+    this.container.bind(DB).toSelf();
+    this.container.bind(SyncRepository).toSelf();
 
-    this.workerContainer.bind(MIGRATIONS).toConstantValue(initSyncTables);
+    this.container.bind(MIGRATIONS).toConstantValue(initSyncTables);
   }
 
   async initialize() {
-    await this.workerContainer
-      .get(DB)
-      .init(this.workerContainer.getAll(MIGRATIONS));
+    await this.container.get(DB).init(this.container.getAll(MIGRATIONS));
   }
 }

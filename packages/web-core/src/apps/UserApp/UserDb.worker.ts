@@ -6,7 +6,7 @@ import {
   DbChangesWriterService,
 } from '../../lib/db/sync/persistence/ApplyChangesService';
 import { BaseDbSyncWorker } from '../../lib/db/sync/persistence/BaseDbSyncWorker';
-import { IMigration } from '../../lib/db/core/types';
+import { IMigration } from '../../extensions/DbExtension/types';
 import { UserDbChangesApplier } from './services/UserDbChangesApplier';
 import { SqlVaultsRepository } from './repositories/VaultsRepository';
 

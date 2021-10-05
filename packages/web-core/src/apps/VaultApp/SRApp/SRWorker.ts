@@ -1,4 +1,4 @@
-import { IMigration } from '../../../lib/db/core/types';
+import { IMigration } from '../../../extensions/DbExtension/types';
 import { BaseDbSyncWorker } from '../../../lib/db/sync/persistence/BaseDbSyncWorker';
 import { createCardsTable } from './migrations/createCardsTable';
 

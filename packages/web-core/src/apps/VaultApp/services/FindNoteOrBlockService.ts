@@ -1,4 +1,4 @@
-import type { DB } from '../../../lib/db/core/DB';
+import type { DB } from '../../../extensions/DbExtension/DB';
 import type { IInternalSyncCtx } from '../../../lib/db/sync/persistence/syncCtx';
 import { notesTable } from '../NotesApp/repositories/NotesRepository';
 import {

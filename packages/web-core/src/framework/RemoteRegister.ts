@@ -1,23 +1,15 @@
-import { ProxyMarked, Remote } from 'comlink';
+import { Remote } from 'comlink';
 import { Container } from 'inversify';
-import { BaseApplication } from './BaseApplication';
 import { RootWorker } from './RootWorker';
+import { toRemoteName } from './utils';
 
 type Class<T = any> = new (...args: any[]) => T;
-const toRemoteName = (klass: Class) => {
-  return `remote.${klass.name}`;
-};
 
-export abstract class BaseExtension {
+export class RemoteRegister {
   constructor(
-    protected application: BaseApplication,
-    protected appContainer: Container,
-    protected rootWorker: Remote<RootWorker>,
+    private rootWorker: Remote<RootWorker>,
+    private appContainer: Container,
   ) {}
-
-  abstract register(): Promise<void>;
-
-  async onReady() {}
 
   async registerRemote(klass: Class) {
     this.appContainer

@@ -1,9 +1,10 @@
 import { proxy } from 'comlink';
 import type { ProxyMarked } from 'comlink';
 import { Container } from 'inversify';
-import { BaseWorkerProvider } from './BaseWorkerProvider';
 import 'reflect-metadata';
 import { APPLICATION_ID, APPLICATION_NAME, WINDOW_ID } from './types';
+import { ExtensionsRegister } from './ExtensionsRegister';
+import { BaseExtension } from './BaseExtension';
 
 export abstract class RootWorker {
   protected workerContainer: Container;
@@ -20,27 +21,18 @@ export abstract class RootWorker {
       .toConstantValue(applicationName);
     this.workerContainer.bind(APPLICATION_ID).toConstantValue(applicationId);
     this.workerContainer.bind(WINDOW_ID).toConstantValue(windowId);
+    this.workerContainer.bind(Container).toConstantValue(this.workerContainer);
   }
 
   async registerProviders() {
-    const providers = await this.getProviders();
-    await Promise.all(
-      providers.map(async (provider) => {
-        await provider.register();
-      }),
+    const extensions = await this.getExtensions();
+
+    const extensionsRegister = new ExtensionsRegister(
+      this.workerContainer,
+      extensions,
     );
 
-    await Promise.all(
-      providers.map(async (provider) => {
-        await provider.initialize();
-      }),
-    );
-
-    await Promise.all(
-      providers.map(async (provider) => {
-        await provider.onReady();
-      }),
-    );
+    await extensionsRegister.register();
   }
 
   getServiceRemotely<T>(name: any): T & ProxyMarked {
@@ -51,5 +43,9 @@ export abstract class RootWorker {
     this.workerContainer.bind(name).to(value);
   }
 
-  abstract getProviders(): Promise<BaseWorkerProvider[]>;
+  abstract getExtensions(): Promise<
+    {
+      new (...args: any): BaseExtension;
+    }[]
+  >;
 }

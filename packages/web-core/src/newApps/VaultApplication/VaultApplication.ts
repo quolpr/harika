@@ -1,4 +1,4 @@
-import { BaseApplication } from '../../lib/BaseApplication';
+import { BaseApplication } from '../../framework/BaseApplication';
 import { NotesExtension } from './NotesExtension/NotesExtension';
 // @ts-ignore
 import VaultWorker from './VaultRootWorker?worker';

@@ -11,7 +11,7 @@ import { VaultChangesApplier } from './services/sync/VaultChangesApplier/VaultCh
 import { FindNoteOrBlockService } from './services/FindNoteOrBlockService';
 import { ImportExportService } from './services/ImportExportService';
 import { DeleteNoteService } from './NotesApp/services/DeleteNoteService';
-import { IMigration } from '../../lib/db/core/types';
+import { IMigration } from '../../extensions/DbExtension/types';
 import { initSyncTables } from '../apps-migrations/initSyncTables';
 import { initVaultsTables } from '../apps-migrations/initVaultsTables';
 import { addBlockIdsToNoteBlocksTables } from '../apps-migrations/addBlockIdsToNoteBlocksTable';
