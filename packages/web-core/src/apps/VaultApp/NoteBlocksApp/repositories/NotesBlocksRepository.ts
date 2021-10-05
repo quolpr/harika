@@ -1,7 +1,7 @@
 import Q from 'sql-bricks';
-import { BaseSyncRepository } from '../../../../lib/db/sync/persistence/BaseSyncRepository';
-import type { ISyncCtx } from '../../../../lib/db/sync/persistence/syncCtx';
-import type { IDatabaseChange } from '../../../../lib/db/sync/synchronizer/types';
+import { BaseSyncRepository } from '../../../../extensions/SyncExtension/persistence/BaseSyncRepository';
+import type { ISyncCtx } from '../../../../extensions/SyncExtension/persistence/syncCtx';
+import type { IDatabaseChange } from '../../../../extensions/SyncExtension/synchronizer/types';
 
 export type NoteBlockRow = {
   id: string;

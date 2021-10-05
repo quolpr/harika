@@ -2,10 +2,10 @@ import 'reflect-metadata';
 import { SyncRepository } from './SyncRepository';
 import Q from 'sql-bricks';
 import { isEqual, mapValues } from 'lodash-es';
-import { DB } from '../../../../extensions/DbExtension/DB';
+import { DB } from '../../DbExtension/DB';
 import type { IInternalSyncCtx, ISyncCtx } from './syncCtx';
 import { inject, injectable } from 'inversify';
-import { WINDOW_ID } from '../../../../framework/types';
+import { WINDOW_ID } from '../../../framework/types';
 
 @injectable()
 export abstract class BaseSyncRepository<

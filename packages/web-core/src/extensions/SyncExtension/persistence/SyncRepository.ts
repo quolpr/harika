@@ -3,9 +3,9 @@ import { inject, injectable } from 'inversify';
 import Q from 'sql-bricks';
 import type { Overwrite, Required } from 'utility-types';
 import { v4 as uuidv4 } from 'uuid';
-import { getCtxStrict } from '../../../../extensions/DbExtension/ctx';
-import { DB } from '../../../../extensions/DbExtension/DB';
-import { suppressLog } from '../../../../extensions/DbExtension/suppressLog';
+import { getCtxStrict } from '../../DbExtension/ctx';
+import { DB } from '../../DbExtension/DB';
+import { suppressLog } from '../../DbExtension/suppressLog';
 import type {
   ICreateChange,
   IDeleteChange,

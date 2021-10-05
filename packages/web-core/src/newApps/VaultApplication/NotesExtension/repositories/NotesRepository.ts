@@ -1,9 +1,9 @@
 import dayjs from 'dayjs';
 import Q from 'sql-bricks';
 import { injectable } from 'inversify';
-import { BaseSyncRepository } from '../../../../lib/db/sync/persistence/BaseSyncRepository';
-import { ISyncCtx } from '../../../../lib/db/sync/persistence/syncCtx';
-import { IDatabaseChange } from '../../../../lib/db/sync/synchronizer/types';
+import { BaseSyncRepository } from '../../../../extensions/SyncExtension/persistence/BaseSyncRepository';
+import { ISyncCtx } from '../../../../extensions/SyncExtension/persistence/syncCtx';
+import { IDatabaseChange } from '../../../../extensions/SyncExtension/synchronizer/types';
 
 export const notesTable = 'notes' as const;
 export const notesFTSTable = 'notesFts' as const;

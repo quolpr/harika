@@ -1,6 +1,6 @@
-import type { DbChangesWriterService } from '../../../lib/db/sync/persistence/ApplyChangesService';
-import type { IChangesApplier } from '../../../lib/db/sync/synchronizer/ServerSynchronizer';
-import type { IDatabaseChange } from '../../../lib/db/sync/synchronizer/types';
+import type { DbChangesWriterService } from '../../../extensions/SyncExtension/persistence/ApplyChangesService';
+import type { IChangesApplier } from '../../../extensions/SyncExtension/synchronizer/ServerSynchronizer';
+import type { IDatabaseChange } from '../../../extensions/SyncExtension/synchronizer/types';
 import type { SqlVaultsRepository } from '../repositories/VaultsRepository';
 
 export class UserDbChangesApplier implements IChangesApplier {

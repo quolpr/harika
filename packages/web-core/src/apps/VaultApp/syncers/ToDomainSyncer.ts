@@ -8,8 +8,8 @@ import type {
   NoteData,
 
 } from '../NotesApp/converters/toModels';
-import type { ITransmittedChange } from '../../../lib/db/sync/persistence/SyncRepository';
-import { DatabaseChangeType } from '../../../lib/db/sync/synchronizer/types';
+import type { ITransmittedChange } from '../../../extensions/SyncExtension/persistence/SyncRepository';
+import { DatabaseChangeType } from '../../../extensions/SyncExtension/synchronizer/types';
 import { noteBlocksTable } from '../NoteBlocksApp/repositories/NotesBlocksRepository';
 import type { INoteBlockChangeEvent } from '../NoteBlocksApp/repositories/NotesBlocksRepository';
 import type { INoteChangeEvent } from '../NotesApp/repositories/NotesRepository';

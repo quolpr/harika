@@ -1,5 +1,5 @@
 import type { DB } from '../../../extensions/DbExtension/DB';
-import type { IInternalSyncCtx } from '../../../lib/db/sync/persistence/syncCtx';
+import type { IInternalSyncCtx } from '../../../extensions/SyncExtension/persistence/syncCtx';
 import { notesTable } from '../NotesApp/repositories/NotesRepository';
 import {
   noteBlocksFTSTable,

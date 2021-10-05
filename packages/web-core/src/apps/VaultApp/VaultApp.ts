@@ -37,7 +37,7 @@ import {
 import { NotesChangesTrackerService } from './NotesTreeApp/services/NotesChangesTrackerService';
 import { toObserver } from '../../lib/toObserver';
 import type { Remote } from 'comlink';
-import type { DbEventsService } from '../../lib/db/sync/DbEventsService';
+import type { DbEventsService } from '../../extensions/SyncExtension/DbEventsService';
 import {
   noteBlocksTable,
   SqlNotesBlocksRepository,
@@ -53,7 +53,7 @@ import {
   defaultSyncState,
   initSync,
   ISyncState,
-} from '../../lib/db/sync/synchronizer/init';
+} from '../../extensions/SyncExtension/synchronizer/init';
 import { VaultAppDbWorker } from './VaultAppDb.worker';
 import dayjs from 'dayjs';
 import { withoutSync } from './utils/syncable';

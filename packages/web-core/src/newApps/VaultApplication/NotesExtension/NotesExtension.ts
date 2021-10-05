@@ -1,4 +1,4 @@
-import { Container, inject, injectable } from 'inversify';
+import { inject, injectable } from 'inversify';
 import { BaseExtension } from '../../../framework/BaseExtension';
 import { RemoteRegister } from '../../../framework/RemoteRegister';
 import { NotesRepository } from './repositories/NotesRepository';

@@ -12,9 +12,8 @@ import { SQLiteFS } from 'absurd-sql';
 import IndexedDBBackend from 'absurd-sql/dist/indexeddb-backend';
 import { shareCtx } from './ctx';
 import { getIsLogSuppressing } from './suppressLog';
-import { IMigration } from './types';
+import { DB_NAME, IMigration } from './types';
 import { inject, injectable } from 'inversify';
-import { DB_NAME } from '../../lib/db/types';
 
 // @ts-ignore
 Q.update.defineClause('or', '{{#if _or}}OR {{_or}}{{/if}}', {

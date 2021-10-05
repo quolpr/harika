@@ -9,7 +9,7 @@ import {
   BlocksScopesRepository,
   blocksScopesTable,
 } from '../NoteBlocksApp/repositories/BlockScopesRepository';
-import type { ISyncCtx } from '../../../lib/db/sync/persistence/syncCtx';
+import type { ISyncCtx } from '../../../extensions/SyncExtension/persistence/syncCtx';
 import { omit } from 'lodash-es';
 
 export class ImportExportService {

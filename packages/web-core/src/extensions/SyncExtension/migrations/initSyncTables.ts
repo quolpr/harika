@@ -3,9 +3,9 @@ import {
   serverChangesPullsTable,
   serverChangesTable,
   clientChangesTable,
-} from '../../lib/db/sync/persistence/SyncRepository';
-import { DB } from '../../extensions/DbExtension/DB';
-import { IMigration } from '../../extensions/DbExtension/types';
+} from '../persistence/SyncRepository';
+import { DB } from '../../DbExtension/DB';
+import { IMigration } from '../../DbExtension/types';
 
 const up = (db: DB<any>) => {
   db.sqlExec(`

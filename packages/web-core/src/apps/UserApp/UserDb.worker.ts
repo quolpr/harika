@@ -1,11 +1,11 @@
 import { proxy, expose } from 'comlink';
-import { initSyncTables } from '../apps-migrations/initSyncTables';
+import { initSyncTables } from '../../extensions/SyncExtension/migrations/initSyncTables';
 import { initUsersDbTables } from '../apps-migrations/initUsersDbTables';
 import {
   ApplyChangesService,
   DbChangesWriterService,
-} from '../../lib/db/sync/persistence/ApplyChangesService';
-import { BaseDbSyncWorker } from '../../lib/db/sync/persistence/BaseDbSyncWorker';
+} from '../../extensions/SyncExtension/persistence/ApplyChangesService';
+import { BaseDbSyncWorker } from '../../extensions/SyncExtension/persistence/BaseDbSyncWorker';
 import { IMigration } from '../../extensions/DbExtension/types';
 import { UserDbChangesApplier } from './services/UserDbChangesApplier';
 import { SqlVaultsRepository } from './repositories/VaultsRepository';

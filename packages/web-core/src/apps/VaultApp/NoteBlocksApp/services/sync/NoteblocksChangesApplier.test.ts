@@ -1,5 +1,5 @@
 import { expect } from '@esm-bundle/chai';
-import { DatabaseChangeType } from '../../../../../lib/db/sync/synchronizer/types';
+import { DatabaseChangeType } from '../../../../../extensions/SyncExtension/synchronizer/types';
 import type { NoteBlockDoc } from '../../repositories/NotesBlocksRepository';
 import { noteBlocksTable } from '../../repositories/NotesBlocksRepository';
 import type { INoteBlockChangeEvent } from '../../repositories/NotesBlocksRepository';

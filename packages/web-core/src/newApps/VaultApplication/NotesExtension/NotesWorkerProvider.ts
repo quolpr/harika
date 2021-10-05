@@ -1,6 +1,6 @@
+import { MIGRATIONS } from '../../../extensions/DbExtension/types';
 import { BaseExtension } from '../../../framework/BaseExtension';
 import { toRemoteName } from '../../../framework/utils';
-import { MIGRATIONS } from '../../../lib/db/types';
 import { initNotesTable } from './migrations/createNotesTable';
 import { NotesRepository } from './repositories/NotesRepository';
 

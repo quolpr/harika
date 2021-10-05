@@ -2,7 +2,7 @@ import type {
   IUpdateChange,
   IDeleteChange,
   IDatabaseChange,
-} from '../../../../../lib/db/sync/synchronizer/types';
+} from '../../../../../extensions/SyncExtension/synchronizer/types';
 import type { NoteDoc, notesTable } from '../../repositories/NotesRepository';
 import { BaseChangesApplier } from '../../../services/sync/VaultChangesApplier/BaseChangesApplier';
 

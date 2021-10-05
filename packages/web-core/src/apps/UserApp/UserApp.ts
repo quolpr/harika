@@ -1,11 +1,11 @@
 import { Vault } from '../VaultApp/Vault';
 import { VaultApp } from '../VaultApp/VaultApp';
-import { initSync } from '../../lib/db/sync/synchronizer/init';
+import { initSync } from '../../extensions/SyncExtension/synchronizer/init';
 import { map } from 'rxjs/operators';
 import { generateId } from '../../lib/generateId';
 import { ToDomainSyncer } from '../VaultApp/syncers/ToDomainSyncer';
 import { getDbWorker } from '../../lib/getDbWorker';
-import { DbEventsService } from '../../lib/db/sync/DbEventsService';
+import { DbEventsService } from '../../extensions/SyncExtension/DbEventsService';
 import {
   SqlVaultsRepository,
   vaultsTable,

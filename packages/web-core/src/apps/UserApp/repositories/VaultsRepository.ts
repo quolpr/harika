@@ -1,4 +1,4 @@
-import { BaseSyncRepository } from '../../../lib/db/sync/persistence/BaseSyncRepository';
+import { BaseSyncRepository } from '../../../extensions/SyncExtension/persistence/BaseSyncRepository';
 
 export const vaultsTable = 'vaults' as const;
 

@@ -7,7 +7,7 @@ import {
   map,
   takeUntil,
 } from 'rxjs/operators';
-import type { BaseSyncRepository } from '../../../lib/db/sync/persistence/BaseSyncRepository';
+import type { BaseSyncRepository } from '../../../extensions/SyncExtension/persistence/BaseSyncRepository';
 import {
   blockModelType,
   NoteBlockModel,

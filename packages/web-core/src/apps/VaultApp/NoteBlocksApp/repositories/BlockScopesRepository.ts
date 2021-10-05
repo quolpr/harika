@@ -1,5 +1,5 @@
-import { BaseSyncRepository } from '../../../../lib/db/sync/persistence/BaseSyncRepository';
-import type { IDatabaseChange } from '../../../../lib/db/sync/synchronizer/types';
+import { BaseSyncRepository } from '../../../../extensions/SyncExtension/persistence/BaseSyncRepository';
+import type { IDatabaseChange } from '../../../../extensions/SyncExtension/synchronizer/types';
 
 export const blocksScopesTable = 'blocksScopes' as const;
 

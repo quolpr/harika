@@ -1,15 +1,15 @@
 import { proxy } from 'comlink';
 import type { ProxyMarked } from 'comlink';
 import { Subject, buffer, debounceTime } from 'rxjs';
-import { DB } from '../../../../extensions/DbExtension/DB';
+import { DB } from '../../DbExtension/DB';
 import type { ApplyChangesService } from './ApplyChangesService';
 import type { ITransmittedChange } from './SyncRepository';
 import { SyncRepository } from './SyncRepository';
 import { BroadcastChannel } from 'broadcast-channel';
 import type { IInternalSyncCtx } from './syncCtx';
 import { isEqual } from 'lodash-es';
-import { suppressLog } from '../../../../extensions/DbExtension/suppressLog';
-import { IMigration } from '../../../../extensions/DbExtension/types';
+import { suppressLog } from '../../DbExtension/suppressLog';
+import { IMigration } from '../../DbExtension/types';
 
 export abstract class BaseDbSyncWorker {
   protected db!: DB<IInternalSyncCtx>;

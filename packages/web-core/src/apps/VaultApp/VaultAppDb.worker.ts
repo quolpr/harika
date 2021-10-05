@@ -2,8 +2,8 @@ import { expose, proxy } from 'comlink';
 import {
   ApplyChangesService,
   DbChangesWriterService,
-} from '../../lib/db/sync/persistence/ApplyChangesService';
-import { BaseDbSyncWorker } from '../../lib/db/sync/persistence/BaseDbSyncWorker';
+} from '../../extensions/SyncExtension/persistence/ApplyChangesService';
+import { BaseDbSyncWorker } from '../../extensions/SyncExtension/persistence/BaseDbSyncWorker';
 import { BlocksScopesRepository } from './NoteBlocksApp/repositories/BlockScopesRepository';
 import { SqlNotesBlocksRepository } from './NoteBlocksApp/repositories/NotesBlocksRepository';
 import { SqlNotesRepository } from './NotesApp/repositories/NotesRepository';
@@ -12,7 +12,7 @@ import { FindNoteOrBlockService } from './services/FindNoteOrBlockService';
 import { ImportExportService } from './services/ImportExportService';
 import { DeleteNoteService } from './NotesApp/services/DeleteNoteService';
 import { IMigration } from '../../extensions/DbExtension/types';
-import { initSyncTables } from '../apps-migrations/initSyncTables';
+import { initSyncTables } from '../../extensions/SyncExtension/migrations/initSyncTables';
 import { initVaultsTables } from '../apps-migrations/initVaultsTables';
 import { addBlockIdsToNoteBlocksTables } from '../apps-migrations/addBlockIdsToNoteBlocksTable';
 
