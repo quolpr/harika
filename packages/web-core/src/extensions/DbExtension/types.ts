@@ -8,4 +8,4 @@ export type IMigration = {
 };
 
 export const DB_NAME = 'dbName' as const;
-export const MIGRATIONS = 'migrations' as const;
+export const DB_MIGRATIONS = 'migrations' as const;

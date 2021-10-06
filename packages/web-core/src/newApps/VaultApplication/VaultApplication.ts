@@ -4,6 +4,7 @@ import { NotesExtension } from './NotesExtension/NotesExtension';
 import VaultWorker from './VaultRootWorker?worker';
 import { SyncAppExtension } from '../../extensions/SyncExtension/SyncAppExtension';
 import { DbAppExtension } from '../../extensions/DbExtension/DbAppExtension';
+import {NoteBlocksExtension} from "./NoteBlocksExtension/NoteBlocksExtension";
 
 export class VaultApplication extends BaseApplication {
   get applicationName() {
@@ -15,6 +16,6 @@ export class VaultApplication extends BaseApplication {
   }
 
   get extensions() {
-    return [DbAppExtension, SyncAppExtension, NotesExtension];
+    return [DbAppExtension, SyncAppExtension, NotesExtension, NoteBlocksExtension];
   }
 }

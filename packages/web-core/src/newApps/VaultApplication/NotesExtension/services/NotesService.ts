@@ -2,7 +2,7 @@ import { inject, injectable } from 'inversify';
 import { ModelCreationData, withoutUndo } from 'mobx-keystone';
 import { Optional } from 'utility-types';
 import { ICreationResult } from '../../../../apps/VaultApp/types';
-import { DbEventsService } from '../../../../extensions/SyncExtension/DbEventsService';
+import { DbEventsListenService } from '../../../../extensions/SyncExtension/services/DbEventsListenerService';
 import type { Required } from 'utility-types';
 import { NoteModel } from '../models/NoteModel';
 import { NotesRepository, notesTable } from '../repositories/NotesRepository';
@@ -17,7 +17,8 @@ import { convertNoteDocToModelAttrs } from '../converters/toModels';
 @injectable()
 export class NotesService {
   constructor(
-    @inject(DbEventsService) private dbEventsService: DbEventsService,
+    @inject(DbEventsListenService)
+    private dbEventsService: DbEventsListenService,
     @inject(toRemoteName(NotesRepository))
     private notesRepository: Remote<NotesRepository>,
     @inject(NotesStore)

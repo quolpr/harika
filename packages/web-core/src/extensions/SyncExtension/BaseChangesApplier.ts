@@ -1,16 +1,18 @@
-import { reduceChanges } from '../../../../../extensions/SyncExtension/synchronizer/reduceChanges';
+import { reduceChanges } from './synchronizer/reduceChanges';
+import { IChangesApplier } from './synchronizer/ServerSynchronizer';
 import type {
   IDatabaseChange,
   IUpdateChange,
   IDeleteChange,
-} from '../../../../../extensions/SyncExtension/synchronizer/types';
-import { DatabaseChangeType } from '../../../../../extensions/SyncExtension/synchronizer/types';
+} from './synchronizer/types';
+import { DatabaseChangeType } from './synchronizer/types';
 
 export abstract class BaseChangesApplier<
   T extends string,
   K extends Record<string, any> & { id: string },
-> {
-  resolveConflicts(
+> implements IChangesApplier
+{
+  resolveChanges(
     clientChanges: IDatabaseChange<T, K>[],
     serverChanges: IDatabaseChange<T, K>[],
   ) {
@@ -106,4 +108,6 @@ export abstract class BaseChangesApplier<
     change1: IUpdateChange<T, K>,
     change2: IDeleteChange<T, K>,
   ): IDatabaseChange<T, K>;
+
+  protected abstract get tableName(): string;
 }

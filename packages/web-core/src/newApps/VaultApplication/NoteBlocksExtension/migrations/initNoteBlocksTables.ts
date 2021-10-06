@@ -1,29 +1,15 @@
-import { DB } from '../../extensions/DbExtension/DB';
-import { IMigration } from '../../extensions/DbExtension/types';
-import { blocksScopesTable } from '../VaultApp/NoteBlocksApp/repositories/BlockScopesRepository';
+import { DB } from '../../../../extensions/DbExtension/DB';
+import { IMigration } from '../../../../extensions/DbExtension/types';
+import { blocksScopesTable } from '../repositories/BlockScopesRepository';
 import {
   noteBlocksNotesTable,
   noteBlocksTable,
   noteBlocksFTSTable,
   notesFTSTable,
-} from '../VaultApp/NoteBlocksApp/repositories/NotesBlocksRepository';
-import { notesTable } from '../VaultApp/NotesApp/repositories/NotesRepository';
+} from '../repositories/NotesBlocksRepository';
+import { notesTable } from '../../../../apps/VaultApp/NotesApp/repositories/NotesRepository';
 
 const up = (db: DB<any>) => {
-  db.sqlExec(`
-    CREATE TABLE IF NOT EXISTS ${notesTable} (
-      id varchar(20) PRIMARY KEY,
-      title varchar(255) NOT NULL,
-      dailyNoteDate INTEGER,
-      rootBlockId varchar(20) NOT NULL,
-      updatedAt INTEGER NOT NULL,
-      createdAt INTEGER NOT NULL
-    );
-
-    CREATE INDEX IF NOT EXISTS idx_notes_title ON ${notesTable}(title);
-    CREATE INDEX IF NOT EXISTS idx_notes_date ON ${notesTable}(dailyNoteDate);
-  `);
-
   db.sqlExec(`
     CREATE TABLE IF NOT EXISTS ${blocksScopesTable} (
       id varchar(100) PRIMARY KEY,
@@ -66,10 +52,6 @@ const up = (db: DB<any>) => {
   `);
 
   db.sqlExec(`
-    CREATE VIRTUAL TABLE IF NOT EXISTS ${notesFTSTable} USING fts5(id UNINDEXED, title, tokenize="trigram");
-  `);
-
-  db.sqlExec(`
     CREATE TRIGGER IF NOT EXISTS populateNoteBlocksNotesTable_insert AFTER INSERT ON ${noteBlocksTable} BEGIN
       DELETE FROM ${noteBlocksNotesTable} WHERE noteBlockId = new.id;
       INSERT INTO ${noteBlocksNotesTable}(noteId, noteBlockId) SELECT j.value, new.id FROM json_each(new.linkedNoteIds) AS j;
@@ -87,8 +69,8 @@ const up = (db: DB<any>) => {
   `);
 };
 
-export const initVaultsTables: IMigration = {
+export const initNoteBlocksTables: IMigration = {
   up,
-  id: 1632733297840, // just take current UTC time, with `new Date().getTime()`
-  name: 'initVaultsTables',
+  id: 163273329540, // just take current UTC time, with `new Date().getTime()`
+  name: 'initNoteBlocksTables',
 };

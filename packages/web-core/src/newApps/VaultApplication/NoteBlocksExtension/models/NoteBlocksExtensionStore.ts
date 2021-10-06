@@ -1,20 +1,20 @@
 import { arraySet, Model, model, modelAction, prop } from 'mobx-keystone';
 import type { ModelCreationData } from 'mobx-keystone';
-import { BlocksScope } from './views/BlocksScope';
+import { BlocksScope } from '../../../../apps/VaultApp/NoteBlocksApp/views/BlocksScope';
 import {
   BlockModelsRegistry,
   blocksRegistryRef,
-} from './models/BlockModelsRegistry';
-import { FocusedBlock } from './views/FocusedBlock';
-import { NoteBlockModel } from './models/NoteBlockModel';
-import { generateId } from '../../../lib/generateId';
-import { BlockContentModel } from './models/BlockContentModel';
-import { withoutUndoAction } from '../../../lib/utils';
-import { withoutSyncAction } from '../utils/syncable';
+} from './BlockModelsRegistry';
+import { FocusedBlock } from '../../../../apps/VaultApp/NoteBlocksApp/views/FocusedBlock';
+import { NoteBlockModel } from './NoteBlockModel';
+import { generateId } from '../../../../lib/generateId';
+import { BlockContentModel } from './BlockContentModel';
+import { withoutUndoAction } from '../../../../lib/utils';
+import { withoutSyncAction } from '../../../../apps/VaultApp/utils/syncable';
 
-const blocksApp = '@harika/NoteBlocksApp';
+const blocksApp = '@harika/NoteBlocksExtensionStore';
 
-export const isBlocksApp = (obj: any): obj is NoteBlocksApp => {
+export const isBlocksApp = (obj: any): obj is NoteBlocksExtensionStore => {
   return obj.$modelType === blocksApp;
 };
 
@@ -28,7 +28,7 @@ export const getScopeKey = (
 };
 
 @model(blocksApp)
-export class NoteBlocksApp extends Model({
+export class NoteBlocksExtensionStore extends Model({
   // key === noteId
   blocksRegistries: prop<Record<string, BlockModelsRegistry>>(() => ({})),
   blocksScopes: prop<Record<string, BlocksScope>>(() => ({})),

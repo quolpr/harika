@@ -2,20 +2,20 @@ import { notesTable, SqlNotesRepository } from '../NotesApp/repositories/NotesRe
 import type { NoteDoc } from '../NotesApp/repositories/NotesRepository';
 import {
   noteBlocksTable,
-  SqlNotesBlocksRepository,
-} from '../NoteBlocksApp/repositories/NotesBlocksRepository';
-import type { NoteBlockDoc } from '../NoteBlocksApp/repositories/NotesBlocksRepository';
+  NotesBlocksRepository,
+} from '../../../newApps/VaultApplication/NoteBlocksExtension/repositories/NotesBlocksRepository';
+import type { NoteBlockDoc } from '../../../newApps/VaultApplication/NoteBlocksExtension/repositories/NotesBlocksRepository';
 import {
   BlocksScopesRepository,
   blocksScopesTable,
-} from '../NoteBlocksApp/repositories/BlockScopesRepository';
+} from '../../../newApps/VaultApplication/NoteBlocksExtension/repositories/BlockScopesRepository';
 import type { ISyncCtx } from '../../../extensions/SyncExtension/persistence/syncCtx';
 import { omit } from 'lodash-es';
 
 export class ImportExportService {
   constructor(
     private notesRepo: SqlNotesRepository,
-    private notesBlocksRepo: SqlNotesBlocksRepository,
+    private notesBlocksRepo: NotesBlocksRepository,
     private blocksScopesRepo: BlocksScopesRepository,
   ) {}
 

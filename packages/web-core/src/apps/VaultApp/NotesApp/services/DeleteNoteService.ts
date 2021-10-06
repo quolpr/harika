@@ -1,11 +1,11 @@
 import type { SqlNotesRepository } from '../repositories/NotesRepository';
-import type { SqlNotesBlocksRepository } from '../../NoteBlocksApp/repositories/NotesBlocksRepository';
+import type { NotesBlocksRepository } from '../../../../newApps/VaultApplication/NoteBlocksExtension/repositories/NotesBlocksRepository';
 import type { ISyncCtx } from '../../../../extensions/SyncExtension/persistence/syncCtx';
 
 export class DeleteNoteService {
   constructor(
     private notesRepo: SqlNotesRepository,
-    private notesBlocksRepo: SqlNotesBlocksRepository,
+    private notesBlocksRepo: NotesBlocksRepository,
   ) {}
 
   deleteNote(noteId: string) {

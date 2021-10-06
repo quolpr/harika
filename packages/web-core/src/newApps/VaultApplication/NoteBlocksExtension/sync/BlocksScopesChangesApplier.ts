@@ -2,14 +2,14 @@ import type {
   IDatabaseChange,
   IDeleteChange,
   IUpdateChange,
-} from '../../../../../extensions/SyncExtension/synchronizer/types';
-import type {
+} from '../../../../extensions/SyncExtension/synchronizer/types';
+import {
   BlocksScopeDoc,
   blocksScopesTable,
-} from '../../repositories/BlockScopesRepository';
-import { BaseChangesApplier } from '../../../services/sync/VaultChangesApplier/BaseChangesApplier';
+} from '../repositories/BlockScopesRepository';
+import { BaseChangesApplier } from '../../../../extensions/SyncExtension/BaseChangesApplier';
 
-export class BlocksScopesChangesConflictResolver extends BaseChangesApplier<
+export class BlocksScopesChangesApplier extends BaseChangesApplier<
   typeof blocksScopesTable,
   BlocksScopeDoc
 > {
@@ -25,5 +25,9 @@ export class BlocksScopesChangesConflictResolver extends BaseChangesApplier<
     change2: IDeleteChange<typeof blocksScopesTable, BlocksScopeDoc>,
   ): IDatabaseChange<typeof blocksScopesTable, BlocksScopeDoc> {
     return change2;
+  }
+
+  get tableName() {
+    return blocksScopesTable;
   }
 }

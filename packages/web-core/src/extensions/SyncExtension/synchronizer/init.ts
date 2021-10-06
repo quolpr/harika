@@ -13,7 +13,7 @@ import {
   tap,
   withLatestFrom,
 } from 'rxjs';
-import type { DbEventsService } from '../DbEventsService';
+import type { DbEventsListenService } from '../services/DbEventsListenerService';
 import { CommandsExecuter } from './CommandsExecuter';
 import { ServerConnector } from './connection/ServerConnector';
 import { ServerSynchronizer } from './ServerSynchronizer';
@@ -64,7 +64,7 @@ export const initSync = async (
   dbWorker: Remote<BaseDbSyncWorker>,
   url: string,
   authToken: string,
-  eventsService: DbEventsService,
+  eventsService: DbEventsListenService,
   isServerConnectionAllowed$: Observable<boolean>,
 ) => {
   const stop$: Subject<void> = new Subject();

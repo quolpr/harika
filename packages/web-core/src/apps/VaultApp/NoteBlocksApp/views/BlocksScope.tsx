@@ -18,8 +18,8 @@ import {
 import { TreeToken } from '../../../../lib/blockParser/parseStringToTree';
 import { withoutUndoAction } from '../../../../lib/utils';
 import { syncable } from '../../utils/syncable';
-import { BlockModelsRegistry } from '../models/BlockModelsRegistry';
-import { NoteBlockModel } from '../models/NoteBlockModel';
+import { BlockModelsRegistry } from '../../../../newApps/VaultApplication/NoteBlocksExtension/models/BlockModelsRegistry';
+import { NoteBlockModel } from '../../../../newApps/VaultApplication/NoteBlocksExtension/models/NoteBlockModel';
 import { ScopedBlock } from './ScopedBlock';
 import { ScopedBlocksRegistry } from './ScopedBlocksRegistry';
 

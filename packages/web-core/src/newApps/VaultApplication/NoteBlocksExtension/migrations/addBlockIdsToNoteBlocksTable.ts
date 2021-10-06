@@ -1,9 +1,9 @@
-import { DB } from '../../extensions/DbExtension/DB';
-import { IMigration } from '../../extensions/DbExtension/types';
+import { DB } from '../../../../extensions/DbExtension/DB';
+import { IMigration } from '../../../../extensions/DbExtension/types';
 import {
   noteBlocksBlocksTable,
   noteBlocksTable,
-} from '../VaultApp/NoteBlocksApp/repositories/NotesBlocksRepository';
+} from '../repositories/NotesBlocksRepository';
 
 const up = (db: DB<any>) => {
   db.sqlExec(`

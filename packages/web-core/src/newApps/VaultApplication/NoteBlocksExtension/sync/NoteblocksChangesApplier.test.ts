@@ -1,8 +1,8 @@
 import { expect } from '@esm-bundle/chai';
-import { DatabaseChangeType } from '../../../../../extensions/SyncExtension/synchronizer/types';
-import type { NoteBlockDoc } from '../../repositories/NotesBlocksRepository';
-import { noteBlocksTable } from '../../repositories/NotesBlocksRepository';
-import type { INoteBlockChangeEvent } from '../../repositories/NotesBlocksRepository';
+import { DatabaseChangeType } from '../../../../extensions/SyncExtension/synchronizer/types';
+import type { NoteBlockDoc } from '../repositories/NotesBlocksRepository';
+import { noteBlocksTable } from '../repositories/NotesBlocksRepository';
+import type { INoteBlockChangeEvent } from '../repositories/NotesBlocksRepository';
 import { NoteblocksChangesApplier } from './NoteblocksChangesApplier';
 
 const updateChange = (
@@ -80,7 +80,7 @@ describe('NoteblocksChangesConflictResolver', () => {
             ];
 
             expect(
-              resolver.resolveConflicts(clientChanges, serverChanges)
+              resolver.resolveChanges(clientChanges, serverChanges)
                 .conflictedChanges,
             ).to.deep.eq([
               updateChange(
@@ -121,7 +121,7 @@ describe('NoteblocksChangesConflictResolver', () => {
             ];
 
             expect(
-              resolver.resolveConflicts(clientChanges, serverChanges)
+              resolver.resolveChanges(clientChanges, serverChanges)
                 .conflictedChanges,
             ).to.deep.eq([
               updateChange(
@@ -164,7 +164,7 @@ describe('NoteblocksChangesConflictResolver', () => {
             ];
 
             expect(
-              resolver.resolveConflicts(clientChanges, serverChanges)
+              resolver.resolveChanges(clientChanges, serverChanges)
                 .conflictedChanges,
             ).to.deep.eq([
               updateChange(
@@ -202,7 +202,7 @@ describe('NoteblocksChangesConflictResolver', () => {
             ];
 
             expect(
-              resolver.resolveConflicts(clientChanges, serverChanges)
+              resolver.resolveChanges(clientChanges, serverChanges)
                 .conflictedChanges,
             ).to.deep.eq([
               updateChange(
@@ -252,7 +252,7 @@ describe('NoteblocksChangesConflictResolver', () => {
         ];
 
         expect(
-          resolver.resolveConflicts(clientChanges, serverChanges)
+          resolver.resolveChanges(clientChanges, serverChanges)
             .conflictedChanges,
         ).to.deep.eq([
           createChange('123', {
@@ -330,8 +330,7 @@ describe('NoteblocksChangesConflictResolver', () => {
       ];
 
       expect(
-        resolver.resolveConflicts(clientChanges, serverChanges)
-          .conflictedChanges,
+        resolver.resolveChanges(clientChanges, serverChanges).conflictedChanges,
       ).to.deep.eq([clientChanges[0]]);
     });
 

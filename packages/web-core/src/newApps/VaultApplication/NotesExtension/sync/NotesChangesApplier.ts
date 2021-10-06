@@ -2,9 +2,9 @@ import type {
   IUpdateChange,
   IDeleteChange,
   IDatabaseChange,
-} from '../../../../../extensions/SyncExtension/synchronizer/types';
-import type { NoteDoc, notesTable } from '../../repositories/NotesRepository';
-import { BaseChangesApplier } from '../../../services/sync/VaultChangesApplier/BaseChangesApplier';
+} from '../../../../extensions/SyncExtension/synchronizer/types';
+import { NoteDoc, notesTable } from '../../../../apps/VaultApp/NotesApp/repositories/NotesRepository';
+import { BaseChangesApplier } from '../../../../extensions/SyncExtension/BaseChangesApplier';
 
 export class NotesChangesApplier extends BaseChangesApplier<
   typeof notesTable,
@@ -22,5 +22,9 @@ export class NotesChangesApplier extends BaseChangesApplier<
     change2: IDeleteChange<typeof notesTable, NoteDoc>,
   ): IDatabaseChange<typeof notesTable, NoteDoc> {
     return change2;
+  }
+
+  get tableName() {
+    return notesTable;
   }
 }

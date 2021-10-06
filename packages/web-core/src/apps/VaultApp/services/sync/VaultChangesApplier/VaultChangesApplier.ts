@@ -5,25 +5,28 @@ import type { IDatabaseChange } from '../../../../../extensions/SyncExtension/sy
 import {
   BlocksScopesRepository,
   blocksScopesTable,
-} from '../../../NoteBlocksApp/repositories/BlockScopesRepository';
-import type { IBlocksScopesChangeEvent } from '../../../NoteBlocksApp/repositories/BlockScopesRepository';
+} from '../../../../../newApps/VaultApplication/NoteBlocksExtension/repositories/BlockScopesRepository';
+import type { IBlocksScopesChangeEvent } from '../../../../../newApps/VaultApplication/NoteBlocksExtension/repositories/BlockScopesRepository';
 import {
-  SqlNotesBlocksRepository,
+  NotesBlocksRepository,
   noteBlocksTable,
-} from '../../../NoteBlocksApp/repositories/NotesBlocksRepository';
-import type { INoteBlockChangeEvent } from '../../../NoteBlocksApp/repositories/NotesBlocksRepository';
-import { SqlNotesRepository, notesTable } from '../../../NotesApp/repositories/NotesRepository';
+} from '../../../../../newApps/VaultApplication/NoteBlocksExtension/repositories/NotesBlocksRepository';
+import type { INoteBlockChangeEvent } from '../../../../../newApps/VaultApplication/NoteBlocksExtension/repositories/NotesBlocksRepository';
+import {
+  SqlNotesRepository,
+  notesTable,
+} from '../../../NotesApp/repositories/NotesRepository';
 import type { INoteChangeEvent } from '../../../NotesApp/repositories/NotesRepository';
-import { BlocksScopesChangesConflictResolver } from '../../../NoteBlocksApp/services/sync/BlocksScopesChangesApplier';
-import { NoteblocksChangesApplier } from '../../../NoteBlocksApp/services/sync/NoteblocksChangesApplier';
-import { NotesChangesApplier } from '../../../NotesApp/services/sync/NotesChangesApplier';
+import { BlocksScopesChangesApplier } from '../../../../../newApps/VaultApplication/NoteBlocksExtension/sync/BlocksScopesChangesApplier';
+import { NoteblocksChangesApplier } from '../../../../../newApps/VaultApplication/NoteBlocksExtension/sync/NoteblocksChangesApplier';
+import { NotesChangesApplier } from '../../../../../newApps/VaultApplication/NotesExtension/sync/NotesChangesApplier';
 
 export class VaultChangesApplier implements IChangesApplier {
   // private consistencyResolver: VaultDbConsistencyResolver;
 
   constructor(
     private noteRepo: SqlNotesRepository,
-    private noteBlocksRepo: SqlNotesBlocksRepository,
+    private noteBlocksRepo: NotesBlocksRepository,
     private blocksScopesRepo: BlocksScopesRepository,
     private dbChangesWriter: DbChangesWriterService,
   ) {
@@ -43,25 +46,25 @@ export class VaultChangesApplier implements IChangesApplier {
       } else {
         const noteblocksResolver = new NoteblocksChangesApplier();
         const notesResolver = new NotesChangesApplier();
-        const scopesResolver = new BlocksScopesChangesConflictResolver();
+        const scopesResolver = new BlocksScopesChangesApplier();
 
         const noteBlocksFilter = ({ table }: { table: string }) =>
           table === noteBlocksTable;
-        const newBlocksChanges = noteblocksResolver.resolveConflicts(
+        const newBlocksChanges = noteblocksResolver.resolveChanges(
           clientChanges.filter(noteBlocksFilter) as INoteBlockChangeEvent[],
           serverChanges.filter(noteBlocksFilter) as INoteBlockChangeEvent[],
         );
 
         const notesFilter = ({ table }: { table: string }) =>
           table === notesTable;
-        const notesChanges = notesResolver.resolveConflicts(
+        const notesChanges = notesResolver.resolveChanges(
           clientChanges.filter(notesFilter) as INoteChangeEvent[],
           serverChanges.filter(notesFilter) as INoteChangeEvent[],
         );
 
         const scopesFilter = ({ table }: { table: string }) =>
           table === blocksScopesTable;
-        const scopesChanges = scopesResolver.resolveConflicts(
+        const scopesChanges = scopesResolver.resolveChanges(
           clientChanges.filter(scopesFilter) as IBlocksScopesChangeEvent[],
           serverChanges.filter(scopesFilter) as IBlocksScopesChangeEvent[],
         );

@@ -1,4 +1,4 @@
-import type { NoteBlockModel } from '../models/NoteBlockModel';
+import type { NoteBlockModel } from '../../../../newApps/VaultApplication/NoteBlocksExtension/models/NoteBlockModel';
 import {
   allRightSiblingsFunc,
   deepLastRightChildFunc,
@@ -15,7 +15,7 @@ import type { ITreeNode } from '../../../../lib/mobx-tree';
 import { comparer, computed, makeObservable, observable } from 'mobx';
 import type { IComputedValue } from 'mobx';
 import { isTodo } from '../../../../lib/blockParser/astHelpers';
-import { BlockContentModel } from '../models/BlockContentModel';
+import { BlockContentModel } from '../../../../newApps/VaultApplication/NoteBlocksExtension/models/BlockContentModel';
 import { ArraySet, ModelCreationData } from 'mobx-keystone';
 import type { Optional } from 'utility-types';
 

@@ -10,14 +10,14 @@ import type {
 } from '../NotesApp/converters/toModels';
 import type { ITransmittedChange } from '../../../extensions/SyncExtension/persistence/SyncRepository';
 import { DatabaseChangeType } from '../../../extensions/SyncExtension/synchronizer/types';
-import { noteBlocksTable } from '../NoteBlocksApp/repositories/NotesBlocksRepository';
-import type { INoteBlockChangeEvent } from '../NoteBlocksApp/repositories/NotesBlocksRepository';
+import { noteBlocksTable } from '../../../newApps/VaultApplication/NoteBlocksExtension/repositories/NotesBlocksRepository';
+import type { INoteBlockChangeEvent } from '../../../newApps/VaultApplication/NoteBlocksExtension/repositories/NotesBlocksRepository';
 import type { INoteChangeEvent } from '../NotesApp/repositories/NotesRepository';
 import { notesTable } from '../NotesApp/repositories/NotesRepository';
-import { blocksScopesTable } from '../NoteBlocksApp/repositories/BlockScopesRepository';
-import type { IBlocksScopesChangeEvent } from '../NoteBlocksApp/repositories/BlockScopesRepository';
+import { blocksScopesTable } from '../../../newApps/VaultApplication/NoteBlocksExtension/repositories/BlockScopesRepository';
+import type { IBlocksScopesChangeEvent } from '../../../newApps/VaultApplication/NoteBlocksExtension/repositories/BlockScopesRepository';
 import { withoutSync } from '../utils/syncable';
-import {convertNoteBlockDocToModelAttrs, NoteBlockData} from "../NoteBlocksApp/converters/toModels";
+import {convertNoteBlockDocToModelAttrs, NoteBlockData} from "../../../newApps/VaultApplication/NoteBlocksExtension/converters/toModels";
 
 // TODO: better deletion
 export class ToDomainSyncer {

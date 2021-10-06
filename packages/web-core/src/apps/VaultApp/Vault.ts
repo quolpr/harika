@@ -9,9 +9,9 @@ import {
   NotesTreeRegistry,
 } from './NotesTreeApp/models/NotesTreeRegistry';
 import type { PartialNote } from './NotesTreeApp/models/NotesTreeRegistry';
-import type { NoteBlockModel } from './NoteBlocksApp/models/NoteBlockModel';
+import type { NoteBlockModel } from '../../newApps/VaultApplication/NoteBlocksExtension/models/NoteBlockModel';
 import dayjs from 'dayjs';
-import { NoteBlocksApp } from './NoteBlocksApp/NoteBlocksApp';
+import { NoteBlocksExtensionStore } from '../../newApps/VaultApplication/NoteBlocksExtension/models/NoteBlocksExtensionStore';
 import { computed } from 'mobx';
 import { withoutUndoAction } from '../../lib/utils';
 import { withoutSyncAction } from './utils/syncable';
@@ -22,7 +22,7 @@ export class Vault extends Model({
   // TODO: notes registry
   notesMap: prop<Record<string, NoteModel>>(() => ({})),
   // Key is noteId
-  noteBlocksApp: prop<NoteBlocksApp>(() => new NoteBlocksApp({})),
+  noteBlocksApp: prop<NoteBlocksExtensionStore>(() => new NoteBlocksExtensionStore({})),
   notesTree: prop<NotesTreeRegistry>(() => newTreeModel()),
 }) {
   @computed

@@ -1,8 +1,8 @@
-import {BaseExtension} from "../../framework/BaseExtension";
-import {DbEventsService} from "./DbEventsService";
+import { BaseExtension } from '../../framework/BaseExtension';
+import { DbEventsListenService } from './services/DbEventsListenerService';
 
 export class SyncAppExtension extends BaseExtension {
   async register() {
-   this.container.bind(DbEventsService).toSelf();
+    this.container.bind(DbEventsListenService).toSelf();
   }
 }

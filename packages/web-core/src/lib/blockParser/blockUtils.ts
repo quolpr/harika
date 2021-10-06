@@ -1,6 +1,6 @@
 import { generateId } from '../generateId';
 import { Vault } from '../../apps/VaultApp/VaultApp';
-import { BlockContentModel } from '../../apps/VaultApp/NoteBlocksApp/models/BlockContentModel';
+import { BlockContentModel } from '../../newApps/VaultApplication/NoteBlocksExtension/models/BlockContentModel';
 import { parseStringToTree } from './parseStringToTree';
 import type { TreeToken } from './parseStringToTree';
 import type { ScopedBlock } from '../../apps/VaultApp/NoteBlocksApp/views/ScopedBlock';

@@ -11,7 +11,7 @@ import { useCurrentFocusedBlockState } from '../../hooks/useFocusedBlockState';
 import { BlockEditor } from './BlockEditor/BlockEditor';
 import { useBacklinkedBlocksCount } from '../LinkedBlocksOfBlocksContext';
 
-// IMPORTANT: don't use any global handlers in <NoteBlocksApp /> (document.addEventListener) cause it is slow down note blocks tree a lot
+// IMPORTANT: don't use any global handlers in <NoteBlocksExtensionStore /> (document.addEventListener) cause it is slow down note blocks tree a lot
 
 export const NoteBlockChildren = observer(
   ({

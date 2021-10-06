@@ -37,7 +37,7 @@ export type INoteBlockChangeEvent = IDatabaseChange<
   NoteBlockDoc
 >;
 
-export class SqlNotesBlocksRepository extends BaseSyncRepository<
+export class NotesBlocksRepository extends BaseSyncRepository<
   NoteBlockDoc,
   NoteBlockRow
 > {

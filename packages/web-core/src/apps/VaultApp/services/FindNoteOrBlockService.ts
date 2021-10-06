@@ -5,12 +5,12 @@ import {
   noteBlocksFTSTable,
   noteBlocksTable,
   notesFTSTable,
-} from '../NoteBlocksApp/repositories/NotesBlocksRepository';
+} from '../../../newApps/VaultApplication/NoteBlocksExtension/repositories/NotesBlocksRepository';
 import Q from 'sql-bricks';
 
 export class FindNoteOrBlockService {
   constructor(
-    private db: DB<IInternalSyncCtx>, // private notesRepo: SqlNotesRepository, // private notesBlocksRepo: SqlNotesBlocksRepository,
+    private db: DB<IInternalSyncCtx>, // private notesRepo: SqlNotesRepository, // private notesBlocksRepo: NotesBlocksRepository,
   ) {}
 
   find(text: string) {

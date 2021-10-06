@@ -31,24 +31,25 @@ import {
   of,
   Subject,
 } from 'rxjs';
-import {
-  convertNoteDocToModelAttrs,
-} from './NotesApp/converters/toModels';
+import { convertNoteDocToModelAttrs } from './NotesApp/converters/toModels';
 import { NotesChangesTrackerService } from './NotesTreeApp/services/NotesChangesTrackerService';
 import { toObserver } from '../../lib/toObserver';
 import type { Remote } from 'comlink';
-import type { DbEventsService } from '../../extensions/SyncExtension/DbEventsService';
+import type { DbEventsListenService } from '../../extensions/SyncExtension/services/DbEventsListenerService';
 import {
   noteBlocksTable,
-  SqlNotesBlocksRepository,
-} from './NoteBlocksApp/repositories/NotesBlocksRepository';
-import { SqlNotesRepository, notesTable } from './NotesApp/repositories/NotesRepository';
+  NotesBlocksRepository,
+} from '../../newApps/VaultApplication/NoteBlocksExtension/repositories/NotesBlocksRepository';
+import {
+  SqlNotesRepository,
+  notesTable,
+} from './NotesApp/repositories/NotesRepository';
 import type { NoteDoc } from './NotesApp/repositories/NotesRepository';
-import type { BlocksScopesRepository } from './NoteBlocksApp/repositories/BlockScopesRepository';
+import type { BlocksScopesRepository } from '../../newApps/VaultApplication/NoteBlocksExtension/repositories/BlockScopesRepository';
 import type { FindNoteOrBlockService } from './services/FindNoteOrBlockService';
 import type { ImportExportService } from './services/ImportExportService';
 import type { DeleteNoteService } from './NotesApp/services/DeleteNoteService';
-import { getScopeKey } from './NoteBlocksApp/NoteBlocksApp';
+import { getScopeKey } from '../../newApps/VaultApplication/NoteBlocksExtension/models/NoteBlocksExtensionStore';
 import {
   defaultSyncState,
   initSync,
@@ -58,14 +59,14 @@ import { VaultAppDbWorker } from './VaultAppDb.worker';
 import dayjs from 'dayjs';
 import { withoutSync } from './utils/syncable';
 import { ToDbSyncer } from './syncers/ToDbSyncer';
-import {convertNoteBlockDocToModelAttrs} from "./NoteBlocksApp/converters/toModels";
+import { convertNoteBlockDocToModelAttrs } from '../../newApps/VaultApplication/NoteBlocksExtension/converters/toModels';
 
 export { NoteModel } from './NotesApp/models/NoteModel';
 export { Vault } from './Vault';
 export {
   NoteBlockModel,
   noteBlockRef,
-} from './NoteBlocksApp/models/NoteBlockModel';
+} from '../../newApps/VaultApplication/NoteBlocksExtension/models/NoteBlockModel';
 
 export class VaultApp {
   private stopSubject = new Subject<unknown>();
@@ -77,9 +78,9 @@ export class VaultApp {
 
   constructor(
     private notesRepository: Remote<SqlNotesRepository>,
-    private notesBlocksRepository: Remote<SqlNotesBlocksRepository>,
+    private notesBlocksRepository: Remote<NotesBlocksRepository>,
     private blocksScopesRepo: Remote<BlocksScopesRepository>,
-    private dbEventsService: DbEventsService,
+    private dbEventsService: DbEventsListenService,
     private importExportService: Remote<ImportExportService>,
     private deleteNoteService: Remote<DeleteNoteService>,
     private findService: Remote<FindNoteOrBlockService>,

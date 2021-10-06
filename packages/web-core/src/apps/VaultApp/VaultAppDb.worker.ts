@@ -4,8 +4,8 @@ import {
   DbChangesWriterService,
 } from '../../extensions/SyncExtension/persistence/ApplyChangesService';
 import { BaseDbSyncWorker } from '../../extensions/SyncExtension/persistence/BaseDbSyncWorker';
-import { BlocksScopesRepository } from './NoteBlocksApp/repositories/BlockScopesRepository';
-import { SqlNotesBlocksRepository } from './NoteBlocksApp/repositories/NotesBlocksRepository';
+import { BlocksScopesRepository } from '../../newApps/VaultApplication/NoteBlocksExtension/repositories/BlockScopesRepository';
+import { NotesBlocksRepository } from '../../newApps/VaultApplication/NoteBlocksExtension/repositories/NotesBlocksRepository';
 import { SqlNotesRepository } from './NotesApp/repositories/NotesRepository';
 import { VaultChangesApplier } from './services/sync/VaultChangesApplier/VaultChangesApplier';
 import { FindNoteOrBlockService } from './services/FindNoteOrBlockService';
@@ -13,8 +13,8 @@ import { ImportExportService } from './services/ImportExportService';
 import { DeleteNoteService } from './NotesApp/services/DeleteNoteService';
 import { IMigration } from '../../extensions/DbExtension/types';
 import { initSyncTables } from '../../extensions/SyncExtension/migrations/initSyncTables';
-import { initVaultsTables } from '../apps-migrations/initVaultsTables';
-import { addBlockIdsToNoteBlocksTables } from '../apps-migrations/addBlockIdsToNoteBlocksTable';
+import { initNoteBlocksTables } from '../../newApps/VaultApplication/NoteBlocksExtension/migrations/initNoteBlocksTables';
+import { addBlockIdsToNoteBlocksTables } from '../../newApps/VaultApplication/NoteBlocksExtension/migrations/addBlockIdsToNoteBlocksTable';
 
 export class VaultAppDbWorker extends BaseDbSyncWorker {
   getNotesRepo() {
@@ -60,7 +60,7 @@ export class VaultAppDbWorker extends BaseDbSyncWorker {
   }
 
   private getNoteBlocksRepoWithoutProxy() {
-    return new SqlNotesBlocksRepository(this.syncRepo, this.db, this.windowId);
+    return new NotesBlocksRepository(this.syncRepo, this.db, this.windowId);
   }
 
   getApplyChangesService() {
@@ -78,7 +78,7 @@ export class VaultAppDbWorker extends BaseDbSyncWorker {
   }
 
   migrations(): IMigration[] {
-    return [initSyncTables, initVaultsTables, addBlockIdsToNoteBlocksTables];
+    return [initSyncTables, initNoteBlocksTables, addBlockIdsToNoteBlocksTables];
   }
 }
 

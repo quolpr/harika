@@ -1,14 +1,14 @@
 import { difference, set, uniq, cloneDeep } from 'lodash-es';
-import { BaseChangesApplier } from '../../../services/sync/VaultChangesApplier/BaseChangesApplier';
+import { BaseChangesApplier } from '../../../../extensions/SyncExtension/BaseChangesApplier';
 import { v4 } from 'uuid';
-import type { NoteBlockDoc } from '../../repositories/NotesBlocksRepository';
-import { noteBlocksTable } from '../../repositories/NotesBlocksRepository';
-import { DatabaseChangeType } from '../../../../../extensions/SyncExtension/synchronizer/types';
+import type { NoteBlockDoc } from '../repositories/NotesBlocksRepository';
+import { noteBlocksTable } from '../repositories/NotesBlocksRepository';
+import { DatabaseChangeType } from '../../../../extensions/SyncExtension/synchronizer/types';
 import type {
   ICreateChange,
   IDeleteChange,
   IUpdateChange,
-} from '../../../../../extensions/SyncExtension/synchronizer/types';
+} from '../../../../extensions/SyncExtension/synchronizer/types';
 
 export class NoteblocksChangesApplier extends BaseChangesApplier<
   typeof noteBlocksTable,
@@ -97,5 +97,9 @@ export class NoteblocksChangesApplier extends BaseChangesApplier<
       key: change1.key,
       obj: obj,
     };
+  }
+
+  get tableName() {
+    return noteBlocksTable;
   }
 }

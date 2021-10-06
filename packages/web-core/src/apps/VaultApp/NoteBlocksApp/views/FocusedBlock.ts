@@ -31,7 +31,7 @@ export class FocusedBlockState extends Model({
 }
 
 // React/mobx has weird bug(and I am not sure that issue exists in github?)
-// That when state is set in `NoteBlocksApp`, then it seems it triggers rerender of all components
+// That when state is set in `NoteBlocksExtensionStore`, then it seems it triggers rerender of all components
 // and event in event handler stops bubbling. WTF?
 @model('FocusedBlock')
 export class FocusedBlock extends Model({

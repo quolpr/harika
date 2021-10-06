@@ -5,7 +5,7 @@ import { map } from 'rxjs/operators';
 import { generateId } from '../../lib/generateId';
 import { ToDomainSyncer } from '../VaultApp/syncers/ToDomainSyncer';
 import { getDbWorker } from '../../lib/getDbWorker';
-import { DbEventsService } from '../../extensions/SyncExtension/DbEventsService';
+import { DbEventsListenService } from '../../extensions/SyncExtension/services/DbEventsListenerService';
 import {
   SqlVaultsRepository,
   vaultsTable,
@@ -21,7 +21,7 @@ const windowId = generateId();
 export class UserApp {
   private notesServices: Record<string, VaultApp | undefined> = {};
   private vaultsRepo!: Remote<SqlVaultsRepository>;
-  private dbEventsService!: DbEventsService;
+  private dbEventsService!: DbEventsListenService;
 
   constructor(
     private dbId: string,
@@ -42,7 +42,7 @@ export class UserApp {
 
     this.vaultsRepo = await worker.getVaultsRepo();
 
-    this.dbEventsService = new DbEventsService(dbName);
+    this.dbEventsService = new DbEventsListenService(dbName);
 
     if (this.sync) {
       // Don't need to await
@@ -153,7 +153,7 @@ export class UserApp {
     const blocksRepo = await worker.getNotesBlocksRepo();
     const viewsRepo = await worker.getBlocksViewsRepo();
 
-    const eventsService = new DbEventsService(dbName);
+    const eventsService = new DbEventsListenService(dbName);
 
     new ToDomainSyncer(
       eventsService.changesChannel$(),

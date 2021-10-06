@@ -1,4 +1,4 @@
-import {BlocksScope} from "../views/BlocksScope";
+import {BlocksScope} from "../../../../apps/VaultApp/NoteBlocksApp/views/BlocksScope";
 import {BlocksScopeDoc} from "../repositories/BlockScopesRepository";
 import {NoteBlockModel} from "../models/NoteBlockModel";
 import {NoteBlockDoc} from "../repositories/NotesBlocksRepository";

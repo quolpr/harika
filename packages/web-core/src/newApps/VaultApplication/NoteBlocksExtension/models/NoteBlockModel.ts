@@ -13,12 +13,12 @@ import {
 import { comparer, computed } from 'mobx';
 import { isEqual } from 'lodash-es';
 import type { BlockContentModel } from './BlockContentModel';
-import { isBlocksApp, NoteBlocksApp } from '../NoteBlocksApp';
-import { syncable } from '../../utils/syncable';
+import { isBlocksApp, NoteBlocksExtensionStore } from './NoteBlocksExtensionStore';
+import { syncable } from '../../../../apps/VaultApp/utils/syncable';
 
 export const noteBlockRef = customRef<NoteBlockModel>('harika/NoteBlockRef', {
   resolve(ref) {
-    const app = findParent<NoteBlocksApp>(this, isBlocksApp);
+    const app = findParent<NoteBlocksExtensionStore>(this, isBlocksApp);
 
     if (!app) {
       return undefined;

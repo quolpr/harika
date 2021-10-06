@@ -11,9 +11,9 @@ import type { BaseSyncRepository } from '../../../extensions/SyncExtension/persi
 import {
   blockModelType,
   NoteBlockModel,
-} from '../NoteBlocksApp/models/NoteBlockModel';
-import type { BlocksScopesRepository } from '../NoteBlocksApp/repositories/BlockScopesRepository';
-import type { SqlNotesBlocksRepository } from '../NoteBlocksApp/repositories/NotesBlocksRepository';
+} from '../../../newApps/VaultApplication/NoteBlocksExtension/models/NoteBlockModel';
+import type { BlocksScopesRepository } from '../../../newApps/VaultApplication/NoteBlocksExtension/repositories/BlockScopesRepository';
+import type { NotesBlocksRepository } from '../../../newApps/VaultApplication/NoteBlocksExtension/repositories/NotesBlocksRepository';
 import type { SqlNotesRepository } from '../NotesApp/repositories/NotesRepository';
 import {
   mapNote,
@@ -31,7 +31,7 @@ import {
   BlocksScope,
   blocksScopeType,
 } from '../NoteBlocksApp/views/BlocksScope';
-import {mapBlocksScope, mapNoteBlock} from "../NoteBlocksApp/converters/toDbDocs";
+import {mapBlocksScope, mapNoteBlock} from "../../../newApps/VaultApplication/NoteBlocksExtension/converters/toDbDocs";
 
 const compressChanges = <T>(chs: ISyncableModelChange<T>[]) => {
   const modelsMap: Record<string, T> = {};
@@ -78,7 +78,7 @@ const compressChanges = <T>(chs: ISyncableModelChange<T>[]) => {
 export class ToDbSyncer {
   constructor(
     private notesRepository: Remote<SqlNotesRepository>,
-    private notesBlocksRepository: Remote<SqlNotesBlocksRepository>,
+    private notesBlocksRepository: Remote<NotesBlocksRepository>,
     private blocksScopesRepository: Remote<BlocksScopesRepository>,
     stop$: Observable<unknown>,
   ) {

@@ -2,11 +2,11 @@ import { BroadcastChannel } from 'broadcast-channel';
 import { inject, injectable } from 'inversify';
 import type { ObservableInput } from 'rxjs';
 import { Observable, switchMap } from 'rxjs';
-import { DB_NAME } from '../DbExtension/types';
-import type { ITransmittedChange } from './persistence/SyncRepository';
+import { DB_NAME } from '../../DbExtension/types';
+import type { ITransmittedChange } from '../persistence/SyncRepository';
 
 @injectable()
-export class DbEventsService {
+export class DbEventsListenService {
   dbEventsChannel: BroadcastChannel;
   newSyncPullsChannel: BroadcastChannel;
 
