@@ -19,7 +19,7 @@
     "@material-ui/core": "^4.12.3",
     "@material-ui/icons": "^4.11.2",
     "@rehooks/local-storage": "2.4.0",
-    "@sentry/react": "^6.12.0",
+    "@sentry/react": "^6.13.3",
     "@sentry/tracing": "^6.12.0",
     "@tippyjs/react": "^4.2.5",
     "buffer": "^6.0.3",
