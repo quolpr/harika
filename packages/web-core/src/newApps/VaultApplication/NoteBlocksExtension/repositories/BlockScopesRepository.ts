@@ -1,5 +1,6 @@
 import { BaseSyncRepository } from '../../../../extensions/SyncExtension/persistence/BaseSyncRepository';
 import type { IDatabaseChange } from '../../../../extensions/SyncExtension/synchronizer/types';
+import { BlocksScopesChangesApplier } from '../sync/BlocksScopesChangesApplier';
 
 export const blocksScopesTable = 'blocksScopes' as const;
 
@@ -46,5 +47,9 @@ export class BlocksScopesRepository extends BaseSyncRepository<
       ...super.toRow(doc),
       collapsedBlockIds: JSON.stringify(doc.collapsedBlockIds),
     };
+  }
+
+  changesApplier() {
+    return new BlocksScopesChangesApplier();
   }
 }

@@ -2,6 +2,7 @@ import Q from 'sql-bricks';
 import { BaseSyncRepository } from '../../../../extensions/SyncExtension/persistence/BaseSyncRepository';
 import type { ISyncCtx } from '../../../../extensions/SyncExtension/persistence/syncCtx';
 import type { IDatabaseChange } from '../../../../extensions/SyncExtension/synchronizer/types';
+import { NoteblocksChangesApplier } from '../sync/NoteblocksChangesApplier';
 
 export type NoteBlockRow = {
   id: string;
@@ -27,7 +28,6 @@ export type NoteBlockDoc = {
 };
 
 export const noteBlocksTable = 'noteBlocks' as const;
-export const notesFTSTable = 'notesFTS' as const;
 export const noteBlocksNotesTable = 'noteBlocksNotes' as const;
 export const noteBlocksBlocksTable = 'noteBlocksBlocks' as const;
 export const noteBlocksFTSTable = 'noteBlocksFTS' as const;
@@ -213,6 +213,10 @@ export class NotesBlocksRepository extends BaseSyncRepository<
     });
 
     return obj;
+  }
+
+  changesApplier() {
+    return new NoteblocksChangesApplier();
   }
 
   toRow(doc: NoteBlockDoc): NoteBlockRow {

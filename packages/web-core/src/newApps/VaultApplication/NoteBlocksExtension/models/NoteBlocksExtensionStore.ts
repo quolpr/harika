@@ -1,16 +1,13 @@
 import { arraySet, Model, model, modelAction, prop } from 'mobx-keystone';
 import type { ModelCreationData } from 'mobx-keystone';
 import { BlocksScope } from '../../../../apps/VaultApp/NoteBlocksApp/views/BlocksScope';
-import {
-  BlockModelsRegistry,
-  blocksRegistryRef,
-} from './BlockModelsRegistry';
+import { BlockModelsRegistry } from './BlockModelsRegistry';
 import { FocusedBlock } from '../../../../apps/VaultApp/NoteBlocksApp/views/FocusedBlock';
 import { NoteBlockModel } from './NoteBlockModel';
-import { generateId } from '../../../../lib/generateId';
 import { BlockContentModel } from './BlockContentModel';
 import { withoutUndoAction } from '../../../../lib/utils';
 import { withoutSyncAction } from '../../../../apps/VaultApp/utils/syncable';
+import { RootRelation } from './RootRelation';
 
 const blocksApp = '@harika/NoteBlocksExtensionStore';
 
@@ -32,7 +29,8 @@ export class NoteBlocksExtensionStore extends Model({
   // key === noteId
   blocksRegistries: prop<Record<string, BlockModelsRegistry>>(() => ({})),
   blocksScopes: prop<Record<string, BlocksScope>>(() => ({})),
-  focusedBlock: prop<FocusedBlock>(() => new FocusedBlock({})),
+
+  rootRelations: prop<Record<string, RootRelation>>(),
 }) {
   areBlocksOfNoteLoaded(noteId: string) {
     return !!this.blocksRegistries[noteId];
@@ -50,12 +48,13 @@ export class NoteBlocksExtensionStore extends Model({
 
   @modelAction
   createNewBlocksTree(
+    rootBlockId: string,
     noteId: string,
-    options?: { addEmptyBlock?: boolean; isDaily?: boolean },
+    options?: { addEmptyBlock?: boolean },
   ) {
     options = { addEmptyBlock: true, ...options };
     const rootBlock = new NoteBlockModel({
-      $modelId: generateId(),
+      $modelId: rootBlockId,
       createdAt: new Date().getTime(),
       updatedAt: new Date().getTime(),
       noteId: noteId,
@@ -150,7 +149,6 @@ export class NoteBlocksExtensionStore extends Model({
       $modelId: key,
       rootScopedBlockId: rootBlockViewId,
       collapsedBlockIds: arraySet(collapsedBlockIds),
-      blocksRegistryRef: blocksRegistryRef(this.blocksRegistries[noteId]),
       scopedModelId: scopedBy.$modelId,
       scopedModelType: scopedBy.$modelType,
     });
@@ -192,13 +190,21 @@ export class NoteBlocksExtensionStore extends Model({
     });
   }
 
+  @withoutSyncAction
+  @modelAction
   createOrUpdateEntitiesFromAttrs(
     blocksAttrs: (ModelCreationData<NoteBlockModel> & {
       $modelId: string;
     })[],
-    noteIdRootIdMap: Record<string, string>,
+    rootAttrs: (ModelCreationData<RootRelation> & {
+      $modelId: string;
+    })[],
     createBlocksRegistry: boolean,
   ) {
+    rootAttrs.forEach((attr) => {
+      this.rootRelations[attr.noteId] = new RootRelation(attr);
+    });
+
     blocksAttrs.map((attr) => {
       const existentNoteBlock = this.getNoteBlock(attr.$modelId);
       if (existentNoteBlock && existentNoteBlock.noteId !== attr.noteId) {
@@ -210,13 +216,13 @@ export class NoteBlocksExtensionStore extends Model({
       }
 
       if (!this.blocksRegistries[attr.noteId] && createBlocksRegistry) {
-        if (!noteIdRootIdMap[attr.noteId]) {
+        if (!this.rootRelations[attr.noteId]) {
           throw new Error(`Root block not found for noteId=${attr.noteId}`);
         }
 
         this.blocksRegistries[attr.noteId] = new BlockModelsRegistry({
           noteId: attr.noteId,
-          rootBlockId: noteIdRootIdMap[attr.noteId],
+          rootBlockId: this.rootRelations[attr.noteId].rootBlockId,
         });
       }
 
