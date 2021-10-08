@@ -5,7 +5,7 @@ import { NotesBlocksRepository } from './repositories/NotesBlocksRepository';
 import { BlocksScopesRepository } from './repositories/BlockScopesRepository';
 import { initNoteBlocksTables } from './migrations/initNoteBlocksTables';
 import { addBlockIdsToNoteBlocksTables } from './migrations/addBlockIdsToNoteBlocksTable';
-import { addBlocksTreesTable } from './migrations/addBlockTreeTable';
+import { addBlocksTreeDescriptorsTable } from './migrations/addBlockTreeDescriptorTable';
 
 export default class NoteBlocksWorkerExtension extends BaseExtension {
   async register() {
@@ -24,7 +24,9 @@ export default class NoteBlocksWorkerExtension extends BaseExtension {
     this.container
       .bind(DB_MIGRATIONS)
       .toConstantValue(addBlockIdsToNoteBlocksTables);
-    this.container.bind(DB_MIGRATIONS).toConstantValue(addBlocksTreesTable);
+    this.container
+      .bind(DB_MIGRATIONS)
+      .toConstantValue(addBlocksTreeDescriptorsTable);
   }
 
   async onReady() {}

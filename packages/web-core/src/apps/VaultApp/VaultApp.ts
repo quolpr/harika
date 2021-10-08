@@ -57,7 +57,7 @@ import {
 } from '../../extensions/SyncExtension/synchronizer/init';
 import { VaultAppDbWorker } from './VaultAppDb.worker';
 import dayjs from 'dayjs';
-import { withoutSync } from './utils/syncable';
+import { withoutSync } from '../../extensions/SyncExtension/mobx-keystone/syncable';
 import { ToDbSyncer } from './syncers/ToDbSyncer';
 import { convertNoteBlockDocToModelAttrs } from '../../newApps/VaultApplication/NoteBlocksExtension/converters/toModels';
 

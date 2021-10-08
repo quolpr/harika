@@ -16,7 +16,7 @@ export class VaultService {
     attrs: Required<
       Optional<
         ModelCreationData<NoteModel>,
-        'createdAt' | 'updatedAt' | 'dailyNoteDate' | 'rootBlockId'
+        'createdAt' | 'updatedAt' | 'dailyNoteDate'
       >,
       'title'
     >,
@@ -25,7 +25,6 @@ export class VaultService {
     const result = await this.notesService.createNote(attrs, options);
     if (result.status === 'ok') {
       const { registry, rootBlock } = this.noteBlocksService.createBlocksTree(
-        result.data.rootBlockId,
         result.data.$modelId,
       );
 

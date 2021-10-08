@@ -5,6 +5,10 @@ import { RemoteRegister } from '../../../framework/RemoteRegister';
 import { NoteBlocksExtensionStore } from './models/NoteBlocksExtensionStore';
 import { NotesBlocksRepository } from './repositories/NotesBlocksRepository';
 import { BlocksScopesRepository } from './repositories/BlockScopesRepository';
+import { SYNC_MAPPER } from '../../../extensions/SyncExtension/mappers';
+import { blocksScopesMapper } from './mappers/blockScopesMapper';
+import { blocksTreeDescriptorsMapper } from './mappers/blocksTreeDescriptorsMapper';
+import { noteBlocksMapper } from './mappers/noteBlocksMapper';
 
 @injectable()
 export class NoteBlocksExtension extends BaseExtension {
@@ -21,6 +25,12 @@ export class NoteBlocksExtension extends BaseExtension {
 
     await this.remoteRegister.registerRemote(NotesBlocksRepository);
     await this.remoteRegister.registerRemote(BlocksScopesRepository);
+
+    this.container.bind(SYNC_MAPPER).toConstantValue(blocksScopesMapper);
+    this.container
+      .bind(SYNC_MAPPER)
+      .toConstantValue(blocksTreeDescriptorsMapper);
+    this.container.bind(SYNC_MAPPER).toConstantValue(noteBlocksMapper);
   }
 
   async onReady() {

@@ -6,7 +6,7 @@ export type {
   TagToken,
 } from './src/lib/blockParser/types';
 export { ScopedBlock } from './src/apps/VaultApp/NoteBlocksApp/views/ScopedBlock';
-export { BlocksScope } from './src/apps/VaultApp/NoteBlocksApp/views/BlocksScope';
+export { BlocksScope } from './src/newApps/VaultApplication/NoteBlocksExtension/models/BlocksScope';
 export * from './src/lib/blockParser/parseStringToTree';
 export * from './src/lib/generateId';
 export * from './src/apps/VaultApp/NotesTreeApp/models/NotesTreeRegistry';

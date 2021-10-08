@@ -1,21 +1,21 @@
 import { BaseSyncRepository } from '../../../../extensions/SyncExtension/persistence/BaseSyncRepository';
 import { BlocksScopesChangesApplier } from '../sync/BlocksScopesChangesApplier';
 
-export const blocksTreesTable = 'blocksTrees' as const;
+export const blocksTreeDescriptorsTable = 'blocksTreesDescriptors' as const;
 
-export type BlocksScopesRow = {
+export type BlocksTreeDescriptorRow = {
   id: string; // = noteId
   rootBlockId: string;
 };
 
-export type BlocksScopeDoc = BlocksScopesRow;
+export type BlocksTreeDescriptorDoc = BlocksTreeDescriptorRow;
 
-export class BlocksScopesRepository extends BaseSyncRepository<
-  BlocksScopeDoc,
-  BlocksScopesRow
+export class BlocksTreeDescriptorsRepository extends BaseSyncRepository<
+  BlocksTreeDescriptorDoc,
+  BlocksTreeDescriptorRow
 > {
   getTableName() {
-    return blocksTreesTable;
+    return blocksTreeDescriptorsTable;
   }
 
   changesApplier() {

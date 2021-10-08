@@ -66,7 +66,7 @@ const astToString = (ast: Token[]): string => {
   );
 };
 
-@model('harika/BlockContentModel')
+@model('harika/noteBlocks/BlockContentModel')
 export class BlockContentModel extends Model({
   _value: prop<string>(),
 }) {

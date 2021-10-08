@@ -4,7 +4,7 @@ import { BlockContentModel } from '../../newApps/VaultApplication/NoteBlocksExte
 import { parseStringToTree } from './parseStringToTree';
 import type { TreeToken } from './parseStringToTree';
 import type { ScopedBlock } from '../../apps/VaultApp/NoteBlocksApp/views/ScopedBlock';
-import { BlocksScope } from '../../apps/VaultApp/NoteBlocksApp/views/BlocksScope';
+import { BlocksScope } from '../../newApps/VaultApplication/NoteBlocksExtension/models/BlocksScope';
 
 export const normalizeBlockTree = (str: string) => {
   const parsed = parseStringToTree(str);

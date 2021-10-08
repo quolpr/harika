@@ -8,7 +8,7 @@ import {
   tProp,
   types,
 } from 'mobx-keystone';
-import { syncable } from '../../utils/syncable';
+import { syncable } from '../../../../extensions/SyncExtension/mobx-keystone/syncable';
 
 export interface INoteLoadStatus {
   areBlockLinksLoaded: boolean;

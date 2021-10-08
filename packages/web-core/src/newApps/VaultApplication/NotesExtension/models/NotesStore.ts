@@ -5,7 +5,7 @@ import {
   ModelCreationData,
   prop,
 } from 'mobx-keystone';
-import { withoutSyncAction } from '../../../../apps/VaultApp/utils/syncable';
+import { withoutSyncAction } from '../../../../extensions/SyncExtension/mobx-keystone/syncable';
 import { generateId } from '../../../../lib/generateId';
 import { NoteModel } from './NoteModel';
 

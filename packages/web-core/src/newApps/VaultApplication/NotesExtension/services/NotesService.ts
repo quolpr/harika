@@ -12,7 +12,7 @@ import { NotesStore } from '../models/NotesStore';
 import { generateId } from '../../../../lib/generateId';
 import dayjs, { Dayjs } from 'dayjs';
 import { interval, map, distinctUntilChanged, switchMap, from, of } from 'rxjs';
-import { convertNoteDocToModelAttrs } from '../converters/toModels';
+import { notesMapper } from '../mappers/notesMapper';
 
 @injectable()
 export class NotesService {
@@ -29,7 +29,7 @@ export class NotesService {
     attrs: Required<
       Optional<
         ModelCreationData<NoteModel>,
-        'createdAt' | 'updatedAt' | 'dailyNoteDate' | 'rootBlockId'
+        'createdAt' | 'updatedAt' | 'dailyNoteDate'
       >,
       'title'
     >,
@@ -55,7 +55,6 @@ export class NotesService {
       $modelId: generateId(),
       createdAt: new Date().getTime(),
       updatedAt: new Date().getTime(),
-      rootBlockId: generateId(),
       ...(options.isDaily
         ? {
             dailyNoteDate: dayjs().startOf('day').unix(),
@@ -109,7 +108,7 @@ export class NotesService {
 
       withoutUndo(() => {
         this.notesStore.createOrUpdateNotes([
-          convertNoteDocToModelAttrs(noteDoc),
+          notesMapper.mapToModelData(noteDoc),
         ]);
       });
 

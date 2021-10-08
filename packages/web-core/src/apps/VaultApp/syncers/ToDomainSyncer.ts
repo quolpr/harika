@@ -16,7 +16,7 @@ import type { INoteChangeEvent } from '../NotesApp/repositories/NotesRepository'
 import { notesTable } from '../NotesApp/repositories/NotesRepository';
 import { blocksScopesTable } from '../../../newApps/VaultApplication/NoteBlocksExtension/repositories/BlockScopesRepository';
 import type { IBlocksScopesChangeEvent } from '../../../newApps/VaultApplication/NoteBlocksExtension/repositories/BlockScopesRepository';
-import { withoutSync } from '../utils/syncable';
+import { withoutSync } from '../../../extensions/SyncExtension/mobx-keystone/syncable';
 import {convertNoteBlockDocToModelAttrs, NoteBlockData} from "../../../newApps/VaultApplication/NoteBlocksExtension/converters/toModels";
 
 // TODO: better deletion

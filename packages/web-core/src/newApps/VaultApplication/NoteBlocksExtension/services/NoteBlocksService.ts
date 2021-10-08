@@ -13,7 +13,6 @@ import {
 import { DbEventsListenService } from '../../../../extensions/SyncExtension/services/DbEventsListenerService';
 import { toRemoteName } from '../../../../framework/utils';
 import { toObserver } from '../../../../lib/toObserver';
-import { convertNoteBlockDocToModelAttrs } from '../converters/toModels';
 import { NoteBlocksExtensionStore } from '../models/NoteBlocksExtensionStore';
 import {
   noteBlocksTable,
@@ -30,12 +29,8 @@ export class NoteBlocksService {
     @inject(NoteBlocksExtensionStore) private store: NoteBlocksExtensionStore,
   ) {}
 
-  createBlocksTree(
-    rootBlockId: string,
-    noteId: string,
-    options?: { addEmptyBlock?: boolean },
-  ) {
-    return this.store.createNewBlocksTree(rootBlockId, noteId, options);
+  createBlocksTree(noteId: string, options?: { addEmptyBlock?: boolean }) {
+    return this.store.createNewBlocksTree(noteId, options);
   }
 
   getBlocksRegistryByNoteIds$(notesIds$: Observable<string[]>) {

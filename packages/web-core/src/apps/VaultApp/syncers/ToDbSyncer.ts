@@ -25,12 +25,12 @@ import {
   ISyncableModelChange,
   syncableModelChangesPipe$,
   SyncableModelChangeType,
-} from '../utils/syncable';
+} from '../../../extensions/SyncExtension/mobx-keystone/syncable';
 import { NoteModel, noteModelType } from '../NotesApp/models/NoteModel';
 import {
   BlocksScope,
   blocksScopeType,
-} from '../NoteBlocksApp/views/BlocksScope';
+} from '../../../newApps/VaultApplication/NoteBlocksExtension/models/BlocksScope';
 import {mapBlocksScope, mapNoteBlock} from "../../../newApps/VaultApplication/NoteBlocksExtension/converters/toDbDocs";
 
 const compressChanges = <T>(chs: ISyncableModelChange<T>[]) => {

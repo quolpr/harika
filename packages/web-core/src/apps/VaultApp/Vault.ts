@@ -14,7 +14,7 @@ import dayjs from 'dayjs';
 import { NoteBlocksExtensionStore } from '../../newApps/VaultApplication/NoteBlocksExtension/models/NoteBlocksExtensionStore';
 import { computed } from 'mobx';
 import { withoutUndoAction } from '../../lib/utils';
-import { withoutSyncAction } from './utils/syncable';
+import { withoutSyncAction } from '../../extensions/SyncExtension/mobx-keystone/syncable';
 
 @model(vaultModelType)
 export class Vault extends Model({

@@ -19,9 +19,9 @@ import { generateId } from '../../../../lib/generateId';
 import { omit } from 'lodash-es';
 import { BlockContentModel } from './BlockContentModel';
 
-export const blocksRegistryType = 'harika/BlockModelsRegistry';
+export const blocksRegistryType = 'harika/noteBlocks/BlockModelsRegistry';
 export const blocksRegistryRef = rootRef<BlockModelsRegistry>(
-  'harika/BlockModelsRegistryRef',
+  'harika/noteBlocks/BlockModelsRegistryRef',
 );
 
 @model(blocksRegistryType)

@@ -4,6 +4,7 @@ import { injectable } from 'inversify';
 import { BaseSyncRepository } from '../../../../extensions/SyncExtension/persistence/BaseSyncRepository';
 import { ISyncCtx } from '../../../../extensions/SyncExtension/persistence/syncCtx';
 import { IDatabaseChange } from '../../../../extensions/SyncExtension/synchronizer/types';
+import { NotesChangesApplier } from '../sync/NotesChangesApplier';
 
 export const notesTable = 'notes' as const;
 export const notesFTSTable = 'notesFts' as const;
@@ -14,7 +15,6 @@ export type NoteRow = {
   dailyNoteDate: number | null;
   createdAt: number;
   updatedAt: number | null;
-  rootBlockId: string;
 };
 export type NoteDoc = {
   id: string;
@@ -22,7 +22,6 @@ export type NoteDoc = {
   dailyNoteDate: number | null;
   createdAt: number;
   updatedAt: number;
-  rootBlockId: string;
 };
 
 export type INoteChangeEvent = IDatabaseChange<typeof notesTable, NoteDoc>;
@@ -127,5 +126,9 @@ export class NotesRepository extends BaseSyncRepository<NoteDoc, NoteRow> {
 
   getTableName() {
     return notesTable;
+  }
+
+  changesApplier() {
+    return new NotesChangesApplier();
   }
 }

@@ -14,9 +14,9 @@ import { comparer, computed } from 'mobx';
 import { isEqual } from 'lodash-es';
 import type { BlockContentModel } from './BlockContentModel';
 import { isBlocksApp, NoteBlocksExtensionStore } from './NoteBlocksExtensionStore';
-import { syncable } from '../../../../apps/VaultApp/utils/syncable';
+import { syncable } from '../../../../extensions/SyncExtension/mobx-keystone/syncable';
 
-export const noteBlockRef = customRef<NoteBlockModel>('harika/NoteBlockRef', {
+export const noteBlockRef = customRef<NoteBlockModel>('harika/noteBlocks/NoteBlockRef', {
   resolve(ref) {
     const app = findParent<NoteBlocksExtensionStore>(this, isBlocksApp);
 
@@ -37,7 +37,7 @@ export const parentBlockCtx = createContext<NoteBlockModel | undefined>();
 
 export const blockModelType = 'harika/NoteBlockModel';
 
-@model('harika/NoteBlockModel')
+@model('harika/noteBlocks/NoteBlockModel')
 @syncable
 export class NoteBlockModel extends Model({
   noteId: prop<string>(),

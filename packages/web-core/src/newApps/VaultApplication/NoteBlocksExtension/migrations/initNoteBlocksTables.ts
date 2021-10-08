@@ -5,9 +5,7 @@ import {
   noteBlocksNotesTable,
   noteBlocksTable,
   noteBlocksFTSTable,
-  notesFTSTable,
 } from '../repositories/NotesBlocksRepository';
-import { notesTable } from '../../../../apps/VaultApp/NotesApp/repositories/NotesRepository';
 
 const up = (db: DB<any>) => {
   db.sqlExec(`

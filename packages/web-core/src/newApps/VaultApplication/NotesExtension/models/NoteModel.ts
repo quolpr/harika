@@ -8,7 +8,7 @@ import {
   tProp,
   types,
 } from 'mobx-keystone';
-import {syncable} from "../../../../apps/VaultApp/utils/syncable";
+import { syncable } from '../../../../extensions/SyncExtension/mobx-keystone/syncable';
 
 export interface INoteLoadStatus {
   areBlockLinksLoaded: boolean;
@@ -29,7 +29,6 @@ export class NoteModel extends Model({
   dailyNoteDate: tProp(types.maybe(types.dateTimestamp)),
   updatedAt: tProp(types.dateTimestamp),
   createdAt: tProp(types.dateTimestamp),
-  rootBlockId: prop<string>(),
 }) {
   @modelAction
   updateTitle(newTitle: string) {
