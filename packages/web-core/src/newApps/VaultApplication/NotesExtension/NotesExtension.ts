@@ -1,6 +1,7 @@
 import { inject, injectable } from 'inversify';
 import { registerRootStore } from 'mobx-keystone';
-import { SYNC_MAPPER } from '../../../extensions/SyncExtension/mappers';
+import { NoteModel } from '../../../apps/VaultApp/VaultApp';
+import { SyncConfig } from '../../../extensions/SyncExtension/serverSynchronizer/SyncConfig';
 import { BaseExtension } from '../../../framework/BaseExtension';
 import { RemoteRegister } from '../../../framework/RemoteRegister';
 import { notesMapper } from './mappers/notesMapper';
@@ -22,9 +23,29 @@ export class NotesExtension extends BaseExtension {
     this.container.bind(NotesStore).toConstantValue(store);
     this.container.bind(NotesService).toSelf();
 
-    this.container.bind(SYNC_MAPPER).toConstantValue(notesMapper);
-
     await this.remoteRegister.registerRemote(NotesRepository);
+  }
+
+  async initialize() {
+    const notesStore = this.container.get(NotesStore);
+    const syncConfig = this.container.get(SyncConfig);
+
+    const disposeNotes = syncConfig.registerSyncRepo(
+      notesMapper,
+      NotesRepository,
+    );
+
+    const disposeSubscription = syncConfig.onModelChange(
+      [NoteModel],
+      ([notesAttrs], [deletedNoteIds]) => {
+        notesStore.handleChanges(notesAttrs, deletedNoteIds);
+      },
+    );
+
+    return () => {
+      disposeNotes();
+      disposeSubscription();
+    };
   }
 
   async onReady() {

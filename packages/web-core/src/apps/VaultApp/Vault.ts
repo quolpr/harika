@@ -22,7 +22,9 @@ export class Vault extends Model({
   // TODO: notes registry
   notesMap: prop<Record<string, NoteModel>>(() => ({})),
   // Key is noteId
-  noteBlocksApp: prop<NoteBlocksExtensionStore>(() => new NoteBlocksExtensionStore({})),
+  noteBlocksApp: prop<NoteBlocksExtensionStore>(
+    () => new NoteBlocksExtensionStore({}),
+  ),
   notesTree: prop<NotesTreeRegistry>(() => newTreeModel()),
 }) {
   @computed
@@ -110,7 +112,7 @@ export class Vault extends Model({
 
     // // BLOCK
 
-    this.noteBlocksApp.createOrUpdateEntitiesFromAttrs(
+    this.noteBlocksApp.handleModelChanges(
       blocksAttrs,
       this.noteRootBlockIdsMap,
       createBlocksRegistry,

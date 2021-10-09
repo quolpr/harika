@@ -1,15 +1,9 @@
 import type { Observable } from 'rxjs';
 import type { Vault } from '../Vault';
-import {
-  convertNoteDocToModelAttrs,
-
-} from '../NotesApp/converters/toModels';
-import type {
-  NoteData,
-
-} from '../NotesApp/converters/toModels';
+import { convertNoteDocToModelAttrs } from '../NotesApp/converters/toModels';
+import type { NoteData } from '../NotesApp/converters/toModels';
 import type { ITransmittedChange } from '../../../extensions/SyncExtension/persistence/SyncRepository';
-import { DatabaseChangeType } from '../../../extensions/SyncExtension/synchronizer/types';
+import { DatabaseChangeType } from '../../../extensions/SyncExtension/serverSynchronizer/types';
 import { noteBlocksTable } from '../../../newApps/VaultApplication/NoteBlocksExtension/repositories/NotesBlocksRepository';
 import type { INoteBlockChangeEvent } from '../../../newApps/VaultApplication/NoteBlocksExtension/repositories/NotesBlocksRepository';
 import type { INoteChangeEvent } from '../NotesApp/repositories/NotesRepository';
@@ -17,7 +11,10 @@ import { notesTable } from '../NotesApp/repositories/NotesRepository';
 import { blocksScopesTable } from '../../../newApps/VaultApplication/NoteBlocksExtension/repositories/BlockScopesRepository';
 import type { IBlocksScopesChangeEvent } from '../../../newApps/VaultApplication/NoteBlocksExtension/repositories/BlockScopesRepository';
 import { withoutSync } from '../../../extensions/SyncExtension/mobx-keystone/syncable';
-import {convertNoteBlockDocToModelAttrs, NoteBlockData} from "../../../newApps/VaultApplication/NoteBlocksExtension/converters/toModels";
+import {
+  convertNoteBlockDocToModelAttrs,
+  NoteBlockData,
+} from '../../../newApps/VaultApplication/NoteBlocksExtension/converters/toModels';
 
 // TODO: better deletion
 export class ToDomainSyncer {
@@ -28,32 +25,7 @@ export class ToDomainSyncer {
   ) {}
 
   start() {
-    this.changes$.subscribe((evs) => {
-      evs = evs.filter(
-        ({ windowId, source }) =>
-          // we are going to pick all events except one that came from current mobx
-          windowId !== this.currentWindowId || source === 'inDbChanges',
-      );
-
-      console.log('New events need handle by mobx', JSON.stringify(evs));
-
-      if (evs.length === 0) return;
-
-      const scopes = this.getScopes(evs);
-
-      if (scopes.length > 0) {
-        this.vault.noteBlocksApp.createOrUpdateScopesFromAttrs(scopes);
-      }
-
-      const notesChanges = this.getNoteChanges(evs);
-      const blockChanges = this.getBlockChanges(evs);
-
-      this.vault.createOrUpdateEntitiesFromAttrs(
-        notesChanges,
-        blockChanges,
-        false,
-      );
-    });
+    this.changes$.subscribe((evs) => {});
   }
 
   private getScopes(evs: ITransmittedChange[]) {

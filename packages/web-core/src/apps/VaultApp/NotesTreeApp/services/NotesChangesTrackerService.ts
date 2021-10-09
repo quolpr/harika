@@ -1,7 +1,7 @@
 import { autorun } from 'mobx';
 import { filter, map, Observable, takeUntil } from 'rxjs';
 import type { ITransmittedChange } from '../../../../extensions/SyncExtension/persistence/SyncRepository';
-import { DatabaseChangeType } from '../../../../extensions/SyncExtension/synchronizer/types';
+import { DatabaseChangeType } from '../../../../extensions/SyncExtension/serverSynchronizer/types';
 import type {
   INoteTitleChange,
   NotesTreeRegistry,

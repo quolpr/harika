@@ -5,10 +5,14 @@ import { RemoteRegister } from '../../../framework/RemoteRegister';
 import { NoteBlocksExtensionStore } from './models/NoteBlocksExtensionStore';
 import { NotesBlocksRepository } from './repositories/NotesBlocksRepository';
 import { BlocksScopesRepository } from './repositories/BlockScopesRepository';
-import { SYNC_MAPPER } from '../../../extensions/SyncExtension/mappers';
 import { blocksScopesMapper } from './mappers/blockScopesMapper';
 import { blocksTreeDescriptorsMapper } from './mappers/blocksTreeDescriptorsMapper';
 import { noteBlocksMapper } from './mappers/noteBlocksMapper';
+import { BlocksTreeDescriptorsRepository } from './repositories/BlockTreeDescriptorsRepository';
+import { SyncConfig } from '../../../extensions/SyncExtension/serverSynchronizer/SyncConfig';
+import { NoteBlockModel } from './models/NoteBlockModel';
+import { BlocksScope } from './models/BlocksScope';
+import { BlocksTreeDescriptor } from './models/BlocksTreeDescriptor';
 
 @injectable()
 export class NoteBlocksExtension extends BaseExtension {
@@ -25,12 +29,45 @@ export class NoteBlocksExtension extends BaseExtension {
 
     await this.remoteRegister.registerRemote(NotesBlocksRepository);
     await this.remoteRegister.registerRemote(BlocksScopesRepository);
+    await this.remoteRegister.registerRemote(BlocksTreeDescriptorsRepository);
+  }
 
-    this.container.bind(SYNC_MAPPER).toConstantValue(blocksScopesMapper);
-    this.container
-      .bind(SYNC_MAPPER)
-      .toConstantValue(blocksTreeDescriptorsMapper);
-    this.container.bind(SYNC_MAPPER).toConstantValue(noteBlocksMapper);
+  async initialize() {
+    const store = this.container.get(NoteBlocksExtensionStore);
+
+    const syncConfig = this.container.get(SyncConfig);
+
+    const disposes: (() => void)[] = [];
+
+    disposes.push(
+      syncConfig.registerSyncRepo(blocksScopesMapper, BlocksScopesRepository),
+      syncConfig.registerSyncRepo(
+        blocksTreeDescriptorsMapper,
+        BlocksTreeDescriptorsRepository,
+      ),
+      syncConfig.registerSyncRepo(noteBlocksMapper, NotesBlocksRepository),
+    );
+
+    disposes.push(
+      syncConfig.onModelChange(
+        [BlocksTreeDescriptor, NoteBlockModel, BlocksScope],
+        (attrs, deletedIds) => {
+          const [descriptorAttrs, blocksAttrs, scopeAttrs] = attrs;
+
+          store.handleModelChanges(
+            descriptorAttrs,
+            blocksAttrs,
+            scopeAttrs,
+            deletedIds,
+            false,
+          );
+        },
+      ),
+    );
+
+    return () => {
+      disposes.forEach((d) => d());
+    };
   }
 
   async onReady() {

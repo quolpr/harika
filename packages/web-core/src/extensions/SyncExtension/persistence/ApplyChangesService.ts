@@ -1,12 +1,12 @@
 import { maxBy } from 'lodash-es';
-import type { IChangesApplier } from '../synchronizer/ServerSynchronizer';
+import type { IChangesApplier } from '../serverSynchronizer/ServerSynchronizer';
 import type {
   IDatabaseChange,
   ICreateChange,
   IDeleteChange,
   IUpdateChange,
-} from '../synchronizer/types';
-import { DatabaseChangeType } from '../synchronizer/types';
+} from '../serverSynchronizer/types';
+import { DatabaseChangeType } from '../serverSynchronizer/types';
 import type { BaseSyncRepository } from './BaseSyncRepository';
 import type { ISyncCtx } from './syncCtx';
 import type { SyncRepository } from './SyncRepository';

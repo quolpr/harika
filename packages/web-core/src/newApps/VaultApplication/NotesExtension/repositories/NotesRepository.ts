@@ -3,7 +3,7 @@ import Q from 'sql-bricks';
 import { injectable } from 'inversify';
 import { BaseSyncRepository } from '../../../../extensions/SyncExtension/persistence/BaseSyncRepository';
 import { ISyncCtx } from '../../../../extensions/SyncExtension/persistence/syncCtx';
-import { IDatabaseChange } from '../../../../extensions/SyncExtension/synchronizer/types';
+import { IDatabaseChange } from '../../../../extensions/SyncExtension/serverSynchronizer/types';
 import { NotesChangesApplier } from '../sync/NotesChangesApplier';
 
 export const notesTable = 'notes' as const;

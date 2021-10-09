@@ -8,6 +8,7 @@ import { withoutUndoAction } from '../../../../lib/utils';
 import { withoutSyncAction } from '../../../../extensions/SyncExtension/mobx-keystone/syncable';
 import { BlocksTreeDescriptor } from './BlocksTreeDescriptor';
 import { generateId } from '../../../../lib/generateId';
+import { SyncModelId } from '../../../../extensions/SyncExtension/types';
 
 const blocksApp = '@harika/noteBlocks/NoteBlocksExtensionStore';
 
@@ -182,29 +183,19 @@ export class NoteBlocksExtensionStore extends Model({
 
   @withoutSyncAction
   @modelAction
-  createOrUpdateScopesFromAttrs(
-    scopes: { id: string; collapsedBlockIds: string[] }[],
-  ) {
-    scopes.forEach(({ id, collapsedBlockIds }) => {
-      if (this.blocksScopes[id]) {
-        this.blocksScopes[id].collapsedBlockIds = arraySet(collapsedBlockIds);
-      }
-    });
-  }
-
-  @withoutSyncAction
-  @modelAction
-  createOrUpdateEntitiesFromAttrs(
-    blocksAttrs: (ModelCreationData<NoteBlockModel> & {
+  loadBlocksTree(
+    descriptorAttrs: (ModelCreationData<BlocksTreeDescriptor> & {
       $modelId: string;
     })[],
-    rootAttrs: (ModelCreationData<BlocksTreeDescriptor> & {
+    blocksAttrs: (ModelCreationData<NoteBlockModel> & {
       $modelId: string;
     })[],
     createBlocksRegistry: boolean,
   ) {
-    rootAttrs.forEach((attr) => {
-      this.blocksTreeDescriptors[attr.noteId] = new BlocksTreeDescriptor(attr);
+    descriptorAttrs.forEach((attr) => {
+      this.blocksTreeDescriptors[attr.$modelId] = new BlocksTreeDescriptor(
+        attr,
+      );
     });
 
     blocksAttrs.map((attr) => {
@@ -234,5 +225,39 @@ export class NoteBlocksExtensionStore extends Model({
 
       return undefined;
     });
+  }
+
+  @withoutSyncAction
+  @modelAction
+  handleModelChanges(
+    descriptorAttrs: (ModelCreationData<BlocksTreeDescriptor> & {
+      $modelId: string;
+    })[],
+    blocksAttrs: (ModelCreationData<NoteBlockModel> & {
+      $modelId: string;
+    })[],
+    scopes: (ModelCreationData<BlocksScope> & { $modelId: string })[],
+    [deletedTreeDescriptorIds, deletedNoteBlockIds, deletedScopeIds]: [
+      SyncModelId<BlocksTreeDescriptor>[],
+      SyncModelId<NoteBlockModel>[],
+      SyncModelId<BlocksScope>[],
+    ],
+    createBlocksRegistry: boolean,
+  ) {
+    deletedScopeIds.forEach((id) => {
+      delete this.blocksScopes[id.value];
+    });
+    deletedTreeDescriptorIds.forEach((id) => {
+      delete this.blocksTreeDescriptors[id.value];
+    });
+    deletedNoteBlockIds.forEach((id) => {
+      this.getNoteBlock(id.value)?.delete();
+    });
+
+    scopes.forEach((scope) => {
+      this.blocksScopes[scope.$modelId] = new BlocksScope(scope);
+    });
+
+    this.loadBlocksTree(descriptorAttrs, blocksAttrs, createBlocksRegistry);
   }
 }

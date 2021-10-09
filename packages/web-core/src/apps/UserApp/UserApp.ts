@@ -1,6 +1,6 @@
 import { Vault } from '../VaultApp/Vault';
 import { VaultApp } from '../VaultApp/VaultApp';
-import { initSync } from '../../extensions/SyncExtension/synchronizer/init';
+import { initSync } from '../../extensions/SyncExtension/serverSynchronizer/init';
 import { map } from 'rxjs/operators';
 import { generateId } from '../../lib/generateId';
 import { ToDomainSyncer } from '../VaultApp/syncers/ToDomainSyncer';

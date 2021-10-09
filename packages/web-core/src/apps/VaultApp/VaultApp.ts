@@ -54,7 +54,7 @@ import {
   defaultSyncState,
   initSync,
   ISyncState,
-} from '../../extensions/SyncExtension/synchronizer/init';
+} from '../../extensions/SyncExtension/serverSynchronizer/init';
 import { VaultAppDbWorker } from './VaultAppDb.worker';
 import dayjs from 'dayjs';
 import { withoutSync } from '../../extensions/SyncExtension/mobx-keystone/syncable';

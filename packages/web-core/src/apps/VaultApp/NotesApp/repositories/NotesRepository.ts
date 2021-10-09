@@ -2,7 +2,7 @@ import dayjs from 'dayjs';
 import Q from 'sql-bricks';
 import { BaseSyncRepository } from '../../../../extensions/SyncExtension/persistence/BaseSyncRepository';
 import type { ISyncCtx } from '../../../../extensions/SyncExtension/persistence/syncCtx';
-import type { IDatabaseChange } from '../../../../extensions/SyncExtension/synchronizer/types';
+import type { IDatabaseChange } from '../../../../extensions/SyncExtension/serverSynchronizer/types';
 import { notesFTSTable } from '../../../../newApps/VaultApplication/NoteBlocksExtension/repositories/NotesBlocksRepository';
 
 export type NoteRow = {

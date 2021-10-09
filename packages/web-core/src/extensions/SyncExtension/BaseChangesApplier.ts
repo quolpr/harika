@@ -1,11 +1,11 @@
-import { reduceChanges } from './synchronizer/reduceChanges';
-import { IChangesApplier } from './synchronizer/ServerSynchronizer';
+import { reduceChanges } from './serverSynchronizer/reduceChanges';
+import { IChangesApplier } from './serverSynchronizer/ServerSynchronizer';
 import type {
   IDatabaseChange,
   IUpdateChange,
   IDeleteChange,
-} from './synchronizer/types';
-import { DatabaseChangeType } from './synchronizer/types';
+} from './serverSynchronizer/types';
+import { DatabaseChangeType } from './serverSynchronizer/types';
 
 export abstract class BaseChangesApplier<
   T extends string,

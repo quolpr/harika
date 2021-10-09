@@ -8,20 +8,25 @@ import {
   APPLICATION_ID,
   APPLICATION_NAME,
   ROOT_WORKER,
+  STOP_SIGNAL,
   WINDOW_ID,
 } from './types';
 import { RemoteRegister } from './RemoteRegister';
 import { ExtensionsRegister } from './ExtensionsRegister';
+import { Subject } from 'rxjs';
 
 const windowId = generateId();
 
 export abstract class BaseApplication {
+  protected stop$ = new Subject<void>();
+
   private container: Container = new Container({ defaultScope: 'Singleton' });
   private worker!: Remote<RootWorker>;
 
   constructor(protected applicationId: string) {}
 
   async start() {
+    this.container.bind(STOP_SIGNAL).toConstantValue(this.stop$);
     this.container.bind(WINDOW_ID).toConstantValue(windowId);
     this.container.bind(APPLICATION_NAME).toConstantValue(this.applicationName);
     this.container.bind(APPLICATION_ID).toConstantValue(this.applicationId);

@@ -10,9 +10,9 @@ import type {
   ICreateChange,
   IDeleteChange,
   IUpdateChange,
-} from '../synchronizer/types';
-import { DatabaseChangeType } from '../synchronizer/types';
-import { getObjectDiff } from '../synchronizer/utils';
+} from '../serverSynchronizer/types';
+import { DatabaseChangeType } from '../serverSynchronizer/types';
+import { getObjectDiff } from '../serverSynchronizer/utils';
 import type { IInternalSyncCtx } from './syncCtx';
 
 export const clientChangesTable = 'clientChanges' as const;

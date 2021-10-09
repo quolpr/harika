@@ -6,6 +6,7 @@ import {
   prop,
 } from 'mobx-keystone';
 import { withoutSyncAction } from '../../../../extensions/SyncExtension/mobx-keystone/syncable';
+import { SyncModelId } from '../../../../extensions/SyncExtension/types';
 import { generateId } from '../../../../lib/generateId';
 import { NoteModel } from './NoteModel';
 
@@ -33,11 +34,16 @@ export class NotesStore extends Model({
 
   @withoutSyncAction
   @modelAction
-  createOrUpdateNotes(
+  handleChanges(
     notesAttrs: (ModelCreationData<NoteModel> & {
       $modelId: string;
     })[],
+    deletedIds: SyncModelId<NoteModel>[],
   ) {
+    deletedIds.forEach((id) => {
+      delete this.notesMap[id.value];
+    });
+
     notesAttrs.forEach((attr) => {
       if (!this.getNote(attr.$modelId)) {
         this.createNote(attr);

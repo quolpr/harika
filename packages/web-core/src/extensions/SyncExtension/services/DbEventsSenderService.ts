@@ -1,22 +1,24 @@
 import { injectable, inject } from 'inversify';
-import { buffer, debounceTime, Subject } from 'rxjs';
+import { buffer, debounceTime, Observable, Subject, takeUntil } from 'rxjs';
 import { DB_NAME } from '../../DbExtension/types';
 import {
   ITransmittedChange,
   SyncRepository,
 } from '../persistence/SyncRepository';
 import { BroadcastChannel } from 'broadcast-channel';
+import { STOP_SIGNAL } from '../../../framework/types';
 
 @injectable()
 export class DbEventsSenderService {
   private onNewSyncPull: Subject<void> = new Subject();
   private eventsSubject: Subject<ITransmittedChange[]> = new Subject();
-  eventsChannel: BroadcastChannel<unknown>;
-  newSyncPullsChannel: BroadcastChannel<unknown>;
+  private eventsChannel: BroadcastChannel<unknown>;
+  private newSyncPullsChannel: BroadcastChannel<unknown>;
 
   constructor(
     @inject(DB_NAME) dbName: string,
     @inject(SyncRepository) private syncRepository: SyncRepository,
+    @inject(STOP_SIGNAL) private stop$: Observable<void>,
   ) {
     this.eventsChannel = new BroadcastChannel(dbName, {
       webWorkerSupport: true,
@@ -31,13 +33,16 @@ export class DbEventsSenderService {
     this.syncRepository.onNewPull(() => this.onNewSyncPull.next());
 
     this.eventsSubject
-      .pipe(buffer(this.eventsSubject.pipe(debounceTime(200))))
+      .pipe(
+        buffer(this.eventsSubject.pipe(debounceTime(200))),
+        takeUntil(this.stop$),
+      )
       .subscribe((evs) => {
         this.eventsChannel.postMessage(evs.flat());
       });
 
-    this.onNewSyncPull.subscribe(() =>
-      this.newSyncPullsChannel.postMessage(''),
-    );
+    this.onNewSyncPull
+      .pipe(takeUntil(this.stop$))
+      .subscribe(() => this.newSyncPullsChannel.postMessage(''));
   }
 }

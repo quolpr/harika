@@ -1,9 +1,6 @@
 import { AnyModel, ModelCreationData } from 'mobx-keystone';
-
-export const SYNC_MAPPER = 'SYNC_MAPPER';
-
 type Class<T = any> = new (...args: any[]) => T;
-export type IMapper<Doc, Model extends AnyModel> = {
+export type IMapper<Doc = any, Model extends AnyModel = any> = {
   mapToModelData: (arg: Doc) => ModelCreationData<Model> & { $modelId: string };
   mapToDoc: (arg: Model) => Doc;
 

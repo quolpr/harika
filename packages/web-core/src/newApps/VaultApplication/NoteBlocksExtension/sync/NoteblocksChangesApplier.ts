@@ -3,12 +3,12 @@ import { BaseChangesApplier } from '../../../../extensions/SyncExtension/BaseCha
 import { v4 } from 'uuid';
 import type { NoteBlockDoc } from '../repositories/NotesBlocksRepository';
 import { noteBlocksTable } from '../repositories/NotesBlocksRepository';
-import { DatabaseChangeType } from '../../../../extensions/SyncExtension/synchronizer/types';
+import { DatabaseChangeType } from '../../../../extensions/SyncExtension/serverSynchronizer/types';
 import type {
   ICreateChange,
   IDeleteChange,
   IUpdateChange,
-} from '../../../../extensions/SyncExtension/synchronizer/types';
+} from '../../../../extensions/SyncExtension/serverSynchronizer/types';
 
 export class NoteblocksChangesApplier extends BaseChangesApplier<
   typeof noteBlocksTable,

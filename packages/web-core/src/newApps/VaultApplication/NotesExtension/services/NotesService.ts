@@ -107,9 +107,7 @@ export class NotesService {
       }
 
       withoutUndo(() => {
-        this.notesStore.createOrUpdateNotes([
-          notesMapper.mapToModelData(noteDoc),
-        ]);
+        this.notesStore.handleChanges([notesMapper.mapToModelData(noteDoc)]);
       });
 
       console.debug(`Loading Note#${id} from DB`);

@@ -6,7 +6,7 @@ import { DB } from '../../DbExtension/DB';
 import type { IInternalSyncCtx, ISyncCtx } from './syncCtx';
 import { inject, injectable } from 'inversify';
 import { WINDOW_ID } from '../../../framework/types';
-import { IChangesApplier } from '../synchronizer/ServerSynchronizer';
+import { IChangesApplier } from '../serverSynchronizer/ServerSynchronizer';
 
 @injectable()
 export abstract class BaseSyncRepository<

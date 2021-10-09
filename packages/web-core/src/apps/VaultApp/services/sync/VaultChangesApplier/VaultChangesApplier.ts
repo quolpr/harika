@@ -1,7 +1,7 @@
 import type { DbChangesWriterService } from '../../../../../extensions/SyncExtension/persistence/ApplyChangesService';
 import type { ISyncCtx } from '../../../../../extensions/SyncExtension/persistence/syncCtx';
-import type { IChangesApplier } from '../../../../../extensions/SyncExtension/synchronizer/ServerSynchronizer';
-import type { IDatabaseChange } from '../../../../../extensions/SyncExtension/synchronizer/types';
+import type { IChangesApplier } from '../../../../../extensions/SyncExtension/serverSynchronizer/ServerSynchronizer';
+import type { IDatabaseChange } from '../../../../../extensions/SyncExtension/serverSynchronizer/types';
 import {
   BlocksScopesRepository,
   blocksScopesTable,

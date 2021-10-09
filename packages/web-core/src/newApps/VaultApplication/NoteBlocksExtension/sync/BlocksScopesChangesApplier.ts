@@ -2,7 +2,7 @@ import type {
   IDatabaseChange,
   IDeleteChange,
   IUpdateChange,
-} from '../../../../extensions/SyncExtension/synchronizer/types';
+} from '../../../../extensions/SyncExtension/serverSynchronizer/types';
 import {
   BlocksScopeDoc,
   blocksScopesTable,

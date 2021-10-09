@@ -15,10 +15,7 @@ import {
 import type { BlocksScopesRepository } from '../../../newApps/VaultApplication/NoteBlocksExtension/repositories/BlockScopesRepository';
 import type { NotesBlocksRepository } from '../../../newApps/VaultApplication/NoteBlocksExtension/repositories/NotesBlocksRepository';
 import type { SqlNotesRepository } from '../NotesApp/repositories/NotesRepository';
-import {
-  mapNote,
-
-} from '../NotesApp/converters/toDbDocs';
+import { mapNote } from '../NotesApp/converters/toDbDocs';
 import { retryBackoff } from 'backoff-rxjs';
 import {
   ISyncableModel,
@@ -31,49 +28,10 @@ import {
   BlocksScope,
   blocksScopeType,
 } from '../../../newApps/VaultApplication/NoteBlocksExtension/models/BlocksScope';
-import {mapBlocksScope, mapNoteBlock} from "../../../newApps/VaultApplication/NoteBlocksExtension/converters/toDbDocs";
-
-const compressChanges = <T>(chs: ISyncableModelChange<T>[]) => {
-  const modelsMap: Record<string, T> = {};
-  const toCreateModels = new Set<T>();
-  const toUpdateModels = new Set<T>();
-  const toDeleteModels = new Set<T>();
-
-  chs.forEach((ch) => {
-    modelsMap[ch.model.$modelId] = ch.model;
-
-    if (ch.type === SyncableModelChangeType.Create) {
-      if (toUpdateModels.has(ch.model)) {
-        toUpdateModels.delete(ch.model);
-      }
-      if (toDeleteModels.has(ch.model)) {
-        throw new Error("Can't create deleted model");
-      }
-
-      toCreateModels.add(ch.model);
-    } else if (ch.type === SyncableModelChangeType.Update) {
-      if (toCreateModels.has(ch.model)) return;
-      if (toDeleteModels.has(ch.model)) return;
-
-      toUpdateModels.add(ch.model);
-    } else {
-      if (toCreateModels.has(ch.model)) {
-        toCreateModels.delete(ch.model);
-      }
-      if (toUpdateModels.has(ch.model)) {
-        toUpdateModels.delete(ch.model);
-      }
-
-      toDeleteModels.add(ch.model);
-    }
-  });
-
-  return {
-    toCreateModels: Array.from(toCreateModels),
-    toUpdateModels: Array.from(toUpdateModels),
-    toDeleteModels: Array.from(toDeleteModels),
-  };
-};
+import {
+  mapBlocksScope,
+  mapNoteBlock,
+} from '../../../newApps/VaultApplication/NoteBlocksExtension/converters/toDbDocs';
 
 export class ToDbSyncer {
   constructor(

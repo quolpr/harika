@@ -6,8 +6,9 @@ export abstract class BaseExtension {
 
   abstract register(): Promise<void>;
 
-  async initialize() {}
+  async initialize(): Promise<(() => void) | void> {}
   async onReady() {}
+  async onDestroy() {}
 
   setContainer(container: Container) {
     this.container = container;

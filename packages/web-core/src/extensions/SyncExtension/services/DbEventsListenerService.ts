@@ -1,7 +1,8 @@
 import { BroadcastChannel } from 'broadcast-channel';
 import { inject, injectable } from 'inversify';
-import type { ObservableInput } from 'rxjs';
+import { ObservableInput, takeUntil } from 'rxjs';
 import { Observable, switchMap } from 'rxjs';
+import { STOP_SIGNAL } from '../../../framework/types';
 import { DB_NAME } from '../../DbExtension/types';
 import type { ITransmittedChange } from '../persistence/SyncRepository';
 
@@ -10,7 +11,10 @@ export class DbEventsListenService {
   dbEventsChannel: BroadcastChannel;
   newSyncPullsChannel: BroadcastChannel;
 
-  constructor(@inject(DB_NAME) private dbName: string) {
+  constructor(
+    @inject(DB_NAME) dbName: string,
+    @inject(STOP_SIGNAL) private stop$: Observable<void>,
+  ) {
     this.dbEventsChannel = new BroadcastChannel(dbName, {
       webWorkerSupport: true,
     });
@@ -42,7 +46,10 @@ export class DbEventsListenService {
       subscriber.next();
 
       return () => this.dbEventsChannel.removeEventListener('message', func);
-    }).pipe(switchMap(() => query()));
+    }).pipe(
+      switchMap(() => query()),
+      takeUntil(this.stop$),
+    );
   }
 
   changesChannel$() {
@@ -54,7 +61,7 @@ export class DbEventsListenService {
       this.dbEventsChannel.addEventListener('message', func);
 
       return () => this.dbEventsChannel.removeEventListener('message', func);
-    });
+    }).pipe(takeUntil(this.stop$));
   }
 
   newSyncPullsChannel$() {
@@ -67,6 +74,6 @@ export class DbEventsListenService {
 
       return () =>
         this.newSyncPullsChannel.removeEventListener('message', func);
-    });
+    }).pipe(takeUntil(this.stop$));
   }
 }

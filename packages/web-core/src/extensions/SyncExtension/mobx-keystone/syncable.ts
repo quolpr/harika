@@ -1,4 +1,4 @@
-import { onPatches } from 'mobx-keystone';
+import { AnyModel, onPatches } from 'mobx-keystone';
 import { Subject } from 'rxjs';
 
 let withoutSyncVal = false;
@@ -40,7 +40,7 @@ export type ISyncableModel<T> = T & {
   $modelType: string;
 };
 
-export type ISyncableModelChange<T extends any = any> = {
+export type ISyncableModelChange<T extends AnyModel = AnyModel> = {
   type: SyncableModelChangeType;
   model: ISyncableModel<T>;
 };
