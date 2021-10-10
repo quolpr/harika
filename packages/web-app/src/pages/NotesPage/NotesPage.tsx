@@ -4,8 +4,8 @@ import './styles.css';
 import { Link } from 'react-router-dom';
 import TimeAgo from 'react-timeago';
 import { paths } from '../../paths';
-import { useNotesService } from '../../contexts/CurrentNotesServiceContext';
-import { useCurrentVault } from '../../hooks/useCurrentVault';
+import { useVaultService } from '../../contexts/CurrentNotesServiceContext';
+import { useCurrentVaultApp } from '../../hooks/useCurrentVault';
 import { TrashIcon } from '@heroicons/react/solid';
 import { useObservable, useObservableState } from 'observable-hooks';
 import { LoadingDoneSubjectContext } from '../../contexts';
@@ -17,8 +17,8 @@ type NoteTuple = {
 };
 
 const NoteRow = observer(({ note }: { note: NoteTuple }) => {
-  const vault = useCurrentVault();
-  const noteRepo = useNotesService();
+  const vault = useCurrentVaultApp();
+  const noteRepo = useVaultService();
 
   const handleDelete = useCallback(async () => {
     noteRepo.deleteNote(note.id);
@@ -46,7 +46,7 @@ const NoteRow = observer(({ note }: { note: NoteTuple }) => {
 });
 
 export const NotesPage = () => {
-  const noteRepo = useNotesService();
+  const noteRepo = useVaultService();
   const loadingDoneSubject = useContext(LoadingDoneSubjectContext);
 
   const input$ = useObservable(() => noteRepo.getAllNotesTuples$());

@@ -1,4 +1,3 @@
-import type { NoteBlockModel } from '@harika/web-core/src/newApps/VaultApplication/NoteBlocksExtension/models/NoteBlockModel';
 import {
   allRightSiblingsFunc,
   deepLastRightChildFunc,
@@ -15,9 +14,10 @@ import type { ITreeNode } from '@harika/web-core/src/lib/mobx-tree';
 import { comparer, computed, makeObservable, observable } from 'mobx';
 import type { IComputedValue } from 'mobx';
 import { isTodo } from '@harika/web-core/src/lib/blockParser/astHelpers';
-import { BlockContentModel } from '@harika/web-core/src/newApps/VaultApplication/NoteBlocksExtension/models/BlockContentModel';
 import { ArraySet, ModelCreationData } from 'mobx-keystone';
 import type { Optional } from 'utility-types';
+import { NoteBlockModel } from '../apps/VaultApplication/NoteBlocksExtension/models/NoteBlockModel';
+import { BlockContentModel } from '../apps/VaultApplication/NoteBlocksExtension/models/BlockContentModel';
 
 // It is not usual mobx-keystone model, it is just mobx model
 // We don't need to store and serialize the state in global state

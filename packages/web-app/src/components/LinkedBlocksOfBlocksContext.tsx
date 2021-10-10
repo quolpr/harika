@@ -7,7 +7,7 @@ import {
   createContext,
   useContextSelector,
 } from 'use-context-selector';
-import { useNotesService } from '../contexts/CurrentNotesServiceContext';
+import { useVaultService } from '../contexts/CurrentNotesServiceContext';
 
 const LinkedBlocksOfBlocksContext = createContext<
   undefined | Record<string, { noteId: string; blockId: string }[]>
@@ -39,7 +39,7 @@ export const useDeepContextSelector = <T extends any, R extends any>(
 export const LinkedBlocksOfBlocksProvider: React.FC<{
   noteId: string;
 }> = ({ noteId, children }) => {
-  const notesService = useNotesService();
+  const notesService = useVaultService();
 
   const links$ = useObservable(
     (inputs$) => {

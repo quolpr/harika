@@ -3,7 +3,7 @@ import { isEqual } from 'lodash-es';
 import { useState } from 'react';
 import { timer } from 'rxjs';
 import { debounce, distinctUntilChanged, switchMap, tap } from 'rxjs/operators';
-import { useNotesService } from '../../../../contexts/CurrentNotesServiceContext';
+import { useVaultService } from '../../../../contexts/CurrentNotesServiceContext';
 import { cn } from '../../../../utils';
 import { useObservable, useObservableState } from 'observable-hooks';
 import { Pos } from 'caret-pos';
@@ -31,7 +31,7 @@ export const NoteTitleAutocomplete = React.memo(
     holderRef: MutableRefObject<HTMLDivElement | null>;
     isShownRef: MutableRefObject<boolean>;
   }) => {
-    const notesService = useNotesService();
+    const notesService = useVaultService();
 
     const [wasFirstSearchHappened, setWasFirstSearchHappened] = useState(false);
 

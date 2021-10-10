@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useObservableEagerState } from 'observable-hooks';
-import { useNotesService } from '../../contexts/CurrentNotesServiceContext';
+import { useVaultService } from '../../contexts/CurrentNotesServiceContext';
 import { bem } from '../../utils';
 import './styles.css';
 import 'tippy.js/dist/tippy.css';
@@ -9,7 +9,7 @@ import Tippy from '@tippyjs/react';
 const syncStateClass = bem('syncState');
 
 export const SyncState = () => {
-  const noteService = useNotesService();
+  const noteService = useVaultService();
 
   const syncState = useObservableEagerState(noteService.syncState$);
   const isConnectionAllowed = useObservableEagerState(

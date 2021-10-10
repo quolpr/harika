@@ -2,17 +2,19 @@ import React, { useEffect, useState } from 'react';
 import { Switch, Route } from 'react-router-dom';
 import { VaultLayout } from '../components/VaultLayout/VaultLayout';
 import { PATHS, VAULT_PREFIX } from '../paths';
-import { UserApp } from '@harika/web-core';
 import { useAuthState } from '../hooks/useAuthState';
 import { OnlyAuthed } from '../components/OnlyAuthed';
 import { DailyNotePage } from '../pages/DailyNotePage';
 import { NotePage } from '../pages/NotePage';
 import { NotesPage } from '../pages/NotesPage/NotesPage';
 import { VaultsPage } from '../pages/VaultsPage/VaultsPage';
+import { UserApplication } from '@harika/web-core';
 
 export const VaultAppRoute = () => {
   const [authInfo] = useAuthState();
-  const [vaultService, setVaultService] = useState<UserApp | undefined>();
+  const [userApplication, setUserApplication] = useState<
+    UserApplication | undefined
+  >();
 
   const userId = authInfo?.userId;
   const isOffline = authInfo?.isOffline;
@@ -21,24 +23,25 @@ export const VaultAppRoute = () => {
   useEffect(() => {
     if (!userId || isOffline === undefined || !authToken) return;
 
-    let service: UserApp | undefined = undefined;
+    let service: UserApplication | undefined = undefined;
 
     const cb = async () => {
-      service = new UserApp(userId, !isOffline, {
-        wsUrl: import.meta.env.VITE_PUBLIC_WS_URL as string,
-        authToken: authToken,
-      });
+      service = new UserApplication(userId);
 
-      await service.init();
+      // , !isOffline, {
+      //         wsUrl: import.meta.env.VITE_PUBLIC_WS_URL as string,
+      //         authToken: authToken,
+      //       }
+      await service.start();
 
-      setVaultService(service);
+      setUserApplication(service);
     };
 
     cb();
 
     return () => {
-      service?.close();
-      setVaultService(undefined);
+      service?.stop();
+      setUserApplication(undefined);
     };
   }, [userId, isOffline, authToken]);
 
@@ -46,8 +49,8 @@ export const VaultAppRoute = () => {
     <>
       <Route path={VAULT_PREFIX}>
         <OnlyAuthed>
-          {vaultService && (
-            <VaultLayout vaultService={vaultService}>
+          {userApplication && (
+            <VaultLayout vaultService={userApplication}>
               <Switch>
                 <Route exact path={PATHS.VAULT_DAILY_PATH}>
                   <DailyNotePage />
@@ -67,7 +70,9 @@ export const VaultAppRoute = () => {
       </Route>
       <Route exact path={PATHS.VAULT_INDEX_PATH}>
         <OnlyAuthed>
-          {vaultService && <VaultsPage vaults={vaultService} />}
+          {userApplication && (
+            <VaultsPage vaultsService={userApplication.getVaultsService()} />
+          )}
         </OnlyAuthed>
       </Route>
     </>

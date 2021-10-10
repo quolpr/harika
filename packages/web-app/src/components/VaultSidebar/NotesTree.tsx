@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { useCurrentVault } from '../../hooks/useCurrentVault';
+import { useCurrentVaultApp } from '../../hooks/useCurrentVault';
 import type { NotesTreeNote } from '@harika/web-core';
 import { cn } from '../../utils';
 import { Link, useHistory } from 'react-router-dom';
@@ -8,7 +8,7 @@ import ArrowDown from '../../icons/arrow-down.svgr.svg?component';
 import ArrowRight from '../../icons/arrow-right.svgr.svg?component';
 import { observer } from 'mobx-react-lite';
 import { usePrimaryNoteId } from '../../hooks/usePrimaryNote';
-import { useNotesService } from '../../contexts/CurrentNotesServiceContext';
+import { useVaultService } from '../../contexts/CurrentNotesServiceContext';
 
 const treeClass = cn('notes-tree');
 const sidebarItemClass = cn('sidebar-item');
@@ -21,8 +21,8 @@ const NoteNode = observer(
     node: NotesTreeNote;
     onNavClick: (e: React.MouseEvent) => void;
   }) => {
-    const vault = useCurrentVault();
-    const repo = useNotesService();
+    const vault = useCurrentVaultApp();
+    const repo = useVaultService();
     const primaryNoteId = usePrimaryNoteId();
     const isFocused = primaryNoteId
       ? node.isExpanded
@@ -126,7 +126,7 @@ const NoteNode = observer(
 
 export const NotesTree = observer(
   ({ onNavClick }: { onNavClick: (e: React.MouseEvent) => void }) => {
-    const vault = useCurrentVault();
+    const vault = useCurrentVaultApp();
 
     const rootNode = vault.notesTree.rootNodeRef.current;
 

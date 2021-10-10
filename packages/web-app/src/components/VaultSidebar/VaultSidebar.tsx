@@ -2,7 +2,7 @@ import React from 'react';
 import './styles.css';
 import { Link } from 'react-router-dom';
 import { paths } from '../../paths';
-import { useCurrentVault } from '../../hooks/useCurrentVault';
+import { useCurrentVaultApp } from '../../hooks/useCurrentVault';
 import { cn } from '../../utils';
 import { useCallback } from 'react';
 import VaultIcon from './vault.svgr.svg?component';
@@ -11,7 +11,7 @@ import NotesIcon from '../../icons/notes.svgr.svg?component';
 import UploadIcon from '../../icons/upload.svgr.svg?component';
 import DownloadIcon from '../../icons/download.svgr.svg?component';
 import { NotesTree } from './NotesTree';
-import { useNotesService } from '../../contexts/CurrentNotesServiceContext';
+import { useVaultService } from '../../contexts/CurrentNotesServiceContext';
 import download from 'downloadjs';
 import dayjs from 'dayjs';
 import { useObservable, useObservableState } from 'observable-hooks';
@@ -29,8 +29,8 @@ type IProps = {
 
 export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
   ({ className, isOpened, onNavClick }: IProps, ref) => {
-    const vault = useCurrentVault();
-    const notesService = useNotesService();
+    const vault = useCurrentVaultApp();
+    const notesService = useVaultService();
     const primaryNoteId = usePrimaryNoteId();
 
     const handleDownloadClick = useCallback(async () => {

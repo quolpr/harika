@@ -1,6 +1,6 @@
 import { observer } from 'mobx-react-lite';
 import React, { useCallback, useContext, useEffect, useRef } from 'react';
-import { useCurrentVault } from '../../hooks/useCurrentVault';
+import { useCurrentVaultApp } from '../../hooks/useCurrentVault';
 import { cn, insertText } from '../../utils';
 import type { BlocksScope } from '@harika/web-core';
 import {
@@ -23,7 +23,7 @@ const toolbarClass = cn('toolbar');
 export const Toolbar = observer(({ scope }: { scope: BlocksScope }) => {
   const footerRef = useContext(FooterRefContext);
 
-  const vault = useCurrentVault();
+  const vault = useCurrentVaultApp();
 
   const currentBlockInputRef = useContext(CurrentBlockInputRefContext);
 

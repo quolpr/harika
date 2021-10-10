@@ -1,6 +1,6 @@
-import { DB } from '../../extensions/DbExtension/DB';
-import { IMigration } from '../../extensions/DbExtension/types';
-import { vaultsTable } from '../UserApp/repositories/VaultsRepository';
+import { DB } from '../../../../extensions/DbExtension/DB';
+import { IMigration } from '../../../../extensions/DbExtension/types';
+import { vaultsTable } from '../repositories/VaultsRepository';
 
 const up = (db: DB<any>) => {
   db.sqlExec(`

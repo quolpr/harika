@@ -5,21 +5,21 @@ import type { IDatabaseChange } from '../../../../../extensions/SyncExtension/se
 import {
   BlocksScopesRepository,
   blocksScopesTable,
-} from '../../../../../newApps/VaultApplication/NoteBlocksExtension/repositories/BlockScopesRepository';
-import type { IBlocksScopesChangeEvent } from '../../../../../newApps/VaultApplication/NoteBlocksExtension/repositories/BlockScopesRepository';
+} from '../../../../../apps/VaultApplication/NoteBlocksExtension/repositories/BlockScopesRepository';
+import type { IBlocksScopesChangeEvent } from '../../../../../apps/VaultApplication/NoteBlocksExtension/repositories/BlockScopesRepository';
 import {
   NotesBlocksRepository,
   noteBlocksTable,
-} from '../../../../../newApps/VaultApplication/NoteBlocksExtension/repositories/NotesBlocksRepository';
-import type { INoteBlockChangeEvent } from '../../../../../newApps/VaultApplication/NoteBlocksExtension/repositories/NotesBlocksRepository';
+} from '../../../../../apps/VaultApplication/NoteBlocksExtension/repositories/NotesBlocksRepository';
+import type { INoteBlockChangeEvent } from '../../../../../apps/VaultApplication/NoteBlocksExtension/repositories/NotesBlocksRepository';
 import {
   SqlNotesRepository,
   notesTable,
 } from '../../../NotesApp/repositories/NotesRepository';
 import type { INoteChangeEvent } from '../../../NotesApp/repositories/NotesRepository';
-import { BlocksScopesChangesApplier } from '../../../../../newApps/VaultApplication/NoteBlocksExtension/sync/BlocksScopesChangesApplier';
-import { NoteblocksChangesApplier } from '../../../../../newApps/VaultApplication/NoteBlocksExtension/sync/NoteblocksChangesApplier';
-import { NotesChangesApplier } from '../../../../../newApps/VaultApplication/NotesExtension/sync/NotesChangesApplier';
+import { BlocksScopesChangesApplier } from '../../../../../apps/VaultApplication/NoteBlocksExtension/sync/BlocksScopesChangesApplier';
+import { NoteblocksChangesApplier } from '../../../../../apps/VaultApplication/NoteBlocksExtension/sync/NoteblocksChangesApplier';
+import { NotesChangesApplier } from '../../../../../apps/VaultApplication/NotesExtension/sync/NotesChangesApplier';
 
 export class VaultChangesApplier implements IChangesApplier {
   // private consistencyResolver: VaultDbConsistencyResolver;

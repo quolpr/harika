@@ -1,6 +1,6 @@
 import { BlocksScope, ScopedBlock, parseStringToTree } from '@harika/web-core';
 import { RefObject, useCallback, useContext, useState } from 'react';
-import { useNotesService } from '../../../../contexts/CurrentNotesServiceContext';
+import { useVaultService } from '../../../../contexts/CurrentNotesServiceContext';
 import { ShiftPressedContext } from '../../../../contexts/ShiftPressedContext';
 import { useCurrentFocusedBlockState } from '../../../../hooks/useFocusedBlockState';
 import { isIOS, insertText } from '../../../../utils';
@@ -51,7 +51,7 @@ export const useHandleInput = (
     number | undefined
   >(undefined);
 
-  const noteRepo = useNotesService();
+  const noteRepo = useVaultService();
 
   const handleKeyPress = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {

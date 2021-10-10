@@ -1,8 +1,8 @@
-import { expect } from '@esm-bundle/chai';
-import {
-  normalizeBlockTree,
-  parseToBlocksTree,
-} from '@harika/web-core/src/lib/blockParser/blockUtils';
+// import { expect } from '@esm-bundle/chai';
+// import {
+//   normalizeBlockTree,
+//   parseToBlocksTree,
+// } from '@harika/web-core/src/lib/blockParser/blockUtils';
 
 // const getViewModel = () => {
 //   const { note, vault } = parseToBlocksTree(`

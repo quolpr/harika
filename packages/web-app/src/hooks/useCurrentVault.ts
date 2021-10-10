@@ -1,10 +1,6 @@
 import { useContext } from 'react';
-import { CurrentVaultContext } from '../contexts/CurrentVaultContext';
+import { CurrentVaultAppContext } from '../contexts/CurrentVaultContext';
 
-export const useCurrentVault = () => {
-  return useContext(CurrentVaultContext);
-};
-
-export const useBlocksApp = () => {
-  return useCurrentVault().noteBlocksApp;
+export const useCurrentVaultApp = () => {
+  return useContext(CurrentVaultAppContext);
 };

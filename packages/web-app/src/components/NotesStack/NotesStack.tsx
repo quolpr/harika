@@ -11,7 +11,7 @@ import './styles.css';
 import { useFindNote } from './useFindNote';
 import { useHistory, useLocation } from 'react-router-dom';
 import { paths } from '../../paths';
-import { useCurrentVault } from '../../hooks/useCurrentVault';
+import { useCurrentVaultApp } from '../../hooks/useCurrentVault';
 import { ContainerElRefContext } from '../../contexts/ContainerElRefContext';
 
 const notesStackClass = cn('notes-stack');
@@ -46,7 +46,7 @@ const NoteStack = observer(
   }) => {
     const location = useLocation();
     const history = useHistory();
-    const vaultId = useCurrentVault().$modelId;
+    const vaultId = useCurrentVaultApp().$modelId;
     const { note, isLoading } = useFindNote(noteId);
 
     const rowRef = useRef<HTMLDivElement | null>(null);

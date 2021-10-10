@@ -1,10 +1,11 @@
 import { generateId } from '../generateId';
-import { Vault } from '../../apps/VaultApp/VaultApp';
-import { BlockContentModel } from '../../newApps/VaultApplication/NoteBlocksExtension/models/BlockContentModel';
+import { BlockContentModel } from '../../apps/VaultApplication/NoteBlocksExtension/models/BlockContentModel';
 import { parseStringToTree } from './parseStringToTree';
 import type { TreeToken } from './parseStringToTree';
-import type { ScopedBlock } from '../../../../web-app/src/views/ScopedBlock';
-import { BlocksScope } from '../../newApps/VaultApplication/NoteBlocksExtension/models/BlocksScope';
+import type { ScopedBlock } from '../../views/ScopedBlock';
+import { Optional } from 'utility-types';
+import { ModelCreationData } from 'mobx-keystone';
+import { NoteBlockModel } from '../../apps/VaultApplication/NoteBlocksExtension/models/NoteBlockModel';
 
 export const normalizeBlockTree = (str: string) => {
   const parsed = parseStringToTree(str);
@@ -21,9 +22,16 @@ export const normalizeBlockTree = (str: string) => {
 };
 
 export const addTokensToNoteBlock = (
-  scope: BlocksScope,
   block: ScopedBlock,
   tokens: TreeToken[],
+  createBlock: (
+    attrs: Optional<
+      ModelCreationData<NoteBlockModel>,
+      'createdAt' | 'noteId' | 'noteBlockRefs' | 'linkedNoteIds' | 'updatedAt'
+    >,
+    parent: ScopedBlock,
+    pos: number | 'append',
+  ) => ScopedBlock,
 ): ScopedBlock[] => {
   const addedModels: ScopedBlock[] = [];
 
@@ -48,7 +56,7 @@ export const addTokensToNoteBlock = (
 
     const parentBlock = currentPath[currentPath.length - 1];
 
-    const newBlock = scope.createBlock(
+    const newBlock = createBlock(
       {
         $modelId: token.id ? token.id : generateId(),
         createdAt: new Date().getTime(),
@@ -70,23 +78,23 @@ export const addTokensToNoteBlock = (
   return addedModels;
 };
 
-export const parseToBlocksTree = (str: string) => {
-  // const tokens = parseStringToTree(str);
+// export const parseToBlocksTree = (str: string) => {
+//   // const tokens = parseStringToTree(str);
 
-  const vault = new Vault({
-    name: 'Vault',
-  });
+//   const vault = new Vault({
+//     name: 'Vault',
+//   });
 
-  const { note, treeRegistry } = vault.newNote(
-    { title: 'NotesApp' },
-    { addEmptyBlock: false },
-  );
+//   const { note, treeRegistry } = vault.newNote(
+//     { title: 'NotesApp' },
+//     { addEmptyBlock: false },
+//   );
 
-  if (!treeRegistry.rootBlock) {
-    throw new Error('Root block is not present!');
-  }
+//   if (!treeRegistry.rootBlock) {
+//     throw new Error('Root block is not present!');
+//   }
 
-  // addTokensToNoteBlock(treeRegistry, treeRegistry.rootBlock, tokens);
+//   // addTokensToNoteBlock(treeRegistry, treeRegistry.rootBlock, tokens);
 
-  return { vault, note };
-};
+//   return { vault, note };
+// };

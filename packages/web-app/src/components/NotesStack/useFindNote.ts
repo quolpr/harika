@@ -4,15 +4,15 @@ import { useHistory } from 'react-router-dom';
 import { NEVER, of, race } from 'rxjs';
 import { timeout, map } from 'rxjs/operators';
 import { LoadingDoneSubjectContext } from '../../contexts';
-import { useNotesService } from '../../contexts/CurrentNotesServiceContext';
-import { useCurrentVault } from '../../hooks/useCurrentVault';
+import { useVaultService } from '../../contexts/CurrentNotesServiceContext';
+import { useCurrentVaultApp } from '../../hooks/useCurrentVault';
 import { paths } from '../../paths';
 
 type IPipeResult = { status: 'found'; id: string } | { status: 'not_found' };
 
 export const useFindNote = (noteId: string) => {
-  const vault = useCurrentVault();
-  const notesService = useNotesService();
+  const vault = useCurrentVaultApp();
+  const notesService = useVaultService();
   const history = useHistory();
 
   const [note, setNote] = useState<NoteModel | undefined>();

@@ -9,7 +9,7 @@ import React, {
 import { useHistory, useLocation, useParams } from 'react-router-dom';
 import { useClickAway, useMedia } from 'react-use';
 import { NotesServiceContext } from '../../contexts/CurrentNotesServiceContext';
-import { CurrentVaultContext } from '../../contexts/CurrentVaultContext';
+import { CurrentVaultAppContext } from '../../contexts/CurrentVaultContext';
 import { VaultHeader } from '../VaultHeader/VaultHeader';
 import { VaultSidebar } from '../VaultSidebar/VaultSidebar';
 
@@ -175,7 +175,7 @@ export const VaultLayout: React.FC<{
   if (!notesService) return null;
 
   return (
-    <CurrentVaultContext.Provider value={notesService.vault}>
+    <CurrentVaultAppContext.Provider value={notesService.vault}>
       <NotesServiceContext.Provider value={notesService}>
         <FooterRefContext.Provider value={footerRef}>
           <UndoRedoManagerProvider notesService={notesService}>
@@ -226,7 +226,7 @@ export const VaultLayout: React.FC<{
           </UndoRedoManagerProvider>
         </FooterRefContext.Provider>
       </NotesServiceContext.Provider>
-    </CurrentVaultContext.Provider>
+    </CurrentVaultAppContext.Provider>
   );
 };
 

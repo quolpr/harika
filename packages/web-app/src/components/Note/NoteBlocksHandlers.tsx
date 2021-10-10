@@ -13,11 +13,11 @@ import {
   tap,
 } from 'rxjs/operators';
 import { isEqual } from 'lodash-es';
-import { useCurrentVault } from '../../hooks/useCurrentVault';
+import { useCurrentVaultApp } from '../../hooks/useCurrentVault';
 
 export const NoteBlocksHandlers = observer(
   ({ scope, note }: { scope: BlocksScope; note: NoteModel }) => {
-    const vault = useCurrentVault();
+    const vault = useCurrentVaultApp();
     const focusedBlock = vault.noteBlocksApp.focusedBlock;
 
     useEffect(() => {

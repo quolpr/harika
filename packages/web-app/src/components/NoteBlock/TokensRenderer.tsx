@@ -8,8 +8,8 @@ import type {
   NoteModel,
   ScopedBlock,
 } from '@harika/web-core';
-import { useNotesService } from '../../contexts/CurrentNotesServiceContext';
-import { useCurrentVault } from '../../hooks/useCurrentVault';
+import { useVaultService } from '../../contexts/CurrentNotesServiceContext';
+import { useCurrentVaultApp } from '../../hooks/useCurrentVault';
 import { useCurrentNote } from '../../hooks/useCurrentNote';
 import { useHandleClick } from '../../hooks/useNoteClick';
 import { paths } from '../../paths';
@@ -29,8 +29,8 @@ const NoteRefRenderer = observer(
     linkedNotes: NoteModel[];
   }) => {
     const location = useLocation();
-    const vault = useCurrentVault();
-    const noteRepo = useNotesService();
+    const vault = useCurrentVaultApp();
+    const noteRepo = useVaultService();
     const currentNote = useCurrentNote();
 
     const handleTodoToggle = useCallback(
@@ -102,8 +102,8 @@ const NoteRefRenderer = observer(
 );
 const BlockRefRenderer = observer(
   ({ token, noteBlock }: { token: NoteBlockRef; noteBlock: ScopedBlock }) => {
-    const notesService = useNotesService();
-    const vault = useCurrentVault();
+    const notesService = useVaultService();
+    const vault = useCurrentVaultApp();
     const currentNote = useCurrentNote();
 
     const linkedBlock$ = useObservable(
@@ -166,7 +166,7 @@ const BlockRefRenderer = observer(
 const TagRenderer = observer(
   ({ token, linkedNotes }: { token: TagToken; linkedNotes: NoteModel[] }) => {
     const location = useLocation();
-    const vault = useCurrentVault();
+    const vault = useCurrentVaultApp();
     const currentNote = useCurrentNote();
 
     const note = linkedNotes.find((n) => {
@@ -334,7 +334,7 @@ const TokenRenderer = observer(
 
 export const TokensRenderer = observer(
   ({ noteBlock, tokens }: { noteBlock: ScopedBlock; tokens: Token[] }) => {
-    const noteRepo = useNotesService();
+    const noteRepo = useVaultService();
 
     const linkedNoteIds = useDeepMemo(
       () => [...noteBlock.linkedNoteIds],

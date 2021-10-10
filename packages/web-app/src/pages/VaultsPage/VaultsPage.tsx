@@ -1,4 +1,3 @@
-import type { UserApp } from '@harika/web-core';
 import React, { useCallback, useMemo, useState } from 'react';
 import { cn } from '../../utils';
 import './styles.css';
@@ -9,7 +8,7 @@ import { PlusIcon } from '@heroicons/react/solid';
 import { CreateVaultModal } from './CreateVaultModal';
 import { useAuthState } from '../../hooks/useAuthState';
 import { Brand } from '../../components/Brand/Brand';
-import { generateId } from '@harika/web-core';
+import { generateId, UserVaultsService } from '@harika/web-core';
 import { deleteFromStorage } from '@rehooks/local-storage';
 import SettingsIcon from '@material-ui/icons/Settings';
 import { SettingsModal } from './SettingsModal';
@@ -19,10 +18,10 @@ const vaultsNavbarClass = cn('vaults-navbar');
 
 const VaultBlock = ({
   vault,
-  vaults,
+  vaultsService: vaults,
 }: {
   vault: { id: string; name: string };
-  vaults: UserApp;
+  vaultsService: UserVaultsService;
 }) => {
   const [isOpened, setIsOpened] = useState(false);
 
@@ -50,14 +49,18 @@ const VaultBlock = ({
       <SettingsModal
         isOpened={isOpened}
         setIsOpened={setIsOpened}
-        vaults={vaults}
+        vaultsService={vaults}
         vault={vault}
       />
     </>
   );
 };
 
-export const VaultsPage = ({ vaults }: { vaults: UserApp }) => {
+export const VaultsPage = ({
+  vaultsService: vaults,
+}: {
+  vaultsService: UserVaultsService;
+}) => {
   const history = useHistory();
 
   const [isCreateModalOpened, setIsCreateModalOpened] = useState(false);
@@ -77,7 +80,7 @@ export const VaultsPage = ({ vaults }: { vaults: UserApp }) => {
 
       setIsCreateModalOpened(false);
 
-      history.push(paths.vaultDailyPath({ vaultId: vault.$modelId }));
+      history.push(paths.vaultDailyPath({ vaultId: vault.id }));
     },
     [vaults, history],
   );
@@ -107,7 +110,7 @@ export const VaultsPage = ({ vaults }: { vaults: UserApp }) => {
       <div className="vaults-container">
         <div className={vaultsClass()}>
           {allVaults.map((vault) => (
-            <VaultBlock key={vault.id} vault={vault} vaults={vaults} />
+            <VaultBlock key={vault.id} vault={vault} vaultsService={vaults} />
           ))}
 
           <button

@@ -1,10 +1,10 @@
+import { VaultService } from '@harika/web-core';
 import { createContext, useContext } from 'react';
-import type { VaultApp } from '@harika/web-core';
 
-export const NotesServiceContext = createContext<VaultApp>(
-  {} as VaultApp,
+export const NotesServiceContext = createContext<VaultService>(
+  {} as VaultService,
 );
 
-export const useNotesService = () => {
+export const useVaultService = () => {
   return useContext(NotesServiceContext);
 };

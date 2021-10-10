@@ -20,7 +20,7 @@ const windowId = generateId();
 export abstract class BaseApplication {
   protected stop$ = new Subject<void>();
 
-  private container: Container = new Container({ defaultScope: 'Singleton' });
+  protected container: Container = new Container({ defaultScope: 'Singleton' });
   private worker!: Remote<RootWorker>;
 
   constructor(protected applicationId: string) {}
@@ -74,4 +74,6 @@ export abstract class BaseApplication {
   }[];
 
   async onReady() {}
+
+  stop() {}
 }

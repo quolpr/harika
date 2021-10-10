@@ -3,7 +3,7 @@ import { wrap } from 'comlink';
 import type { Remote } from 'comlink';
 import type { BaseDbSyncWorker } from '../extensions/SyncExtension/persistence/BaseDbSyncWorker';
 // @ts-ignore
-import UserDbWorker from '../apps/UserApp/UserDb.worker?worker';
+import UserDbWorker from '../apps/UserApplication/UserExtension/UserDb.worker?worker';
 // @ts-ignore
 import VaultDbWorker from '../apps/VaultApp/VaultAppDb.worker?worker';
 // Looks like vite bug. Just force wasm output

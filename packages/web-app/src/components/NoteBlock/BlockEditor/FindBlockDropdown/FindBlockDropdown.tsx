@@ -15,7 +15,7 @@ import {
   tap,
   map,
 } from 'rxjs';
-import { useNotesService } from '../../../../contexts/CurrentNotesServiceContext';
+import { useVaultService } from '../../../../contexts/CurrentNotesServiceContext';
 import {
   IDropdownItem,
   editorDropdownClass,
@@ -37,7 +37,7 @@ export const FindBlockDropdown = ({
   holderRef: MutableRefObject<HTMLDivElement | null>;
   isShownRef: MutableRefObject<boolean>;
 }) => {
-  const notesService = useNotesService();
+  const notesService = useVaultService();
 
   const [wasFirstSearchHappened, setWasFirstSearchHappened] = useState(false);
 

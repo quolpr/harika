@@ -3,8 +3,8 @@ import type {
   IDeleteChange,
   IDatabaseChange,
 } from '../../../../extensions/SyncExtension/serverSynchronizer/types';
-import { NoteDoc, notesTable } from '../../../../apps/VaultApp/NotesApp/repositories/NotesRepository';
 import { BaseChangesApplier } from '../../../../extensions/SyncExtension/BaseChangesApplier';
+import { NoteDoc, notesTable } from '../repositories/NotesRepository';
 
 export class NotesChangesApplier extends BaseChangesApplier<
   typeof notesTable,

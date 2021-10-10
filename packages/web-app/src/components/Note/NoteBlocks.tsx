@@ -5,7 +5,7 @@ import { NoteBlock, NoteBlockChildren } from '../NoteBlock/NoteBlock';
 import { Toolbar } from './Toolbar';
 import { NoteBlocksHandlers } from './NoteBlocksHandlers';
 import type { NoteModel } from '@harika/web-core';
-import { useNotesService } from '../../contexts/CurrentNotesServiceContext';
+import { useVaultService } from '../../contexts/CurrentNotesServiceContext';
 import { useObservable, useObservableState } from 'observable-hooks';
 import { map } from 'rxjs';
 import { LinkedBlocksOfBlocksProvider } from '../LinkedBlocksOfBlocksContext';
@@ -14,7 +14,7 @@ import { bem } from '../../utils';
 const noteClass = bem('note');
 
 export const NoteBlocks = observer(({ note }: { note: NoteModel }) => {
-  const notesService = useNotesService();
+  const notesService = useVaultService();
   const isWide = useMedia('(min-width: 768px)');
 
   const scope$ = useObservable(

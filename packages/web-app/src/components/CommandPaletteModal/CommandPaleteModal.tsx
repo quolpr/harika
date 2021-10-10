@@ -7,14 +7,14 @@ import { cn } from '../../utils';
 import { useKey } from 'react-use';
 import { v4 as uuidv4 } from 'uuid';
 import { paths } from '../../paths';
-import { useNotesService } from '../../contexts/CurrentNotesServiceContext';
-import { useCurrentVault } from '../../hooks/useCurrentVault';
+import { useVaultService } from '../../contexts/CurrentNotesServiceContext';
+import { useCurrentVaultApp } from '../../hooks/useCurrentVault';
 import { Modal, modalClass } from '../Modal/Modal';
 import { debounce, map, Observable, of, switchMap, tap, timer } from 'rxjs';
 import { generateStackedNotePath } from '../../hooks/useNoteClick';
 import { usePrimaryNoteId } from '../../hooks/usePrimaryNote';
 import { useObservable, useObservableState } from 'observable-hooks';
-import type { VaultApp } from '@harika/web-core';
+import { VaultService } from '@harika/web-core';
 
 // Command executes on each user type and as result gives list of actions
 // Commands are start with `!`. If no `!` present - then search happen between all start view actions names
@@ -55,14 +55,14 @@ type IView = {
 const spawnView = ([
   inputCommandValue,
   vaultModelId,
-  noteService,
+  vaultService,
   startView,
   locationSearch,
   primaryNoteId,
 ]: [
   string,
   string,
-  VaultApp,
+  VaultService,
   IView,
   string,
   string | undefined,
@@ -81,7 +81,7 @@ const spawnView = ([
     };
 
     return (
-      toFind.length === 0 ? of([]) : noteService.findNotesOrBlocks$(toFind)
+      toFind.length === 0 ? of([]) : vaultService.findNotesOrBlocks$(toFind)
     ).pipe(
       map((rows) => {
         return {
@@ -158,8 +158,8 @@ export const CommandPaletteModal = ({
   const primaryNoteId = usePrimaryNoteId();
 
   const history = useHistory();
-  const vault = useCurrentVault();
-  const noteService = useNotesService();
+  const vault = useCurrentVaultApp();
+  const vaultService = useVaultService();
   const [inputCommandValue, setInputCommandValue] = useState('!findOrCreate ');
 
   const startView: IView = React.useMemo(
@@ -210,7 +210,7 @@ export const CommandPaletteModal = ({
     [
       inputCommandValue,
       vault.$modelId,
-      noteService,
+      vaultService,
       startView,
       location.search,
       primaryNoteId,
@@ -233,7 +233,7 @@ export const CommandPaletteModal = ({
           onClose();
           break;
         case 'createNote': {
-          const result = await noteService.createNote({
+          const result = await vaultService.createNote({
             title: action.noteName,
           });
 
@@ -246,7 +246,7 @@ export const CommandPaletteModal = ({
           history.push(
             paths.vaultNotePath({
               vaultId: vault.$modelId,
-              noteId: result.data.$modelId,
+              noteId: result.data.note.$modelId,
             }),
           );
 
@@ -258,7 +258,7 @@ export const CommandPaletteModal = ({
           break;
       }
     },
-    [onClose, history, location.search, noteService, vault.$modelId],
+    [onClose, history, location.search, vaultService, vault.$modelId],
   );
 
   useKey(

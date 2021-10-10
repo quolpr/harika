@@ -6,9 +6,9 @@ import { observer } from 'mobx-react-lite';
 import { NoteModel, FocusedBlockState } from '@harika/web-core';
 import { useHistory, useLocation } from 'react-router-dom';
 import { LinkIcon } from '@heroicons/react/solid';
-import { useCurrentVault } from '../../hooks/useCurrentVault';
+import { useCurrentVaultApp } from '../../hooks/useCurrentVault';
 import { CurrentBlockInputRefContext } from '../../contexts';
-import { useNotesService } from '../../contexts/CurrentNotesServiceContext';
+import { useVaultService } from '../../contexts/CurrentNotesServiceContext';
 import { NoteBlocks } from './NoteBlocks';
 import { groupBy } from 'lodash-es';
 import { useObservable, useObservableState } from 'observable-hooks';
@@ -29,7 +29,7 @@ export interface IFocusBlockState {
 }
 
 const BacklinkedNotes = observer(({ note }: { note: NoteModel }) => {
-  const notesService = useNotesService();
+  const notesService = useVaultService();
 
   const backlinks$ = useObservable(
     ($inputs) => {
@@ -114,8 +114,8 @@ const noteClass = bem('note');
 const NoteBody = observer(({ note }: { note: NoteModel }) => {
   const isWide = useMedia('(min-width: 768px)');
   const location = useLocation();
-  const vault = useCurrentVault();
-  const noteRepo = useNotesService();
+  const vault = useCurrentVaultApp();
+  const noteRepo = useVaultService();
   const history = useHistory<IFocusBlockState>();
   const focusOnBlockId = (history.location.state || {}).focusOnBlockId;
 
