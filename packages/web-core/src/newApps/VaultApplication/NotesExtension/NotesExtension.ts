@@ -1,10 +1,10 @@
 import { inject, injectable } from 'inversify';
 import { registerRootStore } from 'mobx-keystone';
-import { NoteModel } from '../../../apps/VaultApp/VaultApp';
 import { SyncConfig } from '../../../extensions/SyncExtension/serverSynchronizer/SyncConfig';
 import { BaseExtension } from '../../../framework/BaseExtension';
 import { RemoteRegister } from '../../../framework/RemoteRegister';
 import { notesMapper } from './mappers/notesMapper';
+import { NoteModel } from './models/NoteModel';
 import { NotesStore } from './models/NotesStore';
 import { NotesRepository } from './repositories/NotesRepository';
 import { NotesService } from './services/NotesService';

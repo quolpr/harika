@@ -4,6 +4,7 @@ import { isEqual } from 'lodash-es';
 import { withoutUndo } from 'mobx-keystone';
 import { from, Observable, of } from 'rxjs';
 import { distinctUntilChanged, map, switchMap, tap } from 'rxjs/operators';
+import { notesTable } from '../../../../apps/VaultApp/NotesApp/repositories/NotesRepository';
 import { DbEventsListenService } from '../../../../extensions/SyncExtension/services/DbEventsListenerService';
 import { toRemoteName } from '../../../../framework/utils';
 import { toObserver } from '../../../../lib/toObserver';
@@ -105,6 +106,16 @@ export class NoteBlocksService {
         noteId ? this.getBlocksRegistryByNoteId$(blockId) : of(undefined),
       ),
       map((registry) => registry?.rootBlock),
+    );
+  }
+
+  getLinksOfNoteId$(noteId: string) {
+    return from(
+      this.dbEventsService.liveQuery(
+        [noteBlocksTable, notesTable],
+        () => this.notesBlocksRepository.getLinksOfNoteId(noteId),
+        false,
+      ),
     );
   }
 }

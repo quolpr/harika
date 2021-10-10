@@ -9,6 +9,7 @@ export class VaultRootWorker extends RootWorker {
         import('../../extensions/SyncExtension/SyncWorkerExtension'),
         import('./NotesExtension/NotesWorkerExtension'),
         import('./NoteBlocksExtension/NoteBlocksWorkerExtension'),
+        import('./VaultExtension/VaultWorkerExtension'),
       ])
     ).map((res) => res.default);
   }

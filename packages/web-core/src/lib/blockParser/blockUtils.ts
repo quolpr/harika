@@ -3,7 +3,7 @@ import { Vault } from '../../apps/VaultApp/VaultApp';
 import { BlockContentModel } from '../../newApps/VaultApplication/NoteBlocksExtension/models/BlockContentModel';
 import { parseStringToTree } from './parseStringToTree';
 import type { TreeToken } from './parseStringToTree';
-import type { ScopedBlock } from '../../apps/VaultApp/NoteBlocksApp/views/ScopedBlock';
+import type { ScopedBlock } from '../../../../web-app/src/views/ScopedBlock';
 import { BlocksScope } from '../../newApps/VaultApplication/NoteBlocksExtension/models/BlocksScope';
 
 export const normalizeBlockTree = (str: string) => {

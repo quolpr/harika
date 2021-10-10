@@ -1,11 +1,13 @@
-import type { SqlNotesRepository } from '../repositories/NotesRepository';
-import type { NotesBlocksRepository } from '../../../../newApps/VaultApplication/NoteBlocksExtension/repositories/NotesBlocksRepository';
+import type { NotesBlocksRepository } from '../../NoteBlocksExtension/repositories/NotesBlocksRepository';
 import type { ISyncCtx } from '../../../../extensions/SyncExtension/persistence/syncCtx';
+import { NotesRepository } from '../../NotesExtension/repositories/NotesRepository';
+import { inject, injectable } from 'inversify';
 
+@injectable()
 export class DeleteNoteService {
   constructor(
-    private notesRepo: SqlNotesRepository,
-    private notesBlocksRepo: NotesBlocksRepository,
+    @inject(NotesRepository) private notesRepo: NotesRepository,
+    @inject(NotesRepository) private notesBlocksRepo: NotesBlocksRepository,
   ) {}
 
   deleteNote(noteId: string) {

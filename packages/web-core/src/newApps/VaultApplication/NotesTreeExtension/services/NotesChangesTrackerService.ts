@@ -1,23 +1,30 @@
 import { autorun } from 'mobx';
 import { filter, map, Observable, takeUntil } from 'rxjs';
-import type { ITransmittedChange } from '../../../../extensions/SyncExtension/persistence/SyncRepository';
 import { DatabaseChangeType } from '../../../../extensions/SyncExtension/serverSynchronizer/types';
-import type {
+import {
   INoteTitleChange,
   NotesTreeRegistry,
 } from '../models/NotesTreeRegistry';
-import { notesTable } from '../../NotesApp/repositories/NotesRepository';
-import type { INoteChangeEvent } from '../../NotesApp/repositories/NotesRepository';
+import {
+  INoteChangeEvent,
+  notesTable,
+} from '../../NotesExtension/repositories/NotesRepository';
+import { inject, injectable } from 'inversify';
+import { STOP_SIGNAL } from '../../../../framework/types';
+import { DbEventsListenService } from '../../../../extensions/SyncExtension/services/DbEventsListenerService';
 
+@injectable()
 export class NotesChangesTrackerService {
   private bufferedChanges: INoteChangeEvent[] = [];
 
   constructor(
-    private changes$: Observable<ITransmittedChange[]>,
-    private treeModel: NotesTreeRegistry,
-    stop$: Observable<unknown>,
+    @inject(DbEventsListenService)
+    dbChangeListenService: DbEventsListenService,
+    @inject(NotesTreeRegistry) private treeModel: NotesTreeRegistry,
+    @inject(STOP_SIGNAL) stop$: Observable<unknown>,
   ) {
-    this.changes$
+    dbChangeListenService
+      .changesChannel$()
       .pipe(
         map(
           (chs) =>

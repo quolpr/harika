@@ -1,16 +1,20 @@
-import type { DB } from '../../../extensions/DbExtension/DB';
-import type { IInternalSyncCtx } from '../../../extensions/SyncExtension/persistence/syncCtx';
-import { notesTable } from '../NotesApp/repositories/NotesRepository';
+import { DB } from '../../../../extensions/DbExtension/DB';
+import type { IInternalSyncCtx } from '../../../../extensions/SyncExtension/persistence/syncCtx';
+import Q from 'sql-bricks';
+import {
+  notesFTSTable,
+  notesTable,
+} from '../../NotesExtension/repositories/NotesRepository';
 import {
   noteBlocksFTSTable,
   noteBlocksTable,
-  notesFTSTable,
-} from '../../../newApps/VaultApplication/NoteBlocksExtension/repositories/NotesBlocksRepository';
-import Q from 'sql-bricks';
+} from '../../NoteBlocksExtension/repositories/NotesBlocksRepository';
+import { inject, injectable } from 'inversify';
 
+@injectable()
 export class FindNoteOrBlockService {
   constructor(
-    private db: DB<IInternalSyncCtx>, // private notesRepo: SqlNotesRepository, // private notesBlocksRepo: NotesBlocksRepository,
+    @inject(DB) private db: DB<IInternalSyncCtx>, // private notesRepo: SqlNotesRepository, // private notesBlocksRepo: NotesBlocksRepository,
   ) {}
 
   find(text: string) {

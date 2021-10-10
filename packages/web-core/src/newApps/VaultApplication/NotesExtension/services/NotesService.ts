@@ -1,18 +1,31 @@
 import { inject, injectable } from 'inversify';
 import { ModelCreationData, withoutUndo } from 'mobx-keystone';
 import { Optional } from 'utility-types';
-import { ICreationResult } from '../../../../apps/VaultApp/types';
 import { DbEventsListenService } from '../../../../extensions/SyncExtension/services/DbEventsListenerService';
 import type { Required } from 'utility-types';
 import { NoteModel } from '../models/NoteModel';
-import { NotesRepository, notesTable } from '../repositories/NotesRepository';
+import {
+  NoteDoc,
+  NotesRepository,
+  notesTable,
+} from '../repositories/NotesRepository';
 import { Remote } from 'comlink';
 import { toRemoteName } from '../../../../framework/utils';
 import { NotesStore } from '../models/NotesStore';
 import { generateId } from '../../../../lib/generateId';
 import dayjs, { Dayjs } from 'dayjs';
-import { interval, map, distinctUntilChanged, switchMap, from, of } from 'rxjs';
+import {
+  interval,
+  map,
+  distinctUntilChanged,
+  switchMap,
+  from,
+  of,
+  Observable,
+} from 'rxjs';
 import { notesMapper } from '../mappers/notesMapper';
+import { isEqual } from 'lodash-es';
+import { ICreationResult } from '../../../../framework/types';
 
 @injectable()
 export class NotesService {
@@ -94,6 +107,33 @@ export class NotesService {
     );
   }
 
+  findNoteByIds$(ids: string[]) {
+    // TODO: load only not loaded
+    return this.dbEventsService
+      .liveQuery([notesTable], async () => {
+        const toLoadIds = ids.filter(
+          (id) => !Boolean(this.notesStore.notesMap[id]),
+        );
+
+        const noteDocs =
+          toLoadIds.length !== 0
+            ? await this.notesRepository.getByIds(toLoadIds)
+            : [];
+
+        withoutUndo(() => {
+          this.notesStore.handleChanges(
+            noteDocs.map((doc) => notesMapper.mapToModelData(doc)),
+            [],
+          );
+        });
+
+        return ids
+          .map((id) => this.notesStore.notesMap[id])
+          .filter((v) => Boolean(v));
+      })
+      .pipe(distinctUntilChanged((a, b) => isEqual(a, b)));
+  }
+
   async getNote(id: string) {
     if (this.notesStore.getNote(id)) {
       return this.notesStore.getNote(id);
@@ -107,12 +147,80 @@ export class NotesService {
       }
 
       withoutUndo(() => {
-        this.notesStore.handleChanges([notesMapper.mapToModelData(noteDoc)]);
+        this.notesStore.handleChanges(
+          [notesMapper.mapToModelData(noteDoc)],
+          [],
+        );
       });
 
       console.debug(`Loading Note#${id} from DB`);
 
       return this.notesStore.getNote(id);
     }
+  }
+
+  getAllNotesTuples$() {
+    return from(
+      this.dbEventsService.liveQuery([notesTable], () =>
+        this.notesRepository.getAll(),
+      ),
+    ).pipe(
+      map((rows) =>
+        rows.map((row) => ({
+          id: row.id,
+          title: row.title,
+          createdAt: new Date(row.createdAt),
+        })),
+      ),
+    );
+  }
+
+  getByTitles$(titles: string[]) {
+    return from(
+      this.dbEventsService.liveQuery([notesTable], () =>
+        this.notesRepository.getByTitles(titles),
+      ),
+    ).pipe(
+      map((rows): NoteModel[] => {
+        return rows.map((row) => {
+          withoutUndo(() => {
+            this.notesStore.handleChanges(
+              [notesMapper.mapToModelData(row)],
+              [],
+            );
+          });
+
+          console.debug(`Loading Note#${row.id} from DB`);
+
+          return this.notesStore.getNote(row.id);
+        });
+      }),
+    );
+  }
+
+  getNoteIdByTitle$(title: string) {
+    return from(
+      this.dbEventsService.liveQuery([notesTable], () =>
+        this.notesRepository.getByTitles([title]),
+      ) as Observable<NoteDoc[]>,
+    ).pipe(
+      map((docs) => docs[0]?.id),
+      distinctUntilChanged(),
+    );
+  }
+
+  async isNoteExists(title: string) {
+    if (
+      Object.values(this.notesStore.notesMap).find(
+        (note) => note.title === title,
+      )
+    )
+      return true;
+
+    return !!(await this.notesRepository.findBy({ title }));
+  }
+
+  async getTuplesWithoutDailyNotes() {
+    return this.notesRepository.getTuplesWithoutDailyNotes();
   }
 }

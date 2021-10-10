@@ -1,4 +1,4 @@
-import type { NoteBlockModel } from '../../../../newApps/VaultApplication/NoteBlocksExtension/models/NoteBlockModel';
+import type { NoteBlockModel } from '@harika/web-core/src/newApps/VaultApplication/NoteBlocksExtension/models/NoteBlockModel';
 import {
   allRightSiblingsFunc,
   deepLastRightChildFunc,
@@ -10,12 +10,12 @@ import {
   orderHashFunc,
   pathFunc,
   siblingsFunc,
-} from '../../../../lib/mobx-tree';
-import type { ITreeNode } from '../../../../lib/mobx-tree';
+} from '@harika/web-core/src/lib/mobx-tree';
+import type { ITreeNode } from '@harika/web-core/src/lib/mobx-tree';
 import { comparer, computed, makeObservable, observable } from 'mobx';
 import type { IComputedValue } from 'mobx';
-import { isTodo } from '../../../../lib/blockParser/astHelpers';
-import { BlockContentModel } from '../../../../newApps/VaultApplication/NoteBlocksExtension/models/BlockContentModel';
+import { isTodo } from '@harika/web-core/src/lib/blockParser/astHelpers';
+import { BlockContentModel } from '@harika/web-core/src/newApps/VaultApplication/NoteBlocksExtension/models/BlockContentModel';
 import { ArraySet, ModelCreationData } from 'mobx-keystone';
 import type { Optional } from 'utility-types';
 

@@ -1,5 +1,5 @@
 import { Model, model, modelAction, prop } from 'mobx-keystone';
-import { withoutUndoAction } from '../../../../lib/utils';
+import { withoutUndoAction } from '@harika/web-core/src/lib/utils';
 
 export interface EditState {
   isFocused: boolean;

@@ -1,21 +1,28 @@
-import { notesTable, SqlNotesRepository } from '../NotesApp/repositories/NotesRepository';
-import type { NoteDoc } from '../NotesApp/repositories/NotesRepository';
 import {
   noteBlocksTable,
   NotesBlocksRepository,
-} from '../../../newApps/VaultApplication/NoteBlocksExtension/repositories/NotesBlocksRepository';
-import type { NoteBlockDoc } from '../../../newApps/VaultApplication/NoteBlocksExtension/repositories/NotesBlocksRepository';
+} from '../../NoteBlocksExtension/repositories/NotesBlocksRepository';
+import type { NoteBlockDoc } from '../../NoteBlocksExtension/repositories/NotesBlocksRepository';
 import {
   BlocksScopesRepository,
   blocksScopesTable,
-} from '../../../newApps/VaultApplication/NoteBlocksExtension/repositories/BlockScopesRepository';
-import type { ISyncCtx } from '../../../extensions/SyncExtension/persistence/syncCtx';
+} from '../../NoteBlocksExtension/repositories/BlockScopesRepository';
+import type { ISyncCtx } from '../../../../extensions/SyncExtension/persistence/syncCtx';
 import { omit } from 'lodash-es';
+import { inject, injectable } from 'inversify';
+import {
+  NoteDoc,
+  NotesRepository,
+  notesTable,
+} from '../../NotesExtension/repositories/NotesRepository';
 
+@injectable()
 export class ImportExportService {
   constructor(
-    private notesRepo: SqlNotesRepository,
+    @inject(NotesRepository) private notesRepo: NotesRepository,
+    @inject(NotesBlocksRepository)
     private notesBlocksRepo: NotesBlocksRepository,
+    @inject(BlocksScopesRepository)
     private blocksScopesRepo: BlocksScopesRepository,
   ) {}
 
@@ -55,7 +62,6 @@ export class ImportExportService {
                   dailyNoteDate: doc.dailyNoteDate ? doc.dailyNoteDate : null,
                   createdAt: doc.createdAt ? doc.createdAt : null,
                   updatedAt: doc.updatedAt || new Date().getTime(),
-                  rootBlockId: doc.rootBlockId || rootBlockIds[doc.id],
                 };
 
                 return noteDoc;
