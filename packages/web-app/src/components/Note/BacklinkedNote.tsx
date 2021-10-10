@@ -2,7 +2,7 @@ import clsx from 'clsx';
 import { observer } from 'mobx-react-lite';
 import React, { useState } from 'react';
 import { useCurrentNote } from '../../hooks/useCurrentNote';
-import { useCurrentVaultApp } from '../../hooks/useCurrentVault';
+import { useCurrentVaultApp } from '../../hooks/useCurrentVaultApp';
 import { useHandleClick } from '../../hooks/useNoteClick';
 import { Arrow } from '../Arrow/Arrow';
 import { Link, useLocation } from 'react-router-dom';

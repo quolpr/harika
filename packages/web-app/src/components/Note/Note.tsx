@@ -6,7 +6,7 @@ import { observer } from 'mobx-react-lite';
 import { NoteModel, FocusedBlockState } from '@harika/web-core';
 import { useHistory, useLocation } from 'react-router-dom';
 import { LinkIcon } from '@heroicons/react/solid';
-import { useCurrentVaultApp } from '../../hooks/useCurrentVault';
+import { useCurrentVaultApp } from '../../hooks/useCurrentVaultApp';
 import { CurrentBlockInputRefContext } from '../../contexts';
 import { useVaultService } from '../../contexts/CurrentNotesServiceContext';
 import { NoteBlocks } from './NoteBlocks';

@@ -4,11 +4,14 @@ import './styles.css';
 import { Link } from 'react-router-dom';
 import TimeAgo from 'react-timeago';
 import { paths } from '../../paths';
-import { useVaultService } from '../../contexts/CurrentNotesServiceContext';
-import { useCurrentVaultApp } from '../../hooks/useCurrentVault';
 import { TrashIcon } from '@heroicons/react/solid';
 import { useObservable, useObservableState } from 'observable-hooks';
 import { LoadingDoneSubjectContext } from '../../contexts';
+import {
+  useCurrentVaultApp,
+  useNotesService,
+  useVaultService,
+} from '../../hooks/vaultAppHooks';
 
 type NoteTuple = {
   id: string;
@@ -17,18 +20,21 @@ type NoteTuple = {
 };
 
 const NoteRow = observer(({ note }: { note: NoteTuple }) => {
-  const vault = useCurrentVaultApp();
-  const noteRepo = useVaultService();
+  const vaultApp = useCurrentVaultApp();
+  const vaultService = useVaultService();
 
   const handleDelete = useCallback(async () => {
-    noteRepo.deleteNote(note.id);
-  }, [note.id, noteRepo]);
+    vaultService.deleteNote(note.id);
+  }, [note.id, vaultService]);
 
   return (
     <tr>
       <td className="pl-1">
         <Link
-          to={paths.vaultNotePath({ vaultId: vault.$modelId, noteId: note.id })}
+          to={paths.vaultNotePath({
+            vaultId: vaultApp.applicationId,
+            noteId: note.id,
+          })}
         >
           {note.title}
         </Link>
@@ -46,10 +52,10 @@ const NoteRow = observer(({ note }: { note: NoteTuple }) => {
 });
 
 export const NotesPage = () => {
-  const noteRepo = useVaultService();
+  const notesService = useNotesService();
   const loadingDoneSubject = useContext(LoadingDoneSubjectContext);
 
-  const input$ = useObservable(() => noteRepo.getAllNotesTuples$());
+  const input$ = useObservable(() => notesService.getAllNotesTuples$());
 
   const observedNotes = useObservableState(input$);
 

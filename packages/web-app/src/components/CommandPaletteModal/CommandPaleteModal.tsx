@@ -8,7 +8,7 @@ import { useKey } from 'react-use';
 import { v4 as uuidv4 } from 'uuid';
 import { paths } from '../../paths';
 import { useVaultService } from '../../contexts/CurrentNotesServiceContext';
-import { useCurrentVaultApp } from '../../hooks/useCurrentVault';
+import { useCurrentVaultApp } from '../../hooks/useCurrentVaultApp';
 import { Modal, modalClass } from '../Modal/Modal';
 import { debounce, map, Observable, of, switchMap, tap, timer } from 'rxjs';
 import { generateStackedNotePath } from '../../hooks/useNoteClick';

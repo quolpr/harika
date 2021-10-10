@@ -13,7 +13,7 @@ import {
   tap,
 } from 'rxjs/operators';
 import { isEqual } from 'lodash-es';
-import { useCurrentVaultApp } from '../../hooks/useCurrentVault';
+import { useCurrentVaultApp } from '../../hooks/useCurrentVaultApp';
 
 export const NoteBlocksHandlers = observer(
   ({ scope, note }: { scope: BlocksScope; note: NoteModel }) => {

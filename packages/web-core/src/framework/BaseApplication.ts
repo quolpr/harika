@@ -23,7 +23,7 @@ export abstract class BaseApplication {
   protected container: Container = new Container({ defaultScope: 'Singleton' });
   private worker!: Remote<RootWorker>;
 
-  constructor(protected applicationId: string) {}
+  constructor(public applicationId: string) {}
 
   async start() {
     this.container.bind(STOP_SIGNAL).toConstantValue(this.stop$);
@@ -34,6 +34,7 @@ export abstract class BaseApplication {
 
     this.worker = await this.loadWorker();
 
+    await this.register();
     await this.worker.registerProviders();
 
     this.container.bind(ROOT_WORKER).toConstantValue(this.worker);
@@ -72,6 +73,8 @@ export abstract class BaseApplication {
   abstract get extensions(): {
     new (...args: any): BaseExtension;
   }[];
+
+  async register() {}
 
   async onReady() {}
 

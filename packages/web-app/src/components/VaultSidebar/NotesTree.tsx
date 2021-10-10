@@ -1,5 +1,4 @@
 import React, { useCallback } from 'react';
-import { useCurrentVaultApp } from '../../hooks/useCurrentVault';
 import type { NotesTreeNote } from '@harika/web-core';
 import { cn } from '../../utils';
 import { Link, useHistory } from 'react-router-dom';
@@ -8,7 +7,11 @@ import ArrowDown from '../../icons/arrow-down.svgr.svg?component';
 import ArrowRight from '../../icons/arrow-right.svgr.svg?component';
 import { observer } from 'mobx-react-lite';
 import { usePrimaryNoteId } from '../../hooks/usePrimaryNote';
-import { useVaultService } from '../../contexts/CurrentNotesServiceContext';
+import {
+  useCurrentVaultApp,
+  useNotesTreeRegistry,
+  useVaultService,
+} from '../../hooks/vaultAppHooks';
 
 const treeClass = cn('notes-tree');
 const sidebarItemClass = cn('sidebar-item');
@@ -21,8 +24,8 @@ const NoteNode = observer(
     node: NotesTreeNote;
     onNavClick: (e: React.MouseEvent) => void;
   }) => {
-    const vault = useCurrentVaultApp();
-    const repo = useVaultService();
+    const vaultApp = useCurrentVaultApp();
+    const vaultService = useVaultService();
     const primaryNoteId = usePrimaryNoteId();
     const isFocused = primaryNoteId
       ? node.isExpanded
@@ -44,14 +47,16 @@ const NoteNode = observer(
       async (e: React.MouseEvent) => {
         onNavClick(e);
 
-        const newNote = await repo.createNote({ title: node.fullTitle });
+        const newNote = await vaultService.createNote({
+          title: node.fullTitle,
+        });
 
         if (newNote.status === 'ok') {
           node.setNoteId(newNote.data.$modelId);
 
           history.push(
             paths.vaultNotePath({
-              vaultId: vault.$modelId,
+              vaultId: vaultApp.applicationId,
               noteId: newNote.data.$modelId,
             }),
           );
@@ -59,7 +64,7 @@ const NoteNode = observer(
           alert('Failed to create note');
         }
       },
-      [history, node, onNavClick, repo, vault.$modelId],
+      [onNavClick, vaultService, node, history, vaultApp.applicationId],
     );
 
     return (
@@ -88,7 +93,7 @@ const NoteNode = observer(
           {node.noteId ? (
             <Link
               to={paths.vaultNotePath({
-                vaultId: vault.$modelId,
+                vaultId: vaultApp.applicationId,
                 noteId: node.noteId,
               })}
               onClick={onNavClick}
@@ -126,9 +131,9 @@ const NoteNode = observer(
 
 export const NotesTree = observer(
   ({ onNavClick }: { onNavClick: (e: React.MouseEvent) => void }) => {
-    const vault = useCurrentVaultApp();
+    const registry = useNotesTreeRegistry();
 
-    const rootNode = vault.notesTree.rootNodeRef.current;
+    const rootNode = registry.rootNodeRef.current;
 
     return (
       <div className={treeClass()}>

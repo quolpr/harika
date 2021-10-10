@@ -2,7 +2,6 @@ import React from 'react';
 import './styles.css';
 import { Link } from 'react-router-dom';
 import { paths } from '../../paths';
-import { useCurrentVaultApp } from '../../hooks/useCurrentVault';
 import { cn } from '../../utils';
 import { useCallback } from 'react';
 import VaultIcon from './vault.svgr.svg?component';
@@ -11,13 +10,17 @@ import NotesIcon from '../../icons/notes.svgr.svg?component';
 import UploadIcon from '../../icons/upload.svgr.svg?component';
 import DownloadIcon from '../../icons/download.svgr.svg?component';
 import { NotesTree } from './NotesTree';
-import { useVaultService } from '../../contexts/CurrentNotesServiceContext';
 import download from 'downloadjs';
 import dayjs from 'dayjs';
 import { useObservable, useObservableState } from 'observable-hooks';
 import { switchMap } from 'rxjs';
 import { useHandleClick } from '../../hooks/useNoteClick';
 import { usePrimaryNoteId } from '../../hooks/usePrimaryNote';
+import {
+  useCurrentVaultApp,
+  useNotesService,
+  useVaultService,
+} from '../../hooks/vaultAppHooks';
 
 const sidebarClass = cn('sidebar');
 
@@ -29,12 +32,13 @@ type IProps = {
 
 export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
   ({ className, isOpened, onNavClick }: IProps, ref) => {
-    const vault = useCurrentVaultApp();
-    const notesService = useVaultService();
+    const vaultApp = useCurrentVaultApp();
+    const notesService = useNotesService();
+    const vaultService = useVaultService();
     const primaryNoteId = usePrimaryNoteId();
 
     const handleDownloadClick = useCallback(async () => {
-      const str = await notesService.export();
+      const str = await vaultService.export();
 
       const bytes = new TextEncoder().encode(str);
       const blob = new Blob([bytes], {
@@ -43,12 +47,13 @@ export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
 
       download(
         blob,
-        `${vault.name
+        `${vaultApp
+          .getDbName()
           .replace(/[^a-z0-9]/gi, '_')
           .toLowerCase()}-${dayjs().format('DD-MM-YYYY')}.json`,
         'application/json',
       );
-    }, [notesService, vault.name]);
+    }, [vaultApp, vaultService]);
 
     const handleImport = useCallback(
       (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -60,14 +65,14 @@ export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
 
           try {
             const result = JSON.parse(eReader.target.result.toString());
-            notesService.import(result);
+            vaultService.import(result);
           } catch (e) {
             alert('Failed to import db');
           }
         };
         reader.readAsText(e.target.files[0]);
       },
-      [notesService],
+      [vaultService],
     );
 
     const dailyNote$ = useObservable(
@@ -81,7 +86,7 @@ export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
     const dailyNote = useObservableState(dailyNote$, undefined);
 
     const handleClick = useHandleClick(
-      vault,
+      vaultApp.applicationId,
       primaryNoteId,
       dailyNote?.$modelId,
     );
@@ -105,13 +110,15 @@ export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
               <VaultIcon />
             </Link>
           </div>
-          <div className={sidebarClass('header-vault-name')}>{vault.name}</div>
+          <div className={sidebarClass('header-vault-name')}>
+            {vaultApp.vaultName}
+          </div>
         </div>
         <div className={sidebarClass('menu-container')}>
           <div className={sidebarClass('menu')}>
             <Link
               className={sidebarClass('menu-link sidebar-item')}
-              to={paths.vaultDailyPath({ vaultId: vault.$modelId })}
+              to={paths.vaultDailyPath({ vaultId: vaultApp.applicationId })}
               onClick={onDailyNoteClick}
             >
               <div className={sidebarClass('menu-link-icon')}>
@@ -123,7 +130,7 @@ export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
 
             <Link
               className={sidebarClass('menu-link sidebar-item')}
-              to={paths.vaultNoteIndexPath({ vaultId: vault.$modelId })}
+              to={paths.vaultNoteIndexPath({ vaultId: vaultApp.applicationId })}
               onClick={onNavClick}
             >
               <div className={sidebarClass('menu-link-icon')}>

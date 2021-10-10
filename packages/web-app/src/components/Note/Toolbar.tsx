@@ -1,6 +1,6 @@
 import { observer } from 'mobx-react-lite';
 import React, { useCallback, useContext, useEffect, useRef } from 'react';
-import { useCurrentVaultApp } from '../../hooks/useCurrentVault';
+import { useCurrentVaultApp } from '../../hooks/useCurrentVaultApp';
 import { cn, insertText } from '../../utils';
 import type { BlocksScope } from '@harika/web-core';
 import {

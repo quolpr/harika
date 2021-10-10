@@ -15,8 +15,22 @@ import { NoteBlocksService } from './NoteBlocksExtension/services/NoteBlocksServ
 import { FindNoteOrBlockService } from './VaultExtension/services/FindNoteOrBlockService';
 import { DeleteNoteService } from './VaultExtension/services/DeleteNoteService';
 import { ImportExportService } from './VaultExtension/services/ImportExportService';
+import { DB_NAME } from '../../extensions/DbExtension/types';
+import { VaultAppRootStore } from './AppRootStore';
 
 export class VaultApplication extends BaseApplication {
+  constructor(applicationId: string, public vaultName: string) {
+    super(applicationId);
+  }
+
+  async register() {
+    this.container.bind(VaultAppRootStore).toSelf();
+  }
+
+  getRootStore() {
+    return this.container.get(VaultAppRootStore);
+  }
+
   getVaultService() {
     return this.container.get(VaultService);
   }
@@ -43,6 +57,10 @@ export class VaultApplication extends BaseApplication {
 
   getImportExportService() {
     return this.container.get(ImportExportService);
+  }
+
+  getDbName() {
+    return this.container.get<string>(DB_NAME);
   }
 
   get applicationName() {

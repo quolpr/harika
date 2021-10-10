@@ -1,24 +1,23 @@
 import { useEffect } from 'react';
 import dayjs from 'dayjs';
 import { useHistory } from 'react-router-dom';
-import { useVaultService } from '../contexts/CurrentNotesServiceContext';
-import { useCurrentVaultApp } from '../hooks/useCurrentVault';
 import { observer } from 'mobx-react-lite';
 import { paths } from '../paths';
+import { useCurrentVaultApp, useVaultService } from '../hooks/vaultAppHooks';
 
 export const DailyNotePage = observer(() => {
-  const vault = useCurrentVaultApp();
-  const noteRepo = useVaultService();
+  const vaultApp = useCurrentVaultApp();
+  const vaultService = useVaultService();
   const history = useHistory();
 
   useEffect(() => {
     const toExecute = async () => {
-      const result = await noteRepo.getOrCreateDailyNote(dayjs());
+      const result = await vaultService.getOrCreateDailyNote(dayjs());
 
       if (result.status === 'ok') {
         history.replace(
           paths.vaultNotePath({
-            vaultId: vault.$modelId,
+            vaultId: vaultApp.applicationId,
             noteId: result.data.$modelId,
           }),
         );
@@ -26,7 +25,7 @@ export const DailyNotePage = observer(() => {
     };
 
     toExecute();
-  }, [history, vault.$modelId, noteRepo]);
+  }, [history, vaultService, vaultApp.applicationId]);
 
   return null;
 });

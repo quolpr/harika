@@ -2,8 +2,8 @@ import { NoteModel } from '@harika/web-core';
 import pathToRegexp from 'path-to-regexp';
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { useVaultService } from '../contexts/CurrentNotesServiceContext';
 import { PATHS } from '../paths';
+import { useNotesService } from './vaultAppHooks';
 
 export const usePrimaryNoteId = () => {
   const location = useLocation();
@@ -16,18 +16,18 @@ export const usePrimaryNoteId = () => {
 
 export const usePrimaryNote = () => {
   const primaryNoteId = usePrimaryNoteId();
-  const repo = useVaultService();
+  const notesService = useNotesService();
   const [primaryNote, setPrimaryNote] = useState<NoteModel>();
 
   useEffect(() => {
     const callback = async () => {
       if (!primaryNoteId) return;
 
-      setPrimaryNote(await repo.getNote(primaryNoteId));
+      setPrimaryNote(await notesService.getNote(primaryNoteId));
     };
 
     callback();
-  }, [primaryNoteId, repo]);
+  }, [primaryNoteId, notesService]);
 
   return primaryNote;
 };

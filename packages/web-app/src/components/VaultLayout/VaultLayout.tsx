@@ -1,4 +1,3 @@
-import type { UserApp, VaultApp } from '@harika/web-core';
 import React, {
   useCallback,
   useContext,
@@ -8,8 +7,6 @@ import React, {
 } from 'react';
 import { useHistory, useLocation, useParams } from 'react-router-dom';
 import { useClickAway, useMedia } from 'react-use';
-import { NotesServiceContext } from '../../contexts/CurrentNotesServiceContext';
-import { CurrentVaultAppContext } from '../../contexts/CurrentVaultContext';
 import { VaultHeader } from '../VaultHeader/VaultHeader';
 import { VaultSidebar } from '../VaultSidebar/VaultSidebar';
 
@@ -21,6 +18,8 @@ import { Observable } from 'rxjs';
 import { mapTo, switchMap, take, tap } from 'rxjs/operators';
 import { bem } from '../../utils';
 import { UndoRedoManagerProvider } from '../UndoRedoManagerProvider';
+import { UserApplication, VaultApplication } from '@harika/web-core';
+import { CurrentVaultAppContext } from '../../hooks/vaultAppHooks';
 
 const layoutClass = bem('vault-layout');
 
@@ -99,12 +98,12 @@ const useKeepScroll = () => {
 };
 
 export const VaultLayout: React.FC<{
-  vaultService: UserApp;
-}> = ({ children, vaultService }) => {
+  userApp: UserApplication;
+}> = ({ children, userApp }) => {
   const history = useHistory();
   const { vaultId } = useParams<{ vaultId: string }>();
   const isWide = useMedia('(min-width: 768px)');
-  const [notesService, setNotesRepo] = useState<VaultApp | undefined>();
+  const [vaultApp, setVaultApp] = useState<VaultApplication | undefined>();
   const [isSidebarOpened, setIsSidebarOpened] = useState(isWide);
 
   const togglerRef = useRef<HTMLDivElement>(null);
@@ -117,28 +116,37 @@ export const VaultLayout: React.FC<{
 
   useEffect(() => {
     let closeDevtool = () => {};
+    let vaultApp: VaultApplication | undefined = undefined;
 
     const cb = async () => {
-      const repo = await vaultService.getNotesService(vaultId);
+      const vault = await userApp.getVaultsService().getVault(vaultId);
+      vaultApp = vault && new VaultApplication(vault.id, vault.name);
 
-      if (!repo) {
+      if (!vaultApp) {
         writeStorage('lastVaultId', undefined);
 
         history.replace('/');
 
         return;
       } else {
-        setNotesRepo(repo);
+        await vaultApp.start();
+
+        setVaultApp(vaultApp);
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         if ((window as any).__REDUX_DEVTOOLS_EXTENSION__) {
           closeDevtool = await (
             await import('../../connectReduxDevtool')
-          ).connect(repo.vault, `Vault ${repo.vault.name}`);
+          ).connect(
+            vaultApp.getRootStore(),
+            `Vault ${vaultApp.applicationName}`,
+          );
         }
 
         if (import.meta.env.MODE === 'production') {
-          (await import('../../connectSentry')).connectSentry(repo.vault);
+          (await import('../../connectSentry')).connectSentry(
+            vaultApp.getRootStore(),
+          );
         }
       }
     };
@@ -146,12 +154,11 @@ export const VaultLayout: React.FC<{
     cb();
 
     return () => {
-      vaultService.closeNotesRepo(vaultId);
-
-      setNotesRepo(undefined);
+      vaultApp?.stop();
+      setVaultApp(undefined);
       closeDevtool();
     };
-  }, [vaultService, vaultId, history]);
+  }, [userApp, vaultId, history]);
 
   // TODO: reset focused block on page change
 
@@ -172,60 +179,58 @@ export const VaultLayout: React.FC<{
 
   const { mainRef, handleScroll } = useKeepScroll();
 
-  if (!notesService) return null;
+  if (!vaultApp) return null;
 
   return (
-    <CurrentVaultAppContext.Provider value={notesService.vault}>
-      <NotesServiceContext.Provider value={notesService}>
-        <FooterRefContext.Provider value={footerRef}>
-          <UndoRedoManagerProvider notesService={notesService}>
-            <div className={layoutClass()}>
-              <VaultSidebar
-                ref={sidebarRef}
-                className={layoutClass('sidebar', {
-                  closed: !isSidebarOpened,
-                })}
-                isOpened={isSidebarOpened}
-                onNavClick={closeSidebar}
-              />
+    <CurrentVaultAppContext.Provider value={vaultApp}>
+      <FooterRefContext.Provider value={footerRef}>
+        <UndoRedoManagerProvider>
+          <div className={layoutClass()}>
+            <VaultSidebar
+              ref={sidebarRef}
+              className={layoutClass('sidebar', {
+                closed: !isSidebarOpened,
+              })}
+              isOpened={isSidebarOpened}
+              onNavClick={closeSidebar}
+            />
+
+            <div
+              className={layoutClass('container', {
+                'with-padding': isSidebarOpened,
+              })}
+            >
+              <div className={layoutClass('header-wrapper')}>
+                <VaultHeader
+                  className={layoutClass('header')}
+                  onTogglerClick={handleTogglerClick}
+                  isTogglerToggled={isSidebarOpened}
+                  togglerRef={togglerRef}
+                />
+              </div>
 
               <div
-                className={layoutClass('container', {
-                  'with-padding': isSidebarOpened,
-                })}
+                className={layoutClass('main-wrapper')}
+                onScroll={handleScroll}
+                ref={mainRef}
               >
-                <div className={layoutClass('header-wrapper')}>
-                  <VaultHeader
-                    className={layoutClass('header')}
-                    onTogglerClick={handleTogglerClick}
-                    isTogglerToggled={isSidebarOpened}
-                    togglerRef={togglerRef}
-                  />
-                </div>
-
-                <div
-                  className={layoutClass('main-wrapper')}
-                  onScroll={handleScroll}
-                  ref={mainRef}
+                <section
+                  className={layoutClass('main', {
+                    'sidebar-opened': isSidebarOpened,
+                  })}
                 >
-                  <section
-                    className={layoutClass('main', {
-                      'sidebar-opened': isSidebarOpened,
-                    })}
-                  >
-                    {children}
-                  </section>
-                </div>
-
-                <div
-                  className={layoutClass('footer-wrapper')}
-                  ref={footerRef}
-                ></div>
+                  {children}
+                </section>
               </div>
+
+              <div
+                className={layoutClass('footer-wrapper')}
+                ref={footerRef}
+              ></div>
             </div>
-          </UndoRedoManagerProvider>
-        </FooterRefContext.Provider>
-      </NotesServiceContext.Provider>
+          </div>
+        </UndoRedoManagerProvider>
+      </FooterRefContext.Provider>
     </CurrentVaultAppContext.Provider>
   );
 };

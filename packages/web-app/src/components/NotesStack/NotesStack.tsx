@@ -11,7 +11,7 @@ import './styles.css';
 import { useFindNote } from './useFindNote';
 import { useHistory, useLocation } from 'react-router-dom';
 import { paths } from '../../paths';
-import { useCurrentVaultApp } from '../../hooks/useCurrentVault';
+import { useCurrentVaultApp } from '../../hooks/useCurrentVaultApp';
 import { ContainerElRefContext } from '../../contexts/ContainerElRefContext';
 
 const notesStackClass = cn('notes-stack');

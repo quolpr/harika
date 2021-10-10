@@ -9,7 +9,7 @@ import type {
   ScopedBlock,
 } from '@harika/web-core';
 import { useVaultService } from '../../contexts/CurrentNotesServiceContext';
-import { useCurrentVaultApp } from '../../hooks/useCurrentVault';
+import { useCurrentVaultApp } from '../../hooks/useCurrentVaultApp';
 import { useCurrentNote } from '../../hooks/useCurrentNote';
 import { useHandleClick } from '../../hooks/useNoteClick';
 import { paths } from '../../paths';

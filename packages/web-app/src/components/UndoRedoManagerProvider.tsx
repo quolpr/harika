@@ -1,8 +1,8 @@
 import React, { useEffect, useRef } from 'react';
-import { VaultApp } from '@harika/web-core';
 import { UndoManager, undoMiddleware } from 'mobx-keystone';
 import { createContext, useMemo } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
+import { useRootStore } from '../hooks/vaultAppHooks';
 
 const UndoRedoContext = createContext<UndoManager>(
   undefined as unknown as UndoManager,
@@ -12,63 +12,63 @@ interface AttachedState {
   currentPath: string;
 }
 
-export const UndoRedoManagerProvider: React.FC<{ notesService: VaultApp }> =
-  ({ notesService, children }) => {
-    let history = useHistory();
-    let location = useLocation();
+export const UndoRedoManagerProvider: React.FC = ({ children }) => {
+  let history = useHistory();
+  let location = useLocation();
 
-    const historyRef = useRef(history);
-    const locationRef = useRef(location);
+  const rootStore = useRootStore();
+  const historyRef = useRef(history);
+  const locationRef = useRef(location);
 
-    useEffect(() => {
-      historyRef.current = history;
-      locationRef.current = location;
-    }, [history, location]);
+  useEffect(() => {
+    historyRef.current = history;
+    locationRef.current = location;
+  }, [history, location]);
 
-    const manager = useMemo(() => {
-      return undoMiddleware(notesService.vault, undefined, {
-        attachedState: {
-          save(): AttachedState {
-            return {
-              currentPath: locationRef.current.pathname,
-            };
-          },
-          restore(attachedState: AttachedState) {
-            if (attachedState.currentPath !== locationRef.current.pathname) {
-              historyRef.current.replace(attachedState.currentPath);
-            }
-          },
+  const manager = useMemo(() => {
+    return undoMiddleware(rootStore, undefined, {
+      attachedState: {
+        save(): AttachedState {
+          return {
+            currentPath: locationRef.current.pathname,
+          };
         },
-      });
-    }, [notesService.vault]);
-
-    useEffect(() => {
-      const listener = function (event: KeyboardEvent) {
-        if (
-          (event.ctrlKey || event.metaKey) &&
-          event.shiftKey &&
-          event.code === 'KeyZ'
-        ) {
-          if (manager.canRedo) {
-            manager.redo();
+        restore(attachedState: AttachedState) {
+          if (attachedState.currentPath !== locationRef.current.pathname) {
+            historyRef.current.replace(attachedState.currentPath);
           }
-        } else if ((event.ctrlKey || event.metaKey) && event.code === 'KeyZ') {
-          if (manager.canUndo) {
-            manager.undo();
-          }
-        }
-      };
-
-      document.addEventListener('keydown', listener);
-
-      return () => {
-        document.removeEventListener('keydown', listener);
-      };
+        },
+      },
     });
+  }, [rootStore]);
 
-    return (
-      <UndoRedoContext.Provider value={manager}>
-        {children}
-      </UndoRedoContext.Provider>
-    );
-  };
+  useEffect(() => {
+    const listener = function (event: KeyboardEvent) {
+      if (
+        (event.ctrlKey || event.metaKey) &&
+        event.shiftKey &&
+        event.code === 'KeyZ'
+      ) {
+        if (manager.canRedo) {
+          manager.redo();
+        }
+      } else if ((event.ctrlKey || event.metaKey) && event.code === 'KeyZ') {
+        if (manager.canUndo) {
+          manager.undo();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', listener);
+
+    return () => {
+      document.removeEventListener('keydown', listener);
+    };
+  });
+
+  return (
+    <UndoRedoContext.Provider value={manager}>
+      {children}
+    </UndoRedoContext.Provider>
+  );
+};

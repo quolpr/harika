@@ -5,7 +5,7 @@ import { NEVER, of, race } from 'rxjs';
 import { timeout, map } from 'rxjs/operators';
 import { LoadingDoneSubjectContext } from '../../contexts';
 import { useVaultService } from '../../contexts/CurrentNotesServiceContext';
-import { useCurrentVaultApp } from '../../hooks/useCurrentVault';
+import { useCurrentVaultApp } from '../../hooks/useCurrentVaultApp';
 import { paths } from '../../paths';
 
 type IPipeResult = { status: 'found'; id: string } | { status: 'not_found' };

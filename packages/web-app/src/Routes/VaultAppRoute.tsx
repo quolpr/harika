@@ -50,7 +50,7 @@ export const VaultAppRoute = () => {
       <Route path={VAULT_PREFIX}>
         <OnlyAuthed>
           {userApplication && (
-            <VaultLayout vaultService={userApplication}>
+            <VaultLayout userApp={userApplication}>
               <Switch>
                 <Route exact path={PATHS.VAULT_DAILY_PATH}>
                   <DailyNotePage />

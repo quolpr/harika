@@ -17,6 +17,10 @@ export class UserVaultsService {
     private dbEventsService: DbEventsListenService,
   ) {}
 
+  async getVault(id: string) {
+    return await this.vaultsRepo.getById(id);
+  }
+
   getAllVaultTuples$() {
     return this.dbEventsService
       .liveQuery([vaultsTable], () => this.vaultsRepo.getAll())

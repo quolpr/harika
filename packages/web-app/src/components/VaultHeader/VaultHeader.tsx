@@ -9,12 +9,11 @@ import { useClickAway, useKey } from 'react-use';
 import { observer } from 'mobx-react-lite';
 import { CommandPaletteModal } from '../CommandPaletteModal/CommandPaleteModal';
 import { paths } from '../../paths';
-import { useVaultService } from '../../contexts/CurrentNotesServiceContext';
-import { useCurrentVaultApp } from '../../hooks/useCurrentVault';
 import { cn } from '../../utils';
 import { generateStackedNotePath } from '../../hooks/useNoteClick';
 import { usePrimaryNote } from '../../hooks/usePrimaryNote';
 import { SyncState } from '../SyncState/SyncState';
+import { useCurrentVaultApp, useVaultService } from '../../hooks/vaultAppHooks';
 
 const vaultHeaderClass = cn('header');
 
@@ -31,7 +30,7 @@ export const VaultHeader = observer(
     togglerRef: React.Ref<HTMLElement>;
   }) => {
     const location = useLocation();
-    const vault = useCurrentVaultApp();
+    const vaultApp = useCurrentVaultApp();
     const noteService = useVaultService();
     const history = useHistory();
 
@@ -72,7 +71,7 @@ export const VaultHeader = observer(
             history.replace(
               generateStackedNotePath(
                 location.search,
-                vault.$modelId,
+                vaultApp.applicationId,
                 primaryNoteId,
                 result.data.$modelId,
               ),
@@ -80,14 +79,20 @@ export const VaultHeader = observer(
           } else {
             history.replace(
               paths.vaultNotePath({
-                vaultId: vault.$modelId,
+                vaultId: vaultApp.applicationId,
                 noteId: result.data.$modelId,
               }) + location.search,
             );
           }
         }
       },
-      [noteService, primaryNoteId, history, location.search, vault.$modelId],
+      [
+        noteService,
+        primaryNoteId,
+        history,
+        location.search,
+        vaultApp.applicationId,
+      ],
     );
 
     return (

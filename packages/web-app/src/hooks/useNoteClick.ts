@@ -1,4 +1,3 @@
-import type { Vault } from '@harika/web-core';
 import queryString from 'query-string';
 import { useCallback } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
@@ -30,7 +29,7 @@ export const generateStackedNotePath = (
 };
 
 export const useHandleClick = (
-  vault: Vault,
+  vaultId: string,
   currentNoteId: string | undefined,
   nextNoteId: string | undefined,
   forceStackOpen = false,
@@ -58,7 +57,7 @@ export const useHandleClick = (
         history.push(
           generateStackedNotePath(
             location.search,
-            vault.$modelId,
+            vaultId,
             currentNoteId,
             nextNoteId,
           ),
@@ -66,7 +65,7 @@ export const useHandleClick = (
       } else {
         history.push(
           paths.vaultNotePath({
-            vaultId: vault.$modelId,
+            vaultId: vaultId,
             noteId: nextNoteId,
           }) + location.search,
         );
@@ -78,7 +77,7 @@ export const useHandleClick = (
       history,
       location.search,
       nextNoteId,
-      vault.$modelId,
+      vaultId,
     ],
   );
 };

@@ -2,8 +2,8 @@ import { FocusedBlockState } from '@harika/web-core';
 import type { EditState } from '@harika/web-core';
 import { comparer, computed } from 'mobx';
 import { useCallback } from 'react';
-import { useBlocksApp } from './useCurrentVault';
 import { isEqual } from 'lodash-es';
+import { useFocusedBlock } from './vaultAppHooks';
 
 export const useCurrentFocusedBlockState = (
   scopeId: string,
@@ -21,10 +21,10 @@ export const useCurrentFocusedBlockState = (
       | undefined,
   ) => void,
 ] => {
-  const blocksApp = useBlocksApp();
+  const focusedBlock = useFocusedBlock();
 
   const focusState = computed(
-    () => blocksApp.focusedBlock.getFocusState(scopeId, scopedBlockId),
+    () => focusedBlock.getFocusState(scopeId, scopedBlockId),
     { equals: comparer.shallow },
   ).get();
 
@@ -40,9 +40,9 @@ export const useCurrentFocusedBlockState = (
         | undefined,
     ) => {
       if (block) {
-        if (isEqual(blocksApp.focusedBlock.state, block)) return;
+        if (isEqual(focusedBlock.state, block)) return;
 
-        blocksApp.focusedBlock.setState(
+        focusedBlock.setState(
           FocusedBlockState.create(
             block.scopeId,
             block.scopedBlockId,
@@ -51,10 +51,10 @@ export const useCurrentFocusedBlockState = (
           ),
         );
       } else {
-        blocksApp.focusedBlock.setState(undefined);
+        focusedBlock.setState(undefined);
       }
     },
-    [blocksApp.focusedBlock],
+    [focusedBlock],
   );
 
   return [focusState, setState];

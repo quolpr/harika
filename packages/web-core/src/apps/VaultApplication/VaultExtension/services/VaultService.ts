@@ -26,7 +26,6 @@ import {
   TagToken,
 } from '../../../../lib/blockParser/types';
 import { Dayjs } from 'dayjs';
-import { ICreationResult } from '../../../../framework/types';
 import { DeleteNoteService } from './DeleteNoteService';
 
 @injectable()
@@ -55,18 +54,13 @@ export class VaultService {
     options?: { isDaily?: boolean },
   ) {
     const result = await this.notesService.createNote(attrs, options);
+
     if (result.status === 'ok') {
-      const { registry, rootBlock } = this.noteBlocksService.createBlocksTree(
-        result.data.$modelId,
-      );
+      this.noteBlocksService.createBlocksTree(result.data.$modelId);
 
       return {
         status: 'ok' as const,
-        data: {
-          note: result.data,
-          registry,
-          rootBlock,
-        },
+        data: result.data,
       };
     } else {
       return result;
@@ -80,7 +74,7 @@ export class VaultService {
       return {
         status: 'ok',
         data: note,
-      } as ICreationResult<NoteModel>;
+      };
     }
 
     const title = date.format('D MMM YYYY');
@@ -200,7 +194,7 @@ export class VaultService {
                 );
 
                 if (result.status === 'ok') {
-                  return result.data.note;
+                  return result.data;
                 } else {
                   alert(JSON.stringify(result.errors));
                 }
