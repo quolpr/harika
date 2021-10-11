@@ -55,7 +55,7 @@ export abstract class BaseApplication {
   }
 
   private async loadWorker() {
-    let worker = new this.workerClass();
+    let worker = this.workerClass();
 
     initBackend(worker);
 
@@ -65,7 +65,13 @@ export abstract class BaseApplication {
       windowId: string,
     ) => Promise<Remote<RootWorker>>;
 
-    return await new Klass(this.applicationName, this.applicationId, windowId);
+    const res = await new Klass(
+      this.applicationName,
+      this.applicationId,
+      windowId,
+    );
+
+    return res;
   }
 
   abstract get workerClass(): any;

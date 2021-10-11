@@ -1,6 +1,5 @@
 import { observer } from 'mobx-react-lite';
 import React, { useCallback, useContext, useEffect, useRef } from 'react';
-import { useCurrentVaultApp } from '../../hooks/useCurrentVaultApp';
 import { cn, insertText } from '../../utils';
 import type { BlocksScope } from '@harika/web-core';
 import {
@@ -17,13 +16,14 @@ import useResizeObserver from 'use-resize-observer/polyfilled';
 import { useUnmount } from 'react-use';
 import { CurrentBlockInputRefContext } from '../../contexts';
 import scrollIntoView from 'scroll-into-view-if-needed';
+import { useFocusedBlock } from '../../hooks/vaultAppHooks';
 
 const toolbarClass = cn('toolbar');
 
 export const Toolbar = observer(({ scope }: { scope: BlocksScope }) => {
   const footerRef = useContext(FooterRefContext);
 
-  const vault = useCurrentVaultApp();
+  const focusedBlock = useFocusedBlock();
 
   const currentBlockInputRef = useContext(CurrentBlockInputRefContext);
 
@@ -39,8 +39,8 @@ export const Toolbar = observer(({ scope }: { scope: BlocksScope }) => {
     }, 0);
   }, [currentBlockInputRef]);
 
-  const currentBlock = vault.noteBlocksApp.focusedBlock.state?.scopedBlockId
-    ? scope.getView(vault.noteBlocksApp.focusedBlock.state?.scopedBlockId)
+  const currentBlock = focusedBlock.state?.scopedBlockId
+    ? scope.getView(focusedBlock.state?.scopedBlockId)
     : undefined;
 
   const handleTodoPress = useCallback(

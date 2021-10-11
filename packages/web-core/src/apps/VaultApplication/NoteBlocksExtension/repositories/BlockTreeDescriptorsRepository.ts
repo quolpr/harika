@@ -1,5 +1,5 @@
 import { BaseSyncRepository } from '../../../../extensions/SyncExtension/persistence/BaseSyncRepository';
-import { BlocksScopesChangesApplier } from '../sync/BlocksScopesChangesApplier';
+import { BlocksScopesChangesApplier } from '../../BlocksScopeExtension/sync/BlocksScopesChangesApplier';
 
 export const blocksTreeDescriptorsTable = 'blocksTreesDescriptors' as const;
 

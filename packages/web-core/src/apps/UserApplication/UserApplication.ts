@@ -3,7 +3,8 @@ import { SyncAppExtension } from '../../extensions/SyncExtension/SyncAppExtensio
 import { BaseApplication } from '../../framework/BaseApplication';
 import { UserVaultsService } from './UserExtension/services/UserVaultsService';
 import { UserExtension } from './UserExtension/UserExtension';
-import { UserRootWorker } from './UserRootWorker';
+// @ts-ignore
+import UserRootWorker from './UserRootWorker?worker';
 
 export class UserApplication extends BaseApplication {
   getVaultsService() {

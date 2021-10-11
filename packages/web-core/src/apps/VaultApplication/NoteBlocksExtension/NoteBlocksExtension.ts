@@ -4,15 +4,15 @@ import { BaseExtension } from '../../../framework/BaseExtension';
 import { RemoteRegister } from '../../../framework/RemoteRegister';
 import { NoteBlocksExtensionStore } from './models/NoteBlocksExtensionStore';
 import { NotesBlocksRepository } from './repositories/NotesBlocksRepository';
-import { BlocksScopesRepository } from './repositories/BlockScopesRepository';
-import { blocksScopesMapper } from './mappers/blockScopesMapper';
+import { BlocksScopesRepository } from '../BlocksScopeExtension/repositories/BlockScopesRepository';
+import { blocksScopesMapper } from '../BlocksScopeExtension/mappers/blockScopesMapper';
 import { blocksTreeDescriptorsMapper } from './mappers/blocksTreeDescriptorsMapper';
 import { noteBlocksMapper } from './mappers/noteBlocksMapper';
 import { BlocksTreeDescriptorsRepository } from './repositories/BlockTreeDescriptorsRepository';
 import { SyncConfig } from '../../../extensions/SyncExtension/serverSynchronizer/SyncConfig';
 import { NoteBlockModel } from './models/NoteBlockModel';
-import { BlocksScope } from './models/BlocksScope';
 import { BlocksTreeDescriptor } from './models/BlocksTreeDescriptor';
+import { NoteBlocksService } from './services/NoteBlocksService';
 
 @injectable()
 export class NoteBlocksExtension extends BaseExtension {
@@ -26,9 +26,9 @@ export class NoteBlocksExtension extends BaseExtension {
     registerRootStore(store);
 
     this.container.bind(NoteBlocksExtensionStore).toConstantValue(store);
+    this.container.bind(NoteBlocksService).toSelf();
 
     await this.remoteRegister.registerRemote(NotesBlocksRepository);
-    await this.remoteRegister.registerRemote(BlocksScopesRepository);
     await this.remoteRegister.registerRemote(BlocksTreeDescriptorsRepository);
   }
 
@@ -50,14 +50,13 @@ export class NoteBlocksExtension extends BaseExtension {
 
     disposes.push(
       syncConfig.onModelChange(
-        [BlocksTreeDescriptor, NoteBlockModel, BlocksScope],
+        [BlocksTreeDescriptor, NoteBlockModel],
         (attrs, deletedIds) => {
-          const [descriptorAttrs, blocksAttrs, scopeAttrs] = attrs;
+          const [descriptorAttrs, blocksAttrs] = attrs;
 
           store.handleModelChanges(
             descriptorAttrs,
             blocksAttrs,
-            scopeAttrs,
             deletedIds,
             false,
           );

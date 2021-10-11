@@ -4,15 +4,15 @@ import { useHistory } from 'react-router-dom';
 import { NEVER, of, race } from 'rxjs';
 import { timeout, map } from 'rxjs/operators';
 import { LoadingDoneSubjectContext } from '../../contexts';
-import { useVaultService } from '../../contexts/CurrentNotesServiceContext';
-import { useCurrentVaultApp } from '../../hooks/useCurrentVaultApp';
+import { useCurrentVaultId, useNotesService } from '../../hooks/vaultAppHooks';
 import { paths } from '../../paths';
 
 type IPipeResult = { status: 'found'; id: string } | { status: 'not_found' };
 
 export const useFindNote = (noteId: string) => {
-  const vault = useCurrentVaultApp();
-  const notesService = useVaultService();
+  const vaultId = useCurrentVaultId();
+  const notesService = useNotesService();
+
   const history = useHistory();
 
   const [note, setNote] = useState<NoteModel | undefined>();
@@ -63,7 +63,7 @@ export const useFindNote = (noteId: string) => {
         next(res) {
           if (res.status === 'found') {
             history.replace(
-              paths.vaultNotePath({ vaultId: vault.$modelId, noteId: res.id }),
+              paths.vaultNotePath({ vaultId: vaultId, noteId: res.id }),
             );
           } else {
             setIsLoading(false);
@@ -73,7 +73,7 @@ export const useFindNote = (noteId: string) => {
 
       return () => flow.unsubscribe();
     }
-  }, [history, noteId, notesService, noteTitle, vault.$modelId, note]);
+  }, [history, noteId, notesService, noteTitle, note, vaultId]);
 
   return { note, isLoading };
 };

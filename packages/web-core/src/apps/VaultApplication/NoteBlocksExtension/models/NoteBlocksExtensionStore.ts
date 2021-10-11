@@ -1,10 +1,8 @@
-import { arraySet, Model, model, modelAction, prop } from 'mobx-keystone';
+import { Model, model, modelAction, prop } from 'mobx-keystone';
 import type { ModelCreationData } from 'mobx-keystone';
-import { BlocksScope } from './BlocksScope';
 import { BlockModelsRegistry } from './BlockModelsRegistry';
 import { NoteBlockModel } from './NoteBlockModel';
 import { BlockContentModel } from './BlockContentModel';
-import { withoutUndoAction } from '../../../../lib/utils';
 import { withoutSyncAction } from '../../../../extensions/SyncExtension/mobx-keystone/syncable';
 import { BlocksTreeDescriptor } from './BlocksTreeDescriptor';
 import { generateId } from '../../../../lib/generateId';
@@ -16,21 +14,10 @@ export const isBlocksApp = (obj: any): obj is NoteBlocksExtensionStore => {
   return obj.$modelType === blocksApp;
 };
 
-export const getScopeKey = (
-  noteId: string,
-  scopedModelId: string,
-  scopedModelType: string,
-  rootBlockViewId: string,
-) => {
-  return `${noteId}-${scopedModelType}-${scopedModelId}-${rootBlockViewId}`;
-};
-
 @model(blocksApp)
 export class NoteBlocksExtensionStore extends Model({
   // key === noteId
   blocksRegistries: prop<Record<string, BlockModelsRegistry>>(() => ({})),
-  blocksScopes: prop<Record<string, BlocksScope>>(() => ({})),
-
   blocksTreeDescriptors: prop<Record<string, BlocksTreeDescriptor>>(() => ({})),
 }) {
   areBlocksOfNoteLoaded(noteId: string) {
@@ -83,98 +70,6 @@ export class NoteBlocksExtensionStore extends Model({
     }
 
     return { registry, rootBlock };
-  }
-
-  @withoutUndoAction
-  @modelAction
-  getOrCreateScopes(
-    args: {
-      noteId: string;
-      scopedBy: { $modelId: string; $modelType: string };
-      collapsedBlockIds: string[];
-      rootBlockViewId: string;
-    }[],
-  ) {
-    return args.map((arg) => {
-      const key = getScopeKey(
-        arg.noteId,
-        arg.scopedBy.$modelType,
-        arg.scopedBy.$modelId,
-        arg.rootBlockViewId,
-      );
-
-      return (
-        this.blocksScopes[key] ||
-        this.createScope(
-          arg.noteId,
-          arg.scopedBy,
-          arg.collapsedBlockIds,
-          arg.rootBlockViewId,
-        )
-      );
-    });
-  }
-
-  isScopeCreated(
-    noteId: string,
-    scopedBy: { $modelId: string; $modelType: string },
-    rootBlockViewId: string,
-  ) {
-    const key = getScopeKey(
-      noteId,
-      scopedBy.$modelType,
-      scopedBy.$modelId,
-      rootBlockViewId,
-    );
-
-    return !!this.blocksScopes[key];
-  }
-
-  private createScope(
-    noteId: string,
-    scopedBy: { $modelId: string; $modelType: string },
-    collapsedBlockIds: string[],
-    rootBlockViewId: string,
-  ) {
-    const key = getScopeKey(
-      noteId,
-      scopedBy.$modelType,
-      scopedBy.$modelId,
-      rootBlockViewId,
-    );
-
-    if (!this.areBlocksOfNoteLoaded(noteId)) {
-      throw new Error('You need to load blocks first');
-    }
-
-    const blocksScope = new BlocksScope({
-      $modelId: key,
-      rootScopedBlockId: rootBlockViewId,
-      collapsedBlockIds: arraySet(collapsedBlockIds),
-      scopedModelId: scopedBy.$modelId,
-      scopedModelType: scopedBy.$modelType,
-      noteId,
-    });
-
-    this.blocksScopes[key] = blocksScope;
-
-    return this.blocksScopes[key];
-  }
-
-  getScopeById(id: string) {
-    return this.blocksScopes[id];
-  }
-
-  getScope(
-    noteId: string,
-    model: { $modelId: string; $modelType: string },
-    rootViewId: string,
-  ) {
-    const key = `${noteId}-${model.$modelType}-${model.$modelId}-${rootViewId}`;
-
-    if (!this.blocksScopes[key]) return undefined;
-
-    return this.blocksScopes[key];
   }
 
   getBlocksRegistryByNoteId(noteId: string) {
@@ -236,26 +131,17 @@ export class NoteBlocksExtensionStore extends Model({
     blocksAttrs: (ModelCreationData<NoteBlockModel> & {
       $modelId: string;
     })[],
-    scopes: (ModelCreationData<BlocksScope> & { $modelId: string })[],
-    [deletedTreeDescriptorIds, deletedNoteBlockIds, deletedScopeIds]: [
+    [deletedTreeDescriptorIds, deletedNoteBlockIds]: [
       SyncModelId<BlocksTreeDescriptor>[],
       SyncModelId<NoteBlockModel>[],
-      SyncModelId<BlocksScope>[],
     ],
     createBlocksRegistry: boolean,
   ) {
-    deletedScopeIds.forEach((id) => {
-      delete this.blocksScopes[id.value];
-    });
     deletedTreeDescriptorIds.forEach((id) => {
       delete this.blocksTreeDescriptors[id.value];
     });
     deletedNoteBlockIds.forEach((id) => {
       this.getNoteBlock(id.value)?.delete();
-    });
-
-    scopes.forEach((scope) => {
-      this.blocksScopes[scope.$modelId] = new BlocksScope(scope);
     });
 
     this.loadBlocksTree(descriptorAttrs, blocksAttrs, createBlocksRegistry);

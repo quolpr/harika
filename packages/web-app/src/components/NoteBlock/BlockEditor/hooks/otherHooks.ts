@@ -1,8 +1,8 @@
 import { MutableRefObject, useContext, useEffect } from 'react';
 import { CurrentBlockInputRefContext } from '../../../../contexts';
 import type { EditState, ScopedBlock } from '@harika/web-core';
-import { useVaultService } from '../../../../contexts/CurrentNotesServiceContext';
 import { usePrevious } from 'react-use';
+import { useVaultService } from '../../../../hooks/vaultAppHooks';
 
 export const useProvideInputToContext = (
   inputRef: MutableRefObject<HTMLTextAreaElement | null>,
@@ -25,17 +25,17 @@ export const useUpdateBlockValues = (
   blockView: ScopedBlock,
   editState: EditState,
 ) => {
-  const noteRepo = useVaultService();
+  const vaultService = useVaultService();
 
   const wasEditing = usePrevious(editState.isEditing);
 
   useEffect(() => {
     if (!editState.isEditing && wasEditing) {
       blockView.content.dumpValue();
-      noteRepo.updateNoteBlockLinks([blockView.$modelId]);
-      noteRepo.updateBlockBlockLinks([blockView.$modelId]);
+      vaultService.updateNoteBlockLinks([blockView.$modelId]);
+      vaultService.updateBlockBlockLinks([blockView.$modelId]);
     }
-  }, [editState.isEditing, blockView, noteRepo, wasEditing]);
+  }, [editState.isEditing, blockView, vaultService, wasEditing]);
 };
 
 export const useHandleFocus = (

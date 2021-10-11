@@ -26,7 +26,7 @@ export class NoteBlocksService {
     private notesBlocksRepository: Remote<NotesBlocksRepository>,
     @inject(toRemoteName(BlocksTreeDescriptorsRepository))
     private treeDescriptorsRepository: Remote<BlocksTreeDescriptorsRepository>,
-    @inject(toRemoteName(NoteBlocksExtensionStore))
+    @inject(NoteBlocksExtensionStore)
     private store: NoteBlocksExtensionStore,
   ) {}
 
@@ -115,6 +115,14 @@ export class NoteBlocksService {
         [noteBlocksTable, notesTable],
         () => this.notesBlocksRepository.getLinksOfNoteId(noteId),
         false,
+      ),
+    );
+  }
+
+  getNoteIdByBlockId$(blockId: string) {
+    return from(
+      this.dbEventsService.liveQuery([noteBlocksTable], () =>
+        this.notesBlocksRepository.getNoteIdByBlockId(blockId),
       ),
     );
   }

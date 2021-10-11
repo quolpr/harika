@@ -1,6 +1,4 @@
-import { useRef, useCallback, useEffect, RefObject, Ref } from 'react';
-import { useCurrentFocusedBlockState } from '../../../../hooks/useFocusedBlockState';
-import type { BlocksScope, ScopedBlock } from '@harika/web-core';
+import { useRef, useCallback, useEffect, RefObject } from 'react';
 
 // https://stackoverflow.com/a/55652503/3872807
 export const useFakeInput = (el: RefObject<HTMLElement | null>) => {

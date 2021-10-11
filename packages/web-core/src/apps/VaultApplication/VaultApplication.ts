@@ -17,6 +17,8 @@ import { DeleteNoteService } from './VaultExtension/services/DeleteNoteService';
 import { ImportExportService } from './VaultExtension/services/ImportExportService';
 import { DB_NAME } from '../../extensions/DbExtension/types';
 import { VaultAppRootStore } from './AppRootStore';
+import { BlocksScopeExtension } from './BlocksScopeExtension/BlocksScopeExtension';
+import { BlocksScopesService } from './BlocksScopeExtension/services/BlocksScopeService';
 
 export class VaultApplication extends BaseApplication {
   constructor(applicationId: string, public vaultName: string) {
@@ -24,7 +26,13 @@ export class VaultApplication extends BaseApplication {
   }
 
   async register() {
-    this.container.bind(VaultAppRootStore).toSelf();
+    this.container
+      .bind(VaultAppRootStore)
+      .toConstantValue(new VaultAppRootStore({}));
+  }
+
+  getBlocksScopesService() {
+    return this.container.get(BlocksScopesService);
   }
 
   getRootStore() {
@@ -80,6 +88,7 @@ export class VaultApplication extends BaseApplication {
       VaultExtension,
       NotesTreeExtension,
       SpacedRepetitionExtension,
+      BlocksScopeExtension,
     ];
   }
 }

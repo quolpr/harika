@@ -2,7 +2,7 @@ import { generateId } from '../generateId';
 import { BlockContentModel } from '../../apps/VaultApplication/NoteBlocksExtension/models/BlockContentModel';
 import { parseStringToTree } from './parseStringToTree';
 import type { TreeToken } from './parseStringToTree';
-import type { ScopedBlock } from '../../views/ScopedBlock';
+import type { ScopedBlock } from '../../apps/VaultApplication/BlocksScopeExtension/models/ScopedBlock';
 import { Optional } from 'utility-types';
 import { ModelCreationData } from 'mobx-keystone';
 import { NoteBlockModel } from '../../apps/VaultApplication/NoteBlocksExtension/models/NoteBlockModel';

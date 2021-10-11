@@ -1,5 +1,5 @@
 import { observer } from 'mobx-react-lite';
-import React, { useCallback, useContext, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { useMedia } from 'react-use';
 import { CurrentNoteContext } from '../../hooks/useCurrentNote';
 import { cn } from '../../utils';
@@ -11,8 +11,8 @@ import './styles.css';
 import { useFindNote } from './useFindNote';
 import { useHistory, useLocation } from 'react-router-dom';
 import { paths } from '../../paths';
-import { useCurrentVaultApp } from '../../hooks/useCurrentVaultApp';
 import { ContainerElRefContext } from '../../contexts/ContainerElRefContext';
+import { useCurrentVaultId } from '../../hooks/vaultAppHooks';
 
 const notesStackClass = cn('notes-stack');
 
@@ -46,7 +46,7 @@ const NoteStack = observer(
   }) => {
     const location = useLocation();
     const history = useHistory();
-    const vaultId = useCurrentVaultApp().$modelId;
+    const vaultId = useCurrentVaultId();
     const { note, isLoading } = useFindNote(noteId);
 
     const rowRef = useRef<HTMLDivElement | null>(null);

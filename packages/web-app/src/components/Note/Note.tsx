@@ -6,9 +6,7 @@ import { observer } from 'mobx-react-lite';
 import { NoteModel, FocusedBlockState } from '@harika/web-core';
 import { useHistory, useLocation } from 'react-router-dom';
 import { LinkIcon } from '@heroicons/react/solid';
-import { useCurrentVaultApp } from '../../hooks/useCurrentVaultApp';
 import { CurrentBlockInputRefContext } from '../../contexts';
-import { useVaultService } from '../../contexts/CurrentNotesServiceContext';
 import { NoteBlocks } from './NoteBlocks';
 import { groupBy } from 'lodash-es';
 import { useObservable, useObservableState } from 'observable-hooks';
@@ -23,34 +21,41 @@ import { generateStackedNotePath } from '../../hooks/useNoteClick';
 import { paths } from '../../paths';
 import { useMedia } from 'react-use';
 import { BacklinkedNote } from './BacklinkedNote';
+import {
+  useBlocksScopesService,
+  useCurrentVaultId,
+  useFocusedBlock,
+  useNotesService,
+  useVaultService,
+} from '../../hooks/vaultAppHooks';
 
 export interface IFocusBlockState {
   focusOnBlockId: string;
 }
 
 const BacklinkedNotes = observer(({ note }: { note: NoteModel }) => {
-  const notesService = useVaultService();
+  const vaultService = useVaultService();
+  const notesService = useNotesService();
+  const blocksScopesService = useBlocksScopesService();
 
   const backlinks$ = useObservable(
     ($inputs) => {
       return $inputs.pipe(
         switchMap(([note]) =>
-          notesService
+          vaultService
             .getLinksOfNote$(note.$modelId)
             .pipe(map((noteLinks) => ({ noteLinks: noteLinks, note }))),
         ),
         switchMap(({ noteLinks, note }) =>
           noteLinks.length
-            ? notesService
+            ? blocksScopesService
                 .getBlocksScopes$(
-                  of(
-                    noteLinks.flatMap((linkedNote) =>
-                      linkedNote.linkedBlockIds.map((blockId) => ({
-                        noteId: linkedNote.note.$modelId,
-                        scopedBy: note,
-                        rootBlockViewId: blockId,
-                      })),
-                    ),
+                  noteLinks.flatMap((linkedNote) =>
+                    linkedNote.linkedBlockIds.map((blockId) => ({
+                      noteId: linkedNote.note.$modelId,
+                      scopedBy: note,
+                      rootBlockViewId: blockId,
+                    })),
                   ),
                 )
                 .pipe(
@@ -112,9 +117,10 @@ const BacklinkedNotes = observer(({ note }: { note: NoteModel }) => {
 const noteClass = bem('note');
 
 const NoteBody = observer(({ note }: { note: NoteModel }) => {
+  const vaultId = useCurrentVaultId();
   const isWide = useMedia('(min-width: 768px)');
   const location = useLocation();
-  const vault = useCurrentVaultApp();
+  const focusedBlock = useFocusedBlock();
   const noteRepo = useVaultService();
   const history = useHistory<IFocusBlockState>();
   const focusOnBlockId = (history.location.state || {}).focusOnBlockId;
@@ -154,11 +160,11 @@ const NoteBody = observer(({ note }: { note: NoteModel }) => {
 
   useEffect(() => {
     if (focusOnBlockId) {
-      vault.noteBlocksApp.focusedBlock.setState(
+      focusedBlock.setState(
         FocusedBlockState.create(note.$modelId, focusOnBlockId),
       );
     }
-  }, [focusOnBlockId, note.$modelId, vault.noteBlocksApp.focusedBlock]);
+  }, [focusOnBlockId, note.$modelId, focusedBlock]);
 
   const inputId = `note-title-input-${note.$modelId}`;
 
@@ -187,7 +193,7 @@ const NoteBody = observer(({ note }: { note: NoteModel }) => {
           history.replace(
             generateStackedNotePath(
               location.search,
-              vault.$modelId,
+              vaultId,
               note.$modelId,
               result.data.$modelId,
             ),
@@ -195,7 +201,7 @@ const NoteBody = observer(({ note }: { note: NoteModel }) => {
         } else {
           history.replace(
             paths.vaultNotePath({
-              vaultId: vault.$modelId,
+              vaultId: vaultId,
               noteId: result.data.$modelId,
             }) + location.search,
           );
@@ -208,7 +214,7 @@ const NoteBody = observer(({ note }: { note: NoteModel }) => {
       note.$modelId,
       note.dailyNoteDate,
       noteRepo,
-      vault.$modelId,
+      vaultId,
     ],
   );
 

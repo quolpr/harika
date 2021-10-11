@@ -8,15 +8,19 @@ import type {
   NoteModel,
   ScopedBlock,
 } from '@harika/web-core';
-import { useVaultService } from '../../contexts/CurrentNotesServiceContext';
-import { useCurrentVaultApp } from '../../hooks/useCurrentVaultApp';
 import { useCurrentNote } from '../../hooks/useCurrentNote';
 import { useHandleClick } from '../../hooks/useNoteClick';
 import { paths } from '../../paths';
 import { useObservable, useObservableState } from 'observable-hooks';
-import { map, of, switchMap } from 'rxjs';
+import { of, switchMap } from 'rxjs';
 import { useDeepMemo } from '../../utils';
 import { NoteBlockRef } from '@harika/web-core/src/lib/blockParser/types';
+import {
+  useBlocksScopesService,
+  useCurrentVaultId,
+  useNotesService,
+  useVaultService,
+} from '../../hooks/vaultAppHooks';
 
 const NoteRefRenderer = observer(
   ({
@@ -29,7 +33,7 @@ const NoteRefRenderer = observer(
     linkedNotes: NoteModel[];
   }) => {
     const location = useLocation();
-    const vault = useCurrentVaultApp();
+    const vaultId = useCurrentVaultId();
     const noteRepo = useVaultService();
     const currentNote = useCurrentNote();
 
@@ -49,7 +53,7 @@ const NoteRefRenderer = observer(
     });
 
     const handleClick = useHandleClick(
-      vault,
+      vaultId,
       currentNote?.$modelId,
       note?.$modelId,
     );
@@ -87,7 +91,7 @@ const NoteRefRenderer = observer(
       <Link
         to={
           paths.vaultNotePath({
-            vaultId: vault.$modelId,
+            vaultId: vaultId,
             noteId: note.$modelId,
           }) + location.search
         }
@@ -102,8 +106,8 @@ const NoteRefRenderer = observer(
 );
 const BlockRefRenderer = observer(
   ({ token, noteBlock }: { token: NoteBlockRef; noteBlock: ScopedBlock }) => {
-    const notesService = useVaultService();
-    const vault = useCurrentVaultApp();
+    const blocksScopesService = useBlocksScopesService();
+    const vaultId = useCurrentVaultId();
     const currentNote = useCurrentNote();
 
     const linkedBlock$ = useObservable(
@@ -111,7 +115,7 @@ const BlockRefRenderer = observer(
         return $inputs.pipe(
           switchMap(([token, modelId]) =>
             token.blockId
-              ? notesService.getScopedBlockById$(
+              ? blocksScopesService.getScopedBlockById$(
                   token.blockId,
                   {
                     $modelId: modelId,
@@ -129,7 +133,7 @@ const BlockRefRenderer = observer(
     const block = useObservableState(linkedBlock$, undefined);
 
     const handleClick = useHandleClick(
-      vault,
+      vaultId,
       currentNote?.$modelId,
       block?.noteId,
       true,
@@ -166,15 +170,15 @@ const BlockRefRenderer = observer(
 const TagRenderer = observer(
   ({ token, linkedNotes }: { token: TagToken; linkedNotes: NoteModel[] }) => {
     const location = useLocation();
-    const vault = useCurrentVaultApp();
     const currentNote = useCurrentNote();
+    const vaultId = useCurrentVaultId();
 
     const note = linkedNotes.find((n) => {
       return n.title === token.ref;
     });
 
     const handleClick = useHandleClick(
-      vault,
+      vaultId,
       currentNote?.$modelId,
       note?.$modelId,
     );
@@ -185,7 +189,7 @@ const TagRenderer = observer(
       <Link
         to={
           paths.vaultNotePath({
-            vaultId: vault.$modelId,
+            vaultId: vaultId,
             noteId: note.$modelId,
           }) + location.search
         }
@@ -334,7 +338,7 @@ const TokenRenderer = observer(
 
 export const TokensRenderer = observer(
   ({ noteBlock, tokens }: { noteBlock: ScopedBlock; tokens: Token[] }) => {
-    const noteRepo = useVaultService();
+    const noteRepo = useNotesService();
 
     const linkedNoteIds = useDeepMemo(
       () => [...noteBlock.linkedNoteIds],
@@ -343,7 +347,7 @@ export const TokensRenderer = observer(
 
     const linkedNotes$ = useObservable(
       ($inputs) => {
-        return noteRepo.findNoteByIds$($inputs.pipe(map(([ids]) => ids)));
+        return $inputs.pipe(switchMap(([ids]) => noteRepo.findNoteByIds$(ids)));
       },
       [linkedNoteIds],
     );

@@ -7,14 +7,13 @@ import { cn } from '../../utils';
 import { useKey } from 'react-use';
 import { v4 as uuidv4 } from 'uuid';
 import { paths } from '../../paths';
-import { useVaultService } from '../../contexts/CurrentNotesServiceContext';
-import { useCurrentVaultApp } from '../../hooks/useCurrentVaultApp';
 import { Modal, modalClass } from '../Modal/Modal';
 import { debounce, map, Observable, of, switchMap, tap, timer } from 'rxjs';
 import { generateStackedNotePath } from '../../hooks/useNoteClick';
 import { usePrimaryNoteId } from '../../hooks/usePrimaryNote';
 import { useObservable, useObservableState } from 'observable-hooks';
 import { VaultService } from '@harika/web-core';
+import { useCurrentVaultApp, useVaultService } from '../../hooks/vaultAppHooks';
 
 // Command executes on each user type and as result gives list of actions
 // Commands are start with `!`. If no `!` present - then search happen between all start view actions names
@@ -169,7 +168,7 @@ export const CommandPaletteModal = ({
           id: uuidv4(),
           name: 'Daily note',
           type: 'goToPage',
-          href: paths.vaultDailyPath({ vaultId: vault.$modelId }),
+          href: paths.vaultDailyPath({ vaultId: vault.applicationId }),
         },
         {
           id: uuidv4(),
@@ -179,7 +178,7 @@ export const CommandPaletteModal = ({
         },
       ],
     }),
-    [vault.$modelId],
+    [vault.applicationId],
   );
 
   const prevMousePosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -209,7 +208,7 @@ export const CommandPaletteModal = ({
     },
     [
       inputCommandValue,
-      vault.$modelId,
+      vault.applicationId,
       vaultService,
       startView,
       location.search,
@@ -245,8 +244,8 @@ export const CommandPaletteModal = ({
 
           history.push(
             paths.vaultNotePath({
-              vaultId: vault.$modelId,
-              noteId: result.data.note.$modelId,
+              vaultId: vault.applicationId,
+              noteId: result.data.$modelId,
             }),
           );
 
@@ -258,7 +257,7 @@ export const CommandPaletteModal = ({
           break;
       }
     },
-    [onClose, history, location.search, vaultService, vault.$modelId],
+    [onClose, history, location.search, vaultService, vault.applicationId],
   );
 
   useKey(

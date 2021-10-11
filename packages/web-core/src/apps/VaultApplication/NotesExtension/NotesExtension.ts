@@ -16,6 +16,7 @@ export class NotesExtension extends BaseExtension {
   }
 
   async register() {
+    console.log('register!');
     const store = new NotesStore({});
 
     registerRootStore(store);

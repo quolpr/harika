@@ -5,8 +5,8 @@ export type {
   NoteRefToken,
   TagToken,
 } from './src/lib/blockParser/types';
-export { ScopedBlock } from './src/views/ScopedBlock';
-export { BlocksScope } from './src/apps/VaultApplication/NoteBlocksExtension/models/BlocksScope';
+export { ScopedBlock } from './src/apps/VaultApplication/BlocksScopeExtension/models/ScopedBlock';
+export { BlocksScope } from './src/apps/VaultApplication/BlocksScopeExtension/models/BlocksScope';
 export * from './src/lib/blockParser/parseStringToTree';
 export * from './src/lib/generateId';
 export * from './src/apps/VaultApplication/NotesTreeExtension/models/NotesTreeRegistry';
@@ -14,9 +14,9 @@ export * from './src/apps/VaultApplication/NotesTreeExtension/models/NotesTreeNo
 export * from './src/apps/VaultApplication/NoteBlocksExtension/models/NoteBlockModel';
 export * from './src/lib/toObserver';
 export { BlockModelsRegistry } from './src/apps/VaultApplication/NoteBlocksExtension/models/BlockModelsRegistry';
-export { FocusedBlock } from './src/views/FocusedBlock';
-export { FocusedBlockState } from './src/views/FocusedBlock';
-export type { EditState } from './src/views/FocusedBlock';
+export { FocusedBlock } from './src/apps/VaultApplication/BlocksScopeExtension/models/FocusedBlock';
+export { FocusedBlockState } from './src/apps/VaultApplication/BlocksScopeExtension/models/FocusedBlock';
+export type { EditState } from './src/apps/VaultApplication/BlocksScopeExtension/models/FocusedBlock';
 export { VaultApplication } from './src/apps/VaultApplication/VaultApplication';
 export { UserApplication } from './src/apps/UserApplication/UserApplication';
 export { UserVaultsService } from './src/apps/UserApplication/UserExtension/services/UserVaultsService';

@@ -6,10 +6,6 @@ import { NotesChangesTrackerService } from './services/NotesChangesTrackerServic
 
 @injectable()
 export class NotesTreeExtension extends BaseExtension {
-  constructor(@inject(NotesService) private notesService: NotesService) {
-    super();
-  }
-
   async register() {
     this.container.bind(NotesChangesTrackerService).toSelf();
     this.container.bind(NotesTreeRegistry).toConstantValue(newTreeModel());
@@ -18,9 +14,11 @@ export class NotesTreeExtension extends BaseExtension {
   async onReady() {
     // Delayed to increase startup time
     setTimeout(async () => {
+      const notesService = this.container.get(NotesService);
+
       this.container
         .get(NotesTreeRegistry)
-        .initializeTree(await this.notesService.getTuplesWithoutDailyNotes());
+        .initializeTree(await notesService.getTuplesWithoutDailyNotes());
     }, 200);
   }
 }

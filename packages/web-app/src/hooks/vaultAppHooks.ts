@@ -9,12 +9,20 @@ export const useCurrentVaultApp = () => {
   return useContext(CurrentVaultAppContext);
 };
 
+export const useCurrentVaultId = () => {
+  return useContext(CurrentVaultAppContext).applicationId;
+};
+
 export const useNotesService = () => {
   return useCurrentVaultApp().getNotesService();
 };
 
 export const useVaultService = () => {
   return useCurrentVaultApp().getVaultService();
+};
+
+export const useBlocksScopesService = () => {
+  return useCurrentVaultApp().getBlocksScopesService();
 };
 
 export const useNoteBlocksService = () => {

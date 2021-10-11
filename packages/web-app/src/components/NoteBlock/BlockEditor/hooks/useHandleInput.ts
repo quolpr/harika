@@ -1,6 +1,5 @@
 import { BlocksScope, ScopedBlock, parseStringToTree } from '@harika/web-core';
 import { RefObject, useCallback, useContext, useState } from 'react';
-import { useVaultService } from '../../../../contexts/CurrentNotesServiceContext';
 import { ShiftPressedContext } from '../../../../contexts/ShiftPressedContext';
 import { useCurrentFocusedBlockState } from '../../../../hooks/useFocusedBlockState';
 import { isIOS, insertText } from '../../../../utils';
@@ -9,6 +8,7 @@ import { getTokensAtCursor } from '../../utils';
 import { Pos, position } from 'caret-pos';
 import dayjs from 'dayjs';
 import { ICommand } from '../EditorCommandsDropdown/EditorCommandsDropdown';
+import { useVaultService } from '../../../../hooks/vaultAppHooks';
 
 const symmetricCommands: { [P in ICommand['id']]?: string } = {
   blockRef: '(())',
@@ -51,7 +51,7 @@ export const useHandleInput = (
     number | undefined
   >(undefined);
 
-  const noteRepo = useVaultService();
+  const vaultService = useVaultService();
 
   const handleKeyPress = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -290,8 +290,8 @@ export const useHandleInput = (
       const injectedBlocks = scope.injectNewTreeTokens(block, parsedToTree);
 
       const ids = injectedBlocks.map(({ $modelId }) => $modelId);
-      noteRepo.updateNoteBlockLinks(ids);
-      noteRepo.updateBlockBlockLinks(ids);
+      vaultService.updateNoteBlockLinks(ids);
+      vaultService.updateBlockBlockLinks(ids);
 
       if (injectedBlocks[0]) {
         setEditState({
@@ -306,7 +306,7 @@ export const useHandleInput = (
       isShiftPressedRef,
       scope,
       block,
-      noteRepo,
+      vaultService,
       setEditState,
     ],
   );

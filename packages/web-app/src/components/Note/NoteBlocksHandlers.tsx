@@ -13,12 +13,11 @@ import {
   tap,
 } from 'rxjs/operators';
 import { isEqual } from 'lodash-es';
-import { useCurrentVaultApp } from '../../hooks/useCurrentVaultApp';
+import { useFocusedBlock } from '../../hooks/vaultAppHooks';
 
 export const NoteBlocksHandlers = observer(
   ({ scope, note }: { scope: BlocksScope; note: NoteModel }) => {
-    const vault = useCurrentVaultApp();
-    const focusedBlock = vault.noteBlocksApp.focusedBlock;
+    const focusedBlock = useFocusedBlock();
 
     useEffect(() => {
       const mouseMove$ = fromEvent<MouseEvent>(document, 'mousemove');
@@ -58,7 +57,7 @@ export const NoteBlocksHandlers = observer(
               return EMPTY;
             }
 
-            const focusedBlockState = vault.noteBlocksApp.focusedBlock.state;
+            const focusedBlockState = focusedBlock.state;
 
             const resetAnySelection$ = mouseMove$.pipe(
               tap(() => {
@@ -81,7 +80,7 @@ export const NoteBlocksHandlers = observer(
                 focusedBlockState.scopedBlockId,
                 fromBlockId,
               );
-              vault.noteBlocksApp.focusedBlock.setState(undefined);
+              focusedBlock.setState(undefined);
 
               return EMPTY;
             }
@@ -119,7 +118,7 @@ export const NoteBlocksHandlers = observer(
                     }
 
                     scope.setSelectionInterval(fromBlockId, toId);
-                    vault.noteBlocksApp.focusedBlock.setState(undefined);
+                    focusedBlock.setState(undefined);
 
                     wasAnyIdSelected = true;
                   }),
@@ -140,7 +139,7 @@ export const NoteBlocksHandlers = observer(
       return () => {
         mouseMoveHandler.unsubscribe();
       };
-    }, [scope, vault.noteBlocksApp.focusedBlock]);
+    }, [focusedBlock, scope]);
 
     const isSelecting = scope.selectionInterval !== undefined;
 
@@ -169,7 +168,7 @@ export const NoteBlocksHandlers = observer(
       document.addEventListener('cut', handler);
 
       return () => document.removeEventListener('cut', handler);
-    }, [isSelecting, note, vault, scope]);
+    }, [isSelecting, note, scope]);
 
     useEffect(() => {
       if (!isSelecting) return;

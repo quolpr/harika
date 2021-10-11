@@ -2,7 +2,6 @@ import clsx from 'clsx';
 import { observer } from 'mobx-react-lite';
 import React, { useState } from 'react';
 import { useCurrentNote } from '../../hooks/useCurrentNote';
-import { useCurrentVaultApp } from '../../hooks/useCurrentVaultApp';
 import { useHandleClick } from '../../hooks/useNoteClick';
 import { Arrow } from '../Arrow/Arrow';
 import { Link, useLocation } from 'react-router-dom';
@@ -10,6 +9,7 @@ import { paths } from '../../paths';
 import type { BlocksScope, NoteModel } from '@harika/web-core';
 import { NoteBlock } from '../NoteBlock/NoteBlock';
 import { NoteBlocksHandlers } from './NoteBlocksHandlers';
+import { useCurrentVaultId } from '../../hooks/vaultAppHooks';
 
 const LinkedBlock = observer(
   ({ note, scope }: { note: NoteModel; scope: BlocksScope }): JSX.Element => {
@@ -46,13 +46,13 @@ const LinkedBlock = observer(
 
 export const BacklinkedNote = observer(
   ({ note, scopes }: { note: NoteModel; scopes: BlocksScope[] }) => {
-    const vault = useCurrentVaultApp();
+    const vaultId = useCurrentVaultId();
     const [isExpanded, setIsExpanded] = useState(true);
     const currentNote = useCurrentNote();
     const location = useLocation();
 
     const handleClick = useHandleClick(
-      vault,
+      vaultId,
       currentNote?.$modelId,
       note?.$modelId,
     );
@@ -75,7 +75,7 @@ export const BacklinkedNote = observer(
             to={
               note
                 ? paths.vaultNotePath({
-                    vaultId: vault.$modelId,
+                    vaultId: vaultId,
                     noteId: note.$modelId,
                   }) + location.search
                 : ''

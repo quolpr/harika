@@ -5,24 +5,24 @@ import { NoteBlock, NoteBlockChildren } from '../NoteBlock/NoteBlock';
 import { Toolbar } from './Toolbar';
 import { NoteBlocksHandlers } from './NoteBlocksHandlers';
 import type { NoteModel } from '@harika/web-core';
-import { useVaultService } from '../../contexts/CurrentNotesServiceContext';
 import { useObservable, useObservableState } from 'observable-hooks';
-import { map } from 'rxjs';
+import { map, switchMap } from 'rxjs';
 import { LinkedBlocksOfBlocksProvider } from '../LinkedBlocksOfBlocksContext';
 import { bem } from '../../utils';
+import { useBlocksScopesService } from '../../hooks/vaultAppHooks';
 
 const noteClass = bem('note');
 
 export const NoteBlocks = observer(({ note }: { note: NoteModel }) => {
-  const notesService = useVaultService();
+  const blocksScopeService = useBlocksScopesService();
   const isWide = useMedia('(min-width: 768px)');
 
   const scope$ = useObservable(
     ($inputs) => {
-      return notesService.getBlocksScope$(
-        $inputs.pipe(
-          map(([note]) => ({ noteId: note.$modelId, scopedBy: note })),
-        ),
+      return $inputs.pipe(
+        switchMap(([note]) => {
+          return blocksScopeService.getBlocksScope$(note.$modelId, note);
+        }),
       );
     },
     [note],

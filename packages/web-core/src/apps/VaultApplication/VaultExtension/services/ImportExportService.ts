@@ -6,7 +6,7 @@ import type { NoteBlockDoc } from '../../NoteBlocksExtension/repositories/NotesB
 import {
   BlocksScopesRepository,
   blocksScopesTable,
-} from '../../NoteBlocksExtension/repositories/BlockScopesRepository';
+} from '../../BlocksScopeExtension/repositories/BlockScopesRepository';
 import type { ISyncCtx } from '../../../../extensions/SyncExtension/persistence/syncCtx';
 import { omit } from 'lodash-es';
 import { inject, injectable } from 'inversify';

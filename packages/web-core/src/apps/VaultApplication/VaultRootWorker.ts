@@ -7,6 +7,7 @@ export class VaultRootWorker extends RootWorker {
       await Promise.all([
         import('../../extensions/DbExtension/DbWorkerExtension'),
         import('../../extensions/SyncExtension/SyncWorkerExtension'),
+        import('./BlocksScopeExtension/BlocksScopeWorkerExtension'),
         import('./NotesExtension/NotesWorkerExtension'),
         import('./NoteBlocksExtension/NoteBlocksWorkerExtension'),
         import('./VaultExtension/VaultWorkerExtension'),

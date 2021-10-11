@@ -3,7 +3,6 @@ import { isEqual } from 'lodash-es';
 import { useState } from 'react';
 import { timer } from 'rxjs';
 import { debounce, distinctUntilChanged, switchMap, tap } from 'rxjs/operators';
-import { useVaultService } from '../../../../contexts/CurrentNotesServiceContext';
 import { cn } from '../../../../utils';
 import { useObservable, useObservableState } from 'observable-hooks';
 import { Pos } from 'caret-pos';
@@ -12,6 +11,7 @@ import {
   editorDropdownClass,
   IDropdownItem,
 } from '../EditorDropdown/EditorDropdown';
+import { useVaultService } from '../../../../hooks/vaultAppHooks';
 
 export type SearchedNote = { id: string; title: string };
 export const noteAutocompleteClass = cn('note-autocomplete');
@@ -31,7 +31,7 @@ export const NoteTitleAutocomplete = React.memo(
     holderRef: MutableRefObject<HTMLDivElement | null>;
     isShownRef: MutableRefObject<boolean>;
   }) => {
-    const notesService = useVaultService();
+    const vaultService = useVaultService();
 
     const [wasFirstSearchHappened, setWasFirstSearchHappened] = useState(false);
 
@@ -40,15 +40,15 @@ export const NoteTitleAutocomplete = React.memo(
         return $inputs.pipe(
           distinctUntilChanged((a, b) => isEqual(a, b)),
           debounce(() => timer(100)),
-          switchMap(([notesService, text]) =>
-            text ? notesService.searchNotesTuples$(text) : [],
+          switchMap(([vaultService, text]) =>
+            text ? vaultService.searchNotesTuples$(text) : [],
           ),
           tap(() => {
             setWasFirstSearchHappened(true);
           }),
         );
       },
-      [notesService, value],
+      [vaultService, value],
     );
 
     const searchResults = useObservableState(searchResult$, []);

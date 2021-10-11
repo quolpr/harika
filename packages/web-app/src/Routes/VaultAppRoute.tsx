@@ -34,6 +34,8 @@ export const VaultAppRoute = () => {
       //       }
       await service.start();
 
+      console.log('started!');
+
       setUserApplication(service);
     };
 

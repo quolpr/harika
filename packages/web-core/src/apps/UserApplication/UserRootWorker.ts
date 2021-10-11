@@ -1,3 +1,4 @@
+import { expose } from 'comlink';
 import { RootWorker } from '../../framework/RootWorker';
 
 export class UserRootWorker extends RootWorker {
@@ -11,3 +12,5 @@ export class UserRootWorker extends RootWorker {
     ).map((res) => res.default);
   }
 }
+
+expose(UserRootWorker);
