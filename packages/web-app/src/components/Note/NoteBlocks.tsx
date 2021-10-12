@@ -6,7 +6,7 @@ import { Toolbar } from './Toolbar';
 import { NoteBlocksHandlers } from './NoteBlocksHandlers';
 import type { NoteModel } from '@harika/web-core';
 import { useObservable, useObservableState } from 'observable-hooks';
-import { map, switchMap } from 'rxjs';
+import { switchMap } from 'rxjs';
 import { LinkedBlocksOfBlocksProvider } from '../LinkedBlocksOfBlocksContext';
 import { bem } from '../../utils';
 import { useBlocksScopesService } from '../../hooks/vaultAppHooks';
@@ -35,7 +35,7 @@ export const NoteBlocks = observer(({ note }: { note: NoteModel }) => {
       {scope && <NoteBlocksHandlers scope={scope} note={note} />}
 
       <div className={noteClass('body')}>
-        {scope && (
+        {scope && scope.rootScopedBlock && (
           <NoteBlockChildren
             parent={scope.rootScopedBlock}
             scope={scope}

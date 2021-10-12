@@ -4,7 +4,7 @@ import { toRemoteName } from '../../../framework/utils';
 import { initUsersDbTables } from './migrations/initUsersDbTables';
 import { VaultsRepository } from './repositories/VaultsRepository';
 
-export default class NotesWorkerExtension extends BaseExtension {
+export class UserWorkerExtension extends BaseExtension {
   async register() {
     this.container.bind(VaultsRepository).toSelf();
     this.container.bind(DB_MIGRATIONS).toConstantValue(initUsersDbTables);

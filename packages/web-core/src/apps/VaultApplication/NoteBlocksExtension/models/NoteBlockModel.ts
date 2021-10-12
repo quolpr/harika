@@ -13,32 +13,38 @@ import {
 import { comparer, computed } from 'mobx';
 import { isEqual } from 'lodash-es';
 import type { BlockContentModel } from './BlockContentModel';
-import { isBlocksApp, NoteBlocksExtensionStore } from './NoteBlocksExtensionStore';
+import {
+  isBlocksApp,
+  NoteBlocksExtensionStore,
+} from './NoteBlocksExtensionStore';
 import { syncable } from '../../../../extensions/SyncExtension/mobx-keystone/syncable';
 
-export const noteBlockRef = customRef<NoteBlockModel>('harika/noteBlocks/NoteBlockRef', {
-  resolve(ref) {
-    const app = findParent<NoteBlocksExtensionStore>(this, isBlocksApp);
+export const noteBlockRef = customRef<NoteBlockModel>(
+  'harika/noteBlocks/NoteBlockRef',
+  {
+    resolve(ref) {
+      const app = findParent<NoteBlocksExtensionStore>(this, isBlocksApp);
 
-    if (!app) {
-      return undefined;
-    }
+      if (!app) {
+        return undefined;
+      }
 
-    return app.getNoteBlock(ref.id);
+      return app.getNoteBlock(ref.id);
+    },
+
+    onResolvedValueChange() {
+      // don't detach ref, we will do it NoteBlockModel code
+    },
   },
-
-  onResolvedValueChange() {
-    // don't detach ref, we will do it NoteBlockModel code
-  },
-});
+);
 
 export const rootBlockIdCtx = createContext<string>('');
 export const parentBlockCtx = createContext<NoteBlockModel | undefined>();
 
 export const blockModelType = 'harika/NoteBlockModel';
 
-@model('harika/noteBlocks/NoteBlockModel')
 @syncable
+@model('harika/noteBlocks/NoteBlockModel')
 export class NoteBlockModel extends Model({
   noteId: prop<string>(),
   content: prop<BlockContentModel>(),

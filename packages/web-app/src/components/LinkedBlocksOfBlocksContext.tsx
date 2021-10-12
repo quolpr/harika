@@ -54,8 +54,6 @@ export const LinkedBlocksOfBlocksProvider: React.FC<{
 
   const links = useObservableState(links$, {});
 
-  console.log({ links });
-
   return (
     <LinkedBlocksOfBlocksContext.Provider value={links}>
       {children}

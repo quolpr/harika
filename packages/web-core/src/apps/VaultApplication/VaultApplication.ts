@@ -19,16 +19,30 @@ import { DB_NAME } from '../../extensions/DbExtension/types';
 import { VaultAppRootStore } from './AppRootStore';
 import { BlocksScopeExtension } from './BlocksScopeExtension/BlocksScopeExtension';
 import { BlocksScopesService } from './BlocksScopeExtension/services/BlocksScopeService';
+import { NotesStore } from './NotesExtension/models/NotesStore';
+import { registerRootStore } from 'mobx-keystone';
+import { BlocksScopeStore } from './BlocksScopeExtension/models/BlocksScopeStore';
+import { NoteBlocksExtensionStore } from './NoteBlocksExtension/models/NoteBlocksExtensionStore';
 
 export class VaultApplication extends BaseApplication {
   constructor(applicationId: string, public vaultName: string) {
     super(applicationId);
   }
 
-  async register() {
-    this.container
-      .bind(VaultAppRootStore)
-      .toConstantValue(new VaultAppRootStore({}));
+  async initialize() {
+    const notesStore = this.container.get(NotesStore);
+    const blocksScopeStore = this.container.get(BlocksScopeStore);
+    const noteBlocksStore = this.container.get(NoteBlocksExtensionStore);
+
+    const rootStore = new VaultAppRootStore({
+      notesStore,
+      blocksScopeStore,
+      noteBlocksStore,
+    });
+
+    this.container.bind(VaultAppRootStore).toConstantValue(rootStore);
+
+    registerRootStore(rootStore);
   }
 
   getBlocksScopesService() {

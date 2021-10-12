@@ -1,5 +1,4 @@
 import { inject, injectable } from 'inversify';
-import { registerRootStore } from 'mobx-keystone';
 import { SyncConfig } from '../../../extensions/SyncExtension/serverSynchronizer/SyncConfig';
 import { BaseExtension } from '../../../framework/BaseExtension';
 import { RemoteRegister } from '../../../framework/RemoteRegister';
@@ -16,10 +15,7 @@ export class NotesExtension extends BaseExtension {
   }
 
   async register() {
-    console.log('register!');
     const store = new NotesStore({});
-
-    registerRootStore(store);
 
     this.container.bind(NotesStore).toConstantValue(store);
     this.container.bind(NotesService).toSelf();
@@ -49,8 +45,5 @@ export class NotesExtension extends BaseExtension {
     };
   }
 
-  async onReady() {
-    console.log(await this.remoteRegister.getRemote(NotesRepository).getAll());
-    console.log(await this.container.get(NotesService).getNote('123'));
-  }
+  async onReady() {}
 }

@@ -5,8 +5,8 @@ import { blocksTreeDescriptorsTable } from '../repositories/BlockTreeDescriptors
 const up = (db: DB<any>) => {
   db.sqlExec(`
     CREATE TABLE ${blocksTreeDescriptorsTable} (
-      blockId varchar(20) NOT NULL,
-      linkedToBlockId varchar(20) NOT NULL
+      id varchar(20) PRIMARY KEY,
+      rootBlockId varchar(20) NOT NULL
     );
   `);
 };

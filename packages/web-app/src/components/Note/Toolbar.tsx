@@ -7,7 +7,6 @@ import {
   ArrowDropUp,
   FormatIndentDecrease,
   FormatIndentIncrease,
-  KeyboardHide,
   CheckBox,
 } from '@material-ui/icons';
 import { FooterRefContext } from '../../contexts/FooterRefContext';
@@ -16,7 +15,7 @@ import useResizeObserver from 'use-resize-observer/polyfilled';
 import { useUnmount } from 'react-use';
 import { CurrentBlockInputRefContext } from '../../contexts';
 import scrollIntoView from 'scroll-into-view-if-needed';
-import { useFocusedBlock } from '../../hooks/vaultAppHooks';
+import { useFocusedBlock } from '../../hooks/useFocusedBlockState';
 
 const toolbarClass = cn('toolbar');
 

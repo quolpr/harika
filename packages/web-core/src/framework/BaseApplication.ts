@@ -49,6 +49,7 @@ export abstract class BaseApplication {
 
     await extensionsRegister.register();
 
+    await this.initialize();
     await this.onReady();
 
     return this.container;
@@ -81,7 +82,7 @@ export abstract class BaseApplication {
   }[];
 
   async register() {}
-
+  async initialize() {}
   async onReady() {}
 
   stop() {}

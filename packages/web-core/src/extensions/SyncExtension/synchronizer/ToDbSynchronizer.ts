@@ -108,7 +108,11 @@ export class ToDbSynchronizer {
         );
 
         if (!reg) {
-          console.error(`Couldn't find syne repo registration for ${chs[0]}`);
+          // console.error(
+          //   `Couldn't find syne repo registration for ${JSON.stringify(
+          //     chs[0].model,
+          //   )}`,
+          // );
           return;
         }
 

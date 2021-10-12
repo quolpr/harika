@@ -3,7 +3,7 @@ import './styles.css';
 import { useEffect } from 'react';
 import { useState } from 'react';
 import { observer } from 'mobx-react-lite';
-import { NoteModel, FocusedBlockState } from '@harika/web-core';
+import { NoteModel } from '@harika/web-core';
 import { useHistory, useLocation } from 'react-router-dom';
 import { LinkIcon } from '@heroicons/react/solid';
 import { CurrentBlockInputRefContext } from '../../contexts';
@@ -24,10 +24,13 @@ import { BacklinkedNote } from './BacklinkedNote';
 import {
   useBlocksScopesService,
   useCurrentVaultId,
-  useFocusedBlock,
   useNotesService,
   useVaultService,
 } from '../../hooks/vaultAppHooks';
+import {
+  FocusedBlockState,
+  useFocusedBlock,
+} from '../../hooks/useFocusedBlockState';
 
 export interface IFocusBlockState {
   focusOnBlockId: string;
@@ -35,7 +38,6 @@ export interface IFocusBlockState {
 
 const BacklinkedNotes = observer(({ note }: { note: NoteModel }) => {
   const vaultService = useVaultService();
-  const notesService = useNotesService();
   const blocksScopesService = useBlocksScopesService();
 
   const backlinks$ = useObservable(

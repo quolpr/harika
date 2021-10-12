@@ -8,7 +8,6 @@ const up = (db: DB<any>) => {
       id varchar(20) PRIMARY KEY,
       title varchar(255) NOT NULL,
       dailyNoteDate INTEGER,
-      rootBlockId varchar(20) NOT NULL,
       updatedAt INTEGER NOT NULL,
       createdAt INTEGER NOT NULL
     );

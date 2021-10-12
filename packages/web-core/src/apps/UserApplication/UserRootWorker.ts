@@ -1,15 +1,12 @@
 import { expose } from 'comlink';
+import DbWorkerExtension from '../../extensions/DbExtension/DbWorkerExtension';
+import SyncWorkerExtension from '../../extensions/SyncExtension/SyncWorkerExtension';
 import { RootWorker } from '../../framework/RootWorker';
+import { UserWorkerExtension } from './UserExtension/UserWorkerExtension';
 
 export class UserRootWorker extends RootWorker {
   async getExtensions() {
-    return (
-      await Promise.all([
-        import('../../extensions/DbExtension/DbWorkerExtension'),
-        import('../../extensions/SyncExtension/SyncWorkerExtension'),
-        import('./UserExtension/UserWorkerExtension'),
-      ])
-    ).map((res) => res.default);
+    return [DbWorkerExtension, SyncWorkerExtension, UserWorkerExtension];
   }
 }
 

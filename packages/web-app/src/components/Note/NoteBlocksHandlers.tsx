@@ -1,4 +1,4 @@
-import { NoteModel, FocusedBlockState, BlocksScope } from '@harika/web-core';
+import { NoteModel, BlocksScope } from '@harika/web-core';
 import { observer } from 'mobx-react-lite';
 import { useEffect } from 'react';
 import { EMPTY, fromEvent, merge } from 'rxjs';
@@ -13,7 +13,10 @@ import {
   tap,
 } from 'rxjs/operators';
 import { isEqual } from 'lodash-es';
-import { useFocusedBlock } from '../../hooks/vaultAppHooks';
+import {
+  FocusedBlockState,
+  useFocusedBlock,
+} from '../../hooks/useFocusedBlockState';
 
 export const NoteBlocksHandlers = observer(
   ({ scope, note }: { scope: BlocksScope; note: NoteModel }) => {

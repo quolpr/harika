@@ -40,6 +40,7 @@ export class BlocksScope extends Model({
   scopedModelId: prop<string>(),
   scopedModelType: prop<string>(),
 }) {
+  public deleteScopesOfBlocks!: (ids: string[]) => void;
   public blockModelsRegistry!: BlockModelsRegistry;
   private scopedBlocksRegistry = new ScopedBlocksRegistry();
 
@@ -71,7 +72,7 @@ export class BlocksScope extends Model({
   }
 
   @computed
-  get rootScopedBlock() {
+  get rootScopedBlock(): ScopedBlock | undefined {
     return this.scopedBlocksRegistry.getScopedBlock(this.rootScopedBlockId);
   }
 
@@ -90,7 +91,7 @@ export class BlocksScope extends Model({
 
     const [fromId, toId] = this.selectionInterval;
 
-    const flattenTree = this.rootScopedBlock.flattenTree;
+    const flattenTree = this.rootScopedBlock?.flattenTree;
 
     if (!flattenTree) return [];
 
@@ -186,6 +187,8 @@ export class BlocksScope extends Model({
 
   @modelAction
   moveToRoot(block: ScopedBlock) {
+    if (!this.rootScopedBlock) return;
+
     block.move(this.rootScopedBlock, 'end');
   }
 
@@ -210,11 +213,15 @@ export class BlocksScope extends Model({
   @modelAction
   deleteNoteBlockIds(ids: string[]) {
     this.blockModelsRegistry.deleteNoteBlockIds(ids);
+
+    this.deleteScopesOfBlocks(ids);
   }
 
   @modelAction
   injectNewTreeTokens(block: ScopedBlock, tokens: TreeToken[]): ScopedBlock[] {
-    return addTokensToNoteBlock(block, tokens, this.createBlock);
+    return addTokensToNoteBlock(block, tokens, (...args) =>
+      this.createBlock(...args),
+    );
   }
 
   onInit() {

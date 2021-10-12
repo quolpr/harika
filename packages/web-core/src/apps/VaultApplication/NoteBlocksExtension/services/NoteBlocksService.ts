@@ -3,7 +3,14 @@ import { inject, injectable } from 'inversify';
 import { isEqual } from 'lodash-es';
 import { withoutUndo } from 'mobx-keystone';
 import { from, Observable, of } from 'rxjs';
-import { distinctUntilChanged, map, switchMap, tap } from 'rxjs/operators';
+import {
+  distinctUntilChanged,
+  filter,
+  map,
+  switchMap,
+  tap,
+  timeout,
+} from 'rxjs/operators';
 import { DbEventsListenService } from '../../../../extensions/SyncExtension/services/DbEventsListenerService';
 import { toRemoteName } from '../../../../framework/utils';
 import { toObserver } from '../../../../lib/toObserver';
@@ -97,6 +104,10 @@ export class NoteBlocksService {
   }
 
   getBlockById$(blockId: string) {
+    if (this.store.getNoteBlock(blockId)) {
+      return of(this.store.getNoteBlock(blockId));
+    }
+
     return from(
       this.dbEventsService.liveQuery([noteBlocksTable], () =>
         this.notesBlocksRepository.getNoteIdByBlockId(blockId),
@@ -105,7 +116,7 @@ export class NoteBlocksService {
       switchMap((noteId) =>
         noteId ? this.getBlocksRegistryByNoteId$(blockId) : of(undefined),
       ),
-      map((registry) => registry?.rootBlock),
+      map((registry) => registry?.getBlockById(blockId)),
     );
   }
 

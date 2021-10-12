@@ -12,7 +12,7 @@ export const blocksTreeDescriptorsMapper: IMapper<
   mapToModelData(doc) {
     return {
       $modelId: doc.id,
-      rootBlockId: doc.id,
+      rootBlockId: doc.rootBlockId,
     };
   },
   mapToDoc(model) {

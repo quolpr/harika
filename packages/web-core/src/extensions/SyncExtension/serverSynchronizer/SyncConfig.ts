@@ -3,6 +3,7 @@ import { inject, injectable } from 'inversify';
 import { AnyModel } from 'mobx-keystone';
 import { Class } from 'utility-types';
 import { RemoteRegister } from '../../../framework/RemoteRegister';
+import { DB_NAME } from '../../DbExtension/types';
 import { IMapper } from '../mappers';
 import { BaseSyncRepository } from '../persistence/BaseSyncRepository';
 import { CreationDataWithId, SyncModelId } from '../types';

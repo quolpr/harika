@@ -2,9 +2,9 @@ import { Remote } from 'comlink';
 import { inject, injectable } from 'inversify';
 import { isEqual } from 'lodash-es';
 import { switchMap, distinctUntilChanged, map, of } from 'rxjs';
+import { withoutSync } from '../../../../extensions/SyncExtension/mobx-keystone/syncable';
 import { toRemoteName } from '../../../../framework/utils';
 import { NoteBlocksService } from '../../NoteBlocksExtension/services/NoteBlocksService';
-import { NotesStore } from '../../NotesExtension/models/NotesStore';
 import { BlocksScopeStore, getScopeKey } from '../models/BlocksScopeStore';
 import { BlocksScopesRepository } from '../repositories/BlockScopesRepository';
 
@@ -15,7 +15,7 @@ export class BlocksScopesService {
     private noteBlocksService: NoteBlocksService,
     @inject(toRemoteName(BlocksScopesRepository))
     private blocksScopesRepo: Remote<BlocksScopesRepository>,
-    @inject(NotesStore)
+    @inject(BlocksScopeStore)
     private blocksScopesStore: BlocksScopeStore,
   ) {}
 
@@ -82,6 +82,16 @@ export class BlocksScopesService {
             .flatMap((f) => (f ? [f] : []));
         }),
         switchMap(async (args) => {
+          const argsWithKey = args.map((arg) => ({
+            ...arg,
+            key: getScopeKey(
+              arg.noteId,
+              arg.scopedBy.$modelType,
+              arg.scopedBy.$modelId,
+              arg.rootBlockViewId,
+            ),
+          }));
+
           const scopesFromDb = Object.fromEntries(
             (
               await this.blocksScopesRepo.getByIds(
@@ -97,20 +107,33 @@ export class BlocksScopesService {
             ).map((doc) => [doc.id, doc]),
           );
 
-          return this.blocksScopesStore.getOrCreateScopes(
-            args.map((arg) => ({
-              ...arg,
-              collapsedBlockIds:
-                scopesFromDb[
-                  getScopeKey(
-                    arg.noteId,
-                    arg.scopedBy.$modelType,
-                    arg.scopedBy.$modelId,
-                    arg.rootBlockViewId,
-                  )
-                ]?.collapsedBlockIds || [],
-            })),
-          );
+          const inDb = withoutSync(() => {
+            return this.blocksScopesStore.getOrCreateScopes(
+              argsWithKey
+                .filter((arg) => scopesFromDb[arg.key])
+                .map((arg) => {
+                  return {
+                    ...arg,
+                    collapsedBlockIds: scopesFromDb[arg.key].collapsedBlockIds,
+                  };
+                }),
+            );
+          });
+
+          const notInDb = (() => {
+            return this.blocksScopesStore.getOrCreateScopes(
+              argsWithKey
+                .filter((arg) => !scopesFromDb[arg.key])
+                .map((arg) => {
+                  return {
+                    ...arg,
+                    collapsedBlockIds: [],
+                  };
+                }),
+            );
+          })();
+
+          return [...inDb, ...notInDb];
         }),
         distinctUntilChanged((a, b) => isEqual(a, b)),
       );

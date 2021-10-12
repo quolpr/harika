@@ -1,18 +1,22 @@
 import { expose } from 'comlink';
+import DbWorkerExtension from '../../extensions/DbExtension/DbWorkerExtension';
+import SyncWorkerExtension from '../../extensions/SyncExtension/SyncWorkerExtension';
 import { RootWorker } from '../../framework/RootWorker';
+import BlocksScopeWorkerExtension from './BlocksScopeExtension/BlocksScopeWorkerExtension';
+import NoteBlocksWorkerExtension from './NoteBlocksExtension/NoteBlocksWorkerExtension';
+import NotesWorkerExtension from './NotesExtension/NotesWorkerExtension';
+import VaultWorkerExtension from './VaultExtension/VaultWorkerExtension';
 
 export class VaultRootWorker extends RootWorker {
   async getExtensions() {
-    return (
-      await Promise.all([
-        import('../../extensions/DbExtension/DbWorkerExtension'),
-        import('../../extensions/SyncExtension/SyncWorkerExtension'),
-        import('./BlocksScopeExtension/BlocksScopeWorkerExtension'),
-        import('./NotesExtension/NotesWorkerExtension'),
-        import('./NoteBlocksExtension/NoteBlocksWorkerExtension'),
-        import('./VaultExtension/VaultWorkerExtension'),
-      ])
-    ).map((res) => res.default);
+    return [
+      DbWorkerExtension,
+      SyncWorkerExtension,
+      BlocksScopeWorkerExtension,
+      NotesWorkerExtension,
+      NoteBlocksWorkerExtension,
+      VaultWorkerExtension,
+    ];
   }
 }
 

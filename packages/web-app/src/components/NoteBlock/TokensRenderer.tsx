@@ -356,14 +356,12 @@ export const TokensRenderer = observer(
     return (
       <>
         {tokens.map((token, i) => (
-          <>
-            <TokenRenderer
-              key={`${token.offsetStart}${token.offsetEnd}`}
-              noteBlock={noteBlock}
-              token={token}
-              linkedNotes={linkedNotes}
-            />
-          </>
+          <TokenRenderer
+            key={`${token.offsetStart}${token.offsetEnd}`}
+            noteBlock={noteBlock}
+            token={token}
+            linkedNotes={linkedNotes}
+          />
         ))}
       </>
     );

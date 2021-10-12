@@ -1,5 +1,6 @@
 import {
   arraySet,
+  detach,
   model,
   Model,
   modelAction,
@@ -23,6 +24,15 @@ export const getScopeKey = (
 export class BlocksScopeStore extends Model({
   blocksScopes: prop<Record<string, BlocksScope>>(() => ({})),
 }) {
+  @modelAction
+  deleteScopesOfBlocks(blockIds: string[]) {
+    Object.values(this.blocksScopes).forEach((scope) => {
+      if (blockIds.includes(scope.rootScopedBlockId)) {
+        detach(scope);
+      }
+    });
+  }
+
   @modelAction
   getOrCreateScopes(
     args: {
@@ -92,6 +102,8 @@ export class BlocksScopeStore extends Model({
     });
 
     blocksScope.blockModelsRegistry = blockModelsRegistry;
+    blocksScope.deleteScopesOfBlocks = (ids: string[]) =>
+      this.deleteScopesOfBlocks(ids);
 
     this.blocksScopes[key] = blocksScope;
 

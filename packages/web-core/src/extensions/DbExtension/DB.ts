@@ -68,6 +68,7 @@ export class DB<Ctx extends object> {
 
     const path = `/blocked/${this.dbName}.sqlite`;
     if (typeof SharedArrayBuffer === 'undefined') {
+      console.log('No SharedArrayBuffer');
       let stream = SQL.FS.open(path, 'a+');
       await stream.node.contents.readIfFallback();
       SQL.FS.close(stream);
@@ -131,7 +132,7 @@ export class DB<Ctx extends object> {
 
     this.sqlDb.run('COMMIT;');
 
-    // TODO: migrations
+    console.log('DB initialized!', this.dbName);
   }
 
   transaction<T extends any>(func: () => T, ctx?: Ctx): T {

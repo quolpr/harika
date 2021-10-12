@@ -29,7 +29,7 @@ export class ScopedBlock implements ITreeNode<ScopedBlock> {
   constructor(
     noteBlock: NoteBlockModel,
     private collapsedBlockIds: IComputedValue<ArraySet<string>>,
-    private rootScopedBlock: IComputedValue<ScopedBlock>,
+    private rootScopedBlock: IComputedValue<ScopedBlock | undefined>,
     private getScopedBlock: (blockId: string) => ScopedBlock,
     private createBlock: (
       attrs: Optional<

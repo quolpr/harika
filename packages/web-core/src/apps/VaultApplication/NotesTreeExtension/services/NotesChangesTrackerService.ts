@@ -1,5 +1,5 @@
 import { autorun } from 'mobx';
-import { filter, map, Observable, takeUntil } from 'rxjs';
+import { filter, map, Observable, takeUntil, tap } from 'rxjs';
 import { DatabaseChangeType } from '../../../../extensions/SyncExtension/serverSynchronizer/types';
 import {
   INoteTitleChange,
@@ -49,6 +49,7 @@ export class NotesChangesTrackerService {
   }
 
   handleChanges(changes: INoteChangeEvent[]) {
+    console.log({ changes });
     if (!this.treeModel.isInitialized) {
       this.bufferedChanges.push(...changes);
       return;

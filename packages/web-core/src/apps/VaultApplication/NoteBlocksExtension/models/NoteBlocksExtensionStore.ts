@@ -58,6 +58,7 @@ export class NoteBlocksExtensionStore extends Model({
 
     this.blocksRegistries[noteId] = registry;
     this.blocksTreeDescriptors[noteId] = new BlocksTreeDescriptor({
+      $modelId: noteId,
       rootBlockId,
     });
 

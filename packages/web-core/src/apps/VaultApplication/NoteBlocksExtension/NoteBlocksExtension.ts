@@ -1,5 +1,4 @@
 import { inject, injectable } from 'inversify';
-import { registerRootStore } from 'mobx-keystone';
 import { BaseExtension } from '../../../framework/BaseExtension';
 import { RemoteRegister } from '../../../framework/RemoteRegister';
 import { NoteBlocksExtensionStore } from './models/NoteBlocksExtensionStore';
@@ -22,8 +21,6 @@ export class NoteBlocksExtension extends BaseExtension {
 
   async register() {
     const store = new NoteBlocksExtensionStore({});
-
-    registerRootStore(store);
 
     this.container.bind(NoteBlocksExtensionStore).toConstantValue(store);
     this.container.bind(NoteBlocksService).toSelf();
@@ -69,9 +66,5 @@ export class NoteBlocksExtension extends BaseExtension {
     };
   }
 
-  async onReady() {
-    console.log(
-      await this.remoteRegister.getRemote(NotesBlocksRepository).getAll(),
-    );
-  }
+  async onReady() {}
 }

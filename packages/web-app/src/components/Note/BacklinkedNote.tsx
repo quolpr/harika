@@ -14,7 +14,9 @@ import { useCurrentVaultId } from '../../hooks/vaultAppHooks';
 const LinkedBlock = observer(
   ({ note, scope }: { note: NoteModel; scope: BlocksScope }): JSX.Element => {
     const rootView = scope.rootScopedBlock;
-    const path = rootView.path;
+    const path = rootView?.path;
+
+    if (!path || !rootView) return <></>;
 
     return (
       <div className="backlinked-note__noteblock-root">

@@ -1,4 +1,4 @@
-import { FocusedBlock, VaultApplication } from '@harika/web-core';
+import { VaultApplication } from '@harika/web-core';
 import { createContext, useContext } from 'react';
 
 export const CurrentVaultAppContext = createContext<VaultApplication>(
@@ -43,10 +43,6 @@ export const useDeleteService = () => {
 
 export const useImportExportService = () => {
   return useCurrentVaultApp().getImportExportService();
-};
-
-export const useFocusedBlock = () => {
-  return new FocusedBlock({ state: undefined });
 };
 
 export const useRootStore = () => {

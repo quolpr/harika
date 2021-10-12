@@ -1,8 +1,9 @@
 import { MutableRefObject, useContext, useEffect } from 'react';
 import { CurrentBlockInputRefContext } from '../../../../contexts';
-import type { EditState, ScopedBlock } from '@harika/web-core';
 import { usePrevious } from 'react-use';
 import { useVaultService } from '../../../../hooks/vaultAppHooks';
+import { ScopedBlock } from '@harika/web-core';
+import { EditState } from '../../../../hooks/useFocusedBlockState';
 
 export const useProvideInputToContext = (
   inputRef: MutableRefObject<HTMLTextAreaElement | null>,

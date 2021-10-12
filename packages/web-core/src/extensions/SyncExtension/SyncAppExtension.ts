@@ -7,8 +7,11 @@ import { ToDbSynchronizer } from './synchronizer/ToDbSynchronizer';
 export class SyncAppExtension extends BaseExtension {
   async register() {
     this.container.bind(DbEventsListenService).toSelf();
-    this.container.bind(OnDbChangeNotifier).toSelf();
-    this.container.bind(ToDbSynchronizer).toSelf();
     this.container.bind(SyncConfig).toSelf();
+  }
+
+  async initialize() {
+    this.container.resolve(ToDbSynchronizer);
+    this.container.resolve(OnDbChangeNotifier);
   }
 }
