@@ -14,7 +14,9 @@ export default defineConfig({
     sourcemap: true,
     minify: 'terser',
     terserOptions: {
-      keep_classnames: true,
+      mangle: {
+        keep_classnames: true,
+      },
     },
   },
   plugins: [
