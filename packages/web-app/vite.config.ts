@@ -12,11 +12,7 @@ const reactSvgPlugin = require('vite-plugin-react-svg');
 export default defineConfig({
   build: {
     sourcemap: true,
-    minify: 'terser',
-    terserOptions: {
-      keep_classnames: true,
-      keep_fnames: true,
-    },
+    minify: false,
   },
   plugins: [
     // reactRefresh(),
