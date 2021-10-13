@@ -1,5 +1,6 @@
 import { arraySet } from 'mobx-keystone';
 import { IMapper } from '../../../../extensions/SyncExtension/mappers';
+import { blocksRegistryRef } from '../../NoteBlocksExtension/models/BlockModelsRegistry';
 import { BlocksScope } from '../models/BlocksScope';
 import {
   BlocksScopeDoc,
@@ -10,6 +11,7 @@ export const blocksScopesMapper: IMapper<BlocksScopeDoc, BlocksScope> = {
   mapToModelData(doc) {
     return {
       $modelId: doc.id,
+      blocksRegistryRef: blocksRegistryRef(doc.noteId),
       collapsedBlockIds: arraySet(doc.collapsedBlockIds),
       noteId: doc.noteId,
       scopedModelId: doc.scopedModelId,

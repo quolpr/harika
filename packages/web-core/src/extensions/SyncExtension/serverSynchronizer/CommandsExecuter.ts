@@ -19,7 +19,7 @@ export class CommandsExecuter {
     private socket$: Observable<Phoenix.Socket | undefined>,
     private channel$: Observable<Phoenix.Channel | undefined>,
     private log: (str: string) => void,
-    private stop$: Subject<void>,
+    private stop$: Observable<unknown>,
   ) {}
 
   send<T extends ClientCommands>(

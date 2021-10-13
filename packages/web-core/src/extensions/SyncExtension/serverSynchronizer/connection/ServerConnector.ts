@@ -31,7 +31,7 @@ export class ServerConnector {
     isLeader$: Observable<boolean>,
     isServerConnectionAllowed$: Observable<boolean>,
     private log: (str: string) => void,
-    private stop$: Subject<void>,
+    private stop$: Observable<unknown>,
   ) {
     combineLatest([isLeader$, isServerConnectionAllowed$]).subscribe(
       ([isLeader, isServerConnectionAllowed]) => {

@@ -98,7 +98,7 @@ const useKeepScroll = () => {
 };
 
 export const VaultLayout: React.FC<{
-  userApp: UserApplication;
+  userApp?: UserApplication;
 }> = ({ children, userApp }) => {
   const history = useHistory();
   const { vaultId } = useParams<{ vaultId: string }>();
@@ -119,8 +119,8 @@ export const VaultLayout: React.FC<{
     let vaultApp: VaultApplication | undefined = undefined;
 
     const cb = async () => {
-      const vault = await userApp.getVaultsService().getVault(vaultId);
-      vaultApp = vault && new VaultApplication(vault.id, vault.name);
+      // const vault = await userApp.getVaultsService().getVault(vaultId);
+      vaultApp = new VaultApplication(vaultId, 'Wow vault!');
 
       if (!vaultApp) {
         writeStorage('lastVaultId', undefined);

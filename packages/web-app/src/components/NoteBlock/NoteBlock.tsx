@@ -33,7 +33,7 @@ export const NoteBlockChildren = observer(
               scope={scope}
             />
           ) : (
-            <div className="text-red-500 ml-2 my-2">
+            <div className="text-red-500 ml-2 my-2" key={id}>
               [Broken child node]
               <button
                 className="ml-1.5 text-gray-200 bg-gray-600 hover:bg-gray-500 rounded px-2 py-0.5"

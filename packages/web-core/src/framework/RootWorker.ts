@@ -32,7 +32,7 @@ export abstract class RootWorker {
     this.workerContainer.bind(STOP_SIGNAL).toConstantValue(this.stop$);
   }
 
-  async registerProviders() {
+  async initWorker() {
     const extensions = await this.getExtensions();
 
     const extensionsRegister = new ExtensionsRegister(

@@ -80,7 +80,7 @@ export class DB<Ctx extends object> {
 
     this.sqlExec(`
       PRAGMA journal_mode=MEMORY;
-      PRAGMA page_size=8192;
+      PRAGMA page_size=${32 * 1024};
       PRAGMA cache_size=-${10 * 1024};
       PRAGMA foreign_keys=ON;
     `);

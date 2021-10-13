@@ -7,6 +7,7 @@ import {
   ModelCreationData,
   onChildAttachedTo,
   prop,
+  Ref,
 } from 'mobx-keystone';
 import { Optional } from 'utility-types';
 import { syncable } from '../../../../extensions/SyncExtension/mobx-keystone/syncable';
@@ -29,6 +30,7 @@ export const blocksScopeType = '@harika/BlocksScope';
 @syncable
 @model(blocksScopeType)
 export class BlocksScope extends Model({
+  blocksRegistryRef: prop<Ref<BlockModelsRegistry>>(),
   selectionInterval: prop<[string, string] | undefined>(),
   prevSelectionInterval: prop<[string, string] | undefined>(),
   // Is needed to handle when shift+click pressed
@@ -40,8 +42,6 @@ export class BlocksScope extends Model({
   scopedModelId: prop<string>(),
   scopedModelType: prop<string>(),
 }) {
-  public deleteScopesOfBlocks!: (ids: string[]) => void;
-  public blockModelsRegistry!: BlockModelsRegistry;
   private scopedBlocksRegistry = new ScopedBlocksRegistry();
 
   getStringTreeToCopy() {
@@ -60,7 +60,7 @@ export class BlocksScope extends Model({
   get blocksWithoutParent() {
     return this.scopedBlocksRegistry.allBlocks.filter((block) => {
       return (
-        !this.blockModelsRegistry.childParentRelations[block.$modelId] &&
+        !this.blocksRegistryRef.current.childParentRelations[block.$modelId] &&
         block.$modelId !== this.rootScopedBlockId
       );
     });
@@ -68,7 +68,7 @@ export class BlocksScope extends Model({
 
   @computed
   get noteId() {
-    return this.blockModelsRegistry.noteId;
+    return this.blocksRegistryRef.current.noteId;
   }
 
   @computed
@@ -171,7 +171,7 @@ export class BlocksScope extends Model({
       return this.scopedBlocksRegistry.getScopedBlock(blockId);
     } else {
       const newBlock: ScopedBlock = new ScopedBlock(
-        this.blockModelsRegistry.getBlockById(blockId),
+        this.blocksRegistryRef.current.getBlockById(blockId),
         computed(() => {
           return this.collapsedBlockIds;
         }),
@@ -201,7 +201,7 @@ export class BlocksScope extends Model({
     parent: ScopedBlock,
     pos: number | 'append',
   ) => {
-    const block = this.blockModelsRegistry.createBlock(
+    const block = this.blocksRegistryRef.current.createBlock(
       attrs,
       parent.noteBlock,
       pos,
@@ -212,9 +212,9 @@ export class BlocksScope extends Model({
 
   @modelAction
   deleteNoteBlockIds(ids: string[]) {
-    this.blockModelsRegistry.deleteNoteBlockIds(ids);
+    this.blocksRegistryRef.current.deleteNoteBlockIds(ids);
 
-    this.deleteScopesOfBlocks(ids);
+    // this.deleteScopesOfBlocks(ids);
   }
 
   @modelAction
@@ -226,7 +226,7 @@ export class BlocksScope extends Model({
 
   onInit() {
     onChildAttachedTo(
-      () => this.blockModelsRegistry.blocksMap,
+      () => this.blocksRegistryRef.current.blocksMap,
       (ch) => {
         if (ch instanceof NoteBlockModel) {
           this.getOrCreateScopedBlock(ch.$modelId);

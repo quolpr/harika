@@ -11,3 +11,7 @@ export type CreationDataWithId<T extends AnyModel = AnyModel> =
   ModelCreationData<T> & {
     $modelId: string;
   };
+
+export const SYNC_AUTH_TOKEN = 'syncAuthToken';
+export const SYNC_URL = 'syncUrl';
+export const SYNC_CONNECTION_ALLOWED = 'syncConnectionAllowed';

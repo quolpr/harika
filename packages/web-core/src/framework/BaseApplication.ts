@@ -34,13 +34,18 @@ export abstract class BaseApplication {
 
     this.worker = await this.loadWorker();
 
-    await this.register();
-    await this.worker.registerProviders();
+    await new Promise((resolve) => {
+      setTimeout(() => {
+        resolve(null);
+      }, 1000);
+    });
 
     this.container.bind(ROOT_WORKER).toConstantValue(this.worker);
     this.container
       .bind(RemoteRegister)
       .toConstantValue(new RemoteRegister(this.worker, this.container));
+
+    await this.register();
 
     const extensionsRegister = new ExtensionsRegister(
       this.container,
@@ -56,7 +61,7 @@ export abstract class BaseApplication {
   }
 
   private async loadWorker() {
-    let worker = this.workerClass();
+    let worker = new this.workerClass();
 
     initBackend(worker);
 
@@ -71,6 +76,8 @@ export abstract class BaseApplication {
       this.applicationId,
       windowId,
     );
+
+    await res.initWorker();
 
     return res;
   }

@@ -40,7 +40,7 @@ export class ServerSynchronizer {
     private serverConnector: ServerConnector,
     onNewChange$: Observable<unknown>,
     onNewPull$: Observable<unknown>,
-    private stop$: Subject<void> = new Subject(),
+    private stop$: Observable<unknown> = new Subject(),
     private log: (str: string) => void,
   ) {
     this.serverChangesReceiver = new ServerChangesReceiver(

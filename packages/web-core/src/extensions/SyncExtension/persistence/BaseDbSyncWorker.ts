@@ -1,15 +1,15 @@
 import { proxy } from 'comlink';
 import type { ProxyMarked } from 'comlink';
-import { Subject, buffer, debounceTime } from 'rxjs';
+import { Subject, buffer, debounceTime, withLatestFrom } from 'rxjs';
 import { DB } from '../../DbExtension/DB';
 import type { ApplyChangesService } from './ApplyChangesService';
 import type { ITransmittedChange } from './SyncRepository';
 import { SyncRepository } from './SyncRepository';
-import { BroadcastChannel } from 'broadcast-channel';
 import type { IInternalSyncCtx } from './syncCtx';
 import { isEqual } from 'lodash-es';
 import { suppressLog } from '../../DbExtension/suppressLog';
 import { IMigration } from '../../DbExtension/types';
+import { getBroadcastCh$ } from '../../../lib/utils';
 
 export abstract class BaseDbSyncWorker {
   protected db!: DB<IInternalSyncCtx>;
@@ -18,23 +18,22 @@ export abstract class BaseDbSyncWorker {
   protected onNewSyncPull$: Subject<void> = new Subject();
 
   constructor(protected dbName: string, protected windowId: string) {
-    const eventsChannel = new BroadcastChannel(this.dbName, {
-      webWorkerSupport: true,
-    });
+    const eventsChannel$ = getBroadcastCh$(this.dbName);
 
     this.eventsSubject$
-      .pipe(buffer(this.eventsSubject$.pipe(debounceTime(200))))
-      .subscribe((evs) => {
-        eventsChannel.postMessage(evs.flat());
+      .pipe(
+        buffer(this.eventsSubject$.pipe(debounceTime(200))),
+        withLatestFrom(eventsChannel$),
+      )
+      .subscribe(([evs, ch]) => {
+        ch.postMessage(evs.flat());
       });
 
-    const newSyncPullsChannel = new BroadcastChannel(
-      `${this.dbName}_syncPull`,
-      {
-        webWorkerSupport: true,
-      },
-    );
-    this.onNewSyncPull$.subscribe(() => newSyncPullsChannel.postMessage(''));
+    const newSyncPullsChannel$ = getBroadcastCh$(`${this.dbName}_syncPull`);
+
+    this.onNewSyncPull$
+      .pipe(withLatestFrom(newSyncPullsChannel$))
+      .subscribe(([, ch]) => ch.postMessage(''));
   }
 
   async initialize() {

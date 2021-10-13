@@ -21,53 +21,44 @@ export const VaultAppRoute = () => {
   const authToken = authInfo?.authToken;
 
   useEffect(() => {
-    if (!userId || isOffline === undefined || !authToken) return;
-
-    let service: UserApplication | undefined = undefined;
-
-    const cb = async () => {
-      service = new UserApplication(userId);
-
-      // , !isOffline, {
-      //         wsUrl: import.meta.env.VITE_PUBLIC_WS_URL as string,
-      //         authToken: authToken,
-      //       }
-      await service.start();
-
-      console.log('started!');
-
-      setUserApplication(service);
-    };
-
-    cb();
-
-    return () => {
-      service?.stop();
-      setUserApplication(undefined);
-    };
+    // if (!userId || isOffline === undefined || !authToken) return;
+    // let service: UserApplication | undefined = undefined;
+    // const cb = async () => {
+    //   service = new UserApplication(userId);
+    //   // , !isOffline, {
+    //   //         wsUrl: import.meta.env.VITE_PUBLIC_WS_URL as string,
+    //   //         authToken: authToken,
+    //   //       }
+    //   await service.start();
+    //   console.log('started!');
+    //   setUserApplication(service);
+    // };
+    // cb();
+    // return () => {
+    //   service?.stop();
+    //   setUserApplication(undefined);
+    // };
   }, [userId, isOffline, authToken]);
 
   return (
     <>
       <Route path={VAULT_PREFIX}>
         <OnlyAuthed>
-          {userApplication && (
-            <VaultLayout userApp={userApplication}>
-              <Switch>
-                <Route exact path={PATHS.VAULT_DAILY_PATH}>
-                  <DailyNotePage />
-                </Route>
+          <VaultLayout userApp={userApplication}>
+            <Switch>
+              <Route exact path={PATHS.VAULT_DAILY_PATH}>
+                <DailyNotePage />
+              </Route>
 
-                <Route exact path={PATHS.VAULT_NOTE_PATH}>
-                  <NotePage />
-                </Route>
+              <Route exact path={PATHS.VAULT_NOTE_PATH}>
+                <NotePage />
+              </Route>
 
-                <Route exact path={PATHS.VAULT_NOTE_INDEX_PATH}>
-                  <NotesPage />
-                </Route>
-              </Switch>
-            </VaultLayout>
-          )}
+              <Route exact path={PATHS.VAULT_NOTE_INDEX_PATH}>
+                <NotesPage />
+              </Route>
+            </Switch>
+          </VaultLayout>
         </OnlyAuthed>
       </Route>
       <Route exact path={PATHS.VAULT_INDEX_PATH}>

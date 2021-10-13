@@ -7,6 +7,7 @@ import { withoutSyncAction } from '../../../../extensions/SyncExtension/mobx-key
 import { BlocksTreeDescriptor } from './BlocksTreeDescriptor';
 import { generateId } from '../../../../lib/generateId';
 import { SyncModelId } from '../../../../extensions/SyncExtension/types';
+import { withoutUndoAction } from '../../../../lib/utils';
 
 const blocksApp = '@harika/noteBlocks/NoteBlocksExtensionStore';
 
@@ -34,6 +35,7 @@ export class NoteBlocksExtensionStore extends Model({
     return undefined;
   }
 
+  @withoutUndoAction
   @modelAction
   createNewBlocksTree(noteId: string, options?: { addEmptyBlock?: boolean }) {
     options = { addEmptyBlock: true, ...options };

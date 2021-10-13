@@ -76,7 +76,9 @@ export class NotesService {
       ...attrs,
     });
 
-    this.notesStore.registerNote(note);
+    withoutUndo(() => {
+      this.notesStore.registerNote(note);
+    });
 
     return {
       status: 'ok',

@@ -8,7 +8,11 @@ import {
   prop,
 } from 'mobx-keystone';
 import { SyncModelId } from '../../../../extensions/SyncExtension/types';
-import { BlockModelsRegistry } from '../../NoteBlocksExtension/models/BlockModelsRegistry';
+import { withoutUndoAction } from '../../../../lib/utils';
+import {
+  BlockModelsRegistry,
+  blocksRegistryRef,
+} from '../../NoteBlocksExtension/models/BlockModelsRegistry';
 import { BlocksScope } from './BlocksScope';
 
 export const getScopeKey = (
@@ -24,6 +28,7 @@ export const getScopeKey = (
 export class BlocksScopeStore extends Model({
   blocksScopes: prop<Record<string, BlocksScope>>(() => ({})),
 }) {
+  @withoutUndoAction
   @modelAction
   deleteScopesOfBlocks(blockIds: string[]) {
     Object.values(this.blocksScopes).forEach((scope) => {
@@ -33,6 +38,7 @@ export class BlocksScopeStore extends Model({
     });
   }
 
+  @withoutUndoAction
   @modelAction
   getOrCreateScopes(
     args: {
@@ -99,11 +105,8 @@ export class BlocksScopeStore extends Model({
       collapsedBlockIds: arraySet(collapsedBlockIds),
       scopedModelId: scopedBy.$modelId,
       scopedModelType: scopedBy.$modelType,
+      blocksRegistryRef: blocksRegistryRef(blockModelsRegistry),
     });
-
-    blocksScope.blockModelsRegistry = blockModelsRegistry;
-    blocksScope.deleteScopesOfBlocks = (ids: string[]) =>
-      this.deleteScopesOfBlocks(ids);
 
     this.blocksScopes[key] = blocksScope;
 
@@ -126,6 +129,8 @@ export class BlocksScopeStore extends Model({
     return this.blocksScopes[key];
   }
 
+  @withoutUndoAction
+  @modelAction
   handleModelChanges(
     scopes: (ModelCreationData<BlocksScope> & { $modelId: string })[],
     [deletedScopeIds]: [SyncModelId<BlocksScope>[]],
