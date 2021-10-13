@@ -28,10 +28,11 @@ type IProps = {
   className?: string;
   isOpened: boolean;
   onNavClick: (e: React.MouseEvent) => void;
+  vaultName: string | undefined;
 };
 
 export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
-  ({ className, isOpened, onNavClick }: IProps, ref) => {
+  ({ className, isOpened, onNavClick, vaultName }: IProps, ref) => {
     const vaultApp = useCurrentVaultApp();
     const notesService = useNotesService();
     const vaultService = useVaultService();
@@ -111,7 +112,7 @@ export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
             </Link>
           </div>
           <div className={sidebarClass('header-vault-name')}>
-            {vaultApp.vaultName}
+            {vaultName || 'Loading...'}
           </div>
         </div>
         <div className={sidebarClass('menu-container')}>

@@ -23,10 +23,27 @@ import { NotesStore } from './NotesExtension/models/NotesStore';
 import { registerRootStore } from 'mobx-keystone';
 import { BlocksScopeStore } from './BlocksScopeExtension/models/BlocksScopeStore';
 import { NoteBlocksExtensionStore } from './NoteBlocksExtension/models/NoteBlocksExtensionStore';
+import {
+  SYNC_AUTH_TOKEN,
+  SYNC_URL,
+} from '../../extensions/SyncExtension/types';
 
 export class VaultApplication extends BaseApplication {
-  constructor(applicationId: string, public vaultName: string) {
+  constructor(
+    applicationId: string,
+    private syncConfig: {
+      url: string;
+      authToken: string;
+    },
+  ) {
     super(applicationId);
+  }
+
+  async register() {
+    this.container.bind(SYNC_URL).toConstantValue(this.syncConfig.url);
+    this.container
+      .bind(SYNC_AUTH_TOKEN)
+      .toConstantValue(this.syncConfig.authToken);
   }
 
   async initialize() {

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Switch, Route } from 'react-router-dom';
 import { VaultLayout } from '../components/VaultLayout/VaultLayout';
 import { PATHS, VAULT_PREFIX } from '../paths';
@@ -20,31 +20,37 @@ export const VaultAppRoute = () => {
   const isOffline = authInfo?.isOffline;
   const authToken = authInfo?.authToken;
 
+  const syncConfig = useMemo(() => {
+    return authToken
+      ? {
+          url: import.meta.env.VITE_PUBLIC_WS_URL as string,
+          authToken,
+        }
+      : undefined;
+  }, [authToken]);
+
   useEffect(() => {
-    // if (!userId || isOffline === undefined || !authToken) return;
-    // let service: UserApplication | undefined = undefined;
-    // const cb = async () => {
-    //   service = new UserApplication(userId);
-    //   // , !isOffline, {
-    //   //         wsUrl: import.meta.env.VITE_PUBLIC_WS_URL as string,
-    //   //         authToken: authToken,
-    //   //       }
-    //   await service.start();
-    //   console.log('started!');
-    //   setUserApplication(service);
-    // };
-    // cb();
-    // return () => {
-    //   service?.stop();
-    //   setUserApplication(undefined);
-    // };
+    if (!userId || isOffline === undefined || !syncConfig) return;
+    let service: UserApplication | undefined = undefined;
+    const cb = async () => {
+      service = new UserApplication(userId, syncConfig);
+
+      await service.start();
+
+      setUserApplication(service);
+    };
+    cb();
+    return () => {
+      service?.stop();
+      setUserApplication(undefined);
+    };
   }, [userId, isOffline, authToken]);
 
   return (
     <>
       <Route path={VAULT_PREFIX}>
         <OnlyAuthed>
-          <VaultLayout userApp={userApplication}>
+          <VaultLayout userApp={userApplication} syncConfig={syncConfig}>
             <Switch>
               <Route exact path={PATHS.VAULT_DAILY_PATH}>
                 <DailyNotePage />

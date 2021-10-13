@@ -3,6 +3,7 @@ import { toRemoteName } from '../../../framework/utils';
 import { BlocksScopesRepository } from './repositories/BlockScopesRepository';
 import { DB_MIGRATIONS } from '../../../extensions/DbExtension/types';
 import { addBlockScopeTable } from './migrations/addBlockScopeTable';
+import { REPOS_WITH_SYNC } from '../../../extensions/SyncExtension/types';
 
 export default class BlocksScopeWorkerExtension extends BaseExtension {
   async register() {
@@ -13,5 +14,9 @@ export default class BlocksScopeWorkerExtension extends BaseExtension {
       .toDynamicValue(() => this.container.get(BlocksScopesRepository));
 
     this.container.bind(DB_MIGRATIONS).toConstantValue(addBlockScopeTable);
+
+    this.container
+      .bind(REPOS_WITH_SYNC)
+      .toDynamicValue(() => this.container.get(BlocksScopesRepository));
   }
 }

@@ -1,5 +1,5 @@
-import { maxBy } from 'lodash-es';
-import type { IChangesApplier } from '../serverSynchronizer/ServerSynchronizer';
+import { inject, injectable, multiInject } from 'inversify';
+import { groupBy, maxBy } from 'lodash-es';
 import type {
   IDatabaseChange,
   ICreateChange,
@@ -7,17 +7,25 @@ import type {
   IUpdateChange,
 } from '../serverSynchronizer/types';
 import { DatabaseChangeType } from '../serverSynchronizer/types';
+import { REPOS_WITH_SYNC } from '../types';
 import type { BaseSyncRepository } from './BaseSyncRepository';
 import type { ISyncCtx } from './syncCtx';
-import type { SyncRepository } from './SyncRepository';
+import { SyncRepository } from './SyncRepository';
 
+@injectable()
 export class ApplyChangesService {
   constructor(
-    private resolver: IChangesApplier,
-    private syncRepo: SyncRepository,
+    @multiInject(REPOS_WITH_SYNC) private reposWithSync: BaseSyncRepository[],
+    @inject(SyncRepository) private syncRepo: SyncRepository,
   ) {}
 
   applyChanges() {
+    const reposByTable: Record<string, BaseSyncRepository> = {};
+
+    this.reposWithSync.forEach((r) => {
+      reposByTable[r.getTableName()] = r;
+    });
+
     this.syncRepo.transaction(() => {
       const syncStatus = this.syncRepo.getSyncStatus();
 
@@ -31,13 +39,24 @@ export class ApplyChangesService {
 
       if (serverChanges.length > 0) {
         const clientChanges = this.syncRepo.getClientChanges();
+        const groupedServerChange = groupBy(serverChanges, (ch) => ch.table);
 
-        this.resolver.resolveChanges(
-          clientChanges.map((change) => ({
-            ...change,
-            source: syncStatus.clientId,
-          })),
-          serverChanges,
+        Object.entries(groupBy(clientChanges, (ch) => ch.table)).forEach(
+          ([tableName, chs]) => {
+            const repo = reposByTable[tableName];
+
+            if (!repo) {
+              throw new Error(`Could find repo for ${JSON.stringify(chs)}`);
+            }
+
+            repo.changesApplier().resolveChanges(
+              chs.map((change) => ({
+                ...change,
+                source: syncStatus.clientId,
+              })),
+              groupedServerChange[tableName] || [],
+            );
+          },
         );
       }
 

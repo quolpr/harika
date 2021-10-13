@@ -1,4 +1,5 @@
 import { DB_MIGRATIONS } from '../../../extensions/DbExtension/types';
+import { REPOS_WITH_SYNC } from '../../../extensions/SyncExtension/types';
 import { BaseExtension } from '../../../framework/BaseExtension';
 import { toRemoteName } from '../../../framework/utils';
 import { initNotesTable } from './migrations/createNotesTable';
@@ -11,6 +12,10 @@ export default class NotesWorkerExtension extends BaseExtension {
 
     this.container
       .bind(toRemoteName(NotesRepository))
+      .toDynamicValue(() => this.container.get(NotesRepository));
+
+    this.container
+      .bind(REPOS_WITH_SYNC)
       .toDynamicValue(() => this.container.get(NotesRepository));
   }
 

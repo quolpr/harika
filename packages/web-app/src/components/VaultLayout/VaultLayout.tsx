@@ -99,7 +99,13 @@ const useKeepScroll = () => {
 
 export const VaultLayout: React.FC<{
   userApp?: UserApplication;
-}> = ({ children, userApp }) => {
+  syncConfig:
+    | undefined
+    | {
+        url: string;
+        authToken: string;
+      };
+}> = ({ children, userApp, syncConfig }) => {
   const history = useHistory();
   const { vaultId } = useParams<{ vaultId: string }>();
   const isWide = useMedia('(min-width: 768px)');
@@ -114,13 +120,23 @@ export const VaultLayout: React.FC<{
     setIsSidebarOpened(!isSidebarOpened);
   }, [isSidebarOpened]);
 
+  const [vaultName, setVaultName] = useState<undefined | string>(undefined);
+
   useEffect(() => {
+    const load = async () => {
+      setVaultName((await userApp?.getVaultsService().getVault(vaultId))?.name);
+    };
+
+    load();
+  }, [userApp]);
+
+  useEffect(() => {
+    if (!syncConfig) return;
     let closeDevtool = () => {};
     let vaultApp: VaultApplication | undefined = undefined;
 
     const cb = async () => {
-      // const vault = await userApp.getVaultsService().getVault(vaultId);
-      vaultApp = new VaultApplication(vaultId, 'Wow vault!');
+      vaultApp = new VaultApplication(vaultId, syncConfig);
 
       if (!vaultApp) {
         writeStorage('lastVaultId', undefined);
@@ -187,6 +203,7 @@ export const VaultLayout: React.FC<{
         <UndoRedoManagerProvider>
           <div className={layoutClass()}>
             <VaultSidebar
+              vaultName={vaultName}
               ref={sidebarRef}
               className={layoutClass('sidebar', {
                 closed: !isSidebarOpened,

@@ -2,11 +2,11 @@ import { DB_MIGRATIONS } from '../../../extensions/DbExtension/types';
 import { BaseExtension } from '../../../framework/BaseExtension';
 import { toRemoteName } from '../../../framework/utils';
 import { NotesBlocksRepository } from './repositories/NotesBlocksRepository';
-import { BlocksScopesRepository } from '../BlocksScopeExtension/repositories/BlockScopesRepository';
 import { initNoteBlocksTables } from './migrations/initNoteBlocksTables';
 import { addBlockIdsToNoteBlocksTables } from './migrations/addBlockIdsToNoteBlocksTable';
 import { addBlocksTreeDescriptorsTable } from './migrations/addBlockTreeDescriptorTable';
 import { BlocksTreeDescriptorsRepository } from './repositories/BlockTreeDescriptorsRepository';
+import { REPOS_WITH_SYNC } from '../../../extensions/SyncExtension/types';
 
 export default class NoteBlocksWorkerExtension extends BaseExtension {
   async register() {
@@ -29,6 +29,15 @@ export default class NoteBlocksWorkerExtension extends BaseExtension {
     this.container
       .bind(DB_MIGRATIONS)
       .toConstantValue(addBlocksTreeDescriptorsTable);
+
+    this.container
+      .bind(REPOS_WITH_SYNC)
+      .toDynamicValue(() => this.container.get(NotesBlocksRepository));
+    this.container
+      .bind(REPOS_WITH_SYNC)
+      .toDynamicValue(() =>
+        this.container.get(BlocksTreeDescriptorsRepository),
+      );
   }
 
   async onReady() {}

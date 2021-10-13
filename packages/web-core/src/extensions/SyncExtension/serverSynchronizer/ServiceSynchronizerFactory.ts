@@ -19,6 +19,7 @@ import { STOP_SIGNAL } from '../../../framework/types';
 import { toRemoteName } from '../../../framework/utils';
 import { getBroadcastCh$ } from '../../../lib/utils';
 import { DB_NAME } from '../../DbExtension/types';
+import { ApplyChangesService } from '../persistence/ApplyChangesService';
 import { SyncRepository } from '../persistence/SyncRepository';
 import { DbEventsListenService } from '../services/DbEventsListenerService';
 import { SYNC_AUTH_TOKEN, SYNC_CONNECTION_ALLOWED, SYNC_URL } from '../types';
@@ -26,7 +27,6 @@ import { CommandsExecuter } from './CommandsExecuter';
 import { ServerConnector } from './connection/ServerConnector';
 import { ISyncState, defaultSyncState } from './init';
 import { ServerSynchronizer } from './ServerSynchronizer';
-import { SyncConfig } from './SyncConfig';
 
 @injectable()
 export class ServerSynchronizerFactory {
@@ -42,8 +42,8 @@ export class ServerSynchronizerFactory {
     private syncUrl: string,
     @inject(SYNC_AUTH_TOKEN)
     private syncAuthToken: string,
-    @inject(SyncConfig)
-    private syncConfig: SyncConfig,
+    @inject(toRemoteName(ApplyChangesService))
+    private applyChangesService: Remote<ApplyChangesService>,
     @inject(STOP_SIGNAL)
     private stop$: Observable<unknown>,
   ) {}
@@ -76,7 +76,7 @@ export class ServerSynchronizerFactory {
 
     const syncer = new ServerSynchronizer(
       this.syncRepo,
-      undefined as unknown as any,
+      this.applyChangesService,
       commandExecuter,
       serverConnector,
       this.dbEventsListenService.changesChannel$(),
