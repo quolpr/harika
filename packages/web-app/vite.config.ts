@@ -29,4 +29,7 @@ export default defineConfig({
     visualizer({ open: true, filename: 'dist/stats.html' }),
     Checker({ typescript: true }),
   ],
+  optimizeDeps: {
+    keepNames: true,
+  },
 });
