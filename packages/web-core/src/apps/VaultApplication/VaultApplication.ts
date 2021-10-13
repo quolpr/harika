@@ -25,8 +25,11 @@ import { BlocksScopeStore } from './BlocksScopeExtension/models/BlocksScopeStore
 import { NoteBlocksExtensionStore } from './NoteBlocksExtension/models/NoteBlocksExtensionStore';
 import {
   SYNC_AUTH_TOKEN,
+  SYNC_CONNECTION_ALLOWED,
   SYNC_URL,
 } from '../../extensions/SyncExtension/types';
+import { SyncStateService } from '../../extensions/SyncExtension/SyncState';
+import { BehaviorSubject } from 'rxjs';
 
 export class VaultApplication extends BaseApplication {
   constructor(
@@ -100,6 +103,16 @@ export class VaultApplication extends BaseApplication {
 
   getDbName() {
     return this.container.get<string>(DB_NAME);
+  }
+
+  getSyncState$() {
+    return this.container.get(SyncStateService).current$;
+  }
+
+  getIsConnectionAllowed$() {
+    return this.container.get<BehaviorSubject<boolean>>(
+      SYNC_CONNECTION_ALLOWED,
+    );
   }
 
   get applicationName() {

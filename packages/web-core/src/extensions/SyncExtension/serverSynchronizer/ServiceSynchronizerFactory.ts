@@ -1,19 +1,13 @@
 import { createLeaderElection } from 'broadcast-channel';
 import { Remote } from 'comlink';
 import { inject, injectable } from 'inversify';
-import { isEqual } from 'lodash-es';
 import {
-  distinctUntilChanged,
-  interval,
-  map,
-  merge,
   Observable,
   ReplaySubject,
   share,
   startWith,
+  Subject,
   switchMap,
-  tap,
-  withLatestFrom,
 } from 'rxjs';
 import { STOP_SIGNAL } from '../../../framework/types';
 import { toRemoteName } from '../../../framework/utils';
@@ -22,10 +16,10 @@ import { DB_NAME } from '../../DbExtension/types';
 import { ApplyChangesService } from '../persistence/ApplyChangesService';
 import { SyncRepository } from '../persistence/SyncRepository';
 import { DbEventsListenService } from '../services/DbEventsListenerService';
+import { SyncStateService } from '../SyncState';
 import { SYNC_AUTH_TOKEN, SYNC_CONNECTION_ALLOWED, SYNC_URL } from '../types';
 import { CommandsExecuter } from './CommandsExecuter';
 import { ServerConnector } from './connection/ServerConnector';
-import { ISyncState, defaultSyncState } from './init';
 import { ServerSynchronizer } from './ServerSynchronizer';
 
 @injectable()
@@ -37,7 +31,7 @@ export class ServerSynchronizerFactory {
     @inject(DbEventsListenService)
     private dbEventsListenService: DbEventsListenService,
     @inject(SYNC_CONNECTION_ALLOWED)
-    private syncConnectionAllowed$: Observable<boolean>,
+    private syncConnectionAllowed$: Subject<boolean>,
     @inject(SYNC_URL)
     private syncUrl: string,
     @inject(SYNC_AUTH_TOKEN)
@@ -46,6 +40,8 @@ export class ServerSynchronizerFactory {
     private applyChangesService: Remote<ApplyChangesService>,
     @inject(STOP_SIGNAL)
     private stop$: Observable<unknown>,
+    @inject(SyncStateService)
+    private syncStateService: SyncStateService,
   ) {}
 
   async initialize() {
@@ -90,7 +86,11 @@ export class ServerSynchronizerFactory {
     return {
       isConnected$: serverConnector.isConnected$,
       isConnectedAndReadyToUse$: serverConnector.isConnectedAndReadyToUse$,
-      syncState$: this.getSyncState$(syncer, serverConnector, isLeader$),
+      syncState$: this.syncStateService.initialize(
+        syncer,
+        serverConnector,
+        isLeader$,
+      ),
     };
   }
 
@@ -113,80 +113,6 @@ export class ServerSynchronizerFactory {
       share({
         connector: () => new ReplaySubject(1),
       }),
-    );
-  }
-
-  private getSyncState$(
-    syncer: ServerSynchronizer,
-    serverConnector: ServerConnector,
-    isLeader$: Observable<boolean>,
-  ) {
-    const storageKey = `sync-state-${this.dbName}`;
-
-    const stateFormer = merge(
-      this.dbEventsListenService.changesChannel$(),
-      this.dbEventsListenService.newSyncPullsChannel$(),
-      syncer.isSyncing$,
-      serverConnector.isConnected$,
-      serverConnector.isConnectedAndReadyToUse$,
-      interval(10_000),
-    ).pipe(
-      startWith(null),
-      switchMap(async () => {
-        const [serverCount, clientCount] =
-          await this.syncRepo.getServerAndClientChangesCount();
-
-        return {
-          isSyncing: syncer.isSyncing$.value,
-          pendingClientChangesCount: clientCount,
-          pendingServerChangesCount: serverCount,
-        };
-      }),
-      withLatestFrom(
-        serverConnector.isConnected$,
-        (partialState, isConnected) => ({ ...partialState, isConnected }),
-      ),
-      withLatestFrom(
-        serverConnector.isConnectedAndReadyToUse$,
-        (partialState, isConnectedAndReadyToUse) => ({
-          ...partialState,
-          isConnectedAndReadyToUse,
-        }),
-      ),
-      distinctUntilChanged((a, b) => isEqual(a, b)),
-      tap((state) => {
-        localStorage.setItem(storageKey, JSON.stringify(state));
-      }),
-      share({
-        connector: () => new ReplaySubject(1),
-      }),
-    );
-
-    const stateGetter = new Observable<string | null>((obs) => {
-      console.log('start listening!');
-      const callback = () => {
-        obs.next(localStorage.getItem(storageKey));
-      };
-      window.addEventListener('storage', callback);
-
-      obs.next(localStorage.getItem(storageKey));
-      return () => {
-        window.removeEventListener('storage', callback);
-      };
-    }).pipe(
-      distinctUntilChanged(),
-      map((val): ISyncState => (val ? JSON.parse(val) : defaultSyncState)),
-    );
-
-    return isLeader$.pipe(
-      switchMap((isLeader) => {
-        return isLeader ? stateFormer : stateGetter;
-      }),
-      withLatestFrom(isLeader$, (partialState, isLeader) => ({
-        ...partialState,
-        isLeader,
-        dbName: this.dbName,
-      })),
     );
   }
 }

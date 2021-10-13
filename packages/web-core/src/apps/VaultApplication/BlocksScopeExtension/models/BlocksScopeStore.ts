@@ -6,7 +6,12 @@ import {
   modelAction,
   ModelCreationData,
   prop,
+  rootRef,
 } from 'mobx-keystone';
+import {
+  withoutSync,
+  withoutSyncAction,
+} from '../../../../extensions/SyncExtension/mobx-keystone/syncable';
 import { SyncModelId } from '../../../../extensions/SyncExtension/types';
 import { withoutUndoAction } from '../../../../lib/utils';
 import {
@@ -130,6 +135,7 @@ export class BlocksScopeStore extends Model({
   }
 
   @withoutUndoAction
+  @withoutSyncAction
   @modelAction
   handleModelChanges(
     scopes: (ModelCreationData<BlocksScope> & { $modelId: string })[],
@@ -140,6 +146,8 @@ export class BlocksScopeStore extends Model({
     });
 
     scopes.forEach((scope) => {
+      if (!scope.blocksRegistryRef.isValid) return;
+
       this.blocksScopes[scope.$modelId] = new BlocksScope(scope);
     });
   }

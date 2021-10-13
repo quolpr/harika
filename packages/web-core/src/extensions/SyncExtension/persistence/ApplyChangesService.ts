@@ -14,6 +14,8 @@ import { SyncRepository } from './SyncRepository';
 
 @injectable()
 export class ApplyChangesService {
+  private dbChangesWriter = new DbChangesWriterService();
+
   constructor(
     @multiInject(REPOS_WITH_SYNC) private reposWithSync: BaseSyncRepository[],
     @inject(SyncRepository) private syncRepo: SyncRepository,
@@ -39,25 +41,38 @@ export class ApplyChangesService {
 
       if (serverChanges.length > 0) {
         const clientChanges = this.syncRepo.getClientChanges();
+        const groupedClientChange = groupBy(clientChanges, (ch) => ch.table);
         const groupedServerChange = groupBy(serverChanges, (ch) => ch.table);
 
-        Object.entries(groupBy(clientChanges, (ch) => ch.table)).forEach(
-          ([tableName, chs]) => {
-            const repo = reposByTable[tableName];
+        Object.entries(groupedServerChange).forEach(([tableName, chs]) => {
+          const repo = reposByTable[tableName];
 
-            if (!repo) {
-              throw new Error(`Could find repo for ${JSON.stringify(chs)}`);
-            }
+          if (!repo) {
+            throw new Error(`Could find repo for ${JSON.stringify(chs)}`);
+          }
 
-            repo.changesApplier().resolveChanges(
-              chs.map((change) => ({
-                ...change,
-                source: syncStatus.clientId,
-              })),
-              groupedServerChange[tableName] || [],
-            );
-          },
-        );
+          const result = repo.changesApplier().resolveChanges(
+            groupedClientChange[tableName] || [],
+            chs.map((change) => ({
+              ...change,
+              source: syncStatus.clientId,
+            })),
+          );
+
+          this.dbChangesWriter.writeChanges(
+            result.notConflictedServerChanges,
+            repo,
+            {
+              shouldRecordChange: false,
+              source: 'inDbChanges' as const,
+            },
+          );
+
+          this.dbChangesWriter.writeChanges(result.conflictedChanges, repo, {
+            shouldRecordChange: true,
+            source: 'inDbChanges' as const,
+          });
+        });
       }
 
       this.syncRepo.deletePulls(serverPulls.map(({ id }) => id));
@@ -111,7 +126,7 @@ export class DbChangesWriterService {
 
     repo.transaction(() => {
       if (createChangesToApply.length > 0)
-        repo.bulkCreate(
+        repo.bulkCreateOrUpdate(
           createChangesToApply.map((c) => c.obj),
           ctx,
         );

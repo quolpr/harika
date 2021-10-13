@@ -48,3 +48,11 @@ export const useImportExportService = () => {
 export const useRootStore = () => {
   return useCurrentVaultApp().getRootStore();
 };
+
+export const useSyncState$ = () => {
+  return useCurrentVaultApp().getSyncState$();
+};
+
+export const useIsConnectionAllowed$ = () => {
+  return useCurrentVaultApp().getIsConnectionAllowed$();
+};

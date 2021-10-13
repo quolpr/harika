@@ -8,6 +8,7 @@ import {
 import { withoutSyncAction } from '../../../../extensions/SyncExtension/mobx-keystone/syncable';
 import { SyncModelId } from '../../../../extensions/SyncExtension/types';
 import { generateId } from '../../../../lib/generateId';
+import { withoutUndoAction } from '../../../../lib/utils';
 import { NoteModel } from './NoteModel';
 
 @model('harika/notesStore')
@@ -32,6 +33,7 @@ export class NotesStore extends Model({
     return this.notesMap[id];
   }
 
+  @withoutUndoAction
   @withoutSyncAction
   @modelAction
   handleChanges(

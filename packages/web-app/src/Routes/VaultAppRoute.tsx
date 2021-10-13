@@ -33,7 +33,7 @@ export const VaultAppRoute = () => {
     if (!userId || isOffline === undefined || !syncConfig) return;
     let service: UserApplication | undefined = undefined;
     const cb = async () => {
-      service = new UserApplication(userId, syncConfig);
+      service = new UserApplication(userId.replace(/\-/g, ''), syncConfig);
 
       await service.start();
 

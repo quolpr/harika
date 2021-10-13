@@ -24,7 +24,10 @@ export interface IChangesApplier {
   resolveChanges(
     clientChanges: IDatabaseChange[],
     serverChanges: IDatabaseChange[],
-  ): void;
+  ): {
+    conflictedChanges: IDatabaseChange[];
+    notConflictedServerChanges: IDatabaseChange[];
+  };
 }
 
 export class ServerSynchronizer {

@@ -2,10 +2,10 @@ import type { IChangesApplier } from '../../../../extensions/SyncExtension/serve
 import type { IDatabaseChange } from '../../../../extensions/SyncExtension/serverSynchronizer/types';
 
 export class UserDbChangesApplier implements IChangesApplier {
-  async resolveChanges(
+  resolveChanges(
     _clientChanges: IDatabaseChange[],
     serverChanges: IDatabaseChange[],
   ) {
-    return serverChanges;
+    return { notConflictedServerChanges: serverChanges, conflictedChanges: [] };
   }
 }

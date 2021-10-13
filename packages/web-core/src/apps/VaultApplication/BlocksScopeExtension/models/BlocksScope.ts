@@ -226,7 +226,13 @@ export class BlocksScope extends Model({
 
   onInit() {
     onChildAttachedTo(
-      () => this.blocksRegistryRef.current.blocksMap,
+      () => {
+        if (!this.blocksRegistryRef.maybeCurrent) {
+          console.error('Blocks registry is not registered!');
+        }
+
+        return this.blocksRegistryRef.current.blocksMap;
+      },
       (ch) => {
         if (ch instanceof NoteBlockModel) {
           this.getOrCreateScopedBlock(ch.$modelId);

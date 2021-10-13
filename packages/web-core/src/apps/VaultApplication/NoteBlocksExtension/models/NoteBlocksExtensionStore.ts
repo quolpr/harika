@@ -125,6 +125,7 @@ export class NoteBlocksExtensionStore extends Model({
     });
   }
 
+  @withoutUndoAction
   @withoutSyncAction
   @modelAction
   handleModelChanges(
