@@ -15,6 +15,11 @@ import {
   NotesRepository,
   notesTable,
 } from '../../NotesExtension/repositories/NotesRepository';
+import {
+  BlocksTreeDescriptorsRepository,
+  blocksTreeDescriptorsTable,
+} from '../../NoteBlocksExtension/repositories/BlockTreeDescriptorsRepository';
+import { BlocksTreeDescriptor } from '../../NoteBlocksExtension/models/BlocksTreeDescriptor';
 
 @injectable()
 export class ImportExportService {
@@ -24,6 +29,8 @@ export class ImportExportService {
     private notesBlocksRepo: NotesBlocksRepository,
     @inject(BlocksScopesRepository)
     private blocksScopesRepo: BlocksScopesRepository,
+    @inject(BlocksTreeDescriptorsRepository)
+    private descriptorRepo: BlocksTreeDescriptorsRepository,
   ) {}
 
   importData(importData: {
@@ -34,12 +41,11 @@ export class ImportExportService {
       source: 'inDbChanges',
     };
 
-    const rootBlockIds = Object.fromEntries(
+    const rootBlockIds =
       importData.data.data
-        .find(({ tableName }) => tableName === noteBlocksTable)
-        ?.rows.filter(({ isRoot }) => isRoot)
-        .map((block) => [block.noteId, block.id]) || [],
-    );
+        .find(({ tableName }) => tableName === notesTable)
+        ?.rows.filter(({ rootBlockId }) => rootBlockId)
+        .map((note) => [note.id, note.rootBlockId]) || [];
 
     this.notesRepo.transaction(() => {
       importData.data.data.forEach(({ rows, tableName }) => {
@@ -48,14 +54,6 @@ export class ImportExportService {
             rows
               .filter(({ title }) => title !== undefined)
               .map((doc) => {
-                const rootBlockId = doc.rootBlockId || rootBlockIds[doc.id];
-
-                if (rootBlockId === undefined) {
-                  console.error('Root block not found for note', doc);
-
-                  return undefined;
-                }
-
                 const noteDoc: NoteDoc = {
                   id: doc.id,
                   title: doc.title,
@@ -94,8 +92,20 @@ export class ImportExportService {
           );
         } else if (tableName === blocksScopesTable) {
           this.blocksScopesRepo.bulkCreate(rows, ctx);
+        } else if (tableName === blocksTreeDescriptorsTable) {
+          this.descriptorRepo.bulkCreate(rows, ctx);
         }
       });
+
+      if (rootBlockIds.length > 0) {
+        this.descriptorRepo.bulkCreate(
+          rootBlockIds.map(([noteId, rootBlockId]) => ({
+            id: noteId,
+            rootBlockId: rootBlockId,
+          })),
+          ctx,
+        );
+      }
     });
   }
 
@@ -108,6 +118,10 @@ export class ImportExportService {
           {
             tableName: blocksScopesTable,
             rows: this.blocksScopesRepo.getAll(),
+          },
+          {
+            tableName: blocksTreeDescriptorsTable,
+            rows: this.descriptorRepo.getAll(),
           },
         ],
       },
