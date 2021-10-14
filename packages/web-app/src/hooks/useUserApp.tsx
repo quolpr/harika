@@ -24,7 +24,11 @@ export const useLoadUserAppCallback = () => {
   const { syncConfig, userId, isOffline } = useSyncConfig();
 
   const cb = useCallback(async () => {
-    if (ctx.state.isLoading || ctx.state.app) return;
+    if (ctx.state.app) return ctx.state.app;
+
+    // TODO: better return promise that is loading
+    if (ctx.state.isLoading) return;
+
     if (!userId || isOffline === undefined || !syncConfig) return;
 
     ctx.setState({ app: undefined, isLoading: true });
