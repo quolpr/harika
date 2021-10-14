@@ -6,7 +6,7 @@ import React, {
   useState,
 } from 'react';
 import { useHistory, useLocation, useParams } from 'react-router-dom';
-import { useClickAway, useMedia } from 'react-use';
+import { useClickAway, useMedia, useMountedState } from 'react-use';
 import { VaultHeader } from '../VaultHeader/VaultHeader';
 import { VaultSidebar } from '../VaultSidebar/VaultSidebar';
 
@@ -20,6 +20,8 @@ import { bem } from '../../utils';
 import { UndoRedoManagerProvider } from '../UndoRedoManagerProvider';
 import { UserApplication, VaultApplication } from '@harika/web-core';
 import { CurrentVaultAppContext } from '../../hooks/vaultAppHooks';
+import { useLoadUserAppCallback } from '../../hooks/useUserApp';
+import { useSyncConfig } from '../../hooks/useSyncConfig';
 
 const layoutClass = bem('vault-layout');
 
@@ -97,15 +99,8 @@ const useKeepScroll = () => {
   return { mainRef, handleScroll };
 };
 
-export const VaultLayout: React.FC<{
-  userApp?: UserApplication;
-  syncConfig:
-    | undefined
-    | {
-        url: string;
-        authToken: string;
-      };
-}> = ({ children, userApp, syncConfig }) => {
+export const VaultLayout: React.FC = ({ children }) => {
+  const { syncConfig } = useSyncConfig();
   const history = useHistory();
   const { vaultId } = useParams<{ vaultId: string }>();
   const isWide = useMedia('(min-width: 768px)');
@@ -122,16 +117,14 @@ export const VaultLayout: React.FC<{
 
   const [vaultName, setVaultName] = useState<undefined | string>(undefined);
 
-  useEffect(() => {
-    const load = async () => {
-      setVaultName((await userApp?.getVaultsService().getVault(vaultId))?.name);
-    };
+  const loadUserApp = useLoadUserAppCallback();
 
-    load();
-  }, [userApp]);
+  const mounted = useMountedState();
 
+  // TODO: race condition may happen here on dispose
   useEffect(() => {
     if (!syncConfig) return;
+
     let closeDevtool = () => {};
     let vaultApp: VaultApplication | undefined = undefined;
 
@@ -147,7 +140,7 @@ export const VaultLayout: React.FC<{
       } else {
         await vaultApp.start();
 
-        setVaultApp(vaultApp);
+        mounted() && setVaultApp(vaultApp);
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         if ((window as any).__REDUX_DEVTOOLS_EXTENSION__) {
@@ -165,6 +158,15 @@ export const VaultLayout: React.FC<{
           );
         }
       }
+
+      setTimeout(async () => {
+        const userApp = await loadUserApp.current();
+
+        mounted() &&
+          setVaultName(
+            (await userApp?.getVaultsService().getVault(vaultId))?.name,
+          );
+      }, 500);
     };
 
     cb();
@@ -174,7 +176,7 @@ export const VaultLayout: React.FC<{
       setVaultApp(undefined);
       closeDevtool();
     };
-  }, [vaultId, history]);
+  }, [vaultId, history, syncConfig, loadUserApp, mounted]);
 
   // TODO: reset focused block on page change
 

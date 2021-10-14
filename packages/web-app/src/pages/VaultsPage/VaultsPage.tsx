@@ -12,6 +12,12 @@ import { generateId, UserVaultsService } from '@harika/web-core';
 import { deleteFromStorage } from '@rehooks/local-storage';
 import SettingsIcon from '@material-ui/icons/Settings';
 import { SettingsModal } from './SettingsModal';
+import {
+  useLoadUserApp,
+  useUserApp,
+  useUserVaults,
+} from '../../hooks/useUserApp';
+import { of } from 'rxjs';
 
 const vaultsClass = cn('vaults');
 const vaultsNavbarClass = cn('vaults-navbar');
@@ -56,22 +62,24 @@ const VaultBlock = ({
   );
 };
 
-export const VaultsPage = ({
-  vaultsService: vaults,
-}: {
-  vaultsService: UserVaultsService;
-}) => {
+export const VaultsPage = () => {
+  useLoadUserApp();
+
   const history = useHistory();
+  const userVaults = useUserVaults();
 
   const [isCreateModalOpened, setIsCreateModalOpened] = useState(false);
-  const allVaultTuples = useMemo(() => vaults.getAllVaultTuples$(), [vaults]);
+  const allVaultTuples = useMemo(
+    () => userVaults?.getAllVaultTuples$() || of([]),
+    [userVaults],
+  );
   const allVaults = useObservableState(allVaultTuples, []);
 
   const handleSubmit = useCallback(
     async (data: { name: string }) => {
       const dbId = generateId();
 
-      const vault = await vaults.createVault({ name: data.name, dbId });
+      const vault = await userVaults?.createVault({ name: data.name, dbId });
       if (!vault) {
         console.error('Failed to create vault');
 
@@ -82,7 +90,7 @@ export const VaultsPage = ({
 
       history.push(paths.vaultDailyPath({ vaultId: vault.id }));
     },
-    [vaults, history],
+    [userVaults, history],
   );
 
   const handleClose = useCallback(() => {
@@ -109,9 +117,16 @@ export const VaultsPage = ({
 
       <div className="vaults-container">
         <div className={vaultsClass()}>
-          {allVaults.map((vault) => (
-            <VaultBlock key={vault.id} vault={vault} vaultsService={vaults} />
-          ))}
+          {allVaults.map(
+            (vault) =>
+              userVaults && (
+                <VaultBlock
+                  key={vault.id}
+                  vault={vault}
+                  vaultsService={userVaults}
+                />
+              ),
+          )}
 
           <button
             className={`${vaultsClass('box')} ${vaultsClass('create-box')}`}

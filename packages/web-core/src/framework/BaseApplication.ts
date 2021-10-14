@@ -34,12 +34,6 @@ export abstract class BaseApplication {
 
     this.worker = await this.loadWorker();
 
-    await new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(null);
-      }, 1000);
-    });
-
     this.container.bind(ROOT_WORKER).toConstantValue(this.worker);
     this.container
       .bind(RemoteRegister)
