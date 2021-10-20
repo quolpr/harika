@@ -1,6 +1,6 @@
 import { autorun } from 'mobx';
 import { filter, map, Observable, takeUntil, tap } from 'rxjs';
-import { DatabaseChangeType } from '../../../../extensions/SyncExtension/serverSynchronizer/types';
+import { DatabaseChangeType } from '../../../../extensions/SyncExtension/app/serverSynchronizer/types';
 import {
   INoteTitleChange,
   NotesTreeRegistry,
@@ -8,10 +8,10 @@ import {
 import {
   INoteChangeEvent,
   notesTable,
-} from '../../NotesExtension/repositories/NotesRepository';
+} from '../../NotesExtension/worker/repositories/NotesRepository';
 import { inject, injectable } from 'inversify';
 import { STOP_SIGNAL } from '../../../../framework/types';
-import { DbEventsListenService } from '../../../../extensions/SyncExtension/services/DbEventsListenerService';
+import { DbEventsListenService } from '../../../../extensions/SyncExtension/app/services/DbEventsListenerService';
 
 @injectable()
 export class NotesChangesTrackerService {

@@ -2,8 +2,8 @@ import { DB_MIGRATIONS } from '../../../extensions/DbExtension/types';
 import { REPOS_WITH_SYNC } from '../../../extensions/SyncExtension/types';
 import { BaseExtension } from '../../../framework/BaseExtension';
 import { toRemoteName } from '../../../framework/utils';
-import { initNotesTable } from './migrations/createNotesTable';
-import { NotesRepository } from './repositories/NotesRepository';
+import { initNotesTable } from './worker/migrations/createNotesTable';
+import { NotesRepository } from './worker/repositories/NotesRepository';
 
 export default class NotesWorkerExtension extends BaseExtension {
   async register() {

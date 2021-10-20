@@ -3,14 +3,14 @@ import { BehaviorSubject, takeUntil } from 'rxjs';
 import { BaseExtension } from '../../framework/BaseExtension';
 import { RemoteRegister } from '../../framework/RemoteRegister';
 import { STOP_SIGNAL } from '../../framework/types';
-import { ApplyChangesService } from './persistence/ApplyChangesService';
-import { SyncRepository } from './persistence/SyncRepository';
-import { ServerSynchronizerFactory } from './serverSynchronizer/ServiceSynchronizerFactory';
-import { SyncConfig } from './serverSynchronizer/SyncConfig';
-import { DbEventsListenService } from './services/DbEventsListenerService';
-import { OnDbChangeNotifier } from './synchronizer/OnDbChangeNotifier';
-import { ToDbSynchronizer } from './synchronizer/ToDbSynchronizer';
-import { SyncStateService } from './SyncState';
+import { ApplyChangesService } from './worker/services/ApplyChangesService';
+import { SyncRepository } from './worker/repositories/SyncRepository';
+import { ServerSynchronizerFactory } from './app/serverSynchronizer/ServiceSynchronizerFactory';
+import { SyncConfig } from './app/serverSynchronizer/SyncConfig';
+import { DbEventsListenService } from './app/services/DbEventsListenerService';
+import { OnDbChangeNotifier } from './app/synchronizer/OnDbChangeNotifier';
+import { ToDbSynchronizer } from './app/synchronizer/ToDbSynchronizer';
+import { SyncStateService } from './app/SyncState';
 import { SYNC_CONNECTION_ALLOWED } from './types';
 
 @injectable()

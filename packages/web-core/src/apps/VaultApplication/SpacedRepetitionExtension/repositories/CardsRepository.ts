@@ -1,6 +1,6 @@
 // The code is taken from https://github.com/roam-unofficial/roam-toolkit/blob/ce48ed748e698ee40975f653a4ddc48c644e4e10/src/ts/core/srs/AnkiScheduler.ts#L95
 
-import { BaseSyncRepository } from '../../../../extensions/SyncExtension/persistence/BaseSyncRepository';
+import { BaseSyncRepository } from '../../../../extensions/SyncExtension/worker/BaseSyncRepository';
 
 export enum SRSignal {
   AGAIN = 1,

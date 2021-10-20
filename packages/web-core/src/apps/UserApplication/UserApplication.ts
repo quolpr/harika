@@ -5,8 +5,8 @@ import {
   SYNC_AUTH_TOKEN,
 } from '../../extensions/SyncExtension/types';
 import { BaseApplication } from '../../framework/BaseApplication';
-import { UserVaultsService } from './UserExtension/services/UserVaultsService';
-import { UserExtension } from './UserExtension/UserExtension';
+import { UserVaultsService } from './UserExtension/app/services/UserVaultsService';
+import { UserAppExtension } from './UserExtension/UserAppExtension';
 // @ts-ignore
 import UserRootWorker from './UserRootWorker?worker';
 
@@ -41,6 +41,6 @@ export class UserApplication extends BaseApplication {
   }
 
   get extensions() {
-    return [DbAppExtension, SyncAppExtension, UserExtension];
+    return [DbAppExtension, SyncAppExtension, UserAppExtension];
   }
 }

@@ -1,8 +1,8 @@
 import { BaseExtension } from '../../../framework/BaseExtension';
 import { toRemoteName } from '../../../framework/utils';
-import { BlocksScopesRepository } from './repositories/BlockScopesRepository';
+import { BlocksScopesRepository } from './worker/repositories/BlockScopesRepository';
 import { DB_MIGRATIONS } from '../../../extensions/DbExtension/types';
-import { addBlockScopeTable } from './migrations/addBlockScopeTable';
+import { addBlockScopeTable } from './worker/migrations/addBlockScopeTable';
 import { REPOS_WITH_SYNC } from '../../../extensions/SyncExtension/types';
 
 export default class BlocksScopeWorkerExtension extends BaseExtension {

@@ -2,8 +2,8 @@ import { DB_MIGRATIONS } from '../../../extensions/DbExtension/types';
 import { REPOS_WITH_SYNC } from '../../../extensions/SyncExtension/types';
 import { BaseExtension } from '../../../framework/BaseExtension';
 import { toRemoteName } from '../../../framework/utils';
-import { initUsersDbTables } from './migrations/initUsersDbTables';
-import { VaultsRepository } from './repositories/VaultsRepository';
+import { initUsersDbTables } from './worker/migrations/initUsersDbTables';
+import { VaultsRepository } from './worker/repositories/VaultsRepository';
 
 export class UserWorkerExtension extends BaseExtension {
   async register() {

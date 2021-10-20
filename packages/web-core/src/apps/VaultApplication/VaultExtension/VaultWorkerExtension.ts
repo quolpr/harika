@@ -1,8 +1,8 @@
 import { BaseExtension } from '../../../framework/BaseExtension';
 import { toRemoteName } from '../../../framework/utils';
-import { DeleteNoteService } from './services/DeleteNoteService';
-import { FindNoteOrBlockService } from './services/FindNoteOrBlockService';
-import { ImportExportService } from './services/ImportExportService';
+import { DeleteNoteService } from './worker/services/DeleteNoteService';
+import { FindNoteOrBlockService } from './worker/services/FindNoteOrBlockService';
+import { ImportExportService } from './worker/services/ImportExportService';
 
 export default class VaultWorkerExtension extends BaseExtension {
   async register() {

@@ -1,11 +1,11 @@
 import { DB_MIGRATIONS } from '../../../extensions/DbExtension/types';
 import { BaseExtension } from '../../../framework/BaseExtension';
 import { toRemoteName } from '../../../framework/utils';
-import { NotesBlocksRepository } from './repositories/NotesBlocksRepository';
-import { initNoteBlocksTables } from './migrations/initNoteBlocksTables';
-import { addBlockIdsToNoteBlocksTables } from './migrations/addBlockIdsToNoteBlocksTable';
-import { addBlocksTreeDescriptorsTable } from './migrations/addBlockTreeDescriptorTable';
-import { BlocksTreeDescriptorsRepository } from './repositories/BlockTreeDescriptorsRepository';
+import { NotesBlocksRepository } from './worker/repositories/NotesBlocksRepository';
+import { initNoteBlocksTables } from './worker/migrations/initNoteBlocksTables';
+import { addBlockIdsToNoteBlocksTables } from './worker/migrations/addBlockIdsToNoteBlocksTable';
+import { addBlocksTreeDescriptorsTable } from './worker/migrations/addBlockTreeDescriptorTable';
+import { BlocksTreeDescriptorsRepository } from './worker/repositories/BlockTreeDescriptorsRepository';
 import { REPOS_WITH_SYNC } from '../../../extensions/SyncExtension/types';
 
 export default class NoteBlocksWorkerExtension extends BaseExtension {

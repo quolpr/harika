@@ -1,7 +1,7 @@
 import { initBackend } from 'absurd-sql/dist/indexeddb-main-thread';
 import { wrap } from 'comlink';
 import type { Remote } from 'comlink';
-import type { BaseDbSyncWorker } from '../extensions/SyncExtension/persistence/BaseDbSyncWorker';
+import type { BaseDbSyncWorker } from '../extensions/SyncExtension/worker/persistence/BaseDbSyncWorker';
 // @ts-ignore
 import UserDbWorker from '../apps/UserApplication/UserExtension/UserDb.worker?worker';
 // @ts-ignore

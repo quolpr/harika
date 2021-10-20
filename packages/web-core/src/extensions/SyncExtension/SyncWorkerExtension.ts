@@ -1,11 +1,11 @@
-import { initSyncTables } from './migrations/initSyncTables';
+import { initSyncTables } from './worker/migrations/initSyncTables';
 import { BaseExtension } from '../../framework/BaseExtension';
-import { SyncRepository } from './persistence/SyncRepository';
+import { SyncRepository } from './worker/repositories/SyncRepository';
 import { DB_MIGRATIONS } from '../DbExtension/types';
-import { DbEventsSenderService } from './services/DbEventsSenderService';
+import { DbEventsSenderService } from './worker/services/DbEventsSenderService';
 import { injectable } from 'inversify';
 import { toRemoteName } from '../../framework/utils';
-import { ApplyChangesService } from './persistence/ApplyChangesService';
+import { ApplyChangesService } from './worker/services/ApplyChangesService';
 
 @injectable()
 export default class SyncWorkerExtension extends BaseExtension {
