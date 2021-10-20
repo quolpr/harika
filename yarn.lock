@@ -6522,10 +6522,10 @@ linked-list@0.1.0:
   resolved "https://registry.yarnpkg.com/linked-list/-/linked-list-0.1.0.tgz#798b0ff97d1b92a4fd08480f55aea4e9d49d37bf"
   integrity sha1-eYsP+X0bkqT9CEgPVa6k6dSdN78=
 
-linkifyjs@v3.0.0-beta.3:
-  version "3.0.0-beta.3"
-  resolved "https://registry.yarnpkg.com/linkifyjs/-/linkifyjs-3.0.0-beta.3.tgz#40697995d7ecf85c464924a30b9e98b1cd6fb253"
-  integrity sha512-aXq4WJs91NsETo5f9dQrt8Vx+OxAvzJAtR8lLgpum8PDjtCgstycwYbIkAjDGRV/YF1LlKKdbWyOpgMYgwgOvQ==
+linkifyjs@v3.0.3:
+  version "3.0.3"
+  resolved "https://registry.yarnpkg.com/linkifyjs/-/linkifyjs-3.0.3.tgz#51ea2160b4c60c2c87c27757a1e9eacd422c6076"
+  integrity sha512-ba5opS5wRHSbDC8VaiDdN14nPGm6LqyRsIPQZGG4qXV4scFdrPneT/uoZOaq9QAPBf6W9I9D/6tNSzWH//815Q==
 
 listr-silent-renderer@^1.1.1:
   version "1.1.1"
