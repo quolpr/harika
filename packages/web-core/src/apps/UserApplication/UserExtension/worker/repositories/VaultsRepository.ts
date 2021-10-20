@@ -1,4 +1,5 @@
 import { BaseSyncRepository } from '../../../../../extensions/SyncExtension/worker/BaseSyncRepository';
+import { remotable } from '../../../../../framework/utils';
 import { UserDbChangesApplier } from '../sync/UserDbChangesApplier';
 
 export const vaultsTable = 'vaults' as const;
@@ -12,6 +13,7 @@ export type VaultRow = {
 
 export type VaultDoc = Omit<VaultRow, '_normalizedTitle'>;
 
+@remotable('VaultsRepository')
 export class VaultsRepository extends BaseSyncRepository<VaultDoc, VaultRow> {
   getTableName() {
     return vaultsTable;

@@ -13,12 +13,9 @@ export default defineConfig({
   build: {
     sourcemap: true,
     minify: 'terser',
-    terserOptions: {
-      mangle: false,
-    },
   },
   plugins: [
-    // reactRefresh(),
+    reactRefresh(),
     crossOriginIsolation(),
     reactSvgPlugin(),
     injectManifest({

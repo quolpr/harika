@@ -1,6 +1,7 @@
 import { BaseSyncRepository } from '../../../../../extensions/SyncExtension/worker/BaseSyncRepository';
 import type { IDatabaseChange } from '../../../../../extensions/SyncExtension/app/serverSynchronizer/types';
 import { BlocksScopesChangesApplier } from '../sync/BlocksScopesChangesApplier';
+import { remotable } from '../../../../../framework/utils';
 
 export const blocksScopesTable = 'blocksScopes' as const;
 
@@ -27,6 +28,7 @@ export type IBlocksScopesChangeEvent = IDatabaseChange<
   BlocksScopeDoc
 >;
 
+@remotable('BlocksScopesRepository')
 export class BlocksScopesRepository extends BaseSyncRepository<
   BlocksScopeDoc,
   BlocksScopesRow

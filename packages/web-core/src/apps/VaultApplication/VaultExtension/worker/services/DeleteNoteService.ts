@@ -2,7 +2,9 @@ import { NotesBlocksRepository } from '../../../NoteBlocksExtension/worker/repos
 import type { ISyncCtx } from '../../../../../extensions/SyncExtension/worker/syncCtx';
 import { NotesRepository } from '../../../NotesExtension/worker/repositories/NotesRepository';
 import { inject, injectable } from 'inversify';
+import { remotable } from '../../../../../framework/utils';
 
+@remotable('DeleteNoteService')
 @injectable()
 export class DeleteNoteService {
   constructor(

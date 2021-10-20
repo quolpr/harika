@@ -10,7 +10,9 @@ import {
   noteBlocksTable,
 } from '../../../NoteBlocksExtension/worker/repositories/NotesBlocksRepository';
 import { inject, injectable } from 'inversify';
+import { remotable } from '../../../../../framework/utils';
 
+@remotable('FindNoteOrBlockService')
 @injectable()
 export class FindNoteOrBlockService {
   constructor(

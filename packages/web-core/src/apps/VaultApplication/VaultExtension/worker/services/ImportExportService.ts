@@ -19,8 +19,9 @@ import {
   BlocksTreeDescriptorsRepository,
   blocksTreeDescriptorsTable,
 } from '../../../NoteBlocksExtension/worker/repositories/BlockTreeDescriptorsRepository';
-import { BlocksTreeDescriptor } from '../../../NoteBlocksExtension/app/models/BlocksTreeDescriptor';
+import { remotable } from '../../../../../framework/utils';
 
+@remotable('ImportExportService')
 @injectable()
 export class ImportExportService {
   constructor(

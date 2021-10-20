@@ -5,6 +5,7 @@ import { BaseSyncRepository } from '../../../../../extensions/SyncExtension/work
 import { ISyncCtx } from '../../../../../extensions/SyncExtension/worker/syncCtx';
 import { IDatabaseChange } from '../../../../../extensions/SyncExtension/app/serverSynchronizer/types';
 import { NotesChangesApplier } from '../sync/NotesChangesApplier';
+import { remotable } from '../../../../../framework/utils';
 
 export const notesTable = 'notes' as const;
 export const notesFTSTable = 'notesFts' as const;
@@ -26,6 +27,7 @@ export type NoteDoc = {
 
 export type INoteChangeEvent = IDatabaseChange<typeof notesTable, NoteDoc>;
 
+@remotable('NotesRepository')
 @injectable()
 export class NotesRepository extends BaseSyncRepository<NoteDoc, NoteRow> {
   bulkCreate(attrsArray: NoteDoc[], ctx: ISyncCtx) {

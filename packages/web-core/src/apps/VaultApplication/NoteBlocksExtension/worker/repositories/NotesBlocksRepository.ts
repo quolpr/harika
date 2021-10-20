@@ -3,6 +3,7 @@ import { BaseSyncRepository } from '../../../../../extensions/SyncExtension/work
 import type { ISyncCtx } from '../../../../../extensions/SyncExtension/worker/syncCtx';
 import type { IDatabaseChange } from '../../../../../extensions/SyncExtension/app/serverSynchronizer/types';
 import { NoteblocksChangesApplier } from '../sync/NoteblocksChangesApplier';
+import { remotable } from '../../../../../framework/utils';
 
 export type NoteBlockRow = {
   id: string;
@@ -37,6 +38,7 @@ export type INoteBlockChangeEvent = IDatabaseChange<
   NoteBlockDoc
 >;
 
+@remotable('NotesBlocksRepository')
 export class NotesBlocksRepository extends BaseSyncRepository<
   NoteBlockDoc,
   NoteBlockRow
