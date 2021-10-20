@@ -1,4 +1,4 @@
-import { AnyModel, ModelCreationData } from 'app/mobx-keystone';
+import { AnyModel, ModelCreationData } from 'mobx-keystone';
 import { Class } from 'utility-types';
 
 // Just for better typing

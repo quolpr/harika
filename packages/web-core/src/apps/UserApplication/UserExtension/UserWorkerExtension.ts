@@ -1,21 +1,13 @@
-import { DB_MIGRATIONS } from '../../../extensions/DbExtension/types';
-import { REPOS_WITH_SYNC } from '../../../extensions/SyncExtension/types';
-import { BaseExtension } from '../../../framework/BaseExtension';
-import { toRemoteName } from '../../../framework/utils';
+import { BaseSyncWorkerExtension } from '../../../extensions/SyncExtension/BaseSyncWorkerExtension';
 import { initUsersDbTables } from './worker/migrations/initUsersDbTables';
 import { VaultsRepository } from './worker/repositories/VaultsRepository';
 
-export class UserWorkerExtension extends BaseExtension {
-  async register() {
-    this.container.bind(VaultsRepository).toSelf();
-    this.container.bind(DB_MIGRATIONS).toConstantValue(initUsersDbTables);
+export class UserWorkerExtension extends BaseSyncWorkerExtension {
+  repos() {
+    return [{ repo: VaultsRepository, withSync: true, remote: true }];
+  }
 
-    this.container
-      .bind(toRemoteName(VaultsRepository))
-      .toDynamicValue(() => this.container.get(VaultsRepository));
-
-    this.container
-      .bind(REPOS_WITH_SYNC)
-      .toDynamicValue(() => this.container.get(VaultsRepository));
+  migrations() {
+    return [initUsersDbTables];
   }
 }

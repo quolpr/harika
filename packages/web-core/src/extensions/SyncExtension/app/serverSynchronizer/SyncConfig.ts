@@ -1,12 +1,11 @@
 import { Remote } from 'comlink';
-import { inject, injectable } from 'inversify';
+import { Container, inject, injectable } from 'inversify';
 import { AnyModel } from 'mobx-keystone';
 import { Class } from 'utility-types';
-import { RemoteRegister } from '../../../../framework/RemoteRegister';
-import { DB_NAME } from '../../../DbExtension/types';
 import { IMapper } from '../mappers';
 import { BaseSyncRepository } from '../../worker/BaseSyncRepository';
 import { CreationDataWithId, SyncModelId } from '../../types';
+import { toRemoteName } from '../../../../framework/utils';
 
 export type IRegistration = {
   mapper: IMapper;
@@ -26,7 +25,7 @@ export class SyncConfig {
   private registeredRepos: IRegistration[] = [];
   private registeredSubscribers: ISubscription[] = [];
 
-  constructor(@inject(RemoteRegister) private remoteRegister: RemoteRegister) {}
+  constructor(@inject(Container) private container: Container) {}
 
   getRegistrationByModelClass(klass: Class<AnyModel>) {
     return this.registeredRepos.find((r) => r.mapper.model === klass);
@@ -46,7 +45,7 @@ export class SyncConfig {
   ) {
     const repoConfig = {
       mapper,
-      repo: this.remoteRegister.getRemote(repo),
+      repo: this.container.get<Remote<BaseSyncRepository>>(toRemoteName(repo)),
     };
 
     this.registeredRepos.push(repoConfig);

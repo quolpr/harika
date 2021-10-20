@@ -3,15 +3,15 @@ import { ModelCreationData, withoutUndo } from 'mobx-keystone';
 import { Optional } from 'utility-types';
 import { DbEventsListenService } from '../../../../../extensions/SyncExtension/app/services/DbEventsListenerService';
 import type { Required } from 'utility-types';
-import { NoteModel } from '../../app/models/NoteModel';
+import { NoteModel } from '../models/NoteModel';
 import {
   NoteDoc,
   NotesRepository,
   notesTable,
-} from '../repositories/NotesRepository';
+} from '../../worker/repositories/NotesRepository';
 import { Remote } from 'comlink';
 import { toRemoteName } from '../../../../../framework/utils';
-import { NotesStore } from '../../app/models/NotesStore';
+import { NotesStore } from '../models/NotesStore';
 import { generateId } from '../../../../../lib/generateId';
 import dayjs, { Dayjs } from 'dayjs';
 import {
@@ -23,7 +23,7 @@ import {
   of,
   Observable,
 } from 'rxjs';
-import { notesMapper } from '../../app/mappers/notesMapper';
+import { notesMapper } from '../mappers/notesMapper';
 import { isEqual } from 'lodash-es';
 import { ICreationResult } from '../../../../../framework/types';
 

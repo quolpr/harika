@@ -1,6 +1,5 @@
 import { inject, injectable } from 'inversify';
 import { BaseExtension } from '../../../framework/BaseExtension';
-import { RemoteRegister } from '../../../framework/RemoteRegister';
 import { NoteBlocksExtensionStore } from './app/models/NoteBlocksExtensionStore';
 import { NotesBlocksRepository } from './worker/repositories/NotesBlocksRepository';
 import { BlocksScopesRepository } from '../BlocksScopeExtension/worker/repositories/BlockScopesRepository';
@@ -12,21 +11,18 @@ import { SyncConfig } from '../../../extensions/SyncExtension/app/serverSynchron
 import { NoteBlockModel } from './app/models/NoteBlockModel';
 import { BlocksTreeDescriptor } from './app/models/BlocksTreeDescriptor';
 import { NoteBlocksService } from './app/services/NoteBlocksService';
+import { BaseAppExtension } from '../../../framework/BaseAppExtension';
 
 @injectable()
-export class NoteBlocksAppExtension extends BaseExtension {
-  constructor(@inject(RemoteRegister) private remoteRegister: RemoteRegister) {
-    super();
-  }
-
+export class NoteBlocksAppExtension extends BaseAppExtension {
   async register() {
     const store = new NoteBlocksExtensionStore({});
 
     this.container.bind(NoteBlocksExtensionStore).toConstantValue(store);
     this.container.bind(NoteBlocksService).toSelf();
 
-    await this.remoteRegister.registerRemote(NotesBlocksRepository);
-    await this.remoteRegister.registerRemote(BlocksTreeDescriptorsRepository);
+    await this.bindRemote(NotesBlocksRepository);
+    await this.bindRemote(BlocksTreeDescriptorsRepository);
   }
 
   async initialize() {

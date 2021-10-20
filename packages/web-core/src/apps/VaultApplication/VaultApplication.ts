@@ -9,7 +9,7 @@ import { VaultAppExtension } from './VaultExtension/VaultAppExtension';
 import { NotesTreeAppExtension } from './NotesTreeExtension/NotesTreeAppExtension';
 import { SpacedRepetitionExtension } from './SpacedRepetitionExtension/SpacedRepetitionExtension';
 import { VaultService } from './VaultExtension/app/services/VaultService';
-import { NotesService } from './NotesExtension/worker/services/NotesService';
+import { NotesService } from './NotesExtension/app/services/NotesService';
 import { NotesTreeRegistry } from './NotesTreeExtension/models/NotesTreeRegistry';
 import { NoteBlocksService } from './NoteBlocksExtension/app/services/NoteBlocksService';
 import { FindNoteOrBlockService } from './VaultExtension/worker/services/FindNoteOrBlockService';

@@ -1,6 +1,6 @@
 import { inject, injectable } from 'inversify';
 import { NoteBlocksService } from '../../../NoteBlocksExtension/app/services/NoteBlocksService';
-import { NotesService } from '../../../NotesExtension/worker/services/NotesService';
+import { NotesService } from '../../../NotesExtension/app/services/NotesService';
 import type { Optional, Required } from 'utility-types';
 import { ModelCreationData } from 'mobx-keystone';
 import { NoteModel } from '../../../NotesExtension/app/models/NoteModel';

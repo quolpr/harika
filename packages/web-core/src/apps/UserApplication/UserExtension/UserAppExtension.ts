@@ -1,17 +1,13 @@
-import { inject, injectable } from 'inversify';
-import { BaseExtension } from '../../../framework/BaseExtension';
-import { RemoteRegister } from '../../../framework/RemoteRegister';
+import { injectable } from 'inversify';
 import { VaultsRepository } from './worker/repositories/VaultsRepository';
 import { UserVaultsService } from './app/services/UserVaultsService';
+import { BaseAppExtension } from '../../../framework/BaseAppExtension';
 
 @injectable()
-export class UserAppExtension extends BaseExtension {
-  constructor(@inject(RemoteRegister) private remoteRegister: RemoteRegister) {
-    super();
-  }
-
+export class UserAppExtension extends BaseAppExtension {
   async register() {
     this.container.bind(UserVaultsService).toSelf();
-    await this.remoteRegister.registerRemote(VaultsRepository);
+
+    await this.bindRemote(VaultsRepository);
   }
 }

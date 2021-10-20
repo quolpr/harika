@@ -1,26 +1,21 @@
-import { inject, injectable } from 'inversify';
+import { injectable } from 'inversify';
 import { SyncConfig } from '../../../extensions/SyncExtension/app/serverSynchronizer/SyncConfig';
-import { BaseExtension } from '../../../framework/BaseExtension';
-import { RemoteRegister } from '../../../framework/RemoteRegister';
+import { BaseAppExtension } from '../../../framework/BaseAppExtension';
 import { notesMapper } from './app/mappers/notesMapper';
 import { NoteModel } from './app/models/NoteModel';
 import { NotesStore } from './app/models/NotesStore';
+import { NotesService } from './app/services/NotesService';
 import { NotesRepository } from './worker/repositories/NotesRepository';
-import { NotesService } from './worker/services/NotesService';
 
 @injectable()
-export class NotesAppExtension extends BaseExtension {
-  constructor(@inject(RemoteRegister) private remoteRegister: RemoteRegister) {
-    super();
-  }
-
+export class NotesAppExtension extends BaseAppExtension {
   async register() {
     const store = new NotesStore({});
 
     this.container.bind(NotesStore).toConstantValue(store);
     this.container.bind(NotesService).toSelf();
 
-    await this.remoteRegister.registerRemote(NotesRepository);
+    await this.bindRemote(NotesRepository);
   }
 
   async initialize() {

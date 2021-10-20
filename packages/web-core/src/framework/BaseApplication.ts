@@ -11,7 +11,6 @@ import {
   STOP_SIGNAL,
   WINDOW_ID,
 } from './types';
-import { RemoteRegister } from './RemoteRegister';
 import { ExtensionsRegister } from './ExtensionsRegister';
 import { Subject } from 'rxjs';
 
@@ -35,9 +34,6 @@ export abstract class BaseApplication {
     this.worker = await this.loadWorker();
 
     this.container.bind(ROOT_WORKER).toConstantValue(this.worker);
-    this.container
-      .bind(RemoteRegister)
-      .toConstantValue(new RemoteRegister(this.worker, this.container));
 
     await this.register();
 

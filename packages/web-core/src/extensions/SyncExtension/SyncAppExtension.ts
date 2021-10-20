@@ -1,7 +1,6 @@
 import { inject, injectable } from 'inversify';
 import { BehaviorSubject, takeUntil } from 'rxjs';
 import { BaseExtension } from '../../framework/BaseExtension';
-import { RemoteRegister } from '../../framework/RemoteRegister';
 import { STOP_SIGNAL } from '../../framework/types';
 import { ApplyChangesService } from './worker/services/ApplyChangesService';
 import { SyncRepository } from './worker/repositories/SyncRepository';
@@ -12,13 +11,10 @@ import { OnDbChangeNotifier } from './app/synchronizer/OnDbChangeNotifier';
 import { ToDbSynchronizer } from './app/synchronizer/ToDbSynchronizer';
 import { SyncStateService } from './app/SyncState';
 import { SYNC_CONNECTION_ALLOWED } from './types';
+import { BaseAppExtension } from '../../framework/BaseAppExtension';
 
 @injectable()
-export class SyncAppExtension extends BaseExtension {
-  constructor(@inject(RemoteRegister) private remoteRegister: RemoteRegister) {
-    super();
-  }
-
+export class SyncAppExtension extends BaseAppExtension {
   async register() {
     this.container.bind(DbEventsListenService).toSelf();
     this.container.bind(SyncConfig).toSelf();
@@ -28,8 +24,8 @@ export class SyncAppExtension extends BaseExtension {
       .bind(SYNC_CONNECTION_ALLOWED)
       .toConstantValue(new BehaviorSubject(true));
 
-    await this.remoteRegister.registerRemote(SyncRepository);
-    await this.remoteRegister.registerRemote(ApplyChangesService);
+    await this.bindRemote(SyncRepository);
+    await this.bindRemote(ApplyChangesService);
   }
 
   async initialize() {
