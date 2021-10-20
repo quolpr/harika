@@ -32,7 +32,7 @@ const renderApp = async () => {
     const whyDidYouRender = await import(
       '@welldone-software/why-did-you-render'
     );
-    whyDidYouRender.default(React);
+    whyDidYouRender.default(React as any);
   }
 
   ReactDOM.render(

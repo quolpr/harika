@@ -1,5 +1,5 @@
 import { computed } from 'mobx';
-import { model, Model, modelAction, prop, Ref } from 'mobx-keystone';
+import { idProp, model, Model, modelAction, prop, Ref } from 'mobx-keystone';
 import { withoutUndoAction } from '../../../../lib/utils';
 import { notesTreeNoteRef, NotesTreeNote } from './NotesTreeNote';
 
@@ -23,6 +23,7 @@ export type INoteTitleChange = INewNote | INoteDelete | INoteRename;
 
 @model(notesTreeRegistryModelType)
 export class NotesTreeRegistry extends Model({
+  $modelId: idProp,
   nodesMap: prop<Record<string, NotesTreeNote>>(() => ({})),
   rootNodeRef: prop<Ref<NotesTreeNote>>(),
   isInitialized: prop<boolean>(() => false),
