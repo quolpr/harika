@@ -24,7 +24,7 @@
     "inversify": "^6.0.1",
     "lodash-es": "^4.17.21",
     "mobx": "^6.3.5",
-    "mobx-keystone": "0.61.3",
+    "mobx-keystone": "0.63.2",
     "nanoid": "^3.1.30",
     "phoenix": "^1.6.2",
     "query-string": "^7.0.1",

@@ -6927,13 +6927,13 @@ mkdirp@^1.0.4:
   resolved "https://registry.yarnpkg.com/mkdirp/-/mkdirp-1.0.4.tgz#3eb5ed62622756d79a5f0e2a221dfebad75c2f7e"
   integrity sha512-vVqVZQyf3WLx2Shd0qJ9xuvqgAyKPLAiqITEtqW0oIUjzo3PePDd6fW9iFz30ef7Ysp/oiWqbhszeGWW2T6Gzw==
 
-mobx-keystone@0.61.3, mobx-keystone@^0.61.3:
-  version "0.61.3"
-  resolved "https://registry.yarnpkg.com/mobx-keystone/-/mobx-keystone-0.61.3.tgz#779841f40cf53651773fdb7335ca361cc00662e3"
-  integrity sha512-NMb+rP4bOsJCD47qgI9eyrVXAhbhY40RHeGKVofORjClIDtkxdaVFPJtA7b5rSzPKXwfxiPfYbQwKC52uPkLgg==
+mobx-keystone@0.63.2, mobx-keystone@^0.63.2:
+  version "0.63.2"
+  resolved "https://registry.yarnpkg.com/mobx-keystone/-/mobx-keystone-0.63.2.tgz#8c20e867632d437602d52ecaa833bc062b282005"
+  integrity sha512-S/0K7giG5nY4JZcIRmnCPthIJspf9PME8v8GOY+J41e6LkoIwXqkNYKc8q3JUHS2ErbIKknOnIwZK8CvfZYSPA==
   dependencies:
     fast-deep-equal "^3.1.3"
-    nanoid "^3.1.25"
+    nanoid "^3.1.29"
     ts-toolbelt "^9.6.0"
     tslib "^2.3.1"
 
@@ -7003,12 +7003,7 @@ nanocolors@^0.2.2:
   resolved "https://registry.yarnpkg.com/nanocolors/-/nanocolors-0.2.12.tgz#4d05932e70116078673ea4cc6699a1c56cc77777"
   integrity sha512-SFNdALvzW+rVlzqexid6epYdt8H9Zol7xDoQarioEFcFN0JHo4CYNztAxmtfgGTVRCmFlEOqqhBpoFGKqSAMug==
 
-nanoid@^3.1.22, nanoid@^3.1.23, nanoid@^3.1.25:
-  version "3.1.25"
-  resolved "https://registry.yarnpkg.com/nanoid/-/nanoid-3.1.25.tgz#09ca32747c0e543f0e1814b7d3793477f9c8e152"
-  integrity sha512-rdwtIXaXCLFAQbnfqDRnI6jaRHp9fTcYBjtFKE8eezcZ7LuLjhUaQGNeMXf1HmRoCH32CLz6XwX0TtxEOS/A3Q==
-
-nanoid@^3.1.28, nanoid@^3.1.30:
+nanoid@^3.1.22, nanoid@^3.1.23, nanoid@^3.1.25, nanoid@^3.1.28, nanoid@^3.1.29, nanoid@^3.1.30:
   version "3.1.30"
   resolved "https://registry.yarnpkg.com/nanoid/-/nanoid-3.1.30.tgz#63f93cc548d2a113dc5dfbc63bfa09e2b9b64362"
   integrity sha512-zJpuPDwOv8D2zq2WRoMe1HsfZthVewpel9CAvTfc/2mBD1uUT/agc5f7GHGWXlYkFvi1mVxe4IjvP2HNrop7nQ==
