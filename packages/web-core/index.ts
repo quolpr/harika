@@ -1,4 +1,5 @@
 import 'reflect-metadata';
+import './src/extensions/DbExtension/start';
 
 export type {
   Token,

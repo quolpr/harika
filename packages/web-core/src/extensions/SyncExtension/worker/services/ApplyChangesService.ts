@@ -32,7 +32,6 @@ export class ApplyChangesService {
 
     this.syncRepo.transaction(() => {
       const syncStatus = this.syncRepo.getSyncStatus();
-
       const serverPulls = this.syncRepo.getChangesPulls();
 
       if (serverPulls.length === 0) return;

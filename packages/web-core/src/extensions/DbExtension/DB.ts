@@ -51,9 +51,7 @@ export class DB<Ctx extends object> {
   private sqlDb!: Database;
   private inTransaction: boolean = false;
 
-  constructor(@inject(DB_NAME) private dbName: string) {
-    console.log('new!', dbName);
-  }
+  constructor(@inject(DB_NAME) private dbName: string) {}
 
   async init(migrations: IMigration[]) {
     let SQL = await initSqlJs({
