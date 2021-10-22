@@ -4,11 +4,11 @@ import {
   serverChangesTable,
   clientChangesTable,
 } from '../repositories/SyncRepository';
-import { DB } from '../../../DbExtension/DB';
 import { IMigration } from '../../../DbExtension/types';
+import { IQueryExecuter } from '../../../DbExtension/DB';
 
-const up = (db: DB<any>) => {
-  db.sqlExec(`
+const up = async (db: IQueryExecuter) => {
+  await db.sqlExec(`
     CREATE TABLE IF NOT EXISTS ${syncStatusTable} (
       id varchar(20) PRIMARY KEY,
       lastReceivedRemoteRevision INTEGER,
@@ -17,14 +17,14 @@ const up = (db: DB<any>) => {
     )
   `);
 
-  db.sqlExec(`
+  await db.sqlExec(`
     CREATE TABLE IF NOT EXISTS ${serverChangesPullsTable} (
       id varchar(36) PRIMARY KEY,
       serverRevision INTEGER NOT NULL
     );
   `);
 
-  db.sqlExec(`
+  await db.sqlExec(`
     CREATE TABLE IF NOT EXISTS ${serverChangesTable} (
       id varchar(36) PRIMARY KEY,
 
@@ -44,13 +44,13 @@ const up = (db: DB<any>) => {
     CREATE INDEX IF NOT EXISTS idx_change_from_server_pullId ON ${serverChangesTable}(pullId);
   `);
 
-  db.sqlExec(`
+  await db.sqlExec(`
     CREATE TABLE IF NOT EXISTS incrementTable (value INT, tableName TEXT);
     CREATE UNIQUE INDEX IF NOT EXISTS idx_incrementTable ON incrementTable(tableName);
     INSERT OR IGNORE INTO incrementTable VALUES (0, '${clientChangesTable}');
   `);
 
-  db.sqlExec(`
+  await db.sqlExec(`
     CREATE TABLE IF NOT EXISTS ${clientChangesTable} (
       id varchar(36) PRIMARY KEY,
       type varchar(10) NOT NULL,

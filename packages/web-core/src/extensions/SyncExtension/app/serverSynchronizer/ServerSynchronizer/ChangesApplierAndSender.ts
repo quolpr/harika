@@ -18,8 +18,8 @@ import type { ApplyChangesService } from '../../../worker/services/ApplyChangesS
 
 export class ChangesApplierAndSender {
   constructor(
-    private syncRepo: Remote<SyncRepository>,
-    private applyChangesService: Remote<ApplyChangesService>,
+    private syncRepo: SyncRepository,
+    private applyChangesService: ApplyChangesService,
     private commandExecuter: CommandsExecuter,
     private triggerGetChangesSubject: Subject<unknown>,
     private log: (str: string) => void,

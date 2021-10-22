@@ -12,6 +12,7 @@ import type { BaseSyncRepository } from '../BaseSyncRepository';
 import type { ISyncCtx } from '../syncCtx';
 import { SyncRepository } from '../repositories/SyncRepository';
 import { remotable } from '../../../../framework/utils';
+import { IQueryExecuter } from '../../../DbExtension/DB';
 
 @remotable('ApplyChangesService')
 @injectable()
@@ -30,22 +31,24 @@ export class ApplyChangesService {
       reposByTable[r.getTableName()] = r;
     });
 
-    this.syncRepo.transaction(() => {
-      const syncStatus = this.syncRepo.getSyncStatus();
-      const serverPulls = this.syncRepo.getChangesPulls();
+    return this.syncRepo.transaction(async (t) => {
+      const syncStatus = await this.syncRepo.getSyncStatus(t);
+      const serverPulls = await this.syncRepo.getChangesPulls(t);
 
       if (serverPulls.length === 0) return;
 
-      const serverChanges = this.syncRepo.getServerChangesByPullIds(
+      const serverChanges = await this.syncRepo.getServerChangesByPullIds(
         serverPulls.map(({ id }) => id),
+        t,
       );
 
       if (serverChanges.length > 0) {
-        const clientChanges = this.syncRepo.getClientChanges();
+        const clientChanges = await this.syncRepo.getClientChanges(t);
+
         const groupedClientChange = groupBy(clientChanges, (ch) => ch.table);
         const groupedServerChange = groupBy(serverChanges, (ch) => ch.table);
 
-        Object.entries(groupedServerChange).forEach(([tableName, chs]) => {
+        for (const [tableName, chs] of Object.entries(groupedServerChange)) {
           const repo = reposByTable[tableName];
 
           if (!repo) {
@@ -67,16 +70,25 @@ export class ApplyChangesService {
               shouldRecordChange: false,
               source: 'inDbChanges' as const,
             },
+            t,
           );
 
-          this.dbChangesWriter.writeChanges(result.conflictedChanges, repo, {
-            shouldRecordChange: true,
-            source: 'inDbChanges' as const,
-          });
-        });
+          this.dbChangesWriter.writeChanges(
+            result.conflictedChanges,
+            repo,
+            {
+              shouldRecordChange: true,
+              source: 'inDbChanges' as const,
+            },
+            t,
+          );
+        }
       }
 
-      this.syncRepo.deletePulls(serverPulls.map(({ id }) => id));
+      await this.syncRepo.deletePulls(
+        serverPulls.map(({ id }) => id),
+        t,
+      );
 
       const maxRevision = maxBy(
         serverPulls,
@@ -84,19 +96,23 @@ export class ApplyChangesService {
       )?.serverRevision;
 
       if (maxRevision) {
-        this.syncRepo.updateSyncStatus({
-          lastAppliedRemoteRevision: maxRevision,
-        });
+        await this.syncRepo.updateSyncStatus(
+          {
+            lastAppliedRemoteRevision: maxRevision,
+          },
+          t,
+        );
       }
     });
   }
 }
 
 export class DbChangesWriterService {
-  writeChanges(
+  async writeChanges(
     changes: IDatabaseChange[],
     repo: BaseSyncRepository,
     ctx: ISyncCtx,
+    e: IQueryExecuter,
   ) {
     if (changes.length === 0) return;
 
@@ -125,35 +141,38 @@ export class DbChangesWriterService {
     const deleteChangesToApply = collectedChanges[DatabaseChangeType.Delete];
     const updateChangesToApply = collectedChanges[DatabaseChangeType.Update];
 
-    repo.transaction(() => {
+    return repo.transaction(async (t) => {
       if (createChangesToApply.length > 0)
-        repo.bulkCreateOrUpdate(
+        await repo.bulkCreateOrUpdate(
           createChangesToApply.map((c) => c.obj),
           ctx,
+          t,
         );
 
       if (updateChangesToApply.length > 0)
-        this.bulkUpdate(updateChangesToApply, repo, ctx);
+        await this.bulkUpdate(updateChangesToApply, repo, ctx, t);
 
       if (deleteChangesToApply.length > 0)
-        repo.bulkDelete(
+        await repo.bulkDelete(
           deleteChangesToApply.map((c) => c.key),
           ctx,
+          t,
         );
     });
   }
 
-  private bulkUpdate(
+  private async bulkUpdate(
     changes: IUpdateChange[],
     repo: BaseSyncRepository,
     ctx: ISyncCtx,
+    e: IQueryExecuter,
   ) {
     let keys = changes.map((c) => c.key);
     let map: Record<string, any> = {};
 
     // Retrieve current object of each change to update and map each
     // found object's primary key to the existing object:
-    repo.getByIds(keys).forEach((obj) => {
+    (await repo.getByIds(keys, e)).forEach((obj) => {
       map[obj.id] = obj;
     });
 
@@ -174,6 +193,6 @@ export class DbChangesWriterService {
       return row;
     });
 
-    return repo.bulkUpdate(objsToPut, ctx);
+    return repo.bulkUpdate(objsToPut, ctx, e);
   }
 }

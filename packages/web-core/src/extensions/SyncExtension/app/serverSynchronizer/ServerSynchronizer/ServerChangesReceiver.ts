@@ -2,7 +2,6 @@ import type { Channel } from 'phoenix';
 import { concatMap, map, merge, Observable, of, pipe, switchMap } from 'rxjs';
 import type { CommandsExecuter } from '../CommandsExecuter';
 import { v4 } from 'uuid';
-import type { Remote } from 'comlink';
 import type {
   ISyncStatus,
   SyncRepository,
@@ -18,7 +17,7 @@ export interface IChangePullRow {
 
 export class ServerChangesReceiver {
   constructor(
-    private syncRepo: Remote<SyncRepository>,
+    private syncRepo: SyncRepository,
     private commandExecuter: CommandsExecuter,
   ) {}
 

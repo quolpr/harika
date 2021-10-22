@@ -1,7 +1,7 @@
-import { DB } from './DB';
+import { IQueryExecuter } from './DB';
 
 export type IMigration = {
-  up: (db: DB<any>) => void;
+  up: (db: IQueryExecuter) => Promise<void>;
   down?: () => void;
   id: number;
   name: string;

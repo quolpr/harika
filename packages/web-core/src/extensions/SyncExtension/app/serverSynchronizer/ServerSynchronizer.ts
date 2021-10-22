@@ -37,8 +37,8 @@ export class ServerSynchronizer {
   public isSyncing$ = new BehaviorSubject<boolean>(false);
 
   constructor(
-    syncRepo: Remote<SyncRepository>,
-    applyChangesService: Remote<ApplyChangesService>,
+    syncRepo: SyncRepository,
+    applyChangesService: ApplyChangesService,
     commandExecuter: CommandsExecuter,
     private serverConnector: ServerConnector,
     onNewChange$: Observable<unknown>,

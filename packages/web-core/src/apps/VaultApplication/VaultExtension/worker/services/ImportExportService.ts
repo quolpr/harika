@@ -34,7 +34,7 @@ export class ImportExportService {
     private descriptorRepo: BlocksTreeDescriptorsRepository,
   ) {}
 
-  importData(importData: {
+  async importData(importData: {
     data: { data: { tableName: string; rows: any[] }[] };
   }) {
     const ctx: ISyncCtx = {
@@ -48,7 +48,7 @@ export class ImportExportService {
         ?.rows.filter(({ rootBlockId }) => rootBlockId)
         .map((note) => [note.id, note.rootBlockId]) || [];
 
-    this.notesRepo.transaction(() => {
+    await this.notesRepo.transaction(async (t) => {
       importData.data.data.forEach(({ rows, tableName }) => {
         if (tableName === notesTable) {
           this.notesRepo.bulkCreate(
@@ -67,6 +67,7 @@ export class ImportExportService {
               })
               .filter((v) => !!v) as NoteDoc[],
             ctx,
+            t,
           );
         } else if (tableName === noteBlocksTable) {
           this.notesBlocksRepo.bulkCreate(
@@ -90,11 +91,12 @@ export class ImportExportService {
                   ) as NoteBlockDoc,
               ),
             ctx,
+            t,
           );
         } else if (tableName === blocksScopesTable) {
-          this.blocksScopesRepo.bulkCreate(rows, ctx);
+          this.blocksScopesRepo.bulkCreate(rows, ctx, t);
         } else if (tableName === blocksTreeDescriptorsTable) {
-          this.descriptorRepo.bulkCreate(rows, ctx);
+          this.descriptorRepo.bulkCreate(rows, ctx, t);
         }
       });
 

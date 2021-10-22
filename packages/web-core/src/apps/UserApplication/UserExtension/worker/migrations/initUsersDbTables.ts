@@ -1,9 +1,9 @@
-import { DB } from '../../../../../extensions/DbExtension/DB';
+import { IQueryExecuter } from '../../../../../extensions/DbExtension/DB';
 import { IMigration } from '../../../../../extensions/DbExtension/types';
 import { vaultsTable } from '../repositories/VaultsRepository';
 
-const up = (db: DB<any>) => {
-  db.sqlExec(`
+const up = async (db: IQueryExecuter) => {
+  await db.sqlExec(`
     CREATE TABLE IF NOT EXISTS ${vaultsTable} (
       id varchar(20) PRIMARY KEY,
       name varchar(255) NOT NULL,

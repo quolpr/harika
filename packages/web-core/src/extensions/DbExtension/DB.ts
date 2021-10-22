@@ -1,19 +1,33 @@
 import 'reflect-metadata';
-import { chunk } from 'lodash-es';
-import Q from 'sql-bricks';
 // @ts-ignore
-import sqlWasmUrl from '@harika-org/sql.js/dist/sql-wasm.wasm?url';
-import initSqlJs, {
-  Database,
-  BindParams,
-  QueryExecResult,
-} from '@harika-org/sql.js';
-import { SQLiteFS } from 'absurd-sql';
-import IndexedDBBackend from 'absurd-sql/dist/indexeddb-backend';
-import { shareCtx } from './ctx';
-import { getIsLogSuppressing } from './suppressLog';
-import { DB_NAME, IMigration } from './types';
+import DbWorker from './DbWorker?worker';
+import { initBackend } from 'absurd-sql/dist/indexeddb-main-thread';
+import Q from 'sql-bricks';
+import {
+  filter,
+  first,
+  lastValueFrom,
+  map,
+  Observable,
+  Subject,
+  takeUntil,
+  tap,
+} from 'rxjs';
+import {
+  ICommand,
+  IInputWorkerMessage,
+  IOutputWorkerMessage,
+} from './DbWorker';
 import { inject, injectable } from 'inversify';
+import { STOP_SIGNAL } from '../../framework/types';
+import { v4 as uuidv4 } from 'uuid';
+import { chunk } from 'lodash-es';
+import { DB_NAME, IMigration } from './types';
+import { QueryExecResult } from '@harika-org/sql.js';
+
+type DistributiveOmit<T, K extends keyof any> = T extends any
+  ? Omit<T, K>
+  : never;
 
 // @ts-ignore
 Q.update.defineClause('or', '{{#if _or}}OR {{_or}}{{/if}}', {
@@ -44,168 +58,216 @@ Q['match'] = function (name: string, col: number, val: string) {
   return new Q.Binary('MATCH', col, val);
 }.bind(null, 'match');
 
-export const migrationsTable = 'migrations';
-
-@injectable()
-export class DB<Ctx extends object> {
-  private sqlDb!: Database;
-  private inTransaction: boolean = false;
-
-  constructor(@inject(DB_NAME) private dbName: string) {}
-
-  async init(migrations: IMigration[]) {
-    let SQL = await initSqlJs({
-      locateFile: () => sqlWasmUrl,
-    });
-
-    let sqlFS = new SQLiteFS(SQL.FS, new IndexedDBBackend());
-
-    SQL.register_for_idb(sqlFS);
-    SQL.FS.mkdir('/blocked');
-    SQL.FS.mount(sqlFS, {}, '/blocked');
-
-    const path = `/blocked/${this.dbName}.sqlite`;
-    if (typeof SharedArrayBuffer === 'undefined') {
-      console.log('No SharedArrayBuffer');
-      let stream = SQL.FS.open(path, 'a+');
-      await stream.node.contents.readIfFallback();
-      SQL.FS.close(stream);
-    }
-
-    this.sqlDb = new SQL.Database(`/blocked/${this.dbName}.sqlite`, {
-      filename: true,
-    });
-
-    this.sqlExec(`
-      PRAGMA journal_mode=MEMORY;
-      PRAGMA page_size=${32 * 1024};
-      PRAGMA cache_size=-${10 * 1024};
-      PRAGMA foreign_keys=ON;
-    `);
-
-    this.sqlExec(`
-      CREATE TABLE IF NOT EXISTS health_check (
-        id INTEGER PRIMARY KEY,
-        isOk BOOLEAN NOT NULL CHECK (isOk IN (0, 1))
-      );
-
-      INSERT OR REPLACE INTO health_check VALUES (1, 1);
-    `);
-
-    this.sqlExec(`
-      CREATE TABLE IF NOT EXISTS ${migrationsTable} (
-        id INTEGER PRIMARY KEY,
-        name varchar(20) NOT NULL,
-        migratedAt INTEGER NOT NULL
-      )
-    `);
-
-    this.sqlDb.run('BEGIN TRANSACTION;');
-
-    const migratedMigrations = this.getRecords<{ id: number; name: string }>(
-      Q.select('*').from(migrationsTable),
-    );
-
-    try {
-      migrations
-        .sort((a, b) => a.id - b.id)
-        .forEach((migration) => {
-          if (migratedMigrations.find(({ id }) => id === migration.id)) return;
-
-          migration.up(this);
-
-          this.execQuery(
-            Q.insertInto(migrationsTable).values({
-              id: migration.id,
-              name: migration.name,
-              migratedAt: new Date().getTime(),
-            }),
-          );
-        });
-    } catch (e) {
-      this.sqlDb.run('ROLLBACK;');
-
-      throw e;
-    }
-
-    this.sqlDb.run('COMMIT;');
-
-    console.log('DB initialized!', this.dbName);
-  }
-
-  transaction<T extends any>(func: () => T, ctx?: Ctx): T {
-    if (this.inTransaction) {
-      return ctx ? shareCtx(func, ctx) : func();
-    }
-
-    this.inTransaction = true;
-
-    this.sqlDb.run('BEGIN TRANSACTION;');
-
-    let result: T | undefined = undefined;
-
-    try {
-      result = ctx ? shareCtx(func, ctx) : func();
-
-      this.sqlDb.run('COMMIT;');
-    } catch (e) {
-      this.sqlDb.run('ROLLBACK;');
-
-      throw e;
-    } finally {
-      this.inTransaction = false;
-    }
-
-    return result;
-  }
-
-  sqlExec(sql: string, params?: BindParams): QueryExecResult[] {
-    try {
-      const startTime = performance.now();
-      const res = this.sqlDb.exec(sql, params);
-      const end = performance.now();
-
-      if (!getIsLogSuppressing()) {
-        console.debug(
-          `[${this.dbName}] Done executing`,
-          sql,
-          params,
-          `Time: ${((end - startTime) / 1000).toFixed(4)}s`,
-        );
-      }
-
-      return res;
-    } catch (e) {
-      console.log(`[${this.dbName}] Failed execute`, sql, params);
-      throw e;
-    }
-  }
-
+export interface IQueryExecuter {
+  execQuery(query: Q.Statement): Promise<QueryExecResult[]>;
+  execQueries(queries: Q.Statement[]): Promise<QueryExecResult[][]>;
   insertRecords(
+    table: string,
+    objs: Record<string, any>[],
+    replace?: boolean,
+  ): Promise<void>;
+  getRecords<T extends Record<string, any>>(query: Q.Statement): Promise<T[]>;
+  transaction<T extends any>(func: (t: Transaction) => Promise<T>): Promise<T>;
+  sqlExec(q: string): Promise<QueryExecResult[]>;
+}
+
+export class Transaction implements IQueryExecuter {
+  constructor(private db: DB, public id: string) {}
+
+  async sqlExec(q: string) {
+    return this.db.sqlExec(q, this.id);
+  }
+
+  async execQuery(query: Q.Statement) {
+    return this.db.execQuery(query, this.id);
+  }
+
+  async execQueries(queries: Q.Statement[]) {
+    return this.db.execQueries(queries, this.id);
+  }
+
+  async commit() {
+    return this.db.commitTransaction(this.id);
+  }
+
+  async getRecords<T extends Record<string, any>>(
+    query: Q.Statement,
+  ): Promise<T[]> {
+    return this.db.getRecords(query);
+  }
+
+  async insertRecords(
     table: string,
     objs: Record<string, any>[],
     replace: boolean = false,
   ) {
+    return this.db.insertRecords(table, objs, replace);
+  }
+
+  transaction<T extends any>(func: (t: Transaction) => Promise<T>): Promise<T> {
+    // We already in transaction
+    return func(this);
+  }
+}
+@injectable()
+export class DB implements IQueryExecuter {
+  private worker: Worker;
+  private messagesFromWorker$: Observable<IOutputWorkerMessage>;
+  private messagesToWorker$: Subject<IInputWorkerMessage> = new Subject();
+
+  constructor(
+    @inject(STOP_SIGNAL) private stop$: Observable<void>,
+    @inject(DB_NAME) private dbName: string,
+  ) {
+    this.worker = new DbWorker();
+
+    initBackend(this.worker);
+
+    this.messagesFromWorker$ = new Observable<IOutputWorkerMessage>((obs) => {
+      const sub = (ev: MessageEvent<any>) => {
+        obs.next(ev.data);
+      };
+      this.worker.addEventListener('message', sub);
+
+      return () => {
+        this.worker.removeEventListener('message', sub);
+      };
+    });
+
+    this.messagesToWorker$.pipe(takeUntil(stop$)).subscribe((mes) => {
+      this.worker.postMessage(mes);
+    });
+  }
+
+  async sqlExec(q: string, transactionId?: string) {
+    const res = await this.execCommand({
+      type: 'execQueries',
+      queries: [{ text: q, values: [] }],
+      transactionId,
+    });
+
+    return res[0];
+  }
+
+  async init() {
+    // maybe timeout?
+    const prom = lastValueFrom(
+      this.messagesFromWorker$.pipe(
+        filter((ev) => ev.type === 'initialized'),
+        first(),
+      ),
+    );
+
+    this.messagesToWorker$.next({ type: 'initialize', dbName: this.dbName });
+
+    return prom;
+  }
+
+  async execQueries(queries: Q.Statement[], transactionId?: string) {
+    return this.execCommand({
+      type: 'execQueries',
+      queries: queries.map((q) => q.toParams()),
+      transactionId,
+      inTransaction: queries.length > 1,
+    });
+  }
+
+  async execQuery(query: Q.Statement, transactionId?: string) {
+    const res = await this.execCommand({
+      type: 'execQueries',
+      queries: [query.toParams()],
+      transactionId,
+    });
+
+    return res[0];
+  }
+
+  async startTransaction(): Promise<Transaction> {
+    const transactionId = uuidv4();
+
+    await this.execCommand({
+      type: 'startTransaction',
+      transactionId,
+    });
+
+    return new Transaction(this, transactionId);
+  }
+
+  async commitTransaction(transactionId: string): Promise<void> {
+    await this.execCommand({
+      type: 'commitTransaction',
+      transactionId,
+    });
+  }
+
+  async transaction<T extends any>(
+    func: (t: Transaction) => Promise<T>,
+  ): Promise<T> {
+    const trans = await this.startTransaction();
+    const res = await func(trans);
+    await trans.commit();
+
+    return res;
+  }
+
+  private execCommand(command: DistributiveOmit<ICommand, 'commandId'>) {
+    const id = uuidv4();
+
+    // TODO: maybe timeout?
+    const prom = lastValueFrom(
+      this.messagesFromWorker$.pipe(
+        filter((ev) => ev.type === 'response' && ev.data.commandId === id),
+        first(),
+        tap((ev) => {
+          if (ev.type === 'response' && ev.data.status === 'error') {
+            throw new Error(ev.data.message);
+          }
+        }),
+        map((ev) => {
+          if (ev.type === 'response' && ev.data.status === 'success') {
+            return ev.data.result;
+          } else {
+            throw new Error('Unknown data format');
+          }
+        }),
+      ),
+    );
+
+    this.messagesToWorker$.next({
+      type: 'command',
+      data: { ...command, commandId: id },
+    });
+
+    return prom;
+  }
+
+  async insertRecords(
+    table: string,
+    objs: Record<string, any>[],
+    replace: boolean = false,
+  ) {
+    const trans = await this.startTransaction();
+
     // sqlite max vars = 32766
     // Let's take table columns count to 20, so 20 * 1000 will fit the restriction
-    chunk(objs, 1000).forEach((chunkObjs) => {
+    for (const chunkObjs of chunk(objs, 1000)) {
       let query = Q.insertInto(table).values(chunkObjs);
 
       if (replace) {
         query = query.orReplace();
       }
 
-      const sql = query.toParams();
+      await trans.execQuery(query);
+    }
 
-      this.sqlExec(sql.text, sql.values);
-    });
+    await trans.commit();
   }
 
-  // TODO: add mapper for better performance
-  getRecords<T extends Record<string, any>>(query: Q.Statement): T[] {
-    const sql = query.toParams();
-
-    const [result] = this.sqlExec(sql.text, sql.values);
+  // TODO: add mapper to arg for better performance
+  async getRecords<T extends Record<string, any>>(
+    query: Q.Statement,
+  ): Promise<T[]> {
+    const [result] = await this.execQuery(query);
 
     return (result?.values?.map((res) => {
       let obj: Record<string, any> = {};
@@ -217,10 +279,26 @@ export class DB<Ctx extends object> {
       return obj;
     }) || []) as T[];
   }
-
-  execQuery(query: Q.Statement) {
-    const sql = query.toParams();
-
-    return this.sqlExec(sql.text, sql.values);
-  }
 }
+
+// const run = async () => {
+//   const dbFront = new DB(new Subject());
+
+//   await dbFront.init();
+
+//   console.log('initialized!!!!!!!!!!!!!');
+
+//   const transaction = await dbFront.startTransaction();
+
+//   console.log(
+//     'result!!!!!!!!!!!!!',
+//     await transaction.execQueries([
+//       Q.select('*').from(migrationsTable),
+//       Q.select('*').from(migrationsTable),
+//     ]),
+//   );
+
+//   await transaction.commit();
+// };
+
+// run();

@@ -13,7 +13,6 @@ export type VaultRow = {
 
 export type VaultDoc = Omit<VaultRow, '_normalizedTitle'>;
 
-@remotable('VaultsRepository')
 export class VaultsRepository extends BaseSyncRepository<VaultDoc, VaultRow> {
   getTableName() {
     return vaultsTable;

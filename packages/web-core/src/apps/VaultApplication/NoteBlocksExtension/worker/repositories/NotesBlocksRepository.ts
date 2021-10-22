@@ -4,6 +4,7 @@ import type { ISyncCtx } from '../../../../../extensions/SyncExtension/worker/sy
 import type { IDatabaseChange } from '../../../../../extensions/SyncExtension/app/serverSynchronizer/types';
 import { NoteblocksChangesApplier } from '../sync/NoteblocksChangesApplier';
 import { remotable } from '../../../../../framework/utils';
+import { IQueryExecuter } from '../../../../../extensions/DbExtension/DB';
 
 export type NoteBlockRow = {
   id: string;
@@ -43,103 +44,98 @@ export class NotesBlocksRepository extends BaseSyncRepository<
   NoteBlockDoc,
   NoteBlockRow
 > {
-  bulkCreate(attrsArray: NoteBlockDoc[], ctx: ISyncCtx) {
-    return this.db.transaction(
-      () => {
-        const res = super.bulkCreate(attrsArray, ctx);
+  bulkCreate(attrsArray: NoteBlockDoc[], ctx: ISyncCtx, e: IQueryExecuter) {
+    return e.transaction(async (t) => {
+      const res = await super.bulkCreate(attrsArray, ctx, t);
 
-        this.db.insertRecords(
-          noteBlocksFTSTable,
-          res.map((row) => ({
-            id: row.id,
-            textContent: row.content.toLowerCase(),
-          })),
-        );
+      await t.insertRecords(
+        noteBlocksFTSTable,
+        res.map((row) => ({
+          id: row.id,
+          textContent: row.content.toLowerCase(),
+        })),
+      );
 
-        return res;
-      },
-      { ...ctx, windowId: this.windowId },
-    );
+      return res;
+    });
   }
 
-  bulkUpdate(records: NoteBlockDoc[], ctx: ISyncCtx) {
-    return this.db.transaction(
-      () => {
-        const res = super.bulkUpdate(records, ctx);
+  bulkUpdate(records: NoteBlockDoc[], ctx: ISyncCtx, e: IQueryExecuter) {
+    return e.transaction(async (t) => {
+      const res = await super.bulkUpdate(records, ctx, t);
 
-        this.db.execQuery(
-          Q.deleteFrom(noteBlocksFTSTable).where(
-            Q.in(
-              'id',
-              res.map(({ id }) => id),
-            ),
+      await t.execQuery(
+        Q.deleteFrom(noteBlocksFTSTable).where(
+          Q.in(
+            'id',
+            res.map(({ id }) => id),
           ),
-        );
+        ),
+      );
 
-        this.db.insertRecords(
-          noteBlocksFTSTable,
-          res.map((row) => ({
-            id: row.id,
-            textContent: row.content.toLowerCase(),
-          })),
-        );
+      await t.insertRecords(
+        noteBlocksFTSTable,
+        res.map((row) => ({
+          id: row.id,
+          textContent: row.content.toLowerCase(),
+        })),
+      );
 
-        return res;
-      },
-      { ...ctx, windowId: this.windowId },
-    );
-  }
-  bulkDelete(ids: string[], ctx: ISyncCtx) {
-    return this.db.transaction(
-      () => {
-        const res = super.bulkDelete(ids, ctx);
-
-        this.db.execQuery(
-          Q.deleteFrom(noteBlocksFTSTable).where(Q.in('id', ids)),
-        );
-
-        return res;
-      },
-      { ...ctx, windowId: this.windowId },
-    );
+      return res;
+    });
   }
 
-  getNoteIdByBlockId(blockId: string) {
-    const [res] = this.db.execQuery(
+  bulkDelete(ids: string[], ctx: ISyncCtx, e: IQueryExecuter) {
+    return e.transaction(async (t) => {
+      const res = await super.bulkDelete(ids, ctx, t);
+
+      await t.execQuery(
+        Q.deleteFrom(noteBlocksFTSTable).where(Q.in('id', ids)),
+      );
+
+      return res;
+    });
+  }
+
+  async getNoteIdByBlockId(blockId: string, e: IQueryExecuter = this.db) {
+    const [res] = await e.execQuery(
       Q.select('noteId').from(this.getTableName()).where(Q.in('id', blockId)),
     );
 
     return res?.values?.[0]?.[0] as string | undefined;
   }
 
-  getByNoteIds(ids: string[]) {
-    const res = this.db.getRecords<NoteBlockRow>(
+  async getByNoteIds(ids: string[], e: IQueryExecuter = this.db) {
+    const res = await e.getRecords<NoteBlockRow>(
       Q.select().from(this.getTableName()).where(Q.in('noteId', ids)),
     );
 
     return res?.map((res) => this.toDoc(res)) || [];
   }
 
-  getIdsByNoteId(id: string) {
-    const [res] = this.db.execQuery(
+  async getIdsByNoteId(id: string, e: IQueryExecuter) {
+    const [res] = await e.execQuery(
       Q.select('id').from(this.getTableName()).where(Q.in('noteId', id)),
     );
 
     return res?.values?.map(([val]) => val as string) || [];
   }
 
-  getByNoteId(id: string): NoteBlockDoc[] {
-    return this.getByNoteIds([id]);
+  async getByNoteId(id: string, e: IQueryExecuter): Promise<NoteBlockDoc[]> {
+    return this.getByNoteIds([id], e);
   }
 
   getTableName() {
     return noteBlocksTable;
   }
 
-  getLinkedBlocksOfNoteId(id: string): NoteBlockDoc[] {
+  async getLinkedBlocksOfNoteId(
+    id: string,
+    e: IQueryExecuter,
+  ): Promise<NoteBlockDoc[]> {
     return (
-      this.db
-        .getRecords<NoteBlockRow>(
+      (
+        await e.getRecords<NoteBlockRow>(
           Q.select(`joined.*`)
             .from(noteBlocksNotesTable)
             .leftJoin(`${this.getTableName()} joined`, {
@@ -147,12 +143,15 @@ export class NotesBlocksRepository extends BaseSyncRepository<
             })
             .where({ [`${noteBlocksNotesTable}.noteId`]: id }),
         )
-        ?.map((res) => this.toDoc(res)) || []
+      )?.map((res) => this.toDoc(res)) || []
     );
   }
 
-  getLinksOfNoteId(id: string): Record<string, string[]> {
-    const res = this.db.getRecords<{ noteId: string; noteBlockId: string }>(
+  async getLinksOfNoteId(
+    id: string,
+    e: IQueryExecuter = this.db,
+  ): Promise<Record<string, string[]>> {
+    const res = await e.getRecords<{ noteId: string; noteBlockId: string }>(
       Q.select()
         .distinct('joined.noteId noteId, joined.id noteBlockId')
         .from(noteBlocksNotesTable)
@@ -172,10 +171,11 @@ export class NotesBlocksRepository extends BaseSyncRepository<
     return grouped;
   }
 
-  getLinkedBlocksOfBlocksOfNote(
+  async getLinkedBlocksOfBlocksOfNote(
     noteId: string,
-  ): Record<string, { noteId: string; blockId: string }[]> {
-    const result = this.db.getRecords<{
+    e: IQueryExecuter = this.db,
+  ): Promise<Record<string, { noteId: string; blockId: string }[]>> {
+    const result = await e.getRecords<{
       linkedToBlockId: string;
       noteId: string;
       blockId: string;

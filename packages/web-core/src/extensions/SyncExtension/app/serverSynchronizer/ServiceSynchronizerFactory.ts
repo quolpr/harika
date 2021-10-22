@@ -17,7 +17,11 @@ import { ApplyChangesService } from '../../worker/services/ApplyChangesService';
 import { SyncRepository } from '../../worker/repositories/SyncRepository';
 import { DbEventsListenService } from '../services/DbEventsListenerService';
 import { SyncStateService } from '../SyncState';
-import { SYNC_AUTH_TOKEN, SYNC_CONNECTION_ALLOWED, SYNC_URL } from '../../types';
+import {
+  SYNC_AUTH_TOKEN,
+  SYNC_CONNECTION_ALLOWED,
+  SYNC_URL,
+} from '../../types';
 import { CommandsExecuter } from './CommandsExecuter';
 import { ServerConnector } from './connection/ServerConnector';
 import { ServerSynchronizer } from './ServerSynchronizer';
@@ -25,8 +29,8 @@ import { ServerSynchronizer } from './ServerSynchronizer';
 @injectable()
 export class ServerSynchronizerFactory {
   constructor(
-    @inject(toRemoteName(SyncRepository))
-    private syncRepo: Remote<SyncRepository>,
+    @inject(SyncRepository)
+    private syncRepo: SyncRepository,
     @inject(DB_NAME) private dbName: string,
     @inject(DbEventsListenService)
     private dbEventsListenService: DbEventsListenService,
@@ -36,8 +40,8 @@ export class ServerSynchronizerFactory {
     private syncUrl: string,
     @inject(SYNC_AUTH_TOKEN)
     private syncAuthToken: string,
-    @inject(toRemoteName(ApplyChangesService))
-    private applyChangesService: Remote<ApplyChangesService>,
+    @inject(ApplyChangesService)
+    private applyChangesService: ApplyChangesService,
     @inject(STOP_SIGNAL)
     private stop$: Observable<unknown>,
     @inject(SyncStateService)

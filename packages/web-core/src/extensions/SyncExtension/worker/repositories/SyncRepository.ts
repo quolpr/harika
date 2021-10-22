@@ -3,9 +3,7 @@ import { inject, injectable } from 'inversify';
 import Q from 'sql-bricks';
 import type { Overwrite, Required } from 'utility-types';
 import { v4 as uuidv4 } from 'uuid';
-import { getCtxStrict } from '../../../DbExtension/ctx';
-import { DB } from '../../../DbExtension/DB';
-import { suppressLog } from '../../../DbExtension/suppressLog';
+import { DB, IQueryExecuter, Transaction } from '../../../DbExtension/DB';
 import type {
   ICreateChange,
   IDeleteChange,
@@ -13,7 +11,7 @@ import type {
 } from '../../app/serverSynchronizer/types';
 import { DatabaseChangeType } from '../../app/serverSynchronizer/types';
 import { getObjectDiff } from '../../app/serverSynchronizer/utils';
-import type { IInternalSyncCtx } from '../syncCtx';
+import type { IInternalSyncCtx, ISyncCtx } from '../syncCtx';
 import { remotable } from '../../../../framework/utils';
 
 export const clientChangesTable = 'clientChanges' as const;
@@ -116,7 +114,7 @@ export class SyncRepository {
   private onChangeCallback: ((ch: ITransmittedChange[]) => void) | undefined;
   private onNewPullCallback: (() => void) | undefined;
 
-  constructor(@inject(DB) private db: DB<IInternalSyncCtx>) {}
+  constructor(@inject(DB) private db: DB) {}
 
   onChange(callback: (ch: ITransmittedChange[]) => void) {
     this.onChangeCallback = callback;
@@ -126,17 +124,19 @@ export class SyncRepository {
     this.onNewPullCallback = callback;
   }
 
-  transaction<T extends any>(func: () => T, ctx?: IInternalSyncCtx): T {
-    return this.db.transaction(func, ctx);
+  async transaction<T extends any>(
+    func: (t: Transaction) => Promise<T>,
+  ): Promise<T> {
+    return this.db.transaction(func);
   }
 
-  createCreateChanges(
+  async createCreateChanges(
     table: string,
     records: (Record<string, unknown> & { id: string })[],
+    ctx: IInternalSyncCtx,
+    e: IQueryExecuter,
   ) {
-    this.db.transaction(() => {
-      const ctx = getCtxStrict<IInternalSyncCtx>();
-
+    return e.transaction(async (t) => {
       const changeEvents = records.map((data): ITransmittedCreateChange => {
         const id = uuidv4();
 
@@ -152,7 +152,7 @@ export class SyncRepository {
       });
 
       if (ctx.shouldRecordChange) {
-        this.db.insertRecords(
+        await t.insertRecords(
           clientChangesTable,
           changeEvents.map((ev): ICreateClientChangeRow => {
             return {
@@ -175,16 +175,16 @@ export class SyncRepository {
     });
   }
 
-  createUpdateChanges(
+  async createUpdateChanges(
     table: string,
     changes: {
       from: Record<string, unknown> & { id: string };
       to: Record<string, unknown> & { id: string };
     }[],
+    ctx: IInternalSyncCtx,
+    e: IQueryExecuter,
   ) {
-    this.db.transaction(() => {
-      const ctx = getCtxStrict<IInternalSyncCtx>();
-
+    return e.transaction(async (t) => {
       const changeEvents = changes.map((ch): ITransmittedUpdateChange => {
         const id = uuidv4();
 
@@ -204,7 +204,7 @@ export class SyncRepository {
       });
 
       if (ctx.shouldRecordChange) {
-        this.db.insertRecords(
+        await t.insertRecords(
           clientChangesTable,
           changeEvents.map((ev): IUpdateClientChangeRow => {
             return {
@@ -227,13 +227,13 @@ export class SyncRepository {
     });
   }
 
-  createDeleteChanges(
+  async createDeleteChanges(
     table: string,
     objs: (Record<string, unknown> & { id: string })[],
+    ctx: IInternalSyncCtx,
+    e: IQueryExecuter,
   ) {
-    this.db.transaction(() => {
-      const ctx = getCtxStrict<IInternalSyncCtx>();
-
+    return e.transaction(async (t) => {
       const changeEvents = objs.map((obj): ITransmittedDeleteChange => {
         const id = uuidv4();
 
@@ -249,7 +249,7 @@ export class SyncRepository {
       });
 
       if (ctx.shouldRecordChange) {
-        this.db.insertRecords(
+        await t.insertRecords(
           clientChangesTable,
           changeEvents.map((ev): IDeleteClientChangeRow => {
             return {
@@ -272,82 +272,92 @@ export class SyncRepository {
     });
   }
 
-  getChangesPulls(): IChangesPullsRow[] {
-    return this.db.getRecords<IChangesPullsRow>(
+  getChangesPulls(e: IQueryExecuter): Promise<IChangesPullsRow[]> {
+    return e.getRecords<IChangesPullsRow>(
       Q.select().from(serverChangesPullsTable),
     );
   }
 
-  getServerAndClientChangesCount() {
-    return suppressLog(() => {
-      const [serverResult] = this.db.execQuery(
-        Q.select('COUNT(*)').from(serverChangesTable),
-      );
-      const [clientResult] = this.db.execQuery(
-        Q.select('COUNT(*)').from(clientChangesTable),
-      );
+  async getServerAndClientChangesCount(e: IQueryExecuter = this.db) {
+    const [[serverResult], [clientResult]] = await e.execQueries([
+      Q.select('COUNT(*)').from(serverChangesTable),
+      Q.select('COUNT(*)').from(clientChangesTable),
+    ]);
 
-      return [
-        serverResult.values[0][0] as number,
-        clientResult.values[0][0] as number,
-      ];
-    });
+    return [
+      serverResult.values[0][0] as number,
+      clientResult.values[0][0] as number,
+    ];
   }
 
-  getServerChangesByPullIds(pullIds: string[]): IServerChangeDoc[] {
-    return this.db
-      .getRecords<IServerChangeRow>(
+  async getServerChangesByPullIds(
+    pullIds: string[],
+    e: IQueryExecuter,
+  ): Promise<IServerChangeDoc[]> {
+    return (
+      await e.getRecords<IServerChangeRow>(
         Q.select()
           .from(serverChangesTable)
           .where(Q.in('pullId', pullIds))
           .orderBy('rev'),
       )
-      .map((row) => this.serverChangeRowToDoc(row));
+    ).map((row) => this.serverChangeRowToDoc(row));
   }
 
-  getClientChanges() {
-    return this.db
-      .getRecords<IClientChangeRow>(
+  async getClientChanges(e: IQueryExecuter = this.db) {
+    return (
+      await e.getRecords<IClientChangeRow>(
         Q.select().from(clientChangesTable).orderBy('rev'),
       )
-      .map((row) => this.clientChangeRowToDoc(row));
+    ).map((row) => this.clientChangeRowToDoc(row));
   }
 
-  bulkDeleteClientChanges(ids: string[]) {
-    this.db.execQuery(
+  async bulkDeleteClientChanges(ids: string[], e: IQueryExecuter = this.db) {
+    await e.execQuery(
       Q.deleteFrom().from(clientChangesTable).where(Q.in('id', ids)),
     );
   }
 
-  deletePulls(ids: string[]) {
-    this.db.execQuery(
+  async deletePulls(ids: string[], e: IQueryExecuter) {
+    await e.execQuery(
       Q.deleteFrom().from(serverChangesPullsTable).where(Q.in('id', ids)),
     );
   }
 
-  createPull(pull: IChangesPullsRow, changes: IServerChangeDoc[]) {
-    this.db.transaction(() => {
-      this.db.insertRecords(serverChangesPullsTable, [pull]);
+  async createPull(
+    pull: IChangesPullsRow,
+    changes: IServerChangeDoc[],
+    e: IQueryExecuter = this.db,
+  ) {
+    await e.transaction(async (t) => {
+      // TODO: could be optimized in one this.db call
+
+      await t.insertRecords(serverChangesPullsTable, [pull]);
 
       const rows = changes.map((ch): IServerChangeRow => {
         return this.serverChangeDocToRow(ch);
       });
 
       if (rows.length > 0) {
-        this.db.insertRecords(serverChangesTable, rows);
+        await t.insertRecords(serverChangesTable, rows);
       }
 
-      this.updateSyncStatus({
-        lastReceivedRemoteRevision: pull.serverRevision,
-      });
+      await this.updateSyncStatus(
+        {
+          lastReceivedRemoteRevision: pull.serverRevision,
+        },
+        t,
+      );
     });
 
     this.onNewPullCallback?.();
   }
 
-  getSyncStatus(): ISyncStatus {
-    let status = this.db.getRecords<ISyncStatus>(
-      Q.select().from(syncStatusTable).where({ id: 1 }),
+  async getSyncStatus(e: IQueryExecuter = this.db): Promise<ISyncStatus> {
+    let status = (
+      await e.getRecords<ISyncStatus>(
+        Q.select().from(syncStatusTable).where({ id: 1 }),
+      )
     )[0];
 
     if (!status) {
@@ -358,14 +368,14 @@ export class SyncRepository {
         clientId: uuidv4(),
       };
 
-      this.db.insertRecords(syncStatusTable, [status]);
+      e.insertRecords(syncStatusTable, [status]);
     }
 
     return status;
   }
 
-  updateSyncStatus(status: Partial<ISyncStatus>) {
-    this.db.execQuery(Q.update(syncStatusTable).set(status).where({ id: 1 }));
+  updateSyncStatus(status: Partial<ISyncStatus>, e: IQueryExecuter) {
+    return e.execQuery(Q.update(syncStatusTable).set(status).where({ id: 1 }));
   }
 
   private clientChangeRowToDoc(ch: IClientChangeRow): IClientChangeDoc {

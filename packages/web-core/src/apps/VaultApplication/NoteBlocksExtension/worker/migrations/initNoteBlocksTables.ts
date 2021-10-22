@@ -1,16 +1,13 @@
-import { DB } from '../../../../../extensions/DbExtension/DB';
+import { IQueryExecuter } from '../../../../../extensions/DbExtension/DB';
 import { IMigration } from '../../../../../extensions/DbExtension/types';
-import { blocksScopesTable } from '../../../BlocksScopeExtension/worker/repositories/BlockScopesRepository';
 import {
   noteBlocksNotesTable,
   noteBlocksTable,
   noteBlocksFTSTable,
 } from '../repositories/NotesBlocksRepository';
 
-const up = (db: DB<any>) => {
-
-
-  db.sqlExec(`
+const up = async (db: IQueryExecuter) => {
+  await db.sqlExec(`
     CREATE TABLE IF NOT EXISTS ${noteBlocksNotesTable} (
       noteId varchar(20) NOT NULL,
       noteBlockId varchar(20) NOT NULL
@@ -20,7 +17,7 @@ const up = (db: DB<any>) => {
     CREATE INDEX IF NOT EXISTS idx_notes_note_blocks_noteBlockId ON ${noteBlocksNotesTable}(noteBlockId);
   `);
 
-  db.sqlExec(`
+  await db.sqlExec(`
     CREATE TABLE IF NOT EXISTS ${noteBlocksTable} (
       id varchar(20) PRIMARY KEY,
       noteId varchar(20) NOT NULL,
@@ -34,11 +31,11 @@ const up = (db: DB<any>) => {
     CREATE INDEX IF NOT EXISTS idx_note_blocks_noteId ON ${noteBlocksTable}(noteId);
   `);
 
-  db.sqlExec(`
+  await db.sqlExec(`
     CREATE VIRTUAL TABLE IF NOT EXISTS ${noteBlocksFTSTable} USING fts5(id UNINDEXED, textContent, tokenize="trigram");
   `);
 
-  db.sqlExec(`
+  await db.sqlExec(`
     CREATE TRIGGER IF NOT EXISTS populateNoteBlocksNotesTable_insert AFTER INSERT ON ${noteBlocksTable} BEGIN
       DELETE FROM ${noteBlocksNotesTable} WHERE noteBlockId = new.id;
       INSERT INTO ${noteBlocksNotesTable}(noteId, noteBlockId) SELECT j.value, new.id FROM json_each(new.linkedNoteIds) AS j;

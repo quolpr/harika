@@ -9,10 +9,11 @@ import initSqlJs, {
 import { SQLiteFS } from 'absurd-sql';
 import IndexedDBBackend from 'absurd-sql/dist/indexeddb-backend';
 import { getIsLogSuppressing } from './suppressLog';
-import { migrationsTable } from './DB';
 import { Subject } from 'rxjs';
+import { v4 as uuidv4 } from 'uuid';
+import { migrationsTable } from './MigrationRunner';
 
-class DB {
+class DbBackend {
   private sqlDb!: Database;
 
   constructor(private dbName: string) {}
@@ -98,16 +99,18 @@ type ICommitTransactionCommand = {
   transactionId: string;
   commandId: string;
 };
-type IExecQueryCommand = {
-  type: 'execQuery';
-  query: Q.SqlBricksParam;
+
+type IExecQueriesCommand = {
+  type: 'execQueries';
+  queries: Q.SqlBricksParam[];
+  inTransaction?: boolean;
   transactionId?: string;
   commandId: string;
 };
 
 export type ICommand =
   | IStartTransactionCommand
-  | IExecQueryCommand
+  | IExecQueriesCommand
   | ICommitTransactionCommand;
 
 type IResponse = {
@@ -116,7 +119,7 @@ type IResponse = {
 } & (
   | {
       status: 'success';
-      result: QueryExecResult[];
+      result: QueryExecResult[][];
     }
   | {
       status: 'error';
@@ -132,15 +135,15 @@ class CommandsExecutor {
   private currentTransactionId?: string;
   response$: Subject<IResponse> = new Subject();
 
-  constructor(private db: DB) {}
+  constructor(private db: DbBackend) {}
 
   exec(command: ICommand) {
-    this.runCommand(command);
+    this.queue.push(command);
 
-    // TODO: optimize it. We can await for commit, for example
     const queue = this.queue;
     this.queue = [];
 
+    // TODO: optimize it. We can await for commit, for example
     queue.forEach((com) => {
       this.runCommand(com);
     });
@@ -151,12 +154,12 @@ class CommandsExecutor {
       this.startTransaction(command);
     } else if (command.type === 'commitTransaction') {
       this.commitTransaction(command);
-    } else if (command.type === 'execQuery') {
+    } else if (command.type === 'execQueries') {
       this.execQuery(command);
     }
   }
 
-  private execQuery(command: IExecQueryCommand) {
+  private execQuery(command: IExecQueriesCommand) {
     if (
       this.currentTransactionId &&
       (!command.transactionId ||
@@ -166,9 +169,7 @@ class CommandsExecutor {
       return;
     }
 
-    this.response$.next(
-      this.sqlExec(command.commandId, command.query.text, command.query.values),
-    );
+    this.response$.next(this.sqlExec(command.commandId, command.queries));
   }
 
   private startTransaction(command: IStartTransactionCommand) {
@@ -178,7 +179,9 @@ class CommandsExecutor {
       this.currentTransactionId = command.transactionId;
 
       this.response$.next(
-        this.sqlExec(command.commandId, 'BEGIN TRANSACTION;'),
+        this.sqlExec(command.commandId, [
+          { text: 'BEGIN TRANSACTION;', values: [] },
+        ]),
       );
     }
   }
@@ -188,7 +191,10 @@ class CommandsExecutor {
       throw new Error("Can't commit not running transaction");
 
     if (this.currentTransactionId === command.transactionId) {
-      this.response$.next(this.sqlExec(command.commandId, 'COMMIT;'));
+      this.response$.next(
+        this.sqlExec(command.commandId, [{ text: 'COMMIT;', values: [] }]),
+      );
+      this.currentTransactionId = undefined;
     } else {
       this.queue.push(command);
     }
@@ -196,12 +202,32 @@ class CommandsExecutor {
 
   private sqlExec(
     commandId: string,
-    sql: string,
-    params?: BindParams,
+    queries: Q.SqlBricksParam[],
+    spawnTransaction: boolean = false,
   ): IResponse {
     try {
-      const res = this.db.sqlExec(sql, params);
-      return { commandId, status: 'success', result: res };
+      const shouldSpawnTransaction =
+        spawnTransaction && !this.currentTransactionId;
+
+      if (shouldSpawnTransaction) {
+        this.db.sqlExec('BEGIN TRANSACTION');
+        this.currentTransactionId = uuidv4();
+      }
+
+      const result = queries.map((q) => {
+        return this.db.sqlExec(q.text, q.values);
+      });
+
+      if (shouldSpawnTransaction) {
+        this.db.sqlExec('COMMIT');
+        this.currentTransactionId = undefined;
+      }
+
+      return {
+        commandId,
+        status: 'success',
+        result,
+      };
     } catch (e) {
       if (this.currentTransactionId) {
         this.db.sqlExec('ROLLBACK;');
@@ -238,7 +264,7 @@ ctx.addEventListener('message', async (event) => {
       return;
     }
 
-    const db = new DB(data.dbName);
+    const db = new DbBackend(data.dbName);
 
     await db.init();
 

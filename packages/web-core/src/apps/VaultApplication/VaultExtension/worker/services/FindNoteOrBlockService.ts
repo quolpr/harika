@@ -16,7 +16,7 @@ import { remotable } from '../../../../../framework/utils';
 @injectable()
 export class FindNoteOrBlockService {
   constructor(
-    @inject(DB) private db: DB<IInternalSyncCtx>, // private notesRepo: SqlNotesRepository, // private notesBlocksRepo: NotesBlocksRepository,
+    @inject(DB) private db: DB, // private notesRepo: SqlNotesRepository, // private notesBlocksRepo: NotesBlocksRepository,
   ) {}
 
   find(text: string) {

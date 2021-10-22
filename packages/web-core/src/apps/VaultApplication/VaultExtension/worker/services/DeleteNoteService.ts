@@ -2,9 +2,7 @@ import { NotesBlocksRepository } from '../../../NoteBlocksExtension/worker/repos
 import type { ISyncCtx } from '../../../../../extensions/SyncExtension/worker/syncCtx';
 import { NotesRepository } from '../../../NotesExtension/worker/repositories/NotesRepository';
 import { inject, injectable } from 'inversify';
-import { remotable } from '../../../../../framework/utils';
 
-@remotable('DeleteNoteService')
 @injectable()
 export class DeleteNoteService {
   constructor(
@@ -13,13 +11,16 @@ export class DeleteNoteService {
     private notesBlocksRepo: NotesBlocksRepository,
   ) {}
 
-  deleteNote(noteId: string) {
+  async deleteNote(noteId: string) {
     const ctx: ISyncCtx = {
       shouldRecordChange: true,
       source: 'inDbChanges',
     };
-    this.notesRepo.transaction(() => {
-      const linkedBlocks = this.notesBlocksRepo.getLinkedBlocksOfNoteId(noteId);
+    await this.notesRepo.transaction(async (t) => {
+      const linkedBlocks = await this.notesBlocksRepo.getLinkedBlocksOfNoteId(
+        noteId,
+        t,
+      );
 
       if (linkedBlocks.length > 0) {
         linkedBlocks.forEach((block) => {
@@ -27,13 +28,14 @@ export class DeleteNoteService {
             (id) => id !== noteId,
           );
         });
-        this.notesBlocksRepo.bulkUpdate(linkedBlocks, ctx);
+        this.notesBlocksRepo.bulkUpdate(linkedBlocks, ctx, t);
       }
 
-      this.notesRepo.delete(noteId, ctx);
+      this.notesRepo.delete(noteId, ctx, t);
       this.notesBlocksRepo.bulkDelete(
-        this.notesBlocksRepo.getIdsByNoteId(noteId),
+        await this.notesBlocksRepo.getIdsByNoteId(noteId, t),
         ctx,
+        t,
       );
     });
   }

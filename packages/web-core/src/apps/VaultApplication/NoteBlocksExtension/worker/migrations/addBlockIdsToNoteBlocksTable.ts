@@ -1,16 +1,16 @@
-import { DB } from '../../../../../extensions/DbExtension/DB';
+import { DB, IQueryExecuter } from '../../../../../extensions/DbExtension/DB';
 import { IMigration } from '../../../../../extensions/DbExtension/types';
 import {
   noteBlocksBlocksTable,
   noteBlocksTable,
 } from '../repositories/NotesBlocksRepository';
 
-const up = (db: DB<any>) => {
-  db.sqlExec(`
+const up = async (db: IQueryExecuter) => {
+  await db.sqlExec(`
     ALTER TABLE ${noteBlocksTable} ADD linkedBlockIds TEXT NOT NULL DEFAULT '[]';
   `);
 
-  db.sqlExec(`
+  await db.sqlExec(`
     CREATE TABLE ${noteBlocksBlocksTable} (
       blockId varchar(20) NOT NULL,
       linkedToBlockId varchar(20) NOT NULL
@@ -20,7 +20,7 @@ const up = (db: DB<any>) => {
     CREATE INDEX IF NOT EXISTS idx_blocks_note_blocks_linkedToBlockId ON ${noteBlocksBlocksTable}(linkedToBlockId);
   `);
 
-  db.sqlExec(`
+  await db.sqlExec(`
     CREATE TRIGGER populateNoteBlocksBlocksTable_insert AFTER INSERT ON ${noteBlocksTable} BEGIN
       DELETE FROM ${noteBlocksBlocksTable} WHERE blockId = new.id;
       INSERT INTO ${noteBlocksBlocksTable}(linkedToBlockId, blockId) SELECT j.value, new.id FROM json_each(new.linkedBlockIds) AS j;
