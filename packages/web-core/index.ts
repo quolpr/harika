@@ -1,4 +1,5 @@
 import 'reflect-metadata';
+import '@harika-org/sql.js/dist/sql-wasm.wasm?url';
 
 export type {
   Token,
