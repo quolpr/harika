@@ -12,7 +12,6 @@ import type {
 import { DatabaseChangeType } from '../../app/serverSynchronizer/types';
 import { getObjectDiff } from '../../app/serverSynchronizer/utils';
 import type { IInternalSyncCtx, ISyncCtx } from '../syncCtx';
-import { remotable } from '../../../../framework/utils';
 
 export const clientChangesTable = 'clientChanges' as const;
 export const syncStatusTable = 'syncStatus' as const;
@@ -108,7 +107,6 @@ export interface ISyncStatus {
 }
 
 // TODO: emit events after transaction finish
-@remotable('SyncRepository')
 @injectable()
 export class SyncRepository {
   private onChangeCallback: ((ch: ITransmittedChange[]) => void) | undefined;

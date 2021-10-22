@@ -11,18 +11,20 @@ import { SyncConfig } from '../../../extensions/SyncExtension/app/serverSynchron
 import { NoteBlockModel } from './app/models/NoteBlockModel';
 import { BlocksTreeDescriptor } from './app/models/BlocksTreeDescriptor';
 import { NoteBlocksService } from './app/services/NoteBlocksService';
-import { BaseAppExtension } from '../../../framework/BaseAppExtension';
+import { BaseSyncExtension } from '../../../extensions/SyncExtension/BaseSyncExtension';
+import { initNoteBlocksTables } from './worker/migrations/initNoteBlocksTables';
+import { addBlockIdsToNoteBlocksTables } from './worker/migrations/addBlockIdsToNoteBlocksTable';
+import { addBlocksTreeDescriptorsTable } from './worker/migrations/addBlockTreeDescriptorTable';
 
 @injectable()
-export class NoteBlocksAppExtension extends BaseAppExtension {
+export class NoteBlocksAppExtension extends BaseSyncExtension {
   async register() {
+    await super.register();
+
     const store = new NoteBlocksExtensionStore({});
 
     this.container.bind(NoteBlocksExtensionStore).toConstantValue(store);
     this.container.bind(NoteBlocksService).toSelf();
-
-    await this.bindRemote(NotesBlocksRepository);
-    await this.bindRemote(BlocksTreeDescriptorsRepository);
   }
 
   async initialize() {
@@ -63,4 +65,19 @@ export class NoteBlocksAppExtension extends BaseAppExtension {
   }
 
   async onReady() {}
+
+  repos() {
+    return [
+      { repo: NotesBlocksRepository, withSync: true },
+      { repo: BlocksTreeDescriptorsRepository, withSync: true },
+    ];
+  }
+
+  migrations() {
+    return [
+      initNoteBlocksTables,
+      addBlockIdsToNoteBlocksTables,
+      addBlocksTreeDescriptorsTable,
+    ];
+  }
 }

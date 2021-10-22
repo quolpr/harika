@@ -1,18 +1,9 @@
-import { Remote } from 'comlink';
 import { inject, injectable } from 'inversify';
 import { isEqual } from 'lodash-es';
 import { withoutUndo } from 'mobx-keystone';
 import { from, Observable, of } from 'rxjs';
-import {
-  distinctUntilChanged,
-  filter,
-  map,
-  switchMap,
-  tap,
-  timeout,
-} from 'rxjs/operators';
+import { distinctUntilChanged, map, switchMap, tap } from 'rxjs/operators';
 import { DbEventsListenService } from '../../../../../extensions/SyncExtension/app/services/DbEventsListenerService';
-import { toRemoteName } from '../../../../../framework/utils';
 import { toObserver } from '../../../../../lib/toObserver';
 import { notesTable } from '../../../NotesExtension/worker/repositories/NotesRepository';
 import { blocksTreeDescriptorsMapper } from '../mappers/blocksTreeDescriptorsMapper';
@@ -29,10 +20,10 @@ export class NoteBlocksService {
   constructor(
     @inject(DbEventsListenService)
     private dbEventsService: DbEventsListenService,
-    @inject(toRemoteName(NotesBlocksRepository))
-    private notesBlocksRepository: Remote<NotesBlocksRepository>,
-    @inject(toRemoteName(BlocksTreeDescriptorsRepository))
-    private treeDescriptorsRepository: Remote<BlocksTreeDescriptorsRepository>,
+    @inject(NotesBlocksRepository)
+    private notesBlocksRepository: NotesBlocksRepository,
+    @inject(BlocksTreeDescriptorsRepository)
+    private treeDescriptorsRepository: BlocksTreeDescriptorsRepository,
     @inject(NoteBlocksExtensionStore)
     private store: NoteBlocksExtensionStore,
   ) {}

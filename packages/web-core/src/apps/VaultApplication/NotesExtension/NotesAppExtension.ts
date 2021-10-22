@@ -1,21 +1,22 @@
 import { injectable } from 'inversify';
 import { SyncConfig } from '../../../extensions/SyncExtension/app/serverSynchronizer/SyncConfig';
-import { BaseAppExtension } from '../../../framework/BaseAppExtension';
+import { BaseSyncExtension } from '../../../extensions/SyncExtension/BaseSyncExtension';
 import { notesMapper } from './app/mappers/notesMapper';
 import { NoteModel } from './app/models/NoteModel';
 import { NotesStore } from './app/models/NotesStore';
 import { NotesService } from './app/services/NotesService';
+import { initNotesTable } from './worker/migrations/createNotesTable';
 import { NotesRepository } from './worker/repositories/NotesRepository';
 
 @injectable()
-export class NotesAppExtension extends BaseAppExtension {
+export class NotesAppExtension extends BaseSyncExtension {
   async register() {
+    await super.register();
+
     const store = new NotesStore({});
 
     this.container.bind(NotesStore).toConstantValue(store);
     this.container.bind(NotesService).toSelf();
-
-    await this.bindRemote(NotesRepository);
   }
 
   async initialize() {
@@ -41,4 +42,12 @@ export class NotesAppExtension extends BaseAppExtension {
   }
 
   async onReady() {}
+
+  repos() {
+    return [{ repo: NotesRepository, withSync: true, remote: true }];
+  }
+
+  migrations() {
+    return [initNotesTable];
+  }
 }

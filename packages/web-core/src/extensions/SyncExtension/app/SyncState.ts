@@ -1,4 +1,3 @@
-import { Remote } from 'comlink';
 import { injectable, inject } from 'inversify';
 import { isEqual } from 'lodash-es';
 import {
@@ -17,7 +16,6 @@ import {
   withLatestFrom,
 } from 'rxjs';
 import { STOP_SIGNAL } from '../../../framework/types';
-import { toRemoteName } from '../../../framework/utils';
 import { DB_NAME } from '../../DbExtension/types';
 import { SyncRepository } from '../worker/repositories/SyncRepository';
 import { ServerConnector } from './serverSynchronizer/connection/ServerConnector';
@@ -49,8 +47,8 @@ export class SyncStateService {
   private currentState$ = new BehaviorSubject<ISyncState>(defaultSyncState);
 
   constructor(
-    @inject(toRemoteName(SyncRepository))
-    private syncRepo: Remote<SyncRepository>,
+    @inject(SyncRepository)
+    private syncRepo: SyncRepository,
     @inject(DB_NAME) private dbName: string,
     @inject(DbEventsListenService)
     private dbEventsListenService: DbEventsListenService,

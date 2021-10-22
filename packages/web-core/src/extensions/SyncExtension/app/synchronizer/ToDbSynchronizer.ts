@@ -1,5 +1,4 @@
 import { retryBackoff } from 'backoff-rxjs';
-import { Remote } from 'comlink';
 import { inject, injectable } from 'inversify';
 import { groupBy } from 'lodash-es';
 import { AnyModel } from 'mobx-keystone';
@@ -127,7 +126,7 @@ export class ToDbSynchronizer {
       toUpdateModels: ISyncableModel<T>[];
       toDeleteModels: ISyncableModel<T>[];
     },
-    repo: Remote<BaseSyncRepository<any, any>>,
+    repo: BaseSyncRepository<any, any>,
     mapper: (model: T) => unknown,
   ) => {
     const ctx = {

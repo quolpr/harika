@@ -12,6 +12,8 @@ import {
   Subject,
   takeUntil,
   tap,
+  throwError,
+  timeout,
 } from 'rxjs';
 import {
   ICommand,
@@ -93,15 +95,15 @@ export class Transaction implements IQueryExecuter {
   async getRecords<T extends Record<string, any>>(
     query: Q.Statement,
   ): Promise<T[]> {
-    return this.db.getRecords(query);
+    return this.db.getRecords(query, this.id);
   }
 
   async insertRecords(
     table: string,
     objs: Record<string, any>[],
     replace: boolean = false,
-  ) {
-    return this.db.insertRecords(table, objs, replace);
+  ): Promise<void> {
+    return this.db.insertRecords(table, objs, replace, this);
   }
 
   transaction<T extends any>(func: (t: Transaction) => Promise<T>): Promise<T> {
@@ -182,32 +184,16 @@ export class DB implements IQueryExecuter {
     return res[0];
   }
 
-  async startTransaction(): Promise<Transaction> {
-    const transactionId = uuidv4();
-
-    await this.execCommand({
-      type: 'startTransaction',
-      transactionId,
-    });
-
-    return new Transaction(this, transactionId);
-  }
-
-  async commitTransaction(transactionId: string): Promise<void> {
-    await this.execCommand({
-      type: 'commitTransaction',
-      transactionId,
-    });
-  }
-
   async transaction<T extends any>(
     func: (t: Transaction) => Promise<T>,
   ): Promise<T> {
     const trans = await this.startTransaction();
-    const res = await func(trans);
-    await trans.commit();
 
-    return res;
+    try {
+      return await func(trans);
+    } finally {
+      await trans.commit();
+    }
   }
 
   private execCommand(command: DistributiveOmit<ICommand, 'commandId'>) {
@@ -230,6 +216,16 @@ export class DB implements IQueryExecuter {
             throw new Error('Unknown data format');
           }
         }),
+        timeout({
+          each: 8000,
+          with: () =>
+            throwError(
+              () =>
+                new Error(
+                  `Failed to execute ${JSON.stringify(command)} - timeout`,
+                ),
+            ),
+        }),
       ),
     );
 
@@ -245,29 +241,29 @@ export class DB implements IQueryExecuter {
     table: string,
     objs: Record<string, any>[],
     replace: boolean = false,
+    e: IQueryExecuter = this,
   ) {
-    const trans = await this.startTransaction();
+    return e.transaction(async (t) => {
+      // sqlite max vars = 32766
+      // Let's take table columns count to 20, so 20 * 1000 will fit the restriction
+      for (const chunkObjs of chunk(objs, 1000)) {
+        let query = Q.insertInto(table).values(chunkObjs);
 
-    // sqlite max vars = 32766
-    // Let's take table columns count to 20, so 20 * 1000 will fit the restriction
-    for (const chunkObjs of chunk(objs, 1000)) {
-      let query = Q.insertInto(table).values(chunkObjs);
+        if (replace) {
+          query = query.orReplace();
+        }
 
-      if (replace) {
-        query = query.orReplace();
+        await t.execQuery(query);
       }
-
-      await trans.execQuery(query);
-    }
-
-    await trans.commit();
+    });
   }
 
   // TODO: add mapper to arg for better performance
   async getRecords<T extends Record<string, any>>(
     query: Q.Statement,
+    transactionId?: string,
   ): Promise<T[]> {
-    const [result] = await this.execQuery(query);
+    const [result] = await this.execQuery(query, transactionId);
 
     return (result?.values?.map((res) => {
       let obj: Record<string, any> = {};
@@ -278,6 +274,24 @@ export class DB implements IQueryExecuter {
 
       return obj;
     }) || []) as T[];
+  }
+
+  private async startTransaction(): Promise<Transaction> {
+    const transactionId = uuidv4();
+
+    await this.execCommand({
+      type: 'startTransaction',
+      transactionId,
+    });
+
+    return new Transaction(this, transactionId);
+  }
+
+  async commitTransaction(transactionId: string): Promise<void> {
+    await this.execCommand({
+      type: 'commitTransaction',
+      transactionId,
+    });
   }
 }
 

@@ -7,8 +7,6 @@ import {
 import { BaseApplication } from '../../framework/BaseApplication';
 import { UserVaultsService } from './UserExtension/app/services/UserVaultsService';
 import { UserAppExtension } from './UserExtension/UserAppExtension';
-// @ts-ignore
-import UserRootWorker from './UserRootWorker?worker';
 
 export class UserApplication extends BaseApplication {
   constructor(
@@ -34,10 +32,6 @@ export class UserApplication extends BaseApplication {
 
   get applicationName() {
     return 'user';
-  }
-
-  get workerClass() {
-    return UserRootWorker;
   }
 
   get extensions() {

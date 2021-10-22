@@ -1,8 +1,6 @@
-import { Remote } from 'comlink';
 import { inject, injectable } from 'inversify';
 import { map } from 'rxjs';
 import { DbEventsListenService } from '../../../../../extensions/SyncExtension/app/services/DbEventsListenerService';
-import { toRemoteName } from '../../../../../framework/utils';
 import {
   VaultsRepository,
   vaultsTable,
@@ -11,8 +9,8 @@ import {
 @injectable()
 export class UserVaultsService {
   constructor(
-    @inject(toRemoteName(VaultsRepository))
-    private vaultsRepo: Remote<VaultsRepository>,
+    @inject(VaultsRepository)
+    private vaultsRepo: VaultsRepository,
     @inject(DbEventsListenService)
     private dbEventsService: DbEventsListenService,
   ) {}

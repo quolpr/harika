@@ -9,8 +9,6 @@ import {
   NotesRepository,
   notesTable,
 } from '../../worker/repositories/NotesRepository';
-import { Remote } from 'comlink';
-import { toRemoteName } from '../../../../../framework/utils';
 import { NotesStore } from '../models/NotesStore';
 import { generateId } from '../../../../../lib/generateId';
 import dayjs, { Dayjs } from 'dayjs';
@@ -32,8 +30,8 @@ export class NotesService {
   constructor(
     @inject(DbEventsListenService)
     private dbEventsService: DbEventsListenService,
-    @inject(toRemoteName(NotesRepository))
-    private notesRepository: Remote<NotesRepository>,
+    @inject(NotesRepository)
+    private notesRepository: NotesRepository,
     @inject(NotesStore)
     private notesStore: NotesStore,
   ) {}

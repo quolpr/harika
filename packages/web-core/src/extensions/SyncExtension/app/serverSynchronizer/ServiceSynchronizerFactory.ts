@@ -1,5 +1,4 @@
 import { createLeaderElection } from 'broadcast-channel';
-import { Remote } from 'comlink';
 import { inject, injectable } from 'inversify';
 import {
   Observable,
@@ -10,7 +9,6 @@ import {
   switchMap,
 } from 'rxjs';
 import { STOP_SIGNAL } from '../../../../framework/types';
-import { toRemoteName } from '../../../../framework/utils';
 import { getBroadcastCh$ } from '../../../../lib/utils';
 import { DB_NAME } from '../../../DbExtension/types';
 import { ApplyChangesService } from '../../worker/services/ApplyChangesService';

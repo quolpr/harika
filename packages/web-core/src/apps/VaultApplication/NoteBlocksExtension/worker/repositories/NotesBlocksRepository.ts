@@ -3,7 +3,6 @@ import { BaseSyncRepository } from '../../../../../extensions/SyncExtension/work
 import type { ISyncCtx } from '../../../../../extensions/SyncExtension/worker/syncCtx';
 import type { IDatabaseChange } from '../../../../../extensions/SyncExtension/app/serverSynchronizer/types';
 import { NoteblocksChangesApplier } from '../sync/NoteblocksChangesApplier';
-import { remotable } from '../../../../../framework/utils';
 import { IQueryExecuter } from '../../../../../extensions/DbExtension/DB';
 
 export type NoteBlockRow = {
@@ -39,12 +38,15 @@ export type INoteBlockChangeEvent = IDatabaseChange<
   NoteBlockDoc
 >;
 
-@remotable('NotesBlocksRepository')
 export class NotesBlocksRepository extends BaseSyncRepository<
   NoteBlockDoc,
   NoteBlockRow
 > {
-  bulkCreate(attrsArray: NoteBlockDoc[], ctx: ISyncCtx, e: IQueryExecuter) {
+  bulkCreate(
+    attrsArray: NoteBlockDoc[],
+    ctx: ISyncCtx,
+    e: IQueryExecuter = this.db,
+  ) {
     return e.transaction(async (t) => {
       const res = await super.bulkCreate(attrsArray, ctx, t);
 
@@ -60,7 +62,11 @@ export class NotesBlocksRepository extends BaseSyncRepository<
     });
   }
 
-  bulkUpdate(records: NoteBlockDoc[], ctx: ISyncCtx, e: IQueryExecuter) {
+  bulkUpdate(
+    records: NoteBlockDoc[],
+    ctx: ISyncCtx,
+    e: IQueryExecuter = this.db,
+  ) {
     return e.transaction(async (t) => {
       const res = await super.bulkUpdate(records, ctx, t);
 
@@ -85,7 +91,7 @@ export class NotesBlocksRepository extends BaseSyncRepository<
     });
   }
 
-  bulkDelete(ids: string[], ctx: ISyncCtx, e: IQueryExecuter) {
+  bulkDelete(ids: string[], ctx: ISyncCtx, e: IQueryExecuter = this.db) {
     return e.transaction(async (t) => {
       const res = await super.bulkDelete(ids, ctx, t);
 

@@ -1,13 +1,22 @@
 import { injectable } from 'inversify';
 import { VaultsRepository } from './worker/repositories/VaultsRepository';
 import { UserVaultsService } from './app/services/UserVaultsService';
-import { BaseAppExtension } from '../../../framework/BaseAppExtension';
+import { initUsersDbTables } from './worker/migrations/initUsersDbTables';
+import { BaseSyncExtension } from '../../../extensions/SyncExtension/BaseSyncExtension';
 
 @injectable()
-export class UserAppExtension extends BaseAppExtension {
+export class UserAppExtension extends BaseSyncExtension {
   async register() {
-    this.container.bind(UserVaultsService).toSelf();
+    await super.register();
 
-    await this.bindRemote(VaultsRepository);
+    this.container.bind(UserVaultsService).toSelf();
+  }
+
+  repos() {
+    return [{ repo: VaultsRepository, withSync: true }];
+  }
+
+  migrations() {
+    return [initUsersDbTables];
   }
 }

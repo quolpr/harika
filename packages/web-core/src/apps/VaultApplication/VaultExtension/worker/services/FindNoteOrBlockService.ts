@@ -1,5 +1,4 @@
 import { DB } from '../../../../../extensions/DbExtension/DB';
-import type { IInternalSyncCtx } from '../../../../../extensions/SyncExtension/worker/syncCtx';
 import Q from 'sql-bricks';
 import {
   notesFTSTable,
@@ -10,9 +9,7 @@ import {
   noteBlocksTable,
 } from '../../../NoteBlocksExtension/worker/repositories/NotesBlocksRepository';
 import { inject, injectable } from 'inversify';
-import { remotable } from '../../../../../framework/utils';
 
-@remotable('FindNoteOrBlockService')
 @injectable()
 export class FindNoteOrBlockService {
   constructor(

@@ -11,10 +11,8 @@ import { REPOS_WITH_SYNC } from '../../types';
 import type { BaseSyncRepository } from '../BaseSyncRepository';
 import type { ISyncCtx } from '../syncCtx';
 import { SyncRepository } from '../repositories/SyncRepository';
-import { remotable } from '../../../../framework/utils';
 import { IQueryExecuter } from '../../../DbExtension/DB';
 
-@remotable('ApplyChangesService')
 @injectable()
 export class ApplyChangesService {
   private dbChangesWriter = new DbChangesWriterService();

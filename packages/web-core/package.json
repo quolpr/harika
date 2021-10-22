@@ -18,7 +18,6 @@
     "backoff-rxjs": "^6.5.7",
     "broadcast-channel": "^4.2.0",
     "camelcase-keys": "^7.0.1",
-    "comlink": "^4.3.1",
     "dayjs": "^1.10.7",
     "downloadjs": "^1.4.7",
     "inversify": "^6.0.1",

@@ -1,9 +1,6 @@
-import { inject, injectable } from 'inversify';
+import { injectable } from 'inversify';
 import { BehaviorSubject, takeUntil } from 'rxjs';
-import { BaseExtension } from '../../framework/BaseExtension';
 import { STOP_SIGNAL } from '../../framework/types';
-import { ApplyChangesService } from './worker/services/ApplyChangesService';
-import { SyncRepository } from './worker/repositories/SyncRepository';
 import { ServerSynchronizerFactory } from './app/serverSynchronizer/ServiceSynchronizerFactory';
 import { SyncConfig } from './app/serverSynchronizer/SyncConfig';
 import { DbEventsListenService } from './app/services/DbEventsListenerService';
@@ -11,11 +8,21 @@ import { OnDbChangeNotifier } from './app/synchronizer/OnDbChangeNotifier';
 import { ToDbSynchronizer } from './app/synchronizer/ToDbSynchronizer';
 import { SyncStateService } from './app/SyncState';
 import { SYNC_CONNECTION_ALLOWED } from './types';
-import { BaseAppExtension } from '../../framework/BaseAppExtension';
+import { BaseExtension } from '../../framework/BaseExtension';
+import { ApplyChangesService } from './worker/services/ApplyChangesService';
+import { SyncRepository } from './worker/repositories/SyncRepository';
+import { DB_MIGRATIONS } from '../DbExtension/types';
+import { initSyncTables } from './worker/migrations/initSyncTables';
+import { DbEventsSenderService } from './worker/services/DbEventsSenderService';
 
 @injectable()
-export class SyncAppExtension extends BaseAppExtension {
+export class SyncAppExtension extends BaseExtension {
   async register() {
+    this.container.bind(ApplyChangesService).toSelf();
+    this.container.bind(SyncRepository).toSelf();
+
+    this.container.bind(DB_MIGRATIONS).toConstantValue(initSyncTables);
+
     this.container.bind(DbEventsListenService).toSelf();
     this.container.bind(SyncConfig).toSelf();
     this.container.bind(SyncStateService).toSelf();
@@ -23,14 +30,12 @@ export class SyncAppExtension extends BaseAppExtension {
     this.container
       .bind(SYNC_CONNECTION_ALLOWED)
       .toConstantValue(new BehaviorSubject(true));
-
-    await this.bindRemote(SyncRepository);
-    await this.bindRemote(ApplyChangesService);
   }
 
   async initialize() {
     this.container.resolve(ToDbSynchronizer);
     this.container.resolve(OnDbChangeNotifier);
+    this.container.resolve(DbEventsSenderService).initialize();
   }
 
   async onReady() {

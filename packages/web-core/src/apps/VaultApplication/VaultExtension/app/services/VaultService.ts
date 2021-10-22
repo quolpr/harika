@@ -5,8 +5,6 @@ import type { Optional, Required } from 'utility-types';
 import { ModelCreationData } from 'mobx-keystone';
 import { NoteModel } from '../../../NotesExtension/app/models/NoteModel';
 import { ImportExportService } from '../../worker/services/ImportExportService';
-import { toRemoteName } from '../../../../../framework/utils';
-import { Remote } from 'comlink';
 import { DbEventsListenService } from '../../../../../extensions/SyncExtension/app/services/DbEventsListenerService';
 import {
   distinctUntilChanged,
@@ -35,12 +33,12 @@ export class VaultService {
     @inject(DbEventsListenService)
     private dbEventsService: DbEventsListenService,
     @inject(NoteBlocksService) private noteBlocksService: NoteBlocksService,
-    @inject(toRemoteName(ImportExportService))
-    private importExportService: Remote<ImportExportService>,
-    @inject(toRemoteName(FindNoteOrBlockService))
-    private findService: Remote<FindNoteOrBlockService>,
-    @inject(toRemoteName(DeleteNoteService))
-    private deleteNoteService: Remote<DeleteNoteService>,
+    @inject(ImportExportService)
+    private importExportService: ImportExportService,
+    @inject(FindNoteOrBlockService)
+    private findService: FindNoteOrBlockService,
+    @inject(DeleteNoteService)
+    private deleteNoteService: DeleteNoteService,
   ) {}
 
   async createNote(

@@ -1,9 +1,7 @@
-import { Remote } from 'comlink';
 import { inject, injectable } from 'inversify';
 import { isEqual } from 'lodash-es';
 import { switchMap, distinctUntilChanged, map, of } from 'rxjs';
 import { withoutSync } from '../../../../../extensions/SyncExtension/app/mobx-keystone/syncable';
-import { toRemoteName } from '../../../../../framework/utils';
 import { NoteBlocksService } from '../../../NoteBlocksExtension/app/services/NoteBlocksService';
 import { BlocksScopeStore, getScopeKey } from '../models/BlocksScopeStore';
 import { BlocksScopesRepository } from '../../worker/repositories/BlockScopesRepository';
@@ -13,8 +11,8 @@ export class BlocksScopesService {
   constructor(
     @inject(NoteBlocksService)
     private noteBlocksService: NoteBlocksService,
-    @inject(toRemoteName(BlocksScopesRepository))
-    private blocksScopesRepo: Remote<BlocksScopesRepository>,
+    @inject(BlocksScopesRepository)
+    private blocksScopesRepo: BlocksScopesRepository,
     @inject(BlocksScopeStore)
     private blocksScopesStore: BlocksScopeStore,
   ) {}

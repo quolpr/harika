@@ -1,13 +1,9 @@
-import { initBackend } from 'absurd-sql/dist/indexeddb-main-thread';
-import { Remote, wrap } from 'comlink';
 import { Container } from 'inversify';
 import { BaseExtension } from './BaseExtension';
 import { generateId } from '../lib/generateId';
-import { RootWorker } from './RootWorker';
 import {
   APPLICATION_ID,
   APPLICATION_NAME,
-  ROOT_WORKER,
   STOP_SIGNAL,
   WINDOW_ID,
 } from './types';
@@ -20,7 +16,6 @@ export abstract class BaseApplication {
   protected stop$ = new Subject<void>();
 
   protected container: Container = new Container({ defaultScope: 'Singleton' });
-  private worker!: Remote<RootWorker>;
 
   constructor(public applicationId: string) {}
 
@@ -30,10 +25,6 @@ export abstract class BaseApplication {
     this.container.bind(APPLICATION_NAME).toConstantValue(this.applicationName);
     this.container.bind(APPLICATION_ID).toConstantValue(this.applicationId);
     this.container.bind(Container).toConstantValue(this.container);
-
-    this.worker = await this.loadWorker();
-
-    this.container.bind(ROOT_WORKER).toConstantValue(this.worker);
 
     await this.register();
 
@@ -50,29 +41,6 @@ export abstract class BaseApplication {
     return this.container;
   }
 
-  private async loadWorker() {
-    let worker = new this.workerClass();
-
-    initBackend(worker);
-
-    const Klass = wrap<RootWorker>(worker) as unknown as new (
-      applicationName: string,
-      applicationId: string,
-      windowId: string,
-    ) => Promise<Remote<RootWorker>>;
-
-    const res = await new Klass(
-      this.applicationName,
-      this.applicationId,
-      windowId,
-    );
-
-    await res.initWorker();
-
-    return res;
-  }
-
-  abstract get workerClass(): any;
   abstract get applicationName(): string;
   abstract get extensions(): {
     new (...args: any): BaseExtension;

@@ -97,11 +97,11 @@ export abstract class BaseSyncRepository<
       });
 
       if (notExistingRecords.length > 0) {
-        await this.bulkCreate(notExistingRecords, internalCtx, e);
+        await this.bulkCreate(notExistingRecords, internalCtx, t);
       }
 
       if (existingRecords.length > 0) {
-        await this.bulkUpdate(existingRecords, internalCtx, e);
+        await this.bulkUpdate(existingRecords, internalCtx, t);
       }
     });
   }
@@ -156,7 +156,7 @@ export abstract class BaseSyncRepository<
           return !isEqual(ch.to, ch.from);
         });
 
-      await e.insertRecords(
+      await t.insertRecords(
         this.getTableName(),
         changes.map(({ to }) => this.toRow(to)),
         true,

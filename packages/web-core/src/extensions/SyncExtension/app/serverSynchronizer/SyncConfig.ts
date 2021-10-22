@@ -1,15 +1,13 @@
-import { Remote } from 'comlink';
 import { Container, inject, injectable } from 'inversify';
 import { AnyModel } from 'mobx-keystone';
 import { Class } from 'utility-types';
 import { IMapper } from '../mappers';
 import { BaseSyncRepository } from '../../worker/BaseSyncRepository';
 import { CreationDataWithId, SyncModelId } from '../../types';
-import { toRemoteName } from '../../../../framework/utils';
 
 export type IRegistration = {
   mapper: IMapper;
-  repo: Remote<BaseSyncRepository>;
+  repo: BaseSyncRepository;
 };
 
 export type ISubscription = {
@@ -45,7 +43,7 @@ export class SyncConfig {
   ) {
     const repoConfig = {
       mapper,
-      repo: this.container.get<Remote<BaseSyncRepository>>(toRemoteName(repo)),
+      repo: this.container.get<BaseSyncRepository>(repo),
     };
 
     this.registeredRepos.push(repoConfig);

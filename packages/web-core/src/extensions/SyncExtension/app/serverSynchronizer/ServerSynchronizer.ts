@@ -11,7 +11,6 @@ import type { CommandsExecuter } from './CommandsExecuter';
 import type { ServerConnector } from './connection/ServerConnector';
 import { ServerChangesReceiver } from './ServerSynchronizer/ServerChangesReceiver';
 import { ChangesApplierAndSender } from './ServerSynchronizer/ChangesApplierAndSender';
-import type { Remote } from 'comlink';
 import type { IDatabaseChange } from './types';
 import type { SyncRepository } from '../../worker/repositories/SyncRepository';
 import type { ApplyChangesService } from '../../worker/services/ApplyChangesService';

@@ -10,7 +10,6 @@ import {
   switchMap,
 } from 'rxjs';
 import { omit } from 'lodash-es';
-import type { Remote } from 'comlink';
 import type { ApplyNewChangesFromClientCommand } from '../types';
 import { CommandTypesFromClient, DatabaseChangeType } from '../types';
 import type { SyncRepository } from '../../../worker/repositories/SyncRepository';

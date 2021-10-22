@@ -1,9 +1,9 @@
-import {DB} from "../../../../../extensions/DbExtension/DB";
-import {IMigration} from "../../../../../extensions/DbExtension/types";
-import {blocksScopesTable} from "../repositories/BlockScopesRepository";
+import { IQueryExecuter } from '../../../../../extensions/DbExtension/DB';
+import { IMigration } from '../../../../../extensions/DbExtension/types';
+import { blocksScopesTable } from '../repositories/BlockScopesRepository';
 
-const up = (db: DB<any>) => {
-  db.sqlExec(`
+const up = async (db: IQueryExecuter) => {
+  await db.sqlExec(`
     CREATE TABLE IF NOT EXISTS ${blocksScopesTable} (
       id varchar(100) PRIMARY KEY,
       collapsedBlockIds TEXT NOT NULL,
@@ -15,7 +15,7 @@ const up = (db: DB<any>) => {
 
     CREATE INDEX IF NOT EXISTS idx_${blocksScopesTable}_noteId ON ${blocksScopesTable}(noteId);
   `);
-}
+};
 
 export const addBlockScopeTable: IMigration = {
   up,

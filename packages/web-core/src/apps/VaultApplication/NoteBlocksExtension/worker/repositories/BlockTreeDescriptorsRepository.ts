@@ -1,5 +1,4 @@
 import { BaseSyncRepository } from '../../../../../extensions/SyncExtension/worker/BaseSyncRepository';
-import { remotable } from '../../../../../framework/utils';
 import { BlocksScopesChangesApplier } from '../../../BlocksScopeExtension/worker/sync/BlocksScopesChangesApplier';
 
 export const blocksTreeDescriptorsTable = 'blocksTreesDescriptors' as const;
@@ -11,7 +10,6 @@ export type BlocksTreeDescriptorRow = {
 
 export type BlocksTreeDescriptorDoc = BlocksTreeDescriptorRow;
 
-@remotable('BlocksTreeDescriptorsRepository')
 export class BlocksTreeDescriptorsRepository extends BaseSyncRepository<
   BlocksTreeDescriptorDoc,
   BlocksTreeDescriptorRow

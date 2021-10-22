@@ -1,5 +1,4 @@
 import { BaseSyncRepository } from '../../../../../extensions/SyncExtension/worker/BaseSyncRepository';
-import { remotable } from '../../../../../framework/utils';
 import { UserDbChangesApplier } from '../sync/UserDbChangesApplier';
 
 export const vaultsTable = 'vaults' as const;

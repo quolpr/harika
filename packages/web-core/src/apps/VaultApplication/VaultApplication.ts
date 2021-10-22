@@ -1,7 +1,5 @@
 import { BaseApplication } from '../../framework/BaseApplication';
 import { NotesAppExtension } from './NotesExtension/NotesAppExtension';
-// @ts-ignore
-import VaultWorker from './VaultRootWorker?worker';
 import { SyncAppExtension } from '../../extensions/SyncExtension/SyncAppExtension';
 import { DbAppExtension } from '../../extensions/DbExtension/DbAppExtension';
 import { NoteBlocksAppExtension } from './NoteBlocksExtension/NoteBlocksAppExtension';
@@ -117,10 +115,6 @@ export class VaultApplication extends BaseApplication {
 
   get applicationName() {
     return 'vault';
-  }
-
-  get workerClass() {
-    return VaultWorker;
   }
 
   get extensions() {
