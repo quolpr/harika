@@ -9,9 +9,18 @@ import initSqlJs, {
 import { SQLiteFS } from 'absurd-sql';
 import IndexedDBBackend from 'absurd-sql/dist/indexeddb-backend';
 import { getIsLogSuppressing } from './suppressLog';
-import { Subject } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
-import { migrationsTable } from './MigrationRunner';
+import {
+  ICommand,
+  IResponse,
+  IExecQueriesCommand,
+  IStartTransactionCommand,
+  ICommitTransactionCommand,
+  IOutputWorkerMessage,
+  IInputWorkerMessage,
+  migrationsTable,
+} from './types';
+import { Subject } from 'rxjs';
 
 class DbBackend {
   private sqlDb!: Database;
@@ -88,44 +97,6 @@ class DbBackend {
     }
   }
 }
-
-type IStartTransactionCommand = {
-  type: 'startTransaction';
-  transactionId: string;
-  commandId: string;
-};
-type ICommitTransactionCommand = {
-  type: 'commitTransaction';
-  transactionId: string;
-  commandId: string;
-};
-
-type IExecQueriesCommand = {
-  type: 'execQueries';
-  queries: Q.SqlBricksParam[];
-  inTransaction?: boolean;
-  transactionId?: string;
-  commandId: string;
-};
-
-export type ICommand =
-  | IStartTransactionCommand
-  | IExecQueriesCommand
-  | ICommitTransactionCommand;
-
-type IResponse = {
-  commandId: string;
-  transactionId?: string;
-} & (
-  | {
-      status: 'success';
-      result: QueryExecResult[][];
-    }
-  | {
-      status: 'error';
-      message: string;
-    }
-);
 
 // Fix:
 // 1. When transaction failed we should discard all future queries with the same
@@ -241,14 +212,6 @@ class CommandsExecutor {
 }
 
 const ctx: Worker = self as any;
-
-export type IOutputWorkerMessage =
-  | { type: 'initialized' }
-  | { type: 'response'; data: IResponse };
-
-export type IInputWorkerMessage =
-  | { type: 'initialize'; dbName: string }
-  | { type: 'command'; data: ICommand };
 
 let commandsExecutor: CommandsExecutor | undefined;
 

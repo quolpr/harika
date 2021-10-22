@@ -15,16 +15,16 @@ import {
   throwError,
   timeout,
 } from 'rxjs';
-import {
-  ICommand,
-  IInputWorkerMessage,
-  IOutputWorkerMessage,
-} from './DbWorker';
 import { inject, injectable } from 'inversify';
 import { STOP_SIGNAL } from '../../framework/types';
 import { v4 as uuidv4 } from 'uuid';
 import { chunk } from 'lodash-es';
-import { DB_NAME, IMigration } from './types';
+import {
+  DB_NAME,
+  ICommand,
+  IInputWorkerMessage,
+  IOutputWorkerMessage,
+} from './types';
 import { QueryExecResult } from '@harika-org/sql.js';
 
 type DistributiveOmit<T, K extends keyof any> = T extends any

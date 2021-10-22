@@ -1,9 +1,7 @@
 import { DB } from './DB';
-import { DB_MIGRATIONS, IMigration } from './types';
+import { DB_MIGRATIONS, IMigration, migrationsTable } from './types';
 import Q from 'sql-bricks';
 import { inject, injectable, multiInject } from 'inversify';
-
-export const migrationsTable = 'migrations';
 
 @injectable()
 export class MigrationRunner {
