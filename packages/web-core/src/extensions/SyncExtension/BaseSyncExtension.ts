@@ -1,6 +1,6 @@
 import { Class } from 'utility-types';
 import { BaseExtension } from '../../framework/BaseExtension';
-import { IMigration } from '../DbExtension/types';
+import { DB_MIGRATIONS, IMigration } from '../DbExtension/types';
 import { REPOS_WITH_SYNC } from './types';
 import { BaseSyncRepository } from './worker/BaseSyncRepository';
 
@@ -14,6 +14,10 @@ export abstract class BaseSyncExtension extends BaseExtension {
           .bind(REPOS_WITH_SYNC)
           .toDynamicValue(() => this.container.get(config.repo));
       }
+    });
+
+    this.migrations().forEach((m) => {
+      this.container.bind(DB_MIGRATIONS).toConstantValue(m);
     });
   }
 
