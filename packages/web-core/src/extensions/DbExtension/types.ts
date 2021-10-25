@@ -22,17 +22,23 @@ export type ICommitTransactionCommand = {
   transactionId: string;
   commandId: string;
 };
+export type IRollbackTransactionCommand = {
+  type: 'rollbackTransaction';
+  transactionId: string;
+  commandId: string;
+};
 
 export type IExecQueriesCommand = {
   type: 'execQueries';
   queries: Q.SqlBricksParam[];
-  inTransaction?: boolean;
+  spawnTransaction?: boolean;
   transactionId?: string;
   commandId: string;
 };
 
 export type ICommand =
   | IStartTransactionCommand
+  | IRollbackTransactionCommand
   | IExecQueriesCommand
   | ICommitTransactionCommand;
 

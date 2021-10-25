@@ -76,14 +76,14 @@ export class SyncStateService {
       interval(10_000),
     ).pipe(
       startWith(null),
-      switchMap(async () => {
+      switchMap(async (res) => {
         const [serverCount, clientCount] =
           await this.syncRepo.getServerAndClientChangesCount();
 
         return {
           isSyncing: syncer.isSyncing$.value,
-          pendingClientChangesCount: clientCount,
-          pendingServerChangesCount: serverCount,
+          pendingClientChangesCount: serverCount,
+          pendingServerChangesCount: clientCount,
         };
       }),
       withLatestFrom(

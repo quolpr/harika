@@ -19,6 +19,7 @@ import {
   IOutputWorkerMessage,
   IInputWorkerMessage,
   migrationsTable,
+  IRollbackTransactionCommand,
 } from './types';
 import { Subject } from 'rxjs';
 
@@ -75,18 +76,26 @@ class DbBackend {
     `);
   }
 
-  sqlExec(sql: string, params?: BindParams): QueryExecResult[] {
+  sqlExec(
+    sql: string,
+    params?: BindParams,
+    logOpts?: {
+      transactionId?: string;
+    },
+  ): QueryExecResult[] {
     try {
       const startTime = performance.now();
       const res = this.sqlDb.exec(sql, params);
       const end = performance.now();
 
       if (!getIsLogSuppressing()) {
-        console.debug(
-          `[${this.dbName}] Done executing`,
-          sql,
-          params,
-          `Time: ${((end - startTime) / 1000).toFixed(4)}s`,
+        console.log(
+          `%c[${this.dbName.substring(0, 10)}]${
+            logOpts?.transactionId
+              ? `[tr_id=${logOpts.transactionId.split('-')[0]}]`
+              : ''
+          } ${sql} Time: ${((end - startTime) / 1000).toFixed(4)}`,
+          `color: #${logOpts?.transactionId?.substring(0, 6) || 'fff'}`,
         );
       }
 
@@ -104,9 +113,26 @@ class DbBackend {
 class CommandsExecutor {
   private queue: ICommand[] = [];
   private currentTransactionId?: string;
+  private transactionStartedAt: number = 0;
+
   response$: Subject<IResponse> = new Subject();
 
-  constructor(private db: DbBackend) {}
+  private pastTransactionIds: string[] = [];
+
+  constructor(private db: DbBackend) {
+    setInterval(() => {
+      if (!this.currentTransactionId) return;
+
+      if (new Date().getTime() - this.transactionStartedAt > 8000) {
+        console.error(
+          `Transaction id = ${this.currentTransactionId} rollbacked due to timeout of 8s!`,
+        );
+
+        this.currentTransactionId = undefined;
+        this.db.sqlExec('ROLLBACK;');
+      }
+    }, 5000);
+  }
 
   exec(command: ICommand) {
     this.queue.push(command);
@@ -123,8 +149,11 @@ class CommandsExecutor {
   private runCommand(command: ICommand) {
     if (command.type === 'startTransaction') {
       this.startTransaction(command);
-    } else if (command.type === 'commitTransaction') {
-      this.commitTransaction(command);
+    } else if (
+      command.type === 'commitTransaction' ||
+      command.type === 'rollbackTransaction'
+    ) {
+      this.commitOrRollbackTransaction(command);
     } else if (command.type === 'execQueries') {
       this.execQuery(command);
     }
@@ -140,14 +169,49 @@ class CommandsExecutor {
       return;
     }
 
-    this.response$.next(this.sqlExec(command.commandId, command.queries));
+    this.response$.next(
+      this.sqlExec(
+        command.commandId,
+        command.queries,
+        command.spawnTransaction,
+      ),
+    );
+  }
+
+  private commitOrRollbackTransaction(
+    command: IRollbackTransactionCommand | ICommitTransactionCommand,
+  ) {
+    if (this.pastTransactionIds.includes(command.transactionId)) return;
+
+    if (
+      this.currentTransactionId &&
+      this.currentTransactionId === command.transactionId
+    ) {
+      this.response$.next(
+        this.sqlExec(command.commandId, [
+          {
+            text: command.type === 'commitTransaction' ? 'COMMIT' : 'ROLLBACK;',
+            values: [],
+          },
+        ]),
+      );
+
+      this.pastTransactionIds.push(this.currentTransactionId);
+      this.currentTransactionId = undefined;
+    }
   }
 
   private startTransaction(command: IStartTransactionCommand) {
+    if (this.pastTransactionIds.includes(command.transactionId)) return;
+    if (this.currentTransactionId === command.transactionId) return;
+
     if (this.currentTransactionId) {
       this.queue.push(command);
     } else {
       this.currentTransactionId = command.transactionId;
+      this.transactionStartedAt = new Date().getTime();
+
+      console.log('begin transaction with id', command.transactionId);
 
       this.response$.next(
         this.sqlExec(command.commandId, [
@@ -157,41 +221,33 @@ class CommandsExecutor {
     }
   }
 
-  private commitTransaction(command: ICommitTransactionCommand) {
-    if (!this.currentTransactionId)
-      throw new Error("Can't commit not running transaction");
-
-    if (this.currentTransactionId === command.transactionId) {
-      this.response$.next(
-        this.sqlExec(command.commandId, [{ text: 'COMMIT;', values: [] }]),
-      );
-      this.currentTransactionId = undefined;
-    } else {
-      this.queue.push(command);
-    }
-  }
-
   private sqlExec(
     commandId: string,
     queries: Q.SqlBricksParam[],
     spawnTransaction: boolean = false,
   ): IResponse {
-    try {
-      const shouldSpawnTransaction =
-        spawnTransaction && !this.currentTransactionId;
+    const shouldSpawnTransaction =
+      spawnTransaction && !this.currentTransactionId;
 
+    try {
       if (shouldSpawnTransaction) {
-        this.db.sqlExec('BEGIN TRANSACTION');
-        this.currentTransactionId = uuidv4();
+        this.db.sqlExec('BEGIN TRANSACTION;', undefined, {
+          transactionId: 'inline',
+        });
       }
 
       const result = queries.map((q) => {
-        return this.db.sqlExec(q.text, q.values);
+        return this.db.sqlExec(q.text, q.values, {
+          transactionId: shouldSpawnTransaction
+            ? 'inline'
+            : this.currentTransactionId,
+        });
       });
 
       if (shouldSpawnTransaction) {
-        this.db.sqlExec('COMMIT');
-        this.currentTransactionId = undefined;
+        this.db.sqlExec('COMMIT;', undefined, {
+          transactionId: 'inline',
+        });
       }
 
       return {
@@ -200,8 +256,12 @@ class CommandsExecutor {
         result,
       };
     } catch (e) {
-      if (this.currentTransactionId) {
-        this.db.sqlExec('ROLLBACK;');
+      if (this.currentTransactionId || shouldSpawnTransaction) {
+        this.db.sqlExec('ROLLBACK;', undefined, {
+          transactionId: this.currentTransactionId
+            ? this.currentTransactionId
+            : 'inline',
+        });
 
         this.currentTransactionId = undefined;
       }

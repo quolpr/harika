@@ -74,7 +74,12 @@ export interface IQueryExecuter {
 }
 
 export class Transaction implements IQueryExecuter {
-  constructor(private db: DB, public id: string) {}
+  constructor(
+    private db: DB,
+    public id: string,
+    private commitTransaction: (id: string) => Promise<void>,
+    private rollbackTransaction: (id: string) => Promise<void>,
+  ) {}
 
   async sqlExec(q: string) {
     return this.db.sqlExec(q, this.id);
@@ -89,7 +94,11 @@ export class Transaction implements IQueryExecuter {
   }
 
   async commit() {
-    return this.db.commitTransaction(this.id);
+    return this.commitTransaction(this.id);
+  }
+
+  async rollback() {
+    return this.rollbackTransaction(this.id);
   }
 
   async getRecords<T extends Record<string, any>>(
@@ -170,7 +179,7 @@ export class DB implements IQueryExecuter {
       type: 'execQueries',
       queries: queries.map((q) => q.toParams()),
       transactionId,
-      inTransaction: queries.length > 1,
+      spawnTransaction: queries.length > 1,
     });
   }
 
@@ -190,9 +199,15 @@ export class DB implements IQueryExecuter {
     const trans = await this.startTransaction();
 
     try {
-      return await func(trans);
-    } finally {
+      const res = await func(trans);
+
       await trans.commit();
+
+      return res;
+    } catch (e) {
+      await trans.rollback();
+
+      throw e;
     }
   }
 
@@ -284,15 +299,27 @@ export class DB implements IQueryExecuter {
       transactionId,
     });
 
-    return new Transaction(this, transactionId);
+    return new Transaction(
+      this,
+      transactionId,
+      this.commitTransaction,
+      this.rollbackTransaction,
+    );
   }
 
-  async commitTransaction(transactionId: string): Promise<void> {
+  private commitTransaction = async (transactionId: string) => {
     await this.execCommand({
       type: 'commitTransaction',
       transactionId,
     });
-  }
+  };
+
+  private rollbackTransaction = async (transactionId: string) => {
+    await this.execCommand({
+      type: 'rollbackTransaction',
+      transactionId,
+    });
+  };
 }
 
 // const run = async () => {
