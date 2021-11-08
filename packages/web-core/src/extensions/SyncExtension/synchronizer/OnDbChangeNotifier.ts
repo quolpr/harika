@@ -1,7 +1,7 @@
 import { inject, injectable } from 'inversify';
 import { groupBy, isEmpty } from 'lodash-es';
 import { AnyModel } from 'mobx-keystone';
-import { Observable, takeUntil } from 'rxjs';
+import { buffer, debounceTime, Observable, takeUntil } from 'rxjs';
 import { STOP_SIGNAL, WINDOW_ID } from '../../../framework/types';
 import { ITransmittedChange } from '../repositories/SyncRepository';
 import { ISubscription, SyncConfig } from '../serverSynchronizer/SyncConfig';
@@ -18,11 +18,12 @@ export class OnDbChangeNotifier {
     @inject(SyncConfig) private syncConfig: SyncConfig,
     @inject(STOP_SIGNAL) stop$: Observable<void>,
   ) {
-    dbChangeListenService
-      .changesChannel$()
-      .pipe(takeUntil(stop$))
+    const changes$ = dbChangeListenService.changesChannel$();
+
+    changes$
+      .pipe(buffer(changes$.pipe(debounceTime(300))), takeUntil(stop$))
       .subscribe((evs) => {
-        this.handleEvents(evs);
+        this.handleEvents(evs.flat());
       });
   }
 
@@ -75,7 +76,7 @@ export class OnDbChangeNotifier {
           toCreateOrUpdateData.push(registration.mapper.mapToModelData(ev.obj));
         } else if (ev.type === DatabaseChangeType.Delete) {
           toDeleteIds.push({
-            value: ev.id,
+            value: ev.key,
             model: registration.mapper.model,
           });
         }
