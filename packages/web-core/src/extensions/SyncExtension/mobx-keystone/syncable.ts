@@ -53,7 +53,9 @@ export const syncable = (constructor: Function) => {
   constructor.prototype.onAttachedToRootStore = function () {
     const model = this;
 
-    const disposer = originalAttached?.();
+    const disposer = originalAttached
+      ? originalAttached.bind(this)?.()
+      : undefined;
 
     const pipe$ = syncChangesCtx.get(model);
 

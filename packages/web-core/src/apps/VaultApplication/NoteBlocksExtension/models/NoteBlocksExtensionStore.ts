@@ -1,6 +1,9 @@
 import { Model, model, modelAction, prop } from 'mobx-keystone';
 import type { ModelCreationData } from 'mobx-keystone';
-import { BlockModelsRegistry } from './BlockModelsRegistry';
+import {
+  BlockModelsRegistry,
+  generateRegistryIdFromNoteId,
+} from './BlockModelsRegistry';
 import { NoteBlockModel } from './NoteBlockModel';
 import { BlockContentModel } from './BlockContentModel';
 import {
@@ -14,13 +17,14 @@ import { SyncModelId } from '../../../../extensions/SyncExtension/types';
 import { withoutUndoAction } from '../../../../lib/utils';
 import { Subject } from 'rxjs';
 
-const blocksApp = '@harika/noteBlocks/NoteBlocksExtensionStore';
+export const blocksExtensionStore =
+  '@harika/noteBlocks/NoteBlocksExtensionStore';
 
 export const isBlocksApp = (obj: any): obj is NoteBlocksExtensionStore => {
-  return obj.$modelType === blocksApp;
+  return obj.$modelType === blocksExtensionStore;
 };
 
-@model(blocksApp)
+@model(blocksExtensionStore)
 export class NoteBlocksExtensionStore extends Model({
   // key === noteId
   blocksRegistries: prop<Record<string, BlockModelsRegistry>>(() => ({})),
@@ -57,6 +61,7 @@ export class NoteBlocksExtensionStore extends Model({
     });
 
     const registry = new BlockModelsRegistry({
+      $modelId: generateRegistryIdFromNoteId(noteId),
       noteId: noteId,
       rootBlockId: rootBlock.$modelId,
     });
@@ -65,8 +70,8 @@ export class NoteBlocksExtensionStore extends Model({
 
     this.blocksRegistries[noteId] = registry;
     this.blocksTreeDescriptors[noteId] = new BlocksTreeDescriptor({
-      $modelId: noteId,
       rootBlockId,
+      noteId,
     });
 
     if (options.addEmptyBlock) {
@@ -96,9 +101,7 @@ export class NoteBlocksExtensionStore extends Model({
     createBlocksRegistry: boolean,
   ) {
     descriptorAttrs.forEach((attr) => {
-      this.blocksTreeDescriptors[attr.$modelId] = new BlocksTreeDescriptor(
-        attr,
-      );
+      this.blocksTreeDescriptors[attr.noteId] = new BlocksTreeDescriptor(attr);
     });
 
     blocksAttrs.map((attr) => {
@@ -117,6 +120,7 @@ export class NoteBlocksExtensionStore extends Model({
         }
 
         this.blocksRegistries[attr.noteId] = new BlockModelsRegistry({
+          $modelId: generateRegistryIdFromNoteId(attr.noteId),
           noteId: attr.noteId,
           rootBlockId: this.blocksTreeDescriptors[attr.noteId].rootBlockId,
         });

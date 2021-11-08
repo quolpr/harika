@@ -1,3 +1,4 @@
+import { computed } from 'mobx';
 import { Model, model, prop } from 'mobx-keystone';
 import { syncable } from '../../../../extensions/SyncExtension/mobx-keystone/syncable';
 
@@ -5,4 +6,5 @@ import { syncable } from '../../../../extensions/SyncExtension/mobx-keystone/syn
 @model('harika/noteBlocks/BlocksTreeDescriptor')
 export class BlocksTreeDescriptor extends Model({
   rootBlockId: prop<string>(),
+  noteId: prop<string>(),
 }) {}

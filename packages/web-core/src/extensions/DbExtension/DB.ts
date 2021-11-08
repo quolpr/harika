@@ -9,7 +9,9 @@ import {
   lastValueFrom,
   map,
   Observable,
+  of,
   Subject,
+  switchMap,
   takeUntil,
   tap,
   throwError,
@@ -214,14 +216,15 @@ export class DB implements IQueryExecuter {
   private execCommand(command: DistributiveOmit<ICommand, 'commandId'>) {
     const id = uuidv4();
 
-    // TODO: maybe timeout?
     const prom = lastValueFrom(
       this.messagesFromWorker$.pipe(
         filter((ev) => ev.type === 'response' && ev.data.commandId === id),
         first(),
-        tap((ev) => {
+        switchMap((ev) => {
           if (ev.type === 'response' && ev.data.status === 'error') {
             throw new Error(ev.data.message);
+          } else {
+            return of(ev);
           }
         }),
         map((ev) => {

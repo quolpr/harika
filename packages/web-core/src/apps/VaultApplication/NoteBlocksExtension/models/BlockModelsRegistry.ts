@@ -1,4 +1,10 @@
 import {
+  customRef,
+  detach,
+  findChildren,
+  findParent,
+  getRoot,
+  getRootStore,
   Model,
   model,
   modelAction,
@@ -18,11 +24,48 @@ import type { Optional } from 'utility-types';
 import { generateId } from '../../../../lib/generateId';
 import { omit } from 'lodash-es';
 import { BlockContentModel } from './BlockContentModel';
+import {
+  blocksExtensionStore,
+  NoteBlocksExtensionStore,
+} from './NoteBlocksExtensionStore';
 
 export const blocksRegistryType = 'harika/noteBlocks/BlockModelsRegistry';
-export const blocksRegistryRef = rootRef<BlockModelsRegistry>(
+export const blocksRegistryRef = customRef<BlockModelsRegistry>(
   'harika/noteBlocks/BlockModelsRegistryRef',
+  {
+    getId(target): string {
+      return (target as BlockModelsRegistry).noteId;
+    },
+    resolve(ref) {
+      for (const store of findChildren<NoteBlocksExtensionStore>(
+        getRoot(ref),
+        (obj: any) => obj.$modelType === blocksExtensionStore,
+      ).values()) {
+        const registry = store.getBlocksRegistryByNoteId(ref.id);
+
+        if (registry) {
+          return registry;
+        }
+      }
+      return undefined;
+    },
+
+    onResolvedValueChange(ref, newTodo, oldTodo) {
+      if (oldTodo && !newTodo) {
+        // if the todo value we were referencing disappeared then remove the reference
+        // from its parent
+        detach(ref);
+      }
+    },
+  },
 );
+
+const prefix = 'blocks-registry-';
+
+export const generateRegistryIdFromNoteId = (noteId: string) => prefix + noteId;
+
+export const getIdFromBlockModelsRegistryId = (id: string) =>
+  id.replace(prefix, '');
 
 @model(blocksRegistryType)
 export class BlockModelsRegistry extends Model({
@@ -134,8 +177,10 @@ export class BlockModelsRegistry extends Model({
 
   onInit() {
     rootBlockIdCtx.setComputed(this, () => this.rootBlockId);
+  }
 
-    onChildAttachedTo(
+  onAttachedToRootStore() {
+    const dispose = onChildAttachedTo(
       () => this.blocksMap,
       (block) => {
         if (block instanceof NoteBlockModel) {
@@ -147,5 +192,7 @@ export class BlockModelsRegistry extends Model({
         }
       },
     );
+
+    return () => dispose(false);
   }
 }

@@ -1,4 +1,5 @@
 import { IMapper } from '../../../../extensions/SyncExtension/mappers';
+import { generateId } from '../../../../lib/generateId';
 import { BlocksTreeDescriptor } from '../models/BlocksTreeDescriptor';
 import {
   BlocksTreeDescriptorDoc,
@@ -11,13 +12,14 @@ export const blocksTreeDescriptorsMapper: IMapper<
 > = {
   mapToModelData(doc) {
     return {
-      $modelId: doc.id,
+      $modelId: generateId(),
       rootBlockId: doc.rootBlockId,
+      noteId: doc.id,
     };
   },
   mapToDoc(model) {
     return {
-      id: model.$modelId,
+      id: model.noteId,
       rootBlockId: model.rootBlockId,
     };
   },

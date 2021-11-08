@@ -94,7 +94,10 @@ class DbBackend {
             logOpts?.transactionId
               ? `[tr_id=${logOpts.transactionId.split('-')[0]}]`
               : ''
-          } ${sql} Time: ${((end - startTime) / 1000).toFixed(4)}`,
+          } ${sql} ${JSON.stringify(params)} Time: ${(
+            (end - startTime) /
+            1000
+          ).toFixed(4)}`,
           `color: #${logOpts?.transactionId?.substring(0, 6) || 'fff'}`,
         );
       }

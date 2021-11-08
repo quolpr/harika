@@ -1,20 +1,14 @@
 import {
   arraySet,
   detach,
+  getRootStore,
   model,
   Model,
   modelAction,
   ModelCreationData,
   prop,
-  rootRef,
 } from 'mobx-keystone';
-import { Subject } from 'rxjs';
-import {
-  ISyncableModelChange,
-  syncChangesCtx,
-  withoutSync,
-  withoutSyncAction,
-} from '../../../../extensions/SyncExtension/mobx-keystone/syncable';
+import { withoutSyncAction } from '../../../../extensions/SyncExtension/mobx-keystone/syncable';
 import { SyncModelId } from '../../../../extensions/SyncExtension/types';
 import { withoutUndoAction } from '../../../../lib/utils';
 import {
@@ -109,6 +103,7 @@ export class BlocksScopeStore extends Model({
 
     const blocksScope = new BlocksScope({
       $modelId: key,
+      noteId,
       rootScopedBlockId: rootBlockViewId,
       collapsedBlockIds: arraySet(collapsedBlockIds),
       scopedModelId: scopedBy.$modelId,
@@ -149,9 +144,11 @@ export class BlocksScopeStore extends Model({
     });
 
     scopes.forEach((scope) => {
-      if (!scope.blocksRegistryRef.isValid) return;
-
-      this.blocksScopes[scope.$modelId] = new BlocksScope(scope);
+      if (this.blocksScopes[scope.$modelId]) {
+        this.blocksScopes[scope.$modelId].update(scope);
+      } else {
+        this.blocksScopes[scope.$modelId] = new BlocksScope(scope);
+      }
     });
   }
 }

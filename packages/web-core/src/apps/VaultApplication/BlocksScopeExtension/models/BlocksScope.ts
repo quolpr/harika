@@ -17,7 +17,10 @@ import {
 } from '../../../../lib/blockParser/blockUtils';
 import { TreeToken } from '../../../../lib/blockParser/parseStringToTree';
 import { withoutUndoAction } from '../../../../lib/utils';
-import { BlockModelsRegistry } from '../../NoteBlocksExtension/models/BlockModelsRegistry';
+import {
+  BlockModelsRegistry,
+  getIdFromBlockModelsRegistryId,
+} from '../../NoteBlocksExtension/models/BlockModelsRegistry';
 import { NoteBlockModel } from '../../NoteBlocksExtension/models/NoteBlockModel';
 import { ScopedBlock } from './ScopedBlock';
 import { ScopedBlocksRegistry } from './ScopedBlocksRegistry';
@@ -41,6 +44,8 @@ export class BlocksScope extends Model({
 
   scopedModelId: prop<string>(),
   scopedModelType: prop<string>(),
+
+  noteId: prop<string>(),
 }) {
   private scopedBlocksRegistry = new ScopedBlocksRegistry();
 
@@ -64,11 +69,6 @@ export class BlocksScope extends Model({
         block.$modelId !== this.rootScopedBlockId
       );
     });
-  }
-
-  @computed
-  get noteId() {
-    return this.blocksRegistryRef.current.noteId;
   }
 
   @computed
@@ -224,11 +224,26 @@ export class BlocksScope extends Model({
     );
   }
 
-  onInit() {
-    onChildAttachedTo(
+  @modelAction
+  update(attrs: ModelCreationData<BlocksScope> & { $modelId: string }) {
+    if (this.blocksRegistryRef.id !== attrs.blocksRegistryRef.id) {
+      this.blocksRegistryRef = attrs.blocksRegistryRef;
+    }
+
+    this.collapsedBlockIds = attrs.collapsedBlockIds;
+    this.noteId = attrs.noteId;
+    this.scopedModelId = attrs.scopedModelId;
+    this.scopedModelType = attrs.scopedModelType;
+    this.rootScopedBlockId = attrs.rootScopedBlockId;
+  }
+
+  onAttachedToRootStore() {
+    const dispose = onChildAttachedTo(
       () => {
-        if (!this.blocksRegistryRef.maybeCurrent) {
+        if (!this.blocksRegistryRef || !this.blocksRegistryRef.maybeCurrent) {
           console.error('Blocks registry is not registered!');
+
+          return {};
         }
 
         return this.blocksRegistryRef.current.blocksMap;
@@ -243,5 +258,7 @@ export class BlocksScope extends Model({
         }
       },
     );
+
+    return () => dispose(false);
   }
 }
