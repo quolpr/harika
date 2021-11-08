@@ -1,9 +1,9 @@
 import { injectable } from 'inversify';
 import { BaseExtension } from '../../../framework/BaseExtension';
-import { DeleteNoteService } from './worker/services/DeleteNoteService';
-import { FindNoteOrBlockService } from './worker/services/FindNoteOrBlockService';
-import { ImportExportService } from './worker/services/ImportExportService';
-import { VaultService } from './app/services/VaultService';
+import { DeleteNoteService } from './services/DeleteNoteService';
+import { FindNoteOrBlockService } from './services/FindNoteOrBlockService';
+import { ImportExportService } from './services/ImportExportService';
+import { VaultService } from './services/VaultService';
 
 @injectable()
 export class VaultAppExtension extends BaseExtension {

@@ -1,19 +1,19 @@
 import { injectable } from 'inversify';
 import { BehaviorSubject, takeUntil } from 'rxjs';
 import { STOP_SIGNAL } from '../../framework/types';
-import { ServerSynchronizerFactory } from './app/serverSynchronizer/ServiceSynchronizerFactory';
-import { SyncConfig } from './app/serverSynchronizer/SyncConfig';
-import { DbEventsListenService } from './app/services/DbEventsListenerService';
-import { OnDbChangeNotifier } from './app/synchronizer/OnDbChangeNotifier';
-import { ToDbSynchronizer } from './app/synchronizer/ToDbSynchronizer';
-import { SyncStateService } from './app/SyncState';
+import { ServerSynchronizerFactory } from './serverSynchronizer/ServiceSynchronizerFactory';
+import { SyncConfig } from './serverSynchronizer/SyncConfig';
+import { DbEventsListenService } from './services/DbEventsListenerService';
+import { OnDbChangeNotifier } from './synchronizer/OnDbChangeNotifier';
+import { ToDbSynchronizer } from './synchronizer/ToDbSynchronizer';
+import { SyncStateService } from './SyncState';
 import { SYNC_CONNECTION_ALLOWED } from './types';
 import { BaseExtension } from '../../framework/BaseExtension';
-import { ApplyChangesService } from './worker/services/ApplyChangesService';
-import { SyncRepository } from './worker/repositories/SyncRepository';
+import { ApplyChangesService } from './services/ApplyChangesService';
+import { SyncRepository } from './repositories/SyncRepository';
 import { DB_MIGRATIONS } from '../DbExtension/types';
-import { initSyncTables } from './worker/migrations/initSyncTables';
-import { DbEventsSenderService } from './worker/services/DbEventsSenderService';
+import { initSyncTables } from './migrations/initSyncTables';
+import { DbEventsSenderService } from './services/DbEventsSenderService';
 
 @injectable()
 export class SyncAppExtension extends BaseExtension {

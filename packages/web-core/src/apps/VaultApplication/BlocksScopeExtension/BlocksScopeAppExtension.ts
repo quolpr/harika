@@ -1,12 +1,12 @@
 import { injectable } from 'inversify';
-import { BlocksScopesRepository } from './worker/repositories/BlockScopesRepository';
-import { SyncConfig } from '../../../extensions/SyncExtension/app/serverSynchronizer/SyncConfig';
-import { blocksScopesMapper } from './app/mappers/blockScopesMapper';
-import { BlocksScope } from './app/models/BlocksScope';
-import { BlocksScopeStore } from './app/models/BlocksScopeStore';
-import { BlocksScopesService } from './app/services/BlocksScopeService';
+import { BlocksScopesRepository } from './repositories/BlockScopesRepository';
+import { SyncConfig } from '../../../extensions/SyncExtension/serverSynchronizer/SyncConfig';
+import { blocksScopesMapper } from './mappers/blockScopesMapper';
+import { BlocksScope } from './models/BlocksScope';
+import { BlocksScopeStore } from './models/BlocksScopeStore';
+import { BlocksScopesService } from './services/BlocksScopeService';
 import { BaseSyncExtension } from '../../../extensions/SyncExtension/BaseSyncExtension';
-import { addBlockScopeTable } from './worker/migrations/addBlockScopeTable';
+import { addBlockScopeTable } from './migrations/addBlockScopeTable';
 
 @injectable()
 export class BlocksScopeAppExtension extends BaseSyncExtension {

@@ -1,20 +1,20 @@
 import { inject, injectable } from 'inversify';
 import { BaseExtension } from '../../../framework/BaseExtension';
-import { NoteBlocksExtensionStore } from './app/models/NoteBlocksExtensionStore';
-import { NotesBlocksRepository } from './worker/repositories/NotesBlocksRepository';
-import { BlocksScopesRepository } from '../BlocksScopeExtension/worker/repositories/BlockScopesRepository';
-import { blocksScopesMapper } from '../BlocksScopeExtension/app/mappers/blockScopesMapper';
-import { blocksTreeDescriptorsMapper } from './app/mappers/blocksTreeDescriptorsMapper';
-import { noteBlocksMapper } from './app/mappers/noteBlocksMapper';
-import { BlocksTreeDescriptorsRepository } from './worker/repositories/BlockTreeDescriptorsRepository';
-import { SyncConfig } from '../../../extensions/SyncExtension/app/serverSynchronizer/SyncConfig';
-import { NoteBlockModel } from './app/models/NoteBlockModel';
-import { BlocksTreeDescriptor } from './app/models/BlocksTreeDescriptor';
-import { NoteBlocksService } from './app/services/NoteBlocksService';
+import { NoteBlocksExtensionStore } from './models/NoteBlocksExtensionStore';
+import { NotesBlocksRepository } from './repositories/NotesBlocksRepository';
+import { BlocksScopesRepository } from '../BlocksScopeExtension/repositories/BlockScopesRepository';
+import { blocksScopesMapper } from '../BlocksScopeExtension/mappers/blockScopesMapper';
+import { blocksTreeDescriptorsMapper } from './mappers/blocksTreeDescriptorsMapper';
+import { noteBlocksMapper } from './mappers/noteBlocksMapper';
+import { BlocksTreeDescriptorsRepository } from './repositories/BlockTreeDescriptorsRepository';
+import { SyncConfig } from '../../../extensions/SyncExtension/serverSynchronizer/SyncConfig';
+import { NoteBlockModel } from './models/NoteBlockModel';
+import { BlocksTreeDescriptor } from './models/BlocksTreeDescriptor';
+import { NoteBlocksService } from './services/NoteBlocksService';
 import { BaseSyncExtension } from '../../../extensions/SyncExtension/BaseSyncExtension';
-import { initNoteBlocksTables } from './worker/migrations/initNoteBlocksTables';
-import { addBlockIdsToNoteBlocksTables } from './worker/migrations/addBlockIdsToNoteBlocksTable';
-import { addBlocksTreeDescriptorsTable } from './worker/migrations/addBlockTreeDescriptorTable';
+import { initNoteBlocksTables } from './migrations/initNoteBlocksTables';
+import { addBlockIdsToNoteBlocksTables } from './migrations/addBlockIdsToNoteBlocksTable';
+import { addBlocksTreeDescriptorsTable } from './migrations/addBlockTreeDescriptorTable';
 
 @injectable()
 export class NoteBlocksAppExtension extends BaseSyncExtension {

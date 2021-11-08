@@ -1,12 +1,12 @@
 import { injectable } from 'inversify';
-import { SyncConfig } from '../../../extensions/SyncExtension/app/serverSynchronizer/SyncConfig';
+import { SyncConfig } from '../../../extensions/SyncExtension/serverSynchronizer/SyncConfig';
 import { BaseSyncExtension } from '../../../extensions/SyncExtension/BaseSyncExtension';
-import { notesMapper } from './app/mappers/notesMapper';
-import { NoteModel } from './app/models/NoteModel';
-import { NotesStore } from './app/models/NotesStore';
-import { NotesService } from './app/services/NotesService';
-import { initNotesTable } from './worker/migrations/createNotesTable';
-import { NotesRepository } from './worker/repositories/NotesRepository';
+import { notesMapper } from './mappers/notesMapper';
+import { NoteModel } from './models/NoteModel';
+import { NotesStore } from './models/NotesStore';
+import { NotesService } from './services/NotesService';
+import { initNotesTable } from './migrations/createNotesTable';
+import { NotesRepository } from './repositories/NotesRepository';
 
 @injectable()
 export class NotesAppExtension extends BaseSyncExtension {

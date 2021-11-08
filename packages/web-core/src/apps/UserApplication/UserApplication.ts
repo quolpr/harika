@@ -5,7 +5,7 @@ import {
   SYNC_AUTH_TOKEN,
 } from '../../extensions/SyncExtension/types';
 import { BaseApplication } from '../../framework/BaseApplication';
-import { UserVaultsService } from './UserExtension/app/services/UserVaultsService';
+import { UserVaultsService } from './UserExtension/services/UserVaultsService';
 import { UserAppExtension } from './UserExtension/UserAppExtension';
 
 export class UserApplication extends BaseApplication {

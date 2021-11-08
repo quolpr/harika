@@ -6,27 +6,27 @@ import { NoteBlocksAppExtension } from './NoteBlocksExtension/NoteBlocksAppExten
 import { VaultAppExtension } from './VaultExtension/VaultAppExtension';
 import { NotesTreeAppExtension } from './NotesTreeExtension/NotesTreeAppExtension';
 import { SpacedRepetitionExtension } from './SpacedRepetitionExtension/SpacedRepetitionExtension';
-import { VaultService } from './VaultExtension/app/services/VaultService';
-import { NotesService } from './NotesExtension/app/services/NotesService';
+import { VaultService } from './VaultExtension/services/VaultService';
+import { NotesService } from './NotesExtension/services/NotesService';
 import { NotesTreeRegistry } from './NotesTreeExtension/models/NotesTreeRegistry';
-import { NoteBlocksService } from './NoteBlocksExtension/app/services/NoteBlocksService';
-import { FindNoteOrBlockService } from './VaultExtension/worker/services/FindNoteOrBlockService';
-import { DeleteNoteService } from './VaultExtension/worker/services/DeleteNoteService';
-import { ImportExportService } from './VaultExtension/worker/services/ImportExportService';
+import { NoteBlocksService } from './NoteBlocksExtension/services/NoteBlocksService';
+import { FindNoteOrBlockService } from './VaultExtension/services/FindNoteOrBlockService';
+import { DeleteNoteService } from './VaultExtension/services/DeleteNoteService';
+import { ImportExportService } from './VaultExtension/services/ImportExportService';
 import { DB_NAME } from '../../extensions/DbExtension/types';
 import { VaultAppRootStore } from './AppRootStore';
 import { BlocksScopeAppExtension } from './BlocksScopeExtension/BlocksScopeAppExtension';
-import { BlocksScopesService } from './BlocksScopeExtension/app/services/BlocksScopeService';
-import { NotesStore } from './NotesExtension/app/models/NotesStore';
+import { BlocksScopesService } from './BlocksScopeExtension/services/BlocksScopeService';
+import { NotesStore } from './NotesExtension/models/NotesStore';
 import { registerRootStore } from 'mobx-keystone';
-import { BlocksScopeStore } from './BlocksScopeExtension/app/models/BlocksScopeStore';
-import { NoteBlocksExtensionStore } from './NoteBlocksExtension/app/models/NoteBlocksExtensionStore';
+import { BlocksScopeStore } from './BlocksScopeExtension/models/BlocksScopeStore';
+import { NoteBlocksExtensionStore } from './NoteBlocksExtension/models/NoteBlocksExtensionStore';
 import {
   SYNC_AUTH_TOKEN,
   SYNC_CONNECTION_ALLOWED,
   SYNC_URL,
 } from '../../extensions/SyncExtension/types';
-import { SyncStateService } from '../../extensions/SyncExtension/app/SyncState';
+import { SyncStateService } from '../../extensions/SyncExtension/SyncState';
 import { BehaviorSubject } from 'rxjs';
 
 export class VaultApplication extends BaseApplication {

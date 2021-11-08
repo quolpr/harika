@@ -1,7 +1,7 @@
 import { injectable } from 'inversify';
-import { VaultsRepository } from './worker/repositories/VaultsRepository';
-import { UserVaultsService } from './app/services/UserVaultsService';
-import { initUsersDbTables } from './worker/migrations/initUsersDbTables';
+import { VaultsRepository } from './repositories/VaultsRepository';
+import { UserVaultsService } from './services/UserVaultsService';
+import { initUsersDbTables } from './migrations/initUsersDbTables';
 import { BaseSyncExtension } from '../../../extensions/SyncExtension/BaseSyncExtension';
 
 @injectable()
