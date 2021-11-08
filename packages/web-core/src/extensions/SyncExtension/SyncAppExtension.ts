@@ -7,7 +7,7 @@ import { DbEventsListenService } from './services/DbEventsListenerService';
 import { OnDbChangeNotifier } from './synchronizer/OnDbChangeNotifier';
 import { ToDbSynchronizer } from './synchronizer/ToDbSynchronizer';
 import { SyncStateService } from './SyncState';
-import { SYNC_CONNECTION_ALLOWED } from './types';
+import { ROOT_STORE, SYNC_CONNECTION_ALLOWED } from './types';
 import { BaseExtension } from '../../framework/BaseExtension';
 import { ApplyChangesService } from './services/ApplyChangesService';
 import { SyncRepository } from './repositories/SyncRepository';
@@ -33,12 +33,17 @@ export class SyncAppExtension extends BaseExtension {
   }
 
   async initialize() {
-    this.container.resolve(ToDbSynchronizer);
     this.container.resolve(OnDbChangeNotifier);
     this.container.resolve(DbEventsSenderService).initialize();
   }
 
   async onReady() {
+    if (this.container.isBound(ROOT_STORE)) {
+      this.container.resolve(ToDbSynchronizer);
+    } else {
+      console.info('no root store');
+    }
+
     // Don't await to not block first render
     setTimeout(async () => {
       await this.container.resolve(ServerSynchronizerFactory).initialize();

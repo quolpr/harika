@@ -22,6 +22,7 @@ import { registerRootStore } from 'mobx-keystone';
 import { BlocksScopeStore } from './BlocksScopeExtension/models/BlocksScopeStore';
 import { NoteBlocksExtensionStore } from './NoteBlocksExtension/models/NoteBlocksExtensionStore';
 import {
+  ROOT_STORE,
   SYNC_AUTH_TOKEN,
   SYNC_CONNECTION_ALLOWED,
   SYNC_URL,
@@ -59,6 +60,7 @@ export class VaultApplication extends BaseApplication {
     });
 
     this.container.bind(VaultAppRootStore).toConstantValue(rootStore);
+    this.container.bind(ROOT_STORE).toConstantValue(rootStore);
 
     registerRootStore(rootStore);
   }

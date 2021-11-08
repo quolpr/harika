@@ -3,11 +3,16 @@ import type { ModelCreationData } from 'mobx-keystone';
 import { BlockModelsRegistry } from './BlockModelsRegistry';
 import { NoteBlockModel } from './NoteBlockModel';
 import { BlockContentModel } from './BlockContentModel';
-import { withoutSyncAction } from '../../../../extensions/SyncExtension/mobx-keystone/syncable';
+import {
+  ISyncableModelChange,
+  syncChangesCtx,
+  withoutSyncAction,
+} from '../../../../extensions/SyncExtension/mobx-keystone/syncable';
 import { BlocksTreeDescriptor } from './BlocksTreeDescriptor';
 import { generateId } from '../../../../lib/generateId';
 import { SyncModelId } from '../../../../extensions/SyncExtension/types';
 import { withoutUndoAction } from '../../../../lib/utils';
+import { Subject } from 'rxjs';
 
 const blocksApp = '@harika/noteBlocks/NoteBlocksExtensionStore';
 

@@ -1,5 +1,10 @@
 import { computed } from 'mobx';
 import { idProp, model, Model, modelAction, prop, Ref } from 'mobx-keystone';
+import { Subject } from 'rxjs';
+import {
+  syncChangesCtx,
+  ISyncableModelChange,
+} from '../../../../extensions/SyncExtension/mobx-keystone/syncable';
 import { withoutUndoAction } from '../../../../lib/utils';
 import { notesTreeNoteRef, NotesTreeNote } from './NotesTreeNote';
 

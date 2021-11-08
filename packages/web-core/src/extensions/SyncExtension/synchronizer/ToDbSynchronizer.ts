@@ -15,11 +15,12 @@ import { STOP_SIGNAL } from '../../../framework/types';
 import {
   ISyncableModel,
   ISyncableModelChange,
-  syncableModelChangesPipe$,
   SyncableModelChangeType,
+  syncChangesCtx,
 } from '../mobx-keystone/syncable';
 import { BaseSyncRepository } from '../BaseSyncRepository';
 import { SyncConfig } from '../serverSynchronizer/SyncConfig';
+import { ROOT_STORE } from '../types';
 
 type Class<T = any> = new (...args: any[]) => T;
 
@@ -72,10 +73,15 @@ export class ToDbSynchronizer {
   constructor(
     @inject(SyncConfig) private syncConfig: SyncConfig,
     @inject(STOP_SIGNAL) stop$: Observable<void>,
+    @inject(ROOT_STORE) rootStore: object,
   ) {
-    syncableModelChangesPipe$
+    const pipe$ = syncChangesCtx.get(rootStore);
+
+    if (!pipe$) throw new Error('Root store changes subject not found');
+
+    pipe$
       .pipe(
-        buffer(syncableModelChangesPipe$.pipe(debounceTime(300))),
+        buffer(pipe$.pipe(debounceTime(300))),
         map((changes) => changes.flat()),
         concatMap((changes) => {
           return defer(() => this.applyChanges(changes)).pipe(
@@ -107,11 +113,12 @@ export class ToDbSynchronizer {
         );
 
         if (!reg) {
-          // console.error(
-          //   `Couldn't find syne repo registration for ${JSON.stringify(
-          //     chs[0].model,
-          //   )}`,
-          // );
+          console.error(
+            `Couldn't find syne repo registration for ${JSON.stringify(
+              chs[0].model,
+            )}`,
+          );
+
           return;
         }
 

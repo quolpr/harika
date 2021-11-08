@@ -7,7 +7,6 @@ import {
   STOP_SIGNAL,
   WINDOW_ID,
 } from './types';
-import { ExtensionsRegister } from './ExtensionsRegister';
 import { Subject } from 'rxjs';
 
 const windowId = generateId();
@@ -26,16 +25,29 @@ export abstract class BaseApplication {
     this.container.bind(APPLICATION_ID).toConstantValue(this.applicationId);
     this.container.bind(Container).toConstantValue(this.container);
 
+    const extensions = this.extensions.map((ext) => {
+      return this.container.resolve(ext);
+    });
+
+    await Promise.all(
+      extensions.map(async (ext) => {
+        await ext.register();
+      }),
+    );
     await this.register();
 
-    const extensionsRegister = new ExtensionsRegister(
-      this.container,
-      this.extensions,
+    await Promise.all(
+      extensions.map(async (ext) => {
+        await ext.initialize();
+      }),
     );
-
-    await extensionsRegister.register();
-
     await this.initialize();
+
+    await Promise.all(
+      extensions.map(async (ext) => {
+        await ext.onReady();
+      }),
+    );
     await this.onReady();
 
     return this.container;

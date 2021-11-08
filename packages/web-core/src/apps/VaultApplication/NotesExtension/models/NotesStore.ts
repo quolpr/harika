@@ -5,7 +5,12 @@ import {
   ModelCreationData,
   prop,
 } from 'mobx-keystone';
-import { withoutSyncAction } from '../../../../extensions/SyncExtension/mobx-keystone/syncable';
+import { Subject } from 'rxjs';
+import {
+  ISyncableModelChange,
+  syncChangesCtx,
+  withoutSyncAction,
+} from '../../../../extensions/SyncExtension/mobx-keystone/syncable';
 import { SyncModelId } from '../../../../extensions/SyncExtension/types';
 import { generateId } from '../../../../lib/generateId';
 import { withoutUndoAction } from '../../../../lib/utils';

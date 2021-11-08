@@ -1,4 +1,4 @@
-import { AnyModel, onPatches } from 'mobx-keystone';
+import { AnyModel, createContext, onPatches } from 'mobx-keystone';
 import { Subject } from 'rxjs';
 
 let withoutSyncVal = false;
@@ -45,7 +45,7 @@ export type ISyncableModelChange<T extends AnyModel = AnyModel> = {
   model: ISyncableModel<T>;
 };
 
-export const syncableModelChangesPipe$ = new Subject<ISyncableModelChange>();
+export const syncChangesCtx = createContext<Subject<ISyncableModelChange>>();
 
 export const syncable = (constructor: Function) => {
   const originalAttached = constructor.prototype.onAttachedToRootStore;
@@ -55,8 +55,14 @@ export const syncable = (constructor: Function) => {
 
     const disposer = originalAttached?.();
 
+    const pipe$ = syncChangesCtx.get(model);
+
+    if (!pipe$) {
+      throw new Error('Did you forget to set syncChangesCtx?');
+    }
+
     if (!withoutSyncVal) {
-      syncableModelChangesPipe$.next({
+      pipe$.next({
         type: SyncableModelChangeType.Create,
         model,
       });
@@ -67,7 +73,7 @@ export const syncable = (constructor: Function) => {
     const patchesDisposer = onPatches(model, () => {
       if (withoutSyncVal) return;
 
-      syncableModelChangesPipe$.next({
+      pipe$.next({
         type: SyncableModelChangeType.Update,
         model,
       });
@@ -79,7 +85,7 @@ export const syncable = (constructor: Function) => {
 
       if (withoutSyncVal) return;
 
-      syncableModelChangesPipe$.next({
+      pipe$.next({
         type: SyncableModelChangeType.Delete,
         model,
       });
