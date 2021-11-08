@@ -137,15 +137,9 @@ export class NoteBlockModel extends Model({
       )
     ) {
       const currentRefs = Object.fromEntries(
-        this.noteBlockRefs
-          .map((ref) => {
-            return [ref.id, ref] as [string, Ref<NoteBlockModel>];
-          })
-          .map((data) => {
-            detach(data[1]);
-
-            return data;
-          }),
+        this.noteBlockRefs.map((ref) => {
+          return [ref.id, ref] as [string, Ref<NoteBlockModel>];
+        }),
       );
 
       this.noteBlockRefs = data.noteBlockRefs.map((ref) =>
@@ -163,8 +157,10 @@ export class NoteBlockModel extends Model({
 
   @modelAction
   delete(spliceParent = true, recursively = true) {
+    const toDelete = [...this.noteBlockRefs];
+
     if (recursively) {
-      this.noteBlockRefs.forEach((block) =>
+      toDelete.forEach((block) =>
         block.current.delete(spliceParent, recursively),
       );
     }
