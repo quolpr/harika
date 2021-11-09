@@ -23,6 +23,8 @@ import {
 } from './types';
 import { Subject } from 'rxjs';
 
+const colors = ['yellow', 'cyan', 'magenta'];
+
 class DbBackend {
   private sqlDb!: Database;
 
@@ -76,6 +78,8 @@ class DbBackend {
     `);
   }
 
+  private currentTransactionI = 0;
+  private currentTransactionId: string | undefined;
   sqlExec(
     sql: string,
     params?: BindParams,
@@ -88,6 +92,17 @@ class DbBackend {
       const res = this.sqlDb.exec(sql, params);
       const end = performance.now();
 
+      if (
+        logOpts?.transactionId &&
+        logOpts.transactionId !== this.currentTransactionId
+      ) {
+        this.currentTransactionId = logOpts.transactionId;
+        this.currentTransactionI++;
+      }
+      if (!logOpts?.transactionId) {
+        this.currentTransactionId = undefined;
+      }
+
       if (!getIsLogSuppressing()) {
         console.log(
           `%c[${this.dbName.substring(0, 10)}]${
@@ -98,7 +113,7 @@ class DbBackend {
             (end - startTime) /
             1000
           ).toFixed(4)}`,
-          `color: #${logOpts?.transactionId?.substring(0, 6) || 'fff'}`,
+          `color: ${colors[this.currentTransactionI % colors.length]}`,
         );
       }
 
@@ -117,6 +132,8 @@ class CommandsExecutor {
   private queue: ICommand[] = [];
   private currentTransactionId?: string;
   private transactionStartedAt: number = 0;
+
+  private inlineTransactionCounter = 0;
 
   response$: Subject<IResponse> = new Subject();
 
@@ -214,8 +231,6 @@ class CommandsExecutor {
       this.currentTransactionId = command.transactionId;
       this.transactionStartedAt = new Date().getTime();
 
-      console.log('begin transaction with id', command.transactionId);
-
       this.response$.next(
         this.sqlExec(command.commandId, [
           { text: 'BEGIN TRANSACTION;', values: [] },
@@ -234,22 +249,24 @@ class CommandsExecutor {
 
     try {
       if (shouldSpawnTransaction) {
+        this.inlineTransactionCounter++;
+
         this.db.sqlExec('BEGIN TRANSACTION;', undefined, {
-          transactionId: 'inline',
+          transactionId: `inline${this.inlineTransactionCounter}`,
         });
       }
 
       const result = queries.map((q) => {
         return this.db.sqlExec(q.text, q.values, {
           transactionId: shouldSpawnTransaction
-            ? 'inline'
+            ? `inline${this.inlineTransactionCounter}`
             : this.currentTransactionId,
         });
       });
 
       if (shouldSpawnTransaction) {
         this.db.sqlExec('COMMIT;', undefined, {
-          transactionId: 'inline',
+          transactionId: `inline${this.inlineTransactionCounter}`,
         });
       }
 
@@ -263,7 +280,7 @@ class CommandsExecutor {
         this.db.sqlExec('ROLLBACK;', undefined, {
           transactionId: this.currentTransactionId
             ? this.currentTransactionId
-            : 'inline',
+            : `inline${this.inlineTransactionCounter}`,
         });
 
         this.currentTransactionId = undefined;
