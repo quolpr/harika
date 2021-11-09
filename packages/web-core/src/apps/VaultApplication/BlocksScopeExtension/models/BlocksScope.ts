@@ -1,4 +1,4 @@
-import { comparer, computed } from 'mobx';
+import { autorun, comparer, computed, when } from 'mobx';
 import {
   ArraySet,
   model,
@@ -9,6 +9,7 @@ import {
   prop,
   Ref,
 } from 'mobx-keystone';
+import { Observable, of, switchMap, switchMapTo, tap } from 'rxjs';
 import { Optional } from 'utility-types';
 import { syncable } from '../../../../extensions/SyncExtension/mobx-keystone/syncable';
 import {
@@ -238,27 +239,40 @@ export class BlocksScope extends Model({
   }
 
   onAttachedToRootStore() {
-    const dispose = onChildAttachedTo(
-      () => {
-        if (!this.blocksRegistryRef || !this.blocksRegistryRef.maybeCurrent) {
-          console.error('Blocks registry is not registered!');
+    const childAttach$ = new Observable(() => {
+      const dispose = onChildAttachedTo(
+        () => {
+          if (!this.blocksRegistryRef || !this.blocksRegistryRef.maybeCurrent) {
+            console.error('Blocks registry is not registered!');
 
-          return {};
-        }
+            return {};
+          }
 
-        return this.blocksRegistryRef.current.blocksMap;
-      },
-      (ch) => {
-        if (ch instanceof NoteBlockModel) {
-          this.getOrCreateScopedBlock(ch.$modelId);
+          return this.blocksRegistryRef.current.blocksMap;
+        },
+        (ch) => {
+          if (ch instanceof NoteBlockModel) {
+            this.getOrCreateScopedBlock(ch.$modelId);
 
-          return () => {
-            this.scopedBlocksRegistry.removeScopedBlock(ch.$modelId);
-          };
-        }
-      },
-    );
+            return () => {
+              this.scopedBlocksRegistry.removeScopedBlock(ch.$modelId);
+            };
+          }
+        },
+      );
 
-    return () => dispose(false);
+      return dispose(false);
+    });
+
+    const subs = of(null)
+      .pipe(
+        switchMap(() =>
+          when(() => this.blocksRegistryRef.maybeCurrent !== undefined),
+        ),
+        switchMapTo(childAttach$),
+      )
+      .subscribe();
+
+    return () => subs.unsubscribe();
   }
 }

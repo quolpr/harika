@@ -110,19 +110,22 @@ export class ImportExportService {
     });
   }
 
-  exportData() {
+  async exportData() {
     return JSON.stringify({
       data: {
         data: [
-          { tableName: notesTable, rows: this.notesRepo.getAll() },
-          { tableName: noteBlocksTable, rows: this.notesBlocksRepo.getAll() },
+          { tableName: notesTable, rows: await this.notesRepo.getAll() },
+          {
+            tableName: noteBlocksTable,
+            rows: await this.notesBlocksRepo.getAll(),
+          },
           {
             tableName: blocksScopesTable,
-            rows: this.blocksScopesRepo.getAll(),
+            rows: await this.blocksScopesRepo.getAll(),
           },
           {
             tableName: blocksTreeDescriptorsTable,
-            rows: this.descriptorRepo.getAll(),
+            rows: await this.descriptorRepo.getAll(),
           },
         ],
       },
