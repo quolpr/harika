@@ -64,7 +64,9 @@ export class FindNoteOrBlockService {
               ),
             ),
         )
-        .orderBy(`CASE tableType WHEN '${notesTable}' THEN 0 ELSE 1 END, rank`),
+        .orderBy(
+          `CASE tableType WHEN '${notesTable}' THEN 0 ELSE 1 END, rank LIMIT 20`,
+        ),
     );
 
     return res;
