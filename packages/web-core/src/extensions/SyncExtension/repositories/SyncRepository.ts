@@ -277,10 +277,13 @@ export class SyncRepository {
   }
 
   async getServerAndClientChangesCount(e: IQueryExecuter = this.db) {
-    const [[serverResult], [clientResult]] = await e.execQueries([
-      Q.select('COUNT(*)').from(serverChangesTable),
-      Q.select('COUNT(*)').from(clientChangesTable),
-    ]);
+    const [[serverResult], [clientResult]] = await e.execQueries(
+      [
+        Q.select('COUNT(*)').from(serverChangesTable),
+        Q.select('COUNT(*)').from(clientChangesTable),
+      ],
+      true,
+    );
 
     return [
       serverResult.values[0][0] as number,

@@ -12,23 +12,27 @@ export type IMigration = {
 export const DB_NAME = 'dbName' as const;
 export const DB_MIGRATIONS = 'migrations' as const;
 
-export type IStartTransactionCommand = {
+type IBaseCommand = {
+  suppressLog?: boolean;
+};
+
+export type IStartTransactionCommand = IBaseCommand & {
   type: 'startTransaction';
   transactionId: string;
   commandId: string;
 };
-export type ICommitTransactionCommand = {
+export type ICommitTransactionCommand = IBaseCommand & {
   type: 'commitTransaction';
   transactionId: string;
   commandId: string;
 };
-export type IRollbackTransactionCommand = {
+export type IRollbackTransactionCommand = IBaseCommand & {
   type: 'rollbackTransaction';
   transactionId: string;
   commandId: string;
 };
 
-export type IExecQueriesCommand = {
+export type IExecQueriesCommand = IBaseCommand & {
   type: 'execQueries';
   queries: Q.SqlBricksParam[];
   spawnTransaction?: boolean;

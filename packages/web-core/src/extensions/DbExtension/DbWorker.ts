@@ -8,8 +8,6 @@ import initSqlJs, {
 } from '@harika-org/sql.js';
 import { SQLiteFS } from 'absurd-sql';
 import IndexedDBBackend from 'absurd-sql/dist/indexeddb-backend';
-import { getIsLogSuppressing } from './suppressLog';
-import { v4 as uuidv4 } from 'uuid';
 import {
   ICommand,
   IResponse,
@@ -85,6 +83,7 @@ class DbBackend {
     params?: BindParams,
     logOpts?: {
       transactionId?: string;
+      suppressLog?: boolean;
     },
   ): QueryExecResult[] {
     try {
@@ -94,7 +93,8 @@ class DbBackend {
 
       if (
         logOpts?.transactionId &&
-        logOpts.transactionId !== this.currentTransactionId
+        logOpts.transactionId !== this.currentTransactionId &&
+        !logOpts.suppressLog
       ) {
         this.currentTransactionId = logOpts.transactionId;
         this.currentTransactionI++;
@@ -103,7 +103,7 @@ class DbBackend {
         this.currentTransactionId = undefined;
       }
 
-      if (!getIsLogSuppressing()) {
+      if (!logOpts?.suppressLog) {
         console.log(
           `%c[${this.dbName.substring(0, 10)}]${
             logOpts?.transactionId
@@ -113,7 +113,11 @@ class DbBackend {
             (end - startTime) /
             1000
           ).toFixed(4)}`,
-          `color: ${colors[this.currentTransactionI % colors.length]}`,
+          `color: ${
+            this.currentTransactionId
+              ? colors[this.currentTransactionI % colors.length]
+              : 'white'
+          }`,
         );
       }
 
@@ -195,7 +199,8 @@ class CommandsExecutor {
       this.sqlExec(
         command.commandId,
         command.queries,
-        command.spawnTransaction,
+        Boolean(command.spawnTransaction),
+        Boolean(command.suppressLog),
       ),
     );
   }
@@ -210,12 +215,18 @@ class CommandsExecutor {
       this.currentTransactionId === command.transactionId
     ) {
       this.response$.next(
-        this.sqlExec(command.commandId, [
-          {
-            text: command.type === 'commitTransaction' ? 'COMMIT' : 'ROLLBACK;',
-            values: [],
-          },
-        ]),
+        this.sqlExec(
+          command.commandId,
+          [
+            {
+              text:
+                command.type === 'commitTransaction' ? 'COMMIT' : 'ROLLBACK;',
+              values: [],
+            },
+          ],
+          false,
+          Boolean(command.suppressLog),
+        ),
       );
 
       this.pastTransactionIds.push(this.currentTransactionId);
@@ -234,9 +245,12 @@ class CommandsExecutor {
       this.transactionStartedAt = new Date().getTime();
 
       this.response$.next(
-        this.sqlExec(command.commandId, [
-          { text: 'BEGIN TRANSACTION;', values: [] },
-        ]),
+        this.sqlExec(
+          command.commandId,
+          [{ text: 'BEGIN TRANSACTION;', values: [] }],
+          false,
+          Boolean(command.suppressLog),
+        ),
       );
     }
   }
@@ -244,7 +258,8 @@ class CommandsExecutor {
   private sqlExec(
     commandId: string,
     queries: Q.SqlBricksParam[],
-    spawnTransaction: boolean = false,
+    spawnTransaction: boolean,
+    suppressLog: boolean,
   ): IResponse {
     const shouldSpawnTransaction =
       spawnTransaction && !this.currentTransactionId;
@@ -255,6 +270,7 @@ class CommandsExecutor {
 
         this.db.sqlExec('BEGIN TRANSACTION;', undefined, {
           transactionId: `inline${this.inlineTransactionCounter}`,
+          suppressLog: suppressLog,
         });
       }
 
@@ -263,12 +279,14 @@ class CommandsExecutor {
           transactionId: shouldSpawnTransaction
             ? `inline${this.inlineTransactionCounter}`
             : this.currentTransactionId,
+          suppressLog: suppressLog,
         });
       });
 
       if (shouldSpawnTransaction) {
         this.db.sqlExec('COMMIT;', undefined, {
           transactionId: `inline${this.inlineTransactionCounter}`,
+          suppressLog: suppressLog,
         });
       }
 
@@ -283,6 +301,7 @@ class CommandsExecutor {
           transactionId: this.currentTransactionId
             ? this.currentTransactionId
             : `inline${this.inlineTransactionCounter}`,
+          suppressLog: suppressLog,
         });
 
         this.currentTransactionId = undefined;

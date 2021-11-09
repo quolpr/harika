@@ -63,58 +63,96 @@ Q['match'] = function (name: string, col: number, val: string) {
 }.bind(null, 'match');
 
 export interface IQueryExecuter {
-  execQuery(query: Q.Statement): Promise<QueryExecResult[]>;
-  execQueries(queries: Q.Statement[]): Promise<QueryExecResult[][]>;
+  execQuery(
+    query: Q.Statement,
+    suppressLog?: boolean,
+  ): Promise<QueryExecResult[]>;
+  execQueries(
+    queries: Q.Statement[],
+    suppressLog?: boolean,
+  ): Promise<QueryExecResult[][]>;
   insertRecords(
     table: string,
     objs: Record<string, any>[],
     replace?: boolean,
+    suppressLog?: boolean,
   ): Promise<void>;
-  getRecords<T extends Record<string, any>>(query: Q.Statement): Promise<T[]>;
-  transaction<T extends any>(func: (t: Transaction) => Promise<T>): Promise<T>;
-  sqlExec(q: string): Promise<QueryExecResult[]>;
+  getRecords<T extends Record<string, any>>(
+    query: Q.Statement,
+    suppressLog?: boolean,
+  ): Promise<T[]>;
+  transaction<T extends any>(
+    func: (t: Transaction) => Promise<T>,
+    suppressLog?: boolean,
+  ): Promise<T>;
+  sqlExec(q: string, suppressLog?: boolean): Promise<QueryExecResult[]>;
 }
 
 export class Transaction implements IQueryExecuter {
   constructor(
     private db: DB,
     public id: string,
-    private commitTransaction: (id: string) => Promise<void>,
-    private rollbackTransaction: (id: string) => Promise<void>,
+    private commitTransaction: () => Promise<void>,
+    private rollbackTransaction: () => Promise<void>,
+    private suppressLog: boolean,
   ) {}
 
-  async sqlExec(q: string) {
-    return this.db.sqlExec(q, this.id);
+  async sqlExec(q: string, suppressLog?: boolean) {
+    return this.db.sqlExec(
+      q,
+      suppressLog !== undefined ? suppressLog : this.suppressLog,
+      this.id,
+    );
   }
 
-  async execQuery(query: Q.Statement) {
-    return this.db.execQuery(query, this.id);
+  async execQuery(query: Q.Statement, suppressLog?: boolean) {
+    return this.db.execQuery(
+      query,
+      suppressLog !== undefined ? suppressLog : this.suppressLog,
+      this.id,
+    );
   }
 
-  async execQueries(queries: Q.Statement[]) {
-    return this.db.execQueries(queries, this.id);
+  async execQueries(queries: Q.Statement[], suppressLog?: boolean) {
+    return this.db.execQueries(
+      queries,
+      suppressLog !== undefined ? suppressLog : this.suppressLog,
+      this.id,
+    );
   }
 
   async commit() {
-    return this.commitTransaction(this.id);
+    return this.commitTransaction();
   }
 
   async rollback() {
-    return this.rollbackTransaction(this.id);
+    return this.rollbackTransaction();
   }
 
   async getRecords<T extends Record<string, any>>(
     query: Q.Statement,
+    suppressLog?: boolean,
   ): Promise<T[]> {
-    return this.db.getRecords(query, this.id);
+    return this.db.getRecords(
+      query,
+      suppressLog !== undefined ? suppressLog : this.suppressLog,
+      this.id,
+    );
   }
 
   async insertRecords(
     table: string,
     objs: Record<string, any>[],
     replace: boolean = false,
+    suppressLog: boolean = false,
   ): Promise<void> {
-    return this.db.insertRecords(table, objs, replace, this);
+    return this.db.insertRecords(
+      table,
+      objs,
+      replace,
+      suppressLog !== undefined ? suppressLog : this.suppressLog,
+      this,
+    );
   }
 
   transaction<T extends any>(func: (t: Transaction) => Promise<T>): Promise<T> {
@@ -152,11 +190,12 @@ export class DB implements IQueryExecuter {
     });
   }
 
-  async sqlExec(q: string, transactionId?: string) {
+  async sqlExec(q: string, suppressLog?: boolean, transactionId?: string) {
     const res = await this.execCommand({
       type: 'execQueries',
       queries: [{ text: q, values: [] }],
       transactionId,
+      suppressLog,
     });
 
     return res[0];
@@ -176,20 +215,30 @@ export class DB implements IQueryExecuter {
     return prom;
   }
 
-  async execQueries(queries: Q.Statement[], transactionId?: string) {
+  async execQueries(
+    queries: Q.Statement[],
+    suppressLog?: boolean,
+    transactionId?: string,
+  ) {
     return this.execCommand({
       type: 'execQueries',
       queries: queries.map((q) => q.toParams()),
       transactionId,
       spawnTransaction: queries.length > 1,
+      suppressLog,
     });
   }
 
-  async execQuery(query: Q.Statement, transactionId?: string) {
+  async execQuery(
+    query: Q.Statement,
+    suppressLog?: boolean,
+    transactionId?: string,
+  ) {
     const res = await this.execCommand({
       type: 'execQueries',
       queries: [query.toParams()],
       transactionId,
+      suppressLog,
     });
 
     return res[0];
@@ -197,8 +246,9 @@ export class DB implements IQueryExecuter {
 
   async transaction<T extends any>(
     func: (t: Transaction) => Promise<T>,
+    suppressLog?: boolean,
   ): Promise<T> {
-    const trans = await this.startTransaction();
+    const trans = await this.startTransaction(Boolean(suppressLog));
 
     try {
       const res = await func(trans);
@@ -259,6 +309,7 @@ export class DB implements IQueryExecuter {
     table: string,
     objs: Record<string, any>[],
     replace: boolean = false,
+    suppressLog: boolean = false,
     e: IQueryExecuter = this,
   ) {
     return e.transaction(async (t) => {
@@ -271,7 +322,7 @@ export class DB implements IQueryExecuter {
           query = query.orReplace();
         }
 
-        await t.execQuery(query);
+        await t.execQuery(query, suppressLog);
       }
     });
   }
@@ -279,9 +330,10 @@ export class DB implements IQueryExecuter {
   // TODO: add mapper to arg for better performance
   async getRecords<T extends Record<string, any>>(
     query: Q.Statement,
+    suppressLog?: boolean,
     transactionId?: string,
   ): Promise<T[]> {
-    const [result] = await this.execQuery(query, transactionId);
+    const [result] = await this.execQuery(query, suppressLog, transactionId);
 
     return (result?.values?.map((res) => {
       let obj: Record<string, any> = {};
@@ -294,33 +346,43 @@ export class DB implements IQueryExecuter {
     }) || []) as T[];
   }
 
-  private async startTransaction(): Promise<Transaction> {
+  private async startTransaction(suppressLog: boolean): Promise<Transaction> {
     const transactionId = uuidv4();
 
     await this.execCommand({
       type: 'startTransaction',
       transactionId,
+      suppressLog,
     });
 
     return new Transaction(
       this,
       transactionId,
-      this.commitTransaction,
-      this.rollbackTransaction,
+      () => this.commitTransaction(transactionId, suppressLog),
+      () => this.rollbackTransaction(transactionId, suppressLog),
+      suppressLog,
     );
   }
 
-  private commitTransaction = async (transactionId: string) => {
+  private commitTransaction = async (
+    transactionId: string,
+    suppressLog: boolean,
+  ) => {
     await this.execCommand({
       type: 'commitTransaction',
       transactionId,
+      suppressLog,
     });
   };
 
-  private rollbackTransaction = async (transactionId: string) => {
+  private rollbackTransaction = async (
+    transactionId: string,
+    suppressLog: boolean,
+  ) => {
     await this.execCommand({
       type: 'rollbackTransaction',
       transactionId,
+      suppressLog,
     });
   };
 }
