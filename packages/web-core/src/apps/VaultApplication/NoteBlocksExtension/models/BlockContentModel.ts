@@ -125,6 +125,7 @@ export class BlockContentModel extends Model({
     });
 
     this.update(astToString(newAst));
+    this.dumpValue();
   }
 
   @computed

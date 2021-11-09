@@ -20,7 +20,7 @@ config :harika, Harika.Repo,
 # watchers to your application. For example, we use it
 # with webpack to recompile .js and .css sources.
 config :harika, HarikaWeb.Endpoint,
-  http: [port: 5000],
+  http: [port: 5001],
   debug_errors: true,
   code_reloader: true,
   check_origin: false,
