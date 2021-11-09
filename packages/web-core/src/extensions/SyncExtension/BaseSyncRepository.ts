@@ -197,6 +197,20 @@ export abstract class BaseSyncRepository<
     });
   }
 
+  bulkApplyChanges(
+    toCreate: Doc[],
+    toUpdate: Doc[],
+    toDelete: string[],
+    ctx: ISyncCtx,
+    e: IQueryExecuter = this.db,
+  ) {
+    return e.transaction(async (t) => {
+      await this.bulkCreate(toCreate, ctx, t);
+      await this.bulkUpdate(toUpdate, ctx, t);
+      await this.bulkDelete(toDelete, ctx, t);
+    });
+  }
+
   async getAll(e: IQueryExecuter = this.db) {
     return (await e.getRecords<Row>(Q.select().from(this.getTableName()))).map(
       (row) => this.toDoc(row),

@@ -160,6 +160,8 @@ class CommandsExecutor {
     const queue = this.queue;
     this.queue = [];
 
+    // console.log(command, [...this.queue]);
+
     // TODO: optimize it. We can await for commit, for example
     queue.forEach((com) => {
       this.runCommand(com);

@@ -141,25 +141,11 @@ export class ToDbSynchronizer {
       source: 'inDomainChanges' as const,
     };
 
-    return Promise.all([
-      result.toCreateModels.length > 0
-        ? repo.bulkCreate(
-            result.toCreateModels.map((model) => mapper(model)),
-            ctx,
-          )
-        : null,
-      result.toUpdateModels.length > 0
-        ? repo.bulkUpdate(
-            result.toUpdateModels.map((model) => mapper(model)),
-            ctx,
-          )
-        : null,
-      result.toDeleteModels.length > 0
-        ? repo.bulkDelete(
-            result.toDeleteModels.map(({ $modelId }) => $modelId),
-            ctx,
-          )
-        : null,
-    ]);
+    return repo.bulkApplyChanges(
+      result.toCreateModels.map((model) => mapper(model)),
+      result.toUpdateModels.map((model) => mapper(model)),
+      result.toDeleteModels.map(({ $modelId }) => $modelId),
+      ctx,
+    );
   };
 }
