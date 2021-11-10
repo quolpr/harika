@@ -13,7 +13,7 @@ import { DatabaseChangeType } from '../serverSynchronizer/types';
 import { getObjectDiff } from '../serverSynchronizer/utils';
 import type { IInternalSyncCtx, ISyncCtx } from '../syncCtx';
 
-export const clientChangesTable = 'clientChanges' as const;
+export const changesTable = 'changes' as const;
 export const syncStatusTable = 'syncStatus' as const;
 export const serverChangesPullsTable = 'serverChangesPulls' as const;
 export const serverChangesTable = 'serverChanges' as const;
@@ -102,7 +102,6 @@ export type IChangesPullsRow = { id: string; serverRevision: number };
 export interface ISyncStatus {
   id: 1;
   lastReceivedRemoteRevision: number | null;
-  lastAppliedRemoteRevision: number | null;
   clientId: string;
 }
 
@@ -151,7 +150,7 @@ export class SyncRepository {
 
       if (ctx.shouldRecordChange) {
         await t.insertRecords(
-          clientChangesTable,
+          changesTable,
           changeEvents.map((ev): ICreateClientChangeRow => {
             return {
               id: ev.id,
@@ -203,7 +202,7 @@ export class SyncRepository {
 
       if (ctx.shouldRecordChange) {
         await t.insertRecords(
-          clientChangesTable,
+          changesTable,
           changeEvents.map((ev): IUpdateClientChangeRow => {
             return {
               id: ev.id,
@@ -248,7 +247,7 @@ export class SyncRepository {
 
       if (ctx.shouldRecordChange) {
         await t.insertRecords(
-          clientChangesTable,
+          changesTable,
           changeEvents.map((ev): IDeleteClientChangeRow => {
             return {
               id: ev.id,
@@ -280,7 +279,7 @@ export class SyncRepository {
     const [[serverResult], [clientResult]] = await e.execQueries(
       [
         Q.select('COUNT(*)').from(serverChangesTable),
-        Q.select('COUNT(*)').from(clientChangesTable),
+        Q.select('COUNT(*)').from(changesTable),
       ],
       true,
     );
@@ -305,18 +304,12 @@ export class SyncRepository {
     ).map((row) => this.serverChangeRowToDoc(row));
   }
 
-  async getClientChanges(e: IQueryExecuter = this.db) {
+  async getClientChanges(e: IQueryExecuter = this.db, clientId: string) {
     return (
       await e.getRecords<IClientChangeRow>(
-        Q.select().from(clientChangesTable).orderBy('rev'),
+        Q.select().from(changesTable).where({ clientId }).orderBy('rev'),
       )
     ).map((row) => this.clientChangeRowToDoc(row));
-  }
-
-  async bulkDeleteClientChanges(ids: string[], e: IQueryExecuter = this.db) {
-    await e.execQuery(
-      Q.deleteFrom().from(clientChangesTable).where(Q.in('id', ids)),
-    );
   }
 
   async deletePulls(ids: string[], e: IQueryExecuter) {

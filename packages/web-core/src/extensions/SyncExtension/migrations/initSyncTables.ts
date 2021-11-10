@@ -2,7 +2,7 @@ import {
   syncStatusTable,
   serverChangesPullsTable,
   serverChangesTable,
-  clientChangesTable,
+  changesTable,
 } from '../repositories/SyncRepository';
 import { IMigration } from '../../DbExtension/types';
 import { IQueryExecuter } from '../../DbExtension/DB';
@@ -11,8 +11,7 @@ const up = async (db: IQueryExecuter) => {
   await db.sqlExec(`
     CREATE TABLE IF NOT EXISTS ${syncStatusTable} (
       id varchar(20) PRIMARY KEY,
-      lastReceivedRemoteRevision INTEGER,
-      lastAppliedRemoteRevision INTEGER,
+      lastReceivedRemoteRevision varchar(36),
       clientId varchar(36) NOT NULL
     )
   `);
@@ -20,7 +19,7 @@ const up = async (db: IQueryExecuter) => {
   await db.sqlExec(`
     CREATE TABLE IF NOT EXISTS ${serverChangesPullsTable} (
       id varchar(36) PRIMARY KEY,
-      serverRevision INTEGER NOT NULL
+      serverRevision varchar(36) NOT NULL
     );
   `);
 
@@ -29,7 +28,6 @@ const up = async (db: IQueryExecuter) => {
       id varchar(36) PRIMARY KEY,
 
       pullId varchar(36) NOT NULL,
-      rev INTEGER NOT NULL,
 
       type varchar(10) NOT NULL,
       inTable varchar(10) NOT NULL,
@@ -37,6 +35,8 @@ const up = async (db: IQueryExecuter) => {
       obj TEXT,
       changeFrom TEXT,
       changeTo TEXT,
+      clientId varchar(36) NOT NULL,
+      timestamp TEXT,
 
       FOREIGN KEY(pullId) REFERENCES ${serverChangesPullsTable}(id) ON DELETE CASCADE
     );
@@ -45,13 +45,7 @@ const up = async (db: IQueryExecuter) => {
   `);
 
   await db.sqlExec(`
-    CREATE TABLE IF NOT EXISTS incrementTable (value INT, tableName TEXT);
-    CREATE UNIQUE INDEX IF NOT EXISTS idx_incrementTable ON incrementTable(tableName);
-    INSERT OR IGNORE INTO incrementTable VALUES (0, '${clientChangesTable}');
-  `);
-
-  await db.sqlExec(`
-    CREATE TABLE IF NOT EXISTS ${clientChangesTable} (
+    CREATE TABLE IF NOT EXISTS ${changesTable} (
       id varchar(36) PRIMARY KEY,
       type varchar(10) NOT NULL,
       inTable varchar(10) NOT NULL,
@@ -59,21 +53,9 @@ const up = async (db: IQueryExecuter) => {
       obj TEXT NOT NULL,
       changeFrom TEXT,
       changeTo TEXT,
-      rev INTEGER NOT NULL DEFAULT 0
+      timestamp TEXT,
+      clientId varchar(36) NOT NULL,
     );
-
-    CREATE TRIGGER IF NOT EXISTS setRev_${clientChangesTable} AFTER INSERT ON ${clientChangesTable} BEGIN
-        UPDATE  incrementTable
-        SET     value = value + 1
-        WHERE   tableName = '${clientChangesTable}';
-
-        UPDATE  ${clientChangesTable}
-        SET     rev = (
-                    SELECT value
-                    FROM incrementTable
-                    WHERE tableName = '${clientChangesTable}')
-        WHERE   id = new.id;
-    END;
   `);
 };
 
