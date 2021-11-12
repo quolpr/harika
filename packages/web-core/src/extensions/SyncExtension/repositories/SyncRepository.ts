@@ -101,8 +101,8 @@ export type IChangesPullsRow = { id: string; serverRevision: number };
 
 export interface ISyncStatus {
   id: 1;
-  lastReceivedRemoteRevision: number | null;
   clientId: string;
+  currentClock: string;
 }
 
 // TODO: emit events after transaction finish

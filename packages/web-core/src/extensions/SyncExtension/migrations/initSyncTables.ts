@@ -12,14 +12,15 @@ const up = async (db: IQueryExecuter) => {
     CREATE TABLE IF NOT EXISTS ${syncStatusTable} (
       id varchar(20) PRIMARY KEY,
       lastReceivedRemoteRevision varchar(36),
-      clientId varchar(36) NOT NULL
+      clientId varchar(36) NOT NULL,
+      currentClock varchar(20) NOT NULL
     )
   `);
 
   await db.sqlExec(`
     CREATE TABLE IF NOT EXISTS ${serverChangesPullsTable} (
       id varchar(36) PRIMARY KEY,
-      serverRevision varchar(36) NOT NULL
+      oldestClock varchar(20) NOT NULL
     );
   `);
 
@@ -36,7 +37,7 @@ const up = async (db: IQueryExecuter) => {
       changeFrom TEXT,
       changeTo TEXT,
       clientId varchar(36) NOT NULL,
-      timestamp TEXT,
+      clock varchar(20),
 
       FOREIGN KEY(pullId) REFERENCES ${serverChangesPullsTable}(id) ON DELETE CASCADE
     );
@@ -53,7 +54,7 @@ const up = async (db: IQueryExecuter) => {
       obj TEXT NOT NULL,
       changeFrom TEXT,
       changeTo TEXT,
-      timestamp TEXT,
+      clock varchar(20),
       clientId varchar(36) NOT NULL,
     );
   `);
