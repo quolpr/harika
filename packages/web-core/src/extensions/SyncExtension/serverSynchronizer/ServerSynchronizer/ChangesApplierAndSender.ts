@@ -8,6 +8,7 @@ import {
   of,
   Subject,
   switchMap,
+  tap,
 } from 'rxjs';
 import { omit } from 'lodash-es';
 import type { ApplyNewChangesFromClientCommand } from '../types';
@@ -65,7 +66,7 @@ export class ChangesApplierAndSender {
           )
           .pipe(map((res) => ({ res, clientChanges }))),
       ),
-      switchMap(({ res, clientChanges }) => {
+      tap(({ res }) => {
         if (!res) return of(null);
 
         if (res.status === 'locked') {
@@ -80,10 +81,6 @@ export class ChangesApplierAndSender {
 
           return of(null);
         }
-
-        return this.syncRepo.bulkDeleteClientChanges(
-          clientChanges.map(({ id }) => id),
-        );
       }),
     );
   };

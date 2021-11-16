@@ -11,16 +11,16 @@ const up = async (db: IQueryExecuter) => {
   await db.sqlExec(`
     CREATE TABLE IF NOT EXISTS ${syncStatusTable} (
       id varchar(20) PRIMARY KEY,
-      lastReceivedRemoteRevision varchar(36),
       clientId varchar(36) NOT NULL,
-      currentClock varchar(20) NOT NULL
+      currentClock varchar(20) NOT NULL,
+      lastReceivedAtServerTime integer NOT NULL
     )
   `);
 
   await db.sqlExec(`
     CREATE TABLE IF NOT EXISTS ${serverChangesPullsTable} (
       id varchar(36) PRIMARY KEY,
-      oldestClock varchar(20) NOT NULL
+      receivedAtServerTime integer NOT NULL,
     );
   `);
 

@@ -21,7 +21,6 @@ export interface IUpdateChange<
   type: DatabaseChangeType.Update;
   table: TableName;
   key: string;
-  obj?: Obj; // new object
   from: Partial<Obj>;
   to: Partial<Obj>;
 }
@@ -36,7 +35,6 @@ export interface IDeleteChange<
   type: DatabaseChangeType.Delete;
   table: TableName;
   key: string;
-  obj: Obj;
 }
 
 export type IDatabaseChange<
@@ -89,13 +87,13 @@ export type GetChangesClientCommand = {
 };
 
 export interface GetChangesRequest {
-  fromRevision: null | number;
+  fromServerTime: number;
   includeSelf: false;
 }
 
 export interface GetChangesResponse {
-  changes: (IDatabaseChange & { rev: number })[];
-  currentRevision: number;
+  changes: (IDatabaseChange & { clock: string })[];
+  lastServerTime: number;
 }
 
 export type ClientCommands =

@@ -61,7 +61,7 @@ export class ServerChangesReceiver {
   private getChanges = (syncStatus: ISyncStatus) => {
     return this.commandExecuter
       .send<GetChangesClientCommand>(CommandTypesFromClient.GetChanges, {
-        fromRevision: syncStatus.lastReceivedRemoteRevision,
+        fromServerTime: syncStatus.lastReceivedAtServerTime,
         includeSelf: false,
       })
       .pipe(map((res) => ({ res, syncStatus })));
@@ -70,11 +70,11 @@ export class ServerChangesReceiver {
   private storeReceivedChanges = async (res: GetChangesResponse) => {
     const pullId = v4();
 
-    if (res.currentRevision !== null) {
+    if (res.lastServerTime !== null) {
       await this.syncRepo.createPull(
         {
           id: pullId,
-          serverRevision: res.currentRevision,
+          receivedAtServerTime: res.lastServerTime,
         },
         res.changes.map((ch) => ({ ...ch, pullId })),
       );

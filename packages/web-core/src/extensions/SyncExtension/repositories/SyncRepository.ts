@@ -12,6 +12,7 @@ import type {
 import { DatabaseChangeType } from '../serverSynchronizer/types';
 import { getObjectDiff } from '../serverSynchronizer/utils';
 import type { IInternalSyncCtx, ISyncCtx } from '../syncCtx';
+import { ClockService } from '../services/ClockService';
 
 export const changesTable = 'changes' as const;
 export const syncStatusTable = 'syncStatus' as const;
@@ -26,13 +27,13 @@ type IChangeExtended = {
 export type IBaseClientChangeRow = {
   id: string;
   key: string;
-  obj: string;
   inTable: string;
-  rev: number;
+  clock: string;
 };
 
 export type ICreateClientChangeRow = IBaseClientChangeRow & {
   type: DatabaseChangeType.Create;
+  obj: string;
   changeFrom: null;
   changeTo: null;
 };
@@ -54,11 +55,11 @@ export type IClientChangeRow =
   | IUpdateClientChangeRow
   | IDeleteClientChangeRow;
 
-export type ICreateClientChangeDoc = ICreateChange & { rev: number };
-export type IUpdateClientChangeDoc = Required<IUpdateChange, 'obj'> & {
-  rev: number;
+export type ICreateClientChangeDoc = ICreateChange & { clock: string };
+export type IUpdateClientChangeDoc = IUpdateChange & {
+  clock: string;
 };
-export type IDeleteClientChangeDoc = IDeleteChange & { rev: number };
+export type IDeleteClientChangeDoc = IDeleteChange & { clock: string };
 
 export type IClientChangeDoc =
   | ICreateClientChangeDoc
@@ -66,7 +67,8 @@ export type IClientChangeDoc =
   | IDeleteClientChangeDoc;
 
 export type ITransmittedCreateChange = ICreateChange & IChangeExtended;
-export type ITransmittedUpdateChange = IUpdateChange & IChangeExtended;
+export type ITransmittedUpdateChange = IUpdateChange &
+  IChangeExtended & { obj: Record<string, unknown> };
 export type ITransmittedDeleteChange = IDeleteChange & IChangeExtended;
 
 export type ITransmittedChange =
@@ -87,7 +89,7 @@ export type IServerChangeRow = (
   | IDeleteServerChangeRow
 ) & {
   pullId: string;
-  rev: number;
+  clock: string;
 };
 export type IServerChangeDoc = (
   | ICreateChange
@@ -95,15 +97,22 @@ export type IServerChangeDoc = (
   | IDeleteChange
 ) & {
   pullId: string;
-  rev: number;
+  clock: string;
 };
-export type IChangesPullsRow = { id: string; serverRevision: number };
+export type IChangesPullsRow = { id: string; receivedAtServerTime: number };
 
 export interface ISyncStatus {
   id: 1;
   clientId: string;
   currentClock: string;
+  // We will get new changes from this time
+  lastReceivedAtServerTime: number;
+  lastSendAtClock: string;
 }
+
+const lastClockFromChanges = (changes: IServerChangeDoc[]) => {
+  return '';
+};
 
 // TODO: emit events after transaction finish
 @injectable()
@@ -111,7 +120,10 @@ export class SyncRepository {
   private onChangeCallback: ((ch: ITransmittedChange[]) => void) | undefined;
   private onNewPullCallback: (() => void) | undefined;
 
-  constructor(@inject(DB) private db: DB) {}
+  constructor(
+    @inject(DB) private db: DB,
+    @inject(ClockService) private clockService: ClockService,
+  ) {}
 
   onChange(callback: (ch: ITransmittedChange[]) => void) {
     this.onChangeCallback = callback;
@@ -142,25 +154,27 @@ export class SyncRepository {
           type: DatabaseChangeType.Create,
           table,
           key: data.id as string,
-          obj: data,
           windowId: ctx.windowId,
           source: ctx.source,
+          obj: data,
         };
       });
 
       if (ctx.shouldRecordChange) {
+        const clocks = await this.clockService.batchNext(changeEvents.length);
+
         await t.insertRecords(
           changesTable,
-          changeEvents.map((ev): ICreateClientChangeRow => {
+          changeEvents.map((ev, i): ICreateClientChangeRow => {
             return {
               id: ev.id,
               type: DatabaseChangeType.Create,
               inTable: table,
               key: ev.key,
-              obj: JSON.stringify(ev.obj),
-              rev: 0,
+              clock: clocks[i],
               changeFrom: null,
               changeTo: null,
+              obj: JSON.stringify(ev.obj),
             };
           }),
         );
@@ -192,18 +206,20 @@ export class SyncRepository {
           type: DatabaseChangeType.Update,
           table,
           key: ch.from.id as string,
-          obj: ch.to,
           from: diff.from,
           to: diff.to,
           windowId: ctx.windowId,
           source: ctx.source,
+          obj: ch.to,
         };
       });
 
       if (ctx.shouldRecordChange) {
+        const clocks = await this.clockService.batchNext(changeEvents.length);
+
         await t.insertRecords(
           changesTable,
-          changeEvents.map((ev): IUpdateClientChangeRow => {
+          changeEvents.map((ev, i): IUpdateClientChangeRow => {
             return {
               id: ev.id,
               type: DatabaseChangeType.Update,
@@ -211,8 +227,7 @@ export class SyncRepository {
               key: ev.key,
               changeFrom: JSON.stringify(ev.from),
               changeTo: JSON.stringify(ev.to),
-              obj: JSON.stringify(ev.obj),
-              rev: 0,
+              clock: clocks[i],
             };
           }),
         );
@@ -239,25 +254,25 @@ export class SyncRepository {
           type: DatabaseChangeType.Delete,
           table,
           key: obj.id as string,
-          obj,
           windowId: ctx.windowId,
           source: ctx.source,
         };
       });
 
       if (ctx.shouldRecordChange) {
+        const clocks = await this.clockService.batchNext(changeEvents.length);
+
         await t.insertRecords(
           changesTable,
-          changeEvents.map((ev): IDeleteClientChangeRow => {
+          changeEvents.map((ev, i): IDeleteClientChangeRow => {
             return {
               id: ev.id,
               type: DatabaseChangeType.Delete,
               inTable: table,
               key: ev.key,
-              obj: JSON.stringify(ev.obj),
-              rev: 0,
               changeFrom: null,
               changeTo: null,
+              clock: clocks[i],
             };
           }),
         );
@@ -299,15 +314,15 @@ export class SyncRepository {
         Q.select()
           .from(serverChangesTable)
           .where(Q.in('pullId', pullIds))
-          .orderBy('rev'),
+          .orderBy('clock'),
       )
     ).map((row) => this.serverChangeRowToDoc(row));
   }
 
-  async getClientChanges(e: IQueryExecuter = this.db, clientId: string) {
+  async getClientChanges(clientId: string, e: IQueryExecuter = this.db) {
     return (
       await e.getRecords<IClientChangeRow>(
-        Q.select().from(changesTable).where({ clientId }).orderBy('rev'),
+        Q.select().from(changesTable).where({ clientId }).orderBy('clock'),
       )
     ).map((row) => this.clientChangeRowToDoc(row));
   }
@@ -336,12 +351,10 @@ export class SyncRepository {
         await t.insertRecords(serverChangesTable, rows);
       }
 
-      await this.updateSyncStatus(
-        {
-          lastReceivedRemoteRevision: pull.serverRevision,
-        },
-        t,
-      );
+      const lastClock = lastClockFromChanges(changes);
+      if (lastClock) {
+        await this.clockService.updateClock(lastClock);
+      }
     });
 
     this.onNewPullCallback?.();
@@ -357,12 +370,12 @@ export class SyncRepository {
     if (!status) {
       status = {
         id: 1,
-        lastReceivedRemoteRevision: null,
-        lastAppliedRemoteRevision: null,
+        currentClock: await this.clockService.initNew(),
+        lastReceivedAtServerTime: 0,
         clientId: uuidv4(),
       };
 
-      e.insertRecords(syncStatusTable, [status]);
+      await e.insertRecords(syncStatusTable, [status]);
     }
 
     return status;
@@ -377,7 +390,7 @@ export class SyncRepository {
       id: ch.id,
       key: ch.key,
       table: ch.inTable,
-      rev: ch.rev,
+      clock: ch.clock,
     };
 
     if (ch.type === DatabaseChangeType.Create) {
@@ -390,7 +403,6 @@ export class SyncRepository {
       return {
         ...base,
         type: DatabaseChangeType.Update,
-        obj: JSON.parse(ch.obj),
         from: JSON.parse(ch.changeFrom),
         to: JSON.parse(ch.changeTo),
       };
@@ -398,7 +410,6 @@ export class SyncRepository {
       return {
         ...base,
         type: DatabaseChangeType.Delete,
-        obj: JSON.parse(ch.obj),
       };
     }
   }
@@ -409,7 +420,7 @@ export class SyncRepository {
       key: ch.key,
       table: ch.inTable,
       pullId: ch.pullId,
-      rev: ch.rev,
+      clock: ch.clock,
     };
 
     if (ch.type === DatabaseChangeType.Create) {
@@ -429,7 +440,6 @@ export class SyncRepository {
       return {
         ...base,
         type: DatabaseChangeType.Delete,
-        obj: JSON.parse(ch.obj),
       };
     }
   }
@@ -440,7 +450,7 @@ export class SyncRepository {
       key: ch.key,
       inTable: ch.table,
       pullId: ch.pullId,
-      rev: ch.rev,
+      clock: ch.clock,
     };
 
     if (ch.type === DatabaseChangeType.Create) {
@@ -457,13 +467,11 @@ export class SyncRepository {
         type: DatabaseChangeType.Update,
         changeFrom: JSON.stringify(ch.from),
         changeTo: JSON.stringify(ch.to),
-        obj: null,
       };
     } else {
       return {
         ...base,
         type: DatabaseChangeType.Delete,
-        obj: JSON.stringify(ch.obj),
         changeFrom: null,
         changeTo: null,
       };
