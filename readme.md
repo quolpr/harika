@@ -1,4 +1,4 @@
-# Harika
+# Harika [in development!]
 
 Harika is an offline-first, performance-focused note taking app for organizing your knowledge database.
 
