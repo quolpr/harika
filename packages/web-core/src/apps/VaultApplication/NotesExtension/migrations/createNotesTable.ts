@@ -17,7 +17,7 @@ const up = async (db: IQueryExecuter) => {
   `);
 
   await db.sqlExec(`
-    CREATE VIRTUAL TABLE IF NOT EXISTS ${notesFTSTable} USING fts5(id UNINDEXED, title, tokenize="trigram");
+    CREATE VIRTUAL TABLE IF NOT EXISTS ${notesFTSTable} USING fts5(id UNINDEXED, title);
   `);
 };
 
