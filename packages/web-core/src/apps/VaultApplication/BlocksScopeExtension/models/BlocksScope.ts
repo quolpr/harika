@@ -261,7 +261,7 @@ export class BlocksScope extends Model({
         },
       );
 
-      return dispose(false);
+      return () => dispose(false);
     });
 
     const subs = of(null)
