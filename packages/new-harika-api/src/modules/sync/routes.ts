@@ -1,7 +1,19 @@
 import { FastifyPluginCallback } from 'fastify';
 import { createChangesSchema } from './createUserSchema';
 import { Server, Socket } from 'socket.io';
-import { Observable, switchMap, tap } from 'rxjs';
+import {
+  BehaviorSubject,
+  catchError,
+  map,
+  mergeMap,
+  Observable,
+  of,
+  share,
+  Subject,
+  switchMap,
+  takeUntil,
+  tap,
+} from 'rxjs';
 import { pg } from '../../plugins/db';
 
 type IRequestToServer = {};
@@ -62,15 +74,37 @@ export enum DatabaseChangeType {
 }
 
 export enum CommandTypesFromClient {
-  ApplyNewChanges = 'apply_new_changes',
-  GetChanges = 'get_changes',
+  ApplyNewChanges = 'applyNewChanges',
+  GetChanges = 'getChanges',
+  Auth = 'auth',
 }
+
+type InternalErrorResponse = { status: 'error'; errorType: 'internalError' };
+type NotAuthedResponse = { status: 'error'; errorType: 'notAuted' };
+
+type ErrorResponse = InternalErrorResponse | NotAuthedResponse;
+
+export type AuthClientCommand = {
+  type: CommandTypesFromClient.Auth;
+
+  request: AuthClientRequest;
+  response: AuthClientResponse;
+};
+
+export interface AuthClientRequest {
+  authToken: string;
+  dbName: string;
+}
+
+export type AuthClientResponse = {
+  status: 'success' | 'failed';
+};
 
 export type ApplyNewChangesFromClientCommand = {
   type: CommandTypesFromClient.ApplyNewChanges;
 
   request: ApplyNewChangesFromClientRequest;
-  response: ApplyNewChangesFromClientResponse;
+  response: ApplyNewChangesFromClientResponse | ErrorResponse;
 };
 
 export interface ApplyNewChangesFromClientRequest {
@@ -85,14 +119,14 @@ export type ApplyNewChangesFromClientResponse =
       newRev: number;
     }
   | {
-      status: 'stale_changes' | 'locked';
+      status: 'staleChanges' | 'locked';
     };
 
 export type GetChangesClientCommand = {
   type: CommandTypesFromClient.GetChanges;
 
   request: GetChangesRequest;
-  response: GetChangesResponse;
+  response: GetChangesResponse | ErrorResponse;
 };
 
 export interface GetChangesRequest {
@@ -107,7 +141,8 @@ export interface GetChangesResponse {
 
 export type ClientCommands =
   | GetChangesClientCommand
-  | ApplyNewChangesFromClientCommand;
+  | ApplyNewChangesFromClientCommand
+  | AuthClientCommand;
 
 export type ClientCommandRequests =
   | GetChangesRequest
@@ -117,54 +152,99 @@ export type ClientCommandResponses =
   | GetChangesResponse
   | ApplyNewChangesFromClientResponse;
 
-function listenMessage<T extends ClientCommands>(type: T['type']) {
-  return function (source: Observable<Socket>) {
-    return source.pipe(
-      switchMap((socket) => {
-        return new Observable<[T['request'], (arg: T['response']) => void]>(
-          (obs) => {
-            socket.on(type as string, async (msg, callback) => {
-              obs.next([msg, callback]);
-            });
+function handleMessage<T extends ClientCommands>(
+  socket: Socket,
+  type: T['type'],
+  func: (req: T['request']) => Observable<T['response']>
+) {
+  return of(socket).pipe(
+    switchMap((socket) => {
+      return new Observable<[T['request'], (arg: T['response']) => void]>(
+        (obs) => {
+          socket.on(type as string, async (msg, callback) => {
+            console.log({ msg, callback });
+            obs.next([msg, callback]);
+          });
+        }
+      );
+    }),
+    mergeMap(([msg, callback]) => {
+      return func(msg).pipe(
+        tap((res) => {
+          callback(res);
+        }),
+        catchError((err) => {
+          if (err instanceof NotAuthedError) {
+            callback({ status: 'error', errorType: 'notAuted' });
+          } else {
+            callback({ status: 'error', errorType: 'internalError' });
           }
-        );
-      })
-    );
-  };
+
+          return of();
+        })
+      );
+    })
+  );
 }
+
+class NotAuthedError extends Error {}
 
 export const syncHandler: FastifyPluginCallback = (server, options, next) => {
   const io = new Server(server.server);
 
-  const socket$ = new Observable<Socket>((obs) => {
-    const conn = io.on('connection', function (socket) {
-      obs.next(socket);
+  io.on('connection', function (socket) {
+    const disconnect$ = new Subject();
 
-      socket.on('disconnect', () => {
-        obs.complete();
-      });
+    const authInfo$ = new BehaviorSubject<
+      undefined | { dbName: string; userId: string }
+    >(undefined);
+
+    const onlyAuthed = () => {
+      return function <T>(source: Observable<T>): Observable<T> {
+        return authInfo$.pipe(
+          switchMap((authInfo) => {
+            if (!authInfo) {
+              throw new NotAuthedError();
+            } else {
+              return source;
+            }
+          })
+        );
+      };
+    };
+
+    handleMessage<AuthClientCommand>(
+      socket,
+      CommandTypesFromClient.Auth,
+      (req) => {
+        authInfo$.next({ dbName: req.dbName, userId: '123' });
+
+        return of({ status: 'success' });
+      }
+    )
+      .pipe(takeUntil(disconnect$))
+      .subscribe();
+
+    handleMessage<GetChangesClientCommand>(
+      socket,
+      CommandTypesFromClient.GetChanges,
+      (req) => {
+        return of(null).pipe(
+          onlyAuthed(),
+          map(() => ({
+            changes: [],
+            lastServerTime: 0,
+          }))
+        );
+      }
+    )
+      .pipe(takeUntil(disconnect$))
+      .subscribe();
+
+    socket.on('disconnect', () => {
+      disconnect$.next(true);
     });
   });
-
-  socket$
-    .pipe(
-      listenMessage<GetChangesClientCommand>(CommandTypesFromClient.GetChanges),
-      tap(([resp, callback]) => {
-        console.log({ resp });
-        callback('hey!' as any);
-      })
-    )
-    .subscribe(
-      (s) => {
-        console.log(s);
-      },
-      () => {
-        console.log('error');
-      },
-      () => {
-        console.log('unsub');
-      }
-    );
 
   server.get('/', async (req, res) => {
     await createChangesSchema(req.db, 'db_user3');

@@ -1,3 +1,4 @@
+import './loadConfig';
 import { Knex } from 'knex';
 import createServer from './server';
 
@@ -7,12 +8,11 @@ declare module 'fastify' {
   }
 }
 
-const PORT = process.env.PORT || '5100';
+const PORT = process.env.APP_PORT || '5000';
 const server = createServer();
 
 server.listen(+PORT, '0.0.0.0', (err, address) => {
   if (err) throw err;
-  console.log(`server listening on ${address}`);
 });
 
-module.exports = server;
+export { server };

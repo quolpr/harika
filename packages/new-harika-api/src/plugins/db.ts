@@ -5,24 +5,10 @@ import knex from 'knex';
 export const pg = knex({
   client: 'pg',
   connection: {
-    host: '127.0.0.1',
-    user: 'postgres',
-    password: 'postgres',
-    database: 'harika_dev',
-  },
-  log: {
-    // warn(message) {
-    //   console.log(message);
-    // },
-    // error(message) {
-    //   console.log(message);
-    // },
-    // deprecate(message) {
-    //   console.log(message);
-    // },
-    // debug(message) {
-    //   console.log(message);
-    // },
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
   },
 });
 

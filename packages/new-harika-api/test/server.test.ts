@@ -1,29 +1,14 @@
-import { createServer } from 'http';
 import Client from 'socket.io-client';
-import { Server } from 'socket.io';
-import { assert } from 'chai';
-
-// beforeEach(async () => {
-//   server = await require('../src/index');
-//   await server.ready();
-// });
-
-// afterAll(() => server.close());
+import { FastifyInstance } from 'fastify';
 
 describe('my awesome project', () => {
-  let server, clientSocket;
+  let server: FastifyInstance, clientSocket: SocketIOClient.Socket;
 
   beforeEach(async (done) => {
-    server = await require('../src/index');
+    server = (await require('../src/index')).server;
     await server.ready();
-
-    clientSocket = Client(`http://localhost:5100`);
-
+    clientSocket = Client(`http://localhost:${process.env.APP_PORT}`);
     done();
-    // server.server.listen(() => {
-
-    //   clientSocket.on('connect', done);
-    // });
   });
 
   afterAll(() => {
@@ -31,8 +16,21 @@ describe('my awesome project', () => {
     server.close();
   });
 
-  test('should work', (done) => {
-    clientSocket.emit('message', 'test', (resp) => {
+  // test('getChanges should work', (done) => {
+  //   clientSocket.emit('getChanges', 'test', (resp) => {
+  //     console.log({ resp });
+  //     done();
+  //   });
+  // });
+
+  test('auth should work', async (done) => {
+    await new Promise<void>((resolve) => {
+      clientSocket.emit('auth', 'test', (resp) => {
+        resolve();
+      });
+    });
+
+    clientSocket.emit('getChanges', 'test', (resp) => {
       console.log({ resp });
       done();
     });

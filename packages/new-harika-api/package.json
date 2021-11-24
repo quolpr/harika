@@ -6,7 +6,7 @@
   "scripts": {
     "start": "nodemon --watch './src/**/*.ts' --exec ts-node ./src/index.ts",
     "build": "tsc",
-    "test": "jest --coverage",
+    "test": "NODE_ENV=test jest --coverage",
     "test:watch": "npm run test -- --watchAll",
     "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx}\"",
     "lint": "eslint \"src/**/*.{tsx,ts}\""
@@ -14,7 +14,7 @@
   "keywords": [],
   "author": "",
   "dependencies": {
-    "dotenv": "^8.2.0",
+    "dotenv": "^10.0.0",
     "fastify": "^3.14.2",
     "fastify-cors": "^5.2.0",
     "fastify-oas": "^3.0.8",
