@@ -125,3 +125,5 @@ node_modules/
 **/priv/static/
 
 .DS_Store
+
+coverage

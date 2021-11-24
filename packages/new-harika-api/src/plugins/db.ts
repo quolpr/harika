@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import fp from 'fastify-plugin';
 import knex from 'knex';
 
-const pg = knex({
+export const pg = knex({
   client: 'pg',
   connection: {
     host: '127.0.0.1',
