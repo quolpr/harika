@@ -68,7 +68,7 @@ export const VaultHeader = observer(
 
         if (result.status === 'ok') {
           if ((ev.nativeEvent as MouseEvent).shiftKey && primaryNoteId) {
-            history.replace(
+            history.push(
               generateStackedNotePath(
                 location.search,
                 vaultApp.applicationId,
@@ -77,7 +77,7 @@ export const VaultHeader = observer(
               ),
             );
           } else {
-            history.replace(
+            history.push(
               paths.vaultNotePath({
                 vaultId: vaultApp.applicationId,
                 noteId: result.data.$modelId,

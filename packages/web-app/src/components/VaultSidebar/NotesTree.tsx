@@ -12,6 +12,7 @@ import {
   useNotesTreeRegistry,
   useVaultService,
 } from '../../hooks/vaultAppHooks';
+import { useHandleClick } from '../../hooks/useNoteClick';
 
 const treeClass = cn('notes-tree');
 const sidebarItemClass = cn('sidebar-item');
@@ -67,6 +68,17 @@ const NoteNode = observer(
       [onNavClick, vaultService, node, history, vaultApp.applicationId],
     );
 
+    const handleClick = useHandleClick(
+      vaultApp.applicationId,
+      primaryNoteId,
+      node.noteId,
+    );
+
+    const handleLinkClick = useCallback((e: React.MouseEvent) => {
+      handleClick(e);
+      onNavClick(e);
+    }, []);
+
     return (
       <div className={treeClass('node')}>
         <div
@@ -96,7 +108,7 @@ const NoteNode = observer(
                 vaultId: vaultApp.applicationId,
                 noteId: node.noteId,
               })}
-              onClick={onNavClick}
+              onClick={handleLinkClick}
               className={treeClass('node-title')}
             >
               {node.title}
