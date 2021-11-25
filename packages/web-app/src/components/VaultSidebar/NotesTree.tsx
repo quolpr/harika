@@ -13,6 +13,7 @@ import {
   useVaultService,
 } from '../../hooks/vaultAppHooks';
 import { useHandleClick } from '../../hooks/useNoteClick';
+import { CustomScrollbar } from '../CustomScrollbar';
 
 const treeClass = cn('notes-tree');
 const sidebarItemClass = cn('sidebar-item');
@@ -74,10 +75,13 @@ const NoteNode = observer(
       node.noteId,
     );
 
-    const handleLinkClick = useCallback((e: React.MouseEvent) => {
-      handleClick(e);
-      onNavClick(e);
-    }, []);
+    const handleLinkClick = useCallback(
+      (e: React.MouseEvent) => {
+        handleClick(e);
+        onNavClick(e);
+      },
+      [handleClick, onNavClick],
+    );
 
     return (
       <div className={treeClass('node')}>

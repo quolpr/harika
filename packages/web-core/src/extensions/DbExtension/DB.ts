@@ -6,6 +6,7 @@ import Q from 'sql-bricks';
 import {
   filter,
   first,
+  interval,
   lastValueFrom,
   map,
   Observable,
@@ -286,7 +287,7 @@ export class DB implements IQueryExecuter {
   private execCommand(command: DistributiveOmit<ICommand, 'commandId'>) {
     const id = uuidv4();
 
-    const prom = lastValueFrom(
+    const waitResponse = () =>
       this.messagesFromWorker$.pipe(
         filter((ev) => ev.type === 'response' && ev.data.commandId === id),
         first(),
@@ -316,13 +317,22 @@ export class DB implements IQueryExecuter {
                 ),
             ),
         }),
+      );
+
+    // TODO: race condition may happen here.
+    // When response received but we didn't start listening it
+    // Not sure how to fix it with RxJS
+    const prom = lastValueFrom(
+      of(null).pipe(
+        tap(() => {
+          this.messagesToWorker$.next({
+            type: 'command',
+            data: { ...command, commandId: id },
+          });
+        }),
+        switchMap(() => waitResponse()),
       ),
     );
-
-    this.messagesToWorker$.next({
-      type: 'command',
-      data: { ...command, commandId: id },
-    });
 
     return prom;
   }

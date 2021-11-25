@@ -22,6 +22,7 @@ import { UserApplication, VaultApplication } from '@harika/web-core';
 import { CurrentVaultAppContext } from '../../hooks/vaultAppHooks';
 import { useLoadUserAppCallback } from '../../hooks/useUserApp';
 import { useSyncConfig } from '../../hooks/useSyncConfig';
+import { CustomScrollbar } from '../CustomScrollbar';
 
 const layoutClass = bem('vault-layout');
 

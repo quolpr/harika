@@ -21,6 +21,7 @@ import {
   useNotesService,
   useVaultService,
 } from '../../hooks/vaultAppHooks';
+import { CustomScrollbar } from '../CustomScrollbar';
 
 const sidebarClass = cn('sidebar');
 
@@ -115,66 +116,74 @@ export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
             {vaultName || 'Loading...'}
           </div>
         </div>
-        <div className={sidebarClass('menu-container')}>
-          <div className={sidebarClass('menu')}>
-            <Link
-              className={sidebarClass('menu-link sidebar-item')}
-              to={paths.vaultDailyPath({ vaultId: vaultApp.applicationId })}
-              onClick={onDailyNoteClick}
-            >
-              <div className={sidebarClass('menu-link-icon')}>
-                <DailyNoteIcon />
-              </div>
+        <CustomScrollbar>
+          <div className={sidebarClass('menu-container')}>
+            <div className={sidebarClass('menu')}>
+              <Link
+                className={sidebarClass('menu-link sidebar-item')}
+                to={paths.vaultDailyPath({ vaultId: vaultApp.applicationId })}
+                onClick={onDailyNoteClick}
+              >
+                <div className={sidebarClass('menu-link-icon')}>
+                  <DailyNoteIcon />
+                </div>
 
-              <div className={sidebarClass('menu-link-title')}>Daily Note</div>
-            </Link>
+                <div className={sidebarClass('menu-link-title')}>
+                  Daily Note
+                </div>
+              </Link>
 
-            <Link
-              className={sidebarClass('menu-link sidebar-item')}
-              to={paths.vaultNoteIndexPath({ vaultId: vaultApp.applicationId })}
-              onClick={onNavClick}
-            >
-              <div className={sidebarClass('menu-link-icon')}>
-                <NotesIcon />
-              </div>
+              <Link
+                className={sidebarClass('menu-link sidebar-item')}
+                to={paths.vaultNoteIndexPath({
+                  vaultId: vaultApp.applicationId,
+                })}
+                onClick={onNavClick}
+              >
+                <div className={sidebarClass('menu-link-icon')}>
+                  <NotesIcon />
+                </div>
 
-              <div className={sidebarClass('menu-link-title')}>All Notes</div>
-            </Link>
+                <div className={sidebarClass('menu-link-title')}>All Notes</div>
+              </Link>
 
-            <button
-              className={sidebarClass('menu-link sidebar-item')}
-              onClick={handleDownloadClick}
-            >
-              <div className={sidebarClass('menu-link-icon')}>
-                <DownloadIcon />
-              </div>
+              <button
+                className={sidebarClass('menu-link sidebar-item')}
+                onClick={handleDownloadClick}
+              >
+                <div className={sidebarClass('menu-link-icon')}>
+                  <DownloadIcon />
+                </div>
 
-              <div className={sidebarClass('menu-link-title')}>Download db</div>
-            </button>
+                <div className={sidebarClass('menu-link-title')}>
+                  Download db
+                </div>
+              </button>
 
-            <label className={sidebarClass('menu-link sidebar-item')}>
-              <input
-                id="upload"
-                type="file"
-                style={{ display: 'none' }}
-                onChange={handleImport}
-              />
-              <div className={sidebarClass('menu-link-icon')}>
-                <UploadIcon />
-              </div>
+              <label className={sidebarClass('menu-link sidebar-item')}>
+                <input
+                  id="upload"
+                  type="file"
+                  style={{ display: 'none' }}
+                  onChange={handleImport}
+                />
+                <div className={sidebarClass('menu-link-icon')}>
+                  <UploadIcon />
+                </div>
 
-              <div className={sidebarClass('menu-link-title')}>Import DB</div>
-            </label>
+                <div className={sidebarClass('menu-link-title')}>Import DB</div>
+              </label>
+            </div>
+
+            <div className={sidebarClass('notes-tree-title')}>Notes Tree</div>
+
+            <div className={sidebarClass('notes-tree')}>
+              <NotesTree onNavClick={onNavClick} />
+            </div>
+
+            {/* <Brand className={sidebarClass('brand')} onClick={onNavClick} /> */}
           </div>
-
-          <div className={sidebarClass('notes-tree-title')}>Notes Tree</div>
-
-          <div className={sidebarClass('notes-tree')}>
-            <NotesTree onNavClick={onNavClick} />
-          </div>
-
-          {/* <Brand className={sidebarClass('brand')} onClick={onNavClick} /> */}
-        </div>
+        </CustomScrollbar>
       </div>
     );
   },

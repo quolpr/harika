@@ -101,7 +101,6 @@
   }
 
   &__menu-container {
-    overflow: scroll;
   }
 
   &__notes-tree {
