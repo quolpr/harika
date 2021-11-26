@@ -13,7 +13,6 @@ import {
   useVaultService,
 } from '../../hooks/vaultAppHooks';
 import { useHandleClick } from '../../hooks/useNoteClick';
-import { CustomScrollbar } from '../CustomScrollbar';
 
 const treeClass = cn('notes-tree');
 const sidebarItemClass = cn('sidebar-item');

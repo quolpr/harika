@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import './styles.css';
 import { Link } from 'react-router-dom';
 import { paths } from '../../paths';
@@ -22,8 +22,10 @@ import {
   useVaultService,
 } from '../../hooks/vaultAppHooks';
 import { CustomScrollbar } from '../CustomScrollbar';
+import { ResizeActionType, Resizer } from './Resizer';
+import { useMedia } from 'react-use';
 
-const sidebarClass = cn('sidebar');
+export const sidebarClass = cn('sidebar');
 
 type IProps = {
   className?: string;
@@ -100,6 +102,40 @@ export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
       },
       [handleClick, onNavClick],
     );
+
+    const [sidebarWidth, setSidebarWidth] = useState(260);
+    const handleResize = useCallback(
+      (newWidth, _newHeight, currentActionType) => {
+        let root = document.documentElement;
+        if (currentActionType === ResizeActionType.ACTIVATE) {
+          root.style.setProperty('--layout-animation', 'none');
+        }
+        if (currentActionType === ResizeActionType.DEACTIVATE) {
+          root.style.removeProperty('--layout-animation');
+          return;
+        }
+
+        const sidebarWidth = Math.max(Math.min(newWidth, 450), 200);
+
+        root.style.setProperty('--sidebar-width', `${sidebarWidth}px`);
+        setSidebarWidth(sidebarWidth);
+        localStorage.setItem('sidebarWidth', sidebarWidth.toString());
+      },
+      [],
+    );
+
+    const isWide = useMedia('(min-width: 768px)');
+    useEffect(() => {
+      const newWidth = isWide
+        ? parseInt(localStorage.getItem('sidebarWidth') || '260', 10)
+        : 260;
+      setSidebarWidth(newWidth);
+    }, [isWide]);
+
+    useEffect(() => {
+      let root = document.documentElement;
+      root.style.setProperty('--sidebar-width', `${sidebarWidth}px`);
+    }, [sidebarWidth]);
 
     return (
       <div
@@ -184,6 +220,14 @@ export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
             {/* <Brand className={sidebarClass('brand')} onClick={onNavClick} /> */}
           </div>
         </CustomScrollbar>
+
+        {isWide && (
+          <Resizer
+            currentWidth={sidebarWidth}
+            currentHeight={0}
+            onResize={handleResize}
+          />
+        )}
       </div>
     );
   },
