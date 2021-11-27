@@ -4,6 +4,10 @@ import { CacheFirst, NetworkOnly } from 'workbox-strategies';
 import { precacheAndRoute, PrecacheFallbackPlugin } from 'workbox-precaching';
 import { CacheableResponsePlugin } from 'workbox-cacheable-response';
 
+declare const self: ServiceWorkerGlobalScope;
+
+/// <reference lib="WebWorker" />
+
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 // eslint-disable-next-line no-restricted-globals
@@ -46,3 +50,12 @@ registerRoute(
     ],
   }),
 );
+
+// @ts-ignore
+self.addEventListener('message', (event) => {
+  console.log({ event });
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    // @ts-ignore
+    self.skipWaiting();
+  }
+});
