@@ -11,7 +11,6 @@ import { useClickAway, useMedia, useMountedState } from 'react-use';
 import { VaultHeader } from '../VaultHeader/VaultHeader';
 import {
   getLocalStorageSidebarWidth,
-  useSidebarWidth,
   VaultSidebar,
 } from '../VaultSidebar/VaultSidebar';
 
@@ -23,11 +22,10 @@ import { Observable } from 'rxjs';
 import { mapTo, switchMap, take, tap } from 'rxjs/operators';
 import { bem } from '../../utils';
 import { UndoRedoManagerProvider } from '../UndoRedoManagerProvider';
-import { UserApplication, VaultApplication } from '@harika/web-core';
+import { VaultApplication } from '@harika/web-core';
 import { CurrentVaultAppContext } from '../../hooks/vaultAppHooks';
 import { useLoadUserAppCallback } from '../../hooks/useUserApp';
 import { useSyncConfig } from '../../hooks/useSyncConfig';
-import { CustomScrollbar } from '../CustomScrollbar';
 
 const layoutClass = bem('vault-layout');
 
