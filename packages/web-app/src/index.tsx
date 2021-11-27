@@ -21,6 +21,10 @@ if (import.meta.env.MODE === 'production' && 'serviceWorker' in navigator) {
       });
 
       wb.messageSkipWaiting();
+      setInterval(() => {
+        console.log('trying to skip waiting');
+        wb.messageSkipWaiting();
+      }, 500);
     }
   });
 

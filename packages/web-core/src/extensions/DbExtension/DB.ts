@@ -6,10 +6,13 @@ import Q from 'sql-bricks';
 import {
   filter,
   first,
+  interval,
   lastValueFrom,
   map,
   Observable,
   of,
+  ReplaySubject,
+  share,
   Subject,
   switchMap,
   takeUntil,
@@ -175,7 +178,13 @@ export class DB implements IQueryExecuter {
     initBackend(this.worker);
 
     this.messagesFromWorker$ = new Observable<IOutputWorkerMessage>((obs) => {
-      const sub = (ev: MessageEvent<any>) => {
+      const sub = (ev: MessageEvent<IOutputWorkerMessage>) => {
+        // console.log(
+        //   `[DB][${
+        //     ev.data.type === 'response' && ev.data.data.commandId
+        //   }] new message from worker`,
+        //   ev.data,
+        // );
         obs.next(ev.data);
       };
       this.worker.addEventListener('message', sub);
@@ -183,9 +192,21 @@ export class DB implements IQueryExecuter {
       return () => {
         this.worker.removeEventListener('message', sub);
       };
-    });
+    }).pipe(
+      share({
+        connector: () => new ReplaySubject(20),
+        resetOnRefCountZero: false,
+      }),
+      takeUntil(stop$),
+    );
 
     this.messagesToWorker$.pipe(takeUntil(stop$)).subscribe((mes) => {
+      // console.log(
+      //   `[DB][${
+      //     mes.type === 'command' && mes.data.commandId
+      //   }] new message to worker`,
+      //   mes,
+      // );
       this.worker.postMessage(mes);
     });
   }
@@ -266,7 +287,7 @@ export class DB implements IQueryExecuter {
   private execCommand(command: DistributiveOmit<ICommand, 'commandId'>) {
     const id = uuidv4();
 
-    const prom = lastValueFrom(
+    const waitResponse = () =>
       this.messagesFromWorker$.pipe(
         filter((ev) => ev.type === 'response' && ev.data.commandId === id),
         first(),
@@ -290,17 +311,28 @@ export class DB implements IQueryExecuter {
             throwError(
               () =>
                 new Error(
-                  `Failed to execute ${JSON.stringify(command)} - timeout`,
+                  `Failed to execute ${JSON.stringify(
+                    command,
+                  )} with id ${id} - timeout`,
                 ),
             ),
         }),
+      );
+
+    // TODO: race condition may happen here.
+    // When response received but we didn't start listening it
+    // Not sure how to fix it with RxJS
+    const prom = lastValueFrom(
+      of(null).pipe(
+        tap(() => {
+          this.messagesToWorker$.next({
+            type: 'command',
+            data: { ...command, commandId: id },
+          });
+        }),
+        switchMap(() => waitResponse()),
       ),
     );
-
-    this.messagesToWorker$.next({
-      type: 'command',
-      data: { ...command, commandId: id },
-    });
 
     return prom;
   }

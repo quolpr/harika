@@ -13,6 +13,7 @@ import { useHistory, useLocation } from 'react-router-dom';
 import { paths } from '../../paths';
 import { ContainerElRefContext } from '../../contexts/ContainerElRefContext';
 import { useCurrentVaultId } from '../../hooks/vaultAppHooks';
+import { CustomScrollbar } from '../CustomScrollbar';
 
 const notesStackClass = cn('notes-stack');
 
@@ -89,24 +90,26 @@ const NoteStack = observer(
 
     return (
       <div className={notesStackClass('row')} ref={rowRef}>
-        <ContainerElRefContext.Provider value={rowRef}>
-          {!isSingle && (
-            <button
-              className={notesStackClass('close-btn')}
-              onClick={handleClose}
-            >
-              <XIcon style={{ width: 20 }} />
-            </button>
-          )}
+        <CustomScrollbar noScrollX>
+          <ContainerElRefContext.Provider value={rowRef}>
+            {!isSingle && (
+              <button
+                className={notesStackClass('close-btn')}
+                onClick={handleClose}
+              >
+                <XIcon style={{ width: 20 }} />
+              </button>
+            )}
 
-          {isLoading && 'Loading...'}
-          {note && !isLoading && (
-            <CurrentNoteContext.Provider value={note}>
-              <Note note={note} />
-            </CurrentNoteContext.Provider>
-          )}
-          {!note && !isLoading && 'NoteModel not found :('}
-        </ContainerElRefContext.Provider>
+            {isLoading && 'Loading...'}
+            {note && !isLoading && (
+              <CurrentNoteContext.Provider value={note}>
+                <Note note={note} />
+              </CurrentNoteContext.Provider>
+            )}
+            {!note && !isLoading && 'NoteModel not found :('}
+          </ContainerElRefContext.Provider>
+        </CustomScrollbar>
       </div>
     );
   },
@@ -117,17 +120,19 @@ export const NotesStack = ({ ids }: { ids: string[] }) => {
   const isWide = useMedia('(min-width: 768px)');
 
   return isWide ? (
-    <div className={notesStackClass()} ref={parentRef}>
-      {ids.map((id, i) => (
-        <NoteStack
-          key={id}
-          noteId={id}
-          isSingle={ids.length === 1}
-          isLast={i === ids.length - 1}
-          parentRef={parentRef}
-        />
-      ))}
-    </div>
+    <CustomScrollbar noScrollY>
+      <div className={notesStackClass()} ref={parentRef}>
+        {ids.map((id, i) => (
+          <NoteStack
+            key={id}
+            noteId={id}
+            isSingle={ids.length === 1}
+            isLast={i === ids.length - 1}
+            parentRef={parentRef}
+          />
+        ))}
+      </div>
+    </CustomScrollbar>
   ) : (
     <SimpleNote noteId={ids[ids.length - 1]} />
   );

@@ -32,7 +32,7 @@ const up = async (db: IQueryExecuter) => {
   `);
 
   await db.sqlExec(`
-    CREATE VIRTUAL TABLE IF NOT EXISTS ${noteBlocksFTSTable} USING fts5(id UNINDEXED, textContent, tokenize="trigram");
+    CREATE VIRTUAL TABLE IF NOT EXISTS ${noteBlocksFTSTable} USING fts5(id UNINDEXED, textContent);
   `);
 
   await db.sqlExec(`

@@ -59,7 +59,6 @@ export class FindNoteOrBlockService {
                   `bm25(${noteBlocksFTSTable}) rank`,
                 )
                   .from(noteBlocksFTSTable)
-                  // @ts-ignore
                   .where(Q.like('textContent', `%${text}%`)),
               ),
             ),

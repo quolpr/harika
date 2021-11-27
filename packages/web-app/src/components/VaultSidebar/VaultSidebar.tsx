@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import './styles.css';
 import { Link } from 'react-router-dom';
 import { paths } from '../../paths';
@@ -21,14 +21,21 @@ import {
   useNotesService,
   useVaultService,
 } from '../../hooks/vaultAppHooks';
+import { CustomScrollbar } from '../CustomScrollbar';
+import { ResizeActionType, Resizer } from './Resizer';
+import { useMedia } from 'react-use';
 
-const sidebarClass = cn('sidebar');
+export const sidebarClass = cn('sidebar');
 
 type IProps = {
   className?: string;
   isOpened: boolean;
   onNavClick: (e: React.MouseEvent) => void;
   vaultName: string | undefined;
+};
+
+export const getLocalStorageSidebarWidth = () => {
+  return parseInt(localStorage.getItem('sidebarWidth') || '260', 10);
 };
 
 export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
@@ -100,6 +107,41 @@ export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
       [handleClick, onNavClick],
     );
 
+    const [sidebarWidth, setSidebarWidth] = useState(() => {
+      return getLocalStorageSidebarWidth();
+    });
+
+    const handleResize = useCallback(
+      (newWidth, _newHeight, currentActionType) => {
+        let root = document.documentElement;
+        if (currentActionType === ResizeActionType.ACTIVATE) {
+          root.style.setProperty('--layout-animation', 'none');
+        }
+        if (currentActionType === ResizeActionType.DEACTIVATE) {
+          root.style.removeProperty('--layout-animation');
+          return;
+        }
+
+        const sidebarWidth = Math.max(Math.min(newWidth, 450), 200);
+
+        root.style.setProperty('--sidebar-width', `${sidebarWidth}px`);
+        setSidebarWidth(sidebarWidth);
+        localStorage.setItem('sidebarWidth', sidebarWidth.toString());
+      },
+      [],
+    );
+
+    const isWide = useMedia('(min-width: 768px)');
+    useEffect(() => {
+      const newWidth = isWide ? getLocalStorageSidebarWidth() : 260;
+      setSidebarWidth(newWidth);
+    }, [isWide]);
+
+    useEffect(() => {
+      let root = document.documentElement;
+      root.style.setProperty('--sidebar-width', `${sidebarWidth}px`);
+    }, [sidebarWidth]);
+
     return (
       <div
         ref={ref}
@@ -115,66 +157,82 @@ export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
             {vaultName || 'Loading...'}
           </div>
         </div>
-        <div className={sidebarClass('menu-container')}>
-          <div className={sidebarClass('menu')}>
-            <Link
-              className={sidebarClass('menu-link sidebar-item')}
-              to={paths.vaultDailyPath({ vaultId: vaultApp.applicationId })}
-              onClick={onDailyNoteClick}
-            >
-              <div className={sidebarClass('menu-link-icon')}>
-                <DailyNoteIcon />
-              </div>
+        <CustomScrollbar>
+          <div className={sidebarClass('menu-container')}>
+            <div className={sidebarClass('menu')}>
+              <Link
+                className={sidebarClass('menu-link sidebar-item')}
+                to={paths.vaultDailyPath({ vaultId: vaultApp.applicationId })}
+                onClick={onDailyNoteClick}
+              >
+                <div className={sidebarClass('menu-link-icon')}>
+                  <DailyNoteIcon />
+                </div>
 
-              <div className={sidebarClass('menu-link-title')}>Daily Note</div>
-            </Link>
+                <div className={sidebarClass('menu-link-title')}>
+                  Daily Note
+                </div>
+              </Link>
 
-            <Link
-              className={sidebarClass('menu-link sidebar-item')}
-              to={paths.vaultNoteIndexPath({ vaultId: vaultApp.applicationId })}
-              onClick={onNavClick}
-            >
-              <div className={sidebarClass('menu-link-icon')}>
-                <NotesIcon />
-              </div>
+              <Link
+                className={sidebarClass('menu-link sidebar-item')}
+                to={paths.vaultNoteIndexPath({
+                  vaultId: vaultApp.applicationId,
+                })}
+                onClick={onNavClick}
+              >
+                <div className={sidebarClass('menu-link-icon')}>
+                  <NotesIcon />
+                </div>
 
-              <div className={sidebarClass('menu-link-title')}>All Notes</div>
-            </Link>
+                <div className={sidebarClass('menu-link-title')}>All Notes</div>
+              </Link>
 
-            <button
-              className={sidebarClass('menu-link sidebar-item')}
-              onClick={handleDownloadClick}
-            >
-              <div className={sidebarClass('menu-link-icon')}>
-                <DownloadIcon />
-              </div>
+              <button
+                className={sidebarClass('menu-link sidebar-item')}
+                onClick={handleDownloadClick}
+              >
+                <div className={sidebarClass('menu-link-icon')}>
+                  <DownloadIcon />
+                </div>
 
-              <div className={sidebarClass('menu-link-title')}>Download db</div>
-            </button>
+                <div className={sidebarClass('menu-link-title')}>
+                  Download db
+                </div>
+              </button>
 
-            <label className={sidebarClass('menu-link sidebar-item')}>
-              <input
-                id="upload"
-                type="file"
-                style={{ display: 'none' }}
-                onChange={handleImport}
-              />
-              <div className={sidebarClass('menu-link-icon')}>
-                <UploadIcon />
-              </div>
+              <label className={sidebarClass('menu-link sidebar-item')}>
+                <input
+                  id="upload"
+                  type="file"
+                  style={{ display: 'none' }}
+                  onChange={handleImport}
+                />
+                <div className={sidebarClass('menu-link-icon')}>
+                  <UploadIcon />
+                </div>
 
-              <div className={sidebarClass('menu-link-title')}>Import DB</div>
-            </label>
+                <div className={sidebarClass('menu-link-title')}>Import DB</div>
+              </label>
+            </div>
+
+            <div className={sidebarClass('notes-tree-title')}>Notes Tree</div>
+
+            <div className={sidebarClass('notes-tree')}>
+              <NotesTree onNavClick={onNavClick} />
+            </div>
+
+            {/* <Brand className={sidebarClass('brand')} onClick={onNavClick} /> */}
           </div>
+        </CustomScrollbar>
 
-          <div className={sidebarClass('notes-tree-title')}>Notes Tree</div>
-
-          <div className={sidebarClass('notes-tree')}>
-            <NotesTree onNavClick={onNavClick} />
-          </div>
-
-          {/* <Brand className={sidebarClass('brand')} onClick={onNavClick} /> */}
-        </div>
+        {isWide && (
+          <Resizer
+            currentWidth={sidebarWidth}
+            currentHeight={0}
+            onResize={handleResize}
+          />
+        )}
       </div>
     );
   },

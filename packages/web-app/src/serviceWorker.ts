@@ -46,3 +46,13 @@ registerRoute(
     ],
   }),
 );
+
+// @ts-ignore
+// eslint-disable-next-line no-restricted-globals
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    // @ts-ignore
+    // eslint-disable-next-line no-restricted-globals
+    self.skipWaiting();
+  }
+});

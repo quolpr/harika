@@ -3,6 +3,10 @@
   @apply mt-8;
 }
 
+:root {
+  --sidebar-width: 260px;
+}
+
 .vault-layout {
   display: flex;
   position: relative;
@@ -12,8 +16,9 @@
 
   &__sidebar {
     position: fixed;
-    @apply transition-all transform-gpu;
-    width: 260px;
+    @apply transform-gpu;
+    width: var(--sidebar-width);
+    transition: var(--layout-animation, all 0.15s cubic-bezier(0.4, 0, 0.2, 1));
 
     @media (min-width: 768px) {
       top: 0;
@@ -21,7 +26,7 @@
   }
 
   &__sidebar--closed {
-    transform: translate3d(-260px, 0, 0);
+    transform: translate3d(calc(var(--sidebar-width) * -1), 0, 0);
   }
 
   &__header-wrapper {
@@ -50,11 +55,11 @@
     margin-left: 0px;
     position: relative;
 
-    @apply transition-all;
+    transition: var(--layout-animation, all 0.15s cubic-bezier(0.4, 0, 0.2, 1));
 
     &--with-padding {
       @media (min-width: 768px) {
-        margin-left: 260px;
+        margin-left: var(--sidebar-width);
       }
     }
   }

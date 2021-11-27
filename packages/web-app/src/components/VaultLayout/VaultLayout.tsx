@@ -2,13 +2,17 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
 } from 'react';
 import { useHistory, useLocation, useParams } from 'react-router-dom';
 import { useClickAway, useMedia, useMountedState } from 'react-use';
 import { VaultHeader } from '../VaultHeader/VaultHeader';
-import { VaultSidebar } from '../VaultSidebar/VaultSidebar';
+import {
+  getLocalStorageSidebarWidth,
+  VaultSidebar,
+} from '../VaultSidebar/VaultSidebar';
 
 import './styles.css';
 import { writeStorage } from '@rehooks/local-storage';
@@ -18,7 +22,7 @@ import { Observable } from 'rxjs';
 import { mapTo, switchMap, take, tap } from 'rxjs/operators';
 import { bem } from '../../utils';
 import { UndoRedoManagerProvider } from '../UndoRedoManagerProvider';
-import { UserApplication, VaultApplication } from '@harika/web-core';
+import { VaultApplication } from '@harika/web-core';
 import { CurrentVaultAppContext } from '../../hooks/vaultAppHooks';
 import { useLoadUserAppCallback } from '../../hooks/useUserApp';
 import { useSyncConfig } from '../../hooks/useSyncConfig';
@@ -196,6 +200,15 @@ export const VaultLayout: React.FC = ({ children }) => {
   }, [vaultId]);
 
   const { mainRef, handleScroll } = useKeepScroll();
+
+  useLayoutEffect(() => {
+    // To avoid flickering on sidebar appear
+    let root = document.documentElement;
+    root.style.setProperty(
+      '--sidebar-width',
+      `${getLocalStorageSidebarWidth()}px`,
+    );
+  }, []);
 
   if (!vaultApp) return null;
 

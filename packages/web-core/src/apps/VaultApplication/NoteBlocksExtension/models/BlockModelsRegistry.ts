@@ -146,7 +146,9 @@ export class BlockModelsRegistry extends Model({
   @modelAction
   deleteNoteBlockIds(ids: string[]) {
     ids.forEach((id) => {
-      this.blocksMap[id].delete(true, true);
+      if (this.blocksMap[id]) {
+        this.blocksMap[id].delete(true, true);
+      }
     });
 
     if (this.rootBlock && !this.rootBlock?.hasChildren) {
