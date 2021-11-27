@@ -2,13 +2,18 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
 } from 'react';
 import { useHistory, useLocation, useParams } from 'react-router-dom';
 import { useClickAway, useMedia, useMountedState } from 'react-use';
 import { VaultHeader } from '../VaultHeader/VaultHeader';
-import { VaultSidebar } from '../VaultSidebar/VaultSidebar';
+import {
+  getLocalStorageSidebarWidth,
+  useSidebarWidth,
+  VaultSidebar,
+} from '../VaultSidebar/VaultSidebar';
 
 import './styles.css';
 import { writeStorage } from '@rehooks/local-storage';
@@ -197,6 +202,15 @@ export const VaultLayout: React.FC = ({ children }) => {
   }, [vaultId]);
 
   const { mainRef, handleScroll } = useKeepScroll();
+
+  useLayoutEffect(() => {
+    // To avoid flickering on sidebar appear
+    let root = document.documentElement;
+    root.style.setProperty(
+      '--sidebar-width',
+      `${getLocalStorageSidebarWidth()}px`,
+    );
+  }, []);
 
   if (!vaultApp) return null;
 

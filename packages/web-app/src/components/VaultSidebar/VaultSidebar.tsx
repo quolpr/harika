@@ -34,6 +34,10 @@ type IProps = {
   vaultName: string | undefined;
 };
 
+export const getLocalStorageSidebarWidth = () => {
+  return parseInt(localStorage.getItem('sidebarWidth') || '260', 10);
+};
+
 export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
   ({ className, isOpened, onNavClick, vaultName }: IProps, ref) => {
     const vaultApp = useCurrentVaultApp();
@@ -103,7 +107,10 @@ export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
       [handleClick, onNavClick],
     );
 
-    const [sidebarWidth, setSidebarWidth] = useState(260);
+    const [sidebarWidth, setSidebarWidth] = useState(() => {
+      return getLocalStorageSidebarWidth();
+    });
+
     const handleResize = useCallback(
       (newWidth, _newHeight, currentActionType) => {
         let root = document.documentElement;
@@ -126,9 +133,7 @@ export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
 
     const isWide = useMedia('(min-width: 768px)');
     useEffect(() => {
-      const newWidth = isWide
-        ? parseInt(localStorage.getItem('sidebarWidth') || '260', 10)
-        : 260;
+      const newWidth = isWide ? getLocalStorageSidebarWidth() : 260;
       setSidebarWidth(newWidth);
     }, [isWide]);
 
