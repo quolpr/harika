@@ -14,6 +14,7 @@ import { useObservable, useObservableState } from 'observable-hooks';
 import { VaultService } from '@harika/web-core';
 import { useCurrentVaultApp, useVaultService } from '../../hooks/vaultAppHooks';
 import { CustomScrollbar } from '../CustomScrollbar';
+import { useNotePath } from '../../contexts/StackedNotesContext';
 
 // Command executes on each user type and as result gives list of actions
 // Commands are start with `!`. If no `!` present - then search happen between all start view actions names
@@ -56,15 +57,13 @@ const spawnView = ([
   vaultModelId,
   vaultService,
   startView,
-  locationSearch,
-  primaryNoteId,
+  notePath,
 ]: [
   string,
   string,
   VaultService,
   IView,
-  string,
-  string | undefined,
+  (noteId: string, openStacked?: boolean) => string,
 ]): Observable<IView> => {
   if (inputCommandValue.startsWith('!findOrCreate')) {
     const toFind = inputCommandValue
@@ -90,8 +89,8 @@ const spawnView = ([
                 id: `${noteId}-${noteBlockId}`,
                 name: data,
                 type: 'goToPage',
-                href: '',
-                stackHref: '',
+                href: notePath(noteId),
+                stackHref: notePath(noteId, true),
                 highlight: toFind,
               }),
             ),
@@ -143,8 +142,6 @@ export const CommandPaletteModal = ({
 }) => {
   const location = useLocation();
 
-  const primaryNoteId = usePrimaryNoteId();
-
   const history = useHistory();
   const vault = useCurrentVaultApp();
   const vaultService = useVaultService();
@@ -173,6 +170,8 @@ export const CommandPaletteModal = ({
   const prevMousePosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const searchItemRefs = useRef<Record<string, HTMLElement>>({});
 
+  const notePath = useNotePath();
+
   const [focusedActionId, setActionCommandId] = useState<undefined | string>(
     startView.actions?.[0]?.id,
   );
@@ -195,14 +194,7 @@ export const CommandPaletteModal = ({
         }),
       );
     },
-    [
-      inputCommandValue,
-      vault.applicationId,
-      vaultService,
-      startView,
-      location.search,
-      primaryNoteId,
-    ],
+    [inputCommandValue, vault.applicationId, vaultService, startView, notePath],
   );
 
   const view = useObservableState(currentView$, emptyView);
@@ -231,12 +223,7 @@ export const CommandPaletteModal = ({
             return;
           }
 
-          history.push(
-            paths.vaultNotePath({
-              vaultId: vault.applicationId,
-              stackIds: '',
-            }),
-          );
+          history.push(notePath(result.data.$modelId));
 
           onClose();
           break;
@@ -246,7 +233,7 @@ export const CommandPaletteModal = ({
           break;
       }
     },
-    [onClose, history, location.search, vaultService, vault.applicationId],
+    [onClose, history, location.search, vaultService, notePath],
   );
 
   useKey(
