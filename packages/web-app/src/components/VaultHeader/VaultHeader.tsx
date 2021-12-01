@@ -8,12 +8,11 @@ import clsx from 'clsx';
 import { useClickAway, useKey } from 'react-use';
 import { observer } from 'mobx-react-lite';
 import { CommandPaletteModal } from '../CommandPaletteModal/CommandPaleteModal';
-import { paths } from '../../paths';
 import { cn } from '../../utils';
-import { generateStackedNotePath } from '../../hooks/useNoteClick';
 import { usePrimaryNote } from '../../hooks/usePrimaryNote';
 import { SyncState } from '../SyncState/SyncState';
 import { useCurrentVaultApp, useVaultService } from '../../hooks/vaultAppHooks';
+import { useNotePath } from '../../contexts/StackedNotesContext';
 
 const vaultHeaderClass = cn('header');
 
@@ -29,13 +28,10 @@ export const VaultHeader = observer(
     isTogglerToggled: boolean;
     togglerRef: React.Ref<HTMLElement>;
   }) => {
-    const location = useLocation();
-    const vaultApp = useCurrentVaultApp();
     const noteService = useVaultService();
     const history = useHistory();
 
     const primaryNote = usePrimaryNote();
-    const primaryNoteId = primaryNote?.$modelId;
 
     const [isModalOpened, setIsModalOpened] = useState(false);
 
@@ -60,6 +56,8 @@ export const VaultHeader = observer(
       setIsCalendarOpened(!isCalendarOpened);
     }, [isCalendarOpened]);
 
+    const notePath = useNotePath();
+
     const handleCalendarChange = useCallback(
       async (date: Date | Date[], ev: React.ChangeEvent<HTMLInputElement>) => {
         if (Array.isArray(date)) return;
@@ -67,32 +65,15 @@ export const VaultHeader = observer(
         const result = await noteService.getOrCreateDailyNote(dayjs(date));
 
         if (result.status === 'ok') {
-          if ((ev.nativeEvent as MouseEvent).shiftKey && primaryNoteId) {
-            history.push(
-              generateStackedNotePath(
-                location.search,
-                vaultApp.applicationId,
-                primaryNoteId,
-                result.data.$modelId,
-              ),
-            );
-          } else {
-            history.push(
-              paths.vaultNotePath({
-                vaultId: vaultApp.applicationId,
-                noteId: result.data.$modelId,
-              }) + location.search,
-            );
-          }
+          history.push(
+            notePath(
+              result.data.$modelId,
+              (ev.nativeEvent as MouseEvent).shiftKey,
+            ),
+          );
         }
       },
-      [
-        noteService,
-        primaryNoteId,
-        history,
-        location.search,
-        vaultApp.applicationId,
-      ],
+      [noteService, history, notePath],
     );
 
     return (

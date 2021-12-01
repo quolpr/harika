@@ -3,16 +3,12 @@ import React, { useCallback, useContext, useEffect } from 'react';
 import './styles.css';
 import { Link } from 'react-router-dom';
 import TimeAgo from 'react-timeago';
-import { paths } from '../../paths';
 import { TrashIcon } from '@heroicons/react/solid';
 import { useObservable, useObservableState } from 'observable-hooks';
 import { LoadingDoneSubjectContext } from '../../contexts';
-import {
-  useCurrentVaultApp,
-  useNotesService,
-  useVaultService,
-} from '../../hooks/vaultAppHooks';
+import { useNotesService, useVaultService } from '../../hooks/vaultAppHooks';
 import { CustomScrollbar } from '../../components/CustomScrollbar';
+import { useNotePath } from '../../contexts/StackedNotesContext';
 
 type NoteTuple = {
   id: string;
@@ -21,24 +17,18 @@ type NoteTuple = {
 };
 
 const NoteRow = observer(({ note }: { note: NoteTuple }) => {
-  const vaultApp = useCurrentVaultApp();
   const vaultService = useVaultService();
 
   const handleDelete = useCallback(async () => {
     vaultService.deleteNote(note.id);
   }, [note.id, vaultService]);
 
+  const notePath = useNotePath();
+
   return (
     <tr>
       <td className="pl-1">
-        <Link
-          to={paths.vaultNotePath({
-            vaultId: vaultApp.applicationId,
-            noteId: note.id,
-          })}
-        >
-          {note.title}
-        </Link>
+        <Link to={notePath(note.id)}>{note.title}</Link>
       </td>
       <td className="notes-table__time">
         <TimeAgo date={note.createdAt} />

@@ -1,17 +1,10 @@
 import { NoteModel } from '@harika/web-core';
-import pathToRegexp from 'path-to-regexp';
-import { useEffect, useMemo, useState } from 'react';
-import { useLocation } from 'react-router-dom';
-import { PATHS } from '../paths';
+import { useEffect, useState } from 'react';
+import { usePrimaryStack } from '../contexts/StackedNotesContext';
 import { useNotesService } from './vaultAppHooks';
 
 export const usePrimaryNoteId = () => {
-  const location = useLocation();
-
-  return useMemo(
-    () => pathToRegexp(PATHS.VAULT_NOTE_PATH).exec(location.pathname)?.[2],
-    [location.pathname],
-  );
+  return usePrimaryStack()?.entityId;
 };
 
 export const usePrimaryNote = () => {

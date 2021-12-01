@@ -14,7 +14,6 @@ import download from 'downloadjs';
 import dayjs from 'dayjs';
 import { useObservable, useObservableState } from 'observable-hooks';
 import { switchMap } from 'rxjs';
-import { useHandleClick } from '../../hooks/useNoteClick';
 import { usePrimaryNoteId } from '../../hooks/usePrimaryNote';
 import {
   useCurrentVaultApp,
@@ -24,6 +23,7 @@ import {
 import { CustomScrollbar } from '../CustomScrollbar';
 import { ResizeActionType, Resizer } from './Resizer';
 import { useMedia } from 'react-use';
+import { useHandleNoteClickOrPress } from '../../contexts/StackedNotesContext';
 
 export const sidebarClass = cn('sidebar');
 
@@ -93,11 +93,7 @@ export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
     );
     const dailyNote = useObservableState(dailyNote$, undefined);
 
-    const handleClick = useHandleClick(
-      vaultApp.applicationId,
-      primaryNoteId,
-      dailyNote?.$modelId,
-    );
+    const handleClick = useHandleNoteClickOrPress(dailyNote?.$modelId);
 
     const onDailyNoteClick = useCallback(
       (e: React.MouseEvent) => {

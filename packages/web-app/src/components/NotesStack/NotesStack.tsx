@@ -1,32 +1,39 @@
+/* eslint-disable jsx-a11y/no-static-element-interactions */
+/* eslint-disable jsx-a11y/click-events-have-key-events */
 import { observer } from 'mobx-react-lite';
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useMedia } from 'react-use';
 import { CurrentNoteContext } from '../../hooks/useCurrentNote';
 import { cn } from '../../utils';
 import { Note } from '../Note/Note';
 import { XIcon } from '@heroicons/react/solid';
-import queryString from 'query-string';
 import './styles.css';
 
 import { useFindNote } from './useFindNote';
-import { useHistory, useLocation } from 'react-router-dom';
-import { paths } from '../../paths';
 import { ContainerElRefContext } from '../../contexts/ContainerElRefContext';
-import { useCurrentVaultId } from '../../hooks/vaultAppHooks';
 import { CustomScrollbar } from '../CustomScrollbar';
+import {
+  CurrentStackContext,
+  FocusedStackIdContext,
+  IStack,
+  useCloseNote,
+  useFocusedStackIdContext,
+} from '../../contexts/StackedNotesContext';
 
 const notesStackClass = cn('notes-stack');
 
-const SimpleNote = observer(({ noteId }: { noteId: string }) => {
-  const { note, isLoading } = useFindNote(noteId);
+const SimpleNote = observer(({ stack }: { stack: IStack }) => {
+  const { note, isLoading } = useFindNote(stack.entityId);
 
   return (
     <>
       {isLoading && 'Loading...'}
       {note && !isLoading && (
-        <CurrentNoteContext.Provider value={note}>
-          <Note note={note} />
-        </CurrentNoteContext.Provider>
+        <CurrentStackContext.Provider value={stack}>
+          <CurrentNoteContext.Provider value={note}>
+            <Note note={note} />
+          </CurrentNoteContext.Provider>
+        </CurrentStackContext.Provider>
       )}
       {!note && !isLoading && 'NoteModel not found :('}
     </>
@@ -39,15 +46,14 @@ const NoteStack = observer(
     isLast,
     parentRef,
     isSingle,
+    stack,
   }: {
     noteId: string;
     isLast: boolean;
     parentRef: React.RefObject<HTMLDivElement>;
     isSingle: boolean;
+    stack: IStack;
   }) => {
-    const location = useLocation();
-    const history = useHistory();
-    const vaultId = useCurrentVaultId();
     const { note, isLoading } = useFindNote(noteId);
 
     const rowRef = useRef<HTMLDivElement | null>(null);
@@ -60,80 +66,76 @@ const NoteStack = observer(
       }, 50);
     }, [note, isLoading, isLast, parentRef]);
 
-    const handleClose = useCallback(() => {
-      const parsedCurrentQuery = queryString.parse(location.search);
-      const currentIds = (
-        parsedCurrentQuery.stackedIds ? [parsedCurrentQuery.stackedIds] : []
-      ).flat();
+    const handleClose = useCloseNote(stack.stackId);
 
-      const newLocation = (() => {
-        if (isLast) {
-          return {
-            query: { stackedIds: currentIds.slice(0, -1) },
-            path: paths.vaultNotePath({
-              vaultId,
-              noteId: currentIds[currentIds.length - 1],
-            }),
-          };
-        } else {
-          return {
-            query: { stackedIds: currentIds.filter((id) => id !== noteId) },
-            path: location.pathname,
-          };
-        }
-      })();
-
-      history.push(
-        `${newLocation.path}?${queryString.stringify(newLocation.query)}`,
-      );
-    }, [history, isLast, location.pathname, location.search, noteId, vaultId]);
+    const { setStackId } = useFocusedStackIdContext();
+    const handleFocus = useCallback(() => {
+      setStackId(stack.stackId);
+    }, [setStackId, stack.stackId]);
 
     return (
-      <div className={notesStackClass('row')} ref={rowRef}>
-        <CustomScrollbar noScrollX>
-          <ContainerElRefContext.Provider value={rowRef}>
-            {!isSingle && (
-              <button
-                className={notesStackClass('close-btn')}
-                onClick={handleClose}
-              >
-                <XIcon style={{ width: 20 }} />
-              </button>
-            )}
+      <CurrentStackContext.Provider value={stack}>
+        <div
+          className={notesStackClass('row')}
+          ref={rowRef}
+          onClick={handleFocus}
+        >
+          <CustomScrollbar noScrollX>
+            <ContainerElRefContext.Provider value={rowRef}>
+              {!isSingle && (
+                <button
+                  className={notesStackClass('close-btn')}
+                  onClick={handleClose}
+                >
+                  <XIcon style={{ width: 20 }} />
+                </button>
+              )}
 
-            {isLoading && 'Loading...'}
-            {note && !isLoading && (
-              <CurrentNoteContext.Provider value={note}>
-                <Note note={note} />
-              </CurrentNoteContext.Provider>
-            )}
-            {!note && !isLoading && 'NoteModel not found :('}
-          </ContainerElRefContext.Provider>
-        </CustomScrollbar>
-      </div>
+              {isLoading && 'Loading...'}
+              {note && !isLoading && (
+                <CurrentNoteContext.Provider value={note}>
+                  <Note note={note} />
+                </CurrentNoteContext.Provider>
+              )}
+              {!note && !isLoading && 'NoteModel not found :('}
+            </ContainerElRefContext.Provider>
+          </CustomScrollbar>
+        </div>
+      </CurrentStackContext.Provider>
     );
   },
 );
 
-export const NotesStack = ({ ids }: { ids: string[] }) => {
+export const NotesStack = ({ stacks }: { stacks: IStack[] }) => {
+  const lastStack: IStack | undefined = stacks[stacks.length - 1];
+  const lastStackId = lastStack?.stackId;
   const parentRef = useRef<HTMLDivElement>(null);
   const isWide = useMedia('(min-width: 768px)');
+
+  const { setStackId } = useFocusedStackIdContext();
+
+  useEffect(() => {
+    if (isWide) return;
+
+    setStackId(lastStackId);
+  }, [isWide, lastStackId, setStackId]);
 
   return isWide ? (
     <CustomScrollbar noScrollY>
       <div className={notesStackClass()} ref={parentRef}>
-        {ids.map((id, i) => (
+        {stacks.map((stack, i) => (
           <NoteStack
-            key={id}
-            noteId={id}
-            isSingle={ids.length === 1}
-            isLast={i === ids.length - 1}
+            key={stack.stackId}
+            stack={stack}
+            noteId={stack.entityId}
+            isSingle={stacks.length === 1}
+            isLast={i === stacks.length - 1}
             parentRef={parentRef}
           />
         ))}
       </div>
     </CustomScrollbar>
   ) : (
-    <SimpleNote noteId={ids[ids.length - 1]} />
+    <SimpleNote stack={lastStack} />
   );
 };

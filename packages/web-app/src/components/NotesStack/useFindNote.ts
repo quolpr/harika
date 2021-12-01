@@ -4,8 +4,8 @@ import { useHistory } from 'react-router-dom';
 import { NEVER, of, race } from 'rxjs';
 import { timeout, map } from 'rxjs/operators';
 import { LoadingDoneSubjectContext } from '../../contexts';
+import { useNotePath } from '../../contexts/StackedNotesContext';
 import { useCurrentVaultId, useNotesService } from '../../hooks/vaultAppHooks';
-import { paths } from '../../paths';
 
 type IPipeResult = { status: 'found'; id: string } | { status: 'not_found' };
 
@@ -39,6 +39,8 @@ export const useFindNote = (noteId: string) => {
 
   const noteTitle = note?.title;
 
+  const notePath = useNotePath();
+
   useEffect(() => {
     if (!noteTitle || !noteId) return;
 
@@ -62,9 +64,7 @@ export const useFindNote = (noteId: string) => {
       ).subscribe({
         next(res) {
           if (res.status === 'found') {
-            history.replace(
-              paths.vaultNotePath({ vaultId: vaultId, noteId: res.id }),
-            );
+            history.replace(notePath(res.id));
           } else {
             setIsLoading(false);
           }
@@ -73,7 +73,7 @@ export const useFindNote = (noteId: string) => {
 
       return () => flow.unsubscribe();
     }
-  }, [history, noteId, notesService, noteTitle, note, vaultId]);
+  }, [history, noteId, notesService, noteTitle, note, vaultId, notePath]);
 
   return { note, isLoading };
 };

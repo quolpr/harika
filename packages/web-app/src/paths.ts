@@ -10,7 +10,7 @@ export const PATHS = {
 
   VAULT_DAILY_PATH: '/vaults/:vaultId',
   VAULT_NOTE_INDEX_PATH: '/vaults/:vaultId/notes',
-  VAULT_NOTE_PATH: '/vaults/:vaultId/notes/:noteId',
+  VAULT_NOTE_PATH: '/vaults/:vaultId/notes/:stackIds',
   SIGNUP_PATH: '/signup',
   LOGIN_PATH: '/login',
 
@@ -23,7 +23,7 @@ export const paths = Object.fromEntries(
   vaultIndexPath(): string;
   vaultDailyPath(params: { vaultId: string }): string;
   vaultNoteIndexPath(params: { vaultId: string }): string;
-  vaultNotePath(params: { vaultId: string; noteId: string }): string;
+  vaultNotePath(params: { vaultId: string; stackIds: string }): string;
   signupPath(): string;
   loginPath(): string;
   defaultPath(): string;

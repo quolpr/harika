@@ -1,6 +1,6 @@
 import { observer } from 'mobx-react-lite';
 import React, { useCallback } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import type {
   NoteRefToken,
   Token,
@@ -8,19 +8,19 @@ import type {
   NoteModel,
   ScopedBlock,
 } from '@harika/web-core';
-import { useCurrentNote } from '../../hooks/useCurrentNote';
-import { useHandleClick } from '../../hooks/useNoteClick';
-import { paths } from '../../paths';
 import { useObservable, useObservableState } from 'observable-hooks';
 import { of, switchMap } from 'rxjs';
 import { useDeepMemo } from '../../utils';
 import { NoteBlockRef } from '@harika/web-core/src/lib/blockParser/types';
 import {
   useBlocksScopesService,
-  useCurrentVaultId,
   useNotesService,
   useVaultService,
 } from '../../hooks/vaultAppHooks';
+import {
+  useHandleNoteClickOrPress,
+  useNotePath,
+} from '../../contexts/StackedNotesContext';
 
 const NoteRefRenderer = observer(
   ({
@@ -32,10 +32,7 @@ const NoteRefRenderer = observer(
     noteBlock: ScopedBlock;
     linkedNotes: NoteModel[];
   }) => {
-    const location = useLocation();
-    const vaultId = useCurrentVaultId();
     const noteRepo = useVaultService();
-    const currentNote = useCurrentNote();
 
     const handleTodoToggle = useCallback(
       (e: React.SyntheticEvent) => {
@@ -52,11 +49,8 @@ const NoteRefRenderer = observer(
       return n.title === token.ref;
     });
 
-    const handleClick = useHandleClick(
-      vaultId,
-      currentNote?.$modelId,
-      note?.$modelId,
-    );
+    const notePath = useNotePath();
+    const handleClick = useHandleNoteClickOrPress(note?.$modelId);
 
     if (token.ref === 'TODO' || token.ref === 'DONE') {
       return (
@@ -89,12 +83,7 @@ const NoteRefRenderer = observer(
 
     return (
       <Link
-        to={
-          paths.vaultNotePath({
-            vaultId: vaultId,
-            noteId: note.$modelId,
-          }) + location.search
-        }
+        to={notePath(note.$modelId)}
         onClick={handleClick}
         className="link"
         data-not-editable
@@ -107,8 +96,6 @@ const NoteRefRenderer = observer(
 const BlockRefRenderer = observer(
   ({ token, noteBlock }: { token: NoteBlockRef; noteBlock: ScopedBlock }) => {
     const blocksScopesService = useBlocksScopesService();
-    const vaultId = useCurrentVaultId();
-    const currentNote = useCurrentNote();
 
     const linkedBlock$ = useObservable(
       ($inputs) => {
@@ -132,12 +119,7 @@ const BlockRefRenderer = observer(
 
     const block = useObservableState(linkedBlock$, undefined);
 
-    const handleClick = useHandleClick(
-      vaultId,
-      currentNote?.$modelId,
-      block?.noteId,
-      true,
-    );
+    const handleClick = useHandleNoteClickOrPress(block?.noteId, true);
 
     const handleEnterPress = useCallback(
       (e: React.KeyboardEvent) => {
@@ -169,30 +151,18 @@ const BlockRefRenderer = observer(
 
 const TagRenderer = observer(
   ({ token, linkedNotes }: { token: TagToken; linkedNotes: NoteModel[] }) => {
-    const location = useLocation();
-    const currentNote = useCurrentNote();
-    const vaultId = useCurrentVaultId();
-
     const note = linkedNotes.find((n) => {
       return n.title === token.ref;
     });
 
-    const handleClick = useHandleClick(
-      vaultId,
-      currentNote?.$modelId,
-      note?.$modelId,
-    );
+    const notePath = useNotePath();
+    const handleClick = useHandleNoteClickOrPress(note?.$modelId);
 
     if (!note) return <>#{token.ref}</>;
 
     return (
       <Link
-        to={
-          paths.vaultNotePath({
-            vaultId: vaultId,
-            noteId: note.$modelId,
-          }) + location.search
-        }
+        to={notePath(note.$modelId)}
         onClick={handleClick}
         className="link link--darker"
         data-not-editable

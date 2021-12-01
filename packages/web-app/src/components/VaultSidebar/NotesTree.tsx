@@ -2,17 +2,18 @@ import React, { useCallback } from 'react';
 import type { NotesTreeNote } from '@harika/web-core';
 import { cn } from '../../utils';
 import { Link, useHistory } from 'react-router-dom';
-import { paths } from '../../paths';
 import ArrowDown from '../../icons/arrow-down.svgr.svg?component';
 import ArrowRight from '../../icons/arrow-right.svgr.svg?component';
 import { observer } from 'mobx-react-lite';
 import { usePrimaryNoteId } from '../../hooks/usePrimaryNote';
 import {
-  useCurrentVaultApp,
   useNotesTreeRegistry,
   useVaultService,
 } from '../../hooks/vaultAppHooks';
-import { useHandleClick } from '../../hooks/useNoteClick';
+import {
+  useHandleNoteClickOrPress,
+  useNotePath,
+} from '../../contexts/StackedNotesContext';
 
 const treeClass = cn('notes-tree');
 const sidebarItemClass = cn('sidebar-item');
@@ -25,7 +26,6 @@ const NoteNode = observer(
     node: NotesTreeNote;
     onNavClick: (e: React.MouseEvent) => void;
   }) => {
-    const vaultApp = useCurrentVaultApp();
     const vaultService = useVaultService();
     const primaryNoteId = usePrimaryNoteId();
     const isFocused = primaryNoteId
@@ -34,6 +34,7 @@ const NoteNode = observer(
         : node.isInsideNode(primaryNoteId)
       : false;
     const history = useHistory();
+    const notePath = useNotePath();
 
     const handleExpandClick = useCallback(
       (e: React.MouseEvent) => {
@@ -55,24 +56,15 @@ const NoteNode = observer(
         if (newNote.status === 'ok') {
           node.setNoteId(newNote.data.$modelId);
 
-          history.push(
-            paths.vaultNotePath({
-              vaultId: vaultApp.applicationId,
-              noteId: newNote.data.$modelId,
-            }),
-          );
+          history.push(notePath(newNote.data.$modelId));
         } else {
           alert('Failed to create note');
         }
       },
-      [onNavClick, vaultService, node, history, vaultApp.applicationId],
+      [onNavClick, vaultService, node, history, notePath],
     );
 
-    const handleClick = useHandleClick(
-      vaultApp.applicationId,
-      primaryNoteId,
-      node.noteId,
-    );
+    const handleClick = useHandleNoteClickOrPress(node.noteId);
 
     const handleLinkClick = useCallback(
       (e: React.MouseEvent) => {
@@ -107,10 +99,7 @@ const NoteNode = observer(
 
           {node.noteId ? (
             <Link
-              to={paths.vaultNotePath({
-                vaultId: vaultApp.applicationId,
-                noteId: node.noteId,
-              })}
+              to={notePath(node.noteId)}
               onClick={handleLinkClick}
               className={treeClass('node-title')}
             >

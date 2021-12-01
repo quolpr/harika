@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { NoteModel } from '@harika/web-core';
-import { useHistory, useLocation } from 'react-router-dom';
+import { useHistory } from 'react-router-dom';
 import { LinkIcon } from '@heroicons/react/solid';
 import { CurrentBlockInputRefContext } from '../../contexts';
 import { NoteBlocks } from './NoteBlocks';
@@ -17,20 +17,17 @@ import { bem } from '../../utils';
 
 import LeftArrow from '../../icons/left-arrow.svg?component';
 import RightArrow from '../../icons/right-arrow.svg?component';
-import { generateStackedNotePath } from '../../hooks/useNoteClick';
-import { paths } from '../../paths';
 import { useMedia } from 'react-use';
 import { BacklinkedNote } from './BacklinkedNote';
 import {
   useBlocksScopesService,
-  useCurrentVaultId,
-  useNotesService,
   useVaultService,
 } from '../../hooks/vaultAppHooks';
 import {
   FocusedBlockState,
   useFocusedBlock,
 } from '../../hooks/useFocusedBlockState';
+import { useNotePath } from '../../contexts/StackedNotesContext';
 
 export interface IFocusBlockState {
   focusOnBlockId: string;
@@ -119,9 +116,7 @@ const BacklinkedNotes = observer(({ note }: { note: NoteModel }) => {
 const noteClass = bem('note');
 
 const NoteBody = observer(({ note }: { note: NoteModel }) => {
-  const vaultId = useCurrentVaultId();
   const isWide = useMedia('(min-width: 768px)');
-  const location = useLocation();
   const focusedBlock = useFocusedBlock();
   const noteRepo = useVaultService();
   const history = useHistory<IFocusBlockState>();
@@ -172,13 +167,13 @@ const NoteBody = observer(({ note }: { note: NoteModel }) => {
 
   const isDailyNote = note.dailyNoteDate !== undefined;
 
+  const notePath = useNotePath();
+
   const handleArrowClick = useCallback(
     async (ev: React.MouseEvent, direction: 'next' | 'prev') => {
       if (!note.dailyNoteDate) return;
 
       const noteDate = dayjs.unix(note.dailyNoteDate / 1000);
-
-      console.log(note.dailyNoteDate, { noteDate });
 
       const result = await (async () => {
         if (direction === 'next') {
@@ -191,33 +186,15 @@ const NoteBody = observer(({ note }: { note: NoteModel }) => {
       })();
 
       if (result.status === 'ok') {
-        if ((ev.nativeEvent as MouseEvent).shiftKey && note.$modelId) {
-          history.replace(
-            generateStackedNotePath(
-              location.search,
-              vaultId,
-              note.$modelId,
-              result.data.$modelId,
-            ),
-          );
-        } else {
-          history.replace(
-            paths.vaultNotePath({
-              vaultId: vaultId,
-              noteId: result.data.$modelId,
-            }) + location.search,
-          );
-        }
+        history.replace(
+          notePath(
+            result.data.$modelId,
+            Boolean((ev.nativeEvent as MouseEvent).shiftKey && note.$modelId),
+          ),
+        );
       }
     },
-    [
-      history,
-      location.search,
-      note.$modelId,
-      note.dailyNoteDate,
-      noteRepo,
-      vaultId,
-    ],
+    [history, note.$modelId, note.dailyNoteDate, notePath, noteRepo],
   );
 
   return (

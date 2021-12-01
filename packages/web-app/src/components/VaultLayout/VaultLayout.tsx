@@ -3,6 +3,7 @@ import React, {
   useContext,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -26,6 +27,7 @@ import { VaultApplication } from '@harika/web-core';
 import { CurrentVaultAppContext } from '../../hooks/vaultAppHooks';
 import { useLoadUserAppCallback } from '../../hooks/useUserApp';
 import { useSyncConfig } from '../../hooks/useSyncConfig';
+import { FocusedStackIdContext } from '../../contexts/StackedNotesContext';
 
 const layoutClass = bem('vault-layout');
 
@@ -210,60 +212,68 @@ export const VaultLayout: React.FC = ({ children }) => {
     );
   }, []);
 
+  const [focusedStackId, setFocusedStackId] = useState<string | undefined>();
+  const focusedStackContextValue = useMemo(
+    () => ({ stackId: focusedStackId, setStackId: setFocusedStackId }),
+    [focusedStackId],
+  );
+
   if (!vaultApp) return null;
 
   return (
-    <CurrentVaultAppContext.Provider value={vaultApp}>
-      <FooterRefContext.Provider value={footerRef}>
-        <UndoRedoManagerProvider>
-          <div className={layoutClass()}>
-            <VaultSidebar
-              vaultName={vaultName}
-              ref={sidebarRef}
-              className={layoutClass('sidebar', {
-                closed: !isSidebarOpened,
-              })}
-              isOpened={isSidebarOpened}
-              onNavClick={closeSidebar}
-            />
-
-            <div
-              className={layoutClass('container', {
-                'with-padding': isSidebarOpened,
-              })}
-            >
-              <div className={layoutClass('header-wrapper')}>
-                <VaultHeader
-                  className={layoutClass('header')}
-                  onTogglerClick={handleTogglerClick}
-                  isTogglerToggled={isSidebarOpened}
-                  togglerRef={togglerRef}
-                />
-              </div>
+    <FocusedStackIdContext.Provider value={focusedStackContextValue}>
+      <CurrentVaultAppContext.Provider value={vaultApp}>
+        <FooterRefContext.Provider value={footerRef}>
+          <UndoRedoManagerProvider>
+            <div className={layoutClass()}>
+              <VaultSidebar
+                vaultName={vaultName}
+                ref={sidebarRef}
+                className={layoutClass('sidebar', {
+                  closed: !isSidebarOpened,
+                })}
+                isOpened={isSidebarOpened}
+                onNavClick={closeSidebar}
+              />
 
               <div
-                className={layoutClass('main-wrapper')}
-                onScroll={handleScroll}
-                ref={mainRef}
+                className={layoutClass('container', {
+                  'with-padding': isSidebarOpened,
+                })}
               >
-                <section
-                  className={layoutClass('main', {
-                    'sidebar-opened': isSidebarOpened,
-                  })}
-                >
-                  {children}
-                </section>
-              </div>
+                <div className={layoutClass('header-wrapper')}>
+                  <VaultHeader
+                    className={layoutClass('header')}
+                    onTogglerClick={handleTogglerClick}
+                    isTogglerToggled={isSidebarOpened}
+                    togglerRef={togglerRef}
+                  />
+                </div>
 
-              <div
-                className={layoutClass('footer-wrapper')}
-                ref={footerRef}
-              ></div>
+                <div
+                  className={layoutClass('main-wrapper')}
+                  onScroll={handleScroll}
+                  ref={mainRef}
+                >
+                  <section
+                    className={layoutClass('main', {
+                      'sidebar-opened': isSidebarOpened,
+                    })}
+                  >
+                    {children}
+                  </section>
+                </div>
+
+                <div
+                  className={layoutClass('footer-wrapper')}
+                  ref={footerRef}
+                ></div>
+              </div>
             </div>
-          </div>
-        </UndoRedoManagerProvider>
-      </FooterRefContext.Provider>
-    </CurrentVaultAppContext.Provider>
+          </UndoRedoManagerProvider>
+        </FooterRefContext.Provider>
+      </CurrentVaultAppContext.Provider>
+    </FocusedStackIdContext.Provider>
   );
 };
 

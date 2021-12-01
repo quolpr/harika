@@ -9,7 +9,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { paths } from '../../paths';
 import { Modal, modalClass } from '../Modal/Modal';
 import { debounce, map, Observable, of, switchMap, tap, timer } from 'rxjs';
-import { generateStackedNotePath } from '../../hooks/useNoteClick';
 import { usePrimaryNoteId } from '../../hooks/usePrimaryNote';
 import { useObservable, useObservableState } from 'observable-hooks';
 import { VaultService } from '@harika/web-core';
@@ -91,19 +90,8 @@ const spawnView = ([
                 id: `${noteId}-${noteBlockId}`,
                 name: data,
                 type: 'goToPage',
-                href: paths.vaultNotePath({
-                  vaultId: vaultModelId,
-                  noteId: noteId,
-                }),
-                stackHref:
-                  primaryNoteId &&
-                  generateStackedNotePath(
-                    locationSearch,
-                    vaultModelId,
-                    primaryNoteId,
-                    noteId,
-                  ),
-
+                href: '',
+                stackHref: '',
                 highlight: toFind,
               }),
             ),
@@ -246,7 +234,7 @@ export const CommandPaletteModal = ({
           history.push(
             paths.vaultNotePath({
               vaultId: vault.applicationId,
-              noteId: result.data.$modelId,
+              stackIds: '',
             }),
           );
 

@@ -1,15 +1,15 @@
 import clsx from 'clsx';
 import { observer } from 'mobx-react-lite';
 import React, { useState } from 'react';
-import { useCurrentNote } from '../../hooks/useCurrentNote';
-import { useHandleClick } from '../../hooks/useNoteClick';
 import { Arrow } from '../Arrow/Arrow';
-import { Link, useLocation } from 'react-router-dom';
-import { paths } from '../../paths';
+import { Link } from 'react-router-dom';
 import type { BlocksScope, NoteModel } from '@harika/web-core';
 import { NoteBlock } from '../NoteBlock/NoteBlock';
 import { NoteBlocksHandlers } from './NoteBlocksHandlers';
-import { useCurrentVaultId } from '../../hooks/vaultAppHooks';
+import {
+  useHandleNoteClickOrPress,
+  useNotePath,
+} from '../../contexts/StackedNotesContext';
 
 const LinkedBlock = observer(
   ({ note, scope }: { note: NoteModel; scope: BlocksScope }): JSX.Element => {
@@ -48,16 +48,10 @@ const LinkedBlock = observer(
 
 export const BacklinkedNote = observer(
   ({ note, scopes }: { note: NoteModel; scopes: BlocksScope[] }) => {
-    const vaultId = useCurrentVaultId();
     const [isExpanded, setIsExpanded] = useState(true);
-    const currentNote = useCurrentNote();
-    const location = useLocation();
 
-    const handleClick = useHandleClick(
-      vaultId,
-      currentNote?.$modelId,
-      note?.$modelId,
-    );
+    const notePath = useNotePath();
+    const handleClick = useHandleNoteClickOrPress(note?.$modelId);
 
     return (
       <div className="backlinked-note">
@@ -73,17 +67,7 @@ export const BacklinkedNote = observer(
               setIsExpanded(!isExpanded);
             }}
           />
-          <Link
-            to={
-              note
-                ? paths.vaultNotePath({
-                    vaultId: vaultId,
-                    noteId: note.$modelId,
-                  }) + location.search
-                : ''
-            }
-            onClick={handleClick}
-          >
+          <Link to={note ? notePath(note.$modelId) : ''} onClick={handleClick}>
             {note.title}
           </Link>
         </div>

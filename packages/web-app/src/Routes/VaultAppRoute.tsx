@@ -4,7 +4,7 @@ import { VaultLayout } from '../components/VaultLayout/VaultLayout';
 import { PATHS, VAULT_PREFIX } from '../paths';
 import { OnlyAuthed } from '../components/OnlyAuthed';
 import { DailyNotePage } from '../pages/DailyNotePage';
-import { NotePage } from '../pages/NotePage';
+import { NoteStackPage } from '../pages/NotePage';
 import { NotesPage } from '../pages/NotesPage/NotesPage';
 import { VaultsPage } from '../pages/VaultsPage/VaultsPage';
 import { UserAppProvider } from '../hooks/useUserApp';
@@ -14,21 +14,25 @@ export const VaultAppRoute = () => {
     <UserAppProvider>
       <Route path={VAULT_PREFIX}>
         <OnlyAuthed>
-          <VaultLayout>
-            <Switch>
-              <Route exact path={PATHS.VAULT_DAILY_PATH}>
+          <Switch>
+            <Route exact path={PATHS.VAULT_DAILY_PATH}>
+              <VaultLayout>
                 <DailyNotePage />
-              </Route>
+              </VaultLayout>
+            </Route>
 
-              <Route exact path={PATHS.VAULT_NOTE_PATH}>
-                <NotePage />
-              </Route>
+            <Route exact path={PATHS.VAULT_NOTE_PATH}>
+              <VaultLayout>
+                <NoteStackPage />
+              </VaultLayout>
+            </Route>
 
-              <Route exact path={PATHS.VAULT_NOTE_INDEX_PATH}>
+            <Route exact path={PATHS.VAULT_NOTE_INDEX_PATH}>
+              <VaultLayout>
                 <NotesPage />
-              </Route>
-            </Switch>
-          </VaultLayout>
+              </VaultLayout>
+            </Route>
+          </Switch>
         </OnlyAuthed>
       </Route>
       <Route exact path={PATHS.VAULT_INDEX_PATH}>
