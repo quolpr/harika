@@ -1,5 +1,4 @@
 import { FastifyPluginCallback } from 'fastify';
-import { createChangesSchema } from './createUserSchema';
 import { Server, Socket } from 'socket.io';
 import {
   BehaviorSubject,
@@ -8,65 +7,16 @@ import {
   mergeMap,
   Observable,
   of,
-  share,
   Subject,
   switchMap,
   takeUntil,
   tap,
 } from 'rxjs';
-import { pg } from '../../plugins/db';
+import { IDatabaseChange } from './types';
+import { createDbSchema } from './createDbSchema';
 
 type IRequestToServer = {};
 type IResponseFromServer = {};
-
-export interface ICreateChange<
-  TableName extends string = string,
-  Obj extends Record<string, any> & { id: string } = Record<string, any> & {
-    id: string;
-  }
-> {
-  id: string;
-  type: DatabaseChangeType.Create;
-  table: TableName;
-  key: string;
-  obj: Obj;
-}
-
-export interface IUpdateChange<
-  TableName extends string = string,
-  Obj extends Record<string, any> & { id: string } = Record<string, any> & {
-    id: string;
-  }
-> {
-  id: string;
-  type: DatabaseChangeType.Update;
-  table: TableName;
-  key: string;
-  from: Partial<Obj>;
-  to: Partial<Obj>;
-}
-
-export interface IDeleteChange<TableName extends string = string> {
-  id: string;
-  type: DatabaseChangeType.Delete;
-  table: TableName;
-  key: string;
-}
-
-export type IDatabaseChange<
-  TableName extends string = string,
-  Obj extends Record<string, any> & { id: string } = Record<string, any> & {
-    id: string;
-  }
-> =
-  | ICreateChange<TableName, Obj>
-  | IUpdateChange<TableName, Obj>
-  | IDeleteChange<TableName>;
-export enum DatabaseChangeType {
-  Create = 'create',
-  Update = 'update',
-  Delete = 'delete',
-}
 
 export enum CommandTypesFromClient {
   ApplyNewChanges = 'applyNewChanges',
@@ -242,7 +192,7 @@ export const syncHandler: FastifyPluginCallback = (server, options, next) => {
   });
 
   server.get('/', async (req, res) => {
-    await createChangesSchema(req.db, 'db_user3');
+    await createDbSchema(req.db, 'db_user3');
 
     res.send({ status: 'ok' });
   });
