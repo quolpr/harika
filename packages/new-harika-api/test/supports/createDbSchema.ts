@@ -6,6 +6,8 @@ let i = 0;
 export const createTestDbSchema = async () => {
   const dbName = `test_db_${i++}`;
 
+  await dropTestDbSchema(dbName);
+
   await createDbSchema(pg, dbName);
 
   return dbName;

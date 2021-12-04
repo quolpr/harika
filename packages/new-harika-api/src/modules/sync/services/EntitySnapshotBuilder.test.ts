@@ -1,7 +1,7 @@
 import {
-  buildCreateChange,
-  buildDeleteChange,
-  buildUpdateChange,
+  updateChangeFactory,
+  createChangeFactory,
+  deleteChangeFactory,
 } from '../../../../test/supports/changeBuilders';
 import { EntitySnapshotBuilder } from './EntitySnapshotBuilder';
 
@@ -9,16 +9,20 @@ describe('EntitySnapshotBuilder', () => {
   it('works', () => {
     expect(
       EntitySnapshotBuilder.build([
-        buildCreateChange('wow', { id: '123', content: 'test' }),
-        buildUpdateChange(
-          'wow',
-          '123',
-          { content: 'wow' },
-          { childIds: [1, 2, 3], test: true }
-        ),
+        createChangeFactory.build({
+          obj: {
+            id: '123',
+            content: 'test',
+          },
+        }),
+        updateChangeFactory.build({
+          key: '123',
+          from: { content: 'wow' },
+          to: { childIds: [1, 2, 3], test: true },
+        }),
       ])
     ).toStrictEqual({
-      wow: {
+      testTable: {
         '123': {
           entity: {
             id: '123',
@@ -34,17 +38,20 @@ describe('EntitySnapshotBuilder', () => {
   it('works with array', () => {
     expect(
       EntitySnapshotBuilder.build([
-        buildCreateChange('wow', { id: '123', content: 'test' }),
-        buildUpdateChange('wow', '123', {}, { childIds: [1, 2, 3] }),
-        buildUpdateChange(
-          'wow',
-          '123',
-          { childIds: [2, 3] },
-          { childIds: [4] }
-        ),
+        createChangeFactory.build({ obj: { id: '123', content: 'test' } }),
+        updateChangeFactory.build({
+          key: '123',
+          from: {},
+          to: { childIds: [1, 2, 3] },
+        }),
+        updateChangeFactory.build({
+          key: '123',
+          from: { childIds: [2, 3] },
+          to: { childIds: [4] },
+        }),
       ])
     ).toStrictEqual({
-      wow: {
+      testTable: {
         '123': {
           entity: {
             id: '123',
@@ -60,22 +67,20 @@ describe('EntitySnapshotBuilder', () => {
   it('works with nested objs', () => {
     expect(
       EntitySnapshotBuilder.build([
-        buildCreateChange('wow', { id: '123', content: 'test' }),
-        buildUpdateChange(
-          'wow',
-          '123',
-          {},
-          { nested: { childIds: [1, 2, 3] } }
-        ),
-        buildUpdateChange(
-          'wow',
-          '123',
-          { nested: { childIds: [2, 3] } },
-          { nested: { childIds: [4], test: true } }
-        ),
+        createChangeFactory.build({ obj: { id: '123', content: 'test' } }),
+        updateChangeFactory.build({
+          key: '123',
+          from: {},
+          to: { nested: { childIds: [1, 2, 3] } },
+        }),
+        updateChangeFactory.build({
+          key: '123',
+          from: { nested: { childIds: [2, 3] } },
+          to: { nested: { childIds: [4], test: true } },
+        }),
       ])
     ).toStrictEqual({
-      wow: {
+      testTable: {
         '123': {
           entity: {
             id: '123',
@@ -93,8 +98,8 @@ describe('EntitySnapshotBuilder', () => {
 
   it('works with delete', () => {
     EntitySnapshotBuilder.build([
-      buildCreateChange('wow', { id: '123', content: 'test' }),
-      buildDeleteChange('wow', '123'),
+      createChangeFactory.build({ obj: { id: '123', content: 'test' } }),
+      deleteChangeFactory.build({ key: '123' }),
     ]);
   });
 });

@@ -7,7 +7,6 @@ import Tippy from '@tippyjs/react';
 import {
   useIsConnectionAllowed$,
   useSyncState$,
-  useVaultService,
 } from '../../hooks/vaultAppHooks';
 import { BehaviorSubject } from 'rxjs';
 import { useMountedState } from 'react-use';

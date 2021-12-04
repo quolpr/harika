@@ -1,6 +1,6 @@
 import {
-  buildCreateChange,
-  buildUpdateChange,
+  updateChangeFactory,
+  createChangeFactory,
 } from '../../../../test/supports/changeBuilders';
 import {
   createTestDbSchema,
@@ -8,6 +8,7 @@ import {
 } from '../../../../test/supports/createDbSchema';
 import { pg } from '../../../plugins/db';
 import { IncomingChangesHandler } from './IncomingChangesHandler';
+import { v4 } from 'uuid';
 
 describe('IncomingChangesHandler', () => {
   let schemaName!: string;
@@ -22,17 +23,23 @@ describe('IncomingChangesHandler', () => {
     await dropTestDbSchema(schemaName);
   });
 
-  it('works', () => {
-    incomingChangesHandler.handleIncomeChanges(schemaName, [
-      buildCreateChange('wow', { id: '123', content: 'test' }),
-      buildUpdateChange(
-        'wow',
-        '123',
-        { content: 'wow' },
-        { childIds: [1, 2, 3], test: true }
-      ),
+  it('works', async () => {
+    console.log(
+      await createChangeFactory.create(
+        { obj: { id: '123', content: 'test' } },
+        { transient: { schemaName } }
+      )
+    );
+
+    await incomingChangesHandler.handleIncomeChanges(schemaName, v4(), [
+      createChangeFactory.build({ obj: { id: '123', content: 'test' } }),
+      updateChangeFactory.build({
+        key: '123',
+        from: { content: 'wow' },
+        to: { childIds: [1, 2, 3], test: true },
+      }),
     ]);
 
-    console.log('hex!');
+    console.log('hex3!');
   });
 });

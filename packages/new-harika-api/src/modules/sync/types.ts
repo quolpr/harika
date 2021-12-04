@@ -2,6 +2,9 @@ export type IAnyEntity = Record<string, any> & {
   id: string;
 };
 
+// TODO rename tableName -> collectionName
+// key -> documentId
+
 interface IBaseChange<TableName extends string = string> {
   id: string;
   key: string;

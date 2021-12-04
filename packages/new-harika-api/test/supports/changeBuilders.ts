@@ -7,55 +7,78 @@ import {
   IDeleteChange,
 } from '../../src/modules/sync/types';
 import { v4 } from 'uuid';
+import { Factory } from 'fishery';
+import { pg } from '../../src/plugins/db';
 
 const clock = HybridClock.parse(HybridClock.since(new Date().toISOString()));
 
-export const buildCreateChange = <
-  TableName extends string = string,
-  T extends IAnyEntity = IAnyEntity
->(
-  table: TableName,
-  obj: T
-): ICreateChange<TableName, T> => {
+const defaultObjectId = '123';
+const defaultTableName = 'testTable';
+
+const onCreateHook =
+  <T>(schemaName: string | undefined) =>
+  async (ch: T) => {
+    if (!schemaName) throw new Error('Schema name should be present!');
+
+    const [{ rev }] = await pg
+      .insert(
+        { ...ch, receivedFromClientId: '22a5f0d7-8df5-4e10-b53f-b46f24ff43d4' },
+        ['rev']
+      )
+      .withSchema(schemaName)
+      .into('changes');
+
+    return { ...ch, rev };
+  };
+
+export const createChangeFactory = Factory.define<
+  ICreateChange<string, IAnyEntity>,
+  { schemaName: string }
+>(({ params, onCreate, transientParams }) => {
+  const finalId = params.key || params.obj.id || defaultObjectId;
+
+  onCreate(onCreateHook(transientParams.schemaName));
+
   return {
-    id: v4(),
+    id: params.id || v4(),
     type: DatabaseChangeType.Create,
-    table: table,
-    key: obj.id,
-    obj,
-    timestamp: HybridClock.send(clock).toString(),
+    table: params.table || defaultTableName,
+    key: finalId,
+    obj: params.obj
+      ? ({ ...params.obj, id: finalId } as IAnyEntity)
+      : { id: finalId, content: 'test' },
+    timestamp: params.timestamp || HybridClock.send(clock).toString(),
   };
-};
+});
 
-export const buildUpdateChange = <
-  TableName extends string = string,
-  T extends IAnyEntity = IAnyEntity
->(
-  table: TableName,
-  key: string,
-  from: Partial<T>,
-  to: Partial<T>
-): IUpdateChange<TableName, T> => {
+export const updateChangeFactory = Factory.define<
+  IUpdateChange<string, IAnyEntity>,
+  { schemaName: string }
+>(({ params, onCreate, transientParams }) => {
+  onCreate(onCreateHook(transientParams.schemaName));
+
   return {
-    id: v4(),
+    id: params.id || v4(),
     type: DatabaseChangeType.Update,
-    table: table,
-    key,
-    from,
-    to,
-    timestamp: HybridClock.send(clock).toString(),
+    table: params.table || defaultTableName,
+    key: params.key || defaultObjectId,
+    from: params.from || { content: 'test' },
+    to: params.to || { content: 'changed test' },
+    timestamp: params.timestamp || HybridClock.send(clock).toString(),
   };
-};
+});
 
-export const buildDeleteChange = <TableName extends string = string>(
-  table: TableName,
-  key: string
-): IDeleteChange<TableName> => {
+export const deleteChangeFactory = Factory.define<
+  IDeleteChange<string>,
+  { schemaName: string }
+>(({ params, onCreate, transientParams }) => {
+  onCreate(onCreateHook(transientParams.schemaName));
+
   return {
-    id: v4(),
+    id: params.id || v4(),
     type: DatabaseChangeType.Delete,
-    table: table,
-    key,
-    timestamp: HybridClock.send(clock).toString(),
+    table: params.table || defaultTableName,
+    key: params.key || defaultObjectId,
+    timestamp: params.timestamp || HybridClock.send(clock).toString(),
   };
-};
+});
