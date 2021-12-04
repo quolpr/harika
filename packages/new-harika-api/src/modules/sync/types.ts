@@ -1,40 +1,35 @@
-interface IScopedChange {
-  scopeId?: string;
-}
-
 export type IAnyEntity = Record<string, any> & {
   id: string;
 };
 
+interface IBaseChange<TableName extends string = string> {
+  id: string;
+  key: string;
+  table: TableName;
+  scopeId?: string;
+  timestamp: string;
+}
+
 export interface ICreateChange<
   TableName extends string = string,
   Obj extends IAnyEntity = IAnyEntity
-> extends IScopedChange {
-  id: string;
+> extends IBaseChange<TableName> {
   type: DatabaseChangeType.Create;
-  table: TableName;
-  key: string;
   obj: Obj;
 }
 
 export interface IUpdateChange<
   TableName extends string = string,
   Obj extends IAnyEntity = IAnyEntity
-> extends IScopedChange {
-  id: string;
+> extends IBaseChange<TableName> {
   type: DatabaseChangeType.Update;
-  table: TableName;
-  key: string;
   from: Partial<Obj>;
   to: Partial<Obj>;
 }
 
 export interface IDeleteChange<TableName extends string = string>
-  extends IScopedChange {
-  id: string;
+  extends IBaseChange<TableName> {
   type: DatabaseChangeType.Delete;
-  table: TableName;
-  key: string;
 }
 
 export type IDatabaseChange<
@@ -44,6 +39,13 @@ export type IDatabaseChange<
   | ICreateChange<TableName, Obj>
   | IUpdateChange<TableName, Obj>
   | IDeleteChange<TableName>;
+
+export type IDatabaseChangeWithRev<
+  TableName extends string = string,
+  Obj extends IAnyEntity = IAnyEntity
+> = IDatabaseChange<TableName, Obj> & {
+  rev: number;
+};
 
 export enum DatabaseChangeType {
   Create = 'create',
