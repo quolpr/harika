@@ -1,10 +1,9 @@
 import { createDbSchema } from '../../src/modules/sync/createDbSchema';
 import { pg } from '../../src/plugins/db';
-
-let i = 0;
+import { v4 } from 'uuid';
 
 export const createTestDbSchema = async () => {
-  const dbName = `test_db_${i++}`;
+  const dbName = `test_db_${v4().replace(/-/g, '').slice(-16)}`;
 
   await dropTestDbSchema(dbName);
 

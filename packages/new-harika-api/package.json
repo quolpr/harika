@@ -20,6 +20,7 @@
     "fastify-oas": "^3.0.8",
     "fastify-plugin": "3.0.0",
     "knex": "^0.95.14",
+    "lodash": "^4.17.21",
     "pg": "^8.7.1",
     "rxjs": "^7.4.0",
     "socket.io": "^4.4.0",

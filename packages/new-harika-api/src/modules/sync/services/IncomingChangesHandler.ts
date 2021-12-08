@@ -1,4 +1,4 @@
-import { IDatabaseChange } from '../types';
+import { IDocChange, IDocChangeWithRev } from '../types';
 import { Knex } from 'knex';
 
 export class IncomingChangesHandler {
@@ -7,7 +7,7 @@ export class IncomingChangesHandler {
   async handleIncomeChanges(
     schemaName: string,
     receivedFromClientId: string,
-    changes: IDatabaseChange[]
+    changes: IDocChange[]
   ) {
     await this.db.transaction(async (trx) => {
       await this.db.schema
@@ -15,17 +15,23 @@ export class IncomingChangesHandler {
         .transacting(trx)
         .raw(`LOCK TABLE "${schemaName}"."changes" IN EXCLUSIVE MODE`);
 
-      console.log(changes);
-      console.log(
-        await this.db
-          .insert(
-            changes.map((ch) => ({ ...ch, receivedFromClientId })),
-            ['id', 'rev']
-          )
-          .transacting(trx)
-          .withSchema(schemaName)
-          .into('changes')
+      const insertResult: { id: string; rev: number }[] = await this.db
+        .insert(
+          changes.map((ch) => ({ ...ch, receivedFromClientId })),
+          ['id', 'rev']
+        )
+        .transacting(trx)
+        .withSchema(schemaName)
+        .into('changes');
+
+      const idRevMap = Object.fromEntries(
+        insertResult.map(({ id, rev }) => [id, rev])
       );
+
+      const changesWithRev: IDocChangeWithRev[] = changes.map((ch) => ({
+        ...ch,
+        rev: idRevMap[ch.id],
+      }));
     });
 
     // 1. Lock changes/entity tables for write

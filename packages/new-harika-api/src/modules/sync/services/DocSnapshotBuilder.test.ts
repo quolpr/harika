@@ -3,20 +3,20 @@ import {
   createChangeFactory,
   deleteChangeFactory,
 } from '../../../../test/supports/changeBuilders';
-import { EntitySnapshotBuilder } from './EntitySnapshotBuilder';
+import { EntitySnapshotBuilder } from './DocSnapshotBuilder';
 
 describe('EntitySnapshotBuilder', () => {
   it('works', () => {
     expect(
       EntitySnapshotBuilder.build([
         createChangeFactory.build({
-          obj: {
+          doc: {
             id: '123',
             content: 'test',
           },
         }),
         updateChangeFactory.build({
-          key: '123',
+          docId: '123',
           from: { content: 'wow' },
           to: { childIds: [1, 2, 3], test: true },
         }),
@@ -38,14 +38,14 @@ describe('EntitySnapshotBuilder', () => {
   it('works with array', () => {
     expect(
       EntitySnapshotBuilder.build([
-        createChangeFactory.build({ obj: { id: '123', content: 'test' } }),
+        createChangeFactory.build({ doc: { id: '123', content: 'test' } }),
         updateChangeFactory.build({
-          key: '123',
+          docId: '123',
           from: {},
           to: { childIds: [1, 2, 3] },
         }),
         updateChangeFactory.build({
-          key: '123',
+          docId: '123',
           from: { childIds: [2, 3] },
           to: { childIds: [4] },
         }),
@@ -67,14 +67,14 @@ describe('EntitySnapshotBuilder', () => {
   it('works with nested objs', () => {
     expect(
       EntitySnapshotBuilder.build([
-        createChangeFactory.build({ obj: { id: '123', content: 'test' } }),
+        createChangeFactory.build({ doc: { id: '123', content: 'test' } }),
         updateChangeFactory.build({
-          key: '123',
+          docId: '123',
           from: {},
           to: { nested: { childIds: [1, 2, 3] } },
         }),
         updateChangeFactory.build({
-          key: '123',
+          docId: '123',
           from: { nested: { childIds: [2, 3] } },
           to: { nested: { childIds: [4], test: true } },
         }),
@@ -98,8 +98,8 @@ describe('EntitySnapshotBuilder', () => {
 
   it('works with delete', () => {
     EntitySnapshotBuilder.build([
-      createChangeFactory.build({ obj: { id: '123', content: 'test' } }),
-      deleteChangeFactory.build({ key: '123' }),
+      createChangeFactory.build({ doc: { id: '123', content: 'test' } }),
+      deleteChangeFactory.build({ docId: '123' }),
     ]);
   });
 });

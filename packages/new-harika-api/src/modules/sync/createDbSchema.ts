@@ -1,4 +1,5 @@
 import { Knex } from 'knex';
+import { changesDbTable, entitiesDbTable } from './dbTypes';
 
 export const createDbSchema = async (db: Knex, schemaName: string) => {
   await db.transaction(async (trx) => {
@@ -6,46 +7,44 @@ export const createDbSchema = async (db: Knex, schemaName: string) => {
 
     await db.schema
       .transacting(trx)
-      .createTable(`${schemaName}.changes`, function (table) {
-        table.uuid('id');
-        table.string('table').notNullable();
-        table.string('key').notNullable();
+      .createTable(`${schemaName}.${changesDbTable}`, function (table) {
+        table.uuid('id').primary({ constraintName: 'changes_primary_key' });
+        table.string('collectionName').notNullable();
+        table.string('docId').notNullable();
         table.string('scopeId');
-        table.increments('rev', { primaryKey: false }).notNullable();
+        table
+          .bigIncrements('rev', { primaryKey: false })
+          .notNullable()
+          .unique();
 
-        table.uuid('receivedFromClientId').notNullable();
-        table.string('timestamp');
+        table.string('receivedFromClientId', 16).notNullable();
+        table.string('timestamp').unique();
         table.string('type', 10).notNullable();
 
         table.jsonb('from');
         table.jsonb('to');
 
-        table.jsonb('obj');
+        table.jsonb('doc');
 
         table.index('receivedFromClientId', 'idxChangesReceivedFromClientId');
         table.index('scopeId', 'idxChangesScopeId');
         table.index([db.raw('rev ASC')], 'idxChangesRevDbName');
-
-        table.timestamps();
       });
 
     await db.schema
       .transacting(trx)
-      .raw(
-        `alter table "${schemaName}"."changes" add constraint "changes_pkey" primary key ("id");`
-      );
+      .createTable(`${schemaName}.${entitiesDbTable}`, function (table) {
+        table
+          .string('docId')
+          .notNullable()
+          .unique()
+          .primary({ constraintName: 'entities_primary_key' });
+        table.string('collectionName').notNullable();
+        table.jsonb('doc').notNullable();
+        table.bigInteger('rev').notNullable().unique();
 
-    await db.schema
-      .transacting(trx)
-      .createTable(`${schemaName}.entities`, function (table) {
-        table.uuid('id');
-        table.string('table').notNullable();
-        table.string('key').notNullable();
-        table.string('obj').notNullable();
-        table.string('rev').notNullable();
-
-        table.index('table', 'idxEntitiesReceivedTable');
-        table.index('key', 'idxEntitiesReceivedKey');
+        table.index('collectionName', 'idxEntitiesReceivedTable');
+        table.index('docId', 'idxEntitiesReceivedKey');
       });
   });
 };

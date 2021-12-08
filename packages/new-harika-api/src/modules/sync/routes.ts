@@ -12,7 +12,7 @@ import {
   takeUntil,
   tap,
 } from 'rxjs';
-import { IDatabaseChange } from './types';
+import { IDocChange } from './types';
 import { createDbSchema } from './createDbSchema';
 
 type IRequestToServer = {};
@@ -53,7 +53,7 @@ export type ApplyNewChangesFromClientCommand = {
 };
 
 export interface ApplyNewChangesFromClientRequest {
-  changes: IDatabaseChange[];
+  changes: IDocChange[];
   partial: boolean;
   lastAppliedRemoteRevision: number | null;
 }
@@ -80,7 +80,7 @@ export interface GetChangesRequest {
 }
 
 export interface GetChangesResponse {
-  changes: (IDatabaseChange & { clock: string })[];
+  changes: (IDocChange & { clock: string })[];
   lastServerTime: number;
 }
 

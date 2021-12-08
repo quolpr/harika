@@ -17,6 +17,6 @@
       "*": ["node_modules/*"]
     },
     "noImplicitAny": false,
-    "lib": ["es6"]
+    "lib": ["es2019"]
   }
 }

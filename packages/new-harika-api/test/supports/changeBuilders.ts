@@ -1,19 +1,27 @@
 import { HybridClock } from '../../src/modules/sync/HybridClock';
 import {
-  IAnyEntity,
+  IAnyDoc,
   ICreateChange,
-  DatabaseChangeType,
+  DocChangeType,
   IUpdateChange,
   IDeleteChange,
+  WithRev,
 } from '../../src/modules/sync/types';
 import { v4 } from 'uuid';
 import { Factory } from 'fishery';
 import { pg } from '../../src/plugins/db';
 
-const clock = HybridClock.parse(HybridClock.since(new Date().toISOString()));
+export function makeClientId() {
+  return v4().replace(/-/g, '').slice(-16);
+}
+
+const clientId = makeClientId();
+const clock = new HybridClock(0, 0, clientId);
 
 const defaultObjectId = '123';
 const defaultTableName = 'testTable';
+
+let currentRev = 0;
 
 const onCreateHook =
   <T>(schemaName: string | undefined) =>
@@ -21,10 +29,7 @@ const onCreateHook =
     if (!schemaName) throw new Error('Schema name should be present!');
 
     const [{ rev }] = await pg
-      .insert(
-        { ...ch, receivedFromClientId: '22a5f0d7-8df5-4e10-b53f-b46f24ff43d4' },
-        ['rev']
-      )
+      .insert({ ...ch, receivedFromClientId: clientId }, ['rev'])
       .withSchema(schemaName)
       .into('changes');
 
@@ -32,53 +37,56 @@ const onCreateHook =
   };
 
 export const createChangeFactory = Factory.define<
-  ICreateChange<string, IAnyEntity>,
+  WithRev<ICreateChange<string, IAnyDoc>>,
   { schemaName: string }
 >(({ params, onCreate, transientParams }) => {
-  const finalId = params.key || params.obj.id || defaultObjectId;
+  const finalId = params.docId || params?.doc?.id || defaultObjectId;
 
   onCreate(onCreateHook(transientParams.schemaName));
 
   return {
     id: params.id || v4(),
-    type: DatabaseChangeType.Create,
-    table: params.table || defaultTableName,
-    key: finalId,
-    obj: params.obj
-      ? ({ ...params.obj, id: finalId } as IAnyEntity)
+    type: DocChangeType.Create,
+    collectionName: params.collectionName || defaultTableName,
+    docId: finalId,
+    doc: params.doc
+      ? ({ ...params.doc, id: finalId } as IAnyDoc)
       : { id: finalId, content: 'test' },
     timestamp: params.timestamp || HybridClock.send(clock).toString(),
+    rev: currentRev++,
   };
 });
 
 export const updateChangeFactory = Factory.define<
-  IUpdateChange<string, IAnyEntity>,
+  WithRev<IUpdateChange<string, IAnyDoc>>,
   { schemaName: string }
 >(({ params, onCreate, transientParams }) => {
   onCreate(onCreateHook(transientParams.schemaName));
 
   return {
     id: params.id || v4(),
-    type: DatabaseChangeType.Update,
-    table: params.table || defaultTableName,
-    key: params.key || defaultObjectId,
+    type: DocChangeType.Update,
+    collectionName: params.collectionName || defaultTableName,
+    docId: params.docId || defaultObjectId,
     from: params.from || { content: 'test' },
     to: params.to || { content: 'changed test' },
     timestamp: params.timestamp || HybridClock.send(clock).toString(),
+    rev: currentRev++,
   };
 });
 
 export const deleteChangeFactory = Factory.define<
-  IDeleteChange<string>,
+  WithRev<IDeleteChange<string>>,
   { schemaName: string }
 >(({ params, onCreate, transientParams }) => {
   onCreate(onCreateHook(transientParams.schemaName));
 
   return {
     id: params.id || v4(),
-    type: DatabaseChangeType.Delete,
-    table: params.table || defaultTableName,
-    key: params.key || defaultObjectId,
+    type: DocChangeType.Delete,
+    collectionName: params.collectionName || defaultTableName,
+    docId: params.docId || defaultObjectId,
     timestamp: params.timestamp || HybridClock.send(clock).toString(),
+    rev: currentRev++,
   };
 });

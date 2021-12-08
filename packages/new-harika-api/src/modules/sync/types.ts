@@ -1,56 +1,66 @@
-export type IAnyEntity = Record<string, any> & {
+export type IAnyDoc = Record<string, any> & {
   id: string;
 };
 
-// TODO rename tableName -> collectionName
-// key -> documentId
-
-interface IBaseChange<TableName extends string = string> {
+interface IBaseChange<CollectionName extends string = string> {
   id: string;
-  key: string;
-  table: TableName;
+  docId: string;
+  collectionName: CollectionName;
   scopeId?: string;
   timestamp: string;
 }
 
 export interface ICreateChange<
-  TableName extends string = string,
-  Obj extends IAnyEntity = IAnyEntity
-> extends IBaseChange<TableName> {
-  type: DatabaseChangeType.Create;
-  obj: Obj;
+  CollectionName extends string = string,
+  Doc extends IAnyDoc = IAnyDoc
+> extends IBaseChange<CollectionName> {
+  type: DocChangeType.Create;
+  doc: Doc;
 }
 
 export interface IUpdateChange<
-  TableName extends string = string,
-  Obj extends IAnyEntity = IAnyEntity
-> extends IBaseChange<TableName> {
-  type: DatabaseChangeType.Update;
-  from: Partial<Obj>;
-  to: Partial<Obj>;
+  CollectionName extends string = string,
+  Doc extends IAnyDoc = IAnyDoc
+> extends IBaseChange<CollectionName> {
+  type: DocChangeType.Update;
+  from: Partial<Doc>;
+  to: Partial<Doc>;
 }
 
-export interface IDeleteChange<TableName extends string = string>
-  extends IBaseChange<TableName> {
-  type: DatabaseChangeType.Delete;
+export interface IDeleteChange<CollectionName extends string = string>
+  extends IBaseChange<CollectionName> {
+  type: DocChangeType.Delete;
 }
 
-export type IDatabaseChange<
-  TableName extends string = string,
-  Obj extends IAnyEntity = IAnyEntity
+export type IDocChange<
+  CollectionName extends string = string,
+  Doc extends IAnyDoc = IAnyDoc
 > =
-  | ICreateChange<TableName, Obj>
-  | IUpdateChange<TableName, Obj>
-  | IDeleteChange<TableName>;
+  | ICreateChange<CollectionName, Doc>
+  | IUpdateChange<CollectionName, Doc>
+  | IDeleteChange<CollectionName>;
 
-export type IDatabaseChangeWithRev<
-  TableName extends string = string,
-  Obj extends IAnyEntity = IAnyEntity
-> = IDatabaseChange<TableName, Obj> & {
+export type WithRev<T> = T & { rev: number };
+
+export type IDocChangeWithRev<
+  CollectionName extends string = string,
+  Doc extends IAnyDoc = IAnyDoc
+> = WithRev<IDocChange<CollectionName, Doc>>;
+
+export type IDocSnapshot<
+  CollectionName extends string = string,
+  Doc extends IAnyDoc = IAnyDoc
+> = {
+  collectionName: CollectionName;
+  doc: Doc;
+  docId: string;
   rev: number;
+  lastTimestamp: string;
+  scopeId?: string;
+  isDeleted: boolean;
 };
 
-export enum DatabaseChangeType {
+export enum DocChangeType {
   Create = 'create',
   Update = 'update',
   Delete = 'delete',

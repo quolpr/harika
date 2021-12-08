@@ -1,4 +1,4 @@
-import { DatabaseChangeType, IAnyEntity, IDatabaseChange } from '../types';
+import { DocChangeType, IDocChange, IDocSnapshot } from '../types';
 import {
   isArray,
   isPlainObject,
@@ -9,11 +9,8 @@ import {
 } from 'lodash';
 
 interface ISnapshotBuilderResult {
-  [tableName: string]: {
-    [id: string]: {
-      entity: IAnyEntity;
-      isDeleted: boolean;
-    };
+  [collectionName: string]: {
+    [id: string]: IDocSnapshot;
   };
 }
 
@@ -76,26 +73,29 @@ const handleUpdate = <T extends Record<string, any>>(
 };
 
 export class EntitySnapshotBuilder {
-  static build(changes: IDatabaseChange[]): ISnapshotBuilderResult {
+  static build(changes: IDocChange[]): ISnapshotBuilderResult {
     const registry: ISnapshotBuilderResult = {};
 
     changes.forEach((ch) => {
-      if (ch.type === DatabaseChangeType.Create) {
-        if (!registry[ch.table]) {
-          registry[ch.table] = {};
+      if (ch.type === DocChangeType.Create) {
+        if (!registry[ch.collectionName]) {
+          registry[ch.collectionName] = {};
         }
 
-        if (registry[ch.table][ch.key]) {
+        if (registry[ch.collectionName][ch.docId]) {
           throw new Error(`Multiple create changes for ${JSON.stringify(ch)}`);
         }
 
-        registry[ch.table][ch.key] = { entity: ch.obj, isDeleted: false };
+        registry[ch.collectionName][ch.docId] = {
+          doc: ch.doc,
+          isDeleted: false,
+        };
 
         return;
       }
 
-      const currentState = registry[ch.table][ch.key];
-      if (!currentState || !currentState.entity) {
+      const currentState = registry[ch.collectionName][ch.docId];
+      if (!currentState || !currentState.doc) {
         throw new Error(
           `Couldn't apply change ${JSON.stringify(
             ch
@@ -103,14 +103,14 @@ export class EntitySnapshotBuilder {
         );
       }
 
-      if (ch.type === DatabaseChangeType.Update) {
-        currentState.entity = handleUpdate(currentState.entity, {
+      if (ch.type === DocChangeType.Update) {
+        currentState.doc = handleUpdate(currentState.doc, {
           from: ch.from,
           to: ch.to,
         });
       }
 
-      if (ch.type === DatabaseChangeType.Delete) {
+      if (ch.type === DocChangeType.Delete) {
         currentState.isDeleted = true;
       }
     });
