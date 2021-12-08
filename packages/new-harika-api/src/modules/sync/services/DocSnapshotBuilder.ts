@@ -88,7 +88,11 @@ export class EntitySnapshotBuilder {
 
         registry[ch.collectionName][ch.docId] = {
           doc: ch.doc,
+          docId: ch.docId,
+          collectionName: ch.collectionName,
           isDeleted: false,
+          lastTimestamp: ch.timestamp,
+          scopeId: ch.scopeId,
         };
 
         return;
@@ -108,6 +112,8 @@ export class EntitySnapshotBuilder {
           from: ch.from,
           to: ch.to,
         });
+        currentState.lastTimestamp = ch.timestamp;
+        currentState.scopeId = ch.scopeId;
       }
 
       if (ch.type === DocChangeType.Delete) {

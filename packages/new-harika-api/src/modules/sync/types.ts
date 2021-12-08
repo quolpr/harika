@@ -54,7 +54,6 @@ export type IDocSnapshot<
   collectionName: CollectionName;
   doc: Doc;
   docId: string;
-  rev: number;
   lastTimestamp: string;
   scopeId?: string;
   isDeleted: boolean;

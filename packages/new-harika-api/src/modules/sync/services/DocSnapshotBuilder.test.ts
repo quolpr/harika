@@ -7,6 +7,12 @@ import { EntitySnapshotBuilder } from './DocSnapshotBuilder';
 
 describe('EntitySnapshotBuilder', () => {
   it('works', () => {
+    const lastChange = updateChangeFactory.build({
+      docId: '123',
+      from: { content: 'wow' },
+      to: { childIds: [1, 2, 3], test: true },
+    });
+
     expect(
       EntitySnapshotBuilder.build([
         createChangeFactory.build({
@@ -15,21 +21,21 @@ describe('EntitySnapshotBuilder', () => {
             content: 'test',
           },
         }),
-        updateChangeFactory.build({
-          docId: '123',
-          from: { content: 'wow' },
-          to: { childIds: [1, 2, 3], test: true },
-        }),
+        lastChange,
       ])
     ).toStrictEqual({
       testTable: {
         '123': {
-          entity: {
+          collectionName: 'testTable',
+          doc: {
             id: '123',
             childIds: [1, 2, 3],
             test: true,
           },
+          docId: '123',
+          lastTimestamp: lastChange.timestamp,
           isDeleted: false,
+          scopeId: undefined,
         },
       },
     });
@@ -49,19 +55,17 @@ describe('EntitySnapshotBuilder', () => {
           from: { childIds: [2, 3] },
           to: { childIds: [4] },
         }),
-      ])
-    ).toStrictEqual({
-      testTable: {
-        '123': {
-          entity: {
-            id: '123',
-            content: 'test',
-            childIds: [1, 4],
-          },
-          isDeleted: false,
+      ]).testTable['123']
+    ).toEqual(
+      expect.objectContaining({
+        doc: {
+          id: '123',
+          content: 'test',
+          childIds: [1, 4],
         },
-      },
-    });
+        isDeleted: false,
+      })
+    );
   });
 
   it('works with nested objs', () => {
@@ -78,28 +82,36 @@ describe('EntitySnapshotBuilder', () => {
           from: { nested: { childIds: [2, 3] } },
           to: { nested: { childIds: [4], test: true } },
         }),
-      ])
-    ).toStrictEqual({
-      testTable: {
-        '123': {
-          entity: {
-            id: '123',
-            content: 'test',
-            nested: {
-              childIds: [1, 4],
-              test: true,
-            },
+      ]).testTable['123']
+    ).toEqual(
+      expect.objectContaining({
+        doc: {
+          id: '123',
+          content: 'test',
+          nested: {
+            childIds: [1, 4],
+            test: true,
           },
-          isDeleted: false,
         },
-      },
-    });
+        isDeleted: false,
+      })
+    );
   });
 
   it('works with delete', () => {
-    EntitySnapshotBuilder.build([
-      createChangeFactory.build({ doc: { id: '123', content: 'test' } }),
-      deleteChangeFactory.build({ docId: '123' }),
-    ]);
+    expect(
+      EntitySnapshotBuilder.build([
+        createChangeFactory.build({ doc: { id: '123', content: 'test' } }),
+        deleteChangeFactory.build({ docId: '123' }),
+      ]).testTable['123']
+    ).toEqual(
+      expect.objectContaining({
+        doc: {
+          id: '123',
+          content: 'test',
+        },
+        isDeleted: true,
+      })
+    );
   });
 });
