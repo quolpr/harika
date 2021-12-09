@@ -3,7 +3,7 @@ import { Server, Socket } from 'socket.io';
 import {
   BehaviorSubject,
   catchError,
-  map,
+  mapTo,
   mergeMap,
   Observable,
   of,
@@ -12,90 +12,19 @@ import {
   takeUntil,
   tap,
 } from 'rxjs';
-import { IDocChange } from './types';
-import { createDbSchema } from './createDbSchema';
-
-type IRequestToServer = {};
-type IResponseFromServer = {};
-
-export enum CommandTypesFromClient {
-  ApplyNewChanges = 'applyNewChanges',
-  GetChanges = 'getChanges',
-  Auth = 'auth',
-}
-
-type InternalErrorResponse = { status: 'error'; errorType: 'internalError' };
-type NotAuthedResponse = { status: 'error'; errorType: 'notAuted' };
-
-type ErrorResponse = InternalErrorResponse | NotAuthedResponse;
-
-export type AuthClientCommand = {
-  type: CommandTypesFromClient.Auth;
-
-  request: AuthClientRequest;
-  response: AuthClientResponse;
-};
-
-export interface AuthClientRequest {
-  authToken: string;
-  dbName: string;
-}
-
-export type AuthClientResponse = {
-  status: 'success' | 'failed';
-};
-
-export type ApplyNewChangesFromClientCommand = {
-  type: CommandTypesFromClient.ApplyNewChanges;
-
-  request: ApplyNewChangesFromClientRequest;
-  response: ApplyNewChangesFromClientResponse | ErrorResponse;
-};
-
-export interface ApplyNewChangesFromClientRequest {
-  changes: IDocChange[];
-  partial: boolean;
-  lastAppliedRemoteRevision: number | null;
-}
-
-export type ApplyNewChangesFromClientResponse =
-  | {
-      status: 'success';
-      newRev: number;
-    }
-  | {
-      status: 'staleChanges' | 'locked';
-    };
-
-export type GetChangesClientCommand = {
-  type: CommandTypesFromClient.GetChanges;
-
-  request: GetChangesRequest;
-  response: GetChangesResponse | ErrorResponse;
-};
-
-export interface GetChangesRequest {
-  fromServerTime: number;
-  includeSelf: false;
-}
-
-export interface GetChangesResponse {
-  changes: (IDocChange & { clock: string })[];
-  lastServerTime: number;
-}
-
-export type ClientCommands =
-  | GetChangesClientCommand
-  | ApplyNewChangesFromClientCommand
-  | AuthClientCommand;
-
-export type ClientCommandRequests =
-  | GetChangesRequest
-  | ApplyNewChangesFromClientRequest;
-
-export type ClientCommandResponses =
-  | GetChangesResponse
-  | ApplyNewChangesFromClientResponse;
+import { createDbSchema, createIfNotExistsDbSchema } from './createDbSchema';
+import { pg } from '../../plugins/db';
+import { DocSnapshotsService } from './services/DocSnapshotsService';
+import { IncomingChangesHandler } from './services/IncomingChangesHandler';
+import { ChangesService } from './services/changesService';
+import { DocSnapshotRebuilder } from './services/DocSnapshotRebuilder';
+import {
+  ApplyNewChangesFromClientCommand,
+  AuthClientCommand,
+  ClientCommands,
+  CommandTypesFromClient,
+  GetSnapshotsClientCommand,
+} from '@harika/sync-common';
 
 function handleMessage<T extends ClientCommands>(
   socket: Socket,
@@ -134,6 +63,19 @@ function handleMessage<T extends ClientCommands>(
 
 class NotAuthedError extends Error {}
 
+const docSnapshotsService = new DocSnapshotsService();
+const changesService = new ChangesService();
+const snapshotsRebuilder = new DocSnapshotRebuilder(
+  changesService,
+  docSnapshotsService
+);
+const incomingChangesHandler = new IncomingChangesHandler(
+  pg,
+  changesService,
+  snapshotsRebuilder,
+  docSnapshotsService
+);
+
 export const syncHandler: FastifyPluginCallback = (server, options, next) => {
   const io = new Server(server.server);
 
@@ -141,7 +83,7 @@ export const syncHandler: FastifyPluginCallback = (server, options, next) => {
     const disconnect$ = new Subject();
 
     const authInfo$ = new BehaviorSubject<
-      undefined | { dbName: string; userId: string }
+      undefined | { dbName: string; userId: string; clientId: string }
     >(undefined);
 
     const onlyAuthed = () => {
@@ -162,23 +104,53 @@ export const syncHandler: FastifyPluginCallback = (server, options, next) => {
       socket,
       CommandTypesFromClient.Auth,
       (req) => {
-        authInfo$.next({ dbName: req.dbName, userId: '123' });
-
-        return of({ status: 'success' });
+        return of(null).pipe(
+          switchMap(() => createIfNotExistsDbSchema(pg, req.dbName)),
+          tap(() => {
+            authInfo$.next({
+              dbName: req.dbName,
+              userId: '123',
+              clientId: req.clientId,
+            });
+          }),
+          mapTo({ status: 'success' })
+        );
       }
     )
       .pipe(takeUntil(disconnect$))
       .subscribe();
 
-    handleMessage<GetChangesClientCommand>(
+    handleMessage<ApplyNewChangesFromClientCommand>(
       socket,
-      CommandTypesFromClient.GetChanges,
+      CommandTypesFromClient.ApplyNewChanges,
       (req) => {
-        return of(null).pipe(
+        return authInfo$.pipe(
           onlyAuthed(),
-          map(() => ({
-            changes: [],
-            lastServerTime: 0,
+          switchMap(async (authInfo) => ({
+            snapshots: await incomingChangesHandler.handleIncomeChanges(
+              authInfo.dbName,
+              authInfo.clientId,
+              req.changes
+            ),
+          }))
+        );
+      }
+    )
+      .pipe(takeUntil(disconnect$))
+      .subscribe();
+
+    handleMessage<GetSnapshotsClientCommand>(
+      socket,
+      CommandTypesFromClient.GetSnapshots,
+      (req) => {
+        return authInfo$.pipe(
+          onlyAuthed(),
+          switchMap(async (authInfo) => ({
+            snapshots: await docSnapshotsService.getSnapshotsFromRev(
+              pg,
+              authInfo.dbName,
+              req.fromRev
+            ),
           }))
         );
       }

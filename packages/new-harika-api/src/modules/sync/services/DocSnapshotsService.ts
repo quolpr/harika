@@ -1,6 +1,6 @@
 import { Knex } from 'knex';
 import { snapshotsTable } from '../dbTypes';
-import { IDocSnapshot } from '../types';
+import { IDocSnapshot } from '@harika/sync-common';
 import { NonConstructor } from '../utils';
 
 export class DocSnapshotsService {
@@ -29,6 +29,17 @@ export class DocSnapshotsService {
       .insert(snapshots)
       .withSchema(schemaName)
       .into(snapshotsTable);
+  }
+
+  async getSnapshotsFromRev(
+    trx: Knex,
+    schemaName: string,
+    rev: number
+  ): Promise<IDocSnapshot[]> {
+    return await trx
+      .withSchema(schemaName)
+      .from(snapshotsTable)
+      .where('rev', '>', rev);
   }
 }
 

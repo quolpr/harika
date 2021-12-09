@@ -1,12 +1,12 @@
-import { HybridClock } from '../../src/modules/sync/HybridClock';
 import {
+  HybridClock,
   IAnyDoc,
   ICreateChange,
   DocChangeType,
   IUpdateChange,
   IDeleteChange,
   WithRev,
-} from '../../src/modules/sync/types';
+} from '@harika/sync-common';
 import { v4 } from 'uuid';
 import { Factory } from 'fishery';
 import { pg } from '../../src/plugins/db';

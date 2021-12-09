@@ -2,7 +2,7 @@ export type IAnyDoc = Record<string, any> & {
   id: string;
 };
 
-interface IBaseChange<CollectionName extends string = string> {
+export interface IBaseChange<CollectionName extends string = string> {
   id: string;
   docId: string;
   collectionName: CollectionName;

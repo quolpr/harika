@@ -3,7 +3,7 @@ import {
   IDocChangeWithRev,
   IDocSnapshot,
   WithRev,
-} from '../types';
+} from '@harika/sync-common';
 import {
   isArray,
   isPlainObject,

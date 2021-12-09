@@ -1,6 +1,6 @@
 import { Knex } from 'knex';
 import { docChangesTable } from '../dbTypes';
-import { IDocChange, IDocChangeWithRev } from '../types';
+import { IDocChange, IDocChangeWithRev } from '@harika/sync-common';
 import { NonConstructor } from '../utils';
 
 export class ChangesService {

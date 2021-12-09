@@ -1,4 +1,4 @@
-import { IDocChange, IDocChangeWithRev } from '../types';
+import { IDocChange, IDocChangeWithRev } from '@harika/sync-common';
 import { Knex } from 'knex';
 import { IChangesService } from './changesService';
 import { groupBy } from 'lodash';

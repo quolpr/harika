@@ -51,3 +51,10 @@ export const createDbSchema = async (db: Knex, schemaName: string) => {
       });
   });
 };
+
+export const createIfNotExistsDbSchema = async (
+  db: Knex,
+  schemaName: string
+) => {
+  // SELECT EXISTS(SELECT 1 FROM information_schema.schemata WHERE schema_name = 'name');
+};

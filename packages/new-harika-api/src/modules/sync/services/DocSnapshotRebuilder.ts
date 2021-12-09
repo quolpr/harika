@@ -1,6 +1,6 @@
 import { Knex } from 'knex';
 import { minBy } from 'lodash';
-import { IDocChangeWithRev, IDocSnapshot } from '../types';
+import { IDocChangeWithRev, IDocSnapshot } from '@harika/sync-common';
 import { NonConstructor, snapshotToCreateChange } from '../utils';
 import { buildSnapshot } from './buildSnapshot';
 import { IChangesService } from './changesService';

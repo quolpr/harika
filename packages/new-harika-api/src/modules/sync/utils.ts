@@ -1,4 +1,9 @@
-import { DocChangeType, ICreateChange, IDocSnapshot, WithRev } from './types';
+import {
+  DocChangeType,
+  ICreateChange,
+  IDocSnapshot,
+  WithRev,
+} from '@harika/sync-common';
 import { v4 } from 'uuid';
 
 export const snapshotToCreateChange = (
