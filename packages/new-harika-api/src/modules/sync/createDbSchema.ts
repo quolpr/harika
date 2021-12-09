@@ -1,5 +1,5 @@
 import { Knex } from 'knex';
-import { changesDbTable, entitiesDbTable } from './dbTypes';
+import { docChangesTable, snapshotsTable } from './dbTypes';
 
 export const createDbSchema = async (db: Knex, schemaName: string) => {
   await db.transaction(async (trx) => {
@@ -7,7 +7,7 @@ export const createDbSchema = async (db: Knex, schemaName: string) => {
 
     await db.schema
       .transacting(trx)
-      .createTable(`${schemaName}.${changesDbTable}`, function (table) {
+      .createTable(`${schemaName}.${docChangesTable}`, function (table) {
         table.uuid('id').primary({ constraintName: 'changes_primary_key' });
         table.string('collectionName').notNullable();
         table.string('docId').notNullable();
@@ -33,7 +33,7 @@ export const createDbSchema = async (db: Knex, schemaName: string) => {
 
     await db.schema
       .transacting(trx)
-      .createTable(`${schemaName}.${entitiesDbTable}`, function (table) {
+      .createTable(`${schemaName}.${snapshotsTable}`, function (table) {
         table
           .string('docId')
           .notNullable()
@@ -42,6 +42,9 @@ export const createDbSchema = async (db: Knex, schemaName: string) => {
         table.string('collectionName').notNullable();
         table.jsonb('doc').notNullable();
         table.bigInteger('rev').notNullable().unique();
+        table.boolean('isDeleted').notNullable();
+        table.string('lastTimestamp').notNullable();
+        table.string('scopeId');
 
         table.index('collectionName', 'idxEntitiesReceivedTable');
         table.index('docId', 'idxEntitiesReceivedKey');

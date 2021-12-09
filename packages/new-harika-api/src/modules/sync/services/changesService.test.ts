@@ -6,8 +6,21 @@ import {
 import { pg } from '../../../plugins/db';
 import { ChangesService } from './changesService';
 
+const collectionName = 'testTable';
+
 describe('ChangesService', () => {
   let schemaName!: string;
+
+  const insertWithTimestamp = (timestamp: string) => {
+    return createChangeFactory.create(
+      {
+        doc: { id: '123' },
+        timestamp: timestamp,
+        collectionName: collectionName,
+      },
+      { transient: { schemaName } }
+    );
+  };
 
   beforeEach(async () => {
     schemaName = await createTestDbSchema();
@@ -17,51 +30,50 @@ describe('ChangesService', () => {
     await dropTestDbSchema(schemaName);
   });
 
-  describe('getIsAnyChangeNotInRangeAfterClock', () => {
-    it('returns true if any change', async () => {});
+  describe('isAnyChangeAfterClock', () => {
+    it('return correct changes', async () => {
+      const changesService = new ChangesService();
 
-    it('returns true if no changes', async () => {});
-  });
+      const changes = await Promise.all([
+        insertWithTimestamp('2021-12-05T11:39:47.186Z-0000-8d0ebac1d11da2f2'),
+        insertWithTimestamp('2021-12-05T11:39:47.186Z-0001-8d0ebac1d11da2f2'),
+        insertWithTimestamp('2021-12-05T11:39:47.189Z-0001-8d0ebac1d11da2f2'),
+        insertWithTimestamp('2021-12-05T11:39:47.186Z-0000-b3baf8c6a05b6528'),
+        insertWithTimestamp('2021-12-05T11:39:47.187Z-0000-b3baf8c6a05b6528'),
+      ]);
 
-  it('return correct changes', async () => {
-    const changesService = new ChangesService(pg, schemaName);
-
-    const tableName = 'testTable';
-
-    const timestamps = [
-      '2021-12-05T11:39:47.186Z-0000-8d0ebac1d11da2f2',
-      '2021-12-05T11:39:47.186Z-0001-8d0ebac1d11da2f2',
-      '2021-12-05T11:39:47.189Z-0001-8d0ebac1d11da2f2',
-      '2021-12-05T11:39:47.186Z-0000-b3baf8c6a05b6528',
-      '2021-12-05T11:39:47.187Z-0000-b3baf8c6a05b6528',
-    ];
-
-    await Promise.all(
-      timestamps.map((t) =>
-        createChangeFactory.create(
-          {
-            doc: { id: '123' },
-            timestamp: t,
-            collectionName: tableName,
-          },
-          { transient: { schemaName } }
+      expect(
+        await changesService.isAnyChangeAfterClock(
+          pg,
+          schemaName,
+          collectionName,
+          '123',
+          '2021-12-05T11:39:47.186Z-0001-8d0ebac1d11da2f2',
+          [changes[1].id, changes[2].id, changes[4].id]
         )
-      )
-    );
+      ).toEqual(false);
 
-    expect(
-      (
-        await changesService.getChangesAfterOrEqualClock(
-          tableName,
-          '2021-12-05T11:39:47.186Z-0001-8d0ebac1d11da2f2'
+      expect(
+        await changesService.isAnyChangeAfterClock(
+          pg,
+          schemaName,
+          collectionName,
+          '123',
+          '2021-12-05T11:39:47.186Z-0001-8d0ebac1d11da2f2',
+          []
         )
-      ).map(({ timestamp }) => timestamp)
-    ).toEqual(
-      expect.arrayContaining([
-        '2021-12-05T11:39:47.186Z-0001-8d0ebac1d11da2f2',
-        '2021-12-05T11:39:47.189Z-0001-8d0ebac1d11da2f2',
-        '2021-12-05T11:39:47.187Z-0000-b3baf8c6a05b6528',
-      ])
-    );
+      ).toEqual(true);
+
+      expect(
+        await changesService.isAnyChangeAfterClock(
+          pg,
+          schemaName,
+          collectionName,
+          '123',
+          '2021-12-06T11:39:47.186Z-0001-8d0ebac1d11da2f2',
+          []
+        )
+      ).toEqual(false);
+    });
   });
 });

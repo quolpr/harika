@@ -6,7 +6,7 @@ interface IBaseChange<CollectionName extends string = string> {
   id: string;
   docId: string;
   collectionName: CollectionName;
-  scopeId?: string;
+  scopeId?: string | null | undefined;
   timestamp: string;
 }
 
@@ -55,8 +55,9 @@ export type IDocSnapshot<
   doc: Doc;
   docId: string;
   lastTimestamp: string;
-  scopeId?: string;
+  scopeId?: string | null | undefined;
   isDeleted: boolean;
+  rev: number;
 };
 
 export enum DocChangeType {

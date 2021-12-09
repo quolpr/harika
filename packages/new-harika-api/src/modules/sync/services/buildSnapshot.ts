@@ -1,4 +1,9 @@
-import { DocChangeType, IDocChange, IDocSnapshot } from '../types';
+import {
+  DocChangeType,
+  IDocChangeWithRev,
+  IDocSnapshot,
+  WithRev,
+} from '../types';
 import {
   isArray,
   isPlainObject,
@@ -7,12 +12,6 @@ import {
   isEqual,
   uniqWith,
 } from 'lodash';
-
-interface ISnapshotBuilderResult {
-  [collectionName: string]: {
-    [id: string]: IDocSnapshot;
-  };
-}
 
 const handleUpdate = <T extends Record<string, any>>(
   current: T,
@@ -72,55 +71,53 @@ const handleUpdate = <T extends Record<string, any>>(
   return current;
 };
 
-export class EntitySnapshotBuilder {
-  static build(changes: IDocChange[]): ISnapshotBuilderResult {
-    const registry: ISnapshotBuilderResult = {};
+export const buildSnapshot = (
+  changes: IDocChangeWithRev[]
+): WithRev<IDocSnapshot> => {
+  let currentSnapshot: WithRev<IDocSnapshot> | undefined;
 
-    changes.forEach((ch) => {
-      if (ch.type === DocChangeType.Create) {
-        if (!registry[ch.collectionName]) {
-          registry[ch.collectionName] = {};
-        }
-
-        if (registry[ch.collectionName][ch.docId]) {
-          throw new Error(`Multiple create changes for ${JSON.stringify(ch)}`);
-        }
-
-        registry[ch.collectionName][ch.docId] = {
-          doc: ch.doc,
-          docId: ch.docId,
-          collectionName: ch.collectionName,
-          isDeleted: false,
-          lastTimestamp: ch.timestamp,
-          scopeId: ch.scopeId,
-        };
-
-        return;
+  changes.forEach((ch) => {
+    if (ch.type === DocChangeType.Create) {
+      if (currentSnapshot) {
+        throw new Error(`Multiple create changes for ${JSON.stringify(ch)}`);
       }
 
-      const currentState = registry[ch.collectionName][ch.docId];
-      if (!currentState || !currentState.doc) {
-        throw new Error(
-          `Couldn't apply change ${JSON.stringify(
-            ch
-          )} due to entity is missed in ${JSON.stringify(registry)}`
-        );
-      }
+      currentSnapshot = {
+        doc: ch.doc,
+        docId: ch.docId,
+        collectionName: ch.collectionName,
+        isDeleted: false,
+        lastTimestamp: ch.timestamp,
+        scopeId: ch.scopeId,
+        rev: ch.rev,
+      };
 
-      if (ch.type === DocChangeType.Update) {
-        currentState.doc = handleUpdate(currentState.doc, {
-          from: ch.from,
-          to: ch.to,
-        });
-        currentState.lastTimestamp = ch.timestamp;
-        currentState.scopeId = ch.scopeId;
-      }
+      return;
+    }
 
-      if (ch.type === DocChangeType.Delete) {
-        currentState.isDeleted = true;
-      }
-    });
+    if (!currentSnapshot || !currentSnapshot.doc) {
+      throw new Error(
+        `Couldn't apply change ${JSON.stringify(
+          ch
+        )} due to snapshot or doc is missed ${JSON.stringify(currentSnapshot)}`
+      );
+    }
 
-    return registry;
-  }
-}
+    if (ch.type === DocChangeType.Update) {
+      currentSnapshot.doc = handleUpdate(currentSnapshot.doc, {
+        from: ch.from,
+        to: ch.to,
+      });
+    }
+
+    if (ch.type === DocChangeType.Delete) {
+      currentSnapshot.isDeleted = true;
+    }
+
+    currentSnapshot.lastTimestamp = ch.timestamp;
+    currentSnapshot.scopeId = ch.scopeId;
+    currentSnapshot.rev = Math.max(currentSnapshot.rev, ch.rev);
+  });
+
+  return currentSnapshot;
+};

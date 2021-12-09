@@ -1,67 +1,54 @@
 import { Knex } from 'knex';
-import { changesDbTable } from '../dbTypes';
+import { docChangesTable } from '../dbTypes';
 import { IDocChange, IDocChangeWithRev } from '../types';
-
-type NonConstructorKeys<T> = {
-  [P in keyof T]: T[P] extends new () => any ? never : P;
-}[keyof T];
-type NonConstructor<T> = Pick<T, NonConstructorKeys<T>>;
+import { NonConstructor } from '../utils';
 
 export class ChangesService {
-  constructor(private db: Knex, private schemaName: string) {}
-
-  async getChangesAfterOrEqualClock(
-    table: string,
-    entityId: string,
-    clock: string
-  ): Promise<IDocChangeWithRev[]> {
-    return await this.db
-      .withSchema(this.schemaName)
-      .from(changesDbTable)
-      .where('timestamp', '>=', clock)
-      .andWhere('table', table)
-      .andWhere('key', entityId);
-  }
-
   async isAnyChangeAfterClock(
     trx: Knex,
-    table: string,
-    entityId: string,
+    schemaName: string,
+    collectionName: string,
+    docId: string,
     afterClock: string,
     excludeIds: string[]
   ) {
-    return Boolean(
-      await trx
-        .count('id')
-        .withSchema(this.schemaName)
-        .from(changesDbTable)
-        .where('timestamp', '>=', afterClock)
-        .andWhere('table', table)
-        .andWhere('key', entityId)
-        .whereNotIn('id', excludeIds)
+    return (
+      (
+        await trx
+          .select('id')
+          .withSchema(schemaName)
+          .from(docChangesTable)
+          .where('timestamp', '>=', afterClock)
+          .andWhere('collectionName', collectionName)
+          .andWhere('docId', docId)
+          .whereNotIn('id', excludeIds)
+          .limit(1)
+      ).length > 0
     );
   }
 
   async getAllChanges(
     trx: Knex,
-    table: string,
+    schemaName: string,
+    collectionName: string,
     entityId: string
   ): Promise<IDocChangeWithRev[]> {
     return await trx
-      .withSchema(this.schemaName)
-      .from(changesDbTable)
-      .andWhere('table', table)
-      .andWhere('key', entityId);
+      .withSchema(schemaName)
+      .from(docChangesTable)
+      .andWhere('collectionName', collectionName)
+      .andWhere('docId', entityId);
   }
 
   async insertChanges(
     trx: Knex,
+    schemaName: string,
     chs: IDocChange[]
   ): Promise<IDocChangeWithRev[]> {
     const insertResult = await trx
       .insert(chs, ['id', 'rev'])
-      .withSchema(this.schemaName)
-      .into('changes');
+      .withSchema(schemaName)
+      .into(docChangesTable);
 
     const idRevMap = Object.fromEntries(
       insertResult.map(({ id, rev }) => [id, rev])

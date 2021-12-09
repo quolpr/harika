@@ -3,7 +3,7 @@ import {
   createChangeFactory,
   deleteChangeFactory,
 } from '../../../../test/supports/changeBuilders';
-import { EntitySnapshotBuilder } from './DocSnapshotBuilder';
+import { buildSnapshot } from './buildSnapshot';
 
 describe('EntitySnapshotBuilder', () => {
   it('works', () => {
@@ -11,10 +11,11 @@ describe('EntitySnapshotBuilder', () => {
       docId: '123',
       from: { content: 'wow' },
       to: { childIds: [1, 2, 3], test: true },
+      rev: 150,
     });
 
     expect(
-      EntitySnapshotBuilder.build([
+      buildSnapshot([
         createChangeFactory.build({
           doc: {
             id: '123',
@@ -24,26 +25,23 @@ describe('EntitySnapshotBuilder', () => {
         lastChange,
       ])
     ).toStrictEqual({
-      testTable: {
-        '123': {
-          collectionName: 'testTable',
-          doc: {
-            id: '123',
-            childIds: [1, 2, 3],
-            test: true,
-          },
-          docId: '123',
-          lastTimestamp: lastChange.timestamp,
-          isDeleted: false,
-          scopeId: undefined,
-        },
+      collectionName: 'testTable',
+      doc: {
+        id: '123',
+        childIds: [1, 2, 3],
+        test: true,
       },
+      docId: '123',
+      lastTimestamp: lastChange.timestamp,
+      isDeleted: false,
+      scopeId: undefined,
+      rev: lastChange.rev,
     });
   });
 
   it('works with array', () => {
     expect(
-      EntitySnapshotBuilder.build([
+      buildSnapshot([
         createChangeFactory.build({ doc: { id: '123', content: 'test' } }),
         updateChangeFactory.build({
           docId: '123',
@@ -55,7 +53,7 @@ describe('EntitySnapshotBuilder', () => {
           from: { childIds: [2, 3] },
           to: { childIds: [4] },
         }),
-      ]).testTable['123']
+      ])
     ).toEqual(
       expect.objectContaining({
         doc: {
@@ -70,7 +68,7 @@ describe('EntitySnapshotBuilder', () => {
 
   it('works with nested objs', () => {
     expect(
-      EntitySnapshotBuilder.build([
+      buildSnapshot([
         createChangeFactory.build({ doc: { id: '123', content: 'test' } }),
         updateChangeFactory.build({
           docId: '123',
@@ -82,7 +80,7 @@ describe('EntitySnapshotBuilder', () => {
           from: { nested: { childIds: [2, 3] } },
           to: { nested: { childIds: [4], test: true } },
         }),
-      ]).testTable['123']
+      ])
     ).toEqual(
       expect.objectContaining({
         doc: {
@@ -100,10 +98,10 @@ describe('EntitySnapshotBuilder', () => {
 
   it('works with delete', () => {
     expect(
-      EntitySnapshotBuilder.build([
+      buildSnapshot([
         createChangeFactory.build({ doc: { id: '123', content: 'test' } }),
         deleteChangeFactory.build({ docId: '123' }),
-      ]).testTable['123']
+      ])
     ).toEqual(
       expect.objectContaining({
         doc: {

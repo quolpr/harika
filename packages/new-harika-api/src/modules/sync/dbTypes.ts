@@ -1,2 +1,2 @@
-export const changesDbTable = 'changes';
-export const entitiesDbTable = 'entities';
+export const docChangesTable = 'changes';
+export const snapshotsTable = 'snapshots';
