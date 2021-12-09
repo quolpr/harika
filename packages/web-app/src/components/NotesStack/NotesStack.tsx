@@ -1,7 +1,7 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 import { observer } from 'mobx-react-lite';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { useMedia } from 'react-use';
 import { CurrentNoteContext } from '../../hooks/useCurrentNote';
 import { cn } from '../../utils';
@@ -14,7 +14,6 @@ import { ContainerElRefContext } from '../../contexts/ContainerElRefContext';
 import { CustomScrollbar } from '../CustomScrollbar';
 import {
   CurrentStackContext,
-  FocusedStackIdContext,
   IStack,
   useCloseNote,
   useFocusedStackIdContext,
@@ -135,7 +134,7 @@ export const NotesStack = ({ stacks }: { stacks: IStack[] }) => {
         ))}
       </div>
     </CustomScrollbar>
-  ) : (
+  ) : lastStack ? (
     <SimpleNote stack={lastStack} />
-  );
+  ) : null;
 };
