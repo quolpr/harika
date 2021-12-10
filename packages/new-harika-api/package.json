@@ -17,7 +17,7 @@
     "@harika/sync-common": "*",
     "dotenv": "^10.0.0",
     "fastify": "^3.14.2",
-    "fastify-cors": "^5.2.0",
+    "fastify-cors": "^6.0.2",
     "fastify-oas": "^3.0.8",
     "fastify-plugin": "3.0.0",
     "knex": "^0.95.14",

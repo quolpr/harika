@@ -9,55 +9,40 @@ import {
 } from 'rxjs/operators';
 import type { CommandsExecuter } from './CommandsExecuter';
 import type { ServerConnector } from './connection/ServerConnector';
-import { ServerChangesReceiver } from './ServerSynchronizer/ServerChangesReceiver';
-import { ChangesApplierAndSender } from './ServerSynchronizer/ChangesApplierAndSender';
-import type { IDatabaseChange } from './types';
+import { ServerSnapshotsReceiver } from './ServerSynchronizer/ServerChangesReceiver';
+import { ChangesSender } from './ServerSynchronizer/ChangesApplierAndSender';
 import type { SyncRepository } from '../repositories/SyncRepository';
-import type { ApplyChangesService } from '../services/ApplyChangesService';
+import { SyncStatusService } from '../services/SyncStatusService';
 
 export interface IConsistencyResolver {
   resolve(): Promise<void>;
 }
 
-export interface IChangesApplier {
-  resolveChanges(
-    clientChanges: IDatabaseChange[],
-    serverChanges: IDatabaseChange[],
-  ): {
-    conflictedChanges: IDatabaseChange[];
-    notConflictedServerChanges: IDatabaseChange[];
-  };
-}
-
 export class ServerSynchronizer {
-  private triggerGetChangesSubject = new Subject<unknown>();
-  private serverChangesReceiver: ServerChangesReceiver;
-  private changesApplierAndSender: ChangesApplierAndSender;
+  private serverSnapshotsReceiver: ServerSnapshotsReceiver;
+  private changesSender: ChangesSender;
   public isSyncing$ = new BehaviorSubject<boolean>(false);
 
   constructor(
     syncRepo: SyncRepository,
-    applyChangesService: ApplyChangesService,
+    syncStatusService: SyncStatusService,
     commandExecuter: CommandsExecuter,
     private serverConnector: ServerConnector,
     onNewChange$: Observable<unknown>,
-    onNewPull$: Observable<unknown>,
     private stop$: Observable<unknown> = new Subject(),
     private log: (str: string) => void,
   ) {
-    this.serverChangesReceiver = new ServerChangesReceiver(
+    this.serverSnapshotsReceiver = new ServerSnapshotsReceiver(
       syncRepo,
+      syncStatusService,
       commandExecuter,
     );
 
-    this.changesApplierAndSender = new ChangesApplierAndSender(
+    this.changesSender = new ChangesSender(
       syncRepo,
-      applyChangesService,
+      syncStatusService,
       commandExecuter,
-      this.triggerGetChangesSubject,
-      this.log,
       onNewChange$,
-      onNewPull$,
     );
   }
 
@@ -81,17 +66,14 @@ export class ServerSynchronizer {
 
     // Only one command at once
     return merge(
-      this.changesApplierAndSender.get$().pipe(
+      this.changesSender.get$().pipe(
         map((observer) => ({
           observer,
           commandName: 'applyChangesAndSend' as const,
         })),
       ),
-      this.serverChangesReceiver
-        .get$(
-          this.serverConnector.channelSubject,
-          this.triggerGetChangesSubject,
-        )
+      this.serverSnapshotsReceiver
+        .get$(this.serverConnector.authedSocket$)
         .pipe(
           map((observer) => ({
             observer,

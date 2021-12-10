@@ -1,44 +1,28 @@
 import type { CommandsExecuter } from '../CommandsExecuter';
-import {
-  filter,
-  from,
-  map,
-  merge,
-  Observable,
-  of,
-  Subject,
-  switchMap,
-} from 'rxjs';
+import { filter, from, map, merge, Observable, of, switchMap } from 'rxjs';
 import { omit } from 'lodash-es';
-import type { ApplyNewChangesFromClientCommand } from '../types';
-import { CommandTypesFromClient, DatabaseChangeType } from '../types';
 import type { SyncRepository } from '../../repositories/SyncRepository';
-import type { ApplyChangesService } from '../../services/ApplyChangesService';
+import {
+  ApplyNewChangesFromClientCommand,
+  CommandTypesFromClient,
+  DocChangeType,
+} from '@harika/sync-common';
+import { SyncStatusService } from '../../services/SyncStatusService';
 
-export class ChangesApplierAndSender {
+export class ChangesSender {
   constructor(
     private syncRepo: SyncRepository,
-    private applyChangesService: ApplyChangesService,
+    private syncStatusService: SyncStatusService,
     private commandExecuter: CommandsExecuter,
-    private triggerGetChangesSubject: Subject<unknown>,
-    private log: (str: string) => void,
     private onNewChange$: Observable<unknown>,
-    private onNewPull$: Observable<unknown>,
   ) {}
 
   get$(): Observable<Observable<unknown>> {
-    return merge(this.onNewChange$, of(null), this.onNewPull$).pipe(
+    return merge(this.onNewChange$, of(null)).pipe(
       map(() => {
-        return of(null).pipe(
-          switchMap(() => this.applyServerChanges()),
-          switchMap(() => this.sendChanges()),
-        );
+        return of(null).pipe(switchMap(() => this.sendChanges()));
       }),
     );
-  }
-
-  private async applyServerChanges() {
-    await this.applyChangesService.applyChanges();
   }
 
   private sendChanges = () => {
@@ -46,7 +30,7 @@ export class ChangesApplierAndSender {
       filter((clientChanges) => clientChanges.length > 0),
       switchMap(async (clientChanges) => ({
         clientChanges,
-        syncStatus: await this.syncRepo.getSyncStatus(),
+        syncStatus: await this.syncStatusService.getSyncStatus(),
       })),
       switchMap(({ clientChanges, syncStatus }) =>
         this.commandExecuter
@@ -54,32 +38,16 @@ export class ChangesApplierAndSender {
             CommandTypesFromClient.ApplyNewChanges,
             {
               changes: clientChanges.map((change) => ({
-                ...(change.type === DatabaseChangeType.Update
+                ...(change.type === DocChangeType.Update
                   ? omit(change, 'obj')
                   : change),
-                source: syncStatus.clientId,
               })),
-              partial: false,
-              lastAppliedRemoteRevision: syncStatus.lastAppliedRemoteRevision,
             },
           )
           .pipe(map((res) => ({ res, clientChanges }))),
       ),
       switchMap(({ res, clientChanges }) => {
         if (!res) return of(null);
-
-        if (res.status === 'locked') {
-          this.log('Locked. Just waiting for new changes');
-
-          return of(null);
-        }
-
-        if (res.status === 'stale_changes') {
-          // Maybe server has newer changes. Let's await for new server changes and try to send again
-          this.triggerGetChangesSubject.next(null);
-
-          return of(null);
-        }
 
         return this.syncRepo.bulkDeleteClientChanges(
           clientChanges.map(({ id }) => id),

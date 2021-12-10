@@ -6,7 +6,6 @@ import { DB, IQueryExecuter, Transaction } from '../DbExtension/DB';
 import type { ISyncCtx } from './syncCtx';
 import { inject, injectable } from 'inversify';
 import { WINDOW_ID } from '../../framework/types';
-import { IChangesApplier } from './serverSynchronizer/ServerSynchronizer';
 
 @injectable()
 export abstract class BaseSyncRepository<
@@ -227,5 +226,4 @@ export abstract class BaseSyncRepository<
   }
 
   abstract getTableName(): string;
-  abstract changesApplier(): IChangesApplier;
 }

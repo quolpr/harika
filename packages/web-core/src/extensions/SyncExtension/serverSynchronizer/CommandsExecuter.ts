@@ -6,6 +6,7 @@ import {
   retry,
   switchMap,
   take,
+  takeUntil,
   tap,
 } from 'rxjs/operators';
 import type { ClientCommands } from '@harika/sync-common';
@@ -51,6 +52,7 @@ export class CommandsExecuter {
         );
       }),
       take(1),
+      takeUntil(this.stop$),
     );
   }
 

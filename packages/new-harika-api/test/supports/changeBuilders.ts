@@ -6,14 +6,11 @@ import {
   IUpdateChange,
   IDeleteChange,
   WithRev,
+  makeClientId,
 } from '@harika/sync-common';
 import { v4 } from 'uuid';
 import { Factory } from 'fishery';
 import { pg } from '../../src/plugins/db';
-
-export function makeClientId() {
-  return v4().replace(/-/g, '').slice(-16);
-}
 
 const clientId = makeClientId();
 const clock = new HybridClock(0, 0, clientId);

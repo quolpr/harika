@@ -13,6 +13,7 @@
     "gen-block-parser": "peggy -o src/lib/blockParser/pegParser.js --cache src/blockParser/pegParser.pegjs"
   },
   "dependencies": {
+    "@harika/sync-common": "*",
     "@harika-org/sql.js": "^1.6.6",
     "absurd-sql": "quolpr/absurd-sql#withDist",
     "backoff-rxjs": "^6.5.7",

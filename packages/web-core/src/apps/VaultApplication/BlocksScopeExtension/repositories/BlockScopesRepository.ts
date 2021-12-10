@@ -1,6 +1,5 @@
+import { IDocChange } from '@harika/sync-common';
 import { BaseSyncRepository } from '../../../../extensions/SyncExtension/BaseSyncRepository';
-import type { IDatabaseChange } from '../../../../extensions/SyncExtension/serverSynchronizer/types';
-import { BlocksScopesChangesApplier } from '../sync/BlocksScopesChangesApplier';
 
 export const blocksScopesTable = 'blocksScopes' as const;
 
@@ -22,7 +21,7 @@ export type BlocksScopeDoc = {
   rootBlockId: string;
 };
 
-export type IBlocksScopesChangeEvent = IDatabaseChange<
+export type IBlocksScopesChangeEvent = IDocChange<
   typeof blocksScopesTable,
   BlocksScopeDoc
 >;
@@ -47,9 +46,5 @@ export class BlocksScopesRepository extends BaseSyncRepository<
       ...super.toRow(doc),
       collapsedBlockIds: JSON.stringify(doc.collapsedBlockIds),
     };
-  }
-
-  changesApplier() {
-    return new BlocksScopesChangesApplier();
   }
 }

@@ -8,7 +8,7 @@ declare module 'fastify' {
   }
 }
 
-const PORT = process.env.APP_PORT || '5000';
+const PORT = process.env.APP_PORT || '5001';
 const server = createServer();
 
 server.listen(+PORT, '0.0.0.0', (err, address) => {

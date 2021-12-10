@@ -28,7 +28,10 @@ export class DocSnapshotsService {
     return await trx
       .insert(snapshots)
       .withSchema(schemaName)
-      .into(snapshotsTable);
+      .into(snapshotsTable)
+      // TODO: docId + collectionName PK
+      .onConflict('docId')
+      .merge();
   }
 
   async getSnapshotsFromRev(

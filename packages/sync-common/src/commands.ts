@@ -6,6 +6,10 @@ export enum CommandTypesFromClient {
   Auth = 'auth',
 }
 
+export enum EventsFromServer {
+  RevisionChanged = 'revisionChanged',
+}
+
 export type InternalErrorResponse = {
   status: 'error';
   errorType: 'internalError';
@@ -43,6 +47,7 @@ export interface ApplyNewChangesFromClientRequest {
 }
 
 export type ApplyNewChangesFromClientResponse = {
+  status: 'success';
   snapshots: IDocSnapshot[];
 };
 
@@ -59,6 +64,9 @@ export interface GetSnapshotsRequest {
 
 export interface GetSnapshotsResponse {
   snapshots: IDocSnapshot[];
+  currentRevision: number;
+  lastTimestamp: string;
+  status: 'success';
 }
 
 export type ClientCommands =

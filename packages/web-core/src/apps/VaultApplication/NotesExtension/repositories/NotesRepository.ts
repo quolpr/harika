@@ -3,9 +3,8 @@ import Q from 'sql-bricks';
 import { injectable } from 'inversify';
 import { BaseSyncRepository } from '../../../../extensions/SyncExtension/BaseSyncRepository';
 import { ISyncCtx } from '../../../../extensions/SyncExtension/syncCtx';
-import { IDatabaseChange } from '../../../../extensions/SyncExtension/serverSynchronizer/types';
-import { NotesChangesApplier } from '../sync/NotesChangesApplier';
 import { IQueryExecuter } from '../../../../extensions/DbExtension/DB';
+import { IDocChange } from '@harika/sync-common';
 
 export const notesTable = 'notes' as const;
 export const notesFTSTable = 'notesFts' as const;
@@ -25,7 +24,7 @@ export type NoteDoc = {
   updatedAt: number;
 };
 
-export type INoteChangeEvent = IDatabaseChange<typeof notesTable, NoteDoc>;
+export type INoteChangeEvent = IDocChange<typeof notesTable, NoteDoc>;
 
 @injectable()
 export class NotesRepository extends BaseSyncRepository<NoteDoc, NoteRow> {
@@ -129,9 +128,5 @@ export class NotesRepository extends BaseSyncRepository<NoteDoc, NoteRow> {
 
   getTableName() {
     return notesTable;
-  }
-
-  changesApplier() {
-    return new NotesChangesApplier();
   }
 }

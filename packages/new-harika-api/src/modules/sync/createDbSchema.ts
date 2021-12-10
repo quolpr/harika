@@ -34,6 +34,7 @@ export const createDbSchema = async (db: Knex, schemaName: string) => {
     await db.schema
       .transacting(trx)
       .createTable(`${schemaName}.${snapshotsTable}`, function (table) {
+        // TODO: docId + collectionName PK
         table
           .string('docId')
           .notNullable()
@@ -56,5 +57,12 @@ export const createIfNotExistsDbSchema = async (
   db: Knex,
   schemaName: string
 ) => {
-  // SELECT EXISTS(SELECT 1 FROM information_schema.schemata WHERE schema_name = 'name');
+  const res = await db
+    .select()
+    .from('information_schema.schemata')
+    .where({ schema_name: schemaName });
+
+  if (res.length === 0) {
+    await createDbSchema(db, schemaName);
+  }
 };

@@ -3,30 +3,22 @@ import fastify from 'fastify';
 import { dbPlugin } from './plugins/db';
 import { healthHandler } from './modules/health/routes';
 import { syncHandler } from './modules/sync/routes';
+import fastifyCors from 'fastify-cors';
 
 function createServer() {
   const server = fastify();
-  server.register(require('fastify-cors'));
 
-  server.register(require('fastify-oas'), {
-    routePrefix: '/docs',
-    exposeRoute: true,
-    swagger: {
-      info: {
-        title: 'product api',
-        description: 'api documentation',
-        version: '0.1.0',
-      },
-      servers: [
-        { url: 'http://localhost:5000', description: 'development' },
-        {
-          url: 'https://<production-url>',
-          description: 'production',
-        },
-      ],
-      schemes: ['http'],
-      consumes: ['application/json'],
-      produces: ['application/json'],
+  server.register(fastifyCors, {
+    origin: (origin, cb) => {
+      console.log(origin);
+
+      if (/localhost/.test(origin) || origin.includes('127.0.0.1')) {
+        //  Request from localhost will pass
+        cb(null, true);
+        return;
+      }
+      // Generate an error on other origins, disabling access
+      cb(new Error('Not allowed'), false);
     },
   });
 

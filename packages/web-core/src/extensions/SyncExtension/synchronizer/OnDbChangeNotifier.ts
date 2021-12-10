@@ -1,3 +1,4 @@
+import { DocChangeType } from '@harika/sync-common';
 import { inject, injectable } from 'inversify';
 import { groupBy, isEmpty } from 'lodash-es';
 import { AnyModel } from 'mobx-keystone';
@@ -5,7 +6,6 @@ import { buffer, debounceTime, Observable, takeUntil } from 'rxjs';
 import { STOP_SIGNAL, WINDOW_ID } from '../../../framework/types';
 import { ITransmittedChange } from '../repositories/SyncRepository';
 import { ISubscription, SyncConfig } from '../serverSynchronizer/SyncConfig';
-import { DatabaseChangeType } from '../serverSynchronizer/types';
 import { DbEventsListenService } from '../services/DbEventsListenerService';
 import { CreationDataWithId, SyncModelId } from '../types';
 
@@ -46,7 +46,7 @@ export class OnDbChangeNotifier {
   }
 
   private getGroupedMappedData = (evs: ITransmittedChange[]) => {
-    const grouped = groupBy(evs, (ev) => ev.table);
+    const grouped = groupBy(evs, (ev) => ev.collectionName);
     const groupedMappedData: Record<
       string,
       { toDeleteIds: SyncModelId[]; toCreateOrUpdateData: CreationDataWithId[] }
@@ -64,19 +64,19 @@ export class OnDbChangeNotifier {
       const toCreateOrUpdateData: CreationDataWithId[] = [];
 
       grouped[tableName].forEach((ev) => {
-        if (ev.type === DatabaseChangeType.Create) {
-          toCreateOrUpdateData.push(registration.mapper.mapToModelData(ev.obj));
-        } else if (ev.type === DatabaseChangeType.Update) {
-          if (!ev.obj) {
+        if (ev.type === DocChangeType.Create) {
+          toCreateOrUpdateData.push(registration.mapper.mapToModelData(ev.doc));
+        } else if (ev.type === DocChangeType.Update) {
+          if (!ev.doc) {
             console.error(
               `Failed to apply ${JSON.stringify(ev)} — obj is not set`,
             );
             return;
           }
-          toCreateOrUpdateData.push(registration.mapper.mapToModelData(ev.obj));
-        } else if (ev.type === DatabaseChangeType.Delete) {
+          toCreateOrUpdateData.push(registration.mapper.mapToModelData(ev.doc));
+        } else if (ev.type === DocChangeType.Delete) {
           toDeleteIds.push({
-            value: ev.key,
+            value: ev.docId,
             model: registration.mapper.model,
           });
         }

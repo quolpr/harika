@@ -1,11 +1,11 @@
 import {
-  syncStatusTable,
-  serverChangesPullsTable,
-  serverChangesTable,
+  serverSnapshotsPullsTable,
+  serverSnapshotsTable,
   clientChangesTable,
 } from '../repositories/SyncRepository';
 import { IMigration } from '../../DbExtension/types';
 import { IQueryExecuter } from '../../DbExtension/DB';
+import { syncStatusTable } from '../services/SyncStatusService';
 
 const up = async (db: IQueryExecuter) => {
   await db.sqlExec(`
@@ -13,35 +13,36 @@ const up = async (db: IQueryExecuter) => {
       id varchar(20) PRIMARY KEY,
       lastReceivedRemoteRevision INTEGER,
       lastAppliedRemoteRevision INTEGER,
-      clientId varchar(36) NOT NULL
+      clientId varchar(36) NOT NULL,
+      currentClock varchar(36) NOT NULL
     )
   `);
 
   await db.sqlExec(`
-    CREATE TABLE IF NOT EXISTS ${serverChangesPullsTable} (
+    CREATE TABLE IF NOT EXISTS ${serverSnapshotsPullsTable} (
       id varchar(36) PRIMARY KEY,
       serverRevision INTEGER NOT NULL
     );
   `);
 
   await db.sqlExec(`
-    CREATE TABLE IF NOT EXISTS ${serverChangesTable} (
+    CREATE TABLE IF NOT EXISTS ${serverSnapshotsTable} (
       id varchar(36) PRIMARY KEY,
 
+      collectionName varchar(36) NOT NULL,
+      doc TEXT NOT NULL,
+      docId varchar(36) NOT NULL,
+      lastTimestamp varchar(36)  NOT NULL,
+      scopeId varchar(36),
+      isDeleted INTEGER NOT NULL,
+      
       pullId varchar(36) NOT NULL,
       rev INTEGER NOT NULL,
 
-      type varchar(10) NOT NULL,
-      inTable varchar(10) NOT NULL,
-      key varchar(36) NOT NULL,
-      obj TEXT,
-      changeFrom TEXT,
-      changeTo TEXT,
-
-      FOREIGN KEY(pullId) REFERENCES ${serverChangesPullsTable}(id) ON DELETE CASCADE
+      FOREIGN KEY(pullId) REFERENCES ${serverSnapshotsPullsTable}(id) ON DELETE CASCADE
     );
 
-    CREATE INDEX IF NOT EXISTS idx_change_from_server_pullId ON ${serverChangesTable}(pullId);
+    CREATE INDEX IF NOT EXISTS idx_change_from_server_pullId ON ${serverSnapshotsTable}(pullId);
   `);
 
   await db.sqlExec(`
@@ -54,12 +55,14 @@ const up = async (db: IQueryExecuter) => {
     CREATE TABLE IF NOT EXISTS ${clientChangesTable} (
       id varchar(36) PRIMARY KEY,
       type varchar(10) NOT NULL,
-      inTable varchar(10) NOT NULL,
-      key varchar(36) NOT NULL,
-      obj TEXT NOT NULL,
+      collectionName varchar(10) NOT NULL,
+      docId varchar(36) NOT NULL,
+      doc TEXT,
       changeFrom TEXT,
       changeTo TEXT,
-      rev INTEGER NOT NULL DEFAULT 0
+      rev INTEGER NOT NULL DEFAULT 0,
+      scopeId varchar(36),
+      timestamp varchar(36) NOT NULL
     );
 
     CREATE TRIGGER IF NOT EXISTS setRev_${clientChangesTable} AFTER INSERT ON ${clientChangesTable} BEGIN

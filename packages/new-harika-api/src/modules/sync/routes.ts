@@ -51,6 +51,7 @@ function handleMessage<T extends ClientCommands>(
           if (err instanceof NotAuthedError) {
             callback({ status: 'error', errorType: 'notAuted' });
           } else {
+            console.error('Error happened', err);
             callback({ status: 'error', errorType: 'internalError' });
           }
 
@@ -77,9 +78,14 @@ const incomingChangesHandler = new IncomingChangesHandler(
 );
 
 export const syncHandler: FastifyPluginCallback = (server, options, next) => {
-  const io = new Server(server.server);
+  const io = new Server(server.server, {
+    cors: {
+      origin: 'http://localhost:3000',
+      methods: ['GET', 'POST'],
+    },
+  });
 
-  io.on('connection', function (socket) {
+  io.of('/sync-db').on('connection', function (socket) {
     const disconnect$ = new Subject();
 
     const authInfo$ = new BehaviorSubject<
@@ -104,6 +110,8 @@ export const syncHandler: FastifyPluginCallback = (server, options, next) => {
       socket,
       CommandTypesFromClient.Auth,
       (req) => {
+        console.log({ req });
+
         return of(null).pipe(
           switchMap(() => createIfNotExistsDbSchema(pg, req.dbName)),
           tap(() => {
@@ -132,6 +140,7 @@ export const syncHandler: FastifyPluginCallback = (server, options, next) => {
               authInfo.clientId,
               req.changes
             ),
+            status: 'success' as const,
           }))
         );
       }
@@ -151,6 +160,9 @@ export const syncHandler: FastifyPluginCallback = (server, options, next) => {
               authInfo.dbName,
               req.fromRev
             ),
+            currentRevision: 0,
+            lastTimestamp: '',
+            status: 'success' as const,
           }))
         );
       }

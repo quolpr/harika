@@ -1,13 +1,18 @@
-import type { Channel } from 'phoenix';
-import { concatMap, map, merge, Observable, of, pipe, switchMap } from 'rxjs';
+import { concatMap, map, merge, Observable, of, switchMap } from 'rxjs';
 import type { CommandsExecuter } from '../CommandsExecuter';
 import { v4 } from 'uuid';
-import type {
+import type { SyncRepository } from '../../repositories/SyncRepository';
+import { Socket } from 'socket.io-client';
+import {
+  CommandTypesFromClient,
+  EventsFromServer,
+  GetSnapshotsClientCommand,
+  GetSnapshotsResponse,
+} from '@harika/sync-common';
+import {
   ISyncStatus,
-  SyncRepository,
-} from '../../repositories/SyncRepository';
-import type { GetChangesClientCommand, GetChangesResponse } from '../types';
-import { CommandTypesFromClient } from '../types';
+  SyncStatusService,
+} from '../../services/SyncStatusService';
 
 export interface IChangePullRow {
   id: string;
@@ -15,37 +20,40 @@ export interface IChangePullRow {
   serverRevision: number;
 }
 
-export class ServerChangesReceiver {
+export class ServerSnapshotsReceiver {
   constructor(
     private syncRepo: SyncRepository,
+    private syncStatusService: SyncStatusService,
     private commandExecuter: CommandsExecuter,
   ) {}
 
   get$(
-    channel$: Observable<Channel | undefined>,
-    getChange$: Observable<unknown>,
+    socket$: Observable<Socket | undefined>,
   ): Observable<Observable<unknown>> {
-    const onNewChangeEvent$ = channel$.pipe(
-      switchMap((channel) => {
-        return channel
+    const onNewRevEvent$ = socket$.pipe(
+      switchMap((socket) => {
+        return socket
           ? new Observable((observer) => {
-              const ref = channel.on('revision_was_changed', () => {
+              const listener = () => {
                 observer.next();
-              });
+              };
 
-              return () => channel.off('revision_was_changed', ref);
+              socket.on(EventsFromServer.RevisionChanged, listener);
+
+              return () =>
+                socket.off(EventsFromServer.RevisionChanged, listener);
             })
           : of();
       }),
     );
 
-    return merge(of(null), onNewChangeEvent$, getChange$).pipe(
+    return merge(of(null), onNewRevEvent$).pipe(
       map(() => {
         return of(null).pipe(
-          switchMap(() => this.syncRepo.getSyncStatus()),
-          switchMap((status) => this.getChanges(status)),
+          switchMap(() => this.syncStatusService.getSyncStatus()),
+          switchMap((status) => this.getSnapshots(status)),
           concatMap(({ res }) => {
-            if (res === null) {
+            if (!res || res?.status === 'error') {
               console.error('Failed to get changes');
 
               return of();
@@ -58,16 +66,15 @@ export class ServerChangesReceiver {
     );
   }
 
-  private getChanges = (syncStatus: ISyncStatus) => {
+  private getSnapshots = (syncStatus: ISyncStatus) => {
     return this.commandExecuter
-      .send<GetChangesClientCommand>(CommandTypesFromClient.GetChanges, {
-        fromRevision: syncStatus.lastReceivedRemoteRevision,
-        includeSelf: false,
+      .send<GetSnapshotsClientCommand>(CommandTypesFromClient.GetSnapshots, {
+        fromRev: syncStatus.lastReceivedRemoteRevision || 0,
       })
       .pipe(map((res) => ({ res, syncStatus })));
   };
 
-  private storeReceivedChanges = async (res: GetChangesResponse) => {
+  private storeReceivedChanges = async (res: GetSnapshotsResponse) => {
     const pullId = v4();
 
     if (res.currentRevision !== null) {
@@ -76,7 +83,7 @@ export class ServerChangesReceiver {
           id: pullId,
           serverRevision: res.currentRevision,
         },
-        res.changes.map((ch) => ({ ...ch, pullId })),
+        res.snapshots.map((snapshot) => ({ ...snapshot, pullId })),
       );
     }
   };

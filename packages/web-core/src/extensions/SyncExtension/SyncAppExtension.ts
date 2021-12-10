@@ -9,16 +9,15 @@ import { ToDbSynchronizer } from './synchronizer/ToDbSynchronizer';
 import { SyncStateService } from './SyncState';
 import { ROOT_STORE, SYNC_CONNECTION_ALLOWED } from './types';
 import { BaseExtension } from '../../framework/BaseExtension';
-import { ApplyChangesService } from './services/ApplyChangesService';
 import { SyncRepository } from './repositories/SyncRepository';
 import { DB_MIGRATIONS } from '../DbExtension/types';
 import { initSyncTables } from './migrations/initSyncTables';
 import { DbEventsSenderService } from './services/DbEventsSenderService';
+import { SyncStatusService } from './services/SyncStatusService';
 
 @injectable()
 export class SyncAppExtension extends BaseExtension {
   async register() {
-    this.container.bind(ApplyChangesService).toSelf();
     this.container.bind(SyncRepository).toSelf();
 
     this.container.bind(DB_MIGRATIONS).toConstantValue(initSyncTables);
@@ -26,6 +25,7 @@ export class SyncAppExtension extends BaseExtension {
     this.container.bind(DbEventsListenService).toSelf();
     this.container.bind(SyncConfig).toSelf();
     this.container.bind(SyncStateService).toSelf();
+    this.container.bind(SyncStatusService).toSelf();
 
     this.container
       .bind(SYNC_CONNECTION_ALLOWED)

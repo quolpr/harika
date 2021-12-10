@@ -43,6 +43,11 @@ export class ServerConnector {
       }),
       takeUntil(stop$),
     );
+
+    socket$.subscribe((s) => {
+      console.log({ s });
+    });
+
     const isAuthed$ = socket$.pipe(
       distinctUntilChanged(),
       switchMap((socket) => {
@@ -72,7 +77,7 @@ export class ServerConnector {
 
   private initSocketIO() {
     return new Observable<Socket | undefined>((obs) => {
-      const socket = io(this.url);
+      const socket = io(`${this.url}/sync-db`);
 
       socket.on('connect', () => {
         obs.next(socket);
@@ -98,6 +103,8 @@ export class ServerConnector {
         dbName: this.dbName,
         clientId: this.clientId,
       };
+
+      console.log({ req });
 
       let isRunning = true;
 

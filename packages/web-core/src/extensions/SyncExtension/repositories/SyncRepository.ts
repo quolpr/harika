@@ -1,111 +1,93 @@
 import 'reflect-metadata';
 import { inject, injectable } from 'inversify';
 import Q from 'sql-bricks';
-import type { Overwrite, Required } from 'utility-types';
 import { v4 as uuidv4 } from 'uuid';
 import { DB, IQueryExecuter, Transaction } from '../../DbExtension/DB';
-import type {
-  ICreateChange,
-  IDeleteChange,
-  IUpdateChange,
-} from '../serverSynchronizer/types';
-import { DatabaseChangeType } from '../serverSynchronizer/types';
 import { getObjectDiff } from '../serverSynchronizer/utils';
 import type { IInternalSyncCtx } from '../syncCtx';
-import { IBaseChange } from '@harika//sync-common';
+import {
+  DocChangeType,
+  IAnyDoc,
+  IBaseChange,
+  ICreateChange,
+  IDeleteChange,
+  IDocChange,
+  IDocSnapshot,
+  IUpdateChange,
+} from '@harika/sync-common';
+import { Overwrite } from 'utility-types';
+import { SyncStatusService } from '../services/SyncStatusService';
 
 export const clientChangesTable = 'clientChanges' as const;
-export const syncStatusTable = 'syncStatus' as const;
-export const serverChangesPullsTable = 'serverChangesPulls' as const;
-export const serverChangesTable = 'serverChanges' as const;
+export const serverSnapshotsPullsTable = 'serverSnapshotsPulls' as const;
+export const serverSnapshotsTable = 'serverSnapshots' as const;
 
 export type WithSourceInfo<T extends IBaseChange> = T & {
   windowId: string;
   source: 'inDomainChanges' | 'inDbChanges';
 };
 
-// export type IBaseClientChangeRow = {
-//   id: string;
-//   key: string;
-//   obj: string;
-//   inTable: string;
-//   rev: number;
-// };
+export type IBaseClientChangeRow = {
+  id: string;
+  docId: string;
+  collectionName: string;
+  scopeId: string | null;
+  timestamp: string;
+};
 
-// export type ICreateClientChangeRow = IBaseClientChangeRow & {
-//   type: DatabaseChangeType.Create;
-//   changeFrom: null;
-//   changeTo: null;
-// };
+export type ICreateClientChangeRow = IBaseClientChangeRow & {
+  type: DocChangeType.Create;
+  doc: string;
+  changeFrom: null;
+  changeTo: null;
+};
 
-// export type IUpdateClientChangeRow = IBaseClientChangeRow & {
-//   type: DatabaseChangeType.Update;
-//   changeFrom: string;
-//   changeTo: string;
-// };
+export type IUpdateClientChangeRow = IBaseClientChangeRow & {
+  type: DocChangeType.Update;
+  doc: null;
+  changeFrom: string;
+  changeTo: string;
+};
 
-// export type IDeleteClientChangeRow = IBaseClientChangeRow & {
-//   type: DatabaseChangeType.Delete;
-//   changeFrom: null;
-//   changeTo: null;
-// };
+export type IDeleteClientChangeRow = IBaseClientChangeRow & {
+  type: DocChangeType.Delete;
+  changeFrom: null;
+  changeTo: null;
+  doc: null;
+};
 
-// export type IClientChangeRow =
-//   | ICreateClientChangeRow
-//   | IUpdateClientChangeRow
-//   | IDeleteClientChangeRow;
+export type IClientChangeRow =
+  | ICreateClientChangeRow
+  | IUpdateClientChangeRow
+  | IDeleteClientChangeRow;
 
-// export type ICreateClientChangeDoc = ICreateChange & { rev: number };
-// export type IUpdateClientChangeDoc = Required<IUpdateChange, 'obj'> & {
-//   rev: number;
-// };
-// export type IDeleteClientChangeDoc = IDeleteChange & { rev: number };
+export type IClientChangeDoc = IDocChange;
 
-// export type IClientChangeDoc =
-//   | ICreateClientChangeDoc
-//   | IUpdateClientChangeDoc
-//   | IDeleteClientChangeDoc;
+export type ITransmittedCreateChange = WithSourceInfo<ICreateChange>;
+export type ITransmittedUpdateChange = WithSourceInfo<IUpdateChange> & {
+  doc: IAnyDoc;
+};
+export type ITransmittedDeleteChange = WithSourceInfo<IDeleteChange> & {
+  doc: IAnyDoc;
+};
 
-// export type ITransmittedCreateChange = ICreateChange & WithSourceInfo;
-// export type ITransmittedUpdateChange = IUpdateChange & WithSourceInfo;
-// export type ITransmittedDeleteChange = IDeleteChange & WithSourceInfo;
+export type ITransmittedChange =
+  | ITransmittedDeleteChange
+  | ITransmittedUpdateChange
+  | ITransmittedCreateChange;
 
-// export type ITransmittedChange =
-//   | ITransmittedDeleteChange
-//   | ITransmittedUpdateChange
-//   | ITransmittedCreateChange;
+export type IDocSnapshotRow = Overwrite<
+  IDocSnapshot & {
+    pullId: string;
+    scopeId: string | null;
+  },
+  {
+    doc: string;
+    isDeleted: number;
+  }
+>;
 
-// export type ICreateServerChangeRow = ICreateClientChangeRow;
-// export type IUpdateServerChangeRow = Overwrite<
-//   IUpdateClientChangeRow,
-//   { obj: null }
-// >;
-// export type IDeleteServerChangeRow = IDeleteClientChangeRow;
-
-// export type IServerChangeRow = (
-//   | ICreateServerChangeRow
-//   | IUpdateServerChangeRow
-//   | IDeleteServerChangeRow
-// ) & {
-//   pullId: string;
-//   rev: number;
-// };
-// export type IServerChangeDoc = (
-//   | ICreateChange
-//   | Omit<IUpdateChange, 'obj'>
-//   | IDeleteChange
-// ) & {
-//   pullId: string;
-//   rev: number;
-// };
-// export type IChangesPullsRow = { id: string; serverRevision: number };
-
-export interface ISyncStatus {
-  id: 1;
-  lastReceivedRemoteRevision: number | null;
-  lastAppliedRemoteRevision: number | null;
-  clientId: string;
-}
+export type ISnapshotsPullsRow = { id: string; serverRevision: number };
 
 // TODO: emit events after transaction finish
 @injectable()
@@ -113,7 +95,10 @@ export class SyncRepository {
   private onChangeCallback: ((ch: ITransmittedChange[]) => void) | undefined;
   private onNewPullCallback: (() => void) | undefined;
 
-  constructor(@inject(DB) private db: DB) {}
+  constructor(
+    @inject(DB) private db: DB,
+    @inject(SyncStatusService) private syncStatusService: SyncStatusService,
+  ) {}
 
   onChange(callback: (ch: ITransmittedChange[]) => void) {
     this.onChangeCallback = callback;
@@ -130,23 +115,29 @@ export class SyncRepository {
   }
 
   async createCreateChanges(
-    table: string,
+    collectionName: string,
     records: (Record<string, unknown> & { id: string })[],
     ctx: IInternalSyncCtx,
     e: IQueryExecuter,
   ) {
     return e.transaction(async (t) => {
-      const changeEvents = records.map((data): ITransmittedCreateChange => {
+      const clocks = await this.syncStatusService.getNextClockBulk(
+        records.length,
+        t,
+      );
+
+      const changeEvents = records.map((data, i): ITransmittedCreateChange => {
         const id = uuidv4();
 
         return {
           id,
-          type: DatabaseChangeType.Create,
-          table,
-          key: data.id as string,
-          obj: data,
+          type: DocChangeType.Create,
+          collectionName: collectionName,
+          docId: data.id as string,
+          doc: data,
           windowId: ctx.windowId,
           source: ctx.source,
+          timestamp: clocks[i],
         };
       });
 
@@ -156,13 +147,14 @@ export class SyncRepository {
           changeEvents.map((ev): ICreateClientChangeRow => {
             return {
               id: ev.id,
-              type: DatabaseChangeType.Create,
-              inTable: table,
-              key: ev.key,
-              obj: JSON.stringify(ev.obj),
-              rev: 0,
+              type: DocChangeType.Create,
+              collectionName: collectionName,
+              docId: ev.docId,
+              doc: JSON.stringify(ev.doc),
               changeFrom: null,
               changeTo: null,
+              scopeId: null,
+              timestamp: ev.timestamp,
             };
           }),
         );
@@ -175,7 +167,7 @@ export class SyncRepository {
   }
 
   async createUpdateChanges(
-    table: string,
+    collectionName: string,
     changes: {
       from: Record<string, unknown> & { id: string };
       to: Record<string, unknown> & { id: string };
@@ -184,21 +176,27 @@ export class SyncRepository {
     e: IQueryExecuter,
   ) {
     return e.transaction(async (t) => {
-      const changeEvents = changes.map((ch): ITransmittedUpdateChange => {
+      const clocks = await this.syncStatusService.getNextClockBulk(
+        changes.length,
+        t,
+      );
+
+      const changeEvents = changes.map((ch, i): ITransmittedUpdateChange => {
         const id = uuidv4();
 
         const diff = getObjectDiff(ch.from, ch.to);
 
         return {
           id,
-          type: DatabaseChangeType.Update,
-          table,
-          key: ch.from.id as string,
-          obj: ch.to,
+          type: DocChangeType.Update,
+          collectionName,
+          doc: ch.to,
+          docId: ch.from.id as string,
           from: diff.from,
           to: diff.to,
           windowId: ctx.windowId,
           source: ctx.source,
+          timestamp: clocks[i],
         };
       });
 
@@ -208,13 +206,14 @@ export class SyncRepository {
           changeEvents.map((ev): IUpdateClientChangeRow => {
             return {
               id: ev.id,
-              type: DatabaseChangeType.Update,
-              inTable: table,
-              key: ev.key,
+              type: DocChangeType.Update,
+              collectionName,
+              docId: ev.docId,
               changeFrom: JSON.stringify(ev.from),
               changeTo: JSON.stringify(ev.to),
-              obj: JSON.stringify(ev.obj),
-              rev: 0,
+              doc: null,
+              scopeId: null,
+              timestamp: ev.timestamp,
             };
           }),
         );
@@ -227,23 +226,29 @@ export class SyncRepository {
   }
 
   async createDeleteChanges(
-    table: string,
+    collectionName: string,
     objs: (Record<string, unknown> & { id: string })[],
     ctx: IInternalSyncCtx,
     e: IQueryExecuter,
   ) {
     return e.transaction(async (t) => {
-      const changeEvents = objs.map((obj): ITransmittedDeleteChange => {
+      const clocks = await this.syncStatusService.getNextClockBulk(
+        objs.length,
+        t,
+      );
+
+      const changeEvents = objs.map((doc, i): ITransmittedDeleteChange => {
         const id = uuidv4();
 
         return {
           id,
-          type: DatabaseChangeType.Delete,
-          table,
-          key: obj.id as string,
-          obj,
+          type: DocChangeType.Delete,
+          collectionName,
+          doc,
+          docId: doc.id as string,
           windowId: ctx.windowId,
           source: ctx.source,
+          timestamp: clocks[i],
         };
       });
 
@@ -253,13 +258,14 @@ export class SyncRepository {
           changeEvents.map((ev): IDeleteClientChangeRow => {
             return {
               id: ev.id,
-              type: DatabaseChangeType.Delete,
-              inTable: table,
-              key: ev.key,
-              obj: JSON.stringify(ev.obj),
-              rev: 0,
+              type: DocChangeType.Delete,
+              collectionName,
+              docId: ev.docId,
+              doc: null,
               changeFrom: null,
               changeTo: null,
+              scopeId: null,
+              timestamp: ev.timestamp,
             };
           }),
         );
@@ -271,16 +277,16 @@ export class SyncRepository {
     });
   }
 
-  getChangesPulls(e: IQueryExecuter): Promise<IChangesPullsRow[]> {
-    return e.getRecords<IChangesPullsRow>(
-      Q.select().from(serverChangesPullsTable),
+  getChangesPulls(e: IQueryExecuter): Promise<ISnapshotsPullsRow[]> {
+    return e.getRecords<ISnapshotsPullsRow>(
+      Q.select().from(serverSnapshotsPullsTable),
     );
   }
 
   async getServerAndClientChangesCount(e: IQueryExecuter = this.db) {
     const [[serverResult], [clientResult]] = await e.execQueries(
       [
-        Q.select('COUNT(*)').from(serverChangesTable),
+        Q.select('COUNT(*)').from(serverSnapshotsTable),
         Q.select('COUNT(*)').from(clientChangesTable),
       ],
       true,
@@ -292,18 +298,18 @@ export class SyncRepository {
     ];
   }
 
-  async getServerChangesByPullIds(
+  async getServerSnapshotsByPullIds(
     pullIds: string[],
     e: IQueryExecuter,
-  ): Promise<IServerChangeDoc[]> {
+  ): Promise<IDocSnapshot[]> {
     return (
-      await e.getRecords<IServerChangeRow>(
+      await e.getRecords<IDocSnapshotRow>(
         Q.select()
-          .from(serverChangesTable)
+          .from(serverSnapshotsTable)
           .where(Q.in('pullId', pullIds))
           .orderBy('rev'),
       )
-    ).map((row) => this.serverChangeRowToDoc(row));
+    ).map((row) => this.snapshotRowToDoc(row));
   }
 
   async getClientChanges(e: IQueryExecuter = this.db) {
@@ -322,29 +328,35 @@ export class SyncRepository {
 
   async deletePulls(ids: string[], e: IQueryExecuter) {
     await e.execQuery(
-      Q.deleteFrom().from(serverChangesPullsTable).where(Q.in('id', ids)),
+      Q.deleteFrom().from(serverSnapshotsPullsTable).where(Q.in('id', ids)),
     );
   }
 
   async createPull(
-    pull: IChangesPullsRow,
-    changes: IServerChangeDoc[],
+    pull: ISnapshotsPullsRow,
+    snapshots: IDocSnapshot[],
     e: IQueryExecuter = this.db,
   ) {
     await e.transaction(async (t) => {
       // TODO: could be optimized in one this.db call
 
-      await t.insertRecords(serverChangesPullsTable, [pull]);
+      await t.insertRecords(serverSnapshotsPullsTable, [pull]);
 
-      const rows = changes.map((ch): IServerChangeRow => {
-        return this.serverChangeDocToRow(ch);
+      const rows = snapshots.map((snap): IDocSnapshotRow => {
+        return {
+          ...snap,
+          pullId: pull.id,
+          doc: JSON.stringify(snap.doc),
+          scopeId: snap.scopeId ? snap.scopeId : null,
+          isDeleted: snap.isDeleted ? 1 : 0,
+        };
       });
 
       if (rows.length > 0) {
-        await t.insertRecords(serverChangesTable, rows);
+        await t.insertRecords(serverSnapshotsTable, rows);
       }
 
-      await this.updateSyncStatus(
+      await this.syncStatusService.updateSyncStatus(
         {
           lastReceivedRemoteRevision: pull.serverRevision,
         },
@@ -355,126 +367,40 @@ export class SyncRepository {
     this.onNewPullCallback?.();
   }
 
-  async getSyncStatus(e: IQueryExecuter = this.db): Promise<ISyncStatus> {
-    let status = (
-      await e.getRecords<ISyncStatus>(
-        Q.select().from(syncStatusTable).where({ id: 1 }),
-      )
-    )[0];
-
-    if (!status) {
-      status = {
-        id: 1,
-        lastReceivedRemoteRevision: null,
-        lastAppliedRemoteRevision: null,
-        clientId: uuidv4(),
-      };
-
-      e.insertRecords(syncStatusTable, [status]);
-    }
-
-    return status;
-  }
-
-  updateSyncStatus(status: Partial<ISyncStatus>, e: IQueryExecuter) {
-    return e.execQuery(Q.update(syncStatusTable).set(status).where({ id: 1 }));
-  }
-
-  private clientChangeRowToDoc(ch: IClientChangeRow): IClientChangeDoc {
+  private clientChangeRowToDoc(snap: IClientChangeRow): IClientChangeDoc {
     const base = {
-      id: ch.id,
-      key: ch.key,
-      table: ch.inTable,
-      rev: ch.rev,
+      id: snap.id,
+      docId: snap.docId,
+      collectionName: snap.collectionName,
+      timestamp: snap.timestamp,
     };
 
-    if (ch.type === DatabaseChangeType.Create) {
+    if (snap.type === DocChangeType.Create) {
       return {
         ...base,
-        type: DatabaseChangeType.Create,
-        obj: JSON.parse(ch.obj),
+        type: DocChangeType.Create,
+        doc: JSON.parse(snap.doc),
       };
-    } else if (ch.type === DatabaseChangeType.Update) {
+    } else if (snap.type === DocChangeType.Update) {
       return {
         ...base,
-        type: DatabaseChangeType.Update,
-        obj: JSON.parse(ch.obj),
-        from: JSON.parse(ch.changeFrom),
-        to: JSON.parse(ch.changeTo),
+        type: DocChangeType.Update,
+        from: JSON.parse(snap.changeFrom),
+        to: JSON.parse(snap.changeTo),
       };
     } else {
       return {
         ...base,
-        type: DatabaseChangeType.Delete,
-        obj: JSON.parse(ch.obj),
+        type: DocChangeType.Delete,
       };
     }
   }
 
-  private serverChangeRowToDoc(ch: IServerChangeRow): IServerChangeDoc {
-    const base = {
-      id: ch.id,
-      key: ch.key,
-      table: ch.inTable,
-      pullId: ch.pullId,
-      rev: ch.rev,
+  private snapshotRowToDoc(snap: IDocSnapshotRow): IDocSnapshot {
+    return {
+      ...snap,
+      doc: JSON.parse(snap.doc),
+      isDeleted: Boolean(snap.isDeleted),
     };
-
-    if (ch.type === DatabaseChangeType.Create) {
-      return {
-        ...base,
-        type: DatabaseChangeType.Create,
-        obj: JSON.parse(ch.obj),
-      };
-    } else if (ch.type === DatabaseChangeType.Update) {
-      return {
-        ...base,
-        type: DatabaseChangeType.Update,
-        from: JSON.parse(ch.changeFrom),
-        to: JSON.parse(ch.changeTo),
-      };
-    } else {
-      return {
-        ...base,
-        type: DatabaseChangeType.Delete,
-        obj: JSON.parse(ch.obj),
-      };
-    }
-  }
-
-  private serverChangeDocToRow(ch: IServerChangeDoc): IServerChangeRow {
-    const base = {
-      id: ch.id,
-      key: ch.key,
-      inTable: ch.table,
-      pullId: ch.pullId,
-      rev: ch.rev,
-    };
-
-    if (ch.type === DatabaseChangeType.Create) {
-      return {
-        ...base,
-        type: DatabaseChangeType.Create,
-        obj: JSON.stringify(ch.obj),
-        changeFrom: null,
-        changeTo: null,
-      };
-    } else if (ch.type === DatabaseChangeType.Update) {
-      return {
-        ...base,
-        type: DatabaseChangeType.Update,
-        changeFrom: JSON.stringify(ch.from),
-        changeTo: JSON.stringify(ch.to),
-        obj: null,
-      };
-    } else {
-      return {
-        ...base,
-        type: DatabaseChangeType.Delete,
-        obj: JSON.stringify(ch.obj),
-        changeFrom: null,
-        changeTo: null,
-      };
-    }
   }
 }

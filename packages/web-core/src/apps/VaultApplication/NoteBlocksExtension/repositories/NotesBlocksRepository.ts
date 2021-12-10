@@ -1,9 +1,8 @@
 import Q from 'sql-bricks';
 import { BaseSyncRepository } from '../../../../extensions/SyncExtension/BaseSyncRepository';
 import type { ISyncCtx } from '../../../../extensions/SyncExtension/syncCtx';
-import type { IDatabaseChange } from '../../../../extensions/SyncExtension/serverSynchronizer/types';
-import { NoteblocksChangesApplier } from '../sync/NoteblocksChangesApplier';
 import { IQueryExecuter } from '../../../../extensions/DbExtension/DB';
+import { IDocChange } from '@harika/sync-common';
 
 export type NoteBlockRow = {
   id: string;
@@ -33,7 +32,7 @@ export const noteBlocksNotesTable = 'noteBlocksNotes' as const;
 export const noteBlocksBlocksTable = 'noteBlocksBlocks' as const;
 export const noteBlocksFTSTable = 'noteBlocksFTS' as const;
 
-export type INoteBlockChangeEvent = IDatabaseChange<
+export type INoteBlockChangeEvent = IDocChange<
   typeof noteBlocksTable,
   NoteBlockDoc
 >;
@@ -221,10 +220,6 @@ export class NotesBlocksRepository extends BaseSyncRepository<
     });
 
     return obj;
-  }
-
-  changesApplier() {
-    return new NoteblocksChangesApplier();
   }
 
   toRow(doc: NoteBlockDoc): NoteBlockRow {
