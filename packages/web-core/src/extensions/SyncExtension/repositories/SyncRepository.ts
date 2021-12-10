@@ -11,93 +11,94 @@ import type {
 } from '../serverSynchronizer/types';
 import { DatabaseChangeType } from '../serverSynchronizer/types';
 import { getObjectDiff } from '../serverSynchronizer/utils';
-import type { IInternalSyncCtx, ISyncCtx } from '../syncCtx';
+import type { IInternalSyncCtx } from '../syncCtx';
+import { IBaseChange } from '@harika//sync-common';
 
 export const clientChangesTable = 'clientChanges' as const;
 export const syncStatusTable = 'syncStatus' as const;
 export const serverChangesPullsTable = 'serverChangesPulls' as const;
 export const serverChangesTable = 'serverChanges' as const;
 
-type IChangeExtended = {
+export type WithSourceInfo<T extends IBaseChange> = T & {
   windowId: string;
   source: 'inDomainChanges' | 'inDbChanges';
 };
 
-export type IBaseClientChangeRow = {
-  id: string;
-  key: string;
-  obj: string;
-  inTable: string;
-  rev: number;
-};
+// export type IBaseClientChangeRow = {
+//   id: string;
+//   key: string;
+//   obj: string;
+//   inTable: string;
+//   rev: number;
+// };
 
-export type ICreateClientChangeRow = IBaseClientChangeRow & {
-  type: DatabaseChangeType.Create;
-  changeFrom: null;
-  changeTo: null;
-};
+// export type ICreateClientChangeRow = IBaseClientChangeRow & {
+//   type: DatabaseChangeType.Create;
+//   changeFrom: null;
+//   changeTo: null;
+// };
 
-export type IUpdateClientChangeRow = IBaseClientChangeRow & {
-  type: DatabaseChangeType.Update;
-  changeFrom: string;
-  changeTo: string;
-};
+// export type IUpdateClientChangeRow = IBaseClientChangeRow & {
+//   type: DatabaseChangeType.Update;
+//   changeFrom: string;
+//   changeTo: string;
+// };
 
-export type IDeleteClientChangeRow = IBaseClientChangeRow & {
-  type: DatabaseChangeType.Delete;
-  changeFrom: null;
-  changeTo: null;
-};
+// export type IDeleteClientChangeRow = IBaseClientChangeRow & {
+//   type: DatabaseChangeType.Delete;
+//   changeFrom: null;
+//   changeTo: null;
+// };
 
-export type IClientChangeRow =
-  | ICreateClientChangeRow
-  | IUpdateClientChangeRow
-  | IDeleteClientChangeRow;
+// export type IClientChangeRow =
+//   | ICreateClientChangeRow
+//   | IUpdateClientChangeRow
+//   | IDeleteClientChangeRow;
 
-export type ICreateClientChangeDoc = ICreateChange & { rev: number };
-export type IUpdateClientChangeDoc = Required<IUpdateChange, 'obj'> & {
-  rev: number;
-};
-export type IDeleteClientChangeDoc = IDeleteChange & { rev: number };
+// export type ICreateClientChangeDoc = ICreateChange & { rev: number };
+// export type IUpdateClientChangeDoc = Required<IUpdateChange, 'obj'> & {
+//   rev: number;
+// };
+// export type IDeleteClientChangeDoc = IDeleteChange & { rev: number };
 
-export type IClientChangeDoc =
-  | ICreateClientChangeDoc
-  | IUpdateClientChangeDoc
-  | IDeleteClientChangeDoc;
+// export type IClientChangeDoc =
+//   | ICreateClientChangeDoc
+//   | IUpdateClientChangeDoc
+//   | IDeleteClientChangeDoc;
 
-export type ITransmittedCreateChange = ICreateChange & IChangeExtended;
-export type ITransmittedUpdateChange = IUpdateChange & IChangeExtended;
-export type ITransmittedDeleteChange = IDeleteChange & IChangeExtended;
+// export type ITransmittedCreateChange = ICreateChange & WithSourceInfo;
+// export type ITransmittedUpdateChange = IUpdateChange & WithSourceInfo;
+// export type ITransmittedDeleteChange = IDeleteChange & WithSourceInfo;
 
-export type ITransmittedChange =
-  | ITransmittedDeleteChange
-  | ITransmittedUpdateChange
-  | ITransmittedCreateChange;
+// export type ITransmittedChange =
+//   | ITransmittedDeleteChange
+//   | ITransmittedUpdateChange
+//   | ITransmittedCreateChange;
 
-export type ICreateServerChangeRow = ICreateClientChangeRow;
-export type IUpdateServerChangeRow = Overwrite<
-  IUpdateClientChangeRow,
-  { obj: null }
->;
-export type IDeleteServerChangeRow = IDeleteClientChangeRow;
+// export type ICreateServerChangeRow = ICreateClientChangeRow;
+// export type IUpdateServerChangeRow = Overwrite<
+//   IUpdateClientChangeRow,
+//   { obj: null }
+// >;
+// export type IDeleteServerChangeRow = IDeleteClientChangeRow;
 
-export type IServerChangeRow = (
-  | ICreateServerChangeRow
-  | IUpdateServerChangeRow
-  | IDeleteServerChangeRow
-) & {
-  pullId: string;
-  rev: number;
-};
-export type IServerChangeDoc = (
-  | ICreateChange
-  | Omit<IUpdateChange, 'obj'>
-  | IDeleteChange
-) & {
-  pullId: string;
-  rev: number;
-};
-export type IChangesPullsRow = { id: string; serverRevision: number };
+// export type IServerChangeRow = (
+//   | ICreateServerChangeRow
+//   | IUpdateServerChangeRow
+//   | IDeleteServerChangeRow
+// ) & {
+//   pullId: string;
+//   rev: number;
+// };
+// export type IServerChangeDoc = (
+//   | ICreateChange
+//   | Omit<IUpdateChange, 'obj'>
+//   | IDeleteChange
+// ) & {
+//   pullId: string;
+//   rev: number;
+// };
+// export type IChangesPullsRow = { id: string; serverRevision: number };
 
 export interface ISyncStatus {
   id: 1;

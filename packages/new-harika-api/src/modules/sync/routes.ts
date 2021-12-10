@@ -12,7 +12,7 @@ import {
   takeUntil,
   tap,
 } from 'rxjs';
-import { createDbSchema, createIfNotExistsDbSchema } from './createDbSchema';
+import { createIfNotExistsDbSchema } from './createDbSchema';
 import { pg } from '../../plugins/db';
 import { DocSnapshotsService } from './services/DocSnapshotsService';
 import { IncomingChangesHandler } from './services/IncomingChangesHandler';
@@ -164,8 +164,6 @@ export const syncHandler: FastifyPluginCallback = (server, options, next) => {
   });
 
   server.get('/', async (req, res) => {
-    await createDbSchema(req.db, 'db_user3');
-
     res.send({ status: 'ok' });
   });
 

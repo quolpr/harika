@@ -15,11 +15,7 @@ import { ApplyChangesService } from '../services/ApplyChangesService';
 import { SyncRepository } from '../repositories/SyncRepository';
 import { DbEventsListenService } from '../services/DbEventsListenerService';
 import { SyncStateService } from '../SyncState';
-import {
-  SYNC_AUTH_TOKEN,
-  SYNC_CONNECTION_ALLOWED,
-  SYNC_URL,
-} from '../types';
+import { SYNC_AUTH_TOKEN, SYNC_CONNECTION_ALLOWED, SYNC_URL } from '../types';
 import { CommandsExecuter } from './CommandsExecuter';
 import { ServerConnector } from './connection/ServerConnector';
 import { ServerSynchronizer } from './ServerSynchronizer';
@@ -61,7 +57,6 @@ export class ServerSynchronizerFactory {
       this.syncAuthToken,
       isLeader$,
       this.syncConnectionAllowed$,
-      log,
       this.stop$,
     );
 
