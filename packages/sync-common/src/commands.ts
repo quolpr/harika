@@ -64,8 +64,8 @@ export interface GetSnapshotsRequest {
 
 export interface GetSnapshotsResponse {
   snapshots: IDocSnapshot[];
-  currentRevision: number;
-  lastTimestamp: string;
+  currentRevision: number | undefined;
+  lastTimestamp: string | undefined;
   status: 'success';
 }
 

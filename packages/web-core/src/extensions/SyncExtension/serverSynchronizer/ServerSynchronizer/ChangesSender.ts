@@ -28,10 +28,14 @@ export class ChangesSender {
   private sendChanges = () => {
     return from(this.syncRepo.getClientChanges()).pipe(
       filter((clientChanges) => clientChanges.length > 0),
-      switchMap(async (clientChanges) => ({
-        clientChanges,
-        syncStatus: await this.syncStatusService.getSyncStatus(),
-      })),
+      switchMap(async (clientChanges) => {
+        console.log({ clientChanges });
+
+        return {
+          clientChanges,
+          syncStatus: await this.syncStatusService.getSyncStatus(),
+        };
+      }),
       switchMap(({ clientChanges, syncStatus }) =>
         this.commandExecuter
           .send<ApplyNewChangesFromClientCommand>(

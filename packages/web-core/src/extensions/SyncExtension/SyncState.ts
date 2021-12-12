@@ -21,6 +21,7 @@ import { SyncRepository } from './repositories/SyncRepository';
 import { ServerConnector } from './serverSynchronizer/connection/ServerConnector';
 import { ServerSynchronizer } from './serverSynchronizer/ServerSynchronizer';
 import { DbEventsListenService } from './services/DbEventsListenerService';
+import { SyncStatusService } from './services/SyncStatusService';
 
 export type ISyncState = {
   isLeader: boolean;
@@ -29,17 +30,23 @@ export type ISyncState = {
   isConnected: boolean;
   isSyncing: boolean;
   pendingClientChangesCount: number;
-  pendingServerChangesCount: number;
+  pendingServerSnapshotsCount: number;
+  lastAppliedRemoteRevision: number | null;
+  lastReceivedRemoteRevision: number | null;
+  currentClock: string;
 };
 
 export const defaultSyncState: ISyncState = {
   dbName: 'Loading...',
   isSyncing: false,
-  pendingServerChangesCount: 0,
+  pendingServerSnapshotsCount: 0,
   pendingClientChangesCount: 0,
   isConnected: false,
   isConnectedAndReadyToUse: false,
   isLeader: false,
+  lastAppliedRemoteRevision: 0,
+  lastReceivedRemoteRevision: 0,
+  currentClock: '',
 };
 
 @injectable()
@@ -52,6 +59,7 @@ export class SyncStateService {
     @inject(DB_NAME) private dbName: string,
     @inject(DbEventsListenService)
     private dbEventsListenService: DbEventsListenService,
+    @inject(SyncStatusService) private syncStatusService: SyncStatusService,
     @inject(STOP_SIGNAL)
     private stop$: Observable<unknown>,
   ) {}
@@ -77,13 +85,18 @@ export class SyncStateService {
     ).pipe(
       startWith(null),
       switchMap(async (res) => {
-        const [serverCount, clientCount] =
-          await this.syncRepo.getServerAndClientChangesCount();
+        const [serverSnapshotsCount, clientChangesCount] =
+          await this.syncRepo.getServerSnapshotsAndClientChangesCount();
+
+        const syncStatus = await this.syncStatusService.getSyncStatus();
 
         return {
           isSyncing: syncer.isSyncing$.value,
-          pendingClientChangesCount: serverCount,
-          pendingServerChangesCount: clientCount,
+          pendingClientChangesCount: clientChangesCount,
+          pendingServerSnapshotsCount: serverSnapshotsCount,
+          lastAppliedRemoteRevision: syncStatus.lastAppliedRemoteRevision,
+          lastReceivedRemoteRevision: syncStatus.lastReceivedRemoteRevision,
+          currentClock: syncStatus.currentClock,
         };
       }),
       withLatestFrom(

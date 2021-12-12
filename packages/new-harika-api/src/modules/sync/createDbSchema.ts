@@ -35,11 +35,7 @@ export const createDbSchema = async (db: Knex, schemaName: string) => {
       .transacting(trx)
       .createTable(`${schemaName}.${snapshotsTable}`, function (table) {
         // TODO: docId + collectionName PK
-        table
-          .string('docId')
-          .notNullable()
-          .unique()
-          .primary({ constraintName: 'entities_primary_key' });
+        table.string('docId').notNullable();
         table.string('collectionName').notNullable();
         table.jsonb('doc').notNullable();
         table.bigInteger('rev').notNullable().unique();
@@ -49,6 +45,10 @@ export const createDbSchema = async (db: Knex, schemaName: string) => {
 
         table.index('collectionName', 'idxEntitiesReceivedTable');
         table.index('docId', 'idxEntitiesReceivedKey');
+
+        table.primary(['collectionName', 'docId'], {
+          constraintName: 'snapshots_primary_key',
+        });
       });
   });
 };

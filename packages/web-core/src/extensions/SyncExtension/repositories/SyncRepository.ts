@@ -283,7 +283,7 @@ export class SyncRepository {
     );
   }
 
-  async getServerAndClientChangesCount(e: IQueryExecuter = this.db) {
+  async getServerSnapshotsAndClientChangesCount(e: IQueryExecuter = this.db) {
     const [[serverResult], [clientResult]] = await e.execQueries(
       [
         Q.select('COUNT(*)').from(serverSnapshotsTable),

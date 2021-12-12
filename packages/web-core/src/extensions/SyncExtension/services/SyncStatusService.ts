@@ -65,14 +65,14 @@ export class SyncStatusService {
     return clocksArray;
   }
 
-  async updateClock(newClock: string, e: IQueryExecuter = this.db) {
-    const currentClock = await this.getCurrentClock(e);
+  // async updateClock( newClock: string, e: IQueryExecuter = this.db,) {
+  //   const currentClock = await this.getCurrentClock();
 
-    const updatedClock = HybridClock.recv(
-      HybridClock.parse(currentClock),
-      HybridClock.parse(newClock),
-    );
+  //   const updatedClock = HybridClock.recv(
+  //     HybridClock.parse(currentClock),
+  //     HybridClock.parse(newClock),
+  //   );
 
-    await this.updateSyncStatus({ currentClock: updatedClock.toString() }, e);
-  }
+  //   await this.updateSyncStatus({ currentClock: updatedClock.toString() }, e);
+  // }
 }

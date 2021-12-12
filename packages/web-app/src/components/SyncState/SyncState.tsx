@@ -99,7 +99,8 @@ export const SyncState = () => {
             <br />
             <b>{syncState.pendingClientChangesCount}</b> pending client changes.
             <br />
-            <b>{syncState.pendingServerChangesCount}</b> pending server changes.
+            <b>{syncState.pendingServerSnapshotsCount}</b> pending server
+            snapshots.
             <br />
             <br />
             <label>

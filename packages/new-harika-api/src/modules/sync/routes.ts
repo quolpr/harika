@@ -11,6 +11,7 @@ import {
   switchMap,
   takeUntil,
   tap,
+  withLatestFrom,
 } from 'rxjs';
 import { createIfNotExistsDbSchema } from './createDbSchema';
 import { pg } from '../../plugins/db';
@@ -23,6 +24,7 @@ import {
   AuthClientCommand,
   ClientCommands,
   CommandTypesFromClient,
+  EventsFromServer,
   GetSnapshotsClientCommand,
 } from '@harika/sync-common';
 
@@ -86,6 +88,8 @@ export const syncHandler: FastifyPluginCallback = (server, options, next) => {
   });
 
   io.of('/sync-db').on('connection', function (socket) {
+    socket.join('test');
+
     const disconnect$ = new Subject();
 
     const authInfo$ = new BehaviorSubject<
@@ -110,11 +114,11 @@ export const syncHandler: FastifyPluginCallback = (server, options, next) => {
       socket,
       CommandTypesFromClient.Auth,
       (req) => {
-        console.log({ req });
-
         return of(null).pipe(
           switchMap(() => createIfNotExistsDbSchema(pg, req.dbName)),
           tap(() => {
+            socket.join(req.dbName);
+
             authInfo$.next({
               dbName: req.dbName,
               userId: '123',
@@ -145,7 +149,15 @@ export const syncHandler: FastifyPluginCallback = (server, options, next) => {
         );
       }
     )
-      .pipe(takeUntil(disconnect$))
+      .pipe(
+        withLatestFrom(authInfo$),
+        tap(([, authInfo]) => {
+          io.of('/sync-db')
+            .to(authInfo.dbName)
+            .emit(EventsFromServer.RevisionChanged);
+        }),
+        takeUntil(disconnect$)
+      )
       .subscribe();
 
     handleMessage<GetSnapshotsClientCommand>(
@@ -154,16 +166,24 @@ export const syncHandler: FastifyPluginCallback = (server, options, next) => {
       (req) => {
         return authInfo$.pipe(
           onlyAuthed(),
-          switchMap(async (authInfo) => ({
-            snapshots: await docSnapshotsService.getSnapshotsFromRev(
+          switchMap(async (authInfo) => {
+            const snapshots = await docSnapshotsService.getSnapshotsFromRev(
               pg,
               authInfo.dbName,
               req.fromRev
-            ),
-            currentRevision: 0,
-            lastTimestamp: '',
-            status: 'success' as const,
-          }))
+            );
+
+            // TODO: race condition may happen here
+            const { currentRev, lastTimestamp } =
+              await docSnapshotsService.getStatus(pg, authInfo.dbName);
+
+            return {
+              snapshots,
+              currentRevision: currentRev,
+              lastTimestamp: lastTimestamp,
+              status: 'success' as const,
+            };
+          })
         );
       }
     )

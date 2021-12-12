@@ -10,7 +10,7 @@ import {
 import type { CommandsExecuter } from './CommandsExecuter';
 import type { ServerConnector } from './connection/ServerConnector';
 import { ServerSnapshotsReceiver } from './ServerSynchronizer/ServerChangesReceiver';
-import { ChangesSender } from './ServerSynchronizer/ChangesApplierAndSender';
+import { ChangesSender } from './ServerSynchronizer/ChangesSender';
 import type { SyncRepository } from '../repositories/SyncRepository';
 import { SyncStatusService } from '../services/SyncStatusService';
 

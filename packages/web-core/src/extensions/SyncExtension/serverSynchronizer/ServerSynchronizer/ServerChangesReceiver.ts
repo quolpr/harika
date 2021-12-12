@@ -77,7 +77,11 @@ export class ServerSnapshotsReceiver {
   private storeReceivedChanges = async (res: GetSnapshotsResponse) => {
     const pullId = v4();
 
-    if (res.currentRevision !== null) {
+    if (res.currentRevision !== null && res.currentRevision !== undefined) {
+      // if (res.lastTimestamp !== undefined) {
+      //   this.syncStatusService.updateClock(res.lastTimestamp);
+      // }
+
       await this.syncRepo.createPull(
         {
           id: pullId,
