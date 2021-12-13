@@ -19,7 +19,6 @@ import { Overwrite } from 'utility-types';
 import { SyncStatusService } from '../services/SyncStatusService';
 
 export const clientChangesTable = 'clientChanges' as const;
-export const serverSnapshotsPullsTable = 'serverSnapshotsPulls' as const;
 export const serverSnapshotsTable = 'serverSnapshots' as const;
 
 export type WithSourceInfo<T extends IBaseChange> = T & {
@@ -78,7 +77,6 @@ export type ITransmittedChange =
 
 export type IDocSnapshotRow = Overwrite<
   IDocSnapshot & {
-    pullId: string;
     scopeId: string | null;
   },
   {
@@ -93,7 +91,7 @@ export type ISnapshotsPullsRow = { id: string; serverRevision: number };
 @injectable()
 export class SyncRepository {
   private onChangeCallback: ((ch: ITransmittedChange[]) => void) | undefined;
-  private onNewPullCallback: (() => void) | undefined;
+  private onNewSnapshotsCallback: (() => void) | undefined;
 
   constructor(
     @inject(DB) private db: DB,
@@ -104,8 +102,12 @@ export class SyncRepository {
     this.onChangeCallback = callback;
   }
 
-  onNewPull(callback: () => void) {
-    this.onNewPullCallback = callback;
+  onNewSnapshots(callback: () => void) {
+    this.onNewSnapshotsCallback = callback;
+
+    return () => {
+      this.onNewSnapshotsCallback = undefined;
+    };
   }
 
   async transaction<T extends any>(
@@ -277,12 +279,6 @@ export class SyncRepository {
     });
   }
 
-  getChangesPulls(e: IQueryExecuter): Promise<ISnapshotsPullsRow[]> {
-    return e.getRecords<ISnapshotsPullsRow>(
-      Q.select().from(serverSnapshotsPullsTable),
-    );
-  }
-
   async getServerSnapshotsAndClientChangesCount(e: IQueryExecuter = this.db) {
     const [[serverResult], [clientResult]] = await e.execQueries(
       [
@@ -298,16 +294,10 @@ export class SyncRepository {
     ];
   }
 
-  async getServerSnapshotsByPullIds(
-    pullIds: string[],
-    e: IQueryExecuter,
-  ): Promise<IDocSnapshot[]> {
+  async getServerSnapshots(e: IQueryExecuter): Promise<IDocSnapshot[]> {
     return (
       await e.getRecords<IDocSnapshotRow>(
-        Q.select()
-          .from(serverSnapshotsTable)
-          .where(Q.in('pullId', pullIds))
-          .orderBy('rev'),
+        Q.select().from(serverSnapshotsTable).orderBy('rev'),
       )
     ).map((row) => this.snapshotRowToDoc(row));
   }
@@ -326,26 +316,17 @@ export class SyncRepository {
     );
   }
 
-  async deletePulls(ids: string[], e: IQueryExecuter) {
-    await e.execQuery(
-      Q.deleteFrom().from(serverSnapshotsPullsTable).where(Q.in('id', ids)),
-    );
-  }
-
-  async createPull(
-    pull: ISnapshotsPullsRow,
+  async createSnapshots(
+    serverRev: number,
     snapshots: IDocSnapshot[],
     e: IQueryExecuter = this.db,
   ) {
     await e.transaction(async (t) => {
       // TODO: could be optimized in one this.db call
 
-      await t.insertRecords(serverSnapshotsPullsTable, [pull]);
-
       const rows = snapshots.map((snap): IDocSnapshotRow => {
         return {
           ...snap,
-          pullId: pull.id,
           doc: JSON.stringify(snap.doc),
           scopeId: snap.scopeId ? snap.scopeId : null,
           isDeleted: snap.isDeleted ? 1 : 0,
@@ -353,18 +334,18 @@ export class SyncRepository {
       });
 
       if (rows.length > 0) {
-        await t.insertRecords(serverSnapshotsTable, rows);
+        await t.insertRecords(serverSnapshotsTable, rows, true);
       }
 
       await this.syncStatusService.updateSyncStatus(
         {
-          lastReceivedRemoteRevision: pull.serverRevision,
+          lastReceivedRemoteRevision: serverRev,
         },
         t,
       );
     });
 
-    this.onNewPullCallback?.();
+    this.onNewSnapshotsCallback?.();
   }
 
   private clientChangeRowToDoc(snap: IClientChangeRow): IClientChangeDoc {

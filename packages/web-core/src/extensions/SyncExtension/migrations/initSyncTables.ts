@@ -1,5 +1,4 @@
 import {
-  serverSnapshotsPullsTable,
   serverSnapshotsTable,
   clientChangesTable,
 } from '../repositories/SyncRepository';
@@ -19,13 +18,6 @@ const up = async (db: IQueryExecuter) => {
   `);
 
   await db.sqlExec(`
-    CREATE TABLE IF NOT EXISTS ${serverSnapshotsPullsTable} (
-      id varchar(36) PRIMARY KEY,
-      serverRevision INTEGER NOT NULL
-    );
-  `);
-
-  await db.sqlExec(`
     CREATE TABLE IF NOT EXISTS ${serverSnapshotsTable} (
       id varchar(36) PRIMARY KEY,
 
@@ -36,13 +28,10 @@ const up = async (db: IQueryExecuter) => {
       scopeId varchar(36),
       isDeleted INTEGER NOT NULL,
       
-      pullId varchar(36) NOT NULL,
       rev INTEGER NOT NULL,
-
-      FOREIGN KEY(pullId) REFERENCES ${serverSnapshotsPullsTable}(id) ON DELETE CASCADE
     );
 
-    CREATE INDEX IF NOT EXISTS idx_change_from_server_pullId ON ${serverSnapshotsTable}(pullId);
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_snapshots_unq ON ${serverSnapshotsTable}(docId, collectionName);
   `);
 
   await db.sqlExec(`

@@ -34,7 +34,7 @@ export class DbEventsSenderService {
 
   initialize() {
     this.syncRepository.onChange((e) => this.eventsSubject.next(e));
-    this.syncRepository.onNewPull(() => this.onNewSyncPull.next());
+    this.syncRepository.onNewSnapshots(() => this.onNewSyncPull.next());
 
     this.eventsSubject
       .pipe(

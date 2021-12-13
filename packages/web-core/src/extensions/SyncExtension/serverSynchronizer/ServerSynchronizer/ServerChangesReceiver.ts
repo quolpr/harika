@@ -82,11 +82,8 @@ export class ServerSnapshotsReceiver {
       //   this.syncStatusService.updateClock(res.lastTimestamp);
       // }
 
-      await this.syncRepo.createPull(
-        {
-          id: pullId,
-          serverRevision: res.currentRevision,
-        },
+      await this.syncRepo.createSnapshots(
+        res.currentRevision,
         res.snapshots.map((snapshot) => ({ ...snapshot, pullId })),
       );
     }
