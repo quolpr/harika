@@ -28,7 +28,7 @@ const up = async (db: IQueryExecuter) => {
       scopeId varchar(36),
       isDeleted INTEGER NOT NULL,
       
-      rev INTEGER NOT NULL,
+      rev INTEGER NOT NULL
     );
 
     CREATE UNIQUE INDEX IF NOT EXISTS idx_snapshots_unq ON ${serverSnapshotsTable}(docId, collectionName);
