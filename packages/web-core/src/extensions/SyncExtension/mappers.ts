@@ -4,6 +4,6 @@ export type IMapper<Doc = any, Model extends AnyModel = any> = {
   mapToModelData: (arg: Doc) => ModelCreationData<Model> & { $modelId: string };
   mapToDoc: (arg: Model) => Doc;
 
-  tableName: string;
+  collectionName: string;
   model: Class<Model>;
 };

@@ -14,6 +14,7 @@ import { DB_MIGRATIONS } from '../DbExtension/types';
 import { initSyncTables } from './migrations/initSyncTables';
 import { DbEventsSenderService } from './services/DbEventsSenderService';
 import { SyncStatusService } from './services/SyncStatusService';
+import { SnapshotsApplier } from './services/SnapshotsApplier';
 
 @injectable()
 export class SyncAppExtension extends BaseExtension {
@@ -35,6 +36,7 @@ export class SyncAppExtension extends BaseExtension {
   async initialize() {
     this.container.resolve(OnDbChangeNotifier);
     this.container.resolve(DbEventsSenderService).initialize();
+    this.container.resolve(SnapshotsApplier).start();
   }
 
   async onReady() {

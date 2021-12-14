@@ -21,6 +21,6 @@ export const notesMapper: IMapper<NoteDoc, NoteModel> = {
       updatedAt: model.updatedAt,
     };
   },
-  tableName: notesTable,
+  collectionName: notesTable,
   model: NoteModel,
 };

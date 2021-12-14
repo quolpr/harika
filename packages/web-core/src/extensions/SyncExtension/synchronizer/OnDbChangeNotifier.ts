@@ -53,7 +53,8 @@ export class OnDbChangeNotifier {
     > = {};
 
     for (const tableName in grouped) {
-      const registration = this.syncConfig.getRegistrationByTable(tableName);
+      const registration =
+        this.syncConfig.getRegistrationByCollectionName(tableName);
 
       if (!registration) {
         console.error('Failed to find sync registration for ' + tableName);
@@ -109,7 +110,7 @@ export class OnDbChangeNotifier {
         return;
       }
 
-      const mappedData = groupedMappedData[registration.mapper.tableName];
+      const mappedData = groupedMappedData[registration.mapper.collectionName];
 
       if (!mappedData) {
         toCreateOrUpdateDatas.push([]);

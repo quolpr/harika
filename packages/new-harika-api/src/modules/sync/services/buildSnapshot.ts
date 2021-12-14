@@ -37,12 +37,16 @@ const handleUpdate = <T extends Record<string, any>>(
       const removedIds = differenceWith(change.from[k], change.to[k], isEqual);
       const addedIds = differenceWith(change.to[k], change.from[k], isEqual);
 
-      current[k as keyof T] = uniqWith(
-        (current[k] || [])
-          .concat(addedIds)
-          .filter((v: any) => !removedIds.find((v2) => isEqual(v, v2))),
-        isEqual
-      ) as T[keyof T];
+      if (removedIds.length === 0 && addedIds.length === 0) {
+        current[k as keyof T] = v as T[keyof T];
+      } else {
+        current[k as keyof T] = uniqWith(
+          (v || [])
+            .concat(current[k])
+            .filter((v: any) => !removedIds.find((v2) => isEqual(v, v2))),
+          isEqual
+        ) as T[keyof T];
+      }
 
       return;
     }

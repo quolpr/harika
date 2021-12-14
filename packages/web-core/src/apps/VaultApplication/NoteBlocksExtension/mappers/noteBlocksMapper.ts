@@ -33,6 +33,6 @@ export const noteBlocksMapper: IMapper<NoteBlockDoc, NoteBlockModel> = {
       updatedAt: model.updatedAt,
     };
   },
-  tableName: noteBlocksTable,
+  collectionName: noteBlocksTable,
   model: NoteBlockModel,
 };

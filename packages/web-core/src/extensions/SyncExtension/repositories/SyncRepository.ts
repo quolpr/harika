@@ -78,6 +78,7 @@ export type ITransmittedChange =
 export type IDocSnapshotRow = Overwrite<
   IDocSnapshot & {
     scopeId: string | null;
+    id: string;
   },
   {
     doc: string;
@@ -294,7 +295,9 @@ export class SyncRepository {
     ];
   }
 
-  async getServerSnapshots(e: IQueryExecuter): Promise<IDocSnapshot[]> {
+  async getServerSnapshots(
+    e: IQueryExecuter,
+  ): Promise<(IDocSnapshot & { id: string })[]> {
     return (
       await e.getRecords<IDocSnapshotRow>(
         Q.select().from(serverSnapshotsTable).orderBy('rev'),
@@ -316,6 +319,12 @@ export class SyncRepository {
     );
   }
 
+  async deleteSnapshots(e: IQueryExecuter, ids: string[]) {
+    await e.execQuery(
+      Q.deleteFrom().from(serverSnapshotsTable).where(Q.in('id', ids)),
+    );
+  }
+
   async createSnapshots(
     serverRev: number,
     snapshots: IDocSnapshot[],
@@ -327,6 +336,7 @@ export class SyncRepository {
       const rows = snapshots.map((snap): IDocSnapshotRow => {
         return {
           ...snap,
+          id: uuidv4(),
           doc: JSON.stringify(snap.doc),
           scopeId: snap.scopeId ? snap.scopeId : null,
           isDeleted: snap.isDeleted ? 1 : 0,
@@ -377,7 +387,9 @@ export class SyncRepository {
     }
   }
 
-  private snapshotRowToDoc(snap: IDocSnapshotRow): IDocSnapshot {
+  private snapshotRowToDoc(
+    snap: IDocSnapshotRow,
+  ): IDocSnapshot & { id: string } {
     return {
       ...snap,
       doc: JSON.parse(snap.doc),
