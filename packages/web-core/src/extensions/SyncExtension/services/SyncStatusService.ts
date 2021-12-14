@@ -35,7 +35,7 @@ export class SyncStatusService {
         currentClock: new HybridClock(0, 0, clientId).toString(),
       };
 
-      e.insertRecords(syncStatusTable, [status]);
+      await e.insertRecords(syncStatusTable, [status]);
     }
 
     return status;
@@ -50,6 +50,8 @@ export class SyncStatusService {
   }
 
   async getNextClockBulk(count: number, e: IQueryExecuter = this.db) {
+    if (count === 0) return [];
+
     let currentClock = HybridClock.parse(await this.getCurrentClock(e));
 
     const clocksArray = times(count, () => {

@@ -33,7 +33,7 @@ export class DbEventsListenService {
           ch.addEventListener('message', func);
 
           return () => {
-            ch.close();
+            void ch.close();
           };
         });
       }),

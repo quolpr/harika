@@ -47,9 +47,9 @@ export class ImportExportService {
         .map((note) => [note.id, note.rootBlockId]) || [];
 
     await this.notesRepo.transaction(async (t) => {
-      importData.data.data.forEach(({ rows, tableName }) => {
+      for (const { rows, tableName } of importData.data.data) {
         if (tableName === notesTable) {
-          this.notesRepo.bulkCreate(
+          await this.notesRepo.bulkCreate(
             rows
               .filter(({ title }) => title !== undefined)
               .map((doc) => {
@@ -68,7 +68,7 @@ export class ImportExportService {
             t,
           );
         } else if (tableName === noteBlocksTable) {
-          this.notesBlocksRepo.bulkCreate(
+          await this.notesBlocksRepo.bulkCreate(
             rows
               .filter((doc) => Boolean(doc.noteId))
               .map(
@@ -92,14 +92,14 @@ export class ImportExportService {
             t,
           );
         } else if (tableName === blocksScopesTable) {
-          this.blocksScopesRepo.bulkCreate(rows, ctx, t);
+          await this.blocksScopesRepo.bulkCreate(rows, ctx, t);
         } else if (tableName === blocksTreeDescriptorsTable) {
-          this.descriptorRepo.bulkCreate(rows, ctx, t);
+          await this.descriptorRepo.bulkCreate(rows, ctx, t);
         }
-      });
+      }
 
       if (rootBlockIds.length > 0) {
-        this.descriptorRepo.bulkCreate(
+        await this.descriptorRepo.bulkCreate(
           rootBlockIds.map(([noteId, rootBlockId]) => ({
             id: noteId,
             rootBlockId: rootBlockId,

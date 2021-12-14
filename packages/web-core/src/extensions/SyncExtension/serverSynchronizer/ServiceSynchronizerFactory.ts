@@ -93,14 +93,25 @@ export class ServerSynchronizerFactory {
     return getBroadcastCh$(`syncLeader-${dbName}`).pipe(
       switchMap((ch) => {
         return new Observable<boolean>((observer) => {
+          let isLeaderTracking = true;
           const elector = createLeaderElection(ch);
 
-          elector.awaitLeadership().then(() => {
-            observer.next(true);
-          });
-
           elector.onduplicate = () => {
+            if (!isLeaderTracking) return;
             observer.next(false);
+          };
+
+          elector
+            .awaitLeadership()
+            .then(() => {
+              if (!isLeaderTracking) return;
+
+              observer.next(true);
+            })
+            .catch(() => observer.error('Leadership error'));
+
+          return () => {
+            isLeaderTracking = false;
           };
         });
       }),

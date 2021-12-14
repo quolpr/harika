@@ -24,5 +24,7 @@ module.exports = {
     project: './tsconfig.json',
   },
   plugins: ['@typescript-eslint', 'react', 'jsx-a11y', 'rxjs'],
-  rules: {},
+  rules: {
+    '@typescript-eslint/no-floating-promises': ['error'],
+  },
 };

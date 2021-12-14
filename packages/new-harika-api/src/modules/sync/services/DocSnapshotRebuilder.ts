@@ -60,6 +60,8 @@ export class DocSnapshotRebuilder {
     ]);
 
     if (isAnyChangesAlreadyHappened || !snapshot) {
+      console.log(`${schemaName}-${collectionName}-${docId} full recalculate`);
+
       // We need to recalculate snapshot from the start, cause we can't make
       // calculation from snapshot cause snapshot time newer
       return await this.changesService.getAllChanges(
@@ -69,6 +71,10 @@ export class DocSnapshotRebuilder {
         docId
       );
     } else {
+      console.log(
+        `${schemaName}-${collectionName}-${docId} partial recalculate`
+      );
+
       return [snapshotToCreateChange(snapshot), ...changes];
     }
   }

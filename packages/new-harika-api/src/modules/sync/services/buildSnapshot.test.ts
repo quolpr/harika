@@ -59,7 +59,7 @@ describe('EntitySnapshotBuilder', () => {
         doc: {
           id: '123',
           content: 'test',
-          childIds: [1, 4],
+          childIds: [4, 1],
         },
         isDeleted: false,
       })
@@ -87,7 +87,7 @@ describe('EntitySnapshotBuilder', () => {
           id: '123',
           content: 'test',
           nested: {
-            childIds: [1, 4],
+            childIds: [4, 1],
             test: true,
           },
         },

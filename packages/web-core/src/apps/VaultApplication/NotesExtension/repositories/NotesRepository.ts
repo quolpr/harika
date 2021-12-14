@@ -52,22 +52,24 @@ export class NotesRepository extends BaseSyncRepository<NoteDoc, NoteRow> {
     return e.transaction(async (t) => {
       const res = await super.bulkUpdate(records, ctx, t);
 
-      await t.execQuery(
-        Q.deleteFrom(notesFTSTable).where(
-          Q.in(
-            'id',
-            res.map(({ id }) => id),
+      if (res.touchedRecords.length > 0) {
+        await t.execQuery(
+          Q.deleteFrom(notesFTSTable).where(
+            Q.in(
+              'id',
+              res.touchedRecords.map(({ id }) => id),
+            ),
           ),
-        ),
-      );
+        );
 
-      await t.insertRecords(
-        notesFTSTable,
-        res.map((row) => ({
-          id: row.id,
-          title: row.title.toLowerCase(),
-        })),
-      );
+        await t.insertRecords(
+          notesFTSTable,
+          res.touchedRecords.map((row) => ({
+            id: row.id,
+            title: row.title.toLowerCase(),
+          })),
+        );
+      }
 
       return res;
     });

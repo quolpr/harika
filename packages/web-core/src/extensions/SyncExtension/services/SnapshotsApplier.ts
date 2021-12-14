@@ -1,20 +1,20 @@
-import { inject, injectable } from 'inversify';
+import { inject, injectable, multiInject } from 'inversify';
 import { groupBy } from 'lodash-es';
 import { concatMap, Observable, takeUntil } from 'rxjs';
 import { STOP_SIGNAL } from '../../../framework/types';
 import { Transaction } from '../../DbExtension/DB';
+import { BaseSyncRepository } from '../BaseSyncRepository';
 import { SyncRepository } from '../repositories/SyncRepository';
-import { SyncConfig } from '../serverSynchronizer/SyncConfig';
 import { ISyncCtx } from '../syncCtx';
+import { REPOS_WITH_SYNC } from '../types';
 
 @injectable()
 export class SnapshotsApplier {
   constructor(
-    @inject(SyncConfig)
-    private syncConfig: SyncConfig,
     @inject(SyncRepository)
     private syncRepo: SyncRepository,
     @inject(STOP_SIGNAL) private stop$: Observable<void>,
+    @multiInject(REPOS_WITH_SYNC) private reposWithSync: BaseSyncRepository[],
   ) {}
 
   start() {
@@ -39,13 +39,21 @@ export class SnapshotsApplier {
       source: 'inDbChanges',
     };
 
+    const repoByCollection = Object.fromEntries(
+      this.reposWithSync.map((r) => [r.getTableName(), r]),
+    );
+
     for (const [collectionName, groupedSnapshots] of Object.entries(
       groupBy(snapshots, (sn) => sn.collectionName),
     )) {
-      const reg =
-        this.syncConfig.getRegistrationByCollectionName(collectionName);
+      const reg = repoByCollection[collectionName];
+
       if (!reg) {
-        console.error('Registration not found for', collectionName);
+        console.error(
+          'Registration not found for',
+          collectionName,
+          groupedSnapshots,
+        );
 
         continue;
       }
@@ -55,10 +63,10 @@ export class SnapshotsApplier {
         .map((sn) => sn.docId);
 
       if (deletedIds.length > 0) {
-        await reg.repo.bulkDelete(deletedIds, syncCtx, t);
+        await reg.bulkDelete(deletedIds, syncCtx, t);
       }
 
-      await reg.repo.bulkCreateOrUpdate(
+      await reg.bulkCreateOrUpdate(
         groupedSnapshots
           .filter((sn) => sn.isDeleted === false)
           .map((sn) => sn.doc),

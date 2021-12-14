@@ -128,7 +128,7 @@ export abstract class BaseSyncRepository<
   }
 
   async update(changeTo: Doc, ctx: ISyncCtx, e: IQueryExecuter = this.db) {
-    return (await this.bulkUpdate([changeTo], ctx, e))[0];
+    return (await this.bulkUpdate([changeTo], ctx, e)).records[0];
   }
 
   bulkUpdate(records: Doc[], ctx: ISyncCtx, e: IQueryExecuter = this.db) {
@@ -161,14 +161,16 @@ export abstract class BaseSyncRepository<
         true,
       );
 
-      this.syncRepository.createUpdateChanges(
+      await this.syncRepository.createUpdateChanges(
         this.getTableName(),
         changes,
         { ...ctx, windowId: this.windowId },
         t,
       );
 
-      return records;
+      const touchedRecords = changes.map((ch) => ch.to);
+
+      return { records, touchedRecords };
     });
   }
 

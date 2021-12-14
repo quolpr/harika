@@ -29,7 +29,6 @@ export class DocSnapshotsService {
       .insert(snapshots)
       .withSchema(schemaName)
       .into(snapshotsTable)
-      // TODO: docId + collectionName PK
       .onConflict(['collectionName', 'docId'])
       .merge();
   }
