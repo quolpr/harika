@@ -1,0 +1,9 @@
+{
+  "name": "@harika/sync-common",
+  "version": "1.0.0",
+  "main": "./index.ts",
+  "private": true,
+  "scripts": {},
+  "dependencies": {},
+  "devDependencies": {}
+}

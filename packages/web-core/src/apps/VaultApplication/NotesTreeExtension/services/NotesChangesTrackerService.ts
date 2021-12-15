@@ -1,6 +1,5 @@
 import { autorun } from 'mobx';
-import { filter, map, Observable, takeUntil, tap } from 'rxjs';
-import { DatabaseChangeType } from '../../../../extensions/SyncExtension/serverSynchronizer/types';
+import { filter, map, Observable, takeUntil } from 'rxjs';
 import {
   INoteTitleChange,
   NotesTreeRegistry,
@@ -12,6 +11,7 @@ import {
 import { inject, injectable } from 'inversify';
 import { STOP_SIGNAL } from '../../../../framework/types';
 import { DbEventsListenService } from '../../../../extensions/SyncExtension/services/DbEventsListenerService';
+import { DocChangeType } from '@harika/sync-common';
 
 @injectable()
 export class NotesChangesTrackerService {
@@ -28,7 +28,9 @@ export class NotesChangesTrackerService {
       .pipe(
         map(
           (chs) =>
-            chs.filter((ch) => ch.table === notesTable) as INoteChangeEvent[],
+            chs.filter(
+              (ch) => ch.collectionName === notesTable,
+            ) as INoteChangeEvent[],
         ),
         filter((chs) => chs.length !== 0),
         takeUntil(stop$),
@@ -58,20 +60,20 @@ export class NotesChangesTrackerService {
     this.treeModel.handleNotesChanges(
       changes
         .map((ch): INoteTitleChange | undefined => {
-          if (ch.type === DatabaseChangeType.Create) {
-            if (ch.obj.dailyNoteDate) return undefined;
+          if (ch.type === DocChangeType.Create) {
+            if (ch.doc.dailyNoteDate) return undefined;
 
-            return { type: 'create', id: ch.key, title: ch.obj.title };
-          } else if (ch.type === DatabaseChangeType.Update && ch.to.title) {
+            return { type: 'create', id: ch.docId, title: ch.doc.title };
+          } else if (ch.type === DocChangeType.Update && ch.to.title) {
             return {
               type: 'rename',
-              id: ch.key,
+              id: ch.docId,
               toTitle: ch.to.title,
             };
-          } else if (ch.type === DatabaseChangeType.Delete) {
+          } else if (ch.type === DocChangeType.Delete) {
             return {
               type: 'delete',
-              id: ch.key,
+              id: ch.docId,
             };
           }
 

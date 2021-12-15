@@ -1,5 +1,4 @@
 import { BaseSyncRepository } from '../../../../extensions/SyncExtension/BaseSyncRepository';
-import { BlocksScopesChangesApplier } from '../../BlocksScopeExtension/sync/BlocksScopesChangesApplier';
 
 export const blocksTreeDescriptorsTable = 'blocksTreesDescriptors' as const;
 
@@ -16,10 +15,5 @@ export class BlocksTreeDescriptorsRepository extends BaseSyncRepository<
 > {
   getTableName() {
     return blocksTreeDescriptorsTable;
-  }
-
-  changesApplier() {
-    // TODO: write own changes applier
-    return new BlocksScopesChangesApplier();
   }
 }

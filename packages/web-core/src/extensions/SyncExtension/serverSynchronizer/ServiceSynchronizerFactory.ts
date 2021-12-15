@@ -11,15 +11,11 @@ import {
 import { STOP_SIGNAL } from '../../../framework/types';
 import { getBroadcastCh$ } from '../../../lib/utils';
 import { DB_NAME } from '../../DbExtension/types';
-import { ApplyChangesService } from '../services/ApplyChangesService';
 import { SyncRepository } from '../repositories/SyncRepository';
 import { DbEventsListenService } from '../services/DbEventsListenerService';
+import { SyncStatusService } from '../services/SyncStatusService';
 import { SyncStateService } from '../SyncState';
-import {
-  SYNC_AUTH_TOKEN,
-  SYNC_CONNECTION_ALLOWED,
-  SYNC_URL,
-} from '../types';
+import { SYNC_AUTH_TOKEN, SYNC_CONNECTION_ALLOWED, SYNC_URL } from '../types';
 import { CommandsExecuter } from './CommandsExecuter';
 import { ServerConnector } from './connection/ServerConnector';
 import { ServerSynchronizer } from './ServerSynchronizer';
@@ -38,12 +34,12 @@ export class ServerSynchronizerFactory {
     private syncUrl: string,
     @inject(SYNC_AUTH_TOKEN)
     private syncAuthToken: string,
-    @inject(ApplyChangesService)
-    private applyChangesService: ApplyChangesService,
     @inject(STOP_SIGNAL)
     private stop$: Observable<unknown>,
     @inject(SyncStateService)
     private syncStateService: SyncStateService,
+    @inject(SyncStatusService)
+    private syncStatusService: SyncStatusService,
   ) {}
 
   async initialize() {
@@ -51,7 +47,7 @@ export class ServerSynchronizerFactory {
       // console.debug(`[${dbName}] ${msg}`);
     };
 
-    const syncStatus = await this.syncRepo.getSyncStatus();
+    const syncStatus = await this.syncStatusService.getSyncStatus();
     const isLeader$ = this.getIsLeader$(this.dbName);
 
     const serverConnector = new ServerConnector(
@@ -61,24 +57,21 @@ export class ServerSynchronizerFactory {
       this.syncAuthToken,
       isLeader$,
       this.syncConnectionAllowed$,
-      log,
       this.stop$,
     );
 
     const commandExecuter = new CommandsExecuter(
-      serverConnector.socketSubject,
-      serverConnector.channelSubject,
+      serverConnector.authedSocket$,
       log,
       this.stop$,
     );
 
     const syncer = new ServerSynchronizer(
       this.syncRepo,
-      this.applyChangesService,
+      this.syncStatusService,
       commandExecuter,
       serverConnector,
       this.dbEventsListenService.changesChannel$(),
-      this.dbEventsListenService.newSyncPullsChannel$(),
       this.stop$,
       log,
     );
@@ -100,14 +93,25 @@ export class ServerSynchronizerFactory {
     return getBroadcastCh$(`syncLeader-${dbName}`).pipe(
       switchMap((ch) => {
         return new Observable<boolean>((observer) => {
+          let isLeaderTracking = true;
           const elector = createLeaderElection(ch);
 
-          elector.awaitLeadership().then(() => {
-            observer.next(true);
-          });
-
           elector.onduplicate = () => {
+            if (!isLeaderTracking) return;
             observer.next(false);
+          };
+
+          elector
+            .awaitLeadership()
+            .then(() => {
+              if (!isLeaderTracking) return;
+
+              observer.next(true);
+            })
+            .catch(() => observer.error('Leadership error'));
+
+          return () => {
+            isLeaderTracking = false;
           };
         });
       }),

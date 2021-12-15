@@ -33,7 +33,7 @@ export class DbEventsListenService {
           ch.addEventListener('message', func);
 
           return () => {
-            ch.close();
+            void ch.close();
           };
         });
       }),
@@ -69,9 +69,9 @@ export class DbEventsListenService {
       filter((evs) => {
         return Boolean(
           evs.find(
-            ({ table, source }) =>
+            ({ collectionName, source }) =>
               (onlyInDb ? source === 'inDbChanges' : true) &&
-              tables.includes(table),
+              tables.includes(collectionName),
           ),
         );
       }),

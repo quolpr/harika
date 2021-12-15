@@ -1,27 +1,22 @@
-import {
-  merge,
-  Subject,
-  Observable,
-  of,
-  ReplaySubject,
-  BehaviorSubject,
-  combineLatest,
-} from 'rxjs';
+import { Observable, of, ReplaySubject, combineLatest } from 'rxjs';
 import {
   distinctUntilChanged,
-  mapTo,
+  map,
   share,
   switchMap,
   takeUntil,
 } from 'rxjs/operators';
-import type Phoenix from 'phoenix';
-import { Socket } from 'phoenix';
+import io, { Socket } from 'socket.io-client';
+import {
+  AuthClientRequest,
+  AuthClientResponse,
+  CommandTypesFromClient,
+} from '@harika/sync-common';
 
 export class ServerConnector {
-  socketSubject = new BehaviorSubject<Phoenix.Socket | undefined>(undefined);
-  channelSubject = new BehaviorSubject<Phoenix.Channel | undefined>(undefined);
   isConnected$: Observable<boolean>;
   isConnectedAndReadyToUse$: Observable<boolean>;
+  authedSocket$: Observable<Socket | undefined>;
 
   constructor(
     private dbName: string,
@@ -30,119 +25,108 @@ export class ServerConnector {
     private authToken: string,
     isLeader$: Observable<boolean>,
     isServerConnectionAllowed$: Observable<boolean>,
-    private log: (str: string) => void,
-    private stop$: Observable<unknown>,
+    stop$: Observable<unknown>,
   ) {
-    combineLatest([isLeader$, isServerConnectionAllowed$]).subscribe(
-      ([isLeader, isServerConnectionAllowed]) => {
+    const socket$ = combineLatest([isLeader$, isServerConnectionAllowed$]).pipe(
+      switchMap(([isLeader, isServerConnectionAllowed]) => {
         if (isLeader && isServerConnectionAllowed) {
-          const socket = new Socket(this.url, {
-            params: { token: this.authToken },
-          });
-          socket.connect();
-
-          const phoenixChannel = socket.channel('db_changes:' + this.dbName, {
-            client_id: this.clientId,
-          });
-
-          this.socketSubject.next(socket);
-          this.channelSubject.next(phoenixChannel);
+          return this.initSocketIO();
         } else {
-          this.channelSubject.value?.leave();
-          this.socketSubject.value?.disconnect();
-
-          this.socketSubject.next(undefined);
-          this.channelSubject.next(undefined);
+          return of(undefined);
         }
-      },
-    );
-
-    const connect$ = this.socketSubject.pipe(
-      switchMap((socket) =>
-        socket
-          ? new Observable((observer) => {
-              socket.onOpen(() => {
-                observer.next();
-              });
-            })
-          : of(),
-      ),
-    );
-
-    const disconnect$ = this.socketSubject.pipe(
-      switchMap(
-        (socket) =>
-          new Observable((observer) => {
-            if (!socket) {
-              observer.next();
-              return;
-            }
-
-            socket.onClose(() => {
-              observer.next();
-            });
-
-            socket.onError(() => {
-              observer.next();
-            });
-          }),
-      ),
-    );
-
-    this.isConnected$ = merge(
-      connect$.pipe(mapTo(true)),
-      disconnect$.pipe(mapTo(false)),
-    ).pipe(
+      }),
       distinctUntilChanged(),
       share({
         connector: () => new ReplaySubject(1),
+        resetOnRefCountZero: false,
+        resetOnError: false,
       }),
-      takeUntil(this.stop$),
+      takeUntil(stop$),
     );
 
-    const isJoined$ = this.channelSubject.pipe(
-      switchMap((channel) => {
-        return channel
-          ? new Observable<boolean>((observer) => {
-              // On timeout/error phoenix will try to reconnect, so no need to handle such case
-              channel
-                .join()
-                .receive('ok', () => {
-                  this.log('Joined channel');
+    socket$.subscribe((s) => {
+      console.log({ s });
+    });
 
-                  observer.next(true);
-                })
-                .receive('error', ({ reason }) => {
-                  this.log(`Channel error - ${JSON.stringify(reason)}`);
-
-                  observer.next(false);
-                })
-                .receive('timeout', () => {
-                  this.log('Channel timeout');
-
-                  observer.next(false);
-                });
-            })
-          : of(false);
+    const isAuthed$ = socket$.pipe(
+      distinctUntilChanged(),
+      switchMap((socket) => {
+        if (socket) {
+          return this.auth(socket);
+        } else {
+          return of(false);
+        }
       }),
       share({
         connector: () => new ReplaySubject(1),
         resetOnRefCountZero: false,
-        resetOnComplete: false,
         resetOnError: false,
       }),
-      takeUntil(this.stop$),
+      takeUntil(stop$),
     );
 
-    this.isConnectedAndReadyToUse$ = this.isConnected$.pipe(
-      switchMap((isConnected) => {
-        return isConnected ? isJoined$ : of(false);
-      }),
-      distinctUntilChanged(),
-      takeUntil(this.stop$),
-      share({
-        connector: () => new ReplaySubject(1),
-      }),
+    this.isConnected$ = socket$.pipe(map((socket) => !!socket));
+    this.isConnectedAndReadyToUse$ = combineLatest([socket$, isAuthed$]).pipe(
+      map(([sock, isAuthed]) => Boolean(sock && isAuthed)),
     );
+
+    this.authedSocket$ = combineLatest([socket$, isAuthed$]).pipe(
+      map(([socket, isAuthed]) => (isAuthed ? socket : undefined)),
+    );
+  }
+
+  private initSocketIO() {
+    return new Observable<Socket | undefined>((obs) => {
+      const socket = io(`${this.url}/sync-db`);
+
+      socket.on('connect', () => {
+        obs.next(socket);
+      });
+
+      socket.on('disconnect', () => {
+        // todo: reconnect logic
+        obs.next(undefined);
+      });
+
+      socket.connect();
+
+      return () => {
+        socket.close();
+      };
+    });
+  }
+
+  private auth(socket: Socket) {
+    return new Observable<boolean>((obs) => {
+      const req: AuthClientRequest = {
+        authToken: this.authToken,
+        dbName: this.dbName,
+        clientId: this.clientId,
+      };
+
+      console.log({ req });
+
+      let isRunning = true;
+
+      socket.emit(
+        CommandTypesFromClient.Auth,
+        req,
+        (response: AuthClientResponse) => {
+          if (!isRunning) return;
+
+          if (response.status === 'success') {
+            obs.next(true);
+          } else {
+            console.error('Failed to auth!');
+
+            obs.next(false);
+          }
+        },
+      );
+
+      return () => {
+        isRunning = false;
+      };
+    });
   }
 }

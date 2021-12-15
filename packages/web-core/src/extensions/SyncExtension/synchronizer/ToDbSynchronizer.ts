@@ -106,25 +106,25 @@ export class ToDbSynchronizer {
   private applyChanges = async (changes: ISyncableModelChange[]) => {
     if (changes.length === 0) return;
 
-    Object.entries(groupBy(changes, (ch) => ch.model.$modelType)).forEach(
-      ([, chs]) => {
-        const reg = this.syncConfig.getRegistrationByModelClass(
-          chs[0].model.constructor as Class<AnyModel>,
+    for (const chs of Object.values(
+      groupBy(changes, (ch) => ch.model.$modelType),
+    )) {
+      const reg = this.syncConfig.getRegistrationByModelClass(
+        chs[0].model.constructor as Class<AnyModel>,
+      );
+
+      if (!reg) {
+        console.error(
+          `Couldn't find syne repo registration for ${JSON.stringify(
+            chs[0].model,
+          )}`,
         );
 
-        if (!reg) {
-          console.error(
-            `Couldn't find syne repo registration for ${JSON.stringify(
-              chs[0].model,
-            )}`,
-          );
+        return;
+      }
 
-          return;
-        }
-
-        this.apply(compressChanges(chs), reg.repo, reg.mapper.mapToDoc);
-      },
-    );
+      await this.apply(compressChanges(chs), reg.repo, reg.mapper.mapToDoc);
+    }
   };
 
   private apply = <T>(

@@ -29,6 +29,6 @@ export const blocksScopesMapper: IMapper<BlocksScopeDoc, BlocksScope> = {
       rootBlockId: model.rootScopedBlockId,
     };
   },
-  tableName: blocksScopesTable,
+  collectionName: blocksScopesTable,
   model: BlocksScope,
 };

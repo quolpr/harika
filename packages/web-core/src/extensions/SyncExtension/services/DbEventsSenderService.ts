@@ -4,6 +4,7 @@ import {
   debounceTime,
   Observable,
   Subject,
+  switchMap,
   takeUntil,
   withLatestFrom,
 } from 'rxjs';
@@ -34,17 +35,16 @@ export class DbEventsSenderService {
 
   initialize() {
     this.syncRepository.onChange((e) => this.eventsSubject.next(e));
-    this.syncRepository.onNewPull(() => this.onNewSyncPull.next());
+    this.syncRepository.onNewSnapshots(() => this.onNewSyncPull.next());
 
     this.eventsSubject
       .pipe(
         buffer(this.eventsSubject.pipe(debounceTime(100))),
         withLatestFrom(this.eventsChannel$),
+        switchMap(([evs, ch]) => ch.postMessage(evs.flat())),
         takeUntil(this.stop$),
       )
-      .subscribe(([evs, ch]) => {
-        ch.postMessage(evs.flat());
-      });
+      .subscribe();
 
     this.onNewSyncPull
       .pipe(withLatestFrom(this.newSyncPullsChannel$), takeUntil(this.stop$))

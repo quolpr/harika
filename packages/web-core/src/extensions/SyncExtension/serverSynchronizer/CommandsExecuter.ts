@@ -1,4 +1,4 @@
-import { Subject, Observable } from 'rxjs';
+import { Observable } from 'rxjs';
 import {
   catchError,
   first,
@@ -6,18 +6,16 @@ import {
   retry,
   switchMap,
   take,
+  takeUntil,
   tap,
 } from 'rxjs/operators';
-import type Phoenix from 'phoenix';
-import snakecaseKeys from 'snakecase-keys';
-import camelcaseKeys from 'camelcase-keys';
-import type { ClientCommands } from './types';
+import type { ClientCommands } from '@harika/sync-common';
+import { Socket } from 'socket.io-client';
 
 export class CommandsExecuter {
   private i = 0;
   constructor(
-    private socket$: Observable<Phoenix.Socket | undefined>,
-    private channel$: Observable<Phoenix.Channel | undefined>,
+    private socket$: Observable<Socket | undefined>,
     private log: (str: string) => void,
     private stop$: Observable<unknown>,
   ) {}
@@ -28,51 +26,13 @@ export class CommandsExecuter {
   ) {
     const id = this.i++;
 
-    return this.channel$.pipe(
-      switchMap((channel) => {
-        return new Observable<T['response']>((observer) => {
-          this.log(
-            `[requestId=${id}] Sending message ${JSON.stringify(
-              command,
-              null,
-              2,
-            )}`,
-          );
-
-          if (!channel) {
-            observer.error('Channel is not set. Is new leader elected?');
-
-            return;
-          }
-
-          channel
-            .push(commandType, snakecaseKeys(command, { deep: true }), 20_000)
-            .receive('ok', (msg) => {
-              const result = camelcaseKeys(msg, {
-                deep: true,
-              }) as T['response'];
-
-              this.log(
-                `[requestId=${id}] Response received, ${JSON.stringify(
-                  result,
-                  null,
-                  2,
-                )}`,
-              );
-
-              observer.next(result);
-            })
-            .receive('error', (reasons) => {
-              this.log(`[${id}] Command failed ${JSON.stringify(reasons)}`);
-
-              observer.error();
-            })
-            .receive('timeout', () => {
-              this.log(`[requestId=${id}] Command timeout`);
-
-              observer.error();
-            });
-        });
+    return this.socket$.pipe(
+      switchMap((socket) => {
+        if (socket) {
+          return this.newMessageSender(socket, commandType, command, id);
+        } else {
+          throw new Error('Not connected');
+        }
       }),
       retry(3),
       catchError(() => {
@@ -92,6 +52,58 @@ export class CommandsExecuter {
         );
       }),
       take(1),
+      takeUntil(this.stop$),
     );
+  }
+
+  private newMessageSender<T extends ClientCommands>(
+    socket: Socket,
+    commandType: T['type'],
+    command: T['request'],
+    requestId: number,
+  ) {
+    return new Observable<T['response']>((observer) => {
+      let isRunning = true;
+
+      this.log(
+        `[requestId=${requestId}] Sending message ${JSON.stringify(
+          command,
+          null,
+          2,
+        )}`,
+      );
+
+      if (!socket) {
+        observer.error('Channel is not set. Is new leader elected?');
+
+        return;
+      }
+
+      const timeout = setTimeout(() => {
+        if (!isRunning) return;
+
+        this.log(`[requestId=${requestId}] Command timeout`);
+      }, 10_000);
+
+      socket.emit(commandType, command, (resp: T['response']) => {
+        if (!isRunning) return;
+
+        clearTimeout(timeout);
+
+        this.log(
+          `[requestId=${requestId}] Response received, ${JSON.stringify(
+            resp,
+            null,
+            2,
+          )}`,
+        );
+
+        observer.next(resp);
+      });
+
+      return () => {
+        isRunning = false;
+      };
+    });
   }
 }

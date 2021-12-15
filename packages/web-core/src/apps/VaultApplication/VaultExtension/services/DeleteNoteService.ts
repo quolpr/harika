@@ -28,11 +28,11 @@ export class DeleteNoteService {
             (id) => id !== noteId,
           );
         });
-        this.notesBlocksRepo.bulkUpdate(linkedBlocks, ctx, t);
+        await this.notesBlocksRepo.bulkUpdate(linkedBlocks, ctx, t);
       }
 
-      this.notesRepo.delete(noteId, ctx, t);
-      this.notesBlocksRepo.bulkDelete(
+      await this.notesRepo.delete(noteId, ctx, t);
+      await this.notesBlocksRepo.bulkDelete(
         await this.notesBlocksRepo.getIdsByNoteId(noteId, t),
         ctx,
         t,

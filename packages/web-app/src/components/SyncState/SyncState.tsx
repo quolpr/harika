@@ -7,7 +7,6 @@ import Tippy from '@tippyjs/react';
 import {
   useIsConnectionAllowed$,
   useSyncState$,
-  useVaultService,
 } from '../../hooks/vaultAppHooks';
 import { BehaviorSubject } from 'rxjs';
 import { useMountedState } from 'react-use';
@@ -100,7 +99,8 @@ export const SyncState = () => {
             <br />
             <b>{syncState.pendingClientChangesCount}</b> pending client changes.
             <br />
-            <b>{syncState.pendingServerChangesCount}</b> pending server changes.
+            <b>{syncState.pendingServerSnapshotsCount}</b> pending server
+            snapshots.
             <br />
             <br />
             <label>

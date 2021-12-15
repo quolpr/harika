@@ -29,8 +29,8 @@ export class SyncConfig {
     return this.registeredRepos.find((r) => r.mapper.model === klass);
   }
 
-  getRegistrationByTable(table: string) {
-    return this.registeredRepos.find((r) => r.mapper.tableName === table);
+  getRegistrationByCollectionName(table: string) {
+    return this.registeredRepos.find((r) => r.mapper.collectionName === table);
   }
 
   getRegisteredSubscribers() {

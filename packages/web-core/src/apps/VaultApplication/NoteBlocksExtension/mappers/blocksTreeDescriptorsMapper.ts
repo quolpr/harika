@@ -23,6 +23,6 @@ export const blocksTreeDescriptorsMapper: IMapper<
       rootBlockId: model.rootBlockId,
     };
   },
-  tableName: blocksTreeDescriptorsTable,
+  collectionName: blocksTreeDescriptorsTable,
   model: BlocksTreeDescriptor,
 };
