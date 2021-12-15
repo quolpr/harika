@@ -10,6 +10,7 @@ import { Redirect, Route, Router, Switch } from 'react-router-dom';
 import { createBrowserHistory } from 'history';
 import { useLocalStorage } from '@rehooks/local-storage';
 import { ShiftPressedContext } from './contexts/ShiftPressedContext';
+import './firebaseApp';
 
 const SignupPage = React.lazy(() => import('./pages/SignupPage/SignupPage'));
 const LoginPage = React.lazy(() => import('./pages/LoginPage/LoginPage'));

@@ -20,6 +20,7 @@
     "fastify-cors": "^6.0.2",
     "fastify-oas": "^3.0.8",
     "fastify-plugin": "3.0.0",
+    "firebase-admin": "^10.0.0",
     "knex": "^0.95.14",
     "lodash": "^4.17.21",
     "pg": "^8.7.1",

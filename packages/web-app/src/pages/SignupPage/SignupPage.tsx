@@ -1,10 +1,10 @@
-import React from 'react';
+import { createUserWithEmailAndPassword, getAuth } from 'firebase/auth';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useHistory } from 'react-router-dom';
-import { useSignupMutation } from '../../generated/graphql';
 import { useAuthState } from '../../hooks/useAuthState';
 import { paths } from '../../paths';
-import { cn, setServerErrors } from '../../utils';
+import { cn } from '../../utils';
 
 const formClass = cn('form');
 
@@ -13,53 +13,62 @@ type IFormData = {
   password: string;
 };
 
+const auth = getAuth();
+
 export const SignupPage = () => {
+  const [isLoading, setIsLoading] = useState(false);
+
   const history = useHistory();
-  const signup = useSignupMutation();
   const [, setAuthInfo] = useAuthState();
 
   const {
     register,
     handleSubmit,
-    formState: { errors },
     setError,
+    formState: { errors },
+    setFocus,
   } = useForm<IFormData>();
 
   const onSubmit = async (data: IFormData) => {
-    const res = await signup.mutateAsync({ ...data });
+    try {
+      setIsLoading(true);
 
-    if (res.createUser.result?.user) {
-      const {
-        user: { id: userId },
-        token,
-      } = res.createUser.result;
+      const res = await createUserWithEmailAndPassword(
+        auth,
+        data.email,
+        data.password,
+      );
+      const authToken = await res.user.getIdToken(true);
 
-      setAuthInfo({ userId, isOffline: false, authToken: token });
+      setAuthInfo({ userId: res.user.uid, isOffline: false, authToken });
 
       history.push(paths.vaultIndexPath());
-    } else {
-      setServerErrors(res.createUser.messages, setError);
+    } catch (e: unknown) {
+      setError('email', {
+        type: 'manual',
+        message: 'Email or password is incorrect',
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const { ref: refEmail, ...restEmail } = register('email', { required: true });
+  React.useEffect(() => {
+    setFocus('email');
+  }, [setFocus]);
 
   return (
     <div className="max-w-screen-sm mx-auto">
       <form onSubmit={handleSubmit(onSubmit)} className={`${formClass()}`}>
         <div className={formClass('field')}>
-          <label htmlFor="name" className={formClass('label')}>
+          <label htmlFor="email" className={formClass('label')}>
             Email
           </label>
           <input
-            {...restEmail}
+            {...register('email', { required: true })}
             type="email"
             placeholder="Email"
             name="email"
-            ref={(el) => {
-              el?.focus();
-              refEmail(el);
-            }}
             className={formClass('input')}
           />
           {errors.email && errors.email.type === 'required' && (
@@ -71,7 +80,7 @@ export const SignupPage = () => {
         </div>
 
         <div className={formClass('field')}>
-          <label htmlFor="name" className={formClass('label')}>
+          <label htmlFor="password" className={formClass('label')}>
             Password
           </label>
           <input
@@ -92,8 +101,8 @@ export const SignupPage = () => {
 
         <input
           type="submit"
-          className={formClass('submit-btn', { loading: signup.isLoading })}
-          disabled={signup.isLoading}
+          className={formClass('submit-btn', { loading: isLoading })}
+          disabled={isLoading}
           value="Sign Up"
         />
       </form>

@@ -1,13 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useCallback } from 'react';
 import { useForm } from 'react-hook-form';
-import { useHistory } from 'react-router-dom';
-import { useLoginMutation } from '../../generated/graphql';
+import { Link, useHistory } from 'react-router-dom';
 import { useAuthState } from '../../hooks/useAuthState';
 import { paths } from '../../paths';
 import { cn } from '../../utils';
 import { useOfflineAccounts } from '../../hooks/useOfflineAccounts';
 import { generateId } from '@harika/web-core';
+import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
 
 const formClass = cn('form');
 
@@ -16,34 +16,44 @@ type IFormData = {
   password: string;
 };
 
+const auth = getAuth();
+
 export const LoginPage = () => {
   const history = useHistory();
-  const login = useLoginMutation();
   const [, setAuthInfo] = useAuthState();
   const [offlineAccounts, addOfflineAccount] = useOfflineAccounts();
+  const [isLoading, setIsLoading] = useState(false);
 
   const {
     register,
     handleSubmit,
     setError,
     formState: { errors },
+    setFocus,
   } = useForm<IFormData>();
 
-  const { ref: refEmail, ...restEmail } = register('email', { required: true });
+  React.useEffect(() => {
+    setFocus('email');
+  }, [setFocus]);
 
   const onSubmit = useCallback(
     async (data: IFormData) => {
       try {
-        const res = await login.mutateAsync(data);
+        setIsLoading(true);
 
-        if (!res.login || !res.login.user) throw new Error('auth error');
+        const res = await signInWithEmailAndPassword(
+          auth,
+          data.email,
+          data.password,
+        );
 
-        const {
-          token,
-          user: { id: userId },
-        } = res.login;
+        const token = await res.user.getIdToken(true);
 
-        setAuthInfo({ userId, isOffline: false, authToken: token });
+        setAuthInfo({
+          userId: res.user.uid,
+          isOffline: false,
+          authToken: token,
+        });
 
         history.push(paths.vaultIndexPath());
       } catch {
@@ -51,9 +61,11 @@ export const LoginPage = () => {
           type: 'server',
           message: 'Email or password is wrong',
         });
+      } finally {
+        setIsLoading(false);
       }
     },
-    [history, login, setAuthInfo, setError],
+    [history, setAuthInfo, setError],
   );
 
   const handleWorkOffline = useCallback(() => {
@@ -84,18 +96,14 @@ export const LoginPage = () => {
     <div className="max-w-screen-sm mx-auto px-5">
       <form onSubmit={handleSubmit(onSubmit)} className={`${formClass()}`}>
         <div className={formClass('field')}>
-          <label htmlFor="name" className={formClass('label')}>
+          <label htmlFor="email" className={formClass('label')}>
             Email
           </label>
           <input
-            {...restEmail}
+            {...register('email', { required: true })}
             type="email"
             placeholder="Email"
             name="email"
-            ref={(el) => {
-              el?.focus();
-              refEmail(el);
-            }}
             className={formClass('input')}
           />
           {errors.email && errors.email.type === 'required' && (
@@ -107,7 +115,7 @@ export const LoginPage = () => {
         </div>
 
         <div className={formClass('field')}>
-          <label htmlFor="name" className={formClass('label')}>
+          <label htmlFor="password" className={formClass('label')}>
             Password
           </label>
           <input
@@ -123,10 +131,17 @@ export const LoginPage = () => {
 
         <input
           type="submit"
-          className={formClass('submit-btn', { loading: login.isLoading })}
-          disabled={login.isLoading}
+          className={formClass('submit-btn', { loading: isLoading })}
+          disabled={isLoading}
           value="Log In"
         />
+
+        <Link
+          to={paths.signupPath()}
+          className={formClass('sign-up-btn', { loading: isLoading })}
+        >
+          Sign Up
+        </Link>
 
         <div className="mx-auto mt-3 text-gray-600 text-sm">
           Or{' '}

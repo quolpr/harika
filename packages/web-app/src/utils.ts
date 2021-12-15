@@ -1,8 +1,6 @@
 import { withNaming } from '@bem-react/classname';
 import { useRef } from 'react';
 import { isEqual } from 'lodash-es';
-import type { ErrorOption } from 'react-hook-form';
-import type { ValidationMessage } from './generated/graphql';
 
 export const cn = withNaming({ n: '', e: '__', m: '--', v: '_' });
 
@@ -45,15 +43,6 @@ export const insertText = (
   const ev = new Event('input', { bubbles: true });
   el.dispatchEvent(ev);
 };
-
-export function setServerErrors<T>(
-  errors: Pick<ValidationMessage, 'field' | 'message'>[],
-  setError: (fieldName: keyof T, error: ErrorOption) => void,
-) {
-  errors.forEach(({ field, message }) => {
-    setError(field as keyof T, { type: 'server', message });
-  });
-}
 
 export function useDeepMemo<TKey, TValue>(
   memoFn: () => TValue,

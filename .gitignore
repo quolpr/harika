@@ -128,3 +128,4 @@ node_modules/
 coverage
 .vim
 .vscode
+.keys

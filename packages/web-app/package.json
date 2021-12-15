@@ -27,6 +27,7 @@
     "caret-pos": "^2.0.0",
     "clsx": "^1.1.1",
     "downloadjs": "^1.4.7",
+    "firebase": "^9.6.1",
     "graphql": "^15.6.1",
     "immer": "^9.0.6",
     "linkifyjs": "v3.0.0-beta.3",

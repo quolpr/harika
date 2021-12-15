@@ -27,6 +27,7 @@ import {
   EventsFromServer,
   GetSnapshotsClientCommand,
 } from '@harika/sync-common';
+import { getAuth } from 'firebase-admin/auth';
 
 function handleMessage<T extends ClientCommands>(
   socket: Socket,
@@ -38,7 +39,6 @@ function handleMessage<T extends ClientCommands>(
       return new Observable<[T['request'], (arg: T['response']) => void]>(
         (obs) => {
           socket.on(type as string, async (msg, callback) => {
-            console.log({ msg, callback });
             obs.next([msg, callback]);
           });
         }
@@ -89,8 +89,6 @@ export const syncHandler: FastifyPluginCallback = (server, options, next) => {
   });
 
   io.of('/sync-db').on('connection', function (socket) {
-    socket.join('test');
-
     const disconnect$ = new Subject();
 
     const authInfo$ = new BehaviorSubject<
@@ -117,12 +115,16 @@ export const syncHandler: FastifyPluginCallback = (server, options, next) => {
       (req) => {
         return of(null).pipe(
           switchMap(() => createIfNotExistsDbSchema(pg, req.dbName)),
-          tap(() => {
-            socket.join(req.dbName);
-
+          switchMap(async () => {
+            await socket.join(req.dbName);
+          }),
+          switchMap(async () => {
+            return await getAuth().verifyIdToken(req.authToken);
+          }),
+          tap((decodedToken) => {
             authInfo$.next({
               dbName: req.dbName,
-              userId: '123',
+              userId: decodedToken.uid,
               clientId: req.clientId,
             });
           }),
