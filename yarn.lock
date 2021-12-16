@@ -9617,10 +9617,10 @@ linked-list@0.1.0:
   resolved "https://registry.yarnpkg.com/linked-list/-/linked-list-0.1.0.tgz#798b0ff97d1b92a4fd08480f55aea4e9d49d37bf"
   integrity sha1-eYsP+X0bkqT9CEgPVa6k6dSdN78=
 
-linkifyjs@v3.0.0-beta.3:
-  version "3.0.0-beta.3"
-  resolved "https://registry.yarnpkg.com/linkifyjs/-/linkifyjs-3.0.0-beta.3.tgz#40697995d7ecf85c464924a30b9e98b1cd6fb253"
-  integrity sha512-aXq4WJs91NsETo5f9dQrt8Vx+OxAvzJAtR8lLgpum8PDjtCgstycwYbIkAjDGRV/YF1LlKKdbWyOpgMYgwgOvQ==
+linkifyjs@v3.0.4:
+  version "3.0.4"
+  resolved "https://registry.yarnpkg.com/linkifyjs/-/linkifyjs-3.0.4.tgz#469a1b44903d179e3b23317fd3c4e995453765b9"
+  integrity sha512-JWw1HHMx54g8mEsG7JwI8I/xh7qeJbF6L9u1dQOYW91RdRqDYpnTn1UaNXYkmLD967Vk0xGuyHzuRnkSApby3w==
 
 listr-silent-renderer@^1.1.1:
   version "1.1.1"
@@ -12098,7 +12098,7 @@ react-query@^3.27.0:
     broadcast-channel "^3.4.1"
     match-sorter "^6.0.2"
 
-react-refresh@^0.10.0:
+react-refresh@0.10.0, react-refresh@^0.10.0:
   version "0.10.0"
   resolved "https://registry.yarnpkg.com/react-refresh/-/react-refresh-0.10.0.tgz#2f536c9660c0b9b1d500684d9e52a65e7404f7e3"
   integrity sha512-PgidR3wST3dDYKr6b4pJoqQFpPGNKDSCDx4cZoshjXipw3LzO7mG1My2pwEzz2JVkF+inx3xRpDeQLFQGH/hsQ==
