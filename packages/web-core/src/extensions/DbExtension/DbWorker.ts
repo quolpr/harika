@@ -166,8 +166,22 @@ class CommandsExecutor {
 
     // console.log(command, [...this.queue]);
 
+    // console.log(
+    //   `Queue to run: ${JSON.stringify(
+    //     queue,
+    //     null,
+    //     2,
+    //   )}\nCurrentCommand: ${JSON.stringify(command, null, 2)}`,
+    // );
+
     // TODO: optimize it. We can await for commit, for example
     queue.forEach((com) => {
+      this.runCommand(com);
+    });
+  }
+
+  private flushQueue() {
+    this.queue.forEach((com) => {
       this.runCommand(com);
     });
   }
@@ -180,6 +194,7 @@ class CommandsExecutor {
       command.type === 'rollbackTransaction'
     ) {
       this.commitOrRollbackTransaction(command);
+      this.flushQueue();
     } else if (command.type === 'execQueries') {
       this.execQuery(command);
     }
@@ -312,6 +327,7 @@ class CommandsExecutor {
   }
 }
 
+// eslint-disable-next-line no-restricted-globals
 const ctx: Worker = self as any;
 
 let commandsExecutor: CommandsExecutor | undefined;
