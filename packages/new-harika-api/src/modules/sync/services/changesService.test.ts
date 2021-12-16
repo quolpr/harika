@@ -3,7 +3,7 @@ import {
   createTestDbSchema,
   dropTestDbSchema,
 } from '../../../../test/supports/createDbSchema';
-import { pg } from '../../../plugins/db';
+import { db } from '../../../db/db';
 import { ChangesService } from './changesService';
 
 const collectionName = 'testTable';
@@ -44,7 +44,7 @@ describe('ChangesService', () => {
 
       expect(
         await changesService.isAnyChangeAfterClock(
-          pg,
+          db,
           schemaName,
           collectionName,
           '123',
@@ -55,7 +55,7 @@ describe('ChangesService', () => {
 
       expect(
         await changesService.isAnyChangeAfterClock(
-          pg,
+          db,
           schemaName,
           collectionName,
           '123',
@@ -66,7 +66,7 @@ describe('ChangesService', () => {
 
       expect(
         await changesService.isAnyChangeAfterClock(
-          pg,
+          db,
           schemaName,
           collectionName,
           '123',

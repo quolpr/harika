@@ -2,7 +2,7 @@ import {
   createTestDbSchema,
   dropTestDbSchema,
 } from '../../../../test/supports/createDbSchema';
-import { pg } from '../../../plugins/db';
+import { db } from '../../../db/db';
 import { DocSnapshotsService } from './DocSnapshotsService';
 
 describe('DocSnapshotsService', () => {
@@ -19,7 +19,7 @@ describe('DocSnapshotsService', () => {
 
   describe('getStatus', () => {
     it('works', async () => {
-      console.log(await service.getStatus(pg, schemaName));
+      console.log(await service.getStatus(db, schemaName));
     });
   });
 });

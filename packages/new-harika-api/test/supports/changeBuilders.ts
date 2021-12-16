@@ -10,7 +10,7 @@ import {
 } from '@harika/sync-common';
 import { v4 } from 'uuid';
 import { Factory } from 'fishery';
-import { pg } from '../../src/plugins/db';
+import { db } from '../../src/db/db';
 
 const clientId = makeClientId();
 const clock = new HybridClock(0, 0, clientId);
@@ -25,7 +25,7 @@ const onCreateHook =
   async (ch: T) => {
     if (!schemaName) throw new Error('Schema name should be present!');
 
-    const [{ rev }] = await pg
+    const [{ rev }] = await db
       .insert({ ...ch, receivedFromClientId: clientId }, ['rev'])
       .withSchema(schemaName)
       .into('changes');

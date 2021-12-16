@@ -14,7 +14,6 @@ import {
   withLatestFrom,
 } from 'rxjs';
 import { createIfNotExistsDbSchema } from './createDbSchema';
-import { pg } from '../../plugins/db';
 import { DocSnapshotsService } from './services/DocSnapshotsService';
 import { IncomingChangesHandler } from './services/IncomingChangesHandler';
 import { ChangesService } from './services/changesService';
@@ -28,6 +27,7 @@ import {
   GetSnapshotsClientCommand,
 } from '@harika/sync-common';
 import { getAuth } from 'firebase-admin/auth';
+import { db } from '../../db/db';
 
 function handleMessage<T extends ClientCommands>(
   socket: Socket,
@@ -73,7 +73,7 @@ const snapshotsRebuilder = new DocSnapshotRebuilder(
   docSnapshotsService
 );
 const incomingChangesHandler = new IncomingChangesHandler(
-  pg,
+  db,
   changesService,
   snapshotsRebuilder,
   docSnapshotsService
@@ -114,12 +114,16 @@ export const syncHandler: FastifyPluginCallback = (server, options, next) => {
       CommandTypesFromClient.Auth,
       (req) => {
         return of(null).pipe(
-          switchMap(() => createIfNotExistsDbSchema(pg, req.dbName)),
           switchMap(async () => {
             await socket.join(req.dbName);
           }),
           switchMap(async () => {
             return await getAuth().verifyIdToken(req.authToken);
+          }),
+          switchMap(async (token) => {
+            await createIfNotExistsDbSchema(db, token.uid, req.dbName);
+
+            return token;
           }),
           tap((decodedToken) => {
             authInfo$.next({
@@ -171,14 +175,14 @@ export const syncHandler: FastifyPluginCallback = (server, options, next) => {
           onlyAuthed(),
           switchMap(async (authInfo) => {
             const snapshots = await docSnapshotsService.getSnapshotsFromRev(
-              pg,
+              db,
               authInfo.dbName,
               req.fromRev
             );
 
             // TODO: race condition may happen here
             const { currentRev, lastTimestamp } =
-              await docSnapshotsService.getStatus(pg, authInfo.dbName);
+              await docSnapshotsService.getStatus(db, authInfo.dbName);
 
             return {
               snapshots,

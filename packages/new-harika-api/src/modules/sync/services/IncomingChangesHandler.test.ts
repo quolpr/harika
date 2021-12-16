@@ -7,7 +7,7 @@ import {
   createTestDbSchema,
   dropTestDbSchema,
 } from '../../../../test/supports/createDbSchema';
-import { pg } from '../../../plugins/db';
+import { db } from '../../../db/db';
 import { ChangesService } from './changesService';
 import { DocSnapshotRebuilder } from './DocSnapshotRebuilder';
 import { DocSnapshotsService } from './DocSnapshotsService';
@@ -19,7 +19,7 @@ describe('IncomingChangesHandler', () => {
   const snapshotsService = new DocSnapshotsService();
   const changesService = new ChangesService();
   let incomingChangesHandler = new IncomingChangesHandler(
-    pg,
+    db,
     changesService,
     new DocSnapshotRebuilder(changesService, snapshotsService),
     snapshotsService
@@ -67,7 +67,7 @@ describe('IncomingChangesHandler', () => {
     await handleChanges();
 
     expect(
-      await snapshotsService.getSnapshot(pg, schemaName, 'testTable', '123')
+      await snapshotsService.getSnapshot(db, schemaName, 'testTable', '123')
     ).toEqual(expect.objectContaining({ docId: '123' }));
   });
 
@@ -76,7 +76,7 @@ describe('IncomingChangesHandler', () => {
 
     expect(
       (
-        await changesService.getAllChanges(pg, schemaName, 'testTable', '123')
+        await changesService.getAllChanges(db, schemaName, 'testTable', '123')
       ).map(({ id }) => id)
     ).toEqual(expect.arrayContaining(changes.map((ch) => ch.id)));
   });

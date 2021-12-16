@@ -1,13 +1,14 @@
 import { Knex } from 'knex';
-import { docChangesTable, snapshotsTable } from './dbTypes';
+import { docChangesTable, snapshotsTable, usersDbsTable } from './dbTypes';
+import { DbService } from './services/DbService';
 
-export const createDbSchema = async (db: Knex, schemaName: string) => {
+export const createDbSchema = async (db: Knex, dbName: string) => {
   await db.transaction(async (trx) => {
-    await db.schema.transacting(trx).raw(`CREATE SCHEMA "${schemaName}";`);
+    await db.schema.transacting(trx).createSchemaIfNotExists(dbName);
 
     await db.schema
       .transacting(trx)
-      .createTable(`${schemaName}.${docChangesTable}`, function (table) {
+      .createTable(`${dbName}.${docChangesTable}`, function (table) {
         table.uuid('id').primary({ constraintName: 'changes_primary_key' });
         table.string('collectionName').notNullable();
         table.string('docId').notNullable();
@@ -33,7 +34,7 @@ export const createDbSchema = async (db: Knex, schemaName: string) => {
 
     await db.schema
       .transacting(trx)
-      .createTable(`${schemaName}.${snapshotsTable}`, function (table) {
+      .createTable(`${dbName}.${snapshotsTable}`, function (table) {
         // TODO: docId + collectionName PK
         table.string('docId').notNullable();
         table.string('collectionName').notNullable();
@@ -55,14 +56,30 @@ export const createDbSchema = async (db: Knex, schemaName: string) => {
 
 export const createIfNotExistsDbSchema = async (
   db: Knex,
-  schemaName: string
+  userId: string,
+  dbName: string
 ) => {
-  const res = await db
-    .select()
-    .from('information_schema.schemata')
-    .where({ schema_name: schemaName });
+  return db.transaction(async (t) => {
+    const dbService = new DbService(t);
 
-  if (res.length === 0) {
-    await createDbSchema(db, schemaName);
-  }
+    const isDbExists =
+      (
+        await t
+          .select()
+          .from('information_schema.schemata')
+          .where({ schema_name: dbName })
+      ).length > 0;
+    const hasUserAccess = await dbService.hasUserAccess(userId, dbName);
+
+    if (!isDbExists) {
+      await createDbSchema(t, dbName);
+      await t.insert({ userId, dbName }).into(usersDbsTable);
+
+      return;
+    }
+
+    if (!hasUserAccess) {
+      throw new Error('No access!');
+    }
+  });
 };

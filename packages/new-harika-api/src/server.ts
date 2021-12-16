@@ -1,7 +1,6 @@
 import fastify from 'fastify';
 
 import { dbPlugin } from './plugins/db';
-import { healthHandler } from './modules/health/routes';
 import { syncHandler } from './modules/sync/routes';
 import fastifyCors from 'fastify-cors';
 
@@ -23,7 +22,6 @@ function createServer() {
   });
 
   server.register(dbPlugin);
-  server.register(healthHandler, { prefix: '/health' });
   server.register(syncHandler, { prefix: '/sync' });
 
   server.setErrorHandler((error, req, res) => {
