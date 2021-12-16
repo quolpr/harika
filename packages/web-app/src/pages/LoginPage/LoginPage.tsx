@@ -7,7 +7,12 @@ import { paths } from '../../paths';
 import { cn } from '../../utils';
 import { useOfflineAccounts } from '../../hooks/useOfflineAccounts';
 import { generateId } from '@harika/web-core';
-import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
+import {
+  getAuth,
+  GoogleAuthProvider,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+} from 'firebase/auth';
 
 const formClass = cn('form');
 
@@ -92,6 +97,29 @@ export const LoginPage = () => {
     history.push(paths.vaultIndexPath());
   }, [setAuthInfo, history, offlineAccounts.accounts, addOfflineAccount]);
 
+  const handleGoogleSignIn = useCallback(async () => {
+    try {
+      setIsLoading(true);
+
+      const provider = new GoogleAuthProvider();
+      const res = await signInWithPopup(auth, provider);
+
+      const token = await res.user.getIdToken(true);
+
+      setAuthInfo({
+        userId: res.user.uid,
+        isOffline: false,
+        authToken: token,
+      });
+    } catch (e) {
+      alert('Failed to log in with Google. Please, try again.');
+
+      console.error(e);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [setAuthInfo]);
+
   return (
     <div className="max-w-screen-sm mx-auto px-5">
       <form onSubmit={handleSubmit(onSubmit)} className={`${formClass()}`}>
@@ -136,11 +164,24 @@ export const LoginPage = () => {
           value="Log In"
         />
 
+        <button
+          type="button"
+          onClick={handleGoogleSignIn}
+          className={formClass('sign-up-btn', {
+            first: true,
+            withGoogle: true,
+          })}
+        >
+          Log In with Google
+        </button>
+
         <Link
           to={paths.signupPath()}
-          className={formClass('sign-up-btn', { loading: isLoading })}
+          className={formClass('sign-up-btn', {
+            withEmail: true,
+          })}
         >
-          Sign Up
+          Sign Up with Email
         </Link>
 
         <div className="mx-auto mt-3 text-gray-600 text-sm">

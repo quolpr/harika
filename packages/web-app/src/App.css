@@ -108,7 +108,16 @@ input[type='search']::-webkit-search-results-decoration {
     text-align: center;
 
     @apply bg-blue-800 rounded-lg shadow px-2 py-3;
-    @apply font-bold mt-14 text-gray-100 focus:ring-2;
+    @apply font-bold text-gray-100 focus:ring-2 mt-6;
+
+    &--withGoogle {
+      background-color: #fff;
+      color: #000;
+    }
+
+    &--withEmail {
+      @apply mt-12;
+    }
   }
 }
 
