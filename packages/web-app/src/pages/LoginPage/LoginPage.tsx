@@ -111,6 +111,8 @@ export const LoginPage = () => {
         isOffline: false,
         authToken: token,
       });
+
+      history.push(paths.vaultIndexPath());
     } catch (e) {
       alert('Failed to log in with Google. Please, try again.');
 
@@ -118,7 +120,7 @@ export const LoginPage = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [setAuthInfo]);
+  }, [history, setAuthInfo]);
 
   return (
     <div className="max-w-screen-sm mx-auto px-5">
