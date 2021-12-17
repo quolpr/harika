@@ -1,6 +1,6 @@
 const rootDir = process.cwd().includes('packages/new-harika-api')
   ? './'
-  : './packages/new-harika-api';
+  : './packages/harika-api';
 
 module.exports = {
   env: {

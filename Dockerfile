@@ -14,9 +14,13 @@ RUN yarn
 COPY packages/harika-api ./packages/harika-api
 COPY packages/sync-common ./packages/sync-common
 
+RUN sed -i 's/index\.ts/dist\/index\.js/' ./packages/sync-common/package.json
 
 FROM base as production
 
-WORKDIR /home/app/packages/harika-api
-RUN ls
+ENV NODE_ENV=production
+WORKDIR /home/app/packages/sync-common
 RUN yarn build
+WORKDIR /home/app/packages/harika-api
+RUN yarn build
+ENTRYPOINT ./start.sh

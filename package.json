@@ -3,11 +3,8 @@
   "version": "0.1.0",
   "author": "quolpr",
   "private": true,
-  "engines": {
-    "node": ">=16.x <=17.x"
-  },
+  "engines": {},
   "scripts": {
-    "start": "yarn start:api:prod",
     "web-app": "yarn workspace @harika/web-app",
     "api-app": "yarn workspace @harika/harika-api",
     "start:api:prod": "yarn workspace @harika/harika-api start-prod",

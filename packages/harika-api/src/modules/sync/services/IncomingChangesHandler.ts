@@ -37,7 +37,7 @@ export class IncomingChangesHandler {
               schemaName,
               chs[0].collectionName,
               chs[0].docId,
-              chs
+              chs as IDocChangeWithRev[]
             );
           }
         )

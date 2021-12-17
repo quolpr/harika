@@ -3,7 +3,11 @@
   "version": "1.0.0",
   "main": "./index.ts",
   "private": true,
-  "scripts": {},
+  "scripts": {
+    "build": "yarn tsc"
+  },
   "dependencies": {},
-  "devDependencies": {}
+  "devDependencies": {
+    "typescript": "^4.5.4"
+  }
 }

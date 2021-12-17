@@ -1,15 +1,34 @@
 import './src/loadConfig';
 
 // Update with your config settings.
-
-module.exports = {
-  client: 'pg',
-  connection: {
-    host: process.env.DB_HOST,
+//
+const connection = (() => {
+  const base = {
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
-  },
+  };
+
+  if (process.env.INSTANCE_CONNECTION_NAME) {
+    const dbSocketPath = process.env.DB_SOCKET_PATH || '/cloudsql';
+
+    return {
+      ...base,
+      host: `${dbSocketPath}/${process.env.INSTANCE_CONNECTION_NAME}`,
+    };
+  } else {
+    return {
+      ...base,
+      host: process.env.DB_HOST,
+    };
+  }
+})();
+
+console.log({ connection }, JSON.stringify(process.env));
+
+const config = {
+  client: 'pg',
+  connection,
   pool: {
     min: parseInt(process.env.DB_POOL_MIN, 10),
     max: parseInt(process.env.DB_POOL_MAX, 10),
@@ -18,3 +37,5 @@ module.exports = {
     tableName: 'migrations',
   },
 };
+
+export default config;
