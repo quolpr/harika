@@ -55,7 +55,7 @@ export const NoteBlocks = observer(({ note }: { note: NoteModel }) => {
       {scope &&
         scope.blocksWithoutParent.map((block) => {
           return (
-            <>
+            <React.Fragment key={block.$modelId}>
               <NoteBlock key={block.$modelId} noteBlock={block} scope={scope} />
 
               <div className={noteClass('conflictedActions')}>
@@ -72,7 +72,7 @@ export const NoteBlocks = observer(({ note }: { note: NoteModel }) => {
                   Delete
                 </button>
               </div>
-            </>
+            </React.Fragment>
           );
         })}
     </LinkedBlocksOfBlocksProvider>

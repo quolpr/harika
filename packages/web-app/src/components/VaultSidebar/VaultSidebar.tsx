@@ -14,7 +14,6 @@ import download from 'downloadjs';
 import dayjs from 'dayjs';
 import { useObservable, useObservableState } from 'observable-hooks';
 import { switchMap } from 'rxjs';
-import { usePrimaryNoteId } from '../../hooks/usePrimaryNote';
 import {
   useCurrentVaultApp,
   useNotesService,
@@ -43,7 +42,6 @@ export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
     const vaultApp = useCurrentVaultApp();
     const notesService = useNotesService();
     const vaultService = useVaultService();
-    const primaryNoteId = usePrimaryNoteId();
 
     const handleDownloadClick = useCallback(async () => {
       const str = await vaultService.export();

@@ -30,17 +30,17 @@ export class IncomingChangesHandler {
         );
 
       const snapshots = await Promise.all(
-        Object.values(groupBy(newChanges, (ch) => ch.docId)).flatMap(
-          async (chs) => {
-            return await this.snapshotRebuilder.handle(
-              trx,
-              schemaName,
-              chs[0].collectionName,
-              chs[0].docId,
-              chs as IDocChangeWithRev[]
-            );
-          }
-        )
+        Object.values(
+          groupBy(newChanges, (ch) => `${ch.collectionName}-${ch.docId}`)
+        ).flatMap(async (chs) => {
+          return await this.snapshotRebuilder.handle(
+            trx,
+            schemaName,
+            chs[0].collectionName,
+            chs[0].docId,
+            chs as IDocChangeWithRev[]
+          );
+        })
       );
 
       await this.docSnapshotsService.insertSnapshots(
