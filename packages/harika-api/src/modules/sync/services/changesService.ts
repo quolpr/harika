@@ -1,7 +1,8 @@
 import { Knex } from 'knex';
 import { docChangesTable } from '../dbTypes';
-import { IDocChange, IDocChangeWithRev } from '@harika/sync-common';
-import { NonConstructor } from '../utils';
+import { IDocChange, IDocChangeWithRev, WithRev } from '@harika/sync-common';
+import { getChangesKey, getUniqKey, NonConstructor } from '../utils';
+import { groupBy } from 'lodash';
 
 export class ChangesService {
   async isAnyChangeAfterClock(
@@ -27,6 +28,72 @@ export class ChangesService {
     );
   }
 
+  async getGroupedChangesByKeys(
+    trx: Knex,
+    schemaName: string,
+    keys: { collectionName: string; docId: string }[]
+  ) {
+    if (keys.length === 0) return {};
+
+    let q = trx
+      .select()
+      .withSchema(schemaName)
+      .from(docChangesTable)
+      .orderBy('timestamp');
+
+    q.andWhere((b1) => {
+      for (const { collectionName, docId } of keys) {
+        b1.orWhere((b2) => {
+          return b2.where({ collectionName, docId });
+        });
+      }
+    });
+
+    return groupBy((await q) as WithRev<IDocChange>[], (ch) =>
+      getChangesKey(ch)
+    );
+  }
+
+  async isAnyChangeAfterClocks(
+    trx: Knex,
+    schemaName: string,
+    keys: {
+      collectionName: string;
+      docId: string;
+      afterClock: string;
+    }[]
+  ) {
+    let q = trx
+      .select('collectionName', 'docId')
+      .withSchema(schemaName)
+      .from(docChangesTable)
+      .groupBy('collectionName', 'docId');
+
+    q.andWhere((b1) => {
+      for (const { collectionName, docId, afterClock } of keys) {
+        b1.orWhere((b2) => {
+          return b2
+            .where({ collectionName, docId })
+            .where('timestamp', '>=', afterClock);
+        });
+      }
+    });
+
+    const resultTable = Object.fromEntries(
+      ((await q) as Array<{ collectionName: string; docId: string }>).map(
+        ({ collectionName, docId }) =>
+          [getUniqKey({ collectionName, docId }), docId] as const
+      )
+    );
+
+    return Object.fromEntries(
+      keys.map(
+        (data) =>
+          [getUniqKey(data), Boolean(resultTable[getUniqKey(data)])] as const
+      )
+    );
+  }
+
   async getAllChanges(
     trx: Knex,
     schemaName: string,
@@ -37,7 +104,8 @@ export class ChangesService {
       .withSchema(schemaName)
       .from(docChangesTable)
       .andWhere('collectionName', collectionName)
-      .andWhere('docId', entityId);
+      .andWhere('docId', entityId)
+      .orderBy('timestamp');
   }
 
   async insertChanges(

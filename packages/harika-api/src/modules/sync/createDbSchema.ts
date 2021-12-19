@@ -28,8 +28,17 @@ export const createDbSchema = async (db: Knex, dbName: string) => {
         table.jsonb('doc');
 
         table.index('receivedFromClientId', 'idxChangesReceivedFromClientId');
+        table.index('docId', 'idxChangesDocId');
         table.index('scopeId', 'idxChangesScopeId');
-        table.index([db.raw('rev ASC')], 'idxChangesRevDbName');
+        table.index('collectionName', 'idxChangesCollectionName');
+
+        table.index([db.raw('rev DESC')], 'idxChangesRevDbName');
+        table.index([db.raw('timestamp DESC')], 'idxTimestamp');
+
+        table.index(
+          ['collectionName', 'docId', db.raw('timestamp DESC'), 'id'],
+          'idxChangesSelect'
+        );
       });
 
     await db.schema
@@ -44,8 +53,11 @@ export const createDbSchema = async (db: Knex, dbName: string) => {
         table.string('lastTimestamp').notNullable();
         table.string('scopeId');
 
-        table.index('collectionName', 'idxEntitiesReceivedTable');
-        table.index('docId', 'idxEntitiesReceivedKey');
+        table.index('collectionName', 'idxSnapshotsReceivedTable');
+        table.index('docId', 'idxSnapshotsEntitiesDocId');
+
+        table.index([db.raw('rev DESC')], 'idxSnapshotsRev');
+        table.index([db.raw('"lastTimestamp" DESC')], 'idxSnapshotsTimestamp');
 
         table.primary(['collectionName', 'docId'], {
           constraintName: 'snapshots_primary_key',

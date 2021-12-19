@@ -20,6 +20,8 @@ const defaultTableName = 'testTable';
 
 let currentRev = 0;
 
+console.log(HybridClock.send(clock).toString());
+
 const onCreateHook =
   <T>(schemaName: string | undefined) =>
   async (ch: T) => {

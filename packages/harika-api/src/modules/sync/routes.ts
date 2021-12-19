@@ -17,7 +17,6 @@ import { createIfNotExistsDbSchema } from './createDbSchema';
 import { DocSnapshotsService } from './services/DocSnapshotsService';
 import { IncomingChangesHandler } from './services/IncomingChangesHandler';
 import { ChangesService } from './services/changesService';
-import { DocSnapshotRebuilder } from './services/DocSnapshotRebuilder';
 import {
   ApplyNewChangesFromClientCommand,
   AuthClientCommand,
@@ -68,14 +67,9 @@ class NotAuthedError extends Error {}
 
 const docSnapshotsService = new DocSnapshotsService();
 const changesService = new ChangesService();
-const snapshotsRebuilder = new DocSnapshotRebuilder(
-  changesService,
-  docSnapshotsService
-);
 const incomingChangesHandler = new IncomingChangesHandler(
   db,
   changesService,
-  snapshotsRebuilder,
   docSnapshotsService
 );
 

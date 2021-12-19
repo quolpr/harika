@@ -24,8 +24,6 @@ const connection = (() => {
   }
 })();
 
-console.log({ connection }, JSON.stringify(process.env));
-
 const config = {
   client: 'pg',
   connection,

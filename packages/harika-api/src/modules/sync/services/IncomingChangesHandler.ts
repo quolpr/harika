@@ -1,16 +1,20 @@
-import { IDocChange, IDocChangeWithRev } from '@harika/sync-common';
+import { IDocChange } from '@harika/sync-common';
 import { Knex } from 'knex';
 import { IChangesService } from './changesService';
-import { groupBy } from 'lodash';
-import { IDocSnapshotRebuilder } from './DocSnapshotRebuilder';
+import { groupBy, minBy } from 'lodash';
 import { IDocSnapshotsService } from './DocSnapshotsService';
-import { NonConstructor } from '../utils';
+import {
+  getChangesKey,
+  NonConstructor,
+  parseKey,
+  snapshotToCreateChange,
+} from '../utils';
+import { buildSnapshot } from './buildSnapshot';
 
 export class IncomingChangesHandler {
   constructor(
     private db: Knex,
     private changesService: IChangesService,
-    private snapshotRebuilder: IDocSnapshotRebuilder,
     private docSnapshotsService: IDocSnapshotsService
   ) {}
 
@@ -22,26 +26,65 @@ export class IncomingChangesHandler {
     return await this.db.transaction(async (trx) => {
       await trx.raw(`LOCK TABLE "${schemaName}"."changes" IN EXCLUSIVE MODE`);
 
-      const newChanges: IDocChangeWithRev[] =
+      const groupedChanges = groupBy(changes, (ch) => getChangesKey(ch));
+
+      const groupedSnapshots =
+        await this.docSnapshotsService.getSnapshotsGrouped(
+          trx,
+          schemaName,
+          Object.values(groupedChanges).map((chs) => ({
+            docId: chs[0].docId,
+            collectionName: chs[0].collectionName,
+          }))
+        );
+
+      const isAnyChangeAfterClocks =
+        await this.changesService.isAnyChangeAfterClocks(
+          trx,
+          schemaName,
+          Object.values(groupedChanges).map((chs) => {
+            const minChange = minBy(chs, (ch) => ch.timestamp);
+
+            return {
+              collectionName: chs[0].collectionName,
+              docId: chs[0].docId,
+              afterClock: minChange.timestamp,
+            };
+          })
+        );
+
+      const insertedNewChanges = groupBy(
         await this.changesService.insertChanges(
           trx,
           schemaName,
           changes.map((ch) => ({ ...ch, receivedFromClientId }))
+        ),
+        (ch) => getChangesKey(ch)
+      );
+
+      // Only that changes will selected that requires recalculation
+      // It already contains new changes(cause they were inserted before)
+      const groupedChangesForRecalculation =
+        await this.changesService.getGroupedChangesByKeys(
+          trx,
+          schemaName,
+          Object.entries(isAnyChangeAfterClocks)
+            .filter(([, present]) => present)
+            .map(([k]) => parseKey(k))
         );
 
-      const snapshots = await Promise.all(
-        Object.values(
-          groupBy(newChanges, (ch) => `${ch.collectionName}-${ch.docId}`)
-        ).flatMap(async (chs) => {
-          return await this.snapshotRebuilder.handle(
-            trx,
-            schemaName,
-            chs[0].collectionName,
-            chs[0].docId,
-            chs as IDocChangeWithRev[]
-          );
-        })
-      );
+      const snapshots = Object.keys(groupedChanges).map((uniqKey) => {
+        if (groupedChangesForRecalculation[uniqKey]) {
+          return buildSnapshot(groupedChangesForRecalculation[uniqKey]);
+        } else if (groupedSnapshots[uniqKey] === undefined) {
+          return buildSnapshot(insertedNewChanges[uniqKey]);
+        } else {
+          return buildSnapshot([
+            snapshotToCreateChange(groupedSnapshots[uniqKey][0]),
+            ...insertedNewChanges[uniqKey],
+          ]);
+        }
+      });
 
       await this.docSnapshotsService.insertSnapshots(
         trx,

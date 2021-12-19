@@ -1,7 +1,8 @@
-import knex, { Knex } from 'knex';
+import { Knex } from 'knex';
 import { snapshotsTable } from '../dbTypes';
 import { IDocSnapshot } from '@harika/sync-common';
-import { NonConstructor } from '../utils';
+import { getSnapshotKey, NonConstructor } from '../utils';
+import { groupBy } from 'lodash';
 
 export class DocSnapshotsService {
   async getSnapshot(
@@ -18,6 +19,29 @@ export class DocSnapshotsService {
         .andWhere('docId', docId)
         .limit(1)
     )[0];
+  }
+
+  async getSnapshots(
+    trx: Knex,
+    schemaName: string,
+    keys: { collectionName: string; docId: string }[]
+  ): Promise<IDocSnapshot[]> {
+    let q = trx.withSchema(schemaName).from(snapshotsTable);
+
+    for (const { collectionName, docId } of keys) {
+      q = q.orWhere({ collectionName, docId });
+    }
+
+    return await q;
+  }
+  async getSnapshotsGrouped(
+    trx: Knex,
+    schemaName: string,
+    keys: { collectionName: string; docId: string }[]
+  ) {
+    const res = await this.getSnapshots(trx, schemaName, keys);
+
+    return groupBy(res, (sn) => getSnapshotKey(sn));
   }
 
   async insertSnapshots(
