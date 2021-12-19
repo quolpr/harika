@@ -25,7 +25,10 @@ import { bem } from '../../utils';
 import { UndoRedoManagerProvider } from '../UndoRedoManagerProvider';
 import { VaultApplication } from '@harika/web-core';
 import { CurrentVaultAppContext } from '../../hooks/vaultAppHooks';
-import { useLoadUserAppCallback } from '../../hooks/useUserApp';
+import {
+  useLoadUserAppCallback,
+  useLoadUserAppSyncConfig,
+} from '../../hooks/useUserApp';
 import { useSyncConfig } from '../../hooks/useSyncConfig';
 import { FocusedStackIdContext } from '../../contexts/StackedNotesContext';
 
@@ -129,13 +132,11 @@ export const VaultLayout: React.FC = ({ children }) => {
 
   // TODO: race condition may happen here on dispose
   useEffect(() => {
-    if (!syncConfig) return;
-
     let closeDevtool = () => {};
     let vaultApp: VaultApplication | undefined = undefined;
 
     const cb = async () => {
-      vaultApp = new VaultApplication(vaultId, syncConfig);
+      vaultApp = new VaultApplication(vaultId);
 
       if (!vaultApp) {
         writeStorage('lastVaultId', undefined);
@@ -182,7 +183,13 @@ export const VaultLayout: React.FC = ({ children }) => {
       setVaultApp(undefined);
       closeDevtool();
     };
-  }, [vaultId, history, syncConfig, loadUserApp, mounted]);
+  }, [vaultId, history, loadUserApp, mounted]);
+
+  useEffect(() => {
+    if (!vaultApp || !syncConfig) return;
+
+    vaultApp.setSyncConfig(syncConfig);
+  }, [syncConfig, vaultApp]);
 
   // TODO: reset focused block on page change
 

@@ -5,6 +5,7 @@ import {
   share,
   switchMap,
   takeUntil,
+  withLatestFrom,
 } from 'rxjs/operators';
 import io, { Socket } from 'socket.io-client';
 import {
@@ -12,6 +13,10 @@ import {
   AuthClientResponse,
   CommandTypesFromClient,
 } from '@harika/sync-common';
+import {
+  IConnectionConfig,
+  SyncConnectionConfig,
+} from '../../SyncConnectionConfig';
 
 export class ServerConnector {
   isConnected$: Observable<boolean>;
@@ -21,16 +26,19 @@ export class ServerConnector {
   constructor(
     private dbName: string,
     private clientId: string,
-    private url: string,
-    private authToken: string,
+    private syncConnectionConfig: SyncConnectionConfig,
     isLeader$: Observable<boolean>,
     isServerConnectionAllowed$: Observable<boolean>,
     stop$: Observable<unknown>,
   ) {
-    const socket$ = combineLatest([isLeader$, isServerConnectionAllowed$]).pipe(
-      switchMap(([isLeader, isServerConnectionAllowed]) => {
-        if (isLeader && isServerConnectionAllowed) {
-          return this.initSocketIO();
+    const socket$ = combineLatest([
+      isLeader$,
+      isServerConnectionAllowed$,
+      this.syncConnectionConfig.config$,
+    ]).pipe(
+      switchMap(([isLeader, isServerConnectionAllowed, connConfig]) => {
+        if (isLeader && isServerConnectionAllowed && connConfig) {
+          return this.initSocketIO(connConfig.url);
         } else {
           return of(undefined);
         }
@@ -50,9 +58,10 @@ export class ServerConnector {
 
     const isAuthed$ = socket$.pipe(
       distinctUntilChanged(),
-      switchMap((socket) => {
-        if (socket) {
-          return this.auth(socket);
+      withLatestFrom(this.syncConnectionConfig.config$),
+      switchMap(([socket, config]) => {
+        if (socket && config) {
+          return this.auth(socket, config.authToken);
         } else {
           return of(false);
         }
@@ -75,9 +84,9 @@ export class ServerConnector {
     );
   }
 
-  private initSocketIO() {
+  private initSocketIO(url: string) {
     return new Observable<Socket | undefined>((obs) => {
-      const socket = io(`${this.url}/sync-db`);
+      const socket = io(`${url}/sync-db`);
 
       socket.on('connect', () => {
         obs.next(socket);
@@ -96,10 +105,10 @@ export class ServerConnector {
     });
   }
 
-  private auth(socket: Socket) {
+  private auth(socket: Socket, authToken: string) {
     return new Observable<boolean>((obs) => {
       const req: AuthClientRequest = {
-        authToken: this.authToken,
+        authToken: authToken,
         dbName: this.dbName,
         clientId: this.clientId,
       };

@@ -23,31 +23,13 @@ import { BlocksScopeStore } from './BlocksScopeExtension/models/BlocksScopeStore
 import { NoteBlocksExtensionStore } from './NoteBlocksExtension/models/NoteBlocksExtensionStore';
 import {
   ROOT_STORE,
-  SYNC_AUTH_TOKEN,
   SYNC_CONNECTION_ALLOWED,
-  SYNC_URL,
 } from '../../extensions/SyncExtension/types';
 import { SyncStateService } from '../../extensions/SyncExtension/SyncState';
 import { BehaviorSubject } from 'rxjs';
+import { SyncConnectionConfig } from '../../extensions/SyncExtension/SyncConnectionConfig';
 
 export class VaultApplication extends BaseApplication {
-  constructor(
-    applicationId: string,
-    private syncConfig: {
-      url: string;
-      authToken: string;
-    },
-  ) {
-    super(applicationId);
-  }
-
-  async register() {
-    this.container.bind(SYNC_URL).toConstantValue(this.syncConfig.url);
-    this.container
-      .bind(SYNC_AUTH_TOKEN)
-      .toConstantValue(this.syncConfig.authToken);
-  }
-
   async initialize() {
     const notesStore = this.container.get(NotesStore);
     const blocksScopeStore = this.container.get(BlocksScopeStore);
@@ -63,6 +45,10 @@ export class VaultApplication extends BaseApplication {
     this.container.bind(ROOT_STORE).toConstantValue(rootStore);
 
     registerRootStore(rootStore);
+  }
+
+  setSyncConfig(syncConfig: { url: string; authToken: string }) {
+    this.container.get(SyncConnectionConfig).config$.next(syncConfig);
   }
 
   getBlocksScopesService() {

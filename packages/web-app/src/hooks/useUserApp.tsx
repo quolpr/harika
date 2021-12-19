@@ -33,7 +33,7 @@ export const useLoadUserAppCallback = () => {
 
     ctx.setState({ app: undefined, isLoading: true });
 
-    const app = new UserApplication(userId.replace(/-/g, ''), syncConfig);
+    const app = new UserApplication(userId.replace(/-/g, ''));
     await app.start();
 
     ctx.setState({ app: app, isLoading: false });
@@ -47,7 +47,20 @@ export const useLoadUserAppCallback = () => {
     cbRef.current = cb;
   }, [cb]);
 
+  useLoadUserAppSyncConfig();
+
   return cbRef;
+};
+
+export const useLoadUserAppSyncConfig = () => {
+  const { syncConfig } = useSyncConfig();
+  const ctx = useContext(UserAppContext);
+
+  useEffect(() => {
+    if (!ctx.state.app || !syncConfig) return;
+
+    ctx.state.app.setSyncConfig(syncConfig);
+  }, [syncConfig, ctx]);
 };
 
 export const useLoadUserApp = () => {
