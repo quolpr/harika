@@ -52,12 +52,9 @@ export const LoginPage = () => {
           data.password,
         );
 
-        const token = await res.user.getIdToken(true);
-
         setAuthInfo({
           userId: res.user.uid,
           isOffline: false,
-          authToken: token,
         });
 
         history.push(paths.vaultIndexPath());
@@ -92,7 +89,7 @@ export const LoginPage = () => {
       }
     })();
 
-    setAuthInfo({ userId, authToken: '123', isOffline: true });
+    setAuthInfo({ userId, isOffline: true });
 
     history.push(paths.vaultIndexPath());
   }, [setAuthInfo, history, offlineAccounts.accounts, addOfflineAccount]);
@@ -104,12 +101,9 @@ export const LoginPage = () => {
       const provider = new GoogleAuthProvider();
       const res = await signInWithPopup(auth, provider);
 
-      const token = await res.user.getIdToken(true);
-
       setAuthInfo({
         userId: res.user.uid,
         isOffline: false,
-        authToken: token,
       });
 
       history.push(paths.vaultIndexPath());

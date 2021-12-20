@@ -8,6 +8,7 @@ import {
   useState,
 } from 'react';
 import { useSyncConfig } from './useSyncConfig';
+import { useGetSyncToken } from './useGetSyncToken';
 
 type IState = {
   app: UserApplication | undefined;
@@ -21,7 +22,8 @@ export const UserAppContext = createContext<{
 
 export const useLoadUserAppCallback = () => {
   const ctx = useContext(UserAppContext);
-  const { syncConfig, userId, isOffline } = useSyncConfig();
+  const { userId, isOffline } = useSyncConfig();
+  const getSyncToken = useGetSyncToken();
 
   const cb = useCallback(async () => {
     if (ctx.state.app) return ctx.state.app;
@@ -29,17 +31,21 @@ export const useLoadUserAppCallback = () => {
     // TODO: better return promise that is loading
     if (ctx.state.isLoading) return;
 
-    if (!userId || isOffline === undefined || !syncConfig) return;
+    if (!userId || isOffline === undefined) return;
 
     ctx.setState({ app: undefined, isLoading: true });
 
-    const app = new UserApplication(userId.replace(/-/g, ''));
+    const app = new UserApplication(
+      userId.replace(/-/g, ''),
+      import.meta.env.VITE_PUBLIC_WS_URL as string,
+      getSyncToken,
+    );
     await app.start();
 
     ctx.setState({ app: app, isLoading: false });
 
     return app;
-  }, [ctx, isOffline, syncConfig, userId]);
+  }, [ctx, getSyncToken, isOffline, userId]);
 
   const cbRef = useRef(cb);
 
@@ -47,20 +53,7 @@ export const useLoadUserAppCallback = () => {
     cbRef.current = cb;
   }, [cb]);
 
-  useLoadUserAppSyncConfig();
-
   return cbRef;
-};
-
-export const useLoadUserAppSyncConfig = () => {
-  const { syncConfig } = useSyncConfig();
-  const ctx = useContext(UserAppContext);
-
-  useEffect(() => {
-    if (!ctx.state.app || !syncConfig) return;
-
-    ctx.state.app.setSyncConfig(syncConfig);
-  }, [syncConfig, ctx]);
 };
 
 export const useLoadUserApp = () => {

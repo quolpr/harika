@@ -15,7 +15,6 @@ import { initSyncTables } from './migrations/initSyncTables';
 import { DbEventsSenderService } from './services/DbEventsSenderService';
 import { SyncStatusService } from './services/SyncStatusService';
 import { SnapshotsApplier } from './services/SnapshotsApplier';
-import { SyncConnectionConfig } from './SyncConnectionConfig';
 
 @injectable()
 export class SyncAppExtension extends BaseExtension {
@@ -32,7 +31,6 @@ export class SyncAppExtension extends BaseExtension {
     this.container
       .bind(SYNC_CONNECTION_ALLOWED)
       .toConstantValue(new BehaviorSubject(true));
-    this.container.bind(SyncConnectionConfig).toSelf();
   }
 
   async initialize() {

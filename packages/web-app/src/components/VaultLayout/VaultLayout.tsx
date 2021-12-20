@@ -25,12 +25,9 @@ import { bem } from '../../utils';
 import { UndoRedoManagerProvider } from '../UndoRedoManagerProvider';
 import { VaultApplication } from '@harika/web-core';
 import { CurrentVaultAppContext } from '../../hooks/vaultAppHooks';
-import {
-  useLoadUserAppCallback,
-  useLoadUserAppSyncConfig,
-} from '../../hooks/useUserApp';
-import { useSyncConfig } from '../../hooks/useSyncConfig';
+import { useLoadUserAppCallback } from '../../hooks/useUserApp';
 import { FocusedStackIdContext } from '../../contexts/StackedNotesContext';
+import { useGetSyncToken } from '../../hooks/useGetSyncToken';
 
 const layoutClass = bem('vault-layout');
 
@@ -109,7 +106,6 @@ const useKeepScroll = () => {
 };
 
 export const VaultLayout: React.FC = ({ children }) => {
-  const { syncConfig } = useSyncConfig();
   const history = useHistory();
   const { vaultId } = useParams<{ vaultId: string }>();
   const isWide = useMedia('(min-width: 768px)');
@@ -129,6 +125,7 @@ export const VaultLayout: React.FC = ({ children }) => {
   const loadUserApp = useLoadUserAppCallback();
 
   const mounted = useMountedState();
+  const getSyncToken = useGetSyncToken();
 
   // TODO: race condition may happen here on dispose
   useEffect(() => {
@@ -136,7 +133,11 @@ export const VaultLayout: React.FC = ({ children }) => {
     let vaultApp: VaultApplication | undefined = undefined;
 
     const cb = async () => {
-      vaultApp = new VaultApplication(vaultId);
+      vaultApp = new VaultApplication(
+        vaultId,
+        import.meta.env.VITE_PUBLIC_WS_URL as string,
+        getSyncToken,
+      );
 
       if (!vaultApp) {
         writeStorage('lastVaultId', undefined);
@@ -183,13 +184,7 @@ export const VaultLayout: React.FC = ({ children }) => {
       setVaultApp(undefined);
       closeDevtool();
     };
-  }, [vaultId, history, loadUserApp, mounted]);
-
-  useEffect(() => {
-    if (!vaultApp || !syncConfig) return;
-
-    vaultApp.setSyncConfig(syncConfig);
-  }, [syncConfig, vaultApp]);
+  }, [vaultId, history, loadUserApp, mounted, getSyncToken]);
 
   // TODO: reset focused block on page change
 

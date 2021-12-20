@@ -22,14 +22,23 @@ import { registerRootStore } from 'mobx-keystone';
 import { BlocksScopeStore } from './BlocksScopeExtension/models/BlocksScopeStore';
 import { NoteBlocksExtensionStore } from './NoteBlocksExtension/models/NoteBlocksExtensionStore';
 import {
+  GET_AUTH_TOKEN,
   ROOT_STORE,
   SYNC_CONNECTION_ALLOWED,
+  SYNC_URL,
 } from '../../extensions/SyncExtension/types';
 import { SyncStateService } from '../../extensions/SyncExtension/SyncState';
 import { BehaviorSubject } from 'rxjs';
-import { SyncConnectionConfig } from '../../extensions/SyncExtension/SyncConnectionConfig';
 
 export class VaultApplication extends BaseApplication {
+  constructor(
+    applicationId: string,
+    private syncUrl: string,
+    private getAuthToken: () => Promise<string | undefined>,
+  ) {
+    super(applicationId);
+  }
+
   async initialize() {
     const notesStore = this.container.get(NotesStore);
     const blocksScopeStore = this.container.get(BlocksScopeStore);
@@ -43,12 +52,10 @@ export class VaultApplication extends BaseApplication {
 
     this.container.bind(VaultAppRootStore).toConstantValue(rootStore);
     this.container.bind(ROOT_STORE).toConstantValue(rootStore);
+    this.container.bind(SYNC_URL).toConstantValue(this.syncUrl);
+    this.container.bind(GET_AUTH_TOKEN).toConstantValue(this.getAuthToken);
 
     registerRootStore(rootStore);
-  }
-
-  setSyncConfig(syncConfig: { url: string; authToken: string }) {
-    this.container.get(SyncConnectionConfig).config$.next(syncConfig);
   }
 
   getBlocksScopesService() {

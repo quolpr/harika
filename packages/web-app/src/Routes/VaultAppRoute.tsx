@@ -8,11 +8,8 @@ import { NoteStackPage } from '../pages/NotePage';
 import { NotesPage } from '../pages/NotesPage/NotesPage';
 import { VaultsPage } from '../pages/VaultsPage/VaultsPage';
 import { UserAppProvider } from '../hooks/useUserApp';
-import { useRefreshAuthState } from '../hooks/useAuthState';
 
 export const VaultAppRoute = () => {
-  useRefreshAuthState();
-
   return (
     <UserAppProvider>
       <Route path={VAULT_PREFIX}>

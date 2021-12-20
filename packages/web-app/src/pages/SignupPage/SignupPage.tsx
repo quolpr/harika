@@ -38,9 +38,8 @@ export const SignupPage = () => {
         data.email,
         data.password,
       );
-      const authToken = await res.user.getIdToken(true);
 
-      setAuthInfo({ userId: res.user.uid, isOffline: false, authToken });
+      setAuthInfo({ userId: res.user.uid, isOffline: false });
 
       history.push(paths.vaultIndexPath());
     } catch (e: unknown) {

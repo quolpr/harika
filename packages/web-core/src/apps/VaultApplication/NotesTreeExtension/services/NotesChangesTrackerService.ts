@@ -51,7 +51,6 @@ export class NotesChangesTrackerService {
   }
 
   handleChanges(changes: INoteChangeEvent[]) {
-    console.log({ changes });
     if (!this.treeModel.isInitialized) {
       this.bufferedChanges.push(...changes);
       return;

@@ -1,4 +1,11 @@
-import { Observable, of, ReplaySubject, combineLatest } from 'rxjs';
+import {
+  Observable,
+  of,
+  ReplaySubject,
+  combineLatest,
+  defer,
+  from,
+} from 'rxjs';
 import {
   distinctUntilChanged,
   map,
@@ -13,10 +20,6 @@ import {
   AuthClientResponse,
   CommandTypesFromClient,
 } from '@harika/sync-common';
-import {
-  IConnectionConfig,
-  SyncConnectionConfig,
-} from '../../SyncConnectionConfig';
 
 export class ServerConnector {
   isConnected$: Observable<boolean>;
@@ -26,19 +29,17 @@ export class ServerConnector {
   constructor(
     private dbName: string,
     private clientId: string,
-    private syncConnectionConfig: SyncConnectionConfig,
+    getAuthToken: () => Promise<string | undefined>,
+    private syncUrl: string,
     isLeader$: Observable<boolean>,
     isServerConnectionAllowed$: Observable<boolean>,
     stop$: Observable<unknown>,
   ) {
-    const socket$ = combineLatest([
-      isLeader$,
-      isServerConnectionAllowed$,
-      this.syncConnectionConfig.config$,
-    ]).pipe(
-      switchMap(([isLeader, isServerConnectionAllowed, connConfig]) => {
-        if (isLeader && isServerConnectionAllowed && connConfig) {
-          return this.initSocketIO(connConfig.url);
+    const socket$ = combineLatest([isLeader$, isServerConnectionAllowed$]).pipe(
+      switchMap(([isLeader, isServerConnectionAllowed]) => {
+        if (isLeader && isServerConnectionAllowed) {
+          console.log('initSocketIO');
+          return this.initSocketIO();
         } else {
           return of(undefined);
         }
@@ -52,16 +53,14 @@ export class ServerConnector {
       takeUntil(stop$),
     );
 
-    socket$.subscribe((s) => {
-      console.log({ s });
-    });
-
     const isAuthed$ = socket$.pipe(
       distinctUntilChanged(),
-      withLatestFrom(this.syncConnectionConfig.config$),
-      switchMap(([socket, config]) => {
-        if (socket && config) {
-          return this.auth(socket, config.authToken);
+      withLatestFrom(defer(() => from(getAuthToken()))),
+      switchMap(([socket, authToken]) => {
+        console.log({ authToken });
+
+        if (socket && authToken) {
+          return this.auth(socket, authToken);
         } else {
           return of(false);
         }
@@ -84,9 +83,9 @@ export class ServerConnector {
     );
   }
 
-  private initSocketIO(url: string) {
+  private initSocketIO() {
     return new Observable<Socket | undefined>((obs) => {
-      const socket = io(`${url}/sync-db`);
+      const socket = io(`${this.syncUrl}/sync-db`);
 
       socket.on('connect', () => {
         obs.next(socket);
@@ -112,8 +111,6 @@ export class ServerConnector {
         dbName: this.dbName,
         clientId: this.clientId,
       };
-
-      console.log({ req });
 
       let isRunning = true;
 

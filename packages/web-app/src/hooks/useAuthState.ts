@@ -3,14 +3,11 @@ import {
   useLocalStorage,
   deleteFromStorage,
 } from '@rehooks/local-storage';
-import { getAuth, onAuthStateChanged, User } from 'firebase/auth';
-import { useCallback, useEffect } from 'react';
-import { firebaseApp } from '../firebaseApp';
+import { useCallback } from 'react';
 
 export interface AuthInfo {
   userId: string;
   isOffline: boolean;
-  authToken: string;
 }
 
 const storageKey = 'auth';
@@ -31,32 +28,4 @@ export const useAuthState = (): [
   }, []);
 
   return [value, write];
-};
-
-export const useRefreshAuthState = () => {
-  useEffect(() => {
-    const auth = getAuth(firebaseApp);
-
-    const cb = async () => {
-      const user = await new Promise<User | null>((resolve) =>
-        onAuthStateChanged(auth, (u) => resolve(u)),
-      );
-
-      if (!user) return;
-      const newToken = await user.getIdToken(true);
-
-      const ls = localStorage.getItem(storageKey);
-      if (!ls) return;
-      const data: AuthInfo | undefined = JSON.parse(ls);
-      if (!data) return;
-
-      const newData: AuthInfo = { ...data, authToken: newToken };
-
-      console.log({ newData });
-
-      writeStorage(storageKey, newData);
-    };
-
-    cb();
-  }, []);
 };
