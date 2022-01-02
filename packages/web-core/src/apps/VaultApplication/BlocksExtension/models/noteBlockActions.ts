@@ -18,7 +18,7 @@ export const createNote = standaloneAction(
     attrs: Required<
       Optional<
         ModelCreationData<NoteBlock>,
-        'createdAt' | 'updatedAt' | 'dailyNoteDate' | 'noteId' | 'type'
+        'createdAt' | 'updatedAt' | 'dailyNoteDate' | 'noteId'
       >,
       'title'
     >,
@@ -34,7 +34,6 @@ export const createNote = standaloneAction(
       updatedAt,
       noteId,
       content: '',
-      type: 'textBlock',
     });
 
     const noteBlock = new NoteBlock({
@@ -48,7 +47,6 @@ export const createNote = standaloneAction(
           }
         : {}),
       children: [blockRef(emptyTextBlock)],
-      type: 'noteBlock',
       ...attrs,
     });
 

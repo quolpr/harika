@@ -157,8 +157,8 @@ export class BlockContentModel extends Model({
       }
     }, 2000);
 
-    reaction(() => this.currentValue, debounced);
-    reaction(
+    const dispose1 = reaction(() => this.currentValue, debounced);
+    const dispose2 = reaction(
       () => this._value,
       (val) => {
         if (val !== this.currentValue) {
@@ -166,5 +166,10 @@ export class BlockContentModel extends Model({
         }
       },
     );
+
+    return () => {
+      dispose1();
+      dispose2();
+    };
   }
 }

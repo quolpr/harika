@@ -5,14 +5,12 @@ import {
   Ref,
   tProp,
   types,
-  createContext,
   rootRef,
+  getRefsResolvingTo,
 } from 'mobx-keystone';
 
 import { comparer, computed } from 'mobx';
 import { rootBlockIdCtx } from '../../NoteBlocksExtension/models/NoteBlockModel';
-
-export const parentBlockCtx = createContext<BaseBlock | undefined>();
 
 export const blockRef = rootRef<BaseBlock>(
   'harika/BlocksExtension/BaseBlockRef',
@@ -23,9 +21,8 @@ export class BaseBlock extends Model({
   children: prop<Ref<BaseBlock>[]>(() => []),
   createdAt: tProp(types.dateTimestamp),
   updatedAt: tProp(types.dateTimestamp),
-  type: tProp(types.string),
   noteId: tProp(types.string),
-  linkedBlockIds: prop<string[]>(() => []),
+  linkedBlockRefs: prop<Ref<BaseBlock>[]>(() => []),
 }) {
   @computed
   get isRoot() {
@@ -34,7 +31,20 @@ export class BaseBlock extends Model({
 
   @computed
   get parent(): BaseBlock | undefined {
-    return parentBlockCtx.get(this);
+    const backRefs = getRefsResolvingTo(this, blockRef);
+
+    for (const backRef of backRefs.values()) {
+      if (!backRef.maybeCurrent) continue;
+
+      const model = backRef.current;
+
+      // To be sure that it is not came from linkedBlockRefs
+      if (model.children.some(({ id }) => id === this.$modelId)) {
+        return model;
+      }
+    }
+
+    return undefined;
   }
 
   @computed
@@ -55,5 +65,10 @@ export class BaseBlock extends Model({
   @computed
   get areChildrenLoaded() {
     return !this.children.some((ref) => ref.maybeCurrent === undefined);
+  }
+
+  @computed
+  get areLinksLoaded() {
+    return !this.linkedBlockRefs.some((ref) => ref.maybeCurrent === undefined);
   }
 }
