@@ -82,10 +82,6 @@ export const buildSnapshot = (
 
   changes.forEach((ch) => {
     if (ch.type === DocChangeType.Create) {
-      if (currentSnapshot) {
-        throw new Error(`Multiple create changes for ${JSON.stringify(ch)}`);
-      }
-
       currentSnapshot = {
         doc: ch.doc,
         docId: ch.docId,
