@@ -15,4 +15,4 @@ Harika is an offline-first, performance-focused note taking app for organizing y
 
 ## How can I try it?
 
-You can create a test account at https://app-dev.harika.io/signup .
+You can create a test account at https://app-dev.harika.io .
