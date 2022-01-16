@@ -6,7 +6,7 @@ import {
 } from '../models/NotesTreeRegistry';
 import {
   INoteChangeEvent,
-  notesTable,
+  noteBlocksTable,
 } from '../../NotesExtension/repositories/NotesRepository';
 import { inject, injectable } from 'inversify';
 import { STOP_SIGNAL } from '../../../../framework/types';
@@ -29,7 +29,7 @@ export class NotesChangesTrackerService {
         map(
           (chs) =>
             chs.filter(
-              (ch) => ch.collectionName === notesTable,
+              (ch) => ch.collectionName === noteBlocksTable,
             ) as INoteChangeEvent[],
         ),
         filter((chs) => chs.length !== 0),

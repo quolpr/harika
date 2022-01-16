@@ -4,7 +4,7 @@ import { BaseSyncExtension } from '../../../extensions/SyncExtension/BaseSyncExt
 import { notesMapper } from './mappers/notesMapper';
 import { NoteModel } from './models/NoteModel';
 import { NotesStore } from './models/NotesStore';
-import { NotesService } from './services/NotesService';
+import { NotesService } from '../BlocksExtension/services/NotesService';
 import { initNotesTable } from './migrations/createNotesTable';
 import { NotesRepository } from './repositories/NotesRepository';
 

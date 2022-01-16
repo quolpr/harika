@@ -1,35 +1,37 @@
-import dayjs from 'dayjs';
 import Q from 'sql-bricks';
-import { injectable } from 'inversify';
-import { BaseSyncRepository } from '../../../../extensions/SyncExtension/BaseSyncRepository';
-import { ISyncCtx } from '../../../../extensions/SyncExtension/syncCtx';
-import { IQueryExecuter } from '../../../../extensions/DbExtension/DB';
 import { IDocChange } from '@harika/sync-common';
+import { injectable } from 'inversify';
+import { IQueryExecuter } from '../../../../extensions/DbExtension/DB';
+import { ISyncCtx } from '../../../../extensions/SyncExtension/syncCtx';
+import { BaseBlockRepository } from './BaseBlockRepository';
+import { BaseBlockDoc, BaseBlockRow } from './AllBlocksRepository';
+import dayjs from 'dayjs';
 
 export const noteBlocksTable = 'noteBlocks' as const;
 export const noteBlocksFTSTable = 'notesBlocksFts' as const;
 
-export type NoteRow = {
-  id: string;
+export type NoteBlockRow = BaseBlockRow & {
   title: string;
   dailyNoteDate: number | null;
-  createdAt: number;
-  updatedAt: number | null;
-};
-export type NoteDoc = {
-  id: string;
-  title: string;
-  dailyNoteDate: number | null;
-  createdAt: number;
-  updatedAt: number;
 };
 
-export type INoteChangeEvent = IDocChange<typeof noteBlocksTable, NoteDoc>;
+export type NoteBlockDoc = BaseBlockDoc & {
+  title: string;
+  dailyNoteDate: number | null;
+};
+
+export type INoteBlockChangeEvent = IDocChange<
+  typeof noteBlocksTable,
+  NoteBlockDoc
+>;
 
 @injectable()
-export class NotesRepository extends BaseSyncRepository<NoteDoc, NoteRow> {
+export class NoteBlocksRepository extends BaseBlockRepository<
+  NoteBlockDoc,
+  NoteBlockRow
+> {
   bulkCreate(
-    attrsArray: NoteDoc[],
+    attrsArray: NoteBlockDoc[],
     ctx: ISyncCtx,
     e: IQueryExecuter = this.db,
   ) {
@@ -48,7 +50,11 @@ export class NotesRepository extends BaseSyncRepository<NoteDoc, NoteRow> {
     });
   }
 
-  bulkUpdate(records: NoteDoc[], ctx: ISyncCtx, e: IQueryExecuter = this.db) {
+  bulkUpdate(
+    records: NoteBlockDoc[],
+    ctx: ISyncCtx,
+    e: IQueryExecuter = this.db,
+  ) {
     return e.transaction(async (t) => {
       const res = await super.bulkUpdate(records, ctx, t);
 
@@ -91,17 +97,17 @@ export class NotesRepository extends BaseSyncRepository<NoteDoc, NoteRow> {
   async getByTitles(
     titles: string[],
     e: IQueryExecuter = this.db,
-  ): Promise<NoteDoc[]> {
+  ): Promise<NoteBlockDoc[]> {
     return (
-      await e.getRecords<NoteDoc>(
+      await e.getRecords<NoteBlockRow>(
         Q.select().from(this.getTableName()).where(Q.in('title', titles)),
       )
     ).map((row) => this.toDoc(row));
   }
 
-  async findInTitle(title: string, e: IQueryExecuter): Promise<NoteDoc[]> {
+  async findInTitle(title: string, e: IQueryExecuter): Promise<NoteBlockDoc[]> {
     return (
-      await e.getRecords<NoteDoc>(
+      await e.getRecords<NoteBlockRow>(
         Q.select()
           .from(this.getTableName())
           .where(Q.like('title', `%${title}%`)),
@@ -122,6 +128,21 @@ export class NotesRepository extends BaseSyncRepository<NoteDoc, NoteRow> {
     e: IQueryExecuter = this.db,
   ): Promise<boolean> {
     return (await this.findBy({ title }, e)) !== undefined;
+  }
+
+  async getNoteIdByBlockId(blockId: string, e: IQueryExecuter = this.db) {
+    const [res] = await e.execQuery(
+      Q.select('noteId').from(this.getTableName()).where(Q.in('id', blockId)),
+    );
+
+    return res?.values?.[0]?.[0] as string | undefined;
+  }
+
+  async getLinkedBlocks(noteId: string): Promise<
+    // Key is noteId, values are block ids
+    Record<string, string[]>
+  > {
+    return {};
   }
 
   getDailyNote(date: number, e: IQueryExecuter = this.db) {

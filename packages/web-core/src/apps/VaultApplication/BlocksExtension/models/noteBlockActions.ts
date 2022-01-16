@@ -18,7 +18,7 @@ export const createNote = standaloneAction(
     attrs: Required<
       Optional<
         ModelCreationData<NoteBlock>,
-        'createdAt' | 'updatedAt' | 'dailyNoteDate' | 'noteId'
+        'createdAt' | 'updatedAt' | 'dailyNoteDate' | 'orderPosition'
       >,
       'title'
     >,
@@ -32,21 +32,22 @@ export const createNote = standaloneAction(
       $modelId: generateId(),
       createdAt,
       updatedAt,
-      noteId,
       content: '',
+      orderPosition: 0,
+      areChildrenLoaded: true,
+      parentRef: blockRef(noteId),
     });
 
     const noteBlock = new NoteBlock({
       $modelId: noteId,
       createdAt,
       updatedAt,
-      noteId,
       ...(options?.isDaily
         ? {
             dailyNoteDate: dayjs().startOf('day').unix(),
           }
         : {}),
-      children: [blockRef(emptyTextBlock)],
+      orderPosition: 0,
       ...attrs,
     });
 
@@ -54,5 +55,7 @@ export const createNote = standaloneAction(
       store.registerBlock(noteBlock);
       store.registerBlock(emptyTextBlock);
     });
+
+    return noteBlock;
   },
 );

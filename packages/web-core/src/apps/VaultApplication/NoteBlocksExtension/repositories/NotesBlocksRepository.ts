@@ -29,7 +29,8 @@ export type NoteBlockDoc = {
 
 export const noteBlocksTable = 'noteBlocks' as const;
 export const noteBlocksNotesTable = 'noteBlocksNotes' as const;
-export const noteBlocksBlocksTable = 'noteBlocksBlocks' as const;
+export const blocksLinksTable = 'blocksRelations' as const;
+export const blocksChildrenTable = 'blocksChildren' as const;
 export const noteBlocksFTSTable = 'noteBlocksFTS' as const;
 
 export type INoteBlockChangeEvent = IDocChange<
@@ -193,14 +194,11 @@ export class NotesBlocksRepository extends BaseSyncRepository<
           .as('noteId')
           .from(noteBlocksTable)
           .where(
-            Q.eq(
-              `${noteBlocksBlocksTable}.blockId`,
-              Q(`${noteBlocksTable}.id`),
-            ),
+            Q.eq(`${blocksLinksTable}.blockId`, Q(`${noteBlocksTable}.id`)),
           ),
       )
         .distinct('noteId, blockId, linkedToBlockId')
-        .from(noteBlocksBlocksTable)
+        .from(blocksLinksTable)
         .where(
           Q.in(
             'linkedToBlockId',

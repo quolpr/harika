@@ -1,6 +1,6 @@
 import { IMapper } from '../../../../extensions/SyncExtension/mappers';
 import { NoteModel } from '../models/NoteModel';
-import { NoteDoc, notesTable } from '../repositories/NotesRepository';
+import { NoteDoc, noteBlocksTable } from '../repositories/NotesRepository';
 
 export const notesMapper: IMapper<NoteDoc, NoteModel> = {
   mapToModelData(doc) {
@@ -21,6 +21,6 @@ export const notesMapper: IMapper<NoteDoc, NoteModel> = {
       updatedAt: model.updatedAt,
     };
   },
-  collectionName: notesTable,
+  collectionName: noteBlocksTable,
   model: NoteModel,
 };

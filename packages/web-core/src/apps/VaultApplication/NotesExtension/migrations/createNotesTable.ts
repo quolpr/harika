@@ -1,10 +1,13 @@
 import { IQueryExecuter } from '../../../../extensions/DbExtension/DB';
 import { IMigration } from '../../../../extensions/DbExtension/types';
-import { notesFTSTable, notesTable } from '../repositories/NotesRepository';
+import {
+  noteBlocksFTSTable,
+  noteBlocksTable,
+} from '../repositories/NotesRepository';
 
 const up = async (db: IQueryExecuter) => {
   await db.sqlExec(`
-    CREATE TABLE IF NOT EXISTS ${notesTable} (
+    CREATE TABLE IF NOT EXISTS ${noteBlocksTable} (
       id varchar(20) PRIMARY KEY,
       title varchar(255) NOT NULL,
       dailyNoteDate INTEGER,
@@ -12,12 +15,12 @@ const up = async (db: IQueryExecuter) => {
       createdAt INTEGER NOT NULL
     );
 
-    CREATE INDEX IF NOT EXISTS idx_notes_title ON ${notesTable}(title);
-    CREATE INDEX IF NOT EXISTS idx_notes_date ON ${notesTable}(dailyNoteDate);
+    CREATE INDEX IF NOT EXISTS idx_notes_title ON ${noteBlocksTable}(title);
+    CREATE INDEX IF NOT EXISTS idx_notes_date ON ${noteBlocksTable}(dailyNoteDate);
   `);
 
   await db.sqlExec(`
-    CREATE VIRTUAL TABLE IF NOT EXISTS ${notesFTSTable} USING fts5(id UNINDEXED, title);
+    CREATE VIRTUAL TABLE IF NOT EXISTS ${noteBlocksFTSTable} USING fts5(id UNINDEXED, title);
   `);
 };
 

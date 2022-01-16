@@ -5,7 +5,6 @@ import { from, Observable, of } from 'rxjs';
 import { distinctUntilChanged, map, switchMap, tap } from 'rxjs/operators';
 import { DbEventsListenService } from '../../../../extensions/SyncExtension/services/DbEventsListenerService';
 import { toObserver } from '../../../../lib/toObserver';
-import { notesTable } from '../../NotesExtension/repositories/NotesRepository';
 import { blocksTreeDescriptorsMapper } from '../mappers/blocksTreeDescriptorsMapper';
 import { noteBlocksMapper } from '../mappers/noteBlocksMapper';
 import { NoteBlocksExtensionStore } from '../models/NoteBlocksExtensionStore';
@@ -114,7 +113,7 @@ export class NoteBlocksService {
   getLinksOfNoteId$(noteId: string) {
     return from(
       this.dbEventsService.liveQuery(
-        [noteBlocksTable, notesTable],
+        [noteBlocksTable, noteBlocksTable],
         () => this.notesBlocksRepository.getLinksOfNoteId(noteId),
         false,
       ),

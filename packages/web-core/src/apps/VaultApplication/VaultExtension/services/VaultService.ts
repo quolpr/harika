@@ -1,6 +1,6 @@
 import { inject, injectable } from 'inversify';
 import { NoteBlocksService } from '../../NoteBlocksExtension/services/NoteBlocksService';
-import { NotesService } from '../../NotesExtension/services/NotesService';
+import { NotesService } from '../../BlocksExtension/services/NotesService';
 import type { Optional, Required } from 'utility-types';
 import { ModelCreationData } from 'mobx-keystone';
 import { NoteModel } from '../../NotesExtension/models/NoteModel';
@@ -13,7 +13,6 @@ import {
   map,
   switchMap,
 } from 'rxjs';
-import { notesTable } from '../../NotesExtension/repositories/NotesRepository';
 import { FindNoteOrBlockService } from './FindNoteOrBlockService';
 import { noteBlocksTable } from '../../NoteBlocksExtension/repositories/NotesBlocksRepository';
 import { filterAst } from '../../../../lib/blockParser/astHelpers';
@@ -90,7 +89,7 @@ export class VaultService {
   findNotesOrBlocks$(content: string) {
     return from(
       this.dbEventsService.liveQuery(
-        [notesTable, noteBlocksTable],
+        [noteBlocksTable, noteBlocksTable],
         () => this.findService.find(content),
         false,
       ),
@@ -99,7 +98,7 @@ export class VaultService {
 
   searchNotesTuples$(title: string) {
     return from(
-      this.dbEventsService.liveQuery([notesTable], () =>
+      this.dbEventsService.liveQuery([noteBlocksTable], () =>
         this.findService.findNotes(title),
       ),
     );

@@ -13,8 +13,8 @@
     "gen-block-parser": "peggy -o src/lib/blockParser/pegParser.js --cache src/blockParser/pegParser.pegjs"
   },
   "dependencies": {
-    "@harika/sync-common": "*",
     "@harika-org/sql.js": "^1.6.6",
+    "@harika/sync-common": "*",
     "absurd-sql": "quolpr/absurd-sql#withDist",
     "backoff-rxjs": "^6.5.7",
     "broadcast-channel": "^4.2.0",
@@ -35,6 +35,7 @@
     "snakecase-keys": "^5.1.0",
     "sql-bricks": "^2.0.5",
     "sql-bricks-sqlite": "^0.1.0",
+    "sql-template-tag": "^4.0.0",
     "utility-types": "^3.10.0"
   },
   "devDependencies": {

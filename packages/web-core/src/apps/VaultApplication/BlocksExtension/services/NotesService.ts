@@ -1,46 +1,46 @@
 import { inject, injectable } from 'inversify';
 import { ModelCreationData, withoutUndo } from 'mobx-keystone';
+import type { Required } from 'utility-types';
 import { Optional } from 'utility-types';
 import { DbEventsListenService } from '../../../../extensions/SyncExtension/services/DbEventsListenerService';
-import type { Required } from 'utility-types';
-import { NoteModel } from '../models/NoteModel';
-import {
-  NoteDoc,
-  NotesRepository,
-  notesTable,
-} from '../repositories/NotesRepository';
-import { NotesStore } from '../models/NotesStore';
-import { generateId } from '../../../../lib/generateId';
 import dayjs, { Dayjs } from 'dayjs';
 import {
+  distinctUntilChanged,
+  from,
   interval,
   map,
-  distinctUntilChanged,
-  switchMap,
-  from,
-  of,
   Observable,
+  of,
+  switchMap,
 } from 'rxjs';
-import { notesMapper } from '../mappers/notesMapper';
 import { isEqual } from 'lodash-es';
 import { ICreationResult } from '../../../../framework/types';
+import {
+  NoteBlockDoc,
+  NoteBlocksRepository,
+  noteBlocksTable,
+} from '../repositories/NoteBlocksRepostitory';
+import { BlocksStore } from '../models/BlocksStore';
+import { notesMapper } from '../mappers/noteBlockMapper';
+import { NoteBlock } from '../models/NoteBlock';
+import { createNote } from '../models/noteBlockActions';
 
 @injectable()
 export class NotesService {
   constructor(
     @inject(DbEventsListenService)
     private dbEventsService: DbEventsListenService,
-    @inject(NotesRepository)
-    private notesRepository: NotesRepository,
-    @inject(NotesStore)
-    private notesStore: NotesStore,
+    @inject(NoteBlocksRepository)
+    private noteBlocksRepository: NoteBlocksRepository,
+    @inject(BlocksStore)
+    private blocksStore: BlocksStore,
   ) {}
 
   async createNote(
     attrs: Required<
       Optional<
-        ModelCreationData<NoteModel>,
-        'createdAt' | 'updatedAt' | 'dailyNoteDate'
+        ModelCreationData<NoteBlock>,
+        'createdAt' | 'updatedAt' | 'dailyNoteDate' | 'orderPosition'
       >,
       'title'
     >,
@@ -52,36 +52,22 @@ export class NotesService {
       return {
         status: 'error',
         errors: { title: ["Can't be empty"] },
-      } as ICreationResult<NoteModel>;
+      } as ICreationResult<NoteBlock>;
     }
 
-    if (await this.notesRepository.getIsExistsByTitle(attrs.title)) {
+    if (await this.noteBlocksRepository.getIsExistsByTitle(attrs.title)) {
       return {
         status: 'error',
         errors: { title: ['Already exists'] },
-      } as ICreationResult<NoteModel>;
+      } as ICreationResult<NoteBlock>;
     }
 
-    const note = new NoteModel({
-      $modelId: generateId(),
-      createdAt: new Date().getTime(),
-      updatedAt: new Date().getTime(),
-      ...(options.isDaily
-        ? {
-            dailyNoteDate: dayjs().startOf('day').unix(),
-          }
-        : {}),
-      ...attrs,
-    });
-
-    withoutUndo(() => {
-      this.notesStore.registerNote(note);
-    });
+    const note = createNote(this.blocksStore, attrs, options);
 
     return {
       status: 'ok',
       data: note,
-    } as ICreationResult<NoteModel>;
+    } as ICreationResult<NoteBlock>;
   }
 
   getTodayDailyNote$() {
@@ -95,50 +81,50 @@ export class NotesService {
 
   getDailyNote$(date: Dayjs) {
     return from(
-      this.dbEventsService.liveQuery([notesTable], () =>
-        this.notesRepository.getDailyNote(date.unix()),
+      this.dbEventsService.liveQuery([noteBlocksTable], () =>
+        this.noteBlocksRepository.getDailyNote(date.unix()),
       ),
     ).pipe(switchMap((row) => (row ? this.getNote(row.id) : of(undefined))));
   }
 
   getNote$(id: string) {
     return from(
-      this.dbEventsService.liveQuery([notesTable], () => this.getNote(id)),
+      this.dbEventsService.liveQuery([noteBlocksTable], () => this.getNote(id)),
     );
   }
 
   findNoteByIds$(ids: string[]) {
     // TODO: load only not loaded
     return this.dbEventsService
-      .liveQuery([notesTable], async () => {
+      .liveQuery([noteBlocksTable], async () => {
         const toLoadIds = ids.filter(
-          (id) => !Boolean(this.notesStore.notesMap[id]),
+          (id) => !Boolean(this.blocksStore.hasBlockWithId(id)),
         );
 
         const noteDocs =
           toLoadIds.length !== 0
-            ? await this.notesRepository.getByIds(toLoadIds)
+            ? await this.noteBlocksRepository.getByIds(toLoadIds)
             : [];
 
         withoutUndo(() => {
-          this.notesStore.handleChanges(
+          this.blocksStore.handleModelChanges(
             noteDocs.map((doc) => notesMapper.mapToModelData(doc)),
             [],
           );
         });
 
         return ids
-          .map((id) => this.notesStore.notesMap[id])
+          .map((id) => this.blocksStore.getBlockById(id))
           .filter((v) => Boolean(v));
       })
       .pipe(distinctUntilChanged((a, b) => isEqual(a, b)));
   }
 
   async getNote(id: string) {
-    if (this.notesStore.getNote(id)) {
-      return this.notesStore.getNote(id);
+    if (this.blocksStore.getBlockById(id)) {
+      return this.blocksStore.getBlockById(id);
     } else {
-      const noteDoc = await this.notesRepository.getById(id);
+      const noteDoc = await this.noteBlocksRepository.getById(id);
 
       if (!noteDoc) {
         console.error(`Note with id ${id} not found`);
@@ -147,7 +133,7 @@ export class NotesService {
       }
 
       withoutUndo(() => {
-        this.notesStore.handleChanges(
+        this.blocksStore.handleModelChanges(
           [notesMapper.mapToModelData(noteDoc)],
           [],
         );
@@ -155,14 +141,14 @@ export class NotesService {
 
       console.debug(`Loading Note#${id} from DB`);
 
-      return this.notesStore.getNote(id);
+      return this.blocksStore.getBlockById(id);
     }
   }
 
   getAllNotesTuples$() {
     return from(
-      this.dbEventsService.liveQuery([notesTable], () =>
-        this.notesRepository.getAll(),
+      this.dbEventsService.liveQuery([noteBlocksTable], () =>
+        this.noteBlocksRepository.getAll(),
       ),
     ).pipe(
       map((rows) =>
@@ -177,14 +163,14 @@ export class NotesService {
 
   getByTitles$(titles: string[]) {
     return from(
-      this.dbEventsService.liveQuery([notesTable], () =>
-        this.notesRepository.getByTitles(titles),
+      this.dbEventsService.liveQuery([noteBlocksTable], () =>
+        this.noteBlocksRepository.getByTitles(titles),
       ),
     ).pipe(
-      map((rows): NoteModel[] => {
+      map((rows): NoteBlock[] => {
         return rows.map((row) => {
           withoutUndo(() => {
-            this.notesStore.handleChanges(
+            this.blocksStore.handleModelChanges(
               [notesMapper.mapToModelData(row)],
               [],
             );
@@ -192,7 +178,7 @@ export class NotesService {
 
           console.debug(`Loading Note#${row.id} from DB`);
 
-          return this.notesStore.getNote(row.id);
+          return this.blocksStore.getBlockById(row.id) as NoteBlock;
         });
       }),
     );
@@ -200,9 +186,9 @@ export class NotesService {
 
   getNoteIdByTitle$(title: string) {
     return from(
-      this.dbEventsService.liveQuery([notesTable], () =>
-        this.notesRepository.getByTitles([title]),
-      ) as Observable<NoteDoc[]>,
+      this.dbEventsService.liveQuery([noteBlocksTable], () =>
+        this.noteBlocksRepository.getByTitles([title]),
+      ) as Observable<NoteBlockDoc[]>,
     ).pipe(
       map((docs) => docs[0]?.id),
       distinctUntilChanged(),
@@ -210,17 +196,10 @@ export class NotesService {
   }
 
   async isNoteExists(title: string) {
-    if (
-      Object.values(this.notesStore.notesMap).find(
-        (note) => note.title === title,
-      )
-    )
-      return true;
-
-    return !!(await this.notesRepository.findBy({ title }));
+    return !!(await this.noteBlocksRepository.findBy({ title }));
   }
 
   async getTuplesWithoutDailyNotes() {
-    return this.notesRepository.getTuplesWithoutDailyNotes();
+    return this.noteBlocksRepository.getTuplesWithoutDailyNotes();
   }
 }

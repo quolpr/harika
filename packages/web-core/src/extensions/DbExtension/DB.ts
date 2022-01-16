@@ -31,6 +31,7 @@ import {
   IOutputWorkerMessage,
 } from './types';
 import { QueryExecResult } from '@harika-org/sql.js';
+import { Sql } from 'sql-template-tag';
 
 type DistributiveOmit<T, K extends keyof any> = T extends any
   ? Omit<T, K>
@@ -67,11 +68,11 @@ Q['match'] = function (name: string, col: number, val: string) {
 
 export interface IQueryExecuter {
   execQuery(
-    query: Q.Statement,
+    query: Q.Statement | Sql,
     suppressLog?: boolean,
   ): Promise<QueryExecResult[]>;
   execQueries(
-    queries: Q.Statement[],
+    queries: (Q.Statement | Sql)[],
     suppressLog?: boolean,
   ): Promise<QueryExecResult[][]>;
   insertRecords(
@@ -81,7 +82,7 @@ export interface IQueryExecuter {
     suppressLog?: boolean,
   ): Promise<void>;
   getRecords<T extends Record<string, any>>(
-    query: Q.Statement,
+    query: Q.Statement | Sql,
     suppressLog?: boolean,
   ): Promise<T[]>;
   transaction<T extends any>(
@@ -237,13 +238,13 @@ export class DB implements IQueryExecuter {
   }
 
   async execQueries(
-    queries: Q.Statement[],
+    queries: (Q.Statement | Sql)[],
     suppressLog?: boolean,
     transactionId?: string,
   ) {
     return this.execCommand({
       type: 'execQueries',
-      queries: queries.map((q) => q.toParams()),
+      queries: queries.map((q) => ('toParams' in q ? q.toParams() : q)),
       transactionId,
       spawnTransaction: queries.length > 1,
       suppressLog,
@@ -251,13 +252,13 @@ export class DB implements IQueryExecuter {
   }
 
   async execQuery(
-    query: Q.Statement,
+    query: Q.Statement | Sql,
     suppressLog?: boolean,
     transactionId?: string,
   ) {
     const res = await this.execCommand({
       type: 'execQueries',
-      queries: [query.toParams()],
+      queries: ['toParams' in query ? query.toParams() : query],
       transactionId,
       suppressLog,
     });
@@ -361,7 +362,7 @@ export class DB implements IQueryExecuter {
 
   // TODO: add mapper to arg for better performance
   async getRecords<T extends Record<string, any>>(
-    query: Q.Statement,
+    query: Q.Statement | Sql,
     suppressLog?: boolean,
     transactionId?: string,
   ): Promise<T[]> {

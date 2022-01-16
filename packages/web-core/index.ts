@@ -20,5 +20,5 @@ export { UserApplication } from './src/apps/UserApplication/UserApplication';
 export { UserVaultsService } from './src/apps/UserApplication/UserExtension/services/UserVaultsService';
 export { VaultService } from './src/apps/VaultApplication/VaultExtension/services/VaultService';
 export { NoteModel } from './src/apps/VaultApplication/NotesExtension/models/NoteModel';
-export { NotesService } from './src/apps/VaultApplication/NotesExtension/services/NotesService';
+export { NotesService } from './src/apps/VaultApplication/BlocksExtension/services/NotesService';
 export { NoteBlocksService } from './src/apps/VaultApplication/NoteBlocksExtension/services/NoteBlocksService';

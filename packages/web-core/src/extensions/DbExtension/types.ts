@@ -34,7 +34,10 @@ export type IRollbackTransactionCommand = IBaseCommand & {
 
 export type IExecQueriesCommand = IBaseCommand & {
   type: 'execQueries';
-  queries: Q.SqlBricksParam[];
+  queries: {
+    text: string;
+    values: any[];
+  }[];
   spawnTransaction?: boolean;
   transactionId?: string;
   commandId: string;

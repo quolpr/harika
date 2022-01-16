@@ -13,7 +13,7 @@ import { inject, injectable } from 'inversify';
 import {
   NoteDoc,
   NotesRepository,
-  notesTable,
+  noteBlocksTable,
 } from '../../NotesExtension/repositories/NotesRepository';
 import {
   BlocksTreeDescriptorsRepository,
@@ -42,13 +42,13 @@ export class ImportExportService {
 
     const rootBlockIds =
       importData.data.data
-        .find(({ tableName }) => tableName === notesTable)
+        .find(({ tableName }) => tableName === noteBlocksTable)
         ?.rows.filter(({ rootBlockId }) => rootBlockId)
         .map((note) => [note.id, note.rootBlockId]) || [];
 
     await this.notesRepo.transaction(async (t) => {
       for (const { rows, tableName } of importData.data.data) {
-        if (tableName === notesTable) {
+        if (tableName === noteBlocksTable) {
           await this.notesRepo.bulkCreate(
             rows
               .filter(({ title }) => title !== undefined)
@@ -114,7 +114,7 @@ export class ImportExportService {
     return JSON.stringify({
       data: {
         data: [
-          { tableName: notesTable, rows: await this.notesRepo.getAll() },
+          { tableName: noteBlocksTable, rows: await this.notesRepo.getAll() },
           {
             tableName: noteBlocksTable,
             rows: await this.notesBlocksRepo.getAll(),

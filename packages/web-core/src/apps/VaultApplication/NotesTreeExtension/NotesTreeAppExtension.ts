@@ -1,6 +1,6 @@
 import { injectable } from 'inversify';
 import { BaseExtension } from '../../../framework/BaseExtension';
-import { NotesService } from '../NotesExtension/services/NotesService';
+import { NotesService } from '../BlocksExtension/services/NotesService';
 import { newTreeModel, NotesTreeRegistry } from './models/NotesTreeRegistry';
 import { NotesChangesTrackerService } from './services/NotesChangesTrackerService';
 

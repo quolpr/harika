@@ -1,8 +1,8 @@
 import { DB } from '../../../../extensions/DbExtension/DB';
 import Q from 'sql-bricks';
 import {
-  notesFTSTable,
-  notesTable,
+  noteBlocksFTSTable,
+  noteBlocksTable,
 } from '../../NotesExtension/repositories/NotesRepository';
 import {
   noteBlocksFTSTable,
@@ -22,7 +22,7 @@ export class FindNoteOrBlockService {
     const res = this.db.getRecords<{
       noteId: string;
       noteBlockId: string | null;
-      tableType: typeof notesTable | typeof noteBlocksTable;
+      tableType: typeof noteBlocksTable | typeof noteBlocksTable;
       data: string;
     }>(
       // Only in nested selects order will work
@@ -32,15 +32,15 @@ export class FindNoteOrBlockService {
             .from(
               Q.select(
                 'NULL as noteBlockId',
-                `'${notesTable}' tableType`,
+                `'${noteBlocksTable}' tableType`,
                 Q.select('title')
                   .as('data')
-                  .from(notesTable)
-                  .where(Q(`id = ${notesFTSTable}.id`)),
+                  .from(noteBlocksTable)
+                  .where(Q(`id = ${noteBlocksFTSTable}.id`)),
                 'id noteId',
-                `bm25(${notesFTSTable}) rank`,
+                `bm25(${noteBlocksFTSTable}) rank`,
               )
-                .from(notesFTSTable)
+                .from(noteBlocksFTSTable)
                 .where(Q.like('title', `%${text}%`)),
             )
             .union(
@@ -64,7 +64,7 @@ export class FindNoteOrBlockService {
             ),
         )
         .orderBy(
-          `CASE tableType WHEN '${notesTable}' THEN 0 ELSE 1 END, rank LIMIT 20`,
+          `CASE tableType WHEN '${noteBlocksTable}' THEN 0 ELSE 1 END, rank LIMIT 20`,
         ),
     );
 
@@ -82,10 +82,10 @@ export class FindNoteOrBlockService {
         'id',
         Q.select('title')
           .as('title')
-          .from(notesTable)
-          .where(Q(`id = ${notesFTSTable}.id`)),
+          .from(noteBlocksTable)
+          .where(Q(`id = ${noteBlocksFTSTable}.id`)),
       )
-        .from(notesFTSTable)
+        .from(noteBlocksFTSTable)
         .where(Q.like('title', `%${text}%`))
         .orderBy('rank'),
     );

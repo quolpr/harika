@@ -7,7 +7,7 @@ import { VaultAppExtension } from './VaultExtension/VaultAppExtension';
 import { NotesTreeAppExtension } from './NotesTreeExtension/NotesTreeAppExtension';
 import { SpacedRepetitionExtension } from './SpacedRepetitionExtension/SpacedRepetitionExtension';
 import { VaultService } from './VaultExtension/services/VaultService';
-import { NotesService } from './NotesExtension/services/NotesService';
+import { NotesService } from './BlocksExtension/services/NotesService';
 import { NotesTreeRegistry } from './NotesTreeExtension/models/NotesTreeRegistry';
 import { NoteBlocksService } from './NoteBlocksExtension/services/NoteBlocksService';
 import { FindNoteOrBlockService } from './VaultExtension/services/FindNoteOrBlockService';
@@ -37,6 +37,23 @@ export class VaultApplication extends BaseApplication {
     private getAuthToken: () => Promise<string | undefined>,
   ) {
     super(applicationId);
+  }
+
+  get applicationName() {
+    return 'vault';
+  }
+
+  get extensions() {
+    return [
+      DbAppExtension,
+      SyncAppExtension,
+      NotesAppExtension,
+      NoteBlocksAppExtension,
+      VaultAppExtension,
+      NotesTreeAppExtension,
+      SpacedRepetitionExtension,
+      BlocksScopeAppExtension,
+    ];
   }
 
   async initialize() {
@@ -106,22 +123,5 @@ export class VaultApplication extends BaseApplication {
     return this.container.get<BehaviorSubject<boolean>>(
       SYNC_CONNECTION_ALLOWED,
     );
-  }
-
-  get applicationName() {
-    return 'vault';
-  }
-
-  get extensions() {
-    return [
-      DbAppExtension,
-      SyncAppExtension,
-      NotesAppExtension,
-      NoteBlocksAppExtension,
-      VaultAppExtension,
-      NotesTreeAppExtension,
-      SpacedRepetitionExtension,
-      BlocksScopeAppExtension,
-    ];
   }
 }

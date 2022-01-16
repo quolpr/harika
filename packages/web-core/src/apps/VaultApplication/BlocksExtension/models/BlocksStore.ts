@@ -5,7 +5,7 @@ import {
   Model,
   modelAction,
   prop,
-  SnapshotOutOf,
+  SnapshotInOf,
 } from 'mobx-keystone';
 import { withoutSyncAction } from '../../../../extensions/SyncExtension/mobx-keystone/syncable';
 import { SyncModelId } from '../../../../extensions/SyncExtension/types';
@@ -16,6 +16,14 @@ import { BlocksRegistry } from './BlocksRegistry';
 export class BlocksStore extends Model({
   blocksRegistry: prop<BlocksRegistry>(),
 }) {
+  hasBlockWithId(id: string) {
+    return this.blocksRegistry.hasBlockWithId(id);
+  }
+
+  getBlockById(id: string) {
+    return this.blocksRegistry.getBlockById(id);
+  }
+
   @modelAction
   registerBlock(block: BaseBlock) {
     this.blocksRegistry.registerBlock(block);
@@ -25,16 +33,16 @@ export class BlocksStore extends Model({
   @withoutSyncAction
   @modelAction
   handleModelChanges(
-    blocksAttrs: SnapshotOutOf<BaseBlock>[],
+    blocksAttrs: SnapshotInOf<BaseBlock>[],
     deletedBlockIds: SyncModelId<BaseBlock>[],
   ) {
     blocksAttrs.forEach((block) => {
-      if (!this.blocksRegistry.hasBlockWithId(block.$modelId)) {
+      if (!this.blocksRegistry.hasBlockWithId(block.$modelId!)) {
         this.blocksRegistry.registerBlock(fromSnapshot<BaseBlock>(block));
       } else {
         applySnapshot<BaseBlock>(
-          this.blocksRegistry.getBlockById(block.$modelId),
-          block,
+          this.blocksRegistry.getBlockById(block.$modelId!),
+          block as any,
         );
       }
     });
@@ -48,16 +56,16 @@ export class BlocksStore extends Model({
 
   @modelAction
   deleteBlock(block: BaseBlock, spliceParent = true, recursively = true) {
-    const toDelete = [...block.children];
+    const toDelete = [...block.childrenBlocks];
 
     if (recursively) {
       toDelete.forEach((block) =>
-        this.deleteBlock(block.current, spliceParent, recursively),
+        this.deleteBlock(block, spliceParent, recursively),
       );
     }
 
-    if (spliceParent && block.parent) {
-      block.parent.children.splice(block.orderPosition, 1);
+    if (spliceParent && block.parentRef?.current) {
+      block.parentRef?.current.childrenBlocks.splice(block.orderPosition, 1);
     }
 
     detach(block);
