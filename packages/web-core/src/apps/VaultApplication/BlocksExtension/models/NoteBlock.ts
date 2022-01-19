@@ -12,4 +12,8 @@ export class NoteBlock extends ExtendedModel(BaseBlock, {
   get parent(): undefined {
     return undefined;
   }
+
+  toString() {
+    return this.title;
+  }
 }

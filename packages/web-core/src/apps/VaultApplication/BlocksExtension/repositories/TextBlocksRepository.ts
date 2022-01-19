@@ -7,20 +7,20 @@ import { BaseBlockRepository } from './BaseBlockRepository';
 export const textBlocksTable = 'textBlocks' as const;
 export const textBlocksFTSTable = 'textBlocksFTS' as const;
 
-export type NoteBlockRow = BaseBlockRow & {
+export type TextBlockRow = BaseBlockRow & {
   content: string;
 };
 
-export type NoteBlockDoc = BaseBlockDoc & {
+export type TextBlockDoc = BaseBlockDoc & {
   content: string;
 };
 
 export class TextBlocksRepository extends BaseBlockRepository<
-  NoteBlockDoc,
-  NoteBlockRow
+  TextBlockDoc,
+  TextBlockRow
 > {
   bulkCreate(
-    attrsArray: NoteBlockDoc[],
+    attrsArray: TextBlockDoc[],
     ctx: ISyncCtx,
     e: IQueryExecuter = this.db,
   ) {
@@ -40,7 +40,7 @@ export class TextBlocksRepository extends BaseBlockRepository<
   }
 
   bulkUpdate(
-    records: NoteBlockDoc[],
+    records: TextBlockDoc[],
     ctx: ISyncCtx,
     e: IQueryExecuter = this.db,
   ) {

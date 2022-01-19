@@ -33,6 +33,10 @@ export class AllBlocksRepository {
     private blocksRepos: BaseBlockRepository[],
   ) {}
 
+  get blocksTables(): string[] {
+    return [];
+  }
+
   async getDescendants(ids: string[], e: IQueryExecuter = this.db) {
     const joinTables = this.blocksRepos
       .map((r) => r.getTableName())

@@ -1,23 +1,22 @@
 import { IMapper } from '../../../../extensions/SyncExtension/mappers';
 import { blockRef } from '../models/BaseBlock';
-import { NoteBlock, noteBlockModelType } from '../models/NoteBlock';
+import { TextBlock, textBlockModelType } from '../models/TextBlock';
 import {
-  NoteBlockDoc,
-  noteBlocksTable,
-} from '../repositories/NoteBlocksRepostitory';
+  TextBlockDoc,
+  textBlocksTable,
+} from '../repositories/TextBlocksRepository';
 
-export const noteBlockMapper: IMapper<NoteBlockDoc, NoteBlock> = {
+export const textBlockMapper: IMapper<TextBlockDoc, TextBlock> = {
   mapToModelData(doc) {
     return {
       $modelId: doc.id,
-      $modelType: noteBlockModelType,
+      $modelType: textBlockModelType,
 
       parentRef: doc.parentId ? blockRef(doc.parentId) : undefined,
       orderPosition: doc.orderPosition,
       linkedBlockRefs: doc.linkedBlockIds.map((id) => blockRef(id)),
 
-      title: doc.title,
-      dailyNoteDate: doc.dailyNoteDate ? doc.dailyNoteDate : undefined,
+      content: doc.content,
 
       areChildrenLoaded: false,
 
@@ -28,19 +27,18 @@ export const noteBlockMapper: IMapper<NoteBlockDoc, NoteBlock> = {
   mapToDoc(model) {
     return {
       id: model.$modelId,
-      type: 'noteBlock',
+      type: 'textBlock',
 
       orderPosition: model.orderPosition,
       parentId: model.parentRef?.id,
       linkedBlockIds: model.linkedBlockRefs.map(({ id }) => id),
 
-      title: model.title,
-      dailyNoteDate: model.dailyNoteDate ? model.dailyNoteDate : null,
+      content: model.content,
 
       createdAt: model.createdAt,
       updatedAt: model.updatedAt,
     };
   },
-  collectionName: noteBlocksTable,
-  model: NoteBlock,
+  collectionName: textBlocksTable,
+  model: TextBlock,
 };

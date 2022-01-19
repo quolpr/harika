@@ -21,12 +21,12 @@ import {
   noteBlocksTable,
 } from '../repositories/NoteBlocksRepostitory';
 import { BlocksStore } from '../models/BlocksStore';
-import { notesMapper } from '../mappers/noteBlockMapper';
+import { noteBlockMapper } from '../mappers/noteBlockMapper';
 import { NoteBlock } from '../models/NoteBlock';
 import { createNote } from '../models/noteBlockActions';
 
 @injectable()
-export class NotesService {
+export class NoteBlocksService {
   constructor(
     @inject(DbEventsListenService)
     private dbEventsService: DbEventsListenService,
@@ -108,7 +108,7 @@ export class NotesService {
 
         withoutUndo(() => {
           this.blocksStore.handleModelChanges(
-            noteDocs.map((doc) => notesMapper.mapToModelData(doc)),
+            noteDocs.map((doc) => noteBlockMapper.mapToModelData(doc)),
             [],
           );
         });
@@ -134,7 +134,7 @@ export class NotesService {
 
       withoutUndo(() => {
         this.blocksStore.handleModelChanges(
-          [notesMapper.mapToModelData(noteDoc)],
+          [noteBlockMapper.mapToModelData(noteDoc)],
           [],
         );
       });
@@ -171,7 +171,7 @@ export class NotesService {
         return rows.map((row) => {
           withoutUndo(() => {
             this.blocksStore.handleModelChanges(
-              [notesMapper.mapToModelData(row)],
+              [noteBlockMapper.mapToModelData(row)],
               [],
             );
           });
@@ -193,6 +193,10 @@ export class NotesService {
       map((docs) => docs[0]?.id),
       distinctUntilChanged(),
     );
+  }
+
+  getNoteIdByBlockId$(blockId: string): undefined | string {
+    return undefined;
   }
 
   async isNoteExists(title: string) {

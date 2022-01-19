@@ -131,11 +131,7 @@ export class NoteBlocksRepository extends BaseBlockRepository<
   }
 
   async getNoteIdByBlockId(blockId: string, e: IQueryExecuter = this.db) {
-    const [res] = await e.execQuery(
-      Q.select('noteId').from(this.getTableName()).where(Q.in('id', blockId)),
-    );
-
-    return res?.values?.[0]?.[0] as string | undefined;
+    return undefined;
   }
 
   async getLinkedBlocks(noteId: string): Promise<
