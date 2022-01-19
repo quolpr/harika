@@ -7,6 +7,8 @@ import {
   types,
   rootRef,
   getRefsResolvingTo,
+  modelAction,
+  detach,
 } from 'mobx-keystone';
 import { comparer, computed } from 'mobx';
 import { rootBlockIdCtx } from '../../NoteBlocksExtension/models/NoteBlockModel';
@@ -59,6 +61,11 @@ export class BaseBlock extends Model({
 
   get children() {
     return this.childrenBlocks;
+  }
+
+  @computed
+  get index() {
+    return this.siblings.findIndex((ch) => ch === this);
   }
 
   @computed({ equals: comparer.shallow })
@@ -125,6 +132,64 @@ export class BaseBlock extends Model({
     right: BaseBlock | undefined,
   ] {
     return leftAndRightFunc(this);
+  }
+
+  @modelAction
+  move(parent: BaseBlock, pos: number | 'start' | 'end') {
+    if (this.isRoot) {
+      throw new Error("Can't move root block");
+    }
+
+    const newPos = (() => {
+      if (pos === 'start') {
+        return 0;
+      } else if (pos === 'end') {
+        return parent.childrenBlocks.length;
+      } else {
+        return pos;
+      }
+    })();
+
+    this.parentRef = blockRef(parent);
+    this.orderPosition = newPos;
+  }
+
+  @modelAction
+  mergeToAndDelete(to: BaseBlock) {
+    to.linkedBlockRefs.push(...this.linkedBlockRefs.map((r) => blockRef(r.id)));
+
+    this.childrenBlocks.forEach((ch) => {
+      ch.parentRef = blockRef(to);
+    });
+
+    this.delete(false);
+  }
+
+  @modelAction
+  delete(recursively = true) {
+    if (recursively) {
+      const toDelete = [...this.childrenBlocks];
+
+      toDelete.forEach((block) => block.delete(recursively));
+    }
+
+    detach(this);
+  }
+
+  // O(n^2)
+  @modelAction
+  updateLinks(allBlockIds: string[]) {
+    this.linkedBlockRefs.forEach((idRef) => {
+      if (!allBlockIds.includes(idRef.id)) {
+        this.linkedBlockRefs.splice(this.linkedBlockRefs.indexOf(idRef), 1);
+      }
+    });
+
+    allBlockIds.forEach((blockId) => {
+      if (!this.linkedBlockRefs.find((ref) => ref.id === blockId)) {
+        this.linkedBlockRefs.push(blockRef(blockId));
+      }
+    });
   }
 
   toString(): string {

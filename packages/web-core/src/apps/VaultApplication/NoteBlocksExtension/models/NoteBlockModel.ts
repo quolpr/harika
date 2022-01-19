@@ -173,21 +173,6 @@ export class NoteBlockModel extends Model({
   }
 
   @modelAction
-  updateNoteLinks(allNoteIds: string[]) {
-    this.linkedNoteIds.forEach((id, index) => {
-      if (!allNoteIds.includes(id)) {
-        this.linkedNoteIds.splice(index, 1);
-      }
-    });
-
-    allNoteIds.forEach((noteId) => {
-      if (!this.linkedNoteIds.includes(noteId)) {
-        this.linkedNoteIds.push(noteId);
-      }
-    });
-  }
-
-  @modelAction
   updateBlockLinks(allBlockIds: string[]) {
     this.linkedBlockIds.forEach((id, index) => {
       if (!allBlockIds.includes(id)) {

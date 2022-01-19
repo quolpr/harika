@@ -1,6 +1,5 @@
 import {
   applySnapshot,
-  detach,
   fromSnapshot,
   Model,
   modelAction,
@@ -49,25 +48,8 @@ export class BlocksStore extends Model({
 
     deletedBlockIds.forEach((id) => {
       if (this.blocksRegistry.hasBlockWithId(id.value)) {
-        this.deleteBlock(this.blocksRegistry.getBlockById(id.value));
+        this.blocksRegistry.getBlockById(id.value).delete(false);
       }
     });
-  }
-
-  @modelAction
-  deleteBlock(block: BaseBlock, spliceParent = true, recursively = true) {
-    const toDelete = [...block.childrenBlocks];
-
-    if (recursively) {
-      toDelete.forEach((block) =>
-        this.deleteBlock(block, spliceParent, recursively),
-      );
-    }
-
-    if (spliceParent && block.parentRef?.current) {
-      block.parentRef?.current.childrenBlocks.splice(block.orderPosition, 1);
-    }
-
-    detach(block);
   }
 }
