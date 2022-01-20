@@ -1,6 +1,6 @@
 import { injectable } from 'inversify';
 import { BaseExtension } from '../../../framework/BaseExtension';
-import { NotesService } from '../BlocksExtension/services/NotesService';
+import { NoteBlocksService } from '../BlocksExtension/services/NoteBlocksService';
 import { newTreeModel, NotesTreeRegistry } from './models/NotesTreeRegistry';
 import { NotesChangesTrackerService } from './services/NotesChangesTrackerService';
 
@@ -15,7 +15,7 @@ export class NotesTreeAppExtension extends BaseExtension {
 
     // Delayed to increase startup time
     setTimeout(async () => {
-      const notesService = this.container.get(NotesService);
+      const notesService = this.container.get(NoteBlocksService);
 
       this.container
         .get(NotesTreeRegistry)

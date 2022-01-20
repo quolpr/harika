@@ -38,7 +38,7 @@ const up = async (db: IQueryExecuter) => {
   `);
 };
 
-export const initNotesTable: IMigration = {
+export const createTextBlocksTable: IMigration = {
   up,
   id: 1632733297841, // just take current UTC time, with `new Date().getTime()`
   name: 'createTextBlocksTable',

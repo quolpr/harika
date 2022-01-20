@@ -85,4 +85,8 @@ export class TextBlocksRepository extends BaseBlockRepository<
   getTableName() {
     return textBlocksTable;
   }
+
+  get docType() {
+    return 'textBlock';
+  }
 }

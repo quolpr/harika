@@ -1,14 +1,13 @@
-import { NotesBlocksRepository } from '../../NoteBlocksExtension/repositories/NotesBlocksRepository';
-import type { ISyncCtx } from '../../../../extensions/SyncExtension/syncCtx';
-import { NotesRepository } from '../../NotesExtension/repositories/NotesRepository';
 import { inject, injectable } from 'inversify';
+import { DB } from '../../../../extensions/DbExtension/DB';
+import { ISyncCtx } from '../../../../extensions/SyncExtension/syncCtx';
+import { AllBlocksRepository } from '../../BlocksExtension/repositories/AllBlocksRepository';
 
 @injectable()
 export class DeleteNoteService {
   constructor(
-    @inject(NotesRepository) private notesRepo: NotesRepository,
-    @inject(NotesBlocksRepository)
-    private notesBlocksRepo: NotesBlocksRepository,
+    @inject(DB) private db: DB,
+    @inject(AllBlocksRepository) private allRepo: AllBlocksRepository,
   ) {}
 
   async deleteNote(noteId: string) {
@@ -16,24 +15,22 @@ export class DeleteNoteService {
       shouldRecordChange: true,
       source: 'inDbChanges',
     };
-    await this.notesRepo.transaction(async (t) => {
-      const linkedBlocks = await this.notesBlocksRepo.getLinkedBlocksOfNoteId(
-        noteId,
-        t,
-      );
+    await this.db.transaction(async (t) => {
+      const linkedBlocks =
+        await this.allRepo.getLinkedBlocksOfBlocksOfRootBlock(noteId, t);
 
       if (linkedBlocks.length > 0) {
         linkedBlocks.forEach((block) => {
-          block.linkedNoteIds = block.linkedNoteIds.filter(
+          block.linkedBlockIds = block.linkedBlockIds.filter(
             (id) => id !== noteId,
           );
         });
-        await this.notesBlocksRepo.bulkUpdate(linkedBlocks, ctx, t);
+
+        await this.allRepo.bulkUpdate(linkedBlocks, ctx, t);
       }
 
-      await this.notesRepo.delete(noteId, ctx, t);
-      await this.notesBlocksRepo.bulkDelete(
-        await this.notesBlocksRepo.getIdsByNoteId(noteId, t),
+      await this.allRepo.bulkDelete(
+        await this.allRepo.getDescendantIds(noteId, t),
         ctx,
         t,
       );

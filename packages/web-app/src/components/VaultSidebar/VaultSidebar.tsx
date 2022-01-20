@@ -16,7 +16,7 @@ import { useObservable, useObservableState } from 'observable-hooks';
 import { switchMap } from 'rxjs';
 import {
   useCurrentVaultApp,
-  useNotesService,
+  useNoteBlocksService,
   useVaultService,
 } from '../../hooks/vaultAppHooks';
 import { CustomScrollbar } from '../CustomScrollbar';
@@ -40,7 +40,7 @@ export const getLocalStorageSidebarWidth = () => {
 export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
   ({ className, isOpened, onNavClick, vaultName }: IProps, ref) => {
     const vaultApp = useCurrentVaultApp();
-    const notesService = useNotesService();
+    const notesService = useNoteBlocksService();
     const vaultService = useVaultService();
 
     const handleDownloadClick = useCallback(async () => {

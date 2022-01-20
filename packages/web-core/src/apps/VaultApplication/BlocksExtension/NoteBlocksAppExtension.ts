@@ -1,78 +1,70 @@
-import { injectable } from 'inversify';
-import { NoteBlocksExtensionStore } from '../NoteBlocksExtension/models/NoteBlocksExtensionStore';
-import { NotesBlocksRepository } from '../NoteBlocksExtension/repositories/NotesBlocksRepository';
-import { BlocksScopesRepository } from './repositories/BlockScopesRepository';
-import { blocksScopesMapper } from './mappers/blockScopesMapper';
-import { blocksTreeDescriptorsMapper } from '../NoteBlocksExtension/mappers/blocksTreeDescriptorsMapper';
-import { noteBlocksMapper } from '../NoteBlocksExtension/mappers/noteBlocksMapper';
-import { BlocksTreeDescriptorsRepository } from '../NoteBlocksExtension/repositories/BlockTreeDescriptorsRepository';
-import { SyncConfig } from '../../../extensions/SyncExtension/serverSynchronizer/SyncConfig';
-import { NoteBlockModel } from '../NoteBlocksExtension/models/NoteBlockModel';
-import { BlocksTreeDescriptor } from '../NoteBlocksExtension/models/BlocksTreeDescriptor';
-import { NoteBlocksService } from '../NoteBlocksExtension/services/NoteBlocksService';
-import { BaseSyncExtension } from '../../../extensions/SyncExtension/BaseSyncExtension';
-import { initNoteBlocksTables } from '../NoteBlocksExtension/migrations/initNoteBlocksTables';
-import { addBlockIdsToNoteBlocksTables } from '../NoteBlocksExtension/migrations/addBlockIdsToNoteBlocksTable';
-import { addBlocksTreeDescriptorsTable } from '../NoteBlocksExtension/migrations/addBlockTreeDescriptorTable';
 import { BlocksScopeStore } from './models/BlocksScopeStore';
 import { BlocksScopesService } from './services/BlocksScopeService';
 import { addBlockScopeTable } from './migrations/addBlockScopeTable';
 import { BlocksScope } from './models/BlocksScope';
+import { injectable } from 'inversify';
+import { BaseSyncExtension } from '../../../extensions/SyncExtension/BaseSyncExtension';
+import { SyncConfig } from '../../../extensions/SyncExtension/serverSynchronizer/SyncConfig';
+import { blocksScopesMapper } from './mappers/blockScopesMapper';
+import { BlocksScopesRepository } from './repositories/BlockScopesRepository';
+import { NoteBlocksService } from './services/NoteBlocksService';
+import { NoteBlocksRepository } from './repositories/NoteBlocksRepostitory';
+import { TextBlocksRepository } from './repositories/TextBlocksRepository';
+import { createBlocksChildrenTable } from './migrations/createBlocksChildrenTable';
+import { createBlocksLinksTable } from './migrations/createBlocksLinksTable';
+import { createNoteBlocksTable } from './migrations/createNoteBlocksTable';
+import { createTextBlocksTable } from './migrations/createTextBlocksTable';
+import { BlocksStore } from './models/BlocksStore';
+import { noteBlockMapper } from './mappers/noteBlockMapper';
+import { textBlockMapper } from './mappers/textBlockMappter';
+import { TextBlocksService } from './services/TextBlocksService';
+import { BLOCK_REPOSITORY } from './types';
+import { NoteBlock } from './models/NoteBlock';
+import { TextBlock } from './models/TextBlock';
 
 @injectable()
 export class NoteBlocksAppExtension extends BaseSyncExtension {
   async register() {
     await super.register();
 
-    const store = new NoteBlocksExtensionStore({});
+    const scopeStore = new BlocksScopeStore({});
 
-    this.container.bind(NoteBlocksExtensionStore).toConstantValue(store);
+    this.container.bind(BlocksScopeStore).toConstantValue(scopeStore);
+    this.container.bind(BlocksScopesService).toSelf();
+
+    const blocksStore = new BlocksStore({});
+    this.container.bind(BlocksStore).toConstantValue(blocksStore);
+    this.container.bind(TextBlocksService).toSelf();
     this.container.bind(NoteBlocksService).toSelf();
 
-    this.container
-      .bind(BlocksScopeStore)
-      .toConstantValue(new BlocksScopeStore({}));
-    this.container.bind(BlocksScopesService).toSelf();
+    this.container.bind(BLOCK_REPOSITORY).toConstantValue(scopeStore);
+    this.container.bind(BLOCK_REPOSITORY).toConstantValue(blocksStore);
   }
 
   async initialize() {
     const scopesStore = this.container.get(BlocksScopeStore);
-    const blocksStore = this.container.get(NoteBlocksExtensionStore);
+    const blocksStore = this.container.get(BlocksStore);
     const syncConfig = this.container.get(SyncConfig);
 
     const disposes: (() => void)[] = [];
 
     disposes.push(
-      syncConfig.registerSyncRepo(blocksScopesMapper, BlocksScopesRepository),
-      syncConfig.registerSyncRepo(
-        blocksTreeDescriptorsMapper,
-        BlocksTreeDescriptorsRepository,
-      ),
-      syncConfig.registerSyncRepo(noteBlocksMapper, NotesBlocksRepository),
+      syncConfig.registerSyncRepo(noteBlockMapper, NoteBlocksRepository),
+      syncConfig.registerSyncRepo(textBlockMapper, TextBlocksRepository),
       syncConfig.registerSyncRepo(blocksScopesMapper, BlocksScopesRepository),
     );
 
     disposes.push(
-      syncConfig.onModelChange(
-        [BlocksTreeDescriptor, NoteBlockModel],
-        (attrs, deletedIds) => {
-          const [descriptorAttrs, blocksAttrs] = attrs;
-
-          blocksStore.handleModelChanges(
-            descriptorAttrs,
-            blocksAttrs,
-            deletedIds,
-            false,
-          );
-        },
-      ),
+      syncConfig.onModelChange([NoteBlock, TextBlock], (attrs, deletedIds) => {
+        blocksStore.handleModelChanges(attrs.flat(), deletedIds.flat());
+      }),
     );
 
     disposes.push(
       syncConfig.onModelChange([BlocksScope], (attrs, deletedIds) => {
         const [scopeAttrs] = attrs;
 
-        scopesStore.handleModelChanges(scopeAttrs, deletedIds);
+        scopesStore.handleModelChanges(scopeAttrs, deletedIds.flat());
       }),
     );
 
@@ -85,18 +77,19 @@ export class NoteBlocksAppExtension extends BaseSyncExtension {
 
   repos() {
     return [
-      { repo: NotesBlocksRepository, withSync: true },
-      { repo: BlocksTreeDescriptorsRepository, withSync: true },
-      { repo: BlocksScopesRepository, withSync: true, remote: true },
+      { repo: BlocksScopesRepository, withSync: true },
+      { repo: NoteBlocksRepository, withSync: true },
+      { repo: TextBlocksRepository, withSync: true },
     ];
   }
 
   migrations() {
     return [
-      initNoteBlocksTables,
-      addBlockIdsToNoteBlocksTables,
-      addBlocksTreeDescriptorsTable,
       addBlockScopeTable,
+      createBlocksChildrenTable,
+      createBlocksLinksTable,
+      createNoteBlocksTable,
+      createTextBlocksTable,
     ];
   }
 }

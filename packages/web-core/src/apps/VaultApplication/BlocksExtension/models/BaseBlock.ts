@@ -38,6 +38,13 @@ export class BaseBlock extends Model({
   updatedAt: tProp(types.dateTimestamp),
 }) {
   @computed
+  get isParentLoaded() {
+    if (!this.parentRef) return true; // It means root block
+
+    return this.parentRef.maybeCurrent !== undefined;
+  }
+
+  @computed
   get isRoot() {
     return rootBlockIdCtx.get(this) === this.$modelId;
   }

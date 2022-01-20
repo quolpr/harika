@@ -20,10 +20,7 @@ export type NoteBlockDoc = BaseBlockDoc & {
   dailyNoteDate: number | null;
 };
 
-export type INoteBlockChangeEvent = IDocChange<
-  typeof noteBlocksTable,
-  NoteBlockDoc
->;
+export type INoteChangeEvent = IDocChange<typeof noteBlocksTable, NoteBlockDoc>;
 
 @injectable()
 export class NoteBlocksRepository extends BaseBlockRepository<
@@ -149,5 +146,9 @@ export class NoteBlocksRepository extends BaseBlockRepository<
 
   getTableName() {
     return noteBlocksTable;
+  }
+
+  get docType() {
+    return 'noteBlock';
   }
 }

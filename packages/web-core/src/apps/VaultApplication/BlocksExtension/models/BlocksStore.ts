@@ -15,7 +15,7 @@ import { BlocksRegistry } from './BlocksRegistry';
 
 @model('harika/BlocksExtension/BlocksStore')
 export class BlocksStore extends Model({
-  blocksRegistry: prop<BlocksRegistry>(),
+  blocksRegistry: prop<BlocksRegistry>(() => new BlocksRegistry({})),
 }) {
   hasBlockWithId(id: string) {
     return this.blocksRegistry.hasBlockWithId(id);
@@ -28,6 +28,11 @@ export class BlocksStore extends Model({
   @modelAction
   registerBlock(block: BaseBlock) {
     this.blocksRegistry.registerBlock(block);
+  }
+
+  @modelAction
+  registerBlocks(blocks: BaseBlock[]) {
+    this.blocksRegistry.registerBlocks(blocks);
   }
 
   @withoutUndoAction

@@ -5,13 +5,16 @@ import { NEVER, of, race } from 'rxjs';
 import { timeout, map } from 'rxjs/operators';
 import { LoadingDoneSubjectContext } from '../../contexts';
 import { useNotePath } from '../../contexts/StackedNotesContext';
-import { useCurrentVaultId, useNotesService } from '../../hooks/vaultAppHooks';
+import {
+  useCurrentVaultId,
+  useNoteBlocksService,
+} from '../../hooks/vaultAppHooks';
 
 type IPipeResult = { status: 'found'; id: string } | { status: 'not_found' };
 
 export const useFindNote = (noteId: string) => {
   const vaultId = useCurrentVaultId();
-  const notesService = useNotesService();
+  const notesService = useNoteBlocksService();
 
   const history = useHistory();
 

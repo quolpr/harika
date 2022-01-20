@@ -1,5 +1,5 @@
 import { Container, inject, injectable } from 'inversify';
-import { AnyModel } from 'mobx-keystone';
+import { AnyModel, SnapshotInOf } from 'mobx-keystone';
 import { Class } from 'utility-types';
 import { IMapper } from '../mappers';
 import { BaseSyncRepository } from '../BaseSyncRepository';
@@ -58,14 +58,14 @@ export class SyncConfig {
   onModelChange<Model1 extends AnyModel>(
     models: Class<Model1>[],
     callback: (
-      arg: [CreationDataWithId<Model1>[]],
+      arg: [SnapshotInOf<Model1>[]],
       deletedIds: [SyncModelId<Model1>[]],
     ) => void,
   ): () => void;
   onModelChange<Model1 extends AnyModel, Model2 extends AnyModel>(
     models: [Class<Model1>, Class<Model2>],
     callback: (
-      arg: [CreationDataWithId<Model1>[], CreationDataWithId<Model2>[]],
+      arg: [SnapshotInOf<Model1>[], SnapshotInOf<Model2>[]],
       deletedIds: [SyncModelId<Model1>[], SyncModelId<Model2>[]],
     ) => void,
   ): () => void;
@@ -77,9 +77,9 @@ export class SyncConfig {
     models: [Class<Model1>, Class<Model2>, Class<Model3>],
     callback: (
       arg: [
-        CreationDataWithId<Model1>[],
-        CreationDataWithId<Model2>[],
-        CreationDataWithId<Model3>[],
+        SnapshotInOf<Model1>[],
+        SnapshotInOf<Model2>[],
+        SnapshotInOf<Model3>[],
       ],
       deletedIds: [
         SyncModelId<Model1>[],

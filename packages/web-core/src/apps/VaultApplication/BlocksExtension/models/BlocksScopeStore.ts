@@ -92,7 +92,7 @@ export class BlocksScopeStore extends Model({
   @withoutSyncAction
   @modelAction
   handleModelChanges(
-    scopes: (SnapshotInOf<BlocksScope> & { $modelId: string })[],
+    scopes: SnapshotInOf<BlocksScope>[],
     deletedScopeIds: SyncModelId<BlocksScope>[],
   ) {
     deletedScopeIds.forEach((id) => {
@@ -100,13 +100,13 @@ export class BlocksScopeStore extends Model({
     });
 
     scopes.forEach((scope) => {
-      if (this.blocksScopes[scope.$modelId]) {
+      if (this.blocksScopes[scope.$modelId!]) {
         applySnapshot<BlocksScope>(
-          this.blocksScopes[scope.$modelId],
+          this.blocksScopes[scope.$modelId!],
           scope as any,
         );
       } else {
-        this.blocksScopes[scope.$modelId] = fromSnapshot<BlocksScope>(scope);
+        this.blocksScopes[scope.$modelId!] = fromSnapshot<BlocksScope>(scope);
       }
     });
   }

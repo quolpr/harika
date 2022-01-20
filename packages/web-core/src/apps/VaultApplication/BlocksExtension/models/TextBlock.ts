@@ -1,8 +1,11 @@
 import { ExtendedModel, model, modelAction, tProp, types } from 'mobx-keystone';
+import { syncable } from '../../../../extensions/SyncExtension/mobx-keystone/syncable';
 import { BaseBlock } from './BaseBlock';
 import { TextBlockContent } from './TextBlockContentModel';
 
 export const textBlockModelType = 'harika/BlocksExtension/NoteBlock';
+
+@syncable
 @model(textBlockModelType)
 export class TextBlock extends ExtendedModel(BaseBlock, {
   content: tProp(types.string),

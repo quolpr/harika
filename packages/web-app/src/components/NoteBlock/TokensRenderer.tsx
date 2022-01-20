@@ -14,7 +14,7 @@ import { useDeepMemo } from '../../utils';
 import { NoteBlockRef } from '@harika/web-core/src/lib/blockParser/types';
 import {
   useBlocksScopesService,
-  useNotesService,
+  useNoteBlocksService,
   useVaultService,
 } from '../../hooks/vaultAppHooks';
 import {
@@ -308,7 +308,7 @@ const TokenRenderer = observer(
 
 export const TokensRenderer = observer(
   ({ noteBlock, tokens }: { noteBlock: ScopedBlock; tokens: Token[] }) => {
-    const noteRepo = useNotesService();
+    const noteRepo = useNoteBlocksService();
 
     const linkedNoteIds = useDeepMemo(
       () => [...noteBlock.linkedNoteIds],

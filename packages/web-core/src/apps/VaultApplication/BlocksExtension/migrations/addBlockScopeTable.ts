@@ -8,8 +8,8 @@ const up = async (db: IQueryExecuter) => {
       id varchar(100) PRIMARY KEY,
       collapsedBlockIds TEXT NOT NULL,
       rootBlockId varchar(20) NOT NULL,
-      scopedModelId varchar(50) NOT NULL,
-      scopedModelType varchar(50) NOT NULL
+      scopeId varchar(50) NOT NULL,
+      scopeType varchar(50) NOT NULL
     );
 
     CREATE INDEX IF NOT EXISTS idx_${blocksScopesTable}_noteId ON ${blocksScopesTable}(noteId);
@@ -19,5 +19,5 @@ const up = async (db: IQueryExecuter) => {
 export const addBlockScopeTable: IMigration = {
   up,
   id: 163273329538, // just take current UTC time, with `new Date().getTime()`
-  name: 'initNoteBlocksTables',
+  name: 'addBlockScopeTable',
 };

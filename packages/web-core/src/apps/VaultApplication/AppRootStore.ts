@@ -5,14 +5,12 @@ import {
   syncChangesCtx,
 } from '../../extensions/SyncExtension/mobx-keystone/syncable';
 import { BlocksScopeStore } from './BlocksExtension/models/BlocksScopeStore';
-import { NoteBlocksExtensionStore } from './NoteBlocksExtension/models/NoteBlocksExtensionStore';
-import { NotesStore } from './NotesExtension/models/NotesStore';
+import { BlocksStore } from './BlocksExtension/models/BlocksStore';
 
 @model('harika/VaultAppRootStore')
 export class VaultAppRootStore extends Model({
-  notesStore: prop<NotesStore>(),
+  blocksStore: prop<BlocksStore>(),
   blocksScopeStore: prop<BlocksScopeStore>(),
-  noteBlocksStore: prop<NoteBlocksExtensionStore>(),
 }) {
   onInit() {
     syncChangesCtx.set(this, new Subject<ISyncableModelChange>());

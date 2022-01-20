@@ -19,7 +19,7 @@ export const noteBlockMapper: IMapper<NoteBlockDoc, NoteBlock> = {
       title: doc.title,
       dailyNoteDate: doc.dailyNoteDate ? doc.dailyNoteDate : undefined,
 
-      areChildrenLoaded: false,
+      areChildrenLoaded: true,
 
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt,

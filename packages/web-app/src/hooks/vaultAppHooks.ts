@@ -13,8 +13,8 @@ export const useCurrentVaultId = () => {
   return useContext(CurrentVaultAppContext).applicationId;
 };
 
-export const useNotesService = () => {
-  return useCurrentVaultApp().getNotesService();
+export const useNoteBlocksService = () => {
+  return useCurrentVaultApp().getNoteBlocksService();
 };
 
 export const useVaultService = () => {
@@ -25,8 +25,8 @@ export const useBlocksScopesService = () => {
   return useCurrentVaultApp().getBlocksScopesService();
 };
 
-export const useNoteBlocksService = () => {
-  return useCurrentVaultApp().getNoteBlocksService();
+export const useTextBlocksService = () => {
+  return useCurrentVaultApp().getTextBlocksService();
 };
 
 export const useNotesTreeRegistry = () => {

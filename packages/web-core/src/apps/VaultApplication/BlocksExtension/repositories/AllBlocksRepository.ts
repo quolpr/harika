@@ -1,7 +1,11 @@
 import { DB, IQueryExecuter } from '../../../../extensions/DbExtension/DB';
-import { inject } from 'inversify';
+import { inject, multiInject } from 'inversify';
 import { BaseBlockRepository } from './BaseBlockRepository';
 import sql, { join, raw } from 'sql-template-tag';
+import { SyncConfig } from '../../../../extensions/SyncExtension/serverSynchronizer/SyncConfig';
+import { BLOCK_REPOSITORY } from '../types';
+import { BaseBlock } from '../models/BaseBlock';
+import { ISyncCtx } from '../../../../extensions/SyncExtension/syncCtx';
 
 export const blocksChildrenTable = 'blocksChildren' as const;
 
@@ -28,16 +32,23 @@ export type BaseBlockDoc = {
 };
 
 export class AllBlocksRepository {
+  private blocksReposMap: Record<string, BaseBlockRepository>;
+
   constructor(
     @inject(DB) private db: DB,
-    private blocksRepos: BaseBlockRepository[],
-  ) {}
-
-  get blocksTables(): string[] {
-    return [];
+    @inject(SyncConfig) private syncConfig: SyncConfig,
+    @multiInject(BLOCK_REPOSITORY) private blocksRepos: BaseBlockRepository[],
+  ) {
+    this.blocksReposMap = Object.fromEntries(
+      blocksRepos.map((r) => [r.docType, r]),
+    );
   }
 
-  async getDescendants(ids: string[], e: IQueryExecuter = this.db) {
+  get blocksTables(): string[] {
+    return this.blocksRepos.map((r) => r.getTableName());
+  }
+
+  async getDescendantsWithSelf(ids: string[], e: IQueryExecuter = this.db) {
     const joinTables = this.blocksRepos
       .map((r) => r.getTableName())
       .map(
@@ -47,32 +58,52 @@ export class AllBlocksRepository {
           )}.id = childrenBlockIds.blockId`,
       );
 
-    // TODO: converts with toDoc
-    return await e.getRecords<BaseBlockRow>(sql`
+    return (
+      await e.getRecords<BaseBlockRow>(sql`
       WITH RECURSIVE
         ${this.withDescendants(ids)}
       SELECT * FROM childrenBlockIds
         ${join(joinTables, ' ')}
-    `);
+    `)
+    ).map((r) => this.blocksReposMap[r.type].toDoc(r));
   }
 
-  // async getLinkedBlocksOfBlockId(
-  //   id: string,
-  //   e: IQueryExecuter,
-  // ): Promise<BaseBlockDoc[]> {
-  //   return (
-  //     (
-  //       await e.getRecords<BaseBlockRow>(
-  //         Q.select(`joined.*`)
-  //           .from(noteBlocksNotesTable)
-  //           .leftJoin(`${this.getTableName()} joined`, {
-  //             [`${noteBlocksNotesTable}.noteBlockId`]: `joined.id`,
-  //           })
-  //           .where({ [`${noteBlocksNotesTable}.noteId`]: id }),
-  //       )
-  //     )?.map((res) => this.toDoc(res)) || []
-  //   );
-  // }
+  async getDescendantIds(
+    id: string,
+    e: IQueryExecuter = this.db,
+  ): Promise<{ id: string; type: string }[]> {
+    return [];
+  }
+
+  async getRootIdByBlockId(id: string, e: IQueryExecuter = this.db) {
+    return '';
+  }
+
+  async getLinkedBlockTuplesOfBlocksOfRootBlock(
+    rootBlockId: string,
+    e: IQueryExecuter = this.db,
+  ): Promise<Record<string, { blockId: string; type: string }[]>> {
+    return {};
+  }
+
+  async getLinkedBlocksOfBlocksOfRootBlock(
+    rootBlockId: string,
+    e: IQueryExecuter = this.db,
+  ): Promise<BaseBlockDoc[]> {
+    return [];
+  }
+
+  async bulkUpdate(
+    doc: BaseBlockDoc[],
+    ctx: ISyncCtx,
+    e: IQueryExecuter = this.db,
+  ) {}
+
+  async bulkDelete(
+    ids: { id: string; type: string }[],
+    ctx: ISyncCtx,
+    e: IQueryExecuter = this.db,
+  ) {}
 
   // async getLinksOfNoteId(
   //   id: string,

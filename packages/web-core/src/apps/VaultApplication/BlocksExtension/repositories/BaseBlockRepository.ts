@@ -28,4 +28,6 @@ export abstract class BaseBlockRepository<
 
     return res;
   }
+
+  abstract get docType(): string;
 }

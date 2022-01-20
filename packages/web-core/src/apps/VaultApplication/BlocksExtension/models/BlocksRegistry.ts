@@ -19,6 +19,13 @@ export class BlocksRegistry extends Model({
     this.blocksMap[block.$modelId] = block;
   }
 
+  @modelAction
+  registerBlocks(blocks: BaseBlock[]) {
+    blocks.forEach((block) => {
+      this.blocksMap[block.$modelId] = block;
+    });
+  }
+
   // // We could use selectors instead, but I am afraid that recalculation
   // // would be too expensive
   // @modelAction

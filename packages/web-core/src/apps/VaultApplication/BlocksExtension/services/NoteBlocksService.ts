@@ -94,7 +94,6 @@ export class NoteBlocksService {
   }
 
   findNoteByIds$(ids: string[]) {
-    // TODO: load only not loaded
     return this.dbEventsService
       .liveQuery([noteBlocksTable], async () => {
         const toLoadIds = ids.filter(
@@ -108,7 +107,10 @@ export class NoteBlocksService {
 
         withoutUndo(() => {
           this.blocksStore.handleModelChanges(
-            noteDocs.map((doc) => noteBlockMapper.mapToModelData(doc)),
+            noteDocs.map((doc) => ({
+              ...noteBlockMapper.mapToModelData(doc),
+              areChildrenLoaded: false,
+            })),
             [],
           );
         });
@@ -134,7 +136,12 @@ export class NoteBlocksService {
 
       withoutUndo(() => {
         this.blocksStore.handleModelChanges(
-          [noteBlockMapper.mapToModelData(noteDoc)],
+          [
+            {
+              ...noteBlockMapper.mapToModelData(noteDoc),
+              areChildrenLoaded: false,
+            },
+          ],
           [],
         );
       });
@@ -171,7 +178,12 @@ export class NoteBlocksService {
         return rows.map((row) => {
           withoutUndo(() => {
             this.blocksStore.handleModelChanges(
-              [noteBlockMapper.mapToModelData(row)],
+              [
+                {
+                  ...noteBlockMapper.mapToModelData(row),
+                  areChildrenLoaded: false,
+                },
+              ],
               [],
             );
           });
