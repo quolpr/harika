@@ -1,6 +1,6 @@
 import { IQueryExecuter } from '../../../../extensions/DbExtension/DB';
 import { IMigration } from '../../../../extensions/DbExtension/types';
-import { blocksChildrenTable } from '../../NoteBlocksExtension/repositories/NotesBlocksRepository';
+import { blocksChildrenTable } from '../repositories/AllBlocksRepository';
 
 const up = async (db: IQueryExecuter) => {
   await db.sqlExec(`

@@ -1,11 +1,11 @@
 import { IQueryExecuter } from '../../../../extensions/DbExtension/DB';
 import { IMigration } from '../../../../extensions/DbExtension/types';
+import { childrenBlocksTrigger } from '../helpers/childrenBlocksTrigger';
+import { linkedBlockTrigger } from '../helpers/linkedBlocksTrigger';
 import {
   noteBlocksFTSTable,
   noteBlocksTable,
-} from '../../NotesExtension/repositories/NotesRepository';
-import { childrenBlocksTrigger } from '../helpers/childrenBlocksTrigger';
-import { linkedBlockTrigger } from '../helpers/linkedBlocksTrigger';
+} from '../repositories/NoteBlocksRepostitory';
 
 const up = async (db: IQueryExecuter) => {
   await db.sqlExec(`

@@ -1,4 +1,4 @@
-import { blocksChildrenTable } from '../../NoteBlocksExtension/repositories/NotesBlocksRepository';
+import { blocksChildrenTable } from '../repositories/AllBlocksRepository';
 
 export const childrenBlocksTrigger = (tableName: string) => {
   return `

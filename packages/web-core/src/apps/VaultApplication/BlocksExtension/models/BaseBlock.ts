@@ -9,9 +9,9 @@ import {
   getRefsResolvingTo,
   modelAction,
   detach,
+  createContext,
 } from 'mobx-keystone';
 import { comparer, computed } from 'mobx';
-import { rootBlockIdCtx } from '../../NoteBlocksExtension/models/NoteBlockModel';
 import {
   deepLastRightChildFunc,
   flattenTreeFunc,
@@ -25,6 +25,8 @@ import {
 export const blockRef = rootRef<BaseBlock>(
   'harika/BlocksExtension/BaseBlockRef',
 );
+
+export const rootBlockIdCtx = createContext<string>('');
 
 @model('harika/BlocksExtension/BaseBlock')
 export class BaseBlock extends Model({

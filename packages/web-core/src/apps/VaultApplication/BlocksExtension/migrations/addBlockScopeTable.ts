@@ -7,7 +7,6 @@ const up = async (db: IQueryExecuter) => {
     CREATE TABLE IF NOT EXISTS ${blocksScopesTable} (
       id varchar(100) PRIMARY KEY,
       collapsedBlockIds TEXT NOT NULL,
-      noteId varchar(20) NOT NULL,
       rootBlockId varchar(20) NOT NULL,
       scopedModelId varchar(50) NOT NULL,
       scopedModelType varchar(50) NOT NULL

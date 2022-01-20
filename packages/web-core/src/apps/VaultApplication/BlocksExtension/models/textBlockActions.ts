@@ -3,7 +3,7 @@ import { Optional } from 'utility-types';
 import { generateId } from '../../../../lib/generateId';
 import { blockRef } from './BaseBlock';
 import { BlocksStore } from './BlocksStore';
-import { CollapsableBlock } from './collapsableTree';
+import { CollapsableBlock } from './CollapsableBlock';
 import { TextBlock } from './TextBlock';
 
 export const createTextBlock = standaloneAction(

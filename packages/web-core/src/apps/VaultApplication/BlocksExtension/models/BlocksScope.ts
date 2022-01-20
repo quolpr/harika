@@ -1,63 +1,38 @@
-import { comparer, computed } from 'mobx';
-import { ArraySet, model, Model, modelAction, prop, Ref } from 'mobx-keystone';
+import { computed } from 'mobx';
+import { ArraySet, model, Model, modelAction, prop } from 'mobx-keystone';
 import { syncable } from '../../../../extensions/SyncExtension/mobx-keystone/syncable';
 import { normalizeBlockTree } from '../../../../lib/blockParser/blockUtils';
 import { withoutUndoAction } from '../../../../lib/utils';
-import { BlockModelsRegistry } from '../../NoteBlocksExtension/models/BlockModelsRegistry';
-import { ScopedBlock } from './ScopedBlock';
-import { ScopedBlocksRegistry } from './ScopedBlocksRegistry';
+import { CollapsableBlock } from './CollapsableBlock';
 
-export const blocksScopeType = '@harika/BlocksScope';
+export const blocksScopeType = '@harika/BlocksExtension/BlocksScope';
 
-// TODO: rename scopedModelType to scopeType scopeId
-// cause modelType could be not mobx model type
 // TODO: move selection to separate class
 @syncable
 @model(blocksScopeType)
 export class BlocksScope extends Model({
-  blocksRegistryRef: prop<Ref<BlockModelsRegistry>>(),
   selectionInterval: prop<[string, string] | undefined>(),
   prevSelectionInterval: prop<[string, string] | undefined>(),
   // Is needed to handle when shift+click pressed
   addableSelectionId: prop<string | undefined>(),
 
   collapsedBlockIds: prop<ArraySet<string>>(),
-  rootScopedBlockId: prop<string>(),
+  rootBlockId: prop<string>(),
 
-  scopedModelId: prop<string>(),
-  scopedModelType: prop<string>(),
-
-  noteId: prop<string>(),
+  scopedId: prop<string>(),
+  scopedType: prop<string>(),
 }) {
-  private scopedBlocksRegistry = new ScopedBlocksRegistry();
-
-  @computed({ equals: comparer.shallow })
-  get blocksWithoutParent() {
-    return this.scopedBlocksRegistry.allBlocks.filter((block) => {
-      return (
-        !this.blocksRegistryRef.current.childParentRelations[block.$modelId] &&
-        block.$modelId !== this.rootScopedBlockId
-      );
-    });
-  }
-
-  @computed
-  get rootScopedBlock(): ScopedBlock | undefined {
-    return this.scopedBlocksRegistry.getScopedBlock(this.rootScopedBlockId);
-  }
-
   @computed
   get isSelecting() {
     return this.selectionInterval !== undefined;
   }
 
-  @computed({ equals: comparer.shallow })
-  get selectedIds() {
+  getSelectedBlocks(rootScopedBlock: CollapsableBlock) {
     if (!this.selectionInterval) return [];
 
     const [fromId, toId] = this.selectionInterval;
 
-    const flattenTree = this.rootScopedBlock?.flattenTree;
+    const flattenTree = rootScopedBlock.flattenTree;
 
     if (!flattenTree) return [];
 
@@ -86,14 +61,14 @@ export class BlocksScope extends Model({
       }
     }
 
-    const ids = new Set<string>();
+    const ids = new Set<CollapsableBlock>();
 
     flattenTree.slice(sliceFrom, sliceTo + 1).forEach((block) => {
-      ids.add(block.$modelId);
+      ids.add(block);
 
-      if (block.hasChildren) {
+      if (block.children.length !== 0) {
         block.flattenTree.forEach((child) => {
-          ids.add(child.$modelId);
+          ids.add(child);
         });
       }
     });
@@ -101,20 +76,16 @@ export class BlocksScope extends Model({
     return Array.from(ids);
   }
 
-  getStringTreeToCopy() {
+  getStringTreeToCopy(rootScopedBlock: CollapsableBlock) {
     let str = '';
 
-    this.selectedIds.forEach((id) => {
-      const block = this.scopedBlocksRegistry.getScopedBlock(id);
-
-      str += `${'  '.repeat(block.indent - 1)}- ${block.textContent}\n`;
+    this.getSelectedBlocks(rootScopedBlock).forEach((block) => {
+      str += `${'  '.repeat(
+        block.indent - 1,
+      )}- ${block.originalBlock.toString()}\n`;
     });
 
     return normalizeBlockTree(str);
-  }
-
-  getView(id: string) {
-    return this.scopedBlocksRegistry.getScopedBlock(id);
   }
 
   @withoutUndoAction

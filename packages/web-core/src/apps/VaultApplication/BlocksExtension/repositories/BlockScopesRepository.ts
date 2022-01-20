@@ -6,7 +6,6 @@ export const blocksScopesTable = 'blocksScopes' as const;
 export type BlocksScopesRow = {
   id: string;
   collapsedBlockIds: string;
-  noteId: string;
   scopedModelId: string;
   scopedModelType: string;
   rootBlockId: string;
@@ -15,7 +14,6 @@ export type BlocksScopesRow = {
 export type BlocksScopeDoc = {
   id: string;
   collapsedBlockIds: string[];
-  noteId: string;
   scopedModelId: string;
   scopedModelType: string;
   rootBlockId: string;

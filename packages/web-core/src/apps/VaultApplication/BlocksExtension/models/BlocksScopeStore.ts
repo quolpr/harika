@@ -1,31 +1,28 @@
 import {
+  applySnapshot,
   arraySet,
   detach,
+  fromSnapshot,
   model,
   Model,
   modelAction,
-  ModelCreationData,
   prop,
+  SnapshotInOf,
 } from 'mobx-keystone';
 import { withoutSyncAction } from '../../../../extensions/SyncExtension/mobx-keystone/syncable';
 import { SyncModelId } from '../../../../extensions/SyncExtension/types';
 import { withoutUndoAction } from '../../../../lib/utils';
-import {
-  BlockModelsRegistry,
-  blocksRegistryRef,
-} from '../../NoteBlocksExtension/models/BlockModelsRegistry';
 import { BlocksScope } from './BlocksScope';
 
 export const getScopeKey = (
-  noteId: string,
-  scopedModelId: string,
-  scopedModelType: string,
-  rootBlockViewId: string,
+  scopeId: string,
+  scopeType: string,
+  rootBlock: string,
 ) => {
-  return `${noteId}-${scopedModelType}-${scopedModelId}-${rootBlockViewId}`;
+  return `${scopeType}-${scopeId}-${rootBlock}`;
 };
 
-@model('@harika/BlocksScopeStore')
+@model('@harika/BlocksExtension/BlocksScopeStore')
 export class BlocksScopeStore extends Model({
   blocksScopes: prop<Record<string, BlocksScope>>(() => ({})),
 }) {
@@ -33,7 +30,7 @@ export class BlocksScopeStore extends Model({
   @modelAction
   deleteScopesOfBlocks(blockIds: string[]) {
     Object.values(this.blocksScopes).forEach((scope) => {
-      if (blockIds.includes(scope.rootScopedBlockId)) {
+      if (blockIds.includes(scope.rootBlockId)) {
         detach(scope);
       }
     });
@@ -43,30 +40,21 @@ export class BlocksScopeStore extends Model({
   @modelAction
   getOrCreateScopes(
     args: {
-      noteId: string;
       scopedBy: { $modelId: string; $modelType: string };
       collapsedBlockIds: string[];
-      rootBlockViewId: string;
-      blockModelsRegistry: BlockModelsRegistry;
+      rootBlockId: string;
     }[],
   ) {
     return args.map((arg) => {
       const key = getScopeKey(
-        arg.noteId,
-        arg.scopedBy.$modelType,
         arg.scopedBy.$modelId,
-        arg.rootBlockViewId,
+        arg.scopedBy.$modelType,
+        arg.rootBlockId,
       );
 
       return (
         this.blocksScopes[key] ||
-        this.createScope(
-          arg.noteId,
-          arg.scopedBy,
-          arg.collapsedBlockIds,
-          arg.rootBlockViewId,
-          arg.blockModelsRegistry,
-        )
+        this.createScope(arg.scopedBy, arg.rootBlockId, arg.collapsedBlockIds)
       );
     });
   }
@@ -77,9 +65,8 @@ export class BlocksScopeStore extends Model({
     rootBlockViewId: string,
   ) {
     const key = getScopeKey(
-      noteId,
-      scopedBy.$modelType,
       scopedBy.$modelId,
+      scopedBy.$modelType,
       rootBlockViewId,
     );
 
@@ -91,11 +78,10 @@ export class BlocksScopeStore extends Model({
   }
 
   getScope(
-    noteId: string,
     model: { $modelId: string; $modelType: string },
     rootViewId: string,
   ) {
-    const key = `${noteId}-${model.$modelType}-${model.$modelId}-${rootViewId}`;
+    const key = getScopeKey(model.$modelId, model.$modelType, rootViewId);
 
     if (!this.blocksScopes[key]) return undefined;
 
@@ -106,8 +92,8 @@ export class BlocksScopeStore extends Model({
   @withoutSyncAction
   @modelAction
   handleModelChanges(
-    scopes: (ModelCreationData<BlocksScope> & { $modelId: string })[],
-    [deletedScopeIds]: [SyncModelId<BlocksScope>[]],
+    scopes: (SnapshotInOf<BlocksScope> & { $modelId: string })[],
+    deletedScopeIds: SyncModelId<BlocksScope>[],
   ) {
     deletedScopeIds.forEach((id) => {
       delete this.blocksScopes[id.value];
@@ -115,35 +101,33 @@ export class BlocksScopeStore extends Model({
 
     scopes.forEach((scope) => {
       if (this.blocksScopes[scope.$modelId]) {
-        this.blocksScopes[scope.$modelId].update(scope);
+        applySnapshot<BlocksScope>(
+          this.blocksScopes[scope.$modelId],
+          scope as any,
+        );
       } else {
-        this.blocksScopes[scope.$modelId] = new BlocksScope(scope);
+        this.blocksScopes[scope.$modelId] = fromSnapshot<BlocksScope>(scope);
       }
     });
   }
 
   private createScope(
-    noteId: string,
     scopedBy: { $modelId: string; $modelType: string },
-    collapsedBlockIds: string[],
     rootBlockViewId: string,
-    blockModelsRegistry: BlockModelsRegistry,
+    collapsedBlockIds: string[],
   ) {
     const key = getScopeKey(
-      noteId,
-      scopedBy.$modelType,
       scopedBy.$modelId,
+      scopedBy.$modelType,
       rootBlockViewId,
     );
 
     const blocksScope = new BlocksScope({
       $modelId: key,
-      noteId,
-      rootScopedBlockId: rootBlockViewId,
+      rootBlockId: rootBlockViewId,
       collapsedBlockIds: arraySet(collapsedBlockIds),
-      scopedModelId: scopedBy.$modelId,
-      scopedModelType: scopedBy.$modelType,
-      blocksRegistryRef: blocksRegistryRef(blockModelsRegistry),
+      scopedId: scopedBy.$modelId,
+      scopedType: scopedBy.$modelType,
     });
 
     this.blocksScopes[key] = blocksScope;

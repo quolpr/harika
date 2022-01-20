@@ -38,13 +38,13 @@ export class BlocksStore extends Model({
     deletedBlockIds: SyncModelId<BaseBlock>[],
   ) {
     blocksAttrs.forEach((block) => {
-      if (!this.blocksRegistry.hasBlockWithId(block.$modelId!)) {
-        this.blocksRegistry.registerBlock(fromSnapshot<BaseBlock>(block));
-      } else {
+      if (this.blocksRegistry.hasBlockWithId(block.$modelId!)) {
         applySnapshot<BaseBlock>(
           this.blocksRegistry.getBlockById(block.$modelId!),
           block as any,
         );
+      } else {
+        this.blocksRegistry.registerBlock(fromSnapshot<BaseBlock>(block));
       }
     });
 

@@ -1,4 +1,4 @@
-import { blocksLinksTable } from '../../NoteBlocksExtension/repositories/NotesBlocksRepository';
+import { blocksLinksTable } from '../repositories/BaseBlockRepository';
 
 export const linkedBlockTrigger = (tableName: string) => {
   return `

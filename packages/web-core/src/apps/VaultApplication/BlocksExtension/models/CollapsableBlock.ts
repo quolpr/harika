@@ -39,7 +39,7 @@ export class CollapsableBlock<T extends BaseBlock = BaseBlock> {
 
   @computed
   get isRoot() {
-    return this.scope.rootScopedBlockId === this.originalBlock.$modelId;
+    return this.scope.rootBlockId === this.originalBlock.$modelId;
   }
 
   @computed
@@ -79,6 +79,11 @@ export class CollapsableBlock<T extends BaseBlock = BaseBlock> {
   @computed
   get path(): CollapsableBlock[] {
     return pathFunc(this);
+  }
+
+  @computed
+  get indent() {
+    return this.path.length;
   }
 
   @computed

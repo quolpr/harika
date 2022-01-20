@@ -1,6 +1,6 @@
 import { IQueryExecuter } from '../../../../extensions/DbExtension/DB';
 import { IMigration } from '../../../../extensions/DbExtension/types';
-import { blocksLinksTable } from '../../NoteBlocksExtension/repositories/NotesBlocksRepository';
+import { blocksLinksTable } from '../repositories/BaseBlockRepository';
 
 const up = async (db: IQueryExecuter) => {
   await db.sqlExec(`
