@@ -26,7 +26,7 @@ export const createNote = standaloneAction(
   ) => {
     const noteId = generateId();
     const createdAt = new Date().getTime();
-    const updatedAt = new Date().getTime();
+    const updatedAt = createdAt;
 
     const emptyTextBlock = new TextBlock({
       $modelId: generateId(),

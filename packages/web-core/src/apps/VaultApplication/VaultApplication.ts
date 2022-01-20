@@ -2,7 +2,7 @@ import { BaseApplication } from '../../framework/BaseApplication';
 import { NotesAppExtension } from './NotesExtension/NotesAppExtension';
 import { SyncAppExtension } from '../../extensions/SyncExtension/SyncAppExtension';
 import { DbAppExtension } from '../../extensions/DbExtension/DbAppExtension';
-import { NoteBlocksAppExtension } from './NoteBlocksExtension/NoteBlocksAppExtension';
+import { NoteBlocksAppExtension } from './BlocksExtension/NoteBlocksAppExtension';
 import { VaultAppExtension } from './VaultExtension/VaultAppExtension';
 import { NotesTreeAppExtension } from './NotesTreeExtension/NotesTreeAppExtension';
 import { SpacedRepetitionExtension } from './SpacedRepetitionExtension/SpacedRepetitionExtension';
@@ -16,10 +16,10 @@ import { ImportExportService } from './VaultExtension/services/ImportExportServi
 import { DB_NAME } from '../../extensions/DbExtension/types';
 import { VaultAppRootStore } from './AppRootStore';
 import { BlocksScopeAppExtension } from './BlocksScopeExtension/BlocksScopeAppExtension';
-import { BlocksScopesService } from './BlocksScopeExtension/services/BlocksScopeService';
+import { BlocksScopesService } from './BlocksExtension/services/BlocksScopeService';
 import { NotesStore } from './NotesExtension/models/NotesStore';
 import { registerRootStore } from 'mobx-keystone';
-import { BlocksScopeStore } from './BlocksScopeExtension/models/BlocksScopeStore';
+import { BlocksScopeStore } from './BlocksExtension/models/BlocksScopeStore';
 import { NoteBlocksExtensionStore } from './NoteBlocksExtension/models/NoteBlocksExtensionStore';
 import {
   GET_AUTH_TOKEN,

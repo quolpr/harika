@@ -1,6 +1,7 @@
-import { Model, modelAction, prop } from 'mobx-keystone';
+import { model, Model, modelAction, prop } from 'mobx-keystone';
 import { BaseBlock } from './BaseBlock';
 
+@model('harika/BlocksExtension/BlocksRegistry')
 export class BlocksRegistry extends Model({
   blocksMap: prop<Record<string, BaseBlock>>(() => ({})),
   // fromChildToParentMap: prop<Record<string, string>>(() => ({})),

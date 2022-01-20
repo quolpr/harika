@@ -1,6 +1,7 @@
 import {
   applySnapshot,
   fromSnapshot,
+  model,
   Model,
   modelAction,
   prop,
@@ -12,6 +13,7 @@ import { withoutUndoAction } from '../../../../lib/utils';
 import { BaseBlock } from './BaseBlock';
 import { BlocksRegistry } from './BlocksRegistry';
 
+@model('harika/BlocksExtension/BlocksStore')
 export class BlocksStore extends Model({
   blocksRegistry: prop<BlocksRegistry>(),
 }) {

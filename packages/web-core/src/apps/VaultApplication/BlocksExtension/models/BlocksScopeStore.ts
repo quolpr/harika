@@ -1,7 +1,6 @@
 import {
   arraySet,
   detach,
-  getRootStore,
   model,
   Model,
   modelAction,
@@ -87,35 +86,6 @@ export class BlocksScopeStore extends Model({
     return !!this.blocksScopes[key];
   }
 
-  private createScope(
-    noteId: string,
-    scopedBy: { $modelId: string; $modelType: string },
-    collapsedBlockIds: string[],
-    rootBlockViewId: string,
-    blockModelsRegistry: BlockModelsRegistry,
-  ) {
-    const key = getScopeKey(
-      noteId,
-      scopedBy.$modelType,
-      scopedBy.$modelId,
-      rootBlockViewId,
-    );
-
-    const blocksScope = new BlocksScope({
-      $modelId: key,
-      noteId,
-      rootScopedBlockId: rootBlockViewId,
-      collapsedBlockIds: arraySet(collapsedBlockIds),
-      scopedModelId: scopedBy.$modelId,
-      scopedModelType: scopedBy.$modelType,
-      blocksRegistryRef: blocksRegistryRef(blockModelsRegistry),
-    });
-
-    this.blocksScopes[key] = blocksScope;
-
-    return this.blocksScopes[key];
-  }
-
   getScopeById(id: string) {
     return this.blocksScopes[id];
   }
@@ -150,5 +120,34 @@ export class BlocksScopeStore extends Model({
         this.blocksScopes[scope.$modelId] = new BlocksScope(scope);
       }
     });
+  }
+
+  private createScope(
+    noteId: string,
+    scopedBy: { $modelId: string; $modelType: string },
+    collapsedBlockIds: string[],
+    rootBlockViewId: string,
+    blockModelsRegistry: BlockModelsRegistry,
+  ) {
+    const key = getScopeKey(
+      noteId,
+      scopedBy.$modelType,
+      scopedBy.$modelId,
+      rootBlockViewId,
+    );
+
+    const blocksScope = new BlocksScope({
+      $modelId: key,
+      noteId,
+      rootScopedBlockId: rootBlockViewId,
+      collapsedBlockIds: arraySet(collapsedBlockIds),
+      scopedModelId: scopedBy.$modelId,
+      scopedModelType: scopedBy.$modelType,
+      blocksRegistryRef: blocksRegistryRef(blockModelsRegistry),
+    });
+
+    this.blocksScopes[key] = blocksScope;
+
+    return this.blocksScopes[key];
   }
 }

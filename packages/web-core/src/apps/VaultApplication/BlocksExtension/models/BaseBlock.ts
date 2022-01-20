@@ -15,6 +15,7 @@ import { rootBlockIdCtx } from '../../NoteBlocksExtension/models/NoteBlockModel'
 import {
   deepLastRightChildFunc,
   flattenTreeFunc,
+  getStringTreeFunc,
   leftAndRightFunc,
   leftAndRightSiblingFunc,
   nearestRightToParentFunc,
@@ -150,6 +151,12 @@ export class BaseBlock extends Model({
       }
     })();
 
+    parent.childrenBlocks.forEach((block) => {
+      if (block.orderPosition >= pos) {
+        block.orderPosition++;
+      }
+    });
+
     this.parentRef = blockRef(parent);
     this.orderPosition = newPos;
   }
@@ -190,6 +197,10 @@ export class BaseBlock extends Model({
         this.linkedBlockRefs.push(blockRef(blockId));
       }
     });
+  }
+
+  getStringTree(includeId: boolean, indent: number): string {
+    return getStringTreeFunc(this, includeId, indent);
   }
 
   toString(): string {

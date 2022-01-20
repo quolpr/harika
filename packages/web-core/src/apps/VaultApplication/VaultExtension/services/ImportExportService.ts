@@ -1,19 +1,16 @@
-import {
-  noteBlocksTable,
-  NotesBlocksRepository,
-} from '../../NoteBlocksExtension/repositories/NotesBlocksRepository';
 import type { NoteBlockDoc } from '../../NoteBlocksExtension/repositories/NotesBlocksRepository';
+import { NotesBlocksRepository } from '../../NoteBlocksExtension/repositories/NotesBlocksRepository';
 import {
   BlocksScopesRepository,
   blocksScopesTable,
-} from '../../BlocksScopeExtension/repositories/BlockScopesRepository';
+} from '../../BlocksExtension/repositories/BlockScopesRepository';
 import type { ISyncCtx } from '../../../../extensions/SyncExtension/syncCtx';
 import { omit } from 'lodash-es';
 import { inject, injectable } from 'inversify';
 import {
+  noteBlocksTable,
   NoteDoc,
   NotesRepository,
-  noteBlocksTable,
 } from '../../NotesExtension/repositories/NotesRepository';
 import {
   BlocksTreeDescriptorsRepository,

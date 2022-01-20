@@ -122,3 +122,28 @@ export function leftAndRightFunc<T extends IModel>(
 
   return [left, right];
 }
+
+type ModelForStringTree<K> = K & {
+  $modelId: string;
+  children: ModelForStringTree<K>[];
+  toString(): string;
+  getStringTree(includeId: boolean, indent: number): string;
+  isRoot: boolean;
+};
+export function getStringTreeFunc<T extends IModel>(
+  node: ModelForStringTree<T>,
+  includeId: boolean,
+  indent: number,
+) {
+  let str = node.isRoot
+    ? ''
+    : `${'  '.repeat(indent)}- ${node.toString()}${
+        includeId ? ` [#${node.$modelId}]` : ''
+      }\n`;
+
+  node.children.forEach((node) => {
+    str += node.getStringTree(includeId, node.isRoot ? 0 : indent + 1);
+  });
+
+  return str;
+}

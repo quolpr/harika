@@ -1,5 +1,5 @@
 import { computed } from 'mobx';
-import { ExtendedModel, model, modelAction, tProp, types } from 'mobx-keystone';
+import { ExtendedModel, model, tProp, types } from 'mobx-keystone';
 import { BaseBlock } from './BaseBlock';
 
 export const noteBlockModelType = 'harika/BlocksExtension/NoteBlock';

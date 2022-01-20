@@ -1,6 +1,6 @@
 import { inject, injectable } from 'inversify';
 import { isEqual } from 'lodash-es';
-import { switchMap, distinctUntilChanged, map, of } from 'rxjs';
+import { distinctUntilChanged, map, of, switchMap } from 'rxjs';
 import { withoutSync } from '../../../../extensions/SyncExtension/mobx-keystone/syncable';
 import { NoteBlocksService } from '../../NoteBlocksExtension/services/NoteBlocksService';
 import { BlocksScopeStore, getScopeKey } from '../models/BlocksScopeStore';

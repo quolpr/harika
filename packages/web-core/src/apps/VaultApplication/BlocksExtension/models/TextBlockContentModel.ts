@@ -66,7 +66,7 @@ const astToString = (ast: Token[]): string => {
   );
 };
 
-export class BlockContent {
+export class TextBlockContent {
   // We are debouncing input here to avoid too frequent sync calls with the server + for the better undo/redo
   @observable currentValue = '';
 

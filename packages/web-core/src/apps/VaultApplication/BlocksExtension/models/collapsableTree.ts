@@ -1,9 +1,10 @@
 import { comparer, computed, makeObservable } from 'mobx';
-import { BlocksScope } from '../../BlocksScopeExtension/models/BlocksScope';
+import { BlocksScope } from './BlocksScope';
 import { BaseBlock } from './BaseBlock';
 import {
   deepLastRightChildFunc,
   flattenTreeFunc,
+  getStringTreeFunc,
   leftAndRightFunc,
   leftAndRightSiblingFunc,
   nearestRightToParentFunc,
@@ -27,8 +28,8 @@ export const getCollapsableBlock = (scope: BlocksScope, block: BaseBlock) => {
   return blocks.get(scope)!.get(block)!;
 };
 
-export class CollapsableBlock {
-  constructor(private scope: BlocksScope, public originalBlock: BaseBlock) {
+export class CollapsableBlock<T extends BaseBlock = BaseBlock> {
+  constructor(private scope: BlocksScope, public originalBlock: T) {
     makeObservable(this);
   }
 
@@ -76,7 +77,7 @@ export class CollapsableBlock {
   }
 
   @computed
-  get path() {
+  get path(): CollapsableBlock[] {
     return pathFunc(this);
   }
 
@@ -118,5 +119,102 @@ export class CollapsableBlock {
     right: CollapsableBlock | undefined,
   ] {
     return leftAndRightFunc(this);
+  }
+
+  getStringTree(includeId: boolean, indent: number): string {
+    return getStringTreeFunc(this, includeId, indent);
+  }
+
+  tryMoveLeft() {
+    if (!this.parent) {
+      throw new Error("Can't move root block");
+    }
+
+    const [left] = this.leftAndRight;
+
+    if (!left) return;
+
+    if (!left.parent) {
+      throw new Error("Left couldn't be root block");
+    }
+
+    if (left === this.parent) {
+      // If left block is parent
+
+      this.originalBlock.move(
+        left.parent.originalBlock,
+        left.originalBlock.orderPosition,
+      );
+    } else if (left.parent !== this.parent) {
+      // If left is child of child of child...
+
+      this.originalBlock.move(
+        left.parent.originalBlock,
+        left.originalBlock.orderPosition + 1,
+      );
+    } else {
+      // if same level
+
+      this.originalBlock.move(
+        left.parent.originalBlock,
+        left.originalBlock.orderPosition,
+      );
+    }
+  }
+
+  tryMoveRight() {
+    let [, right] = this.leftAndRightSibling;
+
+    if (!right) {
+      right = this.nearestRightToParent;
+    }
+
+    if (!right) return;
+
+    if (!right.parent) {
+      throw new Error("Right couldn't be root block");
+    }
+
+    if (right.children.length) {
+      this.originalBlock.move(right.originalBlock, 'start');
+    } else {
+      this.originalBlock.move(
+        right.parent.originalBlock,
+        right.originalBlock.orderPosition,
+      );
+    }
+  }
+
+  tryMoveUp() {
+    const [left] = this.leftAndRightSibling;
+
+    // Don't handle such case otherwise current block will be hidden
+    if (left?.children.length !== 0 && left?.isCollapsed) return;
+
+    if (left) {
+      this.originalBlock.move(left.originalBlock, 'end');
+    }
+  }
+
+  tryMoveDown() {
+    const parent = this.parent;
+    const parentOfParent = parent?.parent;
+
+    if (!parent || !parentOfParent) return;
+
+    this.originalBlock.move(
+      parentOfParent.originalBlock,
+      parent.originalBlock.orderPosition + 1,
+    );
+  }
+
+  mergeToLeftAndDelete() {
+    const [left] = this.leftAndRight;
+
+    if (!left) return;
+
+    this.originalBlock.mergeToAndDelete(left.originalBlock);
+
+    return left;
   }
 }
