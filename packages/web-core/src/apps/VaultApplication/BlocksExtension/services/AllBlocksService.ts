@@ -31,18 +31,31 @@ export class AllBlocksService {
     );
   }
 
-  async getBlockById(blockId: string) {
+  getBlockById$(blockId: string, forceReload = false) {
+    return this.getBlockByIds$([blockId], forceReload).pipe(
+      map((blocks) => blocks[0]),
+    );
+  }
+
+  getBlockByIds$(blockIds: string[], forceReload = false) {
+    const blocksMap: Record<string, BaseBlock> = Object.fromEntries(
+      blockIds
+        .map((id) => [id, this.store.getBlockById(id)])
+        .filter(([, block]) => block !== undefined),
+    );
+
+    const notLoadedIds = blockIds.filter((id) => !!blocksMap[id]);
+
+    if (!forceReload && notLoadedIds.length === 0) {
+      return of(Object.values(blocksMap));
+    }
+
     return from(
       this.dbEventsService.liveQuery(
         this.allBlocksRepository.blocksTables,
-        () => this.allBlocksRepository.getRootIdByBlockId(blockId),
+        () => this.allBlocksRepository.getDescendantsWithSelf(blockIds),
       ),
     ).pipe(
-      switchMap((rootBlockId) =>
-        rootBlockId
-          ? this.allBlocksRepository.getDescendantsWithSelf([rootBlockId])
-          : of(undefined),
-      ),
       tap((allBlocks) =>
         allBlocks
           ? this.store.handleModelChanges(
@@ -51,7 +64,7 @@ export class AllBlocksService {
             )
           : undefined,
       ),
-      map(() => this.store.getBlockById(blockId)),
+      map(() => this.store.getBlocksByIds(blockIds)),
       take(1),
     );
   }

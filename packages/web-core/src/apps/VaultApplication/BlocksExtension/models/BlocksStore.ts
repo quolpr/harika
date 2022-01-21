@@ -25,6 +25,10 @@ export class BlocksStore extends Model({
     return this.blocksRegistry.getBlockById(id);
   }
 
+  getBlocksByIds(ids: string[]) {
+    return ids.map((id) => this.getBlockById(id));
+  }
+
   @modelAction
   registerBlock(block: BaseBlock) {
     this.blocksRegistry.registerBlock(block);

@@ -6,6 +6,7 @@ import { DbEventsListenService } from '../../../../extensions/SyncExtension/serv
 import dayjs, { Dayjs } from 'dayjs';
 import {
   distinctUntilChanged,
+  firstValueFrom,
   from,
   interval,
   map,
@@ -70,6 +71,28 @@ export class NoteBlocksService {
     } as ICreationResult<NoteBlock>;
   }
 
+  async getOrCreateDailyNote(date: Dayjs) {
+    const note = await firstValueFrom(this.getDailyNote$(date));
+
+    if (note) {
+      return {
+        status: 'ok',
+        data: note,
+      };
+    }
+
+    const title = date.format('D MMM YYYY');
+    const startOfDate = date.startOf('day');
+
+    return await this.createNote(
+      {
+        title,
+        dailyNoteDate: startOfDate.toDate().getTime(),
+      },
+      { isDaily: true },
+    );
+  }
+
   getTodayDailyNote$() {
     return interval(1000).pipe(
       map(() => dayjs().startOf('day')),
@@ -124,7 +147,7 @@ export class NoteBlocksService {
 
   async getNote(id: string) {
     if (this.blocksStore.getBlockById(id)) {
-      return this.blocksStore.getBlockById(id);
+      return this.blocksStore.getBlockById(id) as NoteBlock;
     } else {
       const noteDoc = await this.noteBlocksRepository.getById(id);
 
@@ -148,7 +171,7 @@ export class NoteBlocksService {
 
       console.debug(`Loading Note#${id} from DB`);
 
-      return this.blocksStore.getBlockById(id);
+      return this.blocksStore.getBlockById(id) as NoteBlock;
     }
   }
 
