@@ -2627,10 +2627,10 @@
     "@sentry/utils" "6.13.3"
     tslib "^1.9.3"
 
-"@sentry/cli@^1.67.2":
-  version "1.68.0"
-  resolved "https://registry.yarnpkg.com/@sentry/cli/-/cli-1.68.0.tgz#2ced8fac67ee01e746a45e8ee45a518d4526937e"
-  integrity sha512-zc7+cxKDqpHLREGJKRH6KwE8fZW8bnczg3OLibJ0czleXoWPdAuOK1Xm1BTMcOnaXfg3VKAh0rI7S1PTdj+SrQ==
+"@sentry/cli@^1.72.0":
+  version "1.72.0"
+  resolved "https://registry.yarnpkg.com/@sentry/cli/-/cli-1.72.0.tgz#840fa18c8d5bde61b6b3c4ec82e425b078e70eb2"
+  integrity sha512-GiVoEarTYjFgHZo5Zjx74HaJWuEhvmvzPhFyC7k5zEK/NWpq3C3SNXrdPQELkEJhLliRNw0pLwRewPpT+vpwlg==
   dependencies:
     https-proxy-agent "^5.0.0"
     mkdirp "^0.5.5"
@@ -10221,17 +10221,12 @@ node-fetch@2.6.1:
   resolved "https://registry.yarnpkg.com/node-fetch/-/node-fetch-2.6.1.tgz#045bd323631f76ed2e2b55573394416b639a0052"
   integrity sha512-V4aYg89jEoVRxRb2fJdAg8FHvI7cEyYdVAh94HH0UIK8oJxUfkjlDQN9RbMx+bEjP7+ggMiFRprSti032Oipxw==
 
-node-fetch@2.6.5:
+node-fetch@2.6.5, node-fetch@^2.6.0, node-fetch@^2.6.1:
   version "2.6.5"
   resolved "https://registry.yarnpkg.com/node-fetch/-/node-fetch-2.6.5.tgz#42735537d7f080a7e5f78b6c549b7146be1742fd"
   integrity sha512-mmlIVHJEu5rnIxgEgez6b9GgWXbkZj5YZ7fx+2r94a2E+Uirsp6HsPTPlomfdHtpt/B0cdKviwkoaM6pyvUOpQ==
   dependencies:
     whatwg-url "^5.0.0"
-
-node-fetch@^2.6.0, node-fetch@^2.6.1:
-  version "2.6.2"
-  resolved "https://registry.yarnpkg.com/node-fetch/-/node-fetch-2.6.2.tgz#986996818b73785e47b1965cc34eb093a1d464d0"
-  integrity sha512-aLoxToI6RfZ+0NOjmWAgn9+LEd30YCkJKFSyWacNZdEKTit/ZMcKjGkTRo8uWEsnIb/hfKecNPEbln02PdWbcA==
 
 node-forge@^0.10.0:
   version "0.10.0"
@@ -12011,7 +12006,7 @@ react-query@^3.27.0:
     broadcast-channel "^3.4.1"
     match-sorter "^6.0.2"
 
-react-refresh@^0.10.0:
+react-refresh@0.10.0, react-refresh@^0.10.0:
   version "0.10.0"
   resolved "https://registry.yarnpkg.com/react-refresh/-/react-refresh-0.10.0.tgz#2f536c9660c0b9b1d500684d9e52a65e7404f7e3"
   integrity sha512-PgidR3wST3dDYKr6b4pJoqQFpPGNKDSCDx4cZoshjXipw3LzO7mG1My2pwEzz2JVkF+inx3xRpDeQLFQGH/hsQ==
