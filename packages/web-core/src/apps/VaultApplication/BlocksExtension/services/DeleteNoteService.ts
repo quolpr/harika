@@ -10,7 +10,7 @@ export class DeleteNoteService {
     @inject(AllBlocksRepository) private allRepo: AllBlocksRepository,
   ) {}
 
-  async deleteNote(noteId: string) {
+  async deleteBlock(noteId: string) {
     const ctx: ISyncCtx = {
       shouldRecordChange: true,
       source: 'inDbChanges',

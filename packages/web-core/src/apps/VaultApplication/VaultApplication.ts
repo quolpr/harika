@@ -2,14 +2,9 @@ import { BaseApplication } from '../../framework/BaseApplication';
 import { SyncAppExtension } from '../../extensions/SyncExtension/SyncAppExtension';
 import { DbAppExtension } from '../../extensions/DbExtension/DbAppExtension';
 import { NoteBlocksAppExtension } from './BlocksExtension/NoteBlocksAppExtension';
-import { VaultAppExtension } from './VaultExtension/VaultAppExtension';
 import { NotesTreeAppExtension } from './NotesTreeExtension/NotesTreeAppExtension';
 import { SpacedRepetitionExtension } from './SpacedRepetitionExtension/SpacedRepetitionExtension';
-import { VaultService } from './VaultExtension/services/VaultService';
 import { NotesTreeRegistry } from './NotesTreeExtension/models/NotesTreeRegistry';
-import { FindNoteOrBlockService } from './VaultExtension/services/FindNoteOrBlockService';
-import { DeleteNoteService } from './VaultExtension/services/DeleteNoteService';
-import { ImportExportService } from './VaultExtension/services/ImportExportService';
 import { DB_NAME } from '../../extensions/DbExtension/types';
 import { VaultAppRootStore } from './AppRootStore';
 import { BlocksScopesService } from './BlocksExtension/services/BlocksScopeService';
@@ -26,6 +21,11 @@ import { BehaviorSubject } from 'rxjs';
 import { BlocksStore } from './BlocksExtension/models/BlocksStore';
 import { NoteBlocksService } from './BlocksExtension/services/NoteBlocksService';
 import { TextBlocksService } from './BlocksExtension/services/TextBlocksService';
+import { FindNoteOrBlockService } from './BlocksExtension/services/FindNoteOrBlockService';
+import { DeleteNoteService } from './BlocksExtension/services/DeleteNoteService';
+import { ImportExportService } from './BlocksExtension/services/ImportExportService';
+import { AllBlocksService } from './BlocksExtension/services/AllBlocksService';
+import { UpdateLinksService } from './BlocksExtension/services/UpdateLinksService';
 
 export class VaultApplication extends BaseApplication {
   constructor(
@@ -45,7 +45,6 @@ export class VaultApplication extends BaseApplication {
       DbAppExtension,
       SyncAppExtension,
       NoteBlocksAppExtension,
-      VaultAppExtension,
       NotesTreeAppExtension,
       SpacedRepetitionExtension,
     ];
@@ -76,16 +75,20 @@ export class VaultApplication extends BaseApplication {
     return this.container.get(VaultAppRootStore);
   }
 
-  getVaultService() {
-    return this.container.get(VaultService);
-  }
-
   getNoteBlocksService() {
     return this.container.get(NoteBlocksService);
   }
 
   getNotesTreeRegistry() {
     return this.container.get(NotesTreeRegistry);
+  }
+
+  getAllBlocksService() {
+    return this.container.get(AllBlocksService);
+  }
+
+  getUpdateLinksService() {
+    return this.container.get(UpdateLinksService);
   }
 
   getTextBlocksService() {
@@ -96,7 +99,7 @@ export class VaultApplication extends BaseApplication {
     return this.container.get(FindNoteOrBlockService);
   }
 
-  getDeleteService() {
+  getDeleteNoteService() {
     return this.container.get(DeleteNoteService);
   }
 

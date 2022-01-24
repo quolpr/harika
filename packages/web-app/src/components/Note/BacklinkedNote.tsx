@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Arrow } from '../Arrow/Arrow';
 import { Link } from 'react-router-dom';
 import type { BlocksScope, NoteModel } from '@harika/web-core';
-import { NoteBlock } from '../NoteBlock/NoteBlock';
+import { TextBlock } from '../NoteBlock/NoteBlock';
 import { NoteBlocksHandlers } from './NoteBlocksHandlers';
 import {
   useHandleNoteClickOrPress,
@@ -40,7 +40,7 @@ const LinkedBlock = observer(
 
         <NoteBlocksHandlers note={note} scope={scope} />
 
-        <NoteBlock noteBlock={rootView} scope={scope} />
+        <TextBlock block={rootView} scope={scope} />
       </div>
     );
   },

@@ -4,7 +4,6 @@ import { BaseBlockRepository } from './BaseBlockRepository';
 import sql, { join, raw } from 'sql-template-tag';
 import { SyncConfig } from '../../../../extensions/SyncExtension/serverSynchronizer/SyncConfig';
 import { BLOCK_REPOSITORY } from '../types';
-import { BaseBlock } from '../models/BaseBlock';
 import { ISyncCtx } from '../../../../extensions/SyncExtension/syncCtx';
 
 export const blocksChildrenTable = 'blocksChildren' as const;

@@ -17,10 +17,6 @@ export const useNoteBlocksService = () => {
   return useCurrentVaultApp().getNoteBlocksService();
 };
 
-export const useVaultService = () => {
-  return useCurrentVaultApp().getVaultService();
-};
-
 export const useBlocksScopesService = () => {
   return useCurrentVaultApp().getBlocksScopesService();
 };
@@ -37,12 +33,20 @@ export const useFindService = () => {
   return useCurrentVaultApp().getFindService();
 };
 
-export const useDeleteService = () => {
-  return useCurrentVaultApp().getDeleteService();
+export const useUpdateLinkService = () => {
+  return useCurrentVaultApp().getUpdateLinksService();
 };
 
 export const useImportExportService = () => {
   return useCurrentVaultApp().getImportExportService();
+};
+
+export const useAllBlocksService = () => {
+  return useCurrentVaultApp().getAllBlocksService();
+};
+
+export const useDeleteBlocksService = () => {
+  return useCurrentVaultApp().getDeleteNoteService();
 };
 
 export const useRootStore = () => {

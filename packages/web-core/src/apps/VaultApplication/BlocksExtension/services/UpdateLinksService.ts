@@ -3,7 +3,7 @@ import { uniq } from 'lodash';
 import { firstValueFrom } from 'rxjs';
 import { filterAst } from '../../../../lib/blockParser/astHelpers';
 import {
-  NoteBlockRef,
+  TextBlockRef,
   NoteRefToken,
   TagToken,
 } from '../../../../lib/blockParser/types';
@@ -78,8 +78,8 @@ export class UpdateLinksService {
       const textBlockIds = (
         filterAst(
           b.contentModel.ast,
-          (t) => t.type === 'noteBlockRef',
-        ) as NoteBlockRef[]
+          (t) => t.type === 'textBlockRef',
+        ) as TextBlockRef[]
       )
         .map((t) => t.blockId)
         .filter((id) => !!id) as string[];

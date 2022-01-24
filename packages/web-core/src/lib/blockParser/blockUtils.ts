@@ -1,11 +1,9 @@
 import { generateId } from '../generateId';
-import { BlockContentModel } from '../../apps/VaultApplication/NoteBlocksExtension/models/BlockContentModel';
 import { parseStringToTree } from './parseStringToTree';
 import type { TreeToken } from './parseStringToTree';
-import type { ScopedBlock } from '../../apps/VaultApplication/BlocksScopeExtension/models/ScopedBlock';
 import { Optional } from 'utility-types';
 import { ModelCreationData } from 'mobx-keystone';
-import { NoteBlockModel } from '../../apps/VaultApplication/NoteBlocksExtension/models/NoteBlockModel';
+import { CollapsableBlock } from '../../apps/VaultApplication/BlocksExtension/models/CollapsableBlock';
 
 export const normalizeBlockTree = (str: string) => {
   const parsed = parseStringToTree(str);
@@ -22,60 +20,54 @@ export const normalizeBlockTree = (str: string) => {
 };
 
 export const addTokensToNoteBlock = (
-  block: ScopedBlock,
+  block: CollapsableBlock,
   tokens: TreeToken[],
-  createBlock: (
-    attrs: Optional<
-      ModelCreationData<NoteBlockModel>,
-      'createdAt' | 'noteId' | 'noteBlockRefs' | 'linkedNoteIds' | 'updatedAt'
-    >,
-    parent: ScopedBlock,
-    pos: number | 'append',
-  ) => ScopedBlock,
-): ScopedBlock[] => {
-  const addedModels: ScopedBlock[] = [];
+): CollapsableBlock[] => {
+  // const addedModels: ScopedBlock[] = [];
 
-  tokens = tokens.map((token) => ({ ...token, indent: token.indent + 1 }));
+  // tokens = tokens.map((token) => ({ ...token, indent: token.indent + 1 }));
 
-  let previousBlock: { model: ScopedBlock; indent: number } | undefined =
-    undefined;
-  let currentPath: { model: ScopedBlock; indent: number }[] = [
-    { model: block, indent: 0 },
-  ];
+  // let previousBlock: { model: ScopedBlock; indent: number } | undefined =
+  //   undefined;
+  // let currentPath: { model: ScopedBlock; indent: number }[] = [
+  //   { model: block, indent: 0 },
+  // ];
 
-  tokens.forEach((token) => {
-    if (previousBlock) {
-      if (token.indent > previousBlock.indent) {
-        currentPath.push(previousBlock);
-      } else if (token.indent < previousBlock.indent) {
-        currentPath = currentPath.filter(
-          (block) => block.indent < token.indent,
-        );
-      }
-    }
+  // tokens.forEach((token) => {
+  //   if (previousBlock) {
+  //     if (token.indent > previousBlock.indent) {
+  //       currentPath.push(previousBlock);
+  //     } else if (token.indent < previousBlock.indent) {
+  //       currentPath = currentPath.filter(
+  //         (block) => block.indent < token.indent,
+  //       );
+  //     }
+  //   }
 
-    const parentBlock = currentPath[currentPath.length - 1];
+  //   const parentBlock = currentPath[currentPath.length - 1];
 
-    const newBlock = createBlock(
-      {
-        $modelId: token.id ? token.id : generateId(),
-        createdAt: new Date().getTime(),
-        updatedAt: new Date().getTime(),
-        noteId: block.noteId,
-        noteBlockRefs: [],
-        linkedNoteIds: [],
-        content: new BlockContentModel({ _value: token.content }),
-      },
-      parentBlock.model,
-      'append',
-    );
+  //   const newBlock = createBlock(
+  //     {
+  //       $modelId: token.id ? token.id : generateId(),
+  //       createdAt: new Date().getTime(),
+  //       updatedAt: new Date().getTime(),
+  //       noteId: block.noteId,
+  //       noteBlockRefs: [],
+  //       linkedNoteIds: [],
+  //       content: new BlockContentModel({ _value: token.content }),
+  //     },
+  //     parentBlock.model,
+  //     'append',
+  //   );
 
-    previousBlock = { model: newBlock, indent: currentPath.length };
+  //   previousBlock = { model: newBlock, indent: currentPath.length };
 
-    addedModels.push(newBlock);
-  });
+  //   addedModels.push(newBlock);
+  // });
 
-  return addedModels;
+  // return addedModels;
+
+  return [];
 };
 
 // export const parseToBlocksTree = (str: string) => {

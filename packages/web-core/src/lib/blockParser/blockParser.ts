@@ -94,7 +94,7 @@ export const parse = (data: string, idGenerator = newIdGenerator): Token[] => {
       alias = alias?.trim();
 
       return { ...t, ref: ref, alias: alias?.length === 0 ? undefined : alias };
-    } else if (t.type === 'noteBlockRef') {
+    } else if (t.type === 'textBlockRef') {
       const matchResult = t.content.match(
         new RegExp(`^~([${dictionary}]{20})$`),
       );

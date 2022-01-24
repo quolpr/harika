@@ -1,7 +1,7 @@
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { useMedia } from 'react-use';
-import { NoteBlock, NoteBlockChildren } from '../NoteBlock/NoteBlock';
+import { TextBlock, NoteBlockChildren } from '../NoteBlock/NoteBlock';
 import { Toolbar } from './Toolbar';
 import { NoteBlocksHandlers } from './NoteBlocksHandlers';
 import type { NoteModel } from '@harika/web-core';
@@ -56,7 +56,7 @@ export const NoteBlocks = observer(({ note }: { note: NoteModel }) => {
         scope.blocksWithoutParent.map((block) => {
           return (
             <React.Fragment key={block.$modelId}>
-              <NoteBlock key={block.$modelId} noteBlock={block} scope={scope} />
+              <TextBlock key={block.$modelId} block={block} scope={scope} />
 
               <div className={noteClass('conflictedActions')}>
                 <button

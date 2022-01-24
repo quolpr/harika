@@ -21,6 +21,12 @@ import { TextBlocksService } from './services/TextBlocksService';
 import { BLOCK_REPOSITORY } from './types';
 import { NoteBlock } from './models/NoteBlock';
 import { TextBlock } from './models/TextBlock';
+import { AllBlocksService } from './services/AllBlocksService';
+import { DeleteNoteService } from './services/DeleteNoteService';
+import { FindNoteOrBlockService } from './services/FindNoteOrBlockService';
+import { ImportExportService } from './services/ImportExportService';
+import { UpdateLinksService } from './services/UpdateLinksService';
+import { UpdateNoteTitleService } from './services/UpdateNoteTitleService';
 
 @injectable()
 export class NoteBlocksAppExtension extends BaseSyncExtension {
@@ -36,6 +42,13 @@ export class NoteBlocksAppExtension extends BaseSyncExtension {
     this.container.bind(BlocksStore).toConstantValue(blocksStore);
     this.container.bind(TextBlocksService).toSelf();
     this.container.bind(NoteBlocksService).toSelf();
+
+    this.container.bind(AllBlocksService).toSelf();
+    this.container.bind(DeleteNoteService).toSelf();
+    this.container.bind(FindNoteOrBlockService).toSelf();
+    this.container.bind(ImportExportService).toSelf();
+    this.container.bind(UpdateLinksService).toSelf();
+    this.container.bind(UpdateNoteTitleService).toSelf();
 
     this.container.bind(BLOCK_REPOSITORY).toConstantValue(scopeStore);
     this.container.bind(BLOCK_REPOSITORY).toConstantValue(blocksStore);

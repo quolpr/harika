@@ -1,48 +1,53 @@
 import { observer } from 'mobx-react-lite';
 import React, { useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import type {
+import {
   NoteRefToken,
   Token,
   TagToken,
-  NoteModel,
-  ScopedBlock,
+  NoteBlock,
+  CollapsableBlock,
+  toggleTodo,
 } from '@harika/web-core';
 import { useObservable, useObservableState } from 'observable-hooks';
-import { of, switchMap } from 'rxjs';
+import { switchMap } from 'rxjs';
 import { useDeepMemo } from '../../utils';
-import { NoteBlockRef } from '@harika/web-core/src/lib/blockParser/types';
+import { TextBlockRef } from '@harika/web-core/src/lib/blockParser/types';
 import {
-  useBlocksScopesService,
   useNoteBlocksService,
-  useVaultService,
+  useUpdateLinkService,
 } from '../../hooks/vaultAppHooks';
 import {
   useHandleNoteClickOrPress,
   useNotePath,
 } from '../../contexts/StackedNotesContext';
+import { TextBlock } from '@harika/web-core';
 
 const NoteRefRenderer = observer(
   ({
     token,
-    noteBlock,
     linkedNotes,
+    collapsableBlock,
   }: {
     token: NoteRefToken;
-    noteBlock: ScopedBlock;
-    linkedNotes: NoteModel[];
+    collapsableBlock: CollapsableBlock<TextBlock>;
+    linkedNotes: NoteBlock[];
   }) => {
-    const noteRepo = useVaultService();
+    const updateLinksService = useUpdateLinkService();
 
     const handleTodoToggle = useCallback(
       (e: React.SyntheticEvent) => {
         e.stopPropagation();
 
-        noteRepo.updateNoteBlockLinks(
-          noteBlock.toggleTodo(token.id).map(({ $modelId }) => $modelId),
+        updateLinksService.updateBlockLinks(
+          toggleTodo(
+            collapsableBlock.originalBlock,
+            collapsableBlock,
+            token.id,
+          ).map(({ $modelId }) => $modelId),
         );
       },
-      [noteBlock, noteRepo, token.id],
+      [collapsableBlock, token.id, updateLinksService],
     );
 
     const note = linkedNotes.find((n) => {
@@ -94,63 +99,70 @@ const NoteRefRenderer = observer(
   },
 );
 const BlockRefRenderer = observer(
-  ({ token, noteBlock }: { token: NoteBlockRef; noteBlock: ScopedBlock }) => {
-    const blocksScopesService = useBlocksScopesService();
+  ({
+    token,
+    collapsableBlock,
+  }: {
+    token: TextBlockRef;
+    collapsableBlock: CollapsableBlock;
+  }) => {
+    // const blocksScopesService = useBlocksScopesService();
 
-    const linkedBlock$ = useObservable(
-      ($inputs) => {
-        return $inputs.pipe(
-          switchMap(([token, modelId]) =>
-            token.blockId
-              ? blocksScopesService.getScopedBlockById$(
-                  token.blockId,
-                  {
-                    $modelId: modelId,
-                    $modelType: 'BlockRef',
-                  },
-                  token.blockId,
-                )
-              : of(undefined),
-          ),
-        );
-      },
-      [token, noteBlock.$modelId],
-    );
+    // const linkedBlock$ = useObservable(
+    //   ($inputs) => {
+    //     return $inputs.pipe(
+    //       switchMap(([token, modelId]) =>
+    //         token.blockId
+    //           ? blocksScopesService.getScopedBlockById$(
+    //               token.blockId,
+    //               {
+    //                 $modelId: modelId,
+    //                 $modelType: 'BlockRef',
+    //               },
+    //               token.blockId,
+    //             )
+    //           : of(undefined),
+    //       ),
+    //     );
+    //   },
+    //   [token, noteBlock.$modelId],
+    // );
 
-    const block = useObservableState(linkedBlock$, undefined);
+    // const block = useObservableState(linkedBlock$, undefined);
 
-    const handleClick = useHandleNoteClickOrPress(block?.noteId, true);
+    // const handleClick = useHandleNoteClickOrPress(block?.noteId, true);
 
-    const handleEnterPress = useCallback(
-      (e: React.KeyboardEvent) => {
-        if (e.key === 'Enter') {
-          handleClick(e);
-        }
-      },
-      [handleClick],
-    );
+    // const handleEnterPress = useCallback(
+    //   (e: React.KeyboardEvent) => {
+    //     if (e.key === 'Enter') {
+    //       handleClick(e);
+    //     }
+    //   },
+    //   [handleClick],
+    // );
 
-    return (
-      <span
-        className="blockRef"
-        onClick={handleClick}
-        role="link"
-        tabIndex={0}
-        data-not-editable
-        onKeyPress={handleEnterPress}
-        data-offset-start={token.offsetStart}
-        data-offset-end={token.offsetEnd}
-      >
-        {block && (
-          <TokensRenderer noteBlock={block} tokens={block.content.ast} />
-        )}
-      </span>
-    );
+    // return (
+    //   <span
+    //     className="blockRef"
+    //     onClick={handleClick}
+    //     role="link"
+    //     tabIndex={0}
+    //     data-not-editable
+    //     onKeyPress={handleEnterPress}
+    //     data-offset-start={token.offsetStart}
+    //     data-offset-end={token.offsetEnd}
+    //   >
+    //     {block && (
+    //       <TokensRenderer noteBlock={block} tokens={block.content.ast} />
+    //     )}
+    //   </span>
+    // );
+    return <span />;
   },
 );
 
 const TagRenderer = observer(
-  ({ token, linkedNotes }: { token: TagToken; linkedNotes: NoteModel[] }) => {
+  ({ token, linkedNotes }: { token: TagToken; linkedNotes: NoteBlock[] }) => {
     const note = linkedNotes.find((n) => {
       return n.title === token.ref;
     });
@@ -179,13 +191,13 @@ const TagRenderer = observer(
 
 const TokenRenderer = observer(
   ({
-    noteBlock,
+    collapsableBlock,
     token,
     linkedNotes,
   }: {
-    noteBlock: ScopedBlock;
+    collapsableBlock: CollapsableBlock<TextBlock>;
     token: Token;
-    linkedNotes: NoteModel[];
+    linkedNotes: NoteBlock[];
   }) => {
     switch (token.type) {
       case 'tag':
@@ -193,27 +205,36 @@ const TokenRenderer = observer(
       case 'noteRef':
         return (
           <NoteRefRenderer
+            collapsableBlock={collapsableBlock}
             token={token}
-            noteBlock={noteBlock}
             linkedNotes={linkedNotes}
           />
         );
       case 'bold':
         return (
           <b>
-            <TokensRenderer noteBlock={noteBlock} tokens={token.content} />
+            <TokensRenderer
+              collapsableBlock={collapsableBlock}
+              tokens={token.content}
+            />
           </b>
         );
       case 'italic':
         return (
           <i>
-            <TokensRenderer noteBlock={noteBlock} tokens={token.content} />
+            <TokensRenderer
+              collapsableBlock={collapsableBlock}
+              tokens={token.content}
+            />
           </i>
         );
       case 'highlight':
         return (
           <mark>
-            <TokensRenderer noteBlock={noteBlock} tokens={token.content} />
+            <TokensRenderer
+              collapsableBlock={collapsableBlock}
+              tokens={token.content}
+            />
           </mark>
         );
       case 'head':
@@ -221,19 +242,28 @@ const TokenRenderer = observer(
           if (token.depth === 3) {
             return (
               <h3 className="text-xl">
-                <TokensRenderer noteBlock={noteBlock} tokens={token.content} />
+                <TokensRenderer
+                  collapsableBlock={collapsableBlock}
+                  tokens={token.content}
+                />
               </h3>
             );
           } else if (token.depth === 2) {
             return (
               <h2 className="text-2xl">
-                <TokensRenderer noteBlock={noteBlock} tokens={token.content} />
+                <TokensRenderer
+                  collapsableBlock={collapsableBlock}
+                  tokens={token.content}
+                />
               </h2>
             );
           } else {
             return (
               <h1 className="text-3xl">
-                <TokensRenderer noteBlock={noteBlock} tokens={token.content} />
+                <TokensRenderer
+                  collapsableBlock={collapsableBlock}
+                  tokens={token.content}
+                />
               </h1>
             );
           }
@@ -295,11 +325,16 @@ const TokenRenderer = observer(
       case 'quote':
         return (
           <blockquote className="quote">
-            <TokensRenderer noteBlock={noteBlock} tokens={token.content} />
+            <TokensRenderer
+              collapsableBlock={collapsableBlock}
+              tokens={token.content}
+            />
           </blockquote>
         );
-      case 'noteBlockRef':
-        return <BlockRefRenderer token={token} noteBlock={noteBlock} />;
+      case 'textBlockRef':
+        return (
+          <BlockRefRenderer token={token} collapsableBlock={collapsableBlock} />
+        );
       default:
         return <span></span>;
     }
@@ -307,12 +342,20 @@ const TokenRenderer = observer(
 );
 
 export const TokensRenderer = observer(
-  ({ noteBlock, tokens }: { noteBlock: ScopedBlock; tokens: Token[] }) => {
+  ({
+    collapsableBlock,
+    tokens,
+  }: {
+    collapsableBlock: CollapsableBlock<TextBlock>;
+    tokens: Token[];
+  }) => {
     const noteRepo = useNoteBlocksService();
 
     const linkedNoteIds = useDeepMemo(
-      () => [...noteBlock.linkedNoteIds],
-      [[...noteBlock.linkedNoteIds]],
+      () => [
+        ...collapsableBlock.originalBlock.linkedBlockRefs.map((r) => r.id),
+      ],
+      [[...collapsableBlock.originalBlock.linkedBlockRefs.map((r) => r.id)]],
     );
 
     const linkedNotes$ = useObservable(
@@ -328,7 +371,7 @@ export const TokensRenderer = observer(
         {tokens.map((token, i) => (
           <TokenRenderer
             key={`${token.offsetStart}${token.offsetEnd}`}
-            noteBlock={noteBlock}
+            collapsableBlock={collapsableBlock}
             token={token}
             linkedNotes={linkedNotes}
           />

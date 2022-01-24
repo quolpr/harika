@@ -116,7 +116,7 @@ export class NoteBlocksService {
     );
   }
 
-  findNoteByIds$(ids: string[]) {
+  findNoteByIds$(ids: string[]): Observable<NoteBlock[]> {
     return this.dbEventsService
       .liveQuery([noteBlocksTable], async () => {
         const toLoadIds = ids.filter(
@@ -139,7 +139,7 @@ export class NoteBlocksService {
         });
 
         return ids
-          .map((id) => this.blocksStore.getBlockById(id))
+          .map((id) => this.blocksStore.getBlockById(id) as NoteBlock)
           .filter((v) => Boolean(v));
       })
       .pipe(distinctUntilChanged((a, b) => isEqual(a, b)));

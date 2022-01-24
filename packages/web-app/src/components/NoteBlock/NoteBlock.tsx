@@ -2,9 +2,8 @@ import React, { useCallback, useRef } from 'react';
 import './styles.css';
 import clsx from 'clsx';
 import { observer } from 'mobx-react-lite';
-import type { BlocksScope, ScopedBlock } from '@harika/web-core';
+import { BlocksScope, CollapsableBlock, TextBlock } from '@harika/web-core';
 import { Arrow } from '../Arrow/Arrow';
-import { computed } from 'mobx';
 import { TokensRenderer } from './TokensRenderer';
 import { useFakeInput } from './BlockEditor/hooks/useFocusHandler';
 import { useCurrentFocusedBlockState } from '../../hooks/useFocusedBlockState';
@@ -19,31 +18,21 @@ export const NoteBlockChildren = observer(
     childBlocks,
     scope,
   }: {
-    parent: ScopedBlock;
-    childBlocks: { id: string; block: ScopedBlock | undefined }[];
+    parent: CollapsableBlock;
+    childBlocks: CollapsableBlock[];
     scope: BlocksScope;
   }) => {
     return childBlocks.length !== 0 ? (
       <>
-        {childBlocks.map(({ block: childNoteBlock, id }) =>
-          childNoteBlock ? (
-            <NoteBlock
-              key={childNoteBlock.$modelId}
-              noteBlock={childNoteBlock}
+        {childBlocks.map((block) =>
+          block.originalBlock instanceof TextBlock ? (
+            <TextBlockComponent
+              key={block.$modelId}
+              block={block as CollapsableBlock<TextBlock>}
               scope={scope}
             />
           ) : (
-            <div className="text-red-500 ml-2 my-2" key={id}>
-              [Broken child node]
-              <button
-                className="ml-1.5 text-gray-200 bg-gray-600 hover:bg-gray-500 rounded px-2 py-0.5"
-                onClick={() => {
-                  parent.removeChildRef(id);
-                }}
-              >
-                Remove it
-              </button>
-            </div>
+            <span>Unknown block</span>
           ),
         )}
       </>
@@ -55,11 +44,11 @@ export const NoteBlockChildren = observer(
 // Moved to separate component for performance reasons
 const NoteBlockBody = observer(
   ({
-    noteBlock,
+    block,
     scope,
     isExpanded,
   }: {
-    noteBlock: ScopedBlock;
+    block: CollapsableBlock<TextBlock>;
     scope: BlocksScope;
     isExpanded: boolean;
   }) => {
@@ -71,15 +60,15 @@ const NoteBlockBody = observer(
 
     const [editState, setEditState] = useCurrentFocusedBlockState(
       scope.$modelId,
-      noteBlock.$modelId,
+      block.$modelId,
     );
     const { isEditing } = editState;
 
     const handleToggle = useCallback(() => {
-      scope.toggleExpand(noteBlock.$modelId);
-    }, [noteBlock.$modelId, scope]);
+      scope.toggleExpand(block.$modelId);
+    }, [block.$modelId, scope]);
 
-    const contentLength = noteBlock.content.currentValue.length;
+    const contentLength = block.originalBlock.contentModel.currentValue.length;
 
     const handleContentClick = useCallback(
       (e: React.MouseEvent<HTMLDivElement>) => {
@@ -133,7 +122,7 @@ const NoteBlockBody = observer(
 
         setEditState({
           scopeId: scope.$modelId,
-          scopedBlockId: noteBlock.$modelId,
+          scopedBlockId: block.$modelId,
           isEditing: true,
           startAt,
         });
@@ -142,7 +131,7 @@ const NoteBlockBody = observer(
         contentLength,
         setEditState,
         scope.$modelId,
-        noteBlock.$modelId,
+        block.$modelId,
         insertFakeInput,
       ],
     );
@@ -151,7 +140,7 @@ const NoteBlockBody = observer(
       if (e.key === 'Enter' && e.target === e.currentTarget) {
         setEditState({
           scopeId: scope.$modelId,
-          scopedBlockId: noteBlock.$modelId,
+          scopedBlockId: block.$modelId,
           isEditing: true,
           startAt: 0,
         });
@@ -160,7 +149,7 @@ const NoteBlockBody = observer(
 
     return (
       <>
-        {noteBlock.notCollapsedChildren.length !== 0 && (
+        {block.childrenBlocks.length !== 0 && (
           <Arrow
             className="note-block__arrow"
             isExpanded={isExpanded}
@@ -182,7 +171,7 @@ const NoteBlockBody = observer(
 
         <BlockEditor
           scope={scope}
-          noteBlock={noteBlock}
+          noteBlock={block}
           insertFakeInput={insertFakeInput}
           releaseFakeInput={releaseFakeInput}
         />
@@ -198,8 +187,8 @@ const NoteBlockBody = observer(
           onKeyPress={handleContentKeyPress}
         >
           <TokensRenderer
-            noteBlock={noteBlock}
-            tokens={noteBlock.content.ast}
+            collapsableBlock={block}
+            tokens={block.originalBlock.contentModel.ast}
           />
         </span>
         {/* </div> */}
@@ -208,19 +197,21 @@ const NoteBlockBody = observer(
   },
 );
 
-export const NoteBlock = observer(
-  ({ noteBlock, scope }: { noteBlock: ScopedBlock; scope: BlocksScope }) => {
-    const isSelected = computed(() => {
-      return scope.selectedIds.includes(noteBlock.$modelId);
-    }).get();
+export const TextBlockComponent = observer(
+  ({ block, scope }: { block: CollapsableBlock; scope: BlocksScope }) => {
+    // const isSelected = computed(() => {
+    //   return scope.selectedIds.includes(noteBlock.$modelId);
+    // }).get();
 
-    const backlinksCount = useBacklinkedBlocksCount(noteBlock.$modelId);
+    const isSelected = false;
+
+    const backlinksCount = useBacklinkedBlocksCount(block.$modelId);
 
     return (
       <div
         className="note-block"
-        data-id={noteBlock.$modelId}
-        data-order={noteBlock.orderPosition}
+        data-id={block.$modelId}
+        data-order={block.originalBlock.orderPosition}
         data-type="note-block"
         data-scope-id={scope.$modelId}
       >
@@ -229,11 +220,15 @@ export const NoteBlock = observer(
             'note-block__body--selected': isSelected,
           })}
         >
-          <NoteBlockBody
-            noteBlock={noteBlock}
-            scope={scope}
-            isExpanded={noteBlock.isExpanded}
-          />
+          {block.originalBlock instanceof TextBlock ? (
+            <NoteBlockBody
+              block={block as CollapsableBlock<TextBlock>}
+              scope={scope}
+              isExpanded={block.isExpanded}
+            />
+          ) : (
+            <span> Unknown block</span>
+          )}
 
           {backlinksCount > 0 && (
             <div className="note-block__linkedBlocksCounter">
@@ -242,15 +237,15 @@ export const NoteBlock = observer(
           )}
         </div>
 
-        {noteBlock.children.length !== 0 && (
+        {block.children.length !== 0 && (
           <div
             className={clsx('note-block__child-blocks', {
               'note-block__child-blocks--selected': isSelected,
             })}
           >
             <NoteBlockChildren
-              parent={noteBlock}
-              childBlocks={noteBlock.withEmptyChildren}
+              parent={block}
+              childBlocks={block.childrenBlocks}
               scope={scope}
             />
           </div>

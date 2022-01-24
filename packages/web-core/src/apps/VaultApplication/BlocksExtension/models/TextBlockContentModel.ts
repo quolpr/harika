@@ -55,7 +55,7 @@ const astToString = (ast: Token[]): string => {
               t.withTrailingEOL ? `\n` : ''
             }`;
 
-          case 'noteBlockRef':
+          case 'textBlockRef':
             return `((${t.content}))`;
 
           default:

@@ -19,9 +19,9 @@ export interface TodoRefToken extends NoteRefToken {
   ref: 'TODO' | 'DONE';
 }
 
-export interface NoteBlockRef extends BaseToken {
+export interface TextBlockRef extends BaseToken {
   id: string;
-  type: 'noteBlockRef';
+  type: 'textBlockRef';
   content: string;
   blockId: string | undefined;
 }
@@ -96,7 +96,7 @@ interface LinkToken extends BaseToken {
 
 export type Token =
   | NoteRefToken
-  | NoteBlockRef
+  | TextBlockRef
   | TagToken
   | BoldToken
   | ItalicToken

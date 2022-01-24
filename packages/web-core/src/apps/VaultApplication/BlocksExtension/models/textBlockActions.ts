@@ -1,9 +1,10 @@
 import { ModelCreationData, standaloneAction } from 'mobx-keystone';
 import { Optional } from 'utility-types';
+import { isTodo } from '../../../../lib/blockParser/astHelpers';
 import { generateId } from '../../../../lib/generateId';
 import { blockRef } from './BaseBlock';
 import { BlocksStore } from './BlocksStore';
-import { CollapsableBlock } from './CollapsableBlock';
+import { CollapsableBlock, getCollapsableBlock } from './CollapsableBlock';
 import { TextBlock } from './TextBlock';
 
 export const createTextBlock = standaloneAction(
@@ -147,5 +148,36 @@ export const handleNewLinePress = standaloneAction(
     }
 
     return { focusStartAt: startAt, focusOn, newBlock };
+  },
+);
+
+export const toggleTodo = standaloneAction(
+  'harika/BlocksExtension/TextBlock/toggleTodo',
+  (
+    textBlock: TextBlock,
+    collapsableBlock: CollapsableBlock,
+    id: string,
+    toggledModels: CollapsableBlock[] = [],
+  ): CollapsableBlock[] => {
+    const token = textBlock.contentModel.getTokenById(id);
+
+    if (!token || !isTodo(token)) return [];
+
+    if (textBlock.contentModel.firstTodoToken?.id === id) {
+      collapsableBlock.children.forEach((block) => {
+        if (!(block.originalBlock instanceof TextBlock)) return;
+
+        const firstTodo = textBlock.contentModel.firstTodoToken;
+
+        if (firstTodo && firstTodo.ref === token.ref)
+          toggleTodo(block.originalBlock, block, firstTodo.id, toggledModels);
+      });
+    }
+
+    textBlock.contentModel.toggleTodo(id);
+
+    toggledModels.push(collapsableBlock);
+
+    return toggledModels;
   },
 );

@@ -1,4 +1,4 @@
-import type { NoteModel } from '@harika/web-core';
+import { NoteBlock } from '@harika/web-core';
 import { useContext, useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { NEVER, of, race } from 'rxjs';
@@ -18,7 +18,7 @@ export const useFindNote = (noteId: string) => {
 
   const history = useHistory();
 
-  const [note, setNote] = useState<NoteModel | undefined>();
+  const [note, setNote] = useState<NoteBlock | undefined>();
   const loadingDoneSubject = useContext(LoadingDoneSubjectContext);
 
   const [isLoading, setIsLoading] = useState<boolean>(true);
