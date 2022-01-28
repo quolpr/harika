@@ -12,7 +12,7 @@ import { useBacklinkedBlocksCount } from '../LinkedBlocksOfBlocksContext';
 
 // IMPORTANT: don't use any global handlers in <NoteBlocksExtensionStore /> (document.addEventListener) cause it is slow down note blocks tree a lot
 
-export const NoteBlockChildren = observer(
+export const BlocksChildren = observer(
   ({
     parent,
     childBlocks,
@@ -42,7 +42,7 @@ export const NoteBlockChildren = observer(
 
 //TODO: fix textarea performance
 // Moved to separate component for performance reasons
-const NoteBlockBody = observer(
+const TextBlockBody = observer(
   ({
     block,
     scope,
@@ -171,7 +171,7 @@ const NoteBlockBody = observer(
 
         <BlockEditor
           scope={scope}
-          noteBlock={block}
+          textBlock={block}
           insertFakeInput={insertFakeInput}
           releaseFakeInput={releaseFakeInput}
         />
@@ -221,7 +221,7 @@ export const TextBlockComponent = observer(
           })}
         >
           {block.originalBlock instanceof TextBlock ? (
-            <NoteBlockBody
+            <TextBlockBody
               block={block as CollapsableBlock<TextBlock>}
               scope={scope}
               isExpanded={block.isExpanded}
@@ -243,7 +243,7 @@ export const TextBlockComponent = observer(
               'note-block__child-blocks--selected': isSelected,
             })}
           >
-            <NoteBlockChildren
+            <BlocksChildren
               parent={block}
               childBlocks={block.childrenBlocks}
               scope={scope}

@@ -1,7 +1,9 @@
-import { AnyModel, SnapshotInOf } from 'mobx-keystone';
+import { AnyModel, ModelData } from 'mobx-keystone';
 type Class<T = any> = new (...args: any[]) => T;
 export type IMapper<Doc = any, Model extends AnyModel = any> = {
-  mapToModelData: (arg: Doc) => SnapshotInOf<Model> & { $modelId: string };
+  mapToModelData: (
+    arg: Doc,
+  ) => ModelData<Model> & { $modelId: string; $modelType: string };
   mapToDoc: (arg: Model) => Doc;
 
   collectionName: string;

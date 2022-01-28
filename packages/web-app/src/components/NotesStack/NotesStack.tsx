@@ -5,7 +5,6 @@ import React, { useCallback, useEffect, useRef } from 'react';
 import { useMedia } from 'react-use';
 import { CurrentNoteContext } from '../../hooks/useCurrentNote';
 import { cn } from '../../utils';
-import { Note } from '../Note/Note';
 import { XIcon } from '@heroicons/react/solid';
 import './styles.css';
 
@@ -18,6 +17,7 @@ import {
   useCloseNote,
   useFocusedStackIdContext,
 } from '../../contexts/StackedNotesContext';
+import { NoteBlockComponent } from '../NoteBlock/NoteBlockComponent';
 
 const notesStackClass = cn('notes-stack');
 
@@ -30,7 +30,7 @@ const SimpleNote = observer(({ stack }: { stack: IStack }) => {
       {note && !isLoading && (
         <CurrentStackContext.Provider value={stack}>
           <CurrentNoteContext.Provider value={note}>
-            <Note note={note} />
+            <NoteBlockComponent note={note} />
           </CurrentNoteContext.Provider>
         </CurrentStackContext.Provider>
       )}
@@ -93,7 +93,7 @@ const NoteStack = observer(
               {isLoading && 'Loading...'}
               {note && !isLoading && (
                 <CurrentNoteContext.Provider value={note}>
-                  <Note note={note} />
+                  <NoteBlockComponent note={note} />
                 </CurrentNoteContext.Provider>
               )}
               {!note && !isLoading && 'NoteModel not found :('}

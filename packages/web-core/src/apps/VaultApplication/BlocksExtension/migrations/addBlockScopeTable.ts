@@ -12,7 +12,7 @@ const up = async (db: IQueryExecuter) => {
       scopeType varchar(50) NOT NULL
     );
 
-    CREATE INDEX IF NOT EXISTS idx_${blocksScopesTable}_noteId ON ${blocksScopesTable}(noteId);
+    CREATE INDEX IF NOT EXISTS idx_${blocksScopesTable}_rootBlockId ON ${blocksScopesTable}(rootBlockId);
   `);
 };
 

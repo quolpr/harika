@@ -27,6 +27,7 @@ import { FindNoteOrBlockService } from './services/FindNoteOrBlockService';
 import { ImportExportService } from './services/ImportExportService';
 import { UpdateLinksService } from './services/UpdateLinksService';
 import { UpdateNoteTitleService } from './services/UpdateNoteTitleService';
+import { AllBlocksRepository } from './repositories/AllBlocksRepository';
 
 @injectable()
 export class NoteBlocksAppExtension extends BaseSyncExtension {
@@ -43,6 +44,7 @@ export class NoteBlocksAppExtension extends BaseSyncExtension {
     this.container.bind(TextBlocksService).toSelf();
     this.container.bind(NoteBlocksService).toSelf();
 
+    this.container.bind(AllBlocksRepository).toSelf();
     this.container.bind(AllBlocksService).toSelf();
     this.container.bind(DeleteNoteService).toSelf();
     this.container.bind(FindNoteOrBlockService).toSelf();
@@ -50,8 +52,12 @@ export class NoteBlocksAppExtension extends BaseSyncExtension {
     this.container.bind(UpdateLinksService).toSelf();
     this.container.bind(UpdateNoteTitleService).toSelf();
 
-    this.container.bind(BLOCK_REPOSITORY).toConstantValue(scopeStore);
-    this.container.bind(BLOCK_REPOSITORY).toConstantValue(blocksStore);
+    this.container
+      .bind(BLOCK_REPOSITORY)
+      .toConstantValue(this.container.get(NoteBlocksRepository));
+    this.container
+      .bind(BLOCK_REPOSITORY)
+      .toConstantValue(this.container.get(TextBlocksRepository));
   }
 
   async initialize() {
@@ -68,9 +74,18 @@ export class NoteBlocksAppExtension extends BaseSyncExtension {
     );
 
     disposes.push(
-      syncConfig.onModelChange([NoteBlock, TextBlock], (attrs, deletedIds) => {
-        blocksStore.handleModelChanges(attrs.flat(), deletedIds.flat());
-      }),
+      syncConfig.onModelChange(
+        [NoteBlock, TextBlock],
+        ([noteBlocks, textBlocks], deletedIds) => {
+          blocksStore.handleModelChanges(
+            [
+              { klass: NoteBlock, datas: noteBlocks },
+              { klass: TextBlock, datas: textBlocks },
+            ],
+            deletedIds.flat(),
+          );
+        },
+      ),
     );
 
     disposes.push(

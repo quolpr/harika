@@ -41,24 +41,20 @@ export const LinkedBlocksOfBlocksProvider: React.FC<{
 }> = ({ noteId, children }) => {
   const noteBlocksService = useNoteBlocksService();
 
-  const links$ = useObservable(
-    (inputs$) => {
-      return inputs$.pipe(
-        switchMap(([noteBlocksService, noteId]) => {
-          return noteBlocksService.getLinkedBlocksOfBlocksOfNote$(noteId);
-        }),
-      );
-    },
-    [noteBlocksService, noteId],
-  );
+  // const links$ = useObservable(
+  //   (inputs$) => {
+  //     return inputs$.pipe(
+  //       switchMap(([noteBlocksService, noteId]) => {
+  //         return noteBlocksService.getLinkedBlocksOfBlocksOfNote$(noteId);
+  //       }),
+  //     );
+  //   },
+  //   [noteBlocksService, noteId],
+  // );
 
-  const links = useObservableState(links$, {});
+  // const links = useObservableState(links$, {});
 
-  return (
-    <LinkedBlocksOfBlocksContext.Provider value={links}>
-      {children}
-    </LinkedBlocksOfBlocksContext.Provider>
-  );
+  return <>{children}</>;
 };
 
 export const useBacklinkedBlocks = (blockId: string) => {

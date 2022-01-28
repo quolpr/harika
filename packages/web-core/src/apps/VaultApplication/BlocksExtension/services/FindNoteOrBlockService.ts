@@ -1,5 +1,6 @@
 import { DB } from '../../../../extensions/DbExtension/DB';
 import { inject, injectable } from 'inversify';
+import { Observable, of } from 'rxjs';
 
 @injectable()
 export class FindNoteOrBlockService {
@@ -7,7 +8,9 @@ export class FindNoteOrBlockService {
     @inject(DB) private db: DB, // private notesRepo: SqlNotesRepository, // private notesBlocksRepo: NotesBlocksRepository,
   ) {}
 
-  find(text: string) {
+  find(
+    text: string,
+  ): { blockId: string; data: string; noteId: string; type: string }[] {
     // text = text.toLowerCase().trim();
 
     // const res = this.db.getRecords<{
@@ -62,47 +65,60 @@ export class FindNoteOrBlockService {
     return [];
   }
 
-  // findNotes(text: string) {
-  //   text = text.toLowerCase().trim();
+  find$(text: string) {
+    return of(this.find(text));
+  }
 
-  //   const res = this.db.getRecords<{
-  //     id: string;
-  //     title: string;
-  //   }>(
-  //     Q.select(
-  //       'id',
-  //       Q.select('title')
-  //         .as('title')
-  //         .from(noteBlocksTable)
-  //         .where(Q(`id = ${noteBlocksFTSTable}.id`)),
-  //     )
-  //       .from(noteBlocksFTSTable)
-  //       .where(Q.like('title', `%${text}%`))
-  //       .orderBy('rank'),
-  //   );
+  findNotes(text: string): { id: string; title: string }[] {
+    //   text = text.toLowerCase().trim();
 
-  //   return res;
-  // }
+    //   const res = this.db.getRecords<{
+    //     id: string;
+    //     title: string;
+    //   }>(
+    //     Q.select(
+    //       'id',
+    //       Q.select('title')
+    //         .as('title')
+    //         .from(noteBlocksTable)
+    //         .where(Q(`id = ${noteBlocksFTSTable}.id`)),
+    //     )
+    //       .from(noteBlocksFTSTable)
+    //       .where(Q.like('title', `%${text}%`))
+    //       .orderBy('rank'),
+    //   );
 
-  // findBlocks(text: string) {
-  //   text = text.toLowerCase().trim();
+    //   return res;
+    return [];
+  }
 
-  //   const res = this.db.getRecords<{
-  //     id: string;
-  //     content: string;
-  //   }>(
-  //     Q.select(
-  //       'id',
-  //       Q.select('content')
-  //         .as('content')
-  //         .from(noteBlocksTable)
-  //         .where(Q(`id = ${noteBlocksFTSTable}.id`)),
-  //     )
-  //       .from(noteBlocksFTSTable)
-  //       .where(Q.like('textContent', `%${text}%`))
-  //       .orderBy('rank'),
-  //   );
+  findNotes$(text: string): Observable<{ id: string; title: string }[]> {
+    return of(this.findNotes(text));
+  }
 
-  //   return res;
-  // }
+  findTextBlocks(text: string): { id: string; content: string }[] {
+    // text = text.toLowerCase().trim();
+
+    // const res = this.db.getRecords<{
+    //   id: string;
+    //   content: string;
+    // }>(
+    //   Q.select(
+    //     'id',
+    //     Q.select('content')
+    //       .as('content')
+    //       .from(noteBlocksTable)
+    //       .where(Q(`id = ${noteBlocksFTSTable}.id`)),
+    //   )
+    //     .from(noteBlocksFTSTable)
+    //     .where(Q.like('textContent', `%${text}%`))
+    //     .orderBy('rank'),
+    // );
+
+    return [];
+  }
+
+  findTextBlocks$(text: string) {
+    return of(this.findTextBlocks(text));
+  }
 }

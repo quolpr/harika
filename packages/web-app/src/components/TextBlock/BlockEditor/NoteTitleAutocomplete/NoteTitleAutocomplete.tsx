@@ -11,7 +11,7 @@ import {
   editorDropdownClass,
   IDropdownItem,
 } from '../EditorDropdown/EditorDropdown';
-import { useVaultService } from '../../../../hooks/vaultAppHooks';
+import { useFindService } from '../../../../hooks/vaultAppHooks';
 
 export type SearchedNote = { id: string; title: string };
 export const noteAutocompleteClass = cn('note-autocomplete');
@@ -31,7 +31,7 @@ export const NoteTitleAutocomplete = React.memo(
     holderRef: MutableRefObject<HTMLDivElement | null>;
     isShownRef: MutableRefObject<boolean>;
   }) => {
-    const vaultService = useVaultService();
+    const findService = useFindService();
 
     const [wasFirstSearchHappened, setWasFirstSearchHappened] = useState(false);
 
@@ -40,15 +40,15 @@ export const NoteTitleAutocomplete = React.memo(
         return $inputs.pipe(
           distinctUntilChanged((a, b) => isEqual(a, b)),
           debounce(() => timer(100)),
-          switchMap(([vaultService, text]) =>
-            text ? vaultService.searchNotesTuples$(text) : [],
+          switchMap(([findService, text]) =>
+            text ? findService.findNotes$(text) : [],
           ),
           tap(() => {
             setWasFirstSearchHappened(true);
           }),
         );
       },
-      [vaultService, value],
+      [findService, value],
     );
 
     const searchResults = useObservableState(searchResult$, []);

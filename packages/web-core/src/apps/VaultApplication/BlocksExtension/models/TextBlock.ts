@@ -3,7 +3,7 @@ import { syncable } from '../../../../extensions/SyncExtension/mobx-keystone/syn
 import { BaseBlock } from './BaseBlock';
 import { TextBlockContent } from './TextBlockContentModel';
 
-export const textBlockModelType = 'harika/BlocksExtension/NoteBlock';
+export const textBlockModelType = 'harika/BlocksExtension/TextBlock';
 
 @syncable
 @model(textBlockModelType)

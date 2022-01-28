@@ -6,7 +6,7 @@ const up = async (db: IQueryExecuter) => {
   await db.sqlExec(`
     CREATE TABLE ${blocksChildrenTable} (
       blockId varchar(20) NOT NULL,
-      parentId varchar(20) NOT NULL
+      parentId varchar(20)
     );
 
     CREATE INDEX IF NOT EXISTS idx_blocks_children_blockId ON ${blocksChildrenTable}(blockId);

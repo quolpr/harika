@@ -16,6 +16,7 @@ const up = async (db: IQueryExecuter) => {
     CREATE TABLE IF NOT EXISTS ${textBlocksTable} (
       id varchar(20) PRIMARY KEY,
       content TEXT NOT NULL,
+      type varchar(10) NOT NULL,
 
       linkedBlockIds TEXT NOT NULL DEFAULT '[]',
 

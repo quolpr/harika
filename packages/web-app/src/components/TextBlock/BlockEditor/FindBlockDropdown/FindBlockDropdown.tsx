@@ -15,7 +15,7 @@ import {
   tap,
   map,
 } from 'rxjs';
-import { useVaultService } from '../../../../hooks/vaultAppHooks';
+import { useFindService } from '../../../../hooks/vaultAppHooks';
 import {
   IDropdownItem,
   editorDropdownClass,
@@ -37,7 +37,7 @@ export const FindBlockDropdown = ({
   holderRef: MutableRefObject<HTMLDivElement | null>;
   isShownRef: MutableRefObject<boolean>;
 }) => {
-  const vaultService = useVaultService();
+  const findService = useFindService();
 
   const [wasFirstSearchHappened, setWasFirstSearchHappened] = useState(false);
 
@@ -46,8 +46,8 @@ export const FindBlockDropdown = ({
       return $inputs.pipe(
         distinctUntilChanged((a, b) => isEqual(a, b)),
         debounce(() => timer(100)),
-        switchMap(([vaultService, text]) =>
-          text ? vaultService.searchBlocksTuples$(text) : [],
+        switchMap(([findService, text]) =>
+          text ? findService.findTextBlocks$(text) : [],
         ),
         map((tuples) => tuples.map((t) => ({ title: t.content, id: t.id }))),
         tap(() => {
@@ -55,7 +55,7 @@ export const FindBlockDropdown = ({
         }),
       );
     },
-    [vaultService, value],
+    [findService, value],
   );
 
   const searchResults = useObservableState(searchResult$, []);

@@ -10,6 +10,8 @@ import {
   modelAction,
   detach,
   createContext,
+  getSnapshot,
+  getParent,
 } from 'mobx-keystone';
 import { comparer, computed } from 'mobx';
 import {
@@ -51,19 +53,18 @@ export class BaseBlock extends Model({
 
   @computed({ equals: comparer.shallow })
   get childrenBlocks(): BaseBlock[] {
-    const backRefs = getRefsResolvingTo(this, blockRef);
+    const backRefs = getRefsResolvingTo(this, blockRef, {
+      updateAllRefsIfNeeded: true,
+    });
 
     const blocks: BaseBlock[] = [];
 
     for (const backRef of backRefs.values()) {
-      if (!backRef.maybeCurrent) continue;
+      const parent = getParent<BaseBlock>(backRef);
 
-      const model = backRef.current;
+      if (!parent || !(parent instanceof BaseBlock)) continue;
 
-      // To be sure that it is not came from linkedBlockRefs
-      if (model.parentRef?.id === this.$modelId) {
-        blocks.push(model);
-      }
+      blocks.push(parent);
     }
 
     return blocks;

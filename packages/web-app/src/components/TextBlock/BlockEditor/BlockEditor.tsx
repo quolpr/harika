@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useRef } from 'react';
 import clsx from 'clsx';
-import { BlocksScope, ScopedBlock } from '@harika/web-core';
+import { BlocksScope, CollapsableBlock, TextBlock } from '@harika/web-core';
 import { TextareaAutosize } from '@material-ui/core';
 import { NoteTitleAutocomplete } from './NoteTitleAutocomplete/NoteTitleAutocomplete';
 import { useCurrentFocusedBlockState } from '../../../hooks/useFocusedBlockState';
@@ -17,23 +17,23 @@ import { FindBlockDropdown } from './FindBlockDropdown/FindBlockDropdown';
 export const BlockEditor = observer(
   ({
     scope,
-    noteBlock,
+    textBlock,
     insertFakeInput,
     releaseFakeInput,
   }: {
-    noteBlock: ScopedBlock;
+    textBlock: CollapsableBlock<TextBlock>;
     scope: BlocksScope;
     insertFakeInput: () => void;
     releaseFakeInput: () => void;
   }) => {
     const [editState] = useCurrentFocusedBlockState(
       scope.$modelId,
-      noteBlock.$modelId,
+      textBlock.$modelId,
     );
 
     const wrapperRef = useRef<HTMLDivElement | null>(null);
     const inputRef = useRef<HTMLTextAreaElement | null>(null);
-    const inputId = `${scope.$modelId}-${noteBlock.$modelId}`;
+    const inputId = `${scope.$modelId}-${textBlock.$modelId}`;
 
     const { isEditing } = editState;
 
@@ -59,14 +59,14 @@ export const BlockEditor = observer(
       caretPos,
     } = useHandleInput(
       scope,
-      noteBlock,
+      textBlock,
       inputRef,
       insertFakeInput,
       releaseFakeInput,
       isAnyDropdownShown,
     );
-    useHandleFocus(editState, noteBlock, inputRef, releaseFakeInput);
-    useUpdateBlockValues(noteBlock, editState);
+    useHandleFocus(editState, textBlock, inputRef, releaseFakeInput);
+    useUpdateBlockValues(textBlock, editState);
     useProvideInputToContext(inputRef, isEditing);
 
     return (
@@ -84,7 +84,7 @@ export const BlockEditor = observer(
           id={inputId}
           ref={inputRef}
           className={clsx('note-block__content', {})}
-          value={noteBlock.content.currentValue}
+          value={textBlock.originalBlock.contentModel.currentValue}
           {...textareaHandlers}
         />
         {noteTitleToSearch !== undefined && (

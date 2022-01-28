@@ -6,12 +6,14 @@ import {
   model,
   Model,
   modelAction,
+  ModelData,
   prop,
   SnapshotInOf,
 } from 'mobx-keystone';
 import { withoutSyncAction } from '../../../../extensions/SyncExtension/mobx-keystone/syncable';
 import { SyncModelId } from '../../../../extensions/SyncExtension/types';
 import { withoutUndoAction } from '../../../../lib/utils';
+import { applyModelData } from './applyModelData';
 import { BlocksScope } from './BlocksScope';
 
 export const getScopeKey = (
@@ -92,7 +94,7 @@ export class BlocksScopeStore extends Model({
   @withoutSyncAction
   @modelAction
   handleModelChanges(
-    scopes: SnapshotInOf<BlocksScope>[],
+    scopes: (ModelData<BlocksScope> & { $modelType: string })[],
     deletedScopeIds: SyncModelId<BlocksScope>[],
   ) {
     deletedScopeIds.forEach((id) => {
@@ -101,12 +103,9 @@ export class BlocksScopeStore extends Model({
 
     scopes.forEach((scope) => {
       if (this.blocksScopes[scope.$modelId!]) {
-        applySnapshot<BlocksScope>(
-          this.blocksScopes[scope.$modelId!],
-          scope as any,
-        );
+        applyModelData(this.blocksScopes[scope.$modelId!], scope);
       } else {
-        this.blocksScopes[scope.$modelId!] = fromSnapshot<BlocksScope>(scope);
+        this.blocksScopes[scope.$modelId!] = new BlocksScope(scope);
       }
     });
   }
@@ -126,8 +125,8 @@ export class BlocksScopeStore extends Model({
       $modelId: key,
       rootBlockId: rootBlockViewId,
       collapsedBlockIds: arraySet(collapsedBlockIds),
-      scopedId: scopedBy.$modelId,
-      scopedType: scopedBy.$modelType,
+      scopeId: scopedBy.$modelId,
+      scopeType: scopedBy.$modelType,
     });
 
     this.blocksScopes[key] = blocksScope;

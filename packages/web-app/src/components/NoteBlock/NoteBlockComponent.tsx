@@ -1,13 +1,20 @@
-import React, { ChangeEvent, useCallback, useRef } from 'react';
+import React, {
+  ChangeEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import './styles.css';
-import { useEffect } from 'react';
-import { useState } from 'react';
 import { observer } from 'mobx-react-lite';
-import { NoteModel } from '@harika/web-core';
 import { useHistory } from 'react-router-dom';
 import { LinkIcon } from '@heroicons/react/solid';
 import { CurrentBlockInputRefContext } from '../../contexts';
-import { NoteBlocks } from './NoteBlocks';
+import {
+  getCollapsableBlock,
+  NoteBlock as NoteBlockModel,
+} from '@harika/web-core';
 import { groupBy } from 'lodash-es';
 import { useObservable, useObservableState } from 'observable-hooks';
 import { map, of, switchMap } from 'rxjs';
@@ -21,28 +28,32 @@ import { useMedia } from 'react-use';
 import { BacklinkedNote } from './BacklinkedNote';
 import {
   useBlocksScopesService,
-  useVaultService,
+  useNoteBlocksService,
+  useUpdateTitleService,
 } from '../../hooks/vaultAppHooks';
 import {
   FocusedBlockState,
   useFocusedBlock,
 } from '../../hooks/useFocusedBlockState';
 import { useNotePath } from '../../contexts/StackedNotesContext';
+import { NoteBlock } from '@harika/web-core';
+import { ChildrenBlocks } from './ChildrenBlocks';
 
 export interface IFocusBlockState {
   focusOnBlockId: string;
 }
 
-const BacklinkedNotes = observer(({ note }: { note: NoteModel }) => {
-  const vaultService = useVaultService();
+const BacklinkedNotes = observer(({ note }: { note: NoteBlockModel }) => {
   const blocksScopesService = useBlocksScopesService();
+  const noteBlocksService = useNoteBlocksService();
 
+  // TODO: data getting looks pretty complex. It will be good to refactor
   const backlinks$ = useObservable(
     ($inputs) => {
       return $inputs.pipe(
         switchMap(([note]) =>
-          vaultService
-            .getLinksOfNote$(note.$modelId)
+          noteBlocksService
+            .getLinkedBlocksOfBlockDescendants$(note.$modelId)
             .pipe(map((noteLinks) => ({ noteLinks: noteLinks, note }))),
         ),
         switchMap(({ noteLinks, note }) =>
@@ -50,10 +61,9 @@ const BacklinkedNotes = observer(({ note }: { note: NoteModel }) => {
             ? blocksScopesService
                 .getBlocksScopes$(
                   noteLinks.flatMap((linkedNote) =>
-                    linkedNote.linkedBlockIds.map((blockId) => ({
-                      noteId: linkedNote.note.$modelId,
+                    linkedNote.blocks.map((block) => ({
                       scopedBy: note,
-                      rootBlockViewId: blockId,
+                      rootBlockId: block.$modelId,
                     })),
                   ),
                 )
@@ -87,6 +97,26 @@ const BacklinkedNotes = observer(({ note }: { note: NoteModel }) => {
     referencesCount: 0,
   });
 
+  const linksBlocksWithScope = useMemo(
+    () =>
+      backlinks.noteLinks.map((link) => ({
+        note: link.note,
+        scopesWithBlocks: link.blocks.flatMap((rootBlock) => {
+          const scopes = backlinks.groupedScopes[link.note.$modelId];
+          const scope = scopes.find(
+            (sc) => sc.rootBlockId === rootBlock.$modelId,
+          );
+          if (!scope) return [];
+
+          return {
+            scope,
+            rootBlock: getCollapsableBlock(scope, rootBlock),
+          };
+        }),
+      })),
+    [backlinks.groupedScopes, backlinks.noteLinks],
+  );
+
   return (
     <>
       {backlinks.areLoaded ? (
@@ -101,26 +131,26 @@ const BacklinkedNotes = observer(({ note }: { note: NoteModel }) => {
         </div>
       )}
 
-      {backlinks.areLoaded &&
-        backlinks.noteLinks.map((link) => (
-          <BacklinkedNote
-            key={link.note.$modelId}
-            note={link.note}
-            scopes={backlinks.groupedScopes[link.note.$modelId]}
-          />
-        ))}
+      {linksBlocksWithScope.map((link) => (
+        <BacklinkedNote
+          key={link.note.$modelId}
+          note={link.note}
+          scopesWithBlocks={link.scopesWithBlocks}
+        />
+      ))}
     </>
   );
 });
 
 const noteClass = bem('note');
 
-const NoteBody = observer(({ note }: { note: NoteModel }) => {
+const NoteBody = observer(({ note }: { note: NoteBlock }) => {
   const isWide = useMedia('(min-width: 768px)');
   const focusedBlock = useFocusedBlock();
-  const noteRepo = useVaultService();
   const history = useHistory<IFocusBlockState>();
   const focusOnBlockId = (history.location.state || {}).focusOnBlockId;
+  const updateTitleService = useUpdateTitleService();
+  const noteBlocksService = useNoteBlocksService();
 
   const [noteTitle, setNoteTitle] = useState(note.title);
 
@@ -131,7 +161,10 @@ const NoteBody = observer(({ note }: { note: NoteModel }) => {
   const changeTitle = useCallback(async () => {
     if (note.title === noteTitle) return;
 
-    const result = await noteRepo.updateNoteTitle(note.$modelId, noteTitle);
+    const result = await updateTitleService.updateNoteTitle(
+      note.$modelId,
+      noteTitle,
+    );
 
     if (result === 'exists') {
       alert(
@@ -140,7 +173,7 @@ const NoteBody = observer(({ note }: { note: NoteModel }) => {
 
       setNoteTitle(note.title);
     }
-  }, [note, noteRepo, noteTitle]);
+  }, [note.$modelId, note.title, noteTitle, updateTitleService]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -177,9 +210,11 @@ const NoteBody = observer(({ note }: { note: NoteModel }) => {
 
       const result = await (async () => {
         if (direction === 'next') {
-          return await noteRepo.getOrCreateDailyNote(noteDate.add(1, 'day'));
+          return await noteBlocksService.getOrCreateDailyNote(
+            noteDate.add(1, 'day'),
+          );
         } else {
-          return await noteRepo.getOrCreateDailyNote(
+          return await noteBlocksService.getOrCreateDailyNote(
             noteDate.subtract(1, 'day'),
           );
         }
@@ -194,7 +229,7 @@ const NoteBody = observer(({ note }: { note: NoteModel }) => {
         );
       }
     },
-    [history, note.$modelId, note.dailyNoteDate, notePath, noteRepo],
+    [history, note.$modelId, note.dailyNoteDate, noteBlocksService, notePath],
   );
 
   return (
@@ -239,7 +274,7 @@ const NoteBody = observer(({ note }: { note: NoteModel }) => {
         )}
       </h2>
 
-      <NoteBlocks note={note} />
+      <ChildrenBlocks note={note} />
 
       <BacklinkedNotes note={note} />
     </div>
@@ -247,12 +282,14 @@ const NoteBody = observer(({ note }: { note: NoteModel }) => {
 });
 
 // Performance optimization here with context and separate component
-export const Note: React.FC<{ note: NoteModel }> = React.memo(({ note }) => {
-  const currentBlockInputRef = useRef<HTMLTextAreaElement>(null);
+export const NoteBlockComponent: React.FC<{ note: NoteBlock }> = React.memo(
+  ({ note }) => {
+    const currentBlockInputRef = useRef<HTMLTextAreaElement>(null);
 
-  return (
-    <CurrentBlockInputRefContext.Provider value={currentBlockInputRef}>
-      <NoteBody note={note} />
-    </CurrentBlockInputRefContext.Provider>
-  );
-});
+    return (
+      <CurrentBlockInputRefContext.Provider value={currentBlockInputRef}>
+        <NoteBody note={note} />
+      </CurrentBlockInputRefContext.Provider>
+    );
+  },
+);

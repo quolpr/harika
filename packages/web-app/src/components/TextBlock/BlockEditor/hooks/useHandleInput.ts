@@ -1,4 +1,10 @@
-import { BlocksScope, ScopedBlock, parseStringToTree } from '@harika/web-core';
+import {
+  BlocksScope,
+  CollapsableBlock,
+  handleNewLinePress,
+  parseStringToTree,
+  TextBlock,
+} from '@harika/web-core';
 import { RefObject, useCallback, useContext, useState } from 'react';
 import { ShiftPressedContext } from '../../../../contexts/ShiftPressedContext';
 import { useCurrentFocusedBlockState } from '../../../../hooks/useFocusedBlockState';
@@ -8,7 +14,7 @@ import { getTokensAtCursor } from '../../utils';
 import { Pos, position } from 'caret-pos';
 import dayjs from 'dayjs';
 import { ICommand } from '../EditorCommandsDropdown/EditorCommandsDropdown';
-import { useVaultService } from '../../../../hooks/vaultAppHooks';
+import { useBlocksStore } from '../../../../hooks/vaultAppHooks';
 
 const symmetricCommands: { [P in ICommand['id']]?: string } = {
   blockRef: '(())',
@@ -23,12 +29,14 @@ const symmetricCommands: { [P in ICommand['id']]?: string } = {
 
 export const useHandleInput = (
   scope: BlocksScope,
-  block: ScopedBlock,
+  block: CollapsableBlock<TextBlock>,
   inputRef: RefObject<HTMLTextAreaElement | null>,
   insertFakeInput: () => void,
   releaseFakeInput: () => void,
   isAnyDropdownShown: () => boolean,
 ) => {
+  const blocksStore = useBlocksStore();
+
   const [caretPos, setCaretPos] = useState<Pos | undefined>();
 
   const [, setEditState] = useCurrentFocusedBlockState(
@@ -50,8 +58,6 @@ export const useHandleInput = (
   const [commandToSearchStartPos, setCommandToSearchStartPos] = useState<
     number | undefined
   >(undefined);
-
-  const vaultService = useVaultService();
 
   const handleKeyPress = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -75,7 +81,11 @@ export const useHandleInput = (
 
         e.preventDefault();
 
-        const { focusOn, focusStartAt } = block.handleEnterPress(start);
+        const { focusOn, focusStartAt } = handleNewLinePress(
+          blocksStore,
+          block,
+          start,
+        );
 
         // New blockView is still not available in DOM,
         // so lets insert fake input near current block
@@ -94,6 +104,7 @@ export const useHandleInput = (
     },
     [
       isAnyDropdownShown,
+      blocksStore,
       block,
       insertFakeInput,
       releaseFakeInput,
@@ -104,7 +115,7 @@ export const useHandleInput = (
 
   const handleKeyDown = useCallback(
     async (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      const content = block.content.currentValue;
+      const content = block.originalBlock.contentModel.currentValue;
       const start = e.currentTarget.selectionStart;
       const end = e.currentTarget.selectionEnd;
 
@@ -141,15 +152,15 @@ export const useHandleInput = (
 
           const mergedTo = block.mergeToLeftAndDelete();
 
-          if (mergedTo) {
+          if (mergedTo && mergedTo.originalBlock instanceof TextBlock) {
             insertFakeInput();
 
             setEditState({
               scopeId: scope.$modelId,
               scopedBlockId: mergedTo.$modelId,
               startAt:
-                mergedTo.content.currentValue.length -
-                block.content.currentValue.length,
+                mergedTo.originalBlock.contentModel.currentValue.length -
+                block.originalBlock.contentModel.currentValue.length,
               isEditing: true,
             });
           }
@@ -164,7 +175,7 @@ export const useHandleInput = (
             startAt: start,
             isEditing: true,
           });
-          block.moveUp();
+          block.tryMoveUp();
         }
       } else if (e.key === 'Tab' && e.shiftKey) {
         e.preventDefault();
@@ -175,15 +186,15 @@ export const useHandleInput = (
           startAt: start,
           isEditing: true,
         });
-        block.moveDown();
+        block.tryMoveDown();
       } else if (e.key === 'ArrowUp' && e.shiftKey) {
         e.preventDefault();
 
-        if (!isAnyDropdownShown()) block.moveLeft();
+        if (!isAnyDropdownShown()) block.tryMoveLeft();
       } else if (e.key === 'ArrowDown' && e.shiftKey) {
         e.preventDefault();
 
-        if (!isAnyDropdownShown()) block.moveRight();
+        if (!isAnyDropdownShown()) block.tryMoveRight();
       } else if (e.key === '[') {
         e.preventDefault();
 
@@ -221,17 +232,20 @@ export const useHandleInput = (
           requestAnimationFrame(() => {
             const newStart = target.selectionStart;
 
-            if (newStart === block.content.currentValue.length) {
+            if (
+              newStart === block.originalBlock.contentModel.currentValue.length
+            ) {
               const [, right] = block.leftAndRight;
 
-              if (right) {
+              if (right && right.originalBlock instanceof TextBlock) {
                 setEditState({
                   scopeId: scope.$modelId,
                   scopedBlockId: right.$modelId,
                   isEditing: true,
                   startAt:
-                    start === block.content.currentValue.length
-                      ? right.content.currentValue.length
+                    start ===
+                    block.originalBlock.contentModel.currentValue.length
+                      ? right.originalBlock.contentModel.currentValue.length
                       : start,
                 });
               }
@@ -253,18 +267,21 @@ export const useHandleInput = (
       const end = e.currentTarget.selectionEnd;
 
       if (start === end) {
-        const firstToken = getTokensAtCursor(start, block.content.ast)[0];
+        const firstToken = getTokensAtCursor(
+          start,
+          block.originalBlock.contentModel.ast,
+        )[0];
 
         if (firstToken?.type !== 'noteRef' && firstToken?.type !== 'tag') {
           setNoteTitleToSearch(undefined);
         }
 
-        if (firstToken?.type !== 'noteBlockRef') {
+        if (firstToken?.type !== 'textBlockRef') {
           setBlockToSearch(undefined);
         }
       }
     },
-    [block.content.ast],
+    [block.originalBlock.contentModel.ast],
   );
 
   // const [isShiftPressed] = useKeyPress((e) => e.shiftKey);
@@ -287,43 +304,39 @@ export const useHandleInput = (
 
       e.preventDefault();
 
-      const injectedBlocks = scope.injectNewTreeTokens(block, parsedToTree);
+      // const injectedBlocks = scope.injectNewTreeTokens(block, parsedToTree);
 
-      const ids = injectedBlocks.map(({ $modelId }) => $modelId);
-      vaultService.updateNoteBlockLinks(ids);
-      vaultService.updateBlockBlockLinks(ids);
+      // const ids = injectedBlocks.map(({ $modelId }) => $modelId);
+      // vaultService.updateNoteBlockLinks(ids);
+      // vaultService.updateBlockBlockLinks(ids);
 
-      if (injectedBlocks[0]) {
-        setEditState({
-          scopeId: scope.$modelId,
-          scopedBlockId: injectedBlocks[0].$modelId,
-          isEditing: true,
-        });
-      }
+      // if (injectedBlocks[0]) {
+      //   setEditState({
+      //     scopeId: scope.$modelId,
+      //     scopedBlockId: injectedBlocks[0].$modelId,
+      //     isEditing: true,
+      //   });
+      // }
     },
-    [
-      handleCaretChange,
-      isShiftPressedRef,
-      scope,
-      block,
-      vaultService,
-      setEditState,
-    ],
+    [handleCaretChange, isShiftPressedRef],
   );
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-      block.content.update(e.target.value);
+      block.originalBlock.contentModel.update(e.target.value);
 
       const start = e.currentTarget.selectionStart;
       const end = e.currentTarget.selectionEnd;
 
       if (start === end) {
-        const firstToken = getTokensAtCursor(start, block.content.ast)[0];
+        const firstToken = getTokensAtCursor(
+          start,
+          block.originalBlock.contentModel.ast,
+        )[0];
 
         if (firstToken?.type === 'noteRef' || firstToken?.type === 'tag') {
           setNoteTitleToSearch(firstToken.ref);
-        } else if (firstToken?.type === 'noteBlockRef') {
+        } else if (firstToken?.type === 'textBlockRef') {
           if (!firstToken.blockId) {
             setBlockToSearch(firstToken.content);
           } else {
@@ -335,7 +348,9 @@ export const useHandleInput = (
         setBlockToSearch(undefined);
       }
 
-      const splited = block.content.currentValue.slice(0, end).split('/');
+      const splited = block.originalBlock.contentModel.currentValue
+        .slice(0, end)
+        .split('/');
 
       if (splited.length >= 2) {
         setCommandToSearch(splited[splited.length - 1]);
@@ -360,9 +375,12 @@ export const useHandleInput = (
       if (!inputRef.current) return;
       const input = inputRef.current;
       const start = input.selectionStart;
-      const firstToken = getTokensAtCursor(start, block.content.ast)[0];
+      const firstToken = getTokensAtCursor(
+        start,
+        block.originalBlock.contentModel.ast,
+      )[0];
 
-      if (firstToken?.type === 'noteBlockRef') {
+      if (firstToken?.type === 'textBlockRef') {
         const toInsert = `((~${res.id})) `;
 
         insertText(input, toInsert, toInsert.length, {
@@ -375,7 +393,7 @@ export const useHandleInput = (
 
       setBlockToSearch(undefined);
     },
-    [block.content.ast, inputRef],
+    [block.originalBlock.contentModel.ast, inputRef],
   );
 
   const handleSearchSelect = useCallback(
@@ -385,7 +403,10 @@ export const useHandleInput = (
 
       const start = input.selectionStart;
 
-      const firstToken = getTokensAtCursor(start, block.content.ast)[0];
+      const firstToken = getTokensAtCursor(
+        start,
+        block.originalBlock.contentModel.ast,
+      )[0];
 
       if (firstToken?.type === 'noteRef') {
         const alias = firstToken.alias ? ` | ${firstToken.alias}` : '';
@@ -410,7 +431,7 @@ export const useHandleInput = (
 
       setNoteTitleToSearch(undefined);
     },
-    [inputRef, block.content.ast],
+    [inputRef],
   );
 
   const handleCommandSelect = useCallback(

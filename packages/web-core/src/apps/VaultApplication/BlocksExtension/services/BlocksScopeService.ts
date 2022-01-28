@@ -34,8 +34,8 @@ export class BlocksScopesService {
         const argsWithKey = args.map((arg) => ({
           ...arg,
           key: getScopeKey(
-            arg.scopedBy.$modelType,
             arg.scopedBy.$modelId,
+            arg.scopedBy.$modelType,
             arg.rootBlockId,
           ),
         }));
@@ -45,8 +45,8 @@ export class BlocksScopesService {
             await this.blocksScopesRepo.getByIds(
               args.map((arg) =>
                 getScopeKey(
-                  arg.scopedBy.$modelType,
                   arg.scopedBy.$modelId,
+                  arg.scopedBy.$modelType,
                   arg.rootBlockId,
                 ),
               ),

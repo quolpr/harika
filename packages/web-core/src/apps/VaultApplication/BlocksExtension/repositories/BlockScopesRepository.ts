@@ -6,16 +6,16 @@ export const blocksScopesTable = 'blocksScopes' as const;
 export type BlocksScopesRow = {
   id: string;
   collapsedBlockIds: string;
-  scopedModelId: string;
-  scopedModelType: string;
+  scopeId: string;
+  scopeType: string;
   rootBlockId: string;
 };
 
 export type BlocksScopeDoc = {
   id: string;
   collapsedBlockIds: string[];
-  scopedModelId: string;
-  scopedModelType: string;
+  scopeId: string;
+  scopeType: string;
   rootBlockId: string;
 };
 

@@ -1,7 +1,11 @@
 import { observer } from 'mobx-react-lite';
 import React, { useCallback, useContext, useEffect, useRef } from 'react';
 import { cn, insertText } from '../../utils';
-import type { BlocksScope } from '@harika/web-core';
+import {
+  BlocksScope,
+  CollapsableBlock,
+  getCollapsableBlock,
+} from '@harika/web-core';
 import {
   ArrowDropDown,
   ArrowDropUp,
@@ -38,9 +42,12 @@ export const Toolbar = observer(({ scope }: { scope: BlocksScope }) => {
     }, 0);
   }, [currentBlockInputRef]);
 
-  const currentBlock = focusedBlock.state?.scopedBlockId
-    ? scope.getView(focusedBlock.state?.scopedBlockId)
-    : undefined;
+  // const currentBlock = focusedBlock.state?.scopedBlockId
+  //   ? getCollapsableBlock(scope, focusedBlock.state?.scopedBlockId)
+  //   : undefined;
+  const currentBlock: CollapsableBlock | undefined = undefined as
+    | CollapsableBlock
+    | undefined;
 
   const handleTodoPress = useCallback(
     (e: React.MouseEvent) => {
@@ -87,7 +94,7 @@ export const Toolbar = observer(({ scope }: { scope: BlocksScope }) => {
 
       if (!currentBlock) return;
 
-      currentBlock.moveUp();
+      currentBlock.tryMoveUp();
     },
     [currentBlock],
   );
@@ -98,7 +105,7 @@ export const Toolbar = observer(({ scope }: { scope: BlocksScope }) => {
 
       if (!currentBlock) return;
 
-      currentBlock.moveDown();
+      currentBlock.tryMoveDown();
     },
     [currentBlock],
   );
@@ -109,7 +116,7 @@ export const Toolbar = observer(({ scope }: { scope: BlocksScope }) => {
 
       if (!currentBlock) return;
 
-      currentBlock.moveLeft();
+      currentBlock.tryMoveLeft();
 
       scrollToInput();
     },
@@ -122,7 +129,7 @@ export const Toolbar = observer(({ scope }: { scope: BlocksScope }) => {
 
       if (!currentBlock) return;
 
-      currentBlock.moveRight();
+      currentBlock.tryMoveRight();
 
       scrollToInput();
     },

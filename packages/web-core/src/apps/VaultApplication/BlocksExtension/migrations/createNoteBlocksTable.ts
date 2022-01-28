@@ -13,10 +13,11 @@ const up = async (db: IQueryExecuter) => {
       id varchar(20) PRIMARY KEY,
       title varchar(255) NOT NULL,
       dailyNoteDate INTEGER,
+      type varchar(10) NOT NULL,
 
       linkedBlockIds TEXT NOT NULL DEFAULT '[]',
 
-      parentId varchar(20) NOT NULL,
+      parentId varchar(20),
       orderPosition INTEGER NOT NULL,
 
       updatedAt INTEGER NOT NULL,

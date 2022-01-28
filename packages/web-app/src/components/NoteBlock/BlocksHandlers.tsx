@@ -1,8 +1,8 @@
-import { NoteModel, BlocksScope } from '@harika/web-core';
+import { BlocksScope, CollapsableBlock, NoteBlock } from '@harika/web-core';
 import { observer } from 'mobx-react-lite';
 import { useEffect } from 'react';
-import { EMPTY, fromEvent, merge } from 'rxjs';
 import type { OperatorFunction } from 'rxjs';
+import { EMPTY, fromEvent, merge } from 'rxjs';
 import {
   distinctUntilChanged,
   filter,
@@ -17,10 +17,18 @@ import {
   FocusedBlockState,
   useFocusedBlock,
 } from '../../hooks/useFocusedBlockState';
+import { useBlocksStore } from '../../hooks/vaultAppHooks';
 
-export const NoteBlocksHandlers = observer(
-  ({ scope, note }: { scope: BlocksScope; note: NoteModel }) => {
+export const BlocksHandlers = observer(
+  ({
+    scope,
+    rootBlock,
+  }: {
+    scope: BlocksScope;
+    rootBlock: CollapsableBlock;
+  }) => {
     const focusedBlock = useFocusedBlock();
+    const blocksStore = useBlocksStore();
 
     useEffect(() => {
       const mouseMove$ = fromEvent<MouseEvent>(document, 'mousemove');
@@ -150,28 +158,28 @@ export const NoteBlocksHandlers = observer(
       if (!isSelecting) return;
 
       const handler = () => {
-        navigator.clipboard.writeText(scope.getStringTreeToCopy());
+        navigator.clipboard.writeText(scope.getStringTreeToCopy(rootBlock));
       };
 
       document.addEventListener('copy', handler);
 
       return () => document.removeEventListener('copy', handler);
-    }, [isSelecting, scope]);
+    }, [isSelecting, rootBlock, scope]);
 
     useEffect(() => {
       if (!isSelecting) return;
       const handler = () => {
-        const selectedIds = scope.selectedIds;
+        const selectedIds = scope.getSelectedBlockIds(rootBlock);
 
-        navigator.clipboard.writeText(scope.getStringTreeToCopy());
+        navigator.clipboard.writeText(scope.getStringTreeToCopy(rootBlock));
 
-        scope.deleteNoteBlockIds(selectedIds);
+        blocksStore.deletedBlockByIds(selectedIds);
       };
 
       document.addEventListener('cut', handler);
 
       return () => document.removeEventListener('cut', handler);
-    }, [isSelecting, note, scope]);
+    }, [blocksStore, isSelecting, rootBlock, scope]);
 
     useEffect(() => {
       if (!isSelecting) return;
@@ -179,14 +187,14 @@ export const NoteBlocksHandlers = observer(
       const handler = (e: KeyboardEvent) => {
         if (e.key === 'Backspace') {
           e.preventDefault();
-          scope.deleteNoteBlockIds(scope.selectedIds);
+          blocksStore.deletedBlockByIds(scope.getSelectedBlockIds(rootBlock));
         }
       };
 
       document.addEventListener('keydown', handler);
 
       return () => document.removeEventListener('keydown', handler);
-    }, [isSelecting, note, scope]);
+    }, [blocksStore, isSelecting, rootBlock, scope]);
 
     useEffect(() => {
       const handler = (e: MouseEvent) => {

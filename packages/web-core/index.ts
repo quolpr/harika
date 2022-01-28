@@ -20,3 +20,5 @@ export { TextBlock } from './src/apps/VaultApplication/BlocksExtension/models/Te
 export { CollapsableBlock } from './src/apps/VaultApplication/BlocksExtension/models/CollapsableBlock';
 export * from './src/apps/VaultApplication/BlocksExtension/models/noteBlockActions';
 export * from './src/apps/VaultApplication/BlocksExtension/models/textBlockActions';
+export * from './src/apps/VaultApplication/BlocksExtension/models/CollapsableBlock';
+export * from './src/apps/VaultApplication/BlocksExtension/models/BaseBlock';

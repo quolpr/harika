@@ -33,6 +33,14 @@ export const useFindService = () => {
   return useCurrentVaultApp().getFindService();
 };
 
+export const useBlocksStore = () => {
+  return useCurrentVaultApp().getRootStore().blocksStore;
+};
+
+export const useUpdateTitleService = () => {
+  return useCurrentVaultApp().getUpdateNoteTitleService();
+};
+
 export const useUpdateLinkService = () => {
   return useCurrentVaultApp().getUpdateLinksService();
 };

@@ -1,5 +1,5 @@
 import { inject, injectable, multiInject } from 'inversify';
-import { SnapshotInOf } from 'mobx-keystone';
+import { ModelData, SnapshotInOf } from 'mobx-keystone';
 import { from, map, Observable, of, switchMap, take, tap } from 'rxjs';
 import { SyncConfig } from '../../../../extensions/SyncExtension/serverSynchronizer/SyncConfig';
 import { DbEventsListenService } from '../../../../extensions/SyncExtension/services/DbEventsListenerService';
@@ -69,21 +69,21 @@ export class AllBlocksService {
     );
   }
 
-  getLinkedBlocksOfBlocksOfRootBlock$(
-    rootBlockId: string,
-  ): Observable<Record<string, { noteId: string; blockId: string }[]>> {
-    return of({});
-  }
-
   private mapDocsToModelData(docs: BaseBlockDoc[]) {
-    return docs.map(
-      (d) =>
-        // TODO: looks to complicated. It's better to refactor
-        this.syncConfig
-          .getRegistrationByCollectionName(
-            this.blocksReposMap[d.type].getTableName(),
-          )!
-          .mapper.mapToModelData(d) as SnapshotInOf<BaseBlock>,
-    );
+    return docs.map((d) => {
+      // TODO: looks to complicated. It's better to refactor
+      const mapper = this.syncConfig.getRegistrationByCollectionName(
+        this.blocksReposMap[d.type].getTableName(),
+      )!.mapper;
+
+      return {
+        klass: mapper.model,
+        datas: [
+          mapper.mapToModelData(d) as ModelData<BaseBlock> & {
+            $modelType: string;
+          },
+        ],
+      };
+    });
   }
 }

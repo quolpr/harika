@@ -3,20 +3,25 @@ import { observer } from 'mobx-react-lite';
 import React, { useState } from 'react';
 import { Arrow } from '../Arrow/Arrow';
 import { Link } from 'react-router-dom';
-import type { BlocksScope, NoteModel } from '@harika/web-core';
-import { TextBlock } from '../NoteBlock/NoteBlock';
-import { NoteBlocksHandlers } from './NoteBlocksHandlers';
+import { BlocksScope, CollapsableBlock, NoteBlock } from '@harika/web-core';
 import {
   useHandleNoteClickOrPress,
   useNotePath,
 } from '../../contexts/StackedNotesContext';
+import { BlocksHandlers } from './BlocksHandlers';
+import { TextBlockComponent } from '../TextBlock/TextBlock';
 
 const LinkedBlock = observer(
-  ({ note, scope }: { note: NoteModel; scope: BlocksScope }): JSX.Element => {
-    const rootView = scope.rootScopedBlock;
-    const path = rootView?.path;
-
-    if (!path || !rootView) return <></>;
+  ({
+    note,
+    rootBlock,
+    scope,
+  }: {
+    note: NoteBlock;
+    rootBlock: CollapsableBlock;
+    scope: BlocksScope;
+  }): JSX.Element => {
+    const path = rootBlock.path;
 
     return (
       <div className="backlinked-note__noteblock-root">
@@ -30,24 +35,30 @@ const LinkedBlock = observer(
                 })}
                 key={n.$modelId}
               >
-                {n.content.currentValue.trim().length === 0
+                {n.originalBlock.toString().trim().length === 0
                   ? '[blank]'
-                  : n.content.currentValue}
+                  : n.originalBlock.toString()}
               </div>
             ))}
           </div>
         )}
 
-        <NoteBlocksHandlers note={note} scope={scope} />
+        <BlocksHandlers rootBlock={rootBlock} scope={scope} />
 
-        <TextBlock block={rootView} scope={scope} />
+        <TextBlockComponent block={rootBlock} scope={scope} />
       </div>
     );
   },
 );
 
 export const BacklinkedNote = observer(
-  ({ note, scopes }: { note: NoteModel; scopes: BlocksScope[] }) => {
+  ({
+    note,
+    scopesWithBlocks,
+  }: {
+    note: NoteBlock;
+    scopesWithBlocks: { scope: BlocksScope; rootBlock: CollapsableBlock }[];
+  }) => {
     const [isExpanded, setIsExpanded] = useState(true);
 
     const notePath = useNotePath();
@@ -77,8 +88,13 @@ export const BacklinkedNote = observer(
             'backlinked-note__noteblocks--expanded': isExpanded,
           })}
         >
-          {scopes.map((scope) => (
-            <LinkedBlock key={scope.$modelId} note={note} scope={scope} />
+          {scopesWithBlocks.map(({ scope, rootBlock }) => (
+            <LinkedBlock
+              key={scope.$modelId}
+              note={note}
+              scope={scope}
+              rootBlock={rootBlock}
+            />
           ))}
         </div>
       </div>

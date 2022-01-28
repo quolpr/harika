@@ -1,7 +1,7 @@
 import { DB, IQueryExecuter } from '../../../../extensions/DbExtension/DB';
-import { inject, multiInject } from 'inversify';
+import { inject, injectable, multiInject } from 'inversify';
 import { BaseBlockRepository } from './BaseBlockRepository';
-import sql, { join, raw } from 'sql-template-tag';
+import { sqltag, join, raw } from '../../../../lib/sql';
 import { SyncConfig } from '../../../../extensions/SyncExtension/serverSynchronizer/SyncConfig';
 import { BLOCK_REPOSITORY } from '../types';
 import { ISyncCtx } from '../../../../extensions/SyncExtension/syncCtx';
@@ -30,6 +30,7 @@ export type BaseBlockDoc = {
   updatedAt: number;
 };
 
+@injectable()
 export class AllBlocksRepository {
   private blocksReposMap: Record<string, BaseBlockRepository>;
 
@@ -44,6 +45,7 @@ export class AllBlocksRepository {
   }
 
   get blocksTables(): string[] {
+    console.log(this.blocksRepos);
     return this.blocksRepos.map((r) => r.getTableName());
   }
 
@@ -52,19 +54,23 @@ export class AllBlocksRepository {
       .map((r) => r.getTableName())
       .map(
         (tableName) =>
-          sql`LEFT JOIN ${raw(tableName)} ON ${raw(
+          sqltag`LEFT JOIN ${raw(tableName)} ON ${raw(
             tableName,
           )}.id = childrenBlockIds.blockId`,
       );
 
-    return (
-      await e.getRecords<BaseBlockRow>(sql`
+    const res = (
+      await e.getRecords<BaseBlockRow>(sqltag`
       WITH RECURSIVE
         ${this.withDescendants(ids)}
       SELECT * FROM childrenBlockIds
         ${join(joinTables, ' ')}
     `)
     ).map((r) => this.blocksReposMap[r.type].toDoc(r));
+
+    console.log({ res });
+
+    return res;
   }
 
   async getDescendantIds(
@@ -176,10 +182,10 @@ export class AllBlocksRepository {
 
   private withDescendants(ids: string[]) {
     const rawBlocksChildrenTable = raw(blocksChildrenTable);
-    return sql`
+    return sqltag`
       childrenBlockIds(blockId, parentId) AS (
         VALUES ${join(
-          ids.map((id) => sql`(${id})`),
+          ids.map((id) => sqltag`(${id}, NULL)`),
           ',',
         )}
         UNION ALL

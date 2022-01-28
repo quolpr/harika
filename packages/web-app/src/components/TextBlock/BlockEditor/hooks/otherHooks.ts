@@ -1,9 +1,9 @@
 import { MutableRefObject, useContext, useEffect } from 'react';
 import { CurrentBlockInputRefContext } from '../../../../contexts';
 import { usePrevious } from 'react-use';
-import { useVaultService } from '../../../../hooks/vaultAppHooks';
-import { ScopedBlock } from '@harika/web-core';
 import { EditState } from '../../../../hooks/useFocusedBlockState';
+import { useUpdateLinkService } from '../../../../hooks/vaultAppHooks';
+import { CollapsableBlock, TextBlock } from '@harika/web-core';
 
 export const useProvideInputToContext = (
   inputRef: MutableRefObject<HTMLTextAreaElement | null>,
@@ -23,25 +23,30 @@ export const useProvideInputToContext = (
 };
 
 export const useUpdateBlockValues = (
-  blockView: ScopedBlock,
+  block: CollapsableBlock<TextBlock>,
   editState: EditState,
 ) => {
-  const vaultService = useVaultService();
+  const updateLinkService = useUpdateLinkService();
 
   const wasEditing = usePrevious(editState.isEditing);
 
   useEffect(() => {
     if (!editState.isEditing && wasEditing) {
-      blockView.content.dumpValue();
-      vaultService.updateNoteBlockLinks([blockView.$modelId]);
-      vaultService.updateBlockBlockLinks([blockView.$modelId]);
+      block.originalBlock.contentModel.dumpValue();
+      updateLinkService.updateBlockLinks([block.$modelId]);
     }
-  }, [editState.isEditing, blockView, vaultService, wasEditing]);
+  }, [
+    block.$modelId,
+    block.originalBlock,
+    editState.isEditing,
+    updateLinkService,
+    wasEditing,
+  ]);
 };
 
 export const useHandleFocus = (
   editState: EditState,
-  noteBlock: ScopedBlock,
+  textBlock: CollapsableBlock<TextBlock>,
   inputRef: MutableRefObject<HTMLTextAreaElement | null>,
   releaseFakeInput: () => void,
 ) => {
@@ -58,7 +63,7 @@ export const useHandleFocus = (
       const posAt = (() =>
         startAt !== undefined
           ? startAt
-          : noteBlock.content.currentValue.length)();
+          : textBlock.originalBlock.contentModel.currentValue.length)();
 
       inputRef.current.focus();
 
@@ -67,11 +72,5 @@ export const useHandleFocus = (
 
       releaseFakeInput();
     }
-  }, [
-    isEditing,
-    startAt,
-    releaseFakeInput,
-    inputRef,
-    noteBlock.content.currentValue.length,
-  ]);
+  }, [inputRef, isEditing, releaseFakeInput, startAt, textBlock.originalBlock]);
 };

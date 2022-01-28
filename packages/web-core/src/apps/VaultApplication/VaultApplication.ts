@@ -26,6 +26,7 @@ import { DeleteNoteService } from './BlocksExtension/services/DeleteNoteService'
 import { ImportExportService } from './BlocksExtension/services/ImportExportService';
 import { AllBlocksService } from './BlocksExtension/services/AllBlocksService';
 import { UpdateLinksService } from './BlocksExtension/services/UpdateLinksService';
+import { UpdateNoteTitleService } from './BlocksExtension/services/UpdateNoteTitleService';
 
 export class VaultApplication extends BaseApplication {
   constructor(
@@ -89,6 +90,10 @@ export class VaultApplication extends BaseApplication {
 
   getUpdateLinksService() {
     return this.container.get(UpdateLinksService);
+  }
+
+  getUpdateNoteTitleService() {
+    return this.container.get(UpdateNoteTitleService);
   }
 
   getTextBlocksService() {

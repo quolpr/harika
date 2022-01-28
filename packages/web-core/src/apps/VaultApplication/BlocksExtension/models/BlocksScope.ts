@@ -19,8 +19,8 @@ export class BlocksScope extends Model({
   collapsedBlockIds: prop<ArraySet<string>>(),
   rootBlockId: prop<string>(),
 
-  scopedId: prop<string>(),
-  scopedType: prop<string>(),
+  scopeId: prop<string>(),
+  scopeType: prop<string>(),
 }) {
   @computed
   get isSelecting() {
@@ -74,6 +74,12 @@ export class BlocksScope extends Model({
     });
 
     return Array.from(ids);
+  }
+
+  getSelectedBlockIds(rootScopedBlock: CollapsableBlock) {
+    return this.getSelectedBlocks(rootScopedBlock).map(
+      ({ $modelId }) => $modelId,
+    );
   }
 
   getStringTreeToCopy(rootScopedBlock: CollapsableBlock) {

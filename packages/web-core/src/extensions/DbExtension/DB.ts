@@ -31,7 +31,7 @@ import {
   IOutputWorkerMessage,
 } from './types';
 import { QueryExecResult } from '@harika-org/sql.js';
-import { Sql } from 'sql-template-tag';
+import { Sql } from '../../lib/sql';
 
 type DistributiveOmit<T, K extends keyof any> = T extends any
   ? Omit<T, K>
@@ -244,7 +244,9 @@ export class DB implements IQueryExecuter {
   ) {
     return this.execCommand({
       type: 'execQueries',
-      queries: queries.map((q) => ('toParams' in q ? q.toParams() : q)),
+      queries: queries.map((q) =>
+        'toParams' in q ? q.toParams() : { values: q.values, text: q.text },
+      ),
       transactionId,
       spawnTransaction: queries.length > 1,
       suppressLog,
@@ -258,7 +260,11 @@ export class DB implements IQueryExecuter {
   ) {
     const res = await this.execCommand({
       type: 'execQueries',
-      queries: ['toParams' in query ? query.toParams() : query],
+      queries: [
+        'toParams' in query
+          ? query.toParams()
+          : { values: query.values, text: query.text },
+      ],
       transactionId,
       suppressLog,
     });

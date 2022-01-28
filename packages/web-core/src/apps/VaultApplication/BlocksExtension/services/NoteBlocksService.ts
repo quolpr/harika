@@ -25,6 +25,7 @@ import { BlocksStore } from '../models/BlocksStore';
 import { noteBlockMapper } from '../mappers/noteBlockMapper';
 import { NoteBlock } from '../models/NoteBlock';
 import { createNote } from '../models/noteBlockActions';
+import { BaseBlock } from '../models/BaseBlock';
 
 @injectable()
 export class NoteBlocksService {
@@ -130,10 +131,15 @@ export class NoteBlocksService {
 
         withoutUndo(() => {
           this.blocksStore.handleModelChanges(
-            noteDocs.map((doc) => ({
-              ...noteBlockMapper.mapToModelData(doc),
-              areChildrenLoaded: false,
-            })),
+            [
+              {
+                klass: NoteBlock,
+                datas: noteDocs.map((doc) => ({
+                  ...noteBlockMapper.mapToModelData(doc),
+                  areChildrenLoaded: false,
+                })),
+              },
+            ],
             [],
           );
         });
@@ -161,10 +167,16 @@ export class NoteBlocksService {
         this.blocksStore.handleModelChanges(
           [
             {
-              ...noteBlockMapper.mapToModelData(noteDoc),
-              areChildrenLoaded: false,
+              klass: NoteBlock,
+              datas: [
+                {
+                  ...noteBlockMapper.mapToModelData(noteDoc),
+                  areChildrenLoaded: false,
+                },
+              ],
             },
           ],
+
           [],
         );
       });
@@ -203,8 +215,13 @@ export class NoteBlocksService {
             this.blocksStore.handleModelChanges(
               [
                 {
-                  ...noteBlockMapper.mapToModelData(row),
-                  areChildrenLoaded: false,
+                  klass: NoteBlock,
+                  datas: [
+                    {
+                      ...noteBlockMapper.mapToModelData(row),
+                      areChildrenLoaded: false,
+                    },
+                  ],
                 },
               ],
               [],
@@ -240,5 +257,11 @@ export class NoteBlocksService {
 
   async getTuplesWithoutDailyNotes() {
     return this.noteBlocksRepository.getTuplesWithoutDailyNotes();
+  }
+
+  getLinkedBlocksOfBlockDescendants$(
+    rootBlockId: string,
+  ): Observable<{ note: NoteBlock; blocks: BaseBlock[] }[]> {
+    return of([]);
   }
 }

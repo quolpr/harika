@@ -1,15 +1,9 @@
-import {
-  applySnapshot,
-  fromSnapshot,
-  model,
-  Model,
-  modelAction,
-  prop,
-  SnapshotInOf,
-} from 'mobx-keystone';
+import { model, Model, modelAction, ModelData, prop } from 'mobx-keystone';
+import { Class } from 'utility-types';
 import { withoutSyncAction } from '../../../../extensions/SyncExtension/mobx-keystone/syncable';
 import { SyncModelId } from '../../../../extensions/SyncExtension/types';
 import { withoutUndoAction } from '../../../../lib/utils';
+import { applyModelData } from './applyModelData';
 import { BaseBlock } from './BaseBlock';
 import { BlocksRegistry } from './BlocksRegistry';
 
@@ -30,6 +24,13 @@ export class BlocksStore extends Model({
   }
 
   @modelAction
+  deletedBlockByIds(ids: string[]) {
+    this.getBlocksByIds(ids).forEach((block) => {
+      block.delete(true);
+    });
+  }
+
+  @modelAction
   registerBlock(block: BaseBlock) {
     this.blocksRegistry.registerBlock(block);
   }
@@ -43,18 +44,20 @@ export class BlocksStore extends Model({
   @withoutSyncAction
   @modelAction
   handleModelChanges(
-    blocksAttrs: SnapshotInOf<BaseBlock>[],
+    blocksAttrs: { klass: Class<BaseBlock>; datas: ModelData<BaseBlock>[] }[],
     deletedBlockIds: SyncModelId<BaseBlock>[],
   ) {
-    blocksAttrs.forEach((block) => {
-      if (this.blocksRegistry.hasBlockWithId(block.$modelId!)) {
-        applySnapshot<BaseBlock>(
-          this.blocksRegistry.getBlockById(block.$modelId!),
-          block as any,
-        );
-      } else {
-        this.blocksRegistry.registerBlock(fromSnapshot<BaseBlock>(block));
-      }
+    blocksAttrs.forEach(({ klass, datas }) => {
+      datas.forEach((block) => {
+        if (this.blocksRegistry.hasBlockWithId(block.$modelId!)) {
+          applyModelData(
+            this.blocksRegistry.getBlockById(block.$modelId!),
+            block,
+          );
+        } else {
+          this.blocksRegistry.registerBlock(new klass(block));
+        }
+      });
     });
 
     deletedBlockIds.forEach((id) => {
