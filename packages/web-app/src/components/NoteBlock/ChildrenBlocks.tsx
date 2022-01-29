@@ -9,9 +9,9 @@ import { bem } from '../../utils';
 import { useBlocksScopesService } from '../../hooks/vaultAppHooks';
 import {
   CollapsableBlock,
+  getBlocksSelection,
   getCollapsableBlock,
   NoteBlock,
-  TextBlock as TextBlockModel,
 } from '@harika/web-core';
 import { BlocksHandlers } from './BlocksHandlers';
 import { BlocksChildren, TextBlockComponent } from '../TextBlock/TextBlock';
@@ -38,6 +38,9 @@ export const ChildrenBlocks = observer(({ note }: { note: NoteBlock }) => {
     | CollapsableBlock<NoteBlock>
     | undefined;
 
+  const blocksSelection =
+    scope && collapsableNote && getBlocksSelection(scope, collapsableNote);
+
   return (
     <LinkedBlocksOfBlocksProvider noteId={note.$modelId}>
       {scope && collapsableNote && (
@@ -45,11 +48,12 @@ export const ChildrenBlocks = observer(({ note }: { note: NoteBlock }) => {
       )}
 
       <div className={noteClass('body')}>
-        {scope && collapsableNote && (
+        {scope && collapsableNote && blocksSelection && (
           <BlocksChildren
             parent={collapsableNote}
             scope={scope}
             childBlocks={collapsableNote.childrenBlocks}
+            blocksSelection={blocksSelection}
           />
         )}
       </div>

@@ -3,7 +3,12 @@ import { observer } from 'mobx-react-lite';
 import React, { useState } from 'react';
 import { Arrow } from '../Arrow/Arrow';
 import { Link } from 'react-router-dom';
-import { BlocksScope, CollapsableBlock, NoteBlock } from '@harika/web-core';
+import {
+  BlocksScope,
+  CollapsableBlock,
+  getBlocksSelection,
+  NoteBlock,
+} from '@harika/web-core';
 import {
   useHandleNoteClickOrPress,
   useNotePath,
@@ -22,6 +27,9 @@ const LinkedBlock = observer(
     scope: BlocksScope;
   }): JSX.Element => {
     const path = rootBlock.path;
+
+    const blocksSelection =
+      scope && rootBlock && getBlocksSelection(scope, rootBlock);
 
     return (
       <div className="backlinked-note__noteblock-root">
@@ -45,7 +53,11 @@ const LinkedBlock = observer(
 
         <BlocksHandlers rootBlock={rootBlock} scope={scope} />
 
-        <TextBlockComponent block={rootBlock} scope={scope} />
+        <TextBlockComponent
+          block={rootBlock}
+          scope={scope}
+          blocksSelection={blocksSelection}
+        />
       </div>
     );
   },

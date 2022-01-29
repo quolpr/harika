@@ -75,14 +75,6 @@ export class AllBlocksRepository {
       ', ',
     );
 
-    console.log(
-      await e.getRecords<Record<string, unknown>>(sqltag`
-      WITH RECURSIVE
-        ${this.withDescendants(ids)}
-      SELECT *  FROM childrenBlockIds
-      `),
-    );
-
     const res = (
       await e.getRecords<Record<string, unknown>>(sqltag`
       WITH RECURSIVE
@@ -105,8 +97,6 @@ export class AllBlocksRepository {
 
       return actualRepo.toDoc(actualRow as BaseBlockRow);
     });
-
-    console.log({ res });
 
     return res;
   }

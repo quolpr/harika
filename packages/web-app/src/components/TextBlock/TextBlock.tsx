@@ -2,13 +2,20 @@ import React, { useCallback, useRef } from 'react';
 import './styles.css';
 import clsx from 'clsx';
 import { observer } from 'mobx-react-lite';
-import { BlocksScope, CollapsableBlock, TextBlock } from '@harika/web-core';
+import {
+  BlocksScope,
+  BlocksSelection,
+  CollapsableBlock,
+  getBlocksSelection,
+  TextBlock,
+} from '@harika/web-core';
 import { Arrow } from '../Arrow/Arrow';
 import { TokensRenderer } from './TokensRenderer';
 import { useFakeInput } from './BlockEditor/hooks/useFocusHandler';
 import { useCurrentFocusedBlockState } from '../../hooks/useFocusedBlockState';
 import { BlockEditor } from './BlockEditor/BlockEditor';
 import { useBacklinkedBlocksCount } from '../LinkedBlocksOfBlocksContext';
+import { computed } from 'mobx';
 
 // IMPORTANT: don't use any global handlers in <NoteBlocksExtensionStore /> (document.addEventListener) cause it is slow down note blocks tree a lot
 
@@ -17,16 +24,19 @@ export const BlocksChildren = observer(
     parent,
     childBlocks,
     scope,
+    blocksSelection,
   }: {
     parent: CollapsableBlock;
     childBlocks: CollapsableBlock[];
     scope: BlocksScope;
+    blocksSelection: BlocksSelection;
   }) => {
     return childBlocks.length !== 0 ? (
       <>
         {childBlocks.map((block) =>
           block.originalBlock instanceof TextBlock ? (
             <TextBlockComponent
+              blocksSelection={blocksSelection}
               key={block.$modelId}
               block={block as CollapsableBlock<TextBlock>}
               scope={scope}
@@ -149,7 +159,7 @@ const TextBlockBody = observer(
 
     return (
       <>
-        {block.childrenBlocks.length !== 0 && (
+        {block.originalBlock.childrenBlocks.length !== 0 && (
           <Arrow
             className="note-block__arrow"
             isExpanded={isExpanded}
@@ -198,12 +208,18 @@ const TextBlockBody = observer(
 );
 
 export const TextBlockComponent = observer(
-  ({ block, scope }: { block: CollapsableBlock; scope: BlocksScope }) => {
-    // const isSelected = computed(() => {
-    //   return scope.selectedIds.includes(noteBlock.$modelId);
-    // }).get();
-
-    const isSelected = false;
+  ({
+    block,
+    scope,
+    blocksSelection,
+  }: {
+    block: CollapsableBlock;
+    scope: BlocksScope;
+    blocksSelection: BlocksSelection;
+  }) => {
+    const isSelected = computed(() => {
+      return blocksSelection.selectedBlockIds.includes(block.$modelId);
+    }).get();
 
     const backlinksCount = useBacklinkedBlocksCount(block.$modelId);
 
@@ -244,6 +260,7 @@ export const TextBlockComponent = observer(
             })}
           >
             <BlocksChildren
+              blocksSelection={blocksSelection}
               parent={block}
               childBlocks={block.childrenBlocks}
               scope={scope}

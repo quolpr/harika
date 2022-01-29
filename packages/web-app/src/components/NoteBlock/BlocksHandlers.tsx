@@ -1,4 +1,9 @@
-import { BlocksScope, CollapsableBlock, NoteBlock } from '@harika/web-core';
+import {
+  BlocksScope,
+  CollapsableBlock,
+  getBlocksSelection,
+  NoteBlock,
+} from '@harika/web-core';
 import { observer } from 'mobx-react-lite';
 import { useEffect } from 'react';
 import type { OperatorFunction } from 'rxjs';
@@ -29,6 +34,7 @@ export const BlocksHandlers = observer(
   }) => {
     const focusedBlock = useFocusedBlock();
     const blocksStore = useBlocksStore();
+    const blockSelection = getBlocksSelection(scope, rootBlock);
 
     useEffect(() => {
       const mouseMove$ = fromEvent<MouseEvent>(document, 'mousemove');
@@ -61,8 +67,8 @@ export const BlocksHandlers = observer(
           }),
           switchMap(({ fromBlockId, shiftKey }) => {
             if (!fromBlockId) {
-              if (scope.selectionInterval !== undefined) {
-                scope.resetSelection();
+              if (blockSelection.selectionInterval !== undefined) {
+                blockSelection.resetSelection();
               }
 
               return EMPTY;
@@ -72,7 +78,7 @@ export const BlocksHandlers = observer(
 
             const resetAnySelection$ = mouseMove$.pipe(
               tap(() => {
-                if (scope.selectionInterval !== undefined) {
+                if (blockSelection.selectionInterval !== undefined) {
                   window.getSelection()?.removeAllRanges();
                 }
               }),
@@ -84,10 +90,10 @@ export const BlocksHandlers = observer(
               focusedBlockState &&
               focusedBlockState.scopeId === scope.$modelId &&
               focusedBlockState.isEditing === true &&
-              scope.selectionInterval === undefined &&
+              blockSelection.selectionInterval === undefined &&
               shiftKey
             ) {
-              scope.setSelectionInterval(
+              blockSelection.setSelectionInterval(
                 focusedBlockState.scopedBlockId,
                 fromBlockId,
               );
@@ -96,13 +102,13 @@ export const BlocksHandlers = observer(
               return EMPTY;
             }
 
-            if (scope.selectionInterval !== undefined && shiftKey) {
-              scope.expandSelection(fromBlockId);
+            if (blockSelection.selectionInterval !== undefined && shiftKey) {
+              blockSelection.expandSelection(fromBlockId);
 
               return merge(
                 idOnMouseMove$.pipe(
                   tap((toId) => {
-                    scope.expandSelection(toId);
+                    blockSelection.expandSelection(toId);
                   }),
                   takeUntil(mouseUp$),
                 ),
@@ -119,23 +125,23 @@ export const BlocksHandlers = observer(
                   ),
                   tap((toId) => {
                     if (
-                      scope.selectionInterval &&
+                      blockSelection.selectionInterval &&
                       isEqual(
-                        [...scope.selectionInterval].sort(),
+                        [...blockSelection.selectionInterval].sort(),
                         [fromBlockId, toId].sort(),
                       )
                     ) {
                       return;
                     }
 
-                    scope.setSelectionInterval(fromBlockId, toId);
+                    blockSelection.setSelectionInterval(fromBlockId, toId);
                     focusedBlock.setState(undefined);
 
                     wasAnyIdSelected = true;
                   }),
                   finalize(() => {
                     if (!wasAnyIdSelected) {
-                      scope.resetSelection();
+                      blockSelection.resetSelection();
                     }
                   }),
                   takeUntil(mouseUp$),
@@ -150,28 +156,28 @@ export const BlocksHandlers = observer(
       return () => {
         mouseMoveHandler.unsubscribe();
       };
-    }, [focusedBlock, scope]);
+    }, [blockSelection, focusedBlock, scope.$modelId]);
 
-    const isSelecting = scope.selectionInterval !== undefined;
+    const isSelecting = blockSelection.selectionInterval !== undefined;
 
     useEffect(() => {
       if (!isSelecting) return;
 
       const handler = () => {
-        navigator.clipboard.writeText(scope.getStringTreeToCopy(rootBlock));
+        navigator.clipboard.writeText(blockSelection.stringTreeToCopy);
       };
 
       document.addEventListener('copy', handler);
 
       return () => document.removeEventListener('copy', handler);
-    }, [isSelecting, rootBlock, scope]);
+    }, [blockSelection, isSelecting]);
 
     useEffect(() => {
       if (!isSelecting) return;
       const handler = () => {
-        const selectedIds = scope.getSelectedBlockIds(rootBlock);
+        const selectedIds = blockSelection.selectedBlockIds;
 
-        navigator.clipboard.writeText(scope.getStringTreeToCopy(rootBlock));
+        navigator.clipboard.writeText(blockSelection.stringTreeToCopy);
 
         blocksStore.deletedBlockByIds(selectedIds);
       };
@@ -179,7 +185,7 @@ export const BlocksHandlers = observer(
       document.addEventListener('cut', handler);
 
       return () => document.removeEventListener('cut', handler);
-    }, [blocksStore, isSelecting, rootBlock, scope]);
+    }, [blockSelection, blocksStore, isSelecting]);
 
     useEffect(() => {
       if (!isSelecting) return;
@@ -187,14 +193,14 @@ export const BlocksHandlers = observer(
       const handler = (e: KeyboardEvent) => {
         if (e.key === 'Backspace') {
           e.preventDefault();
-          blocksStore.deletedBlockByIds(scope.getSelectedBlockIds(rootBlock));
+          blocksStore.deletedBlockByIds(blockSelection.selectedBlockIds);
         }
       };
 
       document.addEventListener('keydown', handler);
 
       return () => document.removeEventListener('keydown', handler);
-    }, [blocksStore, isSelecting, rootBlock, scope]);
+    }, [blockSelection, blocksStore, isSelecting]);
 
     useEffect(() => {
       const handler = (e: MouseEvent) => {

@@ -72,6 +72,8 @@ export class TextBlockContent {
 
   constructor(private textBlock: TextBlock) {
     makeObservable(this);
+
+    this.currentValue = textBlock.content;
   }
 
   @computed
