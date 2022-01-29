@@ -23,3 +23,4 @@ export * from './src/apps/VaultApplication/BlocksExtension/models/textBlockActio
 export * from './src/apps/VaultApplication/BlocksExtension/models/CollapsableBlock';
 export * from './src/apps/VaultApplication/BlocksExtension/models/BaseBlock';
 export * from './src/apps/VaultApplication/BlocksExtension/models/BlocksSelection';
+export * from './src/lib/blockParser/blockUtils';

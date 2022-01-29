@@ -1,4 +1,5 @@
 import {
+  addTokensToNoteBlock,
   BlocksScope,
   CollapsableBlock,
   handleNewLinePress,
@@ -14,7 +15,10 @@ import { getTokensAtCursor } from '../../utils';
 import { Pos, position } from 'caret-pos';
 import dayjs from 'dayjs';
 import { ICommand } from '../EditorCommandsDropdown/EditorCommandsDropdown';
-import { useBlocksStore } from '../../../../hooks/vaultAppHooks';
+import {
+  useBlocksStore,
+  useUpdateLinkService,
+} from '../../../../hooks/vaultAppHooks';
 
 const symmetricCommands: { [P in ICommand['id']]?: string } = {
   blockRef: '(())',
@@ -36,6 +40,7 @@ export const useHandleInput = (
   isAnyDropdownShown: () => boolean,
 ) => {
   const blocksStore = useBlocksStore();
+  const updateLinkService = useUpdateLinkService();
 
   const [caretPos, setCaretPos] = useState<Pos | undefined>();
 
@@ -304,21 +309,33 @@ export const useHandleInput = (
 
       e.preventDefault();
 
-      // const injectedBlocks = scope.injectNewTreeTokens(block, parsedToTree);
+      const injectedBlocks = addTokensToNoteBlock(
+        blocksStore,
+        scope,
+        block,
+        parsedToTree,
+      );
 
-      // const ids = injectedBlocks.map(({ $modelId }) => $modelId);
-      // vaultService.updateNoteBlockLinks(ids);
-      // vaultService.updateBlockBlockLinks(ids);
+      const ids = injectedBlocks.map(({ $modelId }) => $modelId);
+      updateLinkService.updateBlockLinks(ids);
 
-      // if (injectedBlocks[0]) {
-      //   setEditState({
-      //     scopeId: scope.$modelId,
-      //     scopedBlockId: injectedBlocks[0].$modelId,
-      //     isEditing: true,
-      //   });
-      // }
+      if (injectedBlocks[0]) {
+        setEditState({
+          scopeId: scope.$modelId,
+          scopedBlockId: injectedBlocks[0].$modelId,
+          isEditing: true,
+        });
+      }
     },
-    [handleCaretChange, isShiftPressedRef],
+    [
+      block,
+      blocksStore,
+      handleCaretChange,
+      isShiftPressedRef,
+      scope,
+      setEditState,
+      updateLinkService,
+    ],
   );
 
   const handleChange = useCallback(
