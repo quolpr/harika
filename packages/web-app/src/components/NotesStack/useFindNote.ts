@@ -1,11 +1,12 @@
 import { NoteBlock } from '@harika/web-core';
 import { useContext, useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
-import { NEVER, of, race } from 'rxjs';
+import { firstValueFrom, NEVER, of, race } from 'rxjs';
 import { timeout, map } from 'rxjs/operators';
 import { LoadingDoneSubjectContext } from '../../contexts';
 import { useNotePath } from '../../contexts/StackedNotesContext';
 import {
+  useAllBlocksService,
   useCurrentVaultId,
   useNoteBlocksService,
 } from '../../hooks/vaultAppHooks';
@@ -23,9 +24,13 @@ export const useFindNote = (noteId: string) => {
 
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
+  const allBlocksService = useAllBlocksService();
+
   useEffect(() => {
     const callback = async () => {
-      const note = await notesService.getNote(noteId);
+      const note = (await firstValueFrom(
+        allBlocksService.getBlockById$(noteId),
+      )) as NoteBlock;
 
       if (!note) {
         setIsLoading(false);
@@ -38,7 +43,7 @@ export const useFindNote = (noteId: string) => {
     };
 
     callback();
-  }, [loadingDoneSubject, noteId, notesService]);
+  }, [allBlocksService, loadingDoneSubject, noteId, notesService]);
 
   const noteTitle = note?.title;
 

@@ -37,6 +37,7 @@ export class AllBlocksService {
     );
   }
 
+  // TODO: remove rxjs
   getBlockByIds$(blockIds: string[], forceReload = false) {
     const blocksMap: Record<string, BaseBlock> = Object.fromEntries(
       blockIds
@@ -44,7 +45,7 @@ export class AllBlocksService {
         .filter(([, block]) => block !== undefined),
     );
 
-    const notLoadedIds = blockIds.filter((id) => !!blocksMap[id]);
+    const notLoadedIds = blockIds.filter((id) => !blocksMap[id]);
 
     if (!forceReload && notLoadedIds.length === 0) {
       return of(Object.values(blocksMap));

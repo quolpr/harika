@@ -2,7 +2,7 @@ import { ModelCreationData, standaloneAction } from 'mobx-keystone';
 import { Optional } from 'utility-types';
 import { isTodo } from '../../../../lib/blockParser/astHelpers';
 import { generateId } from '../../../../lib/generateId';
-import { blockRef } from './BaseBlock';
+import { BaseBlock, blockRef } from './BaseBlock';
 import { BlocksStore } from './BlocksStore';
 import { CollapsableBlock, getCollapsableBlock } from './CollapsableBlock';
 import { TextBlock } from './TextBlock';
@@ -131,7 +131,9 @@ export const handleNewLinePress = standaloneAction(
         originalBlock.setContent(content.slice(0, caretPosStart));
       }
 
-      const firstChild = collapsableBlock.children[0].originalBlock;
+      const firstChild: BaseBlock | undefined =
+        collapsableBlock.children[0]?.originalBlock;
+
       if (
         (originalBlock.contentModel.hasTodo ||
           (firstChild &&

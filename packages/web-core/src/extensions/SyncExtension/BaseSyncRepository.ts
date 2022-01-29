@@ -6,6 +6,7 @@ import { DB, IQueryExecuter, Transaction } from '../DbExtension/DB';
 import type { ISyncCtx } from './syncCtx';
 import { inject, injectable } from 'inversify';
 import { WINDOW_ID } from '../../framework/types';
+import { raw, sqltag } from '../../lib/sql';
 
 @injectable()
 export abstract class BaseSyncRepository<
@@ -225,6 +226,19 @@ export abstract class BaseSyncRepository<
 
   toDoc(row: Row): Doc {
     return row as Doc;
+  }
+
+  private cachedColumnNames: string[] | undefined;
+  async getColumnNames(e: IQueryExecuter = this.db) {
+    if (this.cachedColumnNames) return this.cachedColumnNames;
+
+    const res = await e.getRecords<{ name: string }>(
+      sqltag`SELECT name FROM PRAGMA_TABLE_INFO('${raw(this.getTableName())}')`,
+    );
+
+    this.cachedColumnNames = res.map(({ name }) => name);
+
+    return this.cachedColumnNames;
   }
 
   abstract getTableName(): string;

@@ -5,6 +5,7 @@ import { sqltag, join, raw } from '../../../../lib/sql';
 import { SyncConfig } from '../../../../extensions/SyncExtension/serverSynchronizer/SyncConfig';
 import { BLOCK_REPOSITORY } from '../types';
 import { ISyncCtx } from '../../../../extensions/SyncExtension/syncCtx';
+import { mapKeys, pickBy } from 'lodash';
 
 export const blocksChildrenTable = 'blocksChildren' as const;
 
@@ -59,14 +60,51 @@ export class AllBlocksRepository {
           )}.id = childrenBlockIds.blockId`,
       );
 
-    const res = (
-      await e.getRecords<BaseBlockRow>(sqltag`
+    const selects = join(
+      (
+        await Promise.all(
+          this.blocksRepos.flatMap(async (r) => {
+            const tableName = r.getTableName();
+
+            return (await r.getColumnNames()).map((c) =>
+              raw(`${tableName}.${c} AS ${tableName}_${c}`),
+            );
+          }),
+        )
+      ).flat(),
+      ', ',
+    );
+
+    console.log(
+      await e.getRecords<Record<string, unknown>>(sqltag`
       WITH RECURSIVE
         ${this.withDescendants(ids)}
-      SELECT * FROM childrenBlockIds
+      SELECT *  FROM childrenBlockIds
+      `),
+    );
+
+    const res = (
+      await e.getRecords<Record<string, unknown>>(sqltag`
+      WITH RECURSIVE
+        ${this.withDescendants(ids)}
+      SELECT ${selects}  FROM childrenBlockIds
         ${join(joinTables, ' ')}
     `)
-    ).map((r) => this.blocksReposMap[r.type].toDoc(r));
+    ).map((row) => {
+      const actualRepo = this.blocksRepos.find(
+        (repo) => !!row[`${repo.getTableName()}_id`],
+      );
+
+      if (!actualRepo)
+        throw new Error(`Failed to determine repo for ${JSON.stringify(row)}`);
+
+      const actualRow = mapKeys(
+        pickBy(row, (_v, k) => k.startsWith(actualRepo.getTableName())),
+        (_value, key) => key.replace(actualRepo.getTableName() + '_', ''),
+      );
+
+      return actualRepo.toDoc(actualRow as BaseBlockRow);
+    });
 
     console.log({ res });
 
@@ -102,7 +140,9 @@ export class AllBlocksRepository {
     doc: BaseBlockDoc[],
     ctx: ISyncCtx,
     e: IQueryExecuter = this.db,
-  ) {}
+  ) {
+    console.log();
+  }
 
   async bulkDelete(
     ids: { id: string; type: string }[],
@@ -182,6 +222,7 @@ export class AllBlocksRepository {
 
   private withDescendants(ids: string[]) {
     const rawBlocksChildrenTable = raw(blocksChildrenTable);
+
     return sqltag`
       childrenBlockIds(blockId, parentId) AS (
         VALUES ${join(
@@ -190,7 +231,7 @@ export class AllBlocksRepository {
         )}
         UNION ALL
         SELECT a.blockId, a.parentId FROM ${rawBlocksChildrenTable} a 
-          JOIN ${rawBlocksChildrenTable} b ON a.parentId = b.blockId LIMIT 1000000
+          JOIN childrenBlockIds b ON a.parentId = b.blockId LIMIT 1000000
       )
     `;
   }
