@@ -23,9 +23,7 @@ export class UpdateLinksService {
   async updateBlockLinks(noteBlockIds: string[]) {
     console.debug('Updating block links');
 
-    const blocks = await firstValueFrom(
-      this.allBlocksService.getBlockByIds$(noteBlockIds),
-    );
+    const blocks = await this.allBlocksService.getBlockByIds(noteBlockIds);
 
     const textBlocks = blocks.filter(
       (b) => b instanceof TextBlock,
@@ -42,7 +40,7 @@ export class UpdateLinksService {
 
     const existingNotesIndexed = Object.fromEntries(
       (allTitles.length > 0
-        ? await firstValueFrom(this.notesService.getByTitles$(allTitles))
+        ? await this.notesService.getByTitles(allTitles)
         : []
       ).map((n) => [n.title, n]),
     );

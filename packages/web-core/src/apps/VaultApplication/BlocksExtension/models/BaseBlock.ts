@@ -216,4 +216,13 @@ export class BaseBlock extends Model({
   toString(): string {
     return '';
   }
+
+  @computed
+  get isTreeFullyLoaded(): boolean {
+    // TODO: make recursively
+    return (
+      this.areChildrenLoaded &&
+      (this.parentRef ? this.parentRef.maybeCurrent !== undefined : true)
+    );
+  }
 }

@@ -6,7 +6,6 @@ import { DbEventsListenService } from '../../../../extensions/SyncExtension/serv
 import dayjs, { Dayjs } from 'dayjs';
 import {
   distinctUntilChanged,
-  firstValueFrom,
   from,
   interval,
   map,
@@ -14,7 +13,6 @@ import {
   of,
   switchMap,
 } from 'rxjs';
-import { isEqual } from 'lodash-es';
 import { ICreationResult } from '../../../../framework/types';
 import {
   NoteBlockDoc,
@@ -26,6 +24,7 @@ import { noteBlockMapper } from '../mappers/noteBlockMapper';
 import { NoteBlock } from '../models/NoteBlock';
 import { createNote } from '../models/noteBlockActions';
 import { BaseBlock } from '../models/BaseBlock';
+import { AllBlocksService } from './AllBlocksService';
 
 @injectable()
 export class NoteBlocksService {
@@ -36,6 +35,8 @@ export class NoteBlocksService {
     private noteBlocksRepository: NoteBlocksRepository,
     @inject(BlocksStore)
     private blocksStore: BlocksStore,
+    @inject(AllBlocksService)
+    private allBlocksService: AllBlocksService,
   ) {}
 
   async createNote(
@@ -73,7 +74,7 @@ export class NoteBlocksService {
   }
 
   async getOrCreateDailyNote(date: Dayjs) {
-    const note = await firstValueFrom(this.getDailyNote$(date));
+    const note = await this.getDailyNote(date);
 
     if (note) {
       return {
@@ -94,75 +95,62 @@ export class NoteBlocksService {
     );
   }
 
-  getTodayDailyNote$() {
-    return interval(1000).pipe(
-      map(() => dayjs().startOf('day')),
-      distinctUntilChanged((a, b) => a.unix() === b.unix()),
-      switchMap((date) => this.getDailyNote$(date)),
-      distinctUntilChanged(),
+  async getDailyNote(date: Dayjs) {
+    const doc = await this.noteBlocksRepository.getDailyNote(date.unix());
+
+    if (doc) {
+      return this.getNote(doc.id);
+    }
+
+    return undefined;
+  }
+
+  async findNoteByIds(ids: string[]): Promise<NoteBlock[]> {
+    const toLoadIds = ids.filter(
+      (id) => !Boolean(this.blocksStore.hasBlockWithId(id)),
     );
-  }
 
-  getDailyNote$(date: Dayjs) {
-    return from(
-      this.dbEventsService.liveQuery([noteBlocksTable], () =>
-        this.noteBlocksRepository.getDailyNote(date.unix()),
-      ),
-    ).pipe(switchMap((row) => (row ? this.getNote(row.id) : of(undefined))));
-  }
+    const noteDocs =
+      toLoadIds.length !== 0
+        ? await this.noteBlocksRepository.getByIds(toLoadIds)
+        : [];
 
-  getNote$(id: string) {
-    return from(
-      this.dbEventsService.liveQuery([noteBlocksTable], () => this.getNote(id)),
-    );
-  }
+    withoutUndo(() => {
+      this.blocksStore.handleModelChanges(
+        [
+          {
+            klass: NoteBlock,
+            datas: noteDocs.map((doc) => ({
+              ...noteBlockMapper.mapToModelData(doc),
+              areChildrenLoaded: false,
+            })),
+          },
+        ],
+        [],
+      );
+    });
 
-  findNoteByIds$(ids: string[]): Observable<NoteBlock[]> {
-    return this.dbEventsService
-      .liveQuery([noteBlocksTable], async () => {
-        const toLoadIds = ids.filter(
-          (id) => !Boolean(this.blocksStore.hasBlockWithId(id)),
-        );
-
-        const noteDocs =
-          toLoadIds.length !== 0
-            ? await this.noteBlocksRepository.getByIds(toLoadIds)
-            : [];
-
-        withoutUndo(() => {
-          this.blocksStore.handleModelChanges(
-            [
-              {
-                klass: NoteBlock,
-                datas: noteDocs.map((doc) => ({
-                  ...noteBlockMapper.mapToModelData(doc),
-                  areChildrenLoaded: false,
-                })),
-              },
-            ],
-            [],
-          );
-        });
-
-        return ids
-          .map((id) => this.blocksStore.getBlockById(id) as NoteBlock)
-          .filter((v) => Boolean(v));
-      })
-      .pipe(distinctUntilChanged((a, b) => isEqual(a, b)));
+    return ids
+      .map((id) => this.blocksStore.getBlockById(id) as NoteBlock)
+      .filter((v) => Boolean(v));
   }
 
   async getNote(id: string) {
-    if (this.blocksStore.getBlockById(id)) {
-      return this.blocksStore.getBlockById(id) as NoteBlock;
-    } else {
-      const noteDoc = await this.noteBlocksRepository.getById(id);
+    const note = await this.allBlocksService.getBlockById(id);
 
-      if (!noteDoc) {
-        console.error(`Note with id ${id} not found`);
+    if (!(note instanceof NoteBlock)) {
+      console.error(`Note with id ${id} not found, but ${note} found`);
 
-        return;
-      }
+      return;
+    }
 
+    return note;
+  }
+
+  async getByTitles(titles: string[]) {
+    const rows = await this.noteBlocksRepository.getByTitles(titles);
+
+    return rows.map((row) => {
       withoutUndo(() => {
         this.blocksStore.handleModelChanges(
           [
@@ -170,21 +158,47 @@ export class NoteBlocksService {
               klass: NoteBlock,
               datas: [
                 {
-                  ...noteBlockMapper.mapToModelData(noteDoc),
+                  ...noteBlockMapper.mapToModelData(row),
                   areChildrenLoaded: false,
                 },
               ],
             },
           ],
-
           [],
         );
       });
 
-      console.debug(`Loading Note#${id} from DB`);
+      console.debug(`Loading Note#${row.id} from DB`);
 
-      return this.blocksStore.getBlockById(id) as NoteBlock;
-    }
+      return this.blocksStore.getBlockById(row.id) as NoteBlock;
+    });
+  }
+
+  async getTuplesWithoutDailyNotes() {
+    return this.noteBlocksRepository.getTuplesWithoutDailyNotes();
+  }
+
+  async isNoteExists(title: string) {
+    return !!(await this.noteBlocksRepository.findBy({ title }));
+  }
+
+  getTodayDailyNote$() {
+    return interval(1000).pipe(
+      map(() => dayjs().startOf('day')),
+      distinctUntilChanged((a, b) => a.unix() === b.unix()),
+      switchMap((date) =>
+        this.dbEventsService.liveQuery([noteBlocksTable], () =>
+          this.getDailyNote(date),
+        ),
+      ),
+      distinctUntilChanged(),
+    );
+  }
+
+  getLinkedBlocksOfBlockDescendants$(
+    rootBlockId: string,
+  ): Observable<{ note: NoteBlock; blocks: BaseBlock[] }[]> {
+    return of([]);
   }
 
   getAllNotesTuples$() {
@@ -202,40 +216,6 @@ export class NoteBlocksService {
       ),
     );
   }
-
-  getByTitles$(titles: string[]) {
-    return from(
-      this.dbEventsService.liveQuery([noteBlocksTable], () =>
-        this.noteBlocksRepository.getByTitles(titles),
-      ),
-    ).pipe(
-      map((rows): NoteBlock[] => {
-        return rows.map((row) => {
-          withoutUndo(() => {
-            this.blocksStore.handleModelChanges(
-              [
-                {
-                  klass: NoteBlock,
-                  datas: [
-                    {
-                      ...noteBlockMapper.mapToModelData(row),
-                      areChildrenLoaded: false,
-                    },
-                  ],
-                },
-              ],
-              [],
-            );
-          });
-
-          console.debug(`Loading Note#${row.id} from DB`);
-
-          return this.blocksStore.getBlockById(row.id) as NoteBlock;
-        });
-      }),
-    );
-  }
-
   getNoteIdByTitle$(title: string) {
     return from(
       this.dbEventsService.liveQuery([noteBlocksTable], () =>
@@ -245,23 +225,5 @@ export class NoteBlocksService {
       map((docs) => docs[0]?.id),
       distinctUntilChanged(),
     );
-  }
-
-  getNoteIdByBlockId$(blockId: string): undefined | string {
-    return undefined;
-  }
-
-  async isNoteExists(title: string) {
-    return !!(await this.noteBlocksRepository.findBy({ title }));
-  }
-
-  async getTuplesWithoutDailyNotes() {
-    return this.noteBlocksRepository.getTuplesWithoutDailyNotes();
-  }
-
-  getLinkedBlocksOfBlockDescendants$(
-    rootBlockId: string,
-  ): Observable<{ note: NoteBlock; blocks: BaseBlock[] }[]> {
-    return of([]);
   }
 }

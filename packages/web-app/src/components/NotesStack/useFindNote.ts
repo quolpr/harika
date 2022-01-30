@@ -28,9 +28,7 @@ export const useFindNote = (noteId: string) => {
 
   useEffect(() => {
     const callback = async () => {
-      const note = (await firstValueFrom(
-        allBlocksService.getBlockById$(noteId),
-      )) as NoteBlock;
+      const note = (await allBlocksService.getBlockById(noteId)) as NoteBlock;
 
       if (!note) {
         setIsLoading(false);

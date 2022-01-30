@@ -360,7 +360,7 @@ export const TokensRenderer = observer(
 
     const linkedNotes$ = useObservable(
       ($inputs) => {
-        return $inputs.pipe(switchMap(([ids]) => noteRepo.findNoteByIds$(ids)));
+        return $inputs.pipe(switchMap(([ids]) => noteRepo.findNoteByIds(ids)));
       },
       [linkedNoteIds],
     );

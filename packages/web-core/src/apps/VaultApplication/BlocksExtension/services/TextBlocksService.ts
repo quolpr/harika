@@ -1,5 +1,4 @@
 import { inject, injectable } from 'inversify';
-import { of } from 'rxjs';
 import { DbEventsListenService } from '../../../../extensions/SyncExtension/services/DbEventsListenerService';
 import { BlocksStore } from '../models/BlocksStore';
 import { TextBlocksRepository } from '../repositories/TextBlocksRepository';
@@ -17,14 +16,4 @@ export class TextBlocksService {
     @inject(AllBlocksService)
     private allBlocksService: AllBlocksService,
   ) {}
-
-  getNoteIdByBlockId$(blockId: string) {
-    // return from(
-    //   this.dbEventsService.liveQuery([noteBlocksTable], () =>
-    //     this.textBlocksRepository.getNoteIdByBlockId(blockId),
-    //   ),
-    // );
-
-    return of('');
-  }
 }

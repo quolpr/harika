@@ -1,6 +1,5 @@
 import { inject, injectable, multiInject } from 'inversify';
-import { ModelData, SnapshotInOf } from 'mobx-keystone';
-import { from, map, Observable, of, switchMap, take, tap } from 'rxjs';
+import { ModelData } from 'mobx-keystone';
 import { SyncConfig } from '../../../../extensions/SyncExtension/serverSynchronizer/SyncConfig';
 import { DbEventsListenService } from '../../../../extensions/SyncExtension/services/DbEventsListenerService';
 import { BaseBlock } from '../models/BaseBlock';
@@ -17,8 +16,6 @@ export class AllBlocksService {
   private blocksReposMap: Record<string, BaseBlockRepository>;
 
   constructor(
-    @inject(DbEventsListenService)
-    private dbEventsService: DbEventsListenService,
     @inject(AllBlocksRepository)
     private allBlocksRepository: AllBlocksRepository,
     @inject(BlocksStore)
@@ -31,43 +28,34 @@ export class AllBlocksService {
     );
   }
 
-  getBlockById$(blockId: string, forceReload = false) {
-    return this.getBlockByIds$([blockId], forceReload).pipe(
-      map((blocks) => blocks[0]),
-    );
+  async loadBlocksTree(blockId: string) {
+    await this.getBlockByIds([blockId]);
   }
 
-  // TODO: remove rxjs
-  getBlockByIds$(blockIds: string[], forceReload = false) {
-    const blocksMap: Record<string, BaseBlock> = Object.fromEntries(
+  async getBlockById(blockId: string, forceReload = false) {
+    return (await this.getBlockByIds([blockId], forceReload))[0];
+  }
+
+  async getBlockByIds(blockIds: string[], forceReload = false) {
+    const loadedBlocksMap: Record<string, BaseBlock> = Object.fromEntries(
       blockIds
-        .map((id) => [id, this.store.getBlockById(id)])
-        .filter(([, block]) => block !== undefined),
+        .map((id) => [id, this.store.getBlockById(id)] as const)
+        .filter(([, block]) => block !== undefined && block.isTreeFullyLoaded),
     );
 
-    const notLoadedIds = blockIds.filter((id) => !blocksMap[id]);
+    const notLoadedIds = blockIds.filter((id) => !loadedBlocksMap[id]);
 
     if (!forceReload && notLoadedIds.length === 0) {
-      return of(Object.values(blocksMap));
+      return Object.values(loadedBlocksMap);
     }
 
-    return from(
-      this.dbEventsService.liveQuery(
-        this.allBlocksRepository.blocksTables,
-        () => this.allBlocksRepository.getDescendantsWithSelf(blockIds),
-      ),
-    ).pipe(
-      tap((allBlocks) =>
-        allBlocks
-          ? this.store.handleModelChanges(
-              this.mapDocsToModelData(allBlocks),
-              [],
-            )
-          : undefined,
-      ),
-      map(() => this.store.getBlocksByIds(blockIds)),
-      take(1),
+    const allBlocks = await this.allBlocksRepository.getDescendantsWithSelf(
+      blockIds,
     );
+
+    this.store.handleModelChanges(this.mapDocsToModelData(allBlocks), []);
+
+    return this.store.getBlocksByIds(blockIds);
   }
 
   private mapDocsToModelData(docs: BaseBlockDoc[]) {
