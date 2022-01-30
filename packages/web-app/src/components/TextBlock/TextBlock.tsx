@@ -16,6 +16,7 @@ import { useCurrentFocusedBlockState } from '../../hooks/useFocusedBlockState';
 import { BlockEditor } from './BlockEditor/BlockEditor';
 import { useBacklinkedBlocksCount } from '../LinkedBlocksOfBlocksContext';
 import { computed } from 'mobx';
+import { getSnapshot } from 'mobx-keystone';
 
 // IMPORTANT: don't use any global handlers in <NoteBlocksExtensionStore /> (document.addEventListener) cause it is slow down note blocks tree a lot
 
@@ -161,7 +162,7 @@ const TextBlockBody = observer(
       <>
         {block.originalBlock.childrenBlocks.length !== 0 && (
           <Arrow
-            className="note-block__arrow"
+            className="text-block__arrow"
             isExpanded={isExpanded}
             onToggle={handleToggle}
           />
@@ -169,13 +170,13 @@ const TextBlockBody = observer(
 
         <div
           ref={noteBlockBodyElRef}
-          className={clsx('note-block__dot', {
-            'note-block__dot--expanded': isExpanded,
+          className={clsx('text-block__dot', {
+            'text-block__dot--expanded': isExpanded,
           })}
         />
         {/* <div */}
-        {/*   className={clsx('note-block__outline', { */}
-        {/*     'note-block__outline--show': isFocused, */}
+        {/*   className={clsx('text-block__outline', { */}
+        {/*     'text-block__outline--show': isFocused, */}
         {/*   })} */}
         {/* > */}
 
@@ -188,8 +189,8 @@ const TextBlockBody = observer(
 
         <span
           onMouseDown={handleContentClick}
-          className={clsx('note-block__content', {
-            'note-block__content--hidden': isEditing,
+          className={clsx('text-block__content', {
+            'text-block__content--hidden': isEditing,
           })}
           role="textbox"
           aria-label="NoteModel block content"
@@ -225,15 +226,15 @@ export const TextBlockComponent = observer(
 
     return (
       <div
-        className="note-block"
+        className="text-block"
         data-id={block.$modelId}
         data-order={block.originalBlock.orderPosition}
-        data-type="note-block"
+        data-type="text-block"
         data-scope-id={scope.$modelId}
       >
         <div
-          className={clsx('note-block__body', {
-            'note-block__body--selected': isSelected,
+          className={clsx('text-block__body', {
+            'text-block__body--selected': isSelected,
           })}
         >
           {block.originalBlock instanceof TextBlock ? (
@@ -247,7 +248,7 @@ export const TextBlockComponent = observer(
           )}
 
           {backlinksCount > 0 && (
-            <div className="note-block__linkedBlocksCounter">
+            <div className="text-block__linkedBlocksCounter">
               {backlinksCount}
             </div>
           )}
@@ -255,8 +256,8 @@ export const TextBlockComponent = observer(
 
         {block.children.length !== 0 && (
           <div
-            className={clsx('note-block__child-blocks', {
-              'note-block__child-blocks--selected': isSelected,
+            className={clsx('text-block__child-blocks', {
+              'text-block__child-blocks--selected': isSelected,
             })}
           >
             <BlocksChildren

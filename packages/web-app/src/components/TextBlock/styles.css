@@ -1,4 +1,4 @@
-.note-block {
+.text-block {
   @apply flex flex-col text-base;
 
   &__body {

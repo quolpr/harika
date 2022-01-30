@@ -71,8 +71,8 @@ export const BlockEditor = observer(
 
     return (
       <div
-        className={clsx('note-block__input-container', {
-          'note-block__input-container--hidden': !isEditing,
+        className={clsx('text-block__input-container', {
+          'text-block__input-container--hidden': !isEditing,
         })}
         ref={wrapperRef}
       >
@@ -83,7 +83,7 @@ export const BlockEditor = observer(
         <TextareaAutosize
           id={inputId}
           ref={inputRef}
-          className={clsx('note-block__content', {})}
+          className={clsx('text-block__content', {})}
           value={textBlock.originalBlock.contentModel.currentValue}
           {...textareaHandlers}
         />

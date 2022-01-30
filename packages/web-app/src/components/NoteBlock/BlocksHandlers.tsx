@@ -44,7 +44,7 @@ export const BlocksHandlers = observer(
       const idOnMouseMove$ = mouseMove$.pipe(
         map((e) => {
           const el2 = (e.target as HTMLElement).closest<HTMLDivElement>(
-            `[data-type="note-block"][data-scope-id="${scope.$modelId}"]`,
+            `[data-type="text-block"][data-scope-id="${scope.$modelId}"]`,
           );
 
           return el2?.dataset?.id;
@@ -60,7 +60,7 @@ export const BlocksHandlers = observer(
         .pipe(
           map((e) => {
             const el = (e.target as HTMLElement).closest<HTMLDivElement>(
-              `[data-type="note-block"][data-scope-id="${scope.$modelId}"]`,
+              `[data-type="text-block"][data-scope-id="${scope.$modelId}"]`,
             );
 
             return { fromBlockId: el?.dataset?.id, shiftKey: e.shiftKey };
@@ -215,7 +215,7 @@ export const BlocksHandlers = observer(
             !e.target.closest('[data-defocus]')
           ) &&
           e.target instanceof Element &&
-          (e.target.closest('[data-type="note-block"]') as HTMLElement)?.dataset
+          (e.target.closest('[data-type="text-block"]') as HTMLElement)?.dataset
             ?.id !== focusedBlock.state.scopedBlockId
         ) {
           focusedBlock.setState(

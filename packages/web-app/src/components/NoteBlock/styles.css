@@ -139,7 +139,7 @@
       @apply mt-0;
     }
 
-    .note-block__child-blocks::before {
+    .text-block__child-blocks::before {
       @apply bg-gray-700;
     }
   }

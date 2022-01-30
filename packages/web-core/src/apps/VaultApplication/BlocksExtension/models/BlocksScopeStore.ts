@@ -28,48 +28,14 @@ export const getScopeKey = (
 export class BlocksScopeStore extends Model({
   blocksScopes: prop<Record<string, BlocksScope>>(() => ({})),
 }) {
-  @withoutUndoAction
-  @modelAction
-  deleteScopesOfBlocks(blockIds: string[]) {
-    Object.values(this.blocksScopes).forEach((scope) => {
-      if (blockIds.includes(scope.rootBlockId)) {
-        detach(scope);
-      }
-    });
-  }
-
-  @withoutUndoAction
-  @modelAction
-  getOrCreateScopes(
-    args: {
-      scopedBy: { $modelId: string; $modelType: string };
-      collapsedBlockIds: string[];
-      rootBlockId: string;
-    }[],
-  ) {
-    return args.map((arg) => {
-      const key = getScopeKey(
-        arg.scopedBy.$modelId,
-        arg.scopedBy.$modelType,
-        arg.rootBlockId,
-      );
-
-      return (
-        this.blocksScopes[key] ||
-        this.createScope(arg.scopedBy, arg.rootBlockId, arg.collapsedBlockIds)
-      );
-    });
-  }
-
-  isScopeCreated(
-    noteId: string,
+  isScopePresent(
     scopedBy: { $modelId: string; $modelType: string },
-    rootBlockViewId: string,
+    rootBlockId: string,
   ) {
     const key = getScopeKey(
       scopedBy.$modelId,
       scopedBy.$modelType,
-      rootBlockViewId,
+      rootBlockId,
     );
 
     return !!this.blocksScopes[key];
@@ -81,9 +47,9 @@ export class BlocksScopeStore extends Model({
 
   getScope(
     model: { $modelId: string; $modelType: string },
-    rootViewId: string,
+    rootBlockId: string,
   ) {
-    const key = getScopeKey(model.$modelId, model.$modelType, rootViewId);
+    const key = getScopeKey(model.$modelId, model.$modelType, rootBlockId);
 
     if (!this.blocksScopes[key]) return undefined;
 
@@ -108,29 +74,5 @@ export class BlocksScopeStore extends Model({
         this.blocksScopes[scope.$modelId!] = new BlocksScope(scope);
       }
     });
-  }
-
-  private createScope(
-    scopedBy: { $modelId: string; $modelType: string },
-    rootBlockViewId: string,
-    collapsedBlockIds: string[],
-  ) {
-    const key = getScopeKey(
-      scopedBy.$modelId,
-      scopedBy.$modelType,
-      rootBlockViewId,
-    );
-
-    const blocksScope = new BlocksScope({
-      $modelId: key,
-      rootBlockId: rootBlockViewId,
-      collapsedBlockIds: arraySet(collapsedBlockIds),
-      scopeId: scopedBy.$modelId,
-      scopeType: scopedBy.$modelType,
-    });
-
-    this.blocksScopes[key] = blocksScope;
-
-    return this.blocksScopes[key];
   }
 }

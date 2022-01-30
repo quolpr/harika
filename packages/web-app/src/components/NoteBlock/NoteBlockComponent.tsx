@@ -56,27 +56,27 @@ const BacklinkedNotes = observer(({ note }: { note: NoteBlockModel }) => {
             .getLinkedBlocksOfBlockDescendants$(note.$modelId)
             .pipe(map((noteLinks) => ({ noteLinks: noteLinks, note }))),
         ),
-        switchMap(({ noteLinks, note }) =>
-          noteLinks.length
-            ? blocksScopesService
-                .getBlocksScopes$(
-                  noteLinks.flatMap((linkedNote) =>
-                    linkedNote.blocks.map((block) => ({
-                      scopedBy: note,
-                      rootBlockId: block.$modelId,
-                    })),
-                  ),
-                )
-                .pipe(
-                  map((scopes) => ({
-                    referencesCount: scopes.length,
-                    groupedScopes: groupBy(scopes, 'noteId'),
-                    noteLinks: noteLinks,
-                    note,
-                  })),
-                )
-            : of({ referencesCount: 0, groupedScopes: {}, noteLinks, note }),
-        ),
+        switchMap(async ({ noteLinks, note }) => {
+          if (noteLinks.length > 0) {
+            const scopes = await blocksScopesService.getBlocksScopes(
+              noteLinks.flatMap((linkedNote) =>
+                linkedNote.blocks.map((block) => ({
+                  scopedBy: note,
+                  rootBlockId: block.$modelId,
+                })),
+              ),
+            );
+
+            return {
+              referencesCount: scopes.length,
+              groupedScopes: groupBy(scopes, 'noteId'),
+              noteLinks: noteLinks,
+              note,
+            };
+          } else {
+            return { referencesCount: 0, groupedScopes: {}, noteLinks, note };
+          }
+        }),
         switchMap(async ({ noteLinks, referencesCount, groupedScopes }) => {
           return {
             areLoaded: true,

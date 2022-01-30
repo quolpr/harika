@@ -1,6 +1,6 @@
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { useMedia } from 'react-use';
+import { useAsync, useMedia } from 'react-use';
 import { Toolbar } from './Toolbar';
 import { useObservable, useObservableState } from 'observable-hooks';
 import { switchMap } from 'rxjs';
@@ -14,7 +14,7 @@ import {
   NoteBlock,
 } from '@harika/web-core';
 import { BlocksHandlers } from './BlocksHandlers';
-import { BlocksChildren, TextBlockComponent } from '../TextBlock/TextBlock';
+import { BlocksChildren } from '../TextBlock/TextBlock';
 
 const noteClass = bem('note');
 
@@ -22,18 +22,15 @@ export const ChildrenBlocks = observer(({ note }: { note: NoteBlock }) => {
   const blocksScopeService = useBlocksScopesService();
   const isWide = useMedia('(min-width: 768px)');
 
-  const scope$ = useObservable(
-    ($inputs) => {
-      return $inputs.pipe(
-        switchMap(([note]) => {
-          return blocksScopeService.getBlocksScope$(note, note.$modelId);
-        }),
-      );
-    },
-    [note],
-  );
+  const loadingScope = useAsync(() => {
+    return blocksScopeService.getBlocksScope(note, note.$modelId);
+  }, [note]);
+  const scope = loadingScope.loading
+    ? undefined
+    : loadingScope.value?.scopeId === note.$modelId
+    ? loadingScope.value
+    : undefined;
 
-  const scope = useObservableState(scope$, undefined);
   const collapsableNote = (scope && getCollapsableBlock(scope, note)) as
     | CollapsableBlock<NoteBlock>
     | undefined;

@@ -124,7 +124,7 @@ export const NotesStack = ({ stacks }: { stacks: IStack[] }) => {
       <div className={notesStackClass()} ref={parentRef}>
         {stacks.map((stack, i) => (
           <NoteStack
-            key={stack.stackId}
+            key={stack.stackId + stack.entityId}
             stack={stack}
             noteId={stack.entityId}
             isSingle={stacks.length === 1}
@@ -135,6 +135,6 @@ export const NotesStack = ({ stacks }: { stacks: IStack[] }) => {
       </div>
     </CustomScrollbar>
   ) : lastStack ? (
-    <SimpleNote stack={lastStack} />
+    <SimpleNote stack={lastStack} key={lastStack.entityId} />
   ) : null;
 };

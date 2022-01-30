@@ -1,7 +1,10 @@
 import { inject, injectable } from 'inversify';
 import { isEqual } from 'lodash-es';
+import { withoutUndo } from 'mobx-keystone';
 import { distinctUntilChanged, map, of, switchMap } from 'rxjs';
 import { withoutSync } from '../../../../extensions/SyncExtension/mobx-keystone/syncable';
+import { blocksScopesMapper } from '../mappers/blockScopesMapper';
+import { BlocksScope } from '../models/BlocksScope';
 import { BlocksScopeStore, getScopeKey } from '../models/BlocksScopeStore';
 import { BlocksScopesRepository } from '../repositories/BlockScopesRepository';
 
@@ -14,75 +17,51 @@ export class BlocksScopesService {
     private blocksScopesStore: BlocksScopeStore,
   ) {}
 
-  getBlocksScope$(
+  async getBlocksScope(
     scopedBy: { $modelId: string; $modelType: string },
     rootBlockId: string,
   ) {
-    return this.getBlocksScopes$([{ scopedBy, rootBlockId }]).pipe(
-      map((r) => r[0]),
-    );
+    return (await this.getBlocksScopes([{ scopedBy, rootBlockId }]))[0];
   }
 
-  getBlocksScopes$(
+  async getBlocksScopes(
     args: {
       scopedBy: { $modelId: string; $modelType: string };
       rootBlockId: string;
     }[],
   ) {
-    return of(args).pipe(
-      switchMap(async (args) => {
-        const argsWithKey = args.map((arg) => ({
-          ...arg,
-          key: getScopeKey(
-            arg.scopedBy.$modelId,
-            arg.scopedBy.$modelType,
-            arg.rootBlockId,
-          ),
-        }));
-
-        const scopesFromDb = Object.fromEntries(
-          (
-            await this.blocksScopesRepo.getByIds(
-              args.map((arg) =>
-                getScopeKey(
-                  arg.scopedBy.$modelId,
-                  arg.scopedBy.$modelType,
-                  arg.rootBlockId,
-                ),
-              ),
-            )
-          ).map((doc) => [doc.id, doc]),
-        );
-
-        const inDb = withoutSync(() => {
-          return this.blocksScopesStore.getOrCreateScopes(
-            argsWithKey
-              .filter((arg) => scopesFromDb[arg.key])
-              .map((arg) => {
-                return {
-                  ...arg,
-                  collapsedBlockIds: scopesFromDb[arg.key].collapsedBlockIds,
-                };
-              }),
-          );
-        });
-
-        const notInDb = (() => {
-          return this.blocksScopesStore.getOrCreateScopes(
-            argsWithKey
-              .filter((arg) => !scopesFromDb[arg.key])
-              .map((arg) => {
-                return {
-                  ...arg,
-                  collapsedBlockIds: [],
-                };
-              }),
-          );
-        })();
-
-        return [...inDb, ...notInDb];
-      }),
-      distinctUntilChanged((a, b) => isEqual(a, b)),
+    const toLoadScopes = args.filter(
+      ({ scopedBy, rootBlockId }) =>
+        !this.blocksScopesStore.isScopePresent(scopedBy, rootBlockId),
     );
+    const scopesFromDb =
+      toLoadScopes.length !== 0
+        ? await this.blocksScopesRepo.getByIds(
+            toLoadScopes.map((arg) =>
+              getScopeKey(
+                arg.scopedBy.$modelId,
+                arg.scopedBy.$modelType,
+                arg.rootBlockId,
+              ),
+            ),
+          )
+        : [];
+
+    withoutUndo(() => {
+      this.blocksScopesStore.handleModelChanges(
+        scopesFromDb.map((doc) => blocksScopesMapper.mapToModelData(doc)),
+        [],
+      );
+    });
+
+    return args
+      .map(
+        (arg) =>
+          this.blocksScopesStore.getScope(
+            arg.scopedBy,
+            arg.rootBlockId,
+          ) as BlocksScope,
+      )
+      .filter((b) => Boolean(b));
   }
 }
