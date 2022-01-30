@@ -18,7 +18,7 @@ export const textBlockMapper: IMapper<TextBlockDoc, TextBlock> = {
 
       content: doc.content,
 
-      areChildrenLoaded: false,
+      areChildrenLoaded: true,
 
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt,

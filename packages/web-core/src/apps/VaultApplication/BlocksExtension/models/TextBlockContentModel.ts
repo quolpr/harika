@@ -1,5 +1,6 @@
 import { debounce } from 'lodash-es';
 import { action, computed, makeObservable, observable, reaction } from 'mobx';
+import { onChildAttachedTo } from 'mobx-keystone';
 import {
   findFirst,
   isTodo,
@@ -74,6 +75,13 @@ export class TextBlockContent {
     makeObservable(this);
 
     this.currentValue = textBlock.content;
+
+    onChildAttachedTo(
+      () => textBlock,
+      () => {
+        return this.onChildAttach();
+      },
+    );
   }
 
   @computed
@@ -141,28 +149,27 @@ export class TextBlockContent {
     );
   }
 
+  // Let's skip debounce
   dumpValue() {
     this.textBlock.setContent(this.currentValue);
   }
 
-  private updatePrivateValue(newVal: string) {
-    this.textBlock.setContent(newVal);
-  }
-
-  onInit() {
+  // We make debounce of text content to avoid too frequent changes generation
+  onChildAttach() {
     this.currentValue = this.textBlock.content;
 
     const debounced = debounce((val: string) => {
       if (val !== this.textBlock.content) {
-        this.updatePrivateValue(val);
+        this.textBlock.setContent(val);
       }
-    }, 2000);
+    }, 500);
 
     const dispose1 = reaction(() => this.currentValue, debounced);
     const dispose2 = reaction(
       () => this.textBlock.content,
       (val) => {
         if (val !== this.currentValue) {
+          console.log({ val, cur: this.currentValue });
           this.update(val);
         }
       },

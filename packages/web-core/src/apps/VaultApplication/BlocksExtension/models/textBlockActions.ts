@@ -4,7 +4,7 @@ import { isTodo } from '../../../../lib/blockParser/astHelpers';
 import { generateId } from '../../../../lib/generateId';
 import { BaseBlock, blockRef } from './BaseBlock';
 import { BlocksStore } from './BlocksStore';
-import { CollapsableBlock, getCollapsableBlock } from './CollapsableBlock';
+import { CollapsableBlock } from './CollapsableBlock';
 import { TextBlock } from './TextBlock';
 
 export const createTextBlock = standaloneAction(
@@ -42,16 +42,15 @@ export const injectNewLeftBlock = standaloneAction(
     if (!collapsableBlock.parent) {
       throw new Error('Parent must be present!');
     }
+    const newOrderPosition = collapsableBlock.originalBlock.orderPosition;
 
-    return createTextBlock(
-      blocksStore,
+    collapsableBlock.originalBlock.increaseSiblingsPosition(newOrderPosition);
 
-      {
-        content,
-        orderPosition: collapsableBlock.originalBlock.orderPosition,
-        parentRef: blockRef(collapsableBlock.parent.$modelId),
-      },
-    );
+    return createTextBlock(blocksStore, {
+      content,
+      orderPosition: newOrderPosition,
+      parentRef: blockRef(collapsableBlock.parent.$modelId),
+    });
   },
 );
 
@@ -85,6 +84,8 @@ export const injectNewRightBlock = standaloneAction(
       }
     })();
 
+    collapsableBlock.originalBlock.increaseSiblingsPosition(injectTo);
+
     return createTextBlock(blocksStore, {
       content,
       parentRef: blockRef(parentBlock),
@@ -101,7 +102,7 @@ export const handleNewLinePress = standaloneAction(
     caretPosStart: number,
   ) => {
     const { originalBlock } = collapsableBlock;
-    const content = originalBlock.content;
+    const content = originalBlock.contentModel.currentValue;
 
     let newContent = '';
     let startAt = 0;

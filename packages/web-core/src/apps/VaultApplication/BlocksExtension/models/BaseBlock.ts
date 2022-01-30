@@ -67,7 +67,7 @@ export class BaseBlock extends Model({
       blocks.push(parent);
     }
 
-    return blocks;
+    return blocks.sort((a, b) => a.orderPosition - b.orderPosition);
   }
 
   get children() {
@@ -224,5 +224,14 @@ export class BaseBlock extends Model({
       this.areChildrenLoaded &&
       (this.parentRef ? this.parentRef.maybeCurrent !== undefined : true)
     );
+  }
+
+  @modelAction
+  increaseSiblingsPosition(startFrom: number) {
+    this.siblings
+      .filter((bl) => bl.orderPosition >= startFrom)
+      .forEach((bl) => {
+        bl.orderPosition++;
+      });
   }
 }

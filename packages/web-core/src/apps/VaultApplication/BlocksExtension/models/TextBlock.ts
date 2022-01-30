@@ -8,10 +8,12 @@ export const textBlockModelType = 'harika/BlocksExtension/TextBlock';
 @syncable
 @model(textBlockModelType)
 export class TextBlock extends ExtendedModel(BaseBlock, {
+  // It's a private field
   content: tProp(types.string),
 }) {
   public contentModel!: TextBlockContent;
 
+  // Should be used only in TextBlockContent
   @modelAction
   setContent(str: string) {
     this.content = str;
