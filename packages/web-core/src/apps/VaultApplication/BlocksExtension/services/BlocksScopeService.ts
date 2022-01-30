@@ -34,6 +34,7 @@ export class BlocksScopesService {
       ({ scopedBy, rootBlockId }) =>
         !this.blocksScopesStore.isScopePresent(scopedBy, rootBlockId),
     );
+
     const scopesFromDb =
       toLoadScopes.length !== 0
         ? await this.blocksScopesRepo.getByIds(
@@ -46,6 +47,26 @@ export class BlocksScopesService {
             ),
           )
         : [];
+
+    const toCreateScopes = withoutUndo(() =>
+      toLoadScopes
+        .filter(
+          (scope) =>
+            // O(n^2), but on small set should be ok
+            !scopesFromDb.find(
+              (doc) =>
+                doc.id ===
+                getScopeKey(
+                  scope.scopedBy.$modelId,
+                  scope.scopedBy.$modelType,
+                  scope.rootBlockId,
+                ),
+            ),
+        )
+        .map((arg) =>
+          this.blocksScopesStore.createScope(arg.scopedBy, arg.rootBlockId),
+        ),
+    );
 
     withoutUndo(() => {
       this.blocksScopesStore.handleModelChanges(
@@ -62,6 +83,7 @@ export class BlocksScopesService {
             arg.rootBlockId,
           ) as BlocksScope,
       )
-      .filter((b) => Boolean(b));
+      .filter((b) => Boolean(b))
+      .concat(toCreateScopes);
   }
 }

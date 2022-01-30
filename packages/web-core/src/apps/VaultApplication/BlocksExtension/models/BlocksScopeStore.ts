@@ -41,6 +41,29 @@ export class BlocksScopeStore extends Model({
     return !!this.blocksScopes[key];
   }
 
+  @modelAction
+  createScope(
+    scopedBy: { $modelId: string; $modelType: string },
+    rootBlockId: string,
+  ) {
+    const key = getScopeKey(
+      scopedBy.$modelId,
+      scopedBy.$modelType,
+      rootBlockId,
+    );
+
+    const scope = new BlocksScope({
+      rootBlockId,
+      scopeId: scopedBy.$modelId,
+      scopeType: scopedBy.$modelType,
+      collapsedBlockIds: arraySet([]),
+    });
+
+    this.blocksScopes[key] = scope;
+
+    return scope;
+  }
+
   getScopeById(id: string) {
     return this.blocksScopes[id];
   }
@@ -60,7 +83,7 @@ export class BlocksScopeStore extends Model({
   @withoutSyncAction
   @modelAction
   handleModelChanges(
-    scopes: (ModelData<BlocksScope> & { $modelType: string })[],
+    scopes: ModelData<BlocksScope>[],
     deletedScopeIds: SyncModelId<BlocksScope>[],
   ) {
     deletedScopeIds.forEach((id) => {
