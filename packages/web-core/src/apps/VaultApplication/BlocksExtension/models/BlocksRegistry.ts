@@ -14,12 +14,10 @@ export class BlocksRegistry extends Model({
     return !!this.blocksMap[id];
   }
 
-  @modelAction
   registerBlock(block: BaseBlock) {
     this.blocksMap[block.$modelId] = block;
   }
 
-  @modelAction
   registerBlocks(blocks: BaseBlock[]) {
     blocks.forEach((block) => {
       this.blocksMap[block.$modelId] = block;
