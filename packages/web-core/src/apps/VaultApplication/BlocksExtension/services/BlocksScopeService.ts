@@ -48,7 +48,7 @@ export class BlocksScopesService {
           )
         : [];
 
-    const toCreateScopes = withoutUndo(() =>
+    withoutUndo(() => {
       toLoadScopes
         .filter(
           (scope) =>
@@ -65,10 +65,8 @@ export class BlocksScopesService {
         )
         .map((arg) =>
           this.blocksScopesStore.createScope(arg.scopedBy, arg.rootBlockId),
-        ),
-    );
+        );
 
-    withoutUndo(() => {
       this.blocksScopesStore.handleModelChanges(
         scopesFromDb.map((doc) => blocksScopesMapper.mapToModelData(doc)),
         [],
@@ -83,7 +81,6 @@ export class BlocksScopesService {
             arg.rootBlockId,
           ) as BlocksScope,
       )
-      .filter((b) => Boolean(b))
-      .concat(toCreateScopes);
+      .filter((b) => Boolean(b));
   }
 }

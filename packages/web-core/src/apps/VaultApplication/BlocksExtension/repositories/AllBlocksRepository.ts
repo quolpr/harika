@@ -1,6 +1,6 @@
 import { DB, IQueryExecuter } from '../../../../extensions/DbExtension/DB';
 import { inject, injectable, multiInject } from 'inversify';
-import { BaseBlockRepository } from './BaseBlockRepository';
+import { BaseBlockRepository, blocksLinksTable } from './BaseBlockRepository';
 import { sqltag, join, raw } from '../../../../lib/sql';
 import { SyncConfig } from '../../../../extensions/SyncExtension/serverSynchronizer/SyncConfig';
 import { BLOCK_REPOSITORY } from '../types';
@@ -46,7 +46,6 @@ export class AllBlocksRepository {
   }
 
   get blocksTables(): string[] {
-    console.log(this.blocksRepos);
     return this.blocksRepos.map((r) => r.getTableName());
   }
 
@@ -134,6 +133,42 @@ export class AllBlocksRepository {
     console.log();
   }
 
+  async getRootBlockIdsOfLinkedBlocks(
+    rootBlockId: string,
+    e: IQueryExecuter = this.db,
+  ) {
+    const linkedBlockIdsToDescendants = sqltag`
+      SELECT blockId FROM ${raw(blocksLinksTable)} WHERE linkedToBlockId IN (
+        WITH RECURSIVE
+          ${this.withDescendants([rootBlockId])}
+        SELECT blockId FROM childrenBlockIds
+      )
+    `;
+
+    const res = await e.getRecords<{ blockId: string; isLinked: 0 | 1 }>(sqltag`
+      WITH RECURSIVE
+        parentBlockIds(blockId, parentId, isLinked) AS (
+          SELECT blockId, parentId, 1 FROM ${raw(
+            blocksChildrenTable,
+          )} WHERE blockId IN (${linkedBlockIdsToDescendants})
+          UNION ALL
+          SELECT a.blockId, a.parentId, 0 FROM ${raw(
+            blocksChildrenTable,
+          )} a JOIN parentBlockIds b ON a.blockId = b.parentId LIMIT 100
+        )
+      SELECT parentBlockIds.blockId, parentBlockIds.isLinked FROM parentBlockIds WHERE parentBlockIds.parentId IS NULL OR parentBlockIds.isLinked = 1
+    `);
+
+    return {
+      rootBlockIds: res
+        .filter(({ isLinked }) => isLinked === 0)
+        .map(({ blockId }) => blockId),
+      linkedBlockIds: res
+        .filter(({ isLinked }) => isLinked === 1)
+        .map(({ blockId }) => blockId),
+    };
+  }
+
   async bulkDelete(
     ids: { id: string; type: string }[],
     ctx: ISyncCtx,
@@ -210,18 +245,18 @@ export class AllBlocksRepository {
   //   return obj;
   // }
 
-  private withDescendants(ids: string[]) {
+  private withDescendants(ids: string[], tableName = 'childrenBlockIds') {
     const rawBlocksChildrenTable = raw(blocksChildrenTable);
 
     return sqltag`
-      childrenBlockIds(blockId, parentId) AS (
+      ${raw(tableName)}(blockId, parentId) AS (
         VALUES ${join(
           ids.map((id) => sqltag`(${id}, NULL)`),
           ',',
         )}
         UNION ALL
         SELECT a.blockId, a.parentId FROM ${rawBlocksChildrenTable} a 
-          JOIN childrenBlockIds b ON a.parentId = b.blockId LIMIT 1000000
+          JOIN ${raw(tableName)} b ON a.parentId = b.blockId LIMIT 1000000
       )
     `;
   }

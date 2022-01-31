@@ -28,8 +28,6 @@ export const blockRef = rootRef<BaseBlock>(
   'harika/BlocksExtension/BaseBlockRef',
 );
 
-export const rootBlockIdCtx = createContext<string>('');
-
 @model('harika/BlocksExtension/BaseBlock')
 export class BaseBlock extends Model({
   parentRef: prop<Ref<BaseBlock> | undefined>(),
@@ -48,7 +46,7 @@ export class BaseBlock extends Model({
 
   @computed
   get isRoot() {
-    return rootBlockIdCtx.get(this) === this.$modelId;
+    return this.parentRef === undefined;
   }
 
   @computed({ equals: comparer.shallow })
@@ -112,6 +110,11 @@ export class BaseBlock extends Model({
   @computed
   get path() {
     return pathFunc(this);
+  }
+
+  @computed
+  get root() {
+    return this.path[0];
   }
 
   @computed
@@ -219,11 +222,12 @@ export class BaseBlock extends Model({
 
   @computed
   get isTreeFullyLoaded(): boolean {
-    // TODO: make recursively
-    return (
-      this.areChildrenLoaded &&
-      (this.parentRef ? this.parentRef.maybeCurrent !== undefined : true)
+    if (!this.areChildrenLoaded) return false;
+
+    const areNestedChildrenLoaded = this.childrenBlocks.every(
+      (b) => b.areChildrenLoaded,
     );
+    return areNestedChildrenLoaded;
   }
 
   @modelAction

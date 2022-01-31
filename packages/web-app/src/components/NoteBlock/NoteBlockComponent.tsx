@@ -27,6 +27,7 @@ import RightArrow from '../../icons/right-arrow.svg?component';
 import { useMedia } from 'react-use';
 import { BacklinkedNote } from './BacklinkedNote';
 import {
+  useAllBlocksService,
   useBlocksScopesService,
   useNoteBlocksService,
   useUpdateTitleService,
@@ -44,15 +45,15 @@ export interface IFocusBlockState {
 }
 
 const BacklinkedNotes = observer(({ note }: { note: NoteBlockModel }) => {
+  const allBlocksService = useAllBlocksService();
   const blocksScopesService = useBlocksScopesService();
-  const noteBlocksService = useNoteBlocksService();
 
   // TODO: data getting looks pretty complex. It will be good to refactor
   const backlinks$ = useObservable(
     ($inputs) => {
       return $inputs.pipe(
         switchMap(([note]) =>
-          noteBlocksService
+          allBlocksService
             .getLinkedBlocksOfBlockDescendants$(note.$modelId)
             .pipe(map((noteLinks) => ({ noteLinks: noteLinks, note }))),
         ),
@@ -67,9 +68,11 @@ const BacklinkedNotes = observer(({ note }: { note: NoteBlockModel }) => {
               ),
             );
 
+            console.log(scopes, noteLinks);
+
             return {
               referencesCount: scopes.length,
-              groupedScopes: groupBy(scopes, 'noteId'),
+              groupedScopes: groupBy(scopes, (sc) => sc.rootBlockId),
               noteLinks: noteLinks,
               note,
             };
@@ -100,9 +103,9 @@ const BacklinkedNotes = observer(({ note }: { note: NoteBlockModel }) => {
   const linksBlocksWithScope = useMemo(
     () =>
       backlinks.noteLinks.map((link) => ({
-        note: link.note,
+        note: link.rootBlock as NoteBlock,
         scopesWithBlocks: link.blocks.flatMap((rootBlock) => {
-          const scopes = backlinks.groupedScopes[link.note.$modelId];
+          const scopes = backlinks.groupedScopes[rootBlock.$modelId];
           const scope = scopes.find(
             (sc) => sc.rootBlockId === rootBlock.$modelId,
           );
@@ -114,7 +117,7 @@ const BacklinkedNotes = observer(({ note }: { note: NoteBlockModel }) => {
           };
         }),
       })),
-    [backlinks.groupedScopes, backlinks.noteLinks],
+    [backlinks],
   );
 
   return (

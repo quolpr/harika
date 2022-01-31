@@ -195,12 +195,6 @@ export class NoteBlocksService {
     );
   }
 
-  getLinkedBlocksOfBlockDescendants$(
-    rootBlockId: string,
-  ): Observable<{ note: NoteBlock; blocks: BaseBlock[] }[]> {
-    return of([]);
-  }
-
   getAllNotesTuples$() {
     return from(
       this.dbEventsService.liveQuery([noteBlocksTable], () =>

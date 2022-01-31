@@ -23,6 +23,29 @@ export class BlocksStore extends Model({
     return ids.map((id) => this.getBlockById(id));
   }
 
+  getBlocksGroupedByRoot(ids: string[]) {
+    const blocks = this.getBlocksByIds(ids);
+
+    const groupedBlocks: Map<BaseBlock, BaseBlock[]> = new Map();
+
+    blocks.forEach((b) => {
+      if (groupedBlocks.has(b.root)) {
+        groupedBlocks.get(b.root)!.push(b);
+      } else {
+        groupedBlocks.set(b.root, [b]);
+      }
+    });
+
+    const res = Array.from(groupedBlocks.entries()).map(
+      ([rootBlock, blocks]) => ({
+        rootBlock,
+        blocks,
+      }),
+    );
+
+    return res;
+  }
+
   @modelAction
   deletedBlockByIds(ids: string[]) {
     this.getBlocksByIds(ids).forEach((block) => {
