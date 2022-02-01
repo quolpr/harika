@@ -49,6 +49,9 @@ export class AllBlocksRepository {
     return this.blocksRepos.map((r) => r.getTableName());
   }
 
+  // TODO
+  async getSingleBlocksByIds(ids: string[], e: IQueryExecuter = this.db) {}
+
   async getDescendantsWithSelf(ids: string[], e: IQueryExecuter = this.db) {
     const joinTables = this.blocksRepos
       .map((r) => r.getTableName())
@@ -78,7 +81,7 @@ export class AllBlocksRepository {
       await e.getRecords<Record<string, unknown>>(sqltag`
       WITH RECURSIVE
         ${this.withDescendants(ids)}
-      SELECT ${selects}  FROM childrenBlockIds
+      SELECT ${selects} FROM childrenBlockIds
         ${join(joinTables, ' ')}
     `)
     ).map((row) => {

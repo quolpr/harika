@@ -45,20 +45,20 @@ Data
   }
   
 Token
-  = EOLOneLineTokens /  SpaceBeforeTag / Bold / Italic / Highlight / CodeBlock / InlineCode /  NoteRef / NoteBlockRef
+  = EOLOneLineTokens /  SpaceBeforeTag / Bold / Italic / Highlight / CodeBlock / InlineCode /  NoteBlockRef / TextBlockRef
  
-NoteRef
+NoteBlockRef
   = '[[' content:($[^'\]\]']+) ']]' { 
     const loc = location();
 
-    return {id: options.generateId(), type: 'noteRef', content: content, offsetStart: loc.start.offset, offsetEnd: loc.end.offset} 
+    return {id: options.generateId(), type: 'noteBlockRef', content: content, offsetStart: loc.start.offset, offsetEnd: loc.end.offset} 
   }
  
-NoteBlockRef
+TextBlockRef
   = '((' content:($[^'\)\)']+) '))' { 
     const loc = location();
 
-    return {id: options.generateId(), type: 'noteBlockRef', content: content, offsetStart: loc.start.offset, offsetEnd: loc.end.offset} 
+    return {id: options.generateId(), type: 'textBlockRef', content: content, offsetStart: loc.start.offset, offsetEnd: loc.end.offset} 
   }
 
 TagWithBrackets

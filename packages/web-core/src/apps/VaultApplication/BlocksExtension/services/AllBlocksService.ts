@@ -33,18 +33,30 @@ export class AllBlocksService {
   }
 
   async loadBlocksTree(blockId: string) {
-    await this.getBlockByIds([blockId]);
+    await this.getBlockWithTreeByIds([blockId]);
   }
 
   async loadBlocksTrees(blockIds: string[]) {
-    await this.getBlockByIds(blockIds);
+    await this.getBlockWithTreeByIds(blockIds);
   }
 
-  async getBlockById(blockId: string, forceReload = false) {
-    return (await this.getBlockByIds([blockId], forceReload))[0];
+  async getBlockWithTreeById(blockId: string, forceReload = false) {
+    return (await this.getBlockWithTreeByIds([blockId], forceReload))[0];
   }
 
-  async getBlockByIds(blockIds: string[], forceReload = false) {
+  async getSingleBlockByIds(blockIds: string[], forceReload = false) {
+    const loadedBlocksMap: Record<string, BaseBlock> = Object.fromEntries(
+      blockIds.map((id) => [id, this.store.getBlockById(id)] as const),
+    );
+
+    const notLoadedIds = blockIds.filter((id) => !loadedBlocksMap[id]);
+
+    if (!forceReload && notLoadedIds.length === 0) {
+      return Object.values(loadedBlocksMap);
+    }
+  }
+
+  async getBlockWithTreeByIds(blockIds: string[], forceReload = false) {
     const loadedBlocksMap: Record<string, BaseBlock> = Object.fromEntries(
       blockIds
         .map((id) => [id, this.store.getBlockById(id)] as const)
@@ -69,8 +81,6 @@ export class AllBlocksService {
   getLinkedBlocksOfBlockDescendants$(
     rootBlockId: string,
   ): Observable<{ rootBlock: BaseBlock; blocks: BaseBlock[] }[]> {
-    console.log(this.allBlocksRepository.blocksTables);
-
     return this.dbEventsService
       .liveQuery(
         this.allBlocksRepository.blocksTables,

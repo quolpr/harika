@@ -76,6 +76,13 @@ export class BlocksStore extends Model({
           applyModelData(
             this.blocksRegistry.getBlockById(block.$modelId!),
             block,
+            (key, oldVal, newVal) => {
+              if (key === 'areChildrenLoaded') {
+                if (oldVal === true) return true;
+              }
+
+              return newVal;
+            },
           );
         } else {
           this.blocksRegistry.registerBlock(new klass(block));

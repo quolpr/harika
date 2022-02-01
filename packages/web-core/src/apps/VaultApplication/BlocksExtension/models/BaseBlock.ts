@@ -227,6 +227,7 @@ export class BaseBlock extends Model({
     const areNestedChildrenLoaded = this.childrenBlocks.every(
       (b) => b.areChildrenLoaded,
     );
+
     return areNestedChildrenLoaded;
   }
 

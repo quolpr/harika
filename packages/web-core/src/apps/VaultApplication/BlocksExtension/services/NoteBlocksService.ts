@@ -136,7 +136,7 @@ export class NoteBlocksService {
   }
 
   async getNote(id: string) {
-    const note = await this.allBlocksService.getBlockById(id);
+    const note = await this.allBlocksService.getBlockWithTreeById(id);
 
     if (!(note instanceof NoteBlock)) {
       console.error(`Note with id ${id} not found, but ${note} found`);

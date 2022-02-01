@@ -68,8 +68,6 @@ const BacklinkedNotes = observer(({ note }: { note: NoteBlockModel }) => {
               ),
             );
 
-            console.log(scopes, noteLinks);
-
             return {
               referencesCount: scopes.length,
               groupedScopes: groupBy(scopes, (sc) => sc.rootBlockId),

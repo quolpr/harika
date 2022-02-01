@@ -4,7 +4,7 @@ import { firstValueFrom } from 'rxjs';
 import { filterAst } from '../../../../lib/blockParser/astHelpers';
 import {
   TextBlockRef,
-  NoteRefToken,
+  NoteBlockRefToken,
   TagToken,
 } from '../../../../lib/blockParser/types';
 import { TextBlock } from '../models/TextBlock';
@@ -23,7 +23,9 @@ export class UpdateLinksService {
   async updateBlockLinks(noteBlockIds: string[]) {
     console.debug('Updating block links');
 
-    const blocks = await this.allBlocksService.getBlockByIds(noteBlockIds);
+    const blocks = await this.allBlocksService.getBlockWithTreeByIds(
+      noteBlockIds,
+    );
 
     const textBlocks = blocks.filter(
       (b) => b instanceof TextBlock,
@@ -33,9 +35,9 @@ export class UpdateLinksService {
       return (
         filterAst(
           block.contentModel.ast,
-          (t) => t.type === 'noteRef' || t.type === 'tag',
-        ) as (NoteRefToken | TagToken)[]
-      ).map((t: NoteRefToken | TagToken) => t.ref);
+          (t) => t.type === 'noteBlockRef' || t.type === 'tag',
+        ) as (NoteBlockRefToken | TagToken)[]
+      ).map((t: NoteBlockRefToken | TagToken) => t.ref);
     });
 
     const existingNotesIndexed = Object.fromEntries(
@@ -85,10 +87,10 @@ export class UpdateLinksService {
       const noteBlockIds = (
         filterAst(
           b.contentModel.ast,
-          (t) => t.type === 'noteRef' || t.type === 'tag',
-        ) as (NoteRefToken | TagToken)[]
+          (t) => t.type === 'noteBlockRef' || t.type === 'tag',
+        ) as (NoteBlockRefToken | TagToken)[]
       )
-        .map((t: NoteRefToken | TagToken) => t.ref)
+        .map((t: NoteBlockRefToken | TagToken) => t.ref)
         .map((title) => noteTitleIdMap[title]);
 
       b.updateLinks(

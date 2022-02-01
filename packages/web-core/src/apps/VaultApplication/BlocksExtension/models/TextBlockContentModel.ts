@@ -20,7 +20,7 @@ const astToString = (ast: Token[]): string => {
       // eslint-disable-next-line array-callback-return
       .map((t): string => {
         switch (t.type) {
-          case 'noteRef':
+          case 'noteBlockRef':
             return `[[${t.content}]]`;
 
           case 'tag':
@@ -124,7 +124,7 @@ export class TextBlockContent {
   @action
   toggleTodo(id: string) {
     const newAst = mapTokens(this.ast, (token) => {
-      if (token.id === id && token.type === 'noteRef') {
+      if (token.id === id && token.type === 'noteBlockRef') {
         const ref = token.ref === 'TODO' ? 'DONE' : 'TODO';
         return {
           ...token,
@@ -144,7 +144,8 @@ export class TextBlockContent {
     return Boolean(
       findFirst(
         this.ast,
-        (t) => t.type === 'noteRef' && (t.ref === 'TODO' || t.ref === 'DONE'),
+        (t) =>
+          t.type === 'noteBlockRef' && (t.ref === 'TODO' || t.ref === 'DONE'),
       ),
     );
   }
@@ -162,7 +163,7 @@ export class TextBlockContent {
       if (val !== this.textBlock.content) {
         this.textBlock.setContent(val);
       }
-    }, 500);
+    }, 2000);
 
     const dispose1 = reaction(() => this.currentValue, debounced);
     const dispose2 = reaction(

@@ -1,10 +1,22 @@
 import { DB } from '../../../../extensions/DbExtension/DB';
 import { inject, injectable } from 'inversify';
 import { Observable, of } from 'rxjs';
+import Q from 'sql-bricks';
+import {
+  noteBlocksFTSTable,
+  noteBlocksTable,
+} from '../repositories/NoteBlocksRepostitory';
+import { DbEventsListenService } from '../../../../extensions/SyncExtension/services/DbEventsListenerService';
+import {
+  textBlocksFTSTable,
+  textBlocksTable,
+} from '../repositories/TextBlocksRepository';
 
 @injectable()
 export class FindNoteOrBlockService {
   constructor(
+    @inject(DbEventsListenService)
+    private dbEventsService: DbEventsListenService,
     @inject(DB) private db: DB, // private notesRepo: SqlNotesRepository, // private notesBlocksRepo: NotesBlocksRepository,
   ) {}
 
@@ -69,56 +81,61 @@ export class FindNoteOrBlockService {
     return of(this.find(text));
   }
 
-  findNotes(text: string): { id: string; title: string }[] {
-    //   text = text.toLowerCase().trim();
+  async findNotes(text: string): Promise<{ id: string; title: string }[]> {
+    text = text.toLowerCase().trim();
 
-    //   const res = this.db.getRecords<{
-    //     id: string;
-    //     title: string;
-    //   }>(
-    //     Q.select(
-    //       'id',
-    //       Q.select('title')
-    //         .as('title')
-    //         .from(noteBlocksTable)
-    //         .where(Q(`id = ${noteBlocksFTSTable}.id`)),
-    //     )
-    //       .from(noteBlocksFTSTable)
-    //       .where(Q.like('title', `%${text}%`))
-    //       .orderBy('rank'),
-    //   );
+    const res = await this.db.getRecords<{
+      id: string;
+      title: string;
+    }>(
+      Q.select(
+        'id',
+        Q.select('title')
+          .as('title')
+          .from(noteBlocksTable)
+          .where(Q(`id = ${noteBlocksFTSTable}.id`)),
+      )
+        .from(noteBlocksFTSTable)
+        .where(Q.like('title', `%${text}%`))
+        .orderBy('rank'),
+    );
 
-    //   return res;
-    return [];
+    return res;
   }
 
   findNotes$(text: string): Observable<{ id: string; title: string }[]> {
-    return of(this.findNotes(text));
+    return this.dbEventsService.liveQuery([noteBlocksTable], () =>
+      this.findNotes(text),
+    );
   }
 
-  findTextBlocks(text: string): { id: string; content: string }[] {
-    // text = text.toLowerCase().trim();
+  async findTextBlocks(
+    text: string,
+  ): Promise<{ id: string; content: string }[]> {
+    text = text.toLowerCase().trim();
 
-    // const res = this.db.getRecords<{
-    //   id: string;
-    //   content: string;
-    // }>(
-    //   Q.select(
-    //     'id',
-    //     Q.select('content')
-    //       .as('content')
-    //       .from(noteBlocksTable)
-    //       .where(Q(`id = ${noteBlocksFTSTable}.id`)),
-    //   )
-    //     .from(noteBlocksFTSTable)
-    //     .where(Q.like('textContent', `%${text}%`))
-    //     .orderBy('rank'),
-    // );
+    const res = await this.db.getRecords<{
+      id: string;
+      content: string;
+    }>(
+      Q.select(
+        'id',
+        Q.select('content')
+          .as('content')
+          .from(textBlocksTable)
+          .where(Q(`id = ${textBlocksFTSTable}.id`)),
+      )
+        .from(textBlocksFTSTable)
+        .where(Q.like('textContent', `%${text}%`))
+        .orderBy('rank'),
+    );
 
-    return [];
+    return res;
   }
 
   findTextBlocks$(text: string) {
-    return of(this.findTextBlocks(text));
+    return this.dbEventsService.liveQuery([textBlocksTable], () =>
+      this.findTextBlocks(text),
+    );
   }
 }

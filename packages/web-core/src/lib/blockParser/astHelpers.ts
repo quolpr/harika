@@ -59,5 +59,5 @@ export const mapTokens = (
 };
 
 export const isTodo = (token: Token): token is TodoRefToken => {
-  return token.type === 'noteRef' && ['TODO', 'DONE'].includes(token.ref);
+  return token.type === 'noteBlockRef' && ['TODO', 'DONE'].includes(token.ref);
 };

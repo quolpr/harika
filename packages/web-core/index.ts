@@ -3,7 +3,7 @@ import '@harika-org/sql.js/dist/sql-wasm.wasm?url';
 
 export type {
   Token,
-  NoteRefToken,
+  NoteBlockRefToken as NoteRefToken,
   TagToken,
 } from './src/lib/blockParser/types';
 export { BlocksScope } from './src/apps/VaultApplication/BlocksExtension/models/BlocksScope';

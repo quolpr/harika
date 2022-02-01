@@ -202,7 +202,7 @@ const TokenRenderer = observer(
     switch (token.type) {
       case 'tag':
         return <TagRenderer token={token} linkedNotes={linkedNotes} />;
-      case 'noteRef':
+      case 'noteBlockRef':
         return (
           <NoteRefRenderer
             collapsableBlock={collapsableBlock}

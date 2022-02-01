@@ -277,7 +277,7 @@ export const useHandleInput = (
           block.originalBlock.contentModel.ast,
         )[0];
 
-        if (firstToken?.type !== 'noteRef' && firstToken?.type !== 'tag') {
+        if (firstToken?.type !== 'noteBlockRef' && firstToken?.type !== 'tag') {
           setNoteTitleToSearch(undefined);
         }
 
@@ -351,7 +351,7 @@ export const useHandleInput = (
           block.originalBlock.contentModel.ast,
         )[0];
 
-        if (firstToken?.type === 'noteRef' || firstToken?.type === 'tag') {
+        if (firstToken?.type === 'noteBlockRef' || firstToken?.type === 'tag') {
           setNoteTitleToSearch(firstToken.ref);
         } else if (firstToken?.type === 'textBlockRef') {
           if (!firstToken.blockId) {
@@ -425,7 +425,7 @@ export const useHandleInput = (
         block.originalBlock.contentModel.ast,
       )[0];
 
-      if (firstToken?.type === 'noteRef') {
+      if (firstToken?.type === 'noteBlockRef') {
         const alias = firstToken.alias ? ` | ${firstToken.alias}` : '';
         const toInsert = `[[${res.title}${alias}]] `;
 

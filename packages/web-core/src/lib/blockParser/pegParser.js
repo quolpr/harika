@@ -302,7 +302,7 @@ function peg$parse(input, options) {
 
     return {
       id: options.generateId(),
-      type: 'noteRef',
+      type: 'noteBlockRef',
       content: content,
       offsetStart: loc.start.offset,
       offsetEnd: loc.end.offset,
@@ -313,7 +313,7 @@ function peg$parse(input, options) {
 
     return {
       id: options.generateId(),
-      type: 'noteBlockRef',
+      type: 'textBlockRef',
       content: content,
       offsetStart: loc.start.offset,
       offsetEnd: loc.end.offset,
@@ -726,9 +726,9 @@ function peg$parse(input, options) {
               if (s0 === peg$FAILED) {
                 s0 = peg$parseInlineCode();
                 if (s0 === peg$FAILED) {
-                  s0 = peg$parseNoteRef();
+                  s0 = peg$parseNoteBlockRef();
                   if (s0 === peg$FAILED) {
-                    s0 = peg$parseNoteBlockRef();
+                    s0 = peg$parseTextBlockRef();
                   }
                 }
               }
@@ -743,7 +743,7 @@ function peg$parse(input, options) {
     return s0;
   }
 
-  function peg$parseNoteRef() {
+  function peg$parseNoteBlockRef() {
     var s0, s1, s2, s3, s4;
 
     var key = peg$currPos * 18 + 3;
@@ -829,7 +829,7 @@ function peg$parse(input, options) {
     return s0;
   }
 
-  function peg$parseNoteBlockRef() {
+  function peg$parseTextBlockRef() {
     var s0, s1, s2, s3, s4;
 
     var key = peg$currPos * 18 + 4;

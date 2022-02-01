@@ -5,17 +5,17 @@ interface BaseToken {
   offsetEnd: number;
 }
 
-export interface NoteRefToken extends BaseToken {
+export interface NoteBlockRefToken extends BaseToken {
   id: string;
-  type: 'noteRef';
+  type: 'noteBlockRef';
   content: string;
   ref: string;
   alias: string | undefined;
 }
 
-export interface TodoRefToken extends NoteRefToken {
+export interface TodoRefToken extends NoteBlockRefToken {
   id: string;
-  type: 'noteRef';
+  type: 'noteBlockRef';
   ref: 'TODO' | 'DONE';
 }
 
@@ -95,7 +95,7 @@ interface LinkToken extends BaseToken {
 }
 
 export type Token =
-  | NoteRefToken
+  | NoteBlockRefToken
   | TextBlockRef
   | TagToken
   | BoldToken
