@@ -54,7 +54,7 @@ const BacklinkedNotes = observer(({ note }: { note: NoteBlockModel }) => {
       return $inputs.pipe(
         switchMap(([note]) =>
           allBlocksService
-            .getLinkedBlocksOfBlockDescendants$(note.$modelId)
+            .getBacklinkedBlocks$(note.$modelId)
             .pipe(map((noteLinks) => ({ noteLinks: noteLinks, note }))),
         ),
         switchMap(async ({ noteLinks, note }) => {

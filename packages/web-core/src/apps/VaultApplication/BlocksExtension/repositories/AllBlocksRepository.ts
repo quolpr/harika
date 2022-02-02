@@ -49,58 +49,35 @@ export class AllBlocksRepository {
     return this.blocksRepos.map((r) => r.getTableName());
   }
 
-  // TODO
-  async getSingleBlocksByIds(ids: string[], e: IQueryExecuter = this.db) {}
+  async getSingleBlocksByIds(ids: string[], e: IQueryExecuter = this.db) {
+    const { select, joinTables } = await this.getBlocksQueries('blocks');
+
+    return this.joinedRowsToDocs(
+      await e.getRecords(sqltag`
+      SELECT ${select} FROM (
+        ${join(
+          ids.map((id) => sqltag`SELECT ${id} as blockId`),
+          'UNION ALL',
+        )}
+      ) as blocks
+        ${join(joinTables, '')}
+    `),
+    );
+  }
 
   async getDescendantsWithSelf(ids: string[], e: IQueryExecuter = this.db) {
-    const joinTables = this.blocksRepos
-      .map((r) => r.getTableName())
-      .map(
-        (tableName) =>
-          sqltag`LEFT JOIN ${raw(tableName)} ON ${raw(
-            tableName,
-          )}.id = childrenBlockIds.blockId`,
-      );
-
-    const selects = join(
-      (
-        await Promise.all(
-          this.blocksRepos.flatMap(async (r) => {
-            const tableName = r.getTableName();
-
-            return (await r.getColumnNames()).map((c) =>
-              raw(`${tableName}.${c} AS ${tableName}_${c}`),
-            );
-          }),
-        )
-      ).flat(),
-      ', ',
+    const { select, joinTables } = await this.getBlocksQueries(
+      'childrenBlockIds',
     );
 
-    const res = (
-      await e.getRecords<Record<string, unknown>>(sqltag`
+    return this.joinedRowsToDocs(
+      await e.getRecords(sqltag`
       WITH RECURSIVE
         ${this.withDescendants(ids)}
-      SELECT ${selects} FROM childrenBlockIds
+      SELECT ${select} FROM childrenBlockIds
         ${join(joinTables, ' ')}
-    `)
-    ).map((row) => {
-      const actualRepo = this.blocksRepos.find(
-        (repo) => !!row[`${repo.getTableName()}_id`],
-      );
-
-      if (!actualRepo)
-        throw new Error(`Failed to determine repo for ${JSON.stringify(row)}`);
-
-      const actualRow = mapKeys(
-        pickBy(row, (_v, k) => k.startsWith(actualRepo.getTableName())),
-        (_value, key) => key.replace(actualRepo.getTableName() + '_', ''),
-      );
-
-      return actualRepo.toDoc(actualRow as BaseBlockRow);
-    });
-
-    return res;
+    `),
+    );
   }
 
   async getDescendantIds(
@@ -136,39 +113,56 @@ export class AllBlocksRepository {
     console.log();
   }
 
-  async getRootBlockIdsOfLinkedBlocks(
+  async getBacklinkedBlockIds(
     rootBlockId: string,
+    includeDescendant = false,
     e: IQueryExecuter = this.db,
   ) {
     const linkedBlockIdsToDescendants = sqltag`
-      SELECT blockId FROM ${raw(blocksLinksTable)} WHERE linkedToBlockId IN (
+      SELECT blockId, linkedToBlockId FROM ${raw(
+        blocksLinksTable,
+      )} WHERE linkedToBlockId IN (${
+      includeDescendant
+        ? sqltag`
         WITH RECURSIVE
           ${this.withDescendants([rootBlockId])}
         SELECT blockId FROM childrenBlockIds
-      )
+      )`
+        : rootBlockId
+    })
     `;
 
-    const res = await e.getRecords<{ blockId: string; isLinked: 0 | 1 }>(sqltag`
+    const res = await e.getRecords<{
+      blockId: string;
+      isRootBlock: 0 | 1;
+      linkedToBlockId: string | null;
+    }>(sqltag`
       WITH RECURSIVE
-        parentBlockIds(blockId, parentId, isLinked) AS (
-          SELECT blockId, parentId, 1 FROM ${raw(
+        parentBlockIds(blockId, parentId, linkedToBlockId, isRootBlock) AS (
+          SELECT b_c_t.blockId, b_c_t.parentId, linksTable.linkedToBlockId, 0 FROM ${raw(
             blocksChildrenTable,
-          )} WHERE blockId IN (${linkedBlockIdsToDescendants})
+          )} b_c_t JOIN (
+            ${linkedBlockIdsToDescendants}
+          ) linksTable ON b_c_t.blockId = linksTable.blockId
           UNION ALL
-          SELECT a.blockId, a.parentId, 0 FROM ${raw(
+          SELECT a.blockId, a.parentId, NULL, 1 FROM ${raw(
             blocksChildrenTable,
           )} a JOIN parentBlockIds b ON a.blockId = b.parentId LIMIT 100
         )
-      SELECT parentBlockIds.blockId, parentBlockIds.isLinked FROM parentBlockIds WHERE parentBlockIds.parentId IS NULL OR parentBlockIds.isLinked = 1
+      SELECT parentBlockIds.blockId, parentBlockIds.isRootBlock, parentBlockIds.linkedToBlockId FROM parentBlockIds WHERE parentBlockIds.parentId IS NULL OR parentBlockIds.isRootBlock = 0
     `);
 
+    // Root blocks is needed to load the full blocks tree
     return {
       rootBlockIds: res
-        .filter(({ isLinked }) => isLinked === 0)
+        .filter(({ isRootBlock }) => isRootBlock === 1)
         .map(({ blockId }) => blockId),
       linkedBlockIds: res
-        .filter(({ isLinked }) => isLinked === 1)
-        .map(({ blockId }) => blockId),
+        .filter(({ isRootBlock }) => isRootBlock === 0)
+        .map(({ blockId, linkedToBlockId }) => ({
+          blockId,
+          linkedToBlockId: linkedToBlockId as string,
+        })),
     };
   }
 
@@ -177,6 +171,51 @@ export class AllBlocksRepository {
     ctx: ISyncCtx,
     e: IQueryExecuter = this.db,
   ) {}
+
+  private async getBlocksQueries(tableToJoin: string) {
+    return {
+      select: join(
+        (
+          await Promise.all(
+            this.blocksRepos.flatMap(async (r) => {
+              const tableName = r.getTableName();
+
+              return (await r.getColumnNames()).map((c) =>
+                raw(`${tableName}.${c} AS ${tableName}_${c}`),
+              );
+            }),
+          )
+        ).flat(),
+        ', ',
+      ),
+      joinTables: this.blocksRepos
+        .map((r) => r.getTableName())
+        .map(
+          (tableName) =>
+            sqltag`LEFT JOIN ${raw(tableName)} ON ${raw(tableName)}.id = ${raw(
+              tableToJoin,
+            )}.blockId`,
+        ),
+    };
+  }
+
+  private joinedRowsToDocs(rows: Record<string, unknown>[]) {
+    return rows.map((row) => {
+      const actualRepo = this.blocksRepos.find(
+        (repo) => !!row[`${repo.getTableName()}_id`],
+      );
+
+      if (!actualRepo)
+        throw new Error(`Failed to determine repo for ${JSON.stringify(row)}`);
+
+      const actualRow = mapKeys(
+        pickBy(row, (_v, k) => k.startsWith(actualRepo.getTableName())),
+        (_value, key) => key.replace(actualRepo.getTableName() + '_', ''),
+      );
+
+      return actualRepo.toDoc(actualRow as BaseBlockRow);
+    });
+  }
 
   // async getLinksOfNoteId(
   //   id: string,

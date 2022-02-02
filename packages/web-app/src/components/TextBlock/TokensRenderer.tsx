@@ -1,5 +1,5 @@
 import { observer } from 'mobx-react-lite';
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
   NoteRefToken,
@@ -8,12 +8,15 @@ import {
   NoteBlock,
   CollapsableBlock,
   toggleTodo,
+  BlocksScope,
+  getCollapsableBlock,
 } from '@harika/web-core';
 import { useObservable, useObservableState } from 'observable-hooks';
 import { switchMap } from 'rxjs';
 import { useDeepMemo } from '../../utils';
 import { TextBlockRef } from '@harika/web-core/src/lib/blockParser/types';
 import {
+  useAllBlocksService,
   useNoteBlocksService,
   useUpdateLinkService,
 } from '../../hooks/vaultAppHooks';
@@ -22,6 +25,8 @@ import {
   useNotePath,
 } from '../../contexts/StackedNotesContext';
 import { TextBlock } from '@harika/web-core';
+import { useAsync } from 'react-use';
+import { arraySet } from 'mobx-keystone';
 
 const NoteRefRenderer = observer(
   ({
@@ -98,68 +103,70 @@ const NoteRefRenderer = observer(
     );
   },
 );
-const BlockRefRenderer = observer(
-  ({
-    token,
-    collapsableBlock,
-  }: {
-    token: TextBlockRef;
-    collapsableBlock: CollapsableBlock;
-  }) => {
-    // const blocksScopesService = useBlocksScopesService();
+const BlockRefRenderer = observer(({ token }: { token: TextBlockRef }) => {
+  const allBlocksService = useAllBlocksService();
 
-    // const linkedBlock$ = useObservable(
-    //   ($inputs) => {
-    //     return $inputs.pipe(
-    //       switchMap(([token, modelId]) =>
-    //         token.blockId
-    //           ? blocksScopesService.getScopedBlockById$(
-    //               token.blockId,
-    //               {
-    //                 $modelId: modelId,
-    //                 $modelType: 'BlockRef',
-    //               },
-    //               token.blockId,
-    //             )
-    //           : of(undefined),
-    //       ),
-    //     );
-    //   },
-    //   [token, noteBlock.$modelId],
-    // );
+  const blockId = token.blockId;
+  const blockState = useAsync(
+    async () =>
+      blockId
+        ? (await allBlocksService.getSingleBlockByIds([blockId]))[0]
+        : undefined,
+    [blockId],
+  );
 
-    // const block = useObservableState(linkedBlock$, undefined);
+  // TODO maybe pass note id
+  const handleClick = useHandleNoteClickOrPress(
+    blockState?.value?.$modelId,
+    true,
+  );
+  const handleEnterPress = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter') {
+        handleClick(e);
+      }
+    },
+    [handleClick],
+  );
 
-    // const handleClick = useHandleNoteClickOrPress(block?.noteId, true);
+  const fakeScope = useMemo(
+    () =>
+      new BlocksScope({
+        rootBlockId: '123',
+        scopeId: '123',
+        scopeType: '123',
+        collapsedBlockIds: arraySet(),
+      }),
+    [],
+  );
 
-    // const handleEnterPress = useCallback(
-    //   (e: React.KeyboardEvent) => {
-    //     if (e.key === 'Enter') {
-    //       handleClick(e);
-    //     }
-    //   },
-    //   [handleClick],
-    // );
+  const collapsableBlock = blockState.value
+    ? (getCollapsableBlock(
+        fakeScope,
+        blockState.value,
+      ) as CollapsableBlock<TextBlock>)
+    : undefined;
 
-    // return (
-    //   <span
-    //     className="blockRef"
-    //     onClick={handleClick}
-    //     role="link"
-    //     tabIndex={0}
-    //     data-not-editable
-    //     onKeyPress={handleEnterPress}
-    //     data-offset-start={token.offsetStart}
-    //     data-offset-end={token.offsetEnd}
-    //   >
-    //     {block && (
-    //       <TokensRenderer noteBlock={block} tokens={block.content.ast} />
-    //     )}
-    //   </span>
-    // );
-    return <span />;
-  },
-);
+  return (
+    <span
+      className="blockRef"
+      onClick={handleClick}
+      role="link"
+      tabIndex={0}
+      data-not-editable
+      onKeyPress={handleEnterPress}
+      data-offset-start={token.offsetStart}
+      data-offset-end={token.offsetEnd}
+    >
+      {collapsableBlock && (
+        <TokensRenderer
+          collapsableBlock={collapsableBlock}
+          tokens={collapsableBlock.originalBlock.contentModel.ast}
+        />
+      )}
+    </span>
+  );
+});
 
 const TagRenderer = observer(
   ({ token, linkedNotes }: { token: TagToken; linkedNotes: NoteBlock[] }) => {
@@ -332,9 +339,7 @@ const TokenRenderer = observer(
           </blockquote>
         );
       case 'textBlockRef':
-        return (
-          <BlockRefRenderer token={token} collapsableBlock={collapsableBlock} />
-        );
+        return <BlockRefRenderer token={token} />;
       default:
         return <span></span>;
     }

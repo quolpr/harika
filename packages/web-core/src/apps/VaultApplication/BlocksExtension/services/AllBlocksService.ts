@@ -54,6 +54,20 @@ export class AllBlocksService {
     if (!forceReload && notLoadedIds.length === 0) {
       return Object.values(loadedBlocksMap);
     }
+
+    const blocks = await this.allBlocksRepository.getSingleBlocksByIds(
+      blockIds,
+    );
+
+    this.store.handleModelChanges(
+      this.mapDocsToModelData(blocks).map(({ klass, datas }) => ({
+        klass,
+        datas: datas.map((data) => ({ ...data, areChildrenLoaded: false })),
+      })),
+      [],
+    );
+
+    return this.store.getBlocksByIds(blockIds);
   }
 
   async getBlockWithTreeByIds(blockIds: string[], forceReload = false) {
@@ -78,14 +92,13 @@ export class AllBlocksService {
     return this.store.getBlocksByIds(blockIds);
   }
 
-  getLinkedBlocksOfBlockDescendants$(
+  getBacklinkedBlocks$(
     rootBlockId: string,
   ): Observable<{ rootBlock: BaseBlock; blocks: BaseBlock[] }[]> {
     return this.dbEventsService
       .liveQuery(
         this.allBlocksRepository.blocksTables,
-        () =>
-          this.allBlocksRepository.getRootBlockIdsOfLinkedBlocks(rootBlockId),
+        () => this.allBlocksRepository.getBacklinkedBlockIds(rootBlockId),
         false,
       )
       .pipe(
@@ -95,7 +108,9 @@ export class AllBlocksService {
           return res;
         }),
         map((res) => {
-          return this.store.getBlocksGroupedByRoot(res.linkedBlockIds);
+          return this.store.getBlocksGroupedByRoot(
+            res.linkedBlockIds.map(({ blockId }) => blockId),
+          );
         }),
       );
   }
