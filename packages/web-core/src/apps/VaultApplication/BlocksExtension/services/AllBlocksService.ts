@@ -78,18 +78,14 @@ export class AllBlocksService {
     return this.store.getBlocksByIds(blockIds);
   }
 
-  getBacklinkedBlocksOfDescendants$(
+  getLinkedBlocksOfBlockDescendants$(
     rootBlockId: string,
-  ): Observable<
-    Record<string, { rootBlock: BaseBlock; blocks: BaseBlock[] }[]>
-  > {
+  ): Observable<{ rootBlock: BaseBlock; blocks: BaseBlock[] }[]> {
     return this.dbEventsService
       .liveQuery(
         this.allBlocksRepository.blocksTables,
         () =>
-          this.allBlocksRepository.getBacklinkedBlockIdsOfDescendants(
-            rootBlockId,
-          ),
+          this.allBlocksRepository.getRootBlockIdsOfLinkedBlocks(rootBlockId),
         false,
       )
       .pipe(
@@ -99,9 +95,7 @@ export class AllBlocksService {
           return res;
         }),
         map((res) => {
-          return this.store.getBlocksGroupedByLinkedToAndRoot(
-            res.linkedBlockIds,
-          );
+          return this.store.getBlocksGroupedByRoot(res.linkedBlockIds);
         }),
       );
   }

@@ -244,7 +244,7 @@ export const TextBlockComponent = observer(
               isExpanded={block.isExpanded}
             />
           ) : (
-            <span>Unknown block</span>
+            <span> Unknown block</span>
           )}
 
           {backlinksCount > 0 && (

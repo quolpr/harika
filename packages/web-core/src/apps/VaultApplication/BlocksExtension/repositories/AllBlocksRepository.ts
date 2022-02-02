@@ -136,98 +136,39 @@ export class AllBlocksRepository {
     console.log();
   }
 
-  async getBacklinkedBlockIds(
-    rootBlockId: string,
-    e: IQueryExecuter = this.db,
-  ) {
-    const linkedBlockIds = sqltag`
-      SELECT blockId, linkedToBlockId FROM ${raw(
-        blocksLinksTable,
-      )} WHERE linkedToBlockId = ${rootBlockId}
-    `;
-
-    const res = await e.getRecords<{
-      blockId: string;
-      isRootBlock: 0 | 1;
-      linkedToBlockId: string | null;
-    }>(sqltag`
-      WITH RECURSIVE
-        parentBlockIds(blockId, parentId, isRootBlock) AS (
-          SELECT b_c_t.blockId, b_c_t.parentId, 0 FROM ${raw(
-            blocksChildrenTable,
-          )} b_c_t JOIN (
-            ${linkedBlockIds}
-          ) linksTable ON b_c_t.blockId = linksTable.blockId
-          UNION ALL
-          SELECT a.blockId, a.parentId, NULL, 1 FROM ${raw(
-            blocksChildrenTable,
-          )} a JOIN parentBlockIds b ON a.blockId = b.parentId LIMIT 100
-        )
-      SELECT parentBlockIds.blockId, parentBlockIds.isRootBlock, FROM parentBlockIds WHERE parentBlockIds.parentId IS NULL OR parentBlockIds.isRootBlock = 0
-    `);
-
-    // Root blocks is needed to load the full blocks tree
-    return {
-      rootBlockIds: res
-        .filter(({ isRootBlock }) => isRootBlock === 1)
-        .map(({ blockId }) => blockId),
-      linkedBlockIds: res
-        .filter(({ isRootBlock }) => isRootBlock === 0)
-        .map(({ blockId }) => blockId),
-    };
-  }
-
-  async getDescendantBlocksCount(
-    rootBlockId: string,
-    e: IQueryExecuter = this.db,
-  ) {}
-
-  // Not used for now, but myabe in future
-  async getBacklinkedBlockIdsOfDescendants(
+  async getRootBlockIdsOfLinkedBlocks(
     rootBlockId: string,
     e: IQueryExecuter = this.db,
   ) {
     const linkedBlockIdsToDescendants = sqltag`
-      SELECT blockId, linkedToBlockId FROM ${raw(
-        blocksLinksTable,
-      )} WHERE linkedToBlockId IN (
+      SELECT blockId FROM ${raw(blocksLinksTable)} WHERE linkedToBlockId IN (
         WITH RECURSIVE
           ${this.withDescendants([rootBlockId])}
         SELECT blockId FROM childrenBlockIds
       )
     `;
 
-    const res = await e.getRecords<{
-      blockId: string;
-      isRootBlock: 0 | 1;
-      linkedToBlockId: string | null;
-    }>(sqltag`
+    const res = await e.getRecords<{ blockId: string; isLinked: 0 | 1 }>(sqltag`
       WITH RECURSIVE
-        parentBlockIds(blockId, parentId, linkedToBlockId, isRootBlock) AS (
-          SELECT b_c_t.blockId, b_c_t.parentId, linksTable.linkedToBlockId, 0 FROM ${raw(
+        parentBlockIds(blockId, parentId, isLinked) AS (
+          SELECT blockId, parentId, 1 FROM ${raw(
             blocksChildrenTable,
-          )} b_c_t JOIN (
-            ${linkedBlockIdsToDescendants}
-          ) linksTable ON b_c_t.blockId = linksTable.blockId
+          )} WHERE blockId IN (${linkedBlockIdsToDescendants})
           UNION ALL
-          SELECT a.blockId, a.parentId, NULL, 1 FROM ${raw(
+          SELECT a.blockId, a.parentId, 0 FROM ${raw(
             blocksChildrenTable,
           )} a JOIN parentBlockIds b ON a.blockId = b.parentId LIMIT 100
         )
-      SELECT parentBlockIds.blockId, parentBlockIds.isRootBlock, parentBlockIds.linkedToBlockId FROM parentBlockIds WHERE parentBlockIds.parentId IS NULL OR parentBlockIds.isRootBlock = 0
+      SELECT parentBlockIds.blockId, parentBlockIds.isLinked FROM parentBlockIds WHERE parentBlockIds.parentId IS NULL OR parentBlockIds.isLinked = 1
     `);
 
-    // Root blocks is needed to load the full blocks tree
     return {
       rootBlockIds: res
-        .filter(({ isRootBlock }) => isRootBlock === 1)
+        .filter(({ isLinked }) => isLinked === 0)
         .map(({ blockId }) => blockId),
       linkedBlockIds: res
-        .filter(({ isRootBlock }) => isRootBlock === 0)
-        .map(({ blockId, linkedToBlockId }) => ({
-          blockId,
-          linkedToBlockId: linkedToBlockId as string,
-        })),
+        .filter(({ isLinked }) => isLinked === 1)
+        .map(({ blockId }) => blockId),
     };
   }
 
