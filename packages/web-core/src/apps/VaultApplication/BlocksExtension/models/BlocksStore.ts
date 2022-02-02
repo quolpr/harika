@@ -1,3 +1,4 @@
+import { mapValues } from 'lodash';
 import { model, Model, modelAction, ModelData, prop } from 'mobx-keystone';
 import { Class } from 'utility-types';
 import { withoutSyncAction } from '../../../../extensions/SyncExtension/mobx-keystone/syncable';
@@ -23,27 +24,32 @@ export class BlocksStore extends Model({
     return ids.map((id) => this.getBlockById(id));
   }
 
-  getBlocksGroupedByRoot(ids: string[]) {
-    const blocks = this.getBlocksByIds(ids);
+  getBlocksGroupedByLinkedToAndRoot(
+    blockIds: { blockId: string; linkedToBlockId: string }[],
+  ) {
+    const groupedBlocks: Record<string, Record<string, BaseBlock[]>> = {};
 
-    const groupedBlocks: Map<BaseBlock, BaseBlock[]> = new Map();
+    blockIds.forEach(({ blockId, linkedToBlockId }) => {
+      const block = this.getBlockById(blockId);
+      const rootBlock = block.root;
 
-    blocks.forEach((b) => {
-      if (groupedBlocks.has(b.root)) {
-        groupedBlocks.get(b.root)!.push(b);
-      } else {
-        groupedBlocks.set(b.root, [b]);
+      if (!groupedBlocks[linkedToBlockId]) {
+        groupedBlocks[linkedToBlockId] = {};
       }
+
+      if (!groupedBlocks[linkedToBlockId][rootBlock.$modelId]) {
+        groupedBlocks[linkedToBlockId][rootBlock.$modelId] = [];
+      }
+
+      groupedBlocks[linkedToBlockId][rootBlock.$modelId].push(block);
     });
 
-    const res = Array.from(groupedBlocks.entries()).map(
-      ([rootBlock, blocks]) => ({
-        rootBlock,
+    return mapValues(groupedBlocks, (val) =>
+      Object.entries(val).map(([rootBlockId, blocks]) => ({
+        rootBlock: this.getBlockById(rootBlockId),
         blocks,
-      }),
+      })),
     );
-
-    return res;
   }
 
   @modelAction
