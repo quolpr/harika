@@ -88,19 +88,19 @@ const spawnView = ([
         return {
           actions: [
             ...rows.map(
-              ({ noteId, blockId, data }): IAction => ({
-                id: `${noteId}-${blockId}`,
+              ({ rootBlockId, blockId, data }): IAction => ({
+                id: `${rootBlockId}-${blockId}`,
                 name: data,
                 type: 'goToPage',
-                href: notePath(noteId),
-                stackHref: notePath(noteId, true),
+                href: notePath(rootBlockId),
+                stackHref: notePath(rootBlockId, true),
                 highlight: toFind,
               }),
             ),
             ...(toFind.length === 0 ||
             rows.find(
               (r) =>
-                r.type === 'noteBlock' &&
+                r.blockType === 'noteBlock' &&
                 r.data.toLowerCase() === toFind.toLowerCase(),
             )
               ? []

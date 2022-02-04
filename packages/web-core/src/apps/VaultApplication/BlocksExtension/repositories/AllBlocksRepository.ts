@@ -80,31 +80,6 @@ export class AllBlocksRepository {
     );
   }
 
-  async getDescendantIds(
-    id: string,
-    e: IQueryExecuter = this.db,
-  ): Promise<{ id: string; type: string }[]> {
-    return [];
-  }
-
-  async getRootIdByBlockId(id: string, e: IQueryExecuter = this.db) {
-    return '';
-  }
-
-  async getLinkedBlockTuplesOfBlocksOfRootBlock(
-    rootBlockId: string,
-    e: IQueryExecuter = this.db,
-  ): Promise<Record<string, { blockId: string; type: string }[]>> {
-    return {};
-  }
-
-  async getLinkedBlocksOfBlocksOfRootBlock(
-    rootBlockId: string,
-    e: IQueryExecuter = this.db,
-  ): Promise<BaseBlockDoc[]> {
-    return [];
-  }
-
   async bulkUpdate(
     doc: BaseBlockDoc[],
     ctx: ISyncCtx,
@@ -171,6 +146,39 @@ export class AllBlocksRepository {
     ctx: ISyncCtx,
     e: IQueryExecuter = this.db,
   ) {}
+
+  // {[id: string] => rootBlockId: string}
+  async getRootBlockIds(
+    ids: string[],
+    e: IQueryExecuter = this.db,
+  ): Promise<Record<string, string>> {
+    const res = await e.getRecords<{
+      blockId: string;
+      rootBlockId: string;
+    }>(sqltag`
+      WITH RECURSIVE
+        parentBlockIds(blockId, originalBlockId, parentId) AS (
+          VALUES ${join(
+            ids.map(
+              (id) =>
+                sqltag`(${id}, ${id}, (SELECT parentId FROM ${raw(
+                  blocksChildrenTable,
+                )} WHERE blockId=${id}))`,
+            ),
+            ', ',
+          )}
+          UNION ALL
+          SELECT a.blockId, b.originalBlockId, a.parentId FROM ${raw(
+            blocksChildrenTable,
+          )} a JOIN parentBlockIds b ON a.blockId = b.parentId LIMIT 100
+        )
+      SELECT parentBlockIds.blockId AS rootBlockId, parentBlockIds.originalBlockId AS blockId FROM parentBlockIds WHERE parentBlockIds.parentId IS NULL
+    `);
+
+    return Object.fromEntries(
+      res.map(({ blockId, rootBlockId }) => [blockId, rootBlockId]),
+    );
+  }
 
   private async getBlocksQueries(tableToJoin: string) {
     return {
