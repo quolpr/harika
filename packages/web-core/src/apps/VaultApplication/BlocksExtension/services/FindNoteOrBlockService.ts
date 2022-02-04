@@ -12,6 +12,7 @@ import {
   textBlocksTable,
 } from '../repositories/TextBlocksRepository';
 import { AllBlocksRepository } from '../repositories/AllBlocksRepository';
+import { raw, sqltag } from '../../../../lib/sql';
 
 @injectable()
 export class FindNoteOrBlockService {
@@ -41,44 +42,35 @@ export class FindNoteOrBlockService {
       blockId: string;
       blockType: string;
       data: string;
-    }>(
-      // Only in nested selects order will work
-      Q.select()
-        .from(
-          Q.select()
-            .from(
-              Q.select(
-                'id blockId',
-                `'noteBlock' blockType`,
-                Q.select('title')
-                  .as('data')
-                  .from(noteBlocksTable)
-                  .where(Q(`id = ${noteBlocksFTSTable}.id`)),
-                `bm25(${noteBlocksFTSTable}) rank`,
-              )
-                .from(noteBlocksFTSTable)
-                .where(Q.like('title', `%${text}%`)),
-            )
-            .union(
-              Q.select().from(
-                Q.select(
-                  'id blockId',
-                  `'textBlock' tableType`,
-                  Q.select('content')
-                    .as('data')
-                    .from(textBlocksTable)
-                    .where(Q(`id = ${textBlocksFTSTable}.id`)),
-                  `bm25(${textBlocksFTSTable}) rank`,
-                )
-                  .from(textBlocksFTSTable)
-                  .where(Q.like('textContent', `%${text}%`)),
-              ),
-            ),
-        )
-        .orderBy(
-          `CASE blockType WHEN 'noteBlock' THEN 0 ELSE 1 END, rank LIMIT 20`,
-        ),
-    );
+    }>(sqltag`
+      SELECT * FROM (
+        SELECT
+          id blockId,
+          'noteBlock' blockType,
+          (SELECT title as data FROM ${raw(noteBlocksTable)} WHERE id = ${raw(
+      noteBlocksFTSTable,
+    )}.id) data,
+          bm25(${raw(noteBlocksFTSTable)}) rank
+        FROM ${raw(noteBlocksFTSTable)}
+        WHERE
+          title LIKE ${`%${text}%`}
+
+        UNION
+
+        SELECT
+          id blockId,
+          'textBlock' blockType,
+          (SELECT content as data FROM ${raw(textBlocksTable)} WHERE id = ${raw(
+      textBlocksFTSTable,
+    )}.id) data,
+          bm25(${raw(textBlocksFTSTable)}) rank
+        FROM ${raw(textBlocksFTSTable)}
+        WHERE
+          textContent LIKE ${`%${text}%`}
+      )
+      ORDER BY
+        CASE blockType WHEN 'noteBlock' THEN 0 ELSE 1 END, rank LIMIT 20
+    `);
 
     const rootBlocks =
       rows.length > 0
