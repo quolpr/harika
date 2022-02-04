@@ -122,7 +122,7 @@ export class AllBlocksRepository {
           UNION ALL
           SELECT a.blockId, a.parentId, NULL, 1 FROM ${raw(
             blocksChildrenTable,
-          )} a JOIN parentBlockIds b ON a.blockId = b.parentId LIMIT 100
+          )} a JOIN parentBlockIds b ON a.blockId = b.parentId LIMIT 10000000
         )
       SELECT parentBlockIds.blockId, parentBlockIds.isRootBlock, parentBlockIds.linkedToBlockId FROM parentBlockIds WHERE parentBlockIds.parentId IS NULL OR parentBlockIds.isRootBlock = 0
     `);
@@ -170,7 +170,7 @@ export class AllBlocksRepository {
           UNION ALL
           SELECT a.blockId, b.originalBlockId, a.parentId FROM ${raw(
             blocksChildrenTable,
-          )} a JOIN parentBlockIds b ON a.blockId = b.parentId LIMIT 100
+          )} a JOIN parentBlockIds b ON a.blockId = b.parentId LIMIT 10000000
         )
       SELECT parentBlockIds.blockId AS rootBlockId, parentBlockIds.originalBlockId AS blockId FROM parentBlockIds WHERE parentBlockIds.parentId IS NULL
     `);
@@ -306,7 +306,7 @@ export class AllBlocksRepository {
         )}
         UNION ALL
         SELECT a.blockId, a.parentId FROM ${rawBlocksChildrenTable} a 
-          JOIN ${raw(tableName)} b ON a.parentId = b.blockId LIMIT 1000000
+          JOIN ${raw(tableName)} b ON a.parentId = b.blockId LIMIT 10000000
       )
     `;
   }

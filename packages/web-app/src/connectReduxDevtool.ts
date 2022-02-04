@@ -10,7 +10,9 @@ export const connect = async (toConnect: any, name: string) => {
     name,
   });
 
-  connectReduxDevTools(remotedev, connection, toConnect);
+  connectReduxDevTools(remotedev, connection, toConnect, {
+    logArgsNearName: false,
+  });
 
   return connection.unsubscribe;
 };
