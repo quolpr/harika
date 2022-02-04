@@ -9,10 +9,12 @@ export const textBlocksFTSTable = 'textBlocksFTS' as const;
 
 export type TextBlockRow = BaseBlockRow & {
   content: string;
+  type: 'textBlock';
 };
 
 export type TextBlockDoc = BaseBlockDoc & {
   content: string;
+  type: 'textBlock';
 };
 
 export class TextBlocksRepository extends BaseBlockRepository<

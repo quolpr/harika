@@ -57,10 +57,10 @@ export class AllBlocksRepository {
       SELECT ${select} FROM (
         ${join(
           ids.map((id) => sqltag`SELECT ${id} as blockId`),
-          'UNION ALL',
+          ' UNION ALL ',
         )}
       ) as blocks
-        ${join(joinTables, '')}
+        ${join(joinTables, ' ')}
     `),
     );
   }

@@ -24,7 +24,7 @@ export class BlocksStore extends Model({
   }
 
   getBlocksGroupedByRoot(ids: string[]) {
-    const blocks = this.getBlocksByIds(ids);
+    const blocks = this.getBlocksByIds(ids).filter((b) => b !== undefined);
 
     const groupedBlocks: Map<BaseBlock, BaseBlock[]> = new Map();
 

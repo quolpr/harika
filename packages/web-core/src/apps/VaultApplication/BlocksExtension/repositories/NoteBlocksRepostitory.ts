@@ -18,6 +18,7 @@ export type NoteBlockRow = BaseBlockRow & {
 export type NoteBlockDoc = BaseBlockDoc & {
   title: string;
   dailyNoteDate: number | null;
+  type: 'noteBlock';
 };
 
 export type INoteChangeEvent = IDocChange<typeof noteBlocksTable, NoteBlockDoc>;

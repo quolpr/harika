@@ -102,7 +102,7 @@ export const BacklinkedNote = observer(
         >
           {scopesWithBlocks.map(({ scope, rootBlock }) => (
             <LinkedBlock
-              key={scope.$modelId}
+              key={rootBlock.$modelId}
               note={note}
               scope={scope}
               rootBlock={rootBlock}

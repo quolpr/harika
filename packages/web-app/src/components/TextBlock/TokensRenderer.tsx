@@ -354,7 +354,7 @@ export const TokensRenderer = observer(
     collapsableBlock: CollapsableBlock<TextBlock>;
     tokens: Token[];
   }) => {
-    const noteRepo = useNoteBlocksService();
+    const allBlocksService = useAllBlocksService();
 
     const linkedNoteIds = useDeepMemo(
       () => [
@@ -365,7 +365,9 @@ export const TokensRenderer = observer(
 
     const linkedNotes$ = useObservable(
       ($inputs) => {
-        return $inputs.pipe(switchMap(([ids]) => noteRepo.findNoteByIds(ids)));
+        return $inputs.pipe(
+          switchMap(([ids]) => allBlocksService.getSingleBlockByIds(ids)),
+        );
       },
       [linkedNoteIds],
     );
@@ -378,7 +380,7 @@ export const TokensRenderer = observer(
             key={`${token.offsetStart}${token.offsetEnd}`}
             collapsableBlock={collapsableBlock}
             token={token}
-            linkedNotes={linkedNotes}
+            linkedNotes={linkedNotes as NoteBlock[]}
           />
         ))}
       </>

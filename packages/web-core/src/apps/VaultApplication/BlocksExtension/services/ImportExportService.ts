@@ -1,14 +1,124 @@
-import { injectable } from 'inversify';
+import { inject, injectable } from 'inversify';
+import { ISyncCtx } from '../../../../extensions/SyncExtension/syncCtx';
+import {
+  NoteBlockDoc,
+  NoteBlocksRepository,
+} from '../repositories/NoteBlocksRepostitory';
+import {
+  TextBlockDoc,
+  TextBlocksRepository,
+} from '../repositories/TextBlocksRepository';
 
 @injectable()
 export class ImportExportService {
+  constructor(
+    @inject(NoteBlocksRepository)
+    private noteBlocksRepository: NoteBlocksRepository,
+    @inject(TextBlocksRepository)
+    private textBlocksRepository: TextBlocksRepository,
+  ) {}
+
   async importData(importData: {
     data: { data: { tableName: string; rows: any[] }[] };
+    version: undefined;
   }) {
-    // const ctx: ISyncCtx = {
-    //   shouldRecordChange: true,
-    //   source: 'inDbChanges',
-    // };
+    const ctx: ISyncCtx = {
+      shouldRecordChange: true,
+      source: 'inDbChanges',
+    };
+
+    // childId => parentId
+    const relations: Record<
+      string,
+      { parentId: string; orderPosition: number }
+    > = {};
+
+    if (importData.version === undefined) {
+      for (const { rows, tableName } of importData.data.data) {
+        if (tableName === 'noteBlocks') {
+          rows.forEach(
+            ({ noteBlockIds, id }: { noteBlockIds: string[]; id: string }) => {
+              noteBlockIds.forEach((childBlockId: string, i) => {
+                relations[childBlockId] = { parentId: id, orderPosition: i };
+              });
+            },
+          );
+        }
+      }
+
+      const keys = Object.keys(relations);
+
+      const rootBlocksIds: Set<string> = new Set();
+
+      for (const { rows, tableName } of importData.data.data) {
+        if (tableName === 'blocksTreesDescriptors') {
+          // id = noteId
+          rows.forEach(
+            ({ id, rootBlockId }: { id: string; rootBlockId: string }) => {
+              rootBlocksIds.add(rootBlockId);
+
+              const childIdsOfRootBlock = keys.filter(
+                (k) => relations[k].parentId === rootBlockId,
+              );
+
+              childIdsOfRootBlock.forEach((childId) => {
+                // Instead of root block let's use just note block as root
+                relations[childId].parentId = id;
+              });
+            },
+          );
+        }
+      }
+
+      console.log({ relations });
+
+      const textBlocks = importData.data.data.flatMap(({ rows, tableName }) => {
+        if (tableName === 'noteBlocks') {
+          return rows.flatMap((row): TextBlockDoc | never[] => {
+            if (rootBlocksIds.has(row.id)) return [];
+            if (!relations[row.id]) return [];
+
+            return {
+              id: row.id,
+              type: 'textBlock',
+              parentId: relations[row.id].parentId,
+              linkedBlockIds: row.linkedBlockIds.concat(row.linkedNoteIds),
+              orderPosition: relations[row.id].orderPosition,
+              createdAt: row.createdAt,
+              updatedAt: row.updatedAt,
+              content: row.content,
+            };
+          });
+        } else {
+          return [];
+        }
+      });
+
+      const noteBlocks = importData.data.data.flatMap(({ rows, tableName }) => {
+        if (tableName === 'notes') {
+          return rows.map((row): NoteBlockDoc => {
+            return {
+              id: row.id,
+              type: 'noteBlock',
+              parentId: undefined,
+              linkedBlockIds: [],
+              orderPosition: row.createdAt,
+              createdAt: row.createdAt,
+              updatedAt: row.updatedAt,
+              title: row.title,
+              dailyNoteDate: row.dailyNoteDate,
+            };
+          });
+        } else {
+          return [];
+        }
+      });
+
+      await this.noteBlocksRepository.transaction(async (t) => {
+        await this.noteBlocksRepository.bulkCreate(noteBlocks, ctx, t);
+        await this.textBlocksRepository.bulkCreate(textBlocks, ctx, t);
+      });
+    }
     // const rootBlockIds =
     //   importData.data.data
     //     .find(({ tableName }) => tableName === noteBlocksTable)

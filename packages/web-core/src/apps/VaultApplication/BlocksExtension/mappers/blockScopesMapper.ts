@@ -6,6 +6,14 @@ import {
   blocksScopesTable,
 } from '../repositories/BlockScopesRepository';
 
+export const getScopeKey = (
+  scopeId: string,
+  scopeType: string,
+  rootBlock: string,
+) => {
+  return `${scopeType}-${scopeId}-${rootBlock}`;
+};
+
 export const blocksScopesMapper: IMapper<BlocksScopeDoc, BlocksScope> = {
   mapToModelData(doc) {
     return {

@@ -53,6 +53,7 @@ export class BlocksScopeStore extends Model({
     );
 
     const scope = new BlocksScope({
+      $modelId: key,
       rootBlockId,
       scopeId: scopedBy.$modelId,
       scopeType: scopedBy.$modelType,
