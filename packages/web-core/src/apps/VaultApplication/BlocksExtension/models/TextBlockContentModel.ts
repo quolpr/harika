@@ -75,13 +75,6 @@ export class TextBlockContent {
     makeObservable(this);
 
     this.currentValue = textBlock.content;
-
-    onChildAttachedTo(
-      () => textBlock,
-      () => {
-        return this.onChildAttach();
-      },
-    );
   }
 
   @computed
@@ -156,7 +149,7 @@ export class TextBlockContent {
   }
 
   // We make debounce of text content to avoid too frequent changes generation
-  onChildAttach() {
+  onAttachedToRootStore() {
     this.currentValue = this.textBlock.content;
 
     const debounced = debounce((val: string) => {
@@ -170,7 +163,6 @@ export class TextBlockContent {
       () => this.textBlock.content,
       (val) => {
         if (val !== this.currentValue) {
-          console.log({ val, cur: this.currentValue });
           this.update(val);
         }
       },

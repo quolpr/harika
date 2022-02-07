@@ -35,4 +35,8 @@ export class TextBlock extends ExtendedModel(BaseBlock, {
   onInit() {
     this.contentModel = new TextBlockContent(this);
   }
+
+  onAttachedToRootStore() {
+    return this.contentModel.onAttachedToRootStore();
+  }
 }
