@@ -6,7 +6,11 @@ import TimeAgo from 'react-timeago';
 import { TrashIcon } from '@heroicons/react/solid';
 import { useObservable, useObservableState } from 'observable-hooks';
 import { LoadingDoneSubjectContext } from '../../contexts';
-import { useNotesService, useVaultService } from '../../hooks/vaultAppHooks';
+import {
+  useAllBlocksService,
+  useDeleteBlocksService,
+  useNoteBlocksService,
+} from '../../hooks/vaultAppHooks';
 import { CustomScrollbar } from '../../components/CustomScrollbar';
 import { useNotePath } from '../../contexts/StackedNotesContext';
 
@@ -17,11 +21,11 @@ type NoteTuple = {
 };
 
 const NoteRow = observer(({ note }: { note: NoteTuple }) => {
-  const vaultService = useVaultService();
+  const deleteBlocksService = useDeleteBlocksService();
 
   const handleDelete = useCallback(async () => {
-    vaultService.deleteNote(note.id);
-  }, [note.id, vaultService]);
+    deleteBlocksService.deleteBlock(note.id);
+  }, [deleteBlocksService, note.id]);
 
   const notePath = useNotePath();
 
@@ -43,7 +47,7 @@ const NoteRow = observer(({ note }: { note: NoteTuple }) => {
 });
 
 export const NotesPage = () => {
-  const notesService = useNotesService();
+  const notesService = useNoteBlocksService();
   const loadingDoneSubject = useContext(LoadingDoneSubjectContext);
 
   const input$ = useObservable(() => notesService.getAllNotesTuples$());

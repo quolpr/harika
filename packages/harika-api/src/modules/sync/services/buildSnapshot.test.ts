@@ -112,4 +112,22 @@ describe('EntitySnapshotBuilder', () => {
       })
     );
   });
+
+  it('works with multiple create even if deleted', () => {
+    expect(
+      buildSnapshot([
+        createChangeFactory.build({ doc: { id: '123', content: 'test' } }),
+        deleteChangeFactory.build({ docId: '123' }),
+        createChangeFactory.build({ doc: { id: '123', content: 'test-puk' } }),
+      ])
+    ).toEqual(
+      expect.objectContaining({
+        doc: {
+          id: '123',
+          content: 'test-puk',
+        },
+        isDeleted: false,
+      })
+    );
+  });
 });

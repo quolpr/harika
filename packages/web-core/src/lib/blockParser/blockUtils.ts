@@ -1,11 +1,15 @@
 import { generateId } from '../generateId';
-import { BlockContentModel } from '../../apps/VaultApplication/NoteBlocksExtension/models/BlockContentModel';
 import { parseStringToTree } from './parseStringToTree';
 import type { TreeToken } from './parseStringToTree';
-import type { ScopedBlock } from '../../apps/VaultApplication/BlocksScopeExtension/models/ScopedBlock';
-import { Optional } from 'utility-types';
-import { ModelCreationData } from 'mobx-keystone';
-import { NoteBlockModel } from '../../apps/VaultApplication/NoteBlocksExtension/models/NoteBlockModel';
+import { standaloneAction } from 'mobx-keystone';
+import {
+  CollapsableBlock,
+  getCollapsableBlock,
+} from '../../apps/VaultApplication/BlocksExtension/models/CollapsableBlock';
+import { TextBlock } from '../../apps/VaultApplication/BlocksExtension/models/TextBlock';
+import { blockRef } from '../../apps/VaultApplication/BlocksExtension/models/BaseBlock';
+import { BlocksScope } from '../../apps/VaultApplication/BlocksExtension/models/BlocksScope';
+import { BlocksStore } from '../../apps/VaultApplication/BlocksExtension/models/BlocksStore';
 
 export const normalizeBlockTree = (str: string) => {
   const parsed = parseStringToTree(str);
@@ -21,62 +25,54 @@ export const normalizeBlockTree = (str: string) => {
   return normalized.trim();
 };
 
-export const addTokensToNoteBlock = (
-  block: ScopedBlock,
-  tokens: TreeToken[],
-  createBlock: (
-    attrs: Optional<
-      ModelCreationData<NoteBlockModel>,
-      'createdAt' | 'noteId' | 'noteBlockRefs' | 'linkedNoteIds' | 'updatedAt'
-    >,
-    parent: ScopedBlock,
-    pos: number | 'append',
-  ) => ScopedBlock,
-): ScopedBlock[] => {
-  const addedModels: ScopedBlock[] = [];
+export const addTokensToNoteBlock = standaloneAction(
+  'harika/BlocksExtension/BlocksStore/addTokensToNoteBlock',
+  (
+    store: BlocksStore,
+    scope: BlocksScope,
+    block: CollapsableBlock,
+    tokens: TreeToken[],
+  ): CollapsableBlock[] => {
+    const addedModels: CollapsableBlock[] = [];
 
-  tokens = tokens.map((token) => ({ ...token, indent: token.indent + 1 }));
+    tokens = tokens.map((token) => ({ ...token, indent: token.indent + 1 }));
 
-  let previousBlock: { model: ScopedBlock; indent: number } | undefined =
-    undefined;
-  let currentPath: { model: ScopedBlock; indent: number }[] = [
-    { model: block, indent: 0 },
-  ];
+    let previousBlock: { model: CollapsableBlock; indent: number } | undefined =
+      undefined;
+    let currentPath: { model: CollapsableBlock; indent: number }[] = [
+      { model: block, indent: 0 },
+    ];
 
-  tokens.forEach((token) => {
-    if (previousBlock) {
-      if (token.indent > previousBlock.indent) {
-        currentPath.push(previousBlock);
-      } else if (token.indent < previousBlock.indent) {
-        currentPath = currentPath.filter(
-          (block) => block.indent < token.indent,
-        );
+    tokens.forEach((token) => {
+      if (previousBlock) {
+        if (token.indent > previousBlock.indent) {
+          currentPath.push(previousBlock);
+        } else if (token.indent < previousBlock.indent) {
+          currentPath = currentPath.filter(
+            (block) => block.indent < token.indent,
+          );
+        }
       }
-    }
 
-    const parentBlock = currentPath[currentPath.length - 1];
-
-    const newBlock = createBlock(
-      {
-        $modelId: token.id ? token.id : generateId(),
+      const parentBlock = currentPath[currentPath.length - 1];
+      const newBlock = new TextBlock({
+        id: token.id ? token.id : generateId(),
         createdAt: new Date().getTime(),
         updatedAt: new Date().getTime(),
-        noteId: block.noteId,
-        noteBlockRefs: [],
-        linkedNoteIds: [],
-        content: new BlockContentModel({ _value: token.content }),
-      },
-      parentBlock.model,
-      'append',
-    );
+        content: token.content,
+        parentRef: blockRef(parentBlock.model.originalBlock),
+        orderPosition: parentBlock.model.childrenBlocks.length,
+      });
+      store.registerBlock(newBlock);
+      const collapsableBlock = getCollapsableBlock(scope, newBlock);
 
-    previousBlock = { model: newBlock, indent: currentPath.length };
+      previousBlock = { model: collapsableBlock, indent: currentPath.length };
+      addedModels.push(collapsableBlock);
+    });
 
-    addedModels.push(newBlock);
-  });
-
-  return addedModels;
-};
+    return addedModels;
+  },
+);
 
 // export const parseToBlocksTree = (str: string) => {
 //   // const tokens = parseStringToTree(str);

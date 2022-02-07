@@ -1,28 +1,36 @@
-import type { NoteModel } from '@harika/web-core';
+import { NoteBlock } from '@harika/web-core';
 import { useContext, useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
-import { NEVER, of, race } from 'rxjs';
+import { firstValueFrom, NEVER, of, race } from 'rxjs';
 import { timeout, map } from 'rxjs/operators';
 import { LoadingDoneSubjectContext } from '../../contexts';
 import { useNotePath } from '../../contexts/StackedNotesContext';
-import { useCurrentVaultId, useNotesService } from '../../hooks/vaultAppHooks';
+import {
+  useAllBlocksService,
+  useCurrentVaultId,
+  useNoteBlocksService,
+} from '../../hooks/vaultAppHooks';
 
 type IPipeResult = { status: 'found'; id: string } | { status: 'not_found' };
 
 export const useFindNote = (noteId: string) => {
   const vaultId = useCurrentVaultId();
-  const notesService = useNotesService();
+  const notesService = useNoteBlocksService();
 
   const history = useHistory();
 
-  const [note, setNote] = useState<NoteModel | undefined>();
+  const [note, setNote] = useState<NoteBlock | undefined>();
   const loadingDoneSubject = useContext(LoadingDoneSubjectContext);
 
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
+  const allBlocksService = useAllBlocksService();
+
   useEffect(() => {
     const callback = async () => {
-      const note = await notesService.getNote(noteId);
+      const note = (await allBlocksService.getBlockWithTreeById(
+        noteId,
+      )) as NoteBlock;
 
       if (!note) {
         setIsLoading(false);
@@ -35,7 +43,7 @@ export const useFindNote = (noteId: string) => {
     };
 
     callback();
-  }, [loadingDoneSubject, noteId, notesService]);
+  }, [allBlocksService, loadingDoneSubject, noteId, notesService]);
 
   const noteTitle = note?.title;
 

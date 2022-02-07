@@ -1,10 +1,10 @@
-import type { NoteModel } from '@harika/web-core';
+import { NoteBlock } from '@harika/web-core';
 import { createContext, useContext } from 'react';
 
-export const CurrentNoteContext = createContext<NoteModel>(
-  null as unknown as NoteModel,
+export const CurrentNoteContext = createContext<NoteBlock>(
+  null as unknown as NoteBlock,
 );
 
-export const useCurrentNote = (): NoteModel | undefined => {
+export const useCurrentNoteBlock = (): NoteBlock | undefined => {
   return useContext(CurrentNoteContext);
 };

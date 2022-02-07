@@ -1,0 +1,165 @@
+.text-block {
+  @apply flex flex-col text-base;
+
+  &__body {
+    @apply flex relative py-1 pl-2;
+
+    &--selected {
+      @apply bg-coolGray-800;
+    }
+  }
+
+  &__linkedBlocksCounter {
+    display: flex;
+    background-color: #353739;
+    align-self: start;
+
+    padding: 0.1rem 0.4rem;
+    margin-left: 0.4rem;
+    border-radius: 3px;
+  }
+
+  &__dot {
+    @apply flex items-start justify-end w-9;
+
+    &::before {
+      @apply bg-gray-500 mr-3 border-2 border-gray-300;
+      flex: none;
+
+      margin-top: 10px;
+
+      width: 9px;
+      height: 9px;
+
+      content: '';
+      border-radius: 100%;
+
+      transform: translateX(2px) translateY(-1px);
+
+      transition: all 0.07s linear;
+    }
+
+    &--expanded {
+      &::before {
+        @apply border-0;
+
+        margin-top: 10px;
+
+        width: 5px;
+        height: 5px;
+
+        transform: translateX(0) translateY(0);
+      }
+    }
+  }
+
+  &__arrow {
+    position: absolute;
+  }
+
+  &__child-blocks {
+    @apply relative box-border pl-7;
+
+    &--selected {
+      @apply bg-coolGray-800;
+    }
+
+    &::before {
+      @apply absolute bg-gray-800;
+
+      content: '';
+      width: 1px;
+      top: 5px;
+      height: calc(100% - 5px);
+    }
+  }
+
+  &__input-container {
+    position: relative;
+    display: flex;
+
+    width: 100%;
+    flex-direction: column;
+
+    &--hidden {
+      display: none;
+    }
+  }
+
+  &__content {
+    @apply focus:outline-none rounded-sm text-warmGray-300;
+
+    display: inline;
+
+    width: 100%;
+    background: transparent;
+    resize: none;
+    min-height: 24px;
+
+    white-space: pre-wrap;
+    word-break: break-word;
+
+    &--hidden {
+      display: none;
+    }
+
+    &--focused {
+      @apply bg-gray-800 bg-opacity-80;
+    }
+  }
+
+  &__input {
+    width: 100%;
+
+    background-color: transparent;
+
+    border: none;
+    overflow: scroll;
+    outline: none;
+
+    box-shadow: none;
+
+    resize: none; /*remove the resize handle on the bottom right*/
+  }
+}
+
+.quote {
+  @apply border-l-4 border-coolGray-600 text-coolGray-500 pl-4;
+}
+
+.content {
+  &__inline-code {
+    @apply bg-gray-500 bg-opacity-40 px-0.5 py-0.5;
+
+    margin-bottom: 0.01rem;
+
+    display: inline;
+    border-radius: 6px;
+    font-size: 85%;
+
+    white-space: pre-wrap;
+    word-break: break-word;
+
+    vertical-align: baseline;
+  }
+
+  &__code {
+    @apply bg-gray-500 bg-opacity-30 my-1 px-2.5 py-1;
+
+    display: block;
+
+    overflow: scroll;
+    border-radius: 6px;
+    font-size: 85%;
+  }
+}
+
+.blockRef {
+  border-bottom: 0.1px solid;
+  @apply border-blue-500;
+
+  cursor: alias;
+  padding: 2px 0;
+
+  display: inline;
+}

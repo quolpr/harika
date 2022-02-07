@@ -16,8 +16,8 @@ import { useObservable, useObservableState } from 'observable-hooks';
 import { switchMap } from 'rxjs';
 import {
   useCurrentVaultApp,
-  useNotesService,
-  useVaultService,
+  useImportExportService,
+  useNoteBlocksService,
 } from '../../hooks/vaultAppHooks';
 import { CustomScrollbar } from '../CustomScrollbar';
 import { ResizeActionType, Resizer } from './Resizer';
@@ -40,11 +40,11 @@ export const getLocalStorageSidebarWidth = () => {
 export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
   ({ className, isOpened, onNavClick, vaultName }: IProps, ref) => {
     const vaultApp = useCurrentVaultApp();
-    const notesService = useNotesService();
-    const vaultService = useVaultService();
+    const importExportService = useImportExportService();
+    const notesService = useNoteBlocksService();
 
     const handleDownloadClick = useCallback(async () => {
-      const str = await vaultService.export();
+      const str = await importExportService.exportData();
 
       const bytes = new TextEncoder().encode(str);
       const blob = new Blob([bytes], {
@@ -59,7 +59,7 @@ export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
           .toLowerCase()}-${dayjs().format('DD-MM-YYYY')}.json`,
         'application/json',
       );
-    }, [vaultApp, vaultService]);
+    }, [vaultApp, importExportService]);
 
     const handleImport = useCallback(
       (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -71,14 +71,14 @@ export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
 
           try {
             const result = JSON.parse(eReader.target.result.toString());
-            vaultService.import(result);
+            importExportService.importData(result);
           } catch (e) {
             alert('Failed to import db');
           }
         };
         reader.readAsText(e.target.files[0]);
       },
-      [vaultService],
+      [importExportService],
     );
 
     const dailyNote$ = useObservable(

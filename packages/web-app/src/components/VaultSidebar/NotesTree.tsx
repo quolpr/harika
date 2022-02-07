@@ -7,8 +7,8 @@ import ArrowRight from '../../icons/arrow-right.svgr.svg?component';
 import { observer } from 'mobx-react-lite';
 import { usePrimaryNoteId } from '../../hooks/usePrimaryNote';
 import {
+  useNoteBlocksService,
   useNotesTreeRegistry,
-  useVaultService,
 } from '../../hooks/vaultAppHooks';
 import {
   useHandleNoteClickOrPress,
@@ -26,7 +26,7 @@ const NoteNode = observer(
     node: NotesTreeNote;
     onNavClick: (e: React.MouseEvent) => void;
   }) => {
-    const vaultService = useVaultService();
+    const notesService = useNoteBlocksService();
     const primaryNoteId = usePrimaryNoteId();
     const isFocused = primaryNoteId
       ? node.isExpanded
@@ -49,7 +49,7 @@ const NoteNode = observer(
       async (e: React.MouseEvent) => {
         onNavClick(e);
 
-        const newNote = await vaultService.createNote({
+        const newNote = await notesService.createNote({
           title: node.fullTitle,
         });
 
@@ -61,7 +61,7 @@ const NoteNode = observer(
           alert('Failed to create note');
         }
       },
-      [onNavClick, vaultService, node, history, notePath],
+      [onNavClick, notesService, node, history, notePath],
     );
 
     const handleClick = useHandleNoteClickOrPress(node.noteId);

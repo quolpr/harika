@@ -9,12 +9,15 @@ import { v4 as uuidv4 } from 'uuid';
 import { paths } from '../../paths';
 import { Modal, modalClass } from '../Modal/Modal';
 import { debounce, map, Observable, of, switchMap, tap, timer } from 'rxjs';
-import { usePrimaryNoteId } from '../../hooks/usePrimaryNote';
 import { useObservable, useObservableState } from 'observable-hooks';
-import { VaultService } from '@harika/web-core';
-import { useCurrentVaultApp, useVaultService } from '../../hooks/vaultAppHooks';
+import {
+  useCurrentVaultApp,
+  useFindService,
+  useNoteBlocksService,
+} from '../../hooks/vaultAppHooks';
 import { CustomScrollbar } from '../CustomScrollbar';
 import { useNotePath } from '../../contexts/StackedNotesContext';
+import { FindNoteOrBlockService } from '@harika/web-core/src/apps/VaultApplication/BlocksExtension/services/FindNoteOrBlockService';
 
 // Command executes on each user type and as result gives list of actions
 // Commands are start with `!`. If no `!` present - then search happen between all start view actions names
@@ -55,13 +58,13 @@ type IView = {
 const spawnView = ([
   inputCommandValue,
   vaultModelId,
-  vaultService,
+  findNoteOrBlockService,
   startView,
   notePath,
 ]: [
   string,
   string,
-  VaultService,
+  FindNoteOrBlockService,
   IView,
   (noteId: string, openStacked?: boolean) => string,
 ]): Observable<IView> => {
@@ -79,25 +82,25 @@ const spawnView = ([
     };
 
     return (
-      toFind.length === 0 ? of([]) : vaultService.findNotesOrBlocks$(toFind)
+      toFind.length === 0 ? of([]) : findNoteOrBlockService.find$(toFind)
     ).pipe(
       map((rows) => {
         return {
           actions: [
             ...rows.map(
-              ({ noteId, noteBlockId, data }): IAction => ({
-                id: `${noteId}-${noteBlockId}`,
+              ({ rootBlockId, blockId, data }): IAction => ({
+                id: `${rootBlockId}-${blockId}`,
                 name: data,
                 type: 'goToPage',
-                href: notePath(noteId),
-                stackHref: notePath(noteId, true),
+                href: notePath(rootBlockId),
+                stackHref: notePath(rootBlockId, true),
                 highlight: toFind,
               }),
             ),
             ...(toFind.length === 0 ||
             rows.find(
               (r) =>
-                r.tableType === 'notes' &&
+                r.blockType === 'noteBlock' &&
                 r.data.toLowerCase() === toFind.toLowerCase(),
             )
               ? []
@@ -144,7 +147,8 @@ export const CommandPaletteModal = ({
 
   const history = useHistory();
   const vault = useCurrentVaultApp();
-  const vaultService = useVaultService();
+  const notesService = useNoteBlocksService();
+  const findService = useFindService();
   const [inputCommandValue, setInputCommandValue] = useState('!findOrCreate ');
 
   const startView: IView = React.useMemo(
@@ -194,7 +198,7 @@ export const CommandPaletteModal = ({
         }),
       );
     },
-    [inputCommandValue, vault.applicationId, vaultService, startView, notePath],
+    [inputCommandValue, vault.applicationId, findService, startView, notePath],
   );
 
   const view = useObservableState(currentView$, emptyView);
@@ -213,7 +217,7 @@ export const CommandPaletteModal = ({
           onClose();
           break;
         case 'createNote': {
-          const result = await vaultService.createNote({
+          const result = await notesService.createNote({
             title: action.noteName,
           });
 
@@ -233,7 +237,7 @@ export const CommandPaletteModal = ({
           break;
       }
     },
-    [onClose, history, location.search, vaultService, notePath],
+    [onClose, history, location.search, notesService, notePath],
   );
 
   useKey(

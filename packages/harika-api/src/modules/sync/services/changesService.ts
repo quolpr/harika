@@ -116,7 +116,9 @@ export class ChangesService {
     const insertResult = await trx
       .insert(chs, ['id', 'rev'])
       .withSchema(schemaName)
-      .into(docChangesTable);
+      .into(docChangesTable)
+      .onConflict('id')
+      .ignore();
 
     const idRevMap = Object.fromEntries(
       insertResult.map(({ id, rev }) => [id, rev])

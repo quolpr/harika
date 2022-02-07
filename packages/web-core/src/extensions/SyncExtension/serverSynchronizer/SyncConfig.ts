@@ -1,5 +1,5 @@
 import { Container, inject, injectable } from 'inversify';
-import { AnyModel } from 'mobx-keystone';
+import { AnyModel, ModelData } from 'mobx-keystone';
 import { Class } from 'utility-types';
 import { IMapper } from '../mappers';
 import { BaseSyncRepository } from '../BaseSyncRepository';
@@ -16,6 +16,10 @@ export type ISubscription = {
     deletedIds: SyncModelId<AnyModel>[][],
   ) => void;
   modelClasses: Class<AnyModel>[];
+};
+
+type ModelDataWithType<T extends AnyModel> = ModelData<T> & {
+  $modelType: string;
 };
 
 @injectable()
@@ -58,14 +62,14 @@ export class SyncConfig {
   onModelChange<Model1 extends AnyModel>(
     models: Class<Model1>[],
     callback: (
-      arg: [CreationDataWithId<Model1>[]],
+      arg: [ModelDataWithType<Model1>[]],
       deletedIds: [SyncModelId<Model1>[]],
     ) => void,
   ): () => void;
   onModelChange<Model1 extends AnyModel, Model2 extends AnyModel>(
     models: [Class<Model1>, Class<Model2>],
     callback: (
-      arg: [CreationDataWithId<Model1>[], CreationDataWithId<Model2>[]],
+      arg: [ModelDataWithType<Model1>[], ModelDataWithType<Model2>[]],
       deletedIds: [SyncModelId<Model1>[], SyncModelId<Model2>[]],
     ) => void,
   ): () => void;
@@ -77,9 +81,9 @@ export class SyncConfig {
     models: [Class<Model1>, Class<Model2>, Class<Model3>],
     callback: (
       arg: [
-        CreationDataWithId<Model1>[],
-        CreationDataWithId<Model2>[],
-        CreationDataWithId<Model3>[],
+        ModelDataWithType<Model1>[],
+        ModelDataWithType<Model2>[],
+        ModelDataWithType<Model3>[],
       ],
       deletedIds: [
         SyncModelId<Model1>[],

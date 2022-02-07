@@ -1,7 +1,7 @@
-import { NoteModel } from '@harika/web-core';
+import { NoteBlock } from '@harika/web-core';
 import { useEffect, useState } from 'react';
 import { usePrimaryStack } from '../contexts/StackedNotesContext';
-import { useNotesService } from './vaultAppHooks';
+import { useNoteBlocksService } from './vaultAppHooks';
 
 export const usePrimaryNoteId = () => {
   return usePrimaryStack()?.entityId;
@@ -9,8 +9,8 @@ export const usePrimaryNoteId = () => {
 
 export const usePrimaryNote = () => {
   const primaryNoteId = usePrimaryNoteId();
-  const notesService = useNotesService();
-  const [primaryNote, setPrimaryNote] = useState<NoteModel>();
+  const notesService = useNoteBlocksService();
+  const [primaryNote, setPrimaryNote] = useState<NoteBlock>();
 
   useEffect(() => {
     const callback = async () => {

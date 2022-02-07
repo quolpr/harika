@@ -84,7 +84,7 @@ export const parse = (data: string, idGenerator = newIdGenerator): Token[] => {
       } else {
         return t;
       }
-    } else if (t.type === 'noteRef') {
+    } else if (t.type === 'noteBlockRef') {
       let [ref, alias] = t.content.split('|', 2) as [
         string,
         string | undefined,
@@ -94,7 +94,7 @@ export const parse = (data: string, idGenerator = newIdGenerator): Token[] => {
       alias = alias?.trim();
 
       return { ...t, ref: ref, alias: alias?.length === 0 ? undefined : alias };
-    } else if (t.type === 'noteBlockRef') {
+    } else if (t.type === 'textBlockRef') {
       const matchResult = t.content.match(
         new RegExp(`^~([${dictionary}]{20})$`),
       );

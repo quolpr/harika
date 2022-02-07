@@ -19,15 +19,15 @@ const handleUpdate = <T extends Record<string, any>>(
 ) => {
   current = cloneDeep(current);
 
-  Object.values(current).forEach((v) => {
-    if (isArray(v)) {
-      if (uniqWith(v, isEqual).length !== v.length) {
-        throw new Error(
-          `Only uniq arrays are supported in ${JSON.stringify(current)}`
-        );
-      }
-    }
-  });
+  // Object.values(current).forEach((v) => {
+  //   if (isArray(v)) {
+  //     if (uniqWith(v, isEqual).length !== v.length) {
+  //       throw new Error(
+  //         `Only uniq arrays are supported in ${JSON.stringify(current)}`
+  //       );
+  //     }
+  //   }
+  // });
 
   Object.entries(change.to).forEach(([k, v]) => {
     if (isArray(v)) {
@@ -82,10 +82,6 @@ export const buildSnapshot = (
 
   changes.forEach((ch) => {
     if (ch.type === DocChangeType.Create) {
-      if (currentSnapshot) {
-        throw new Error(`Multiple create changes for ${JSON.stringify(ch)}`);
-      }
-
       currentSnapshot = {
         doc: ch.doc,
         docId: ch.docId,

@@ -4,14 +4,14 @@ import {
   INoteTitleChange,
   NotesTreeRegistry,
 } from '../models/NotesTreeRegistry';
-import {
-  INoteChangeEvent,
-  notesTable,
-} from '../../NotesExtension/repositories/NotesRepository';
 import { inject, injectable } from 'inversify';
 import { STOP_SIGNAL } from '../../../../framework/types';
 import { DbEventsListenService } from '../../../../extensions/SyncExtension/services/DbEventsListenerService';
 import { DocChangeType } from '@harika/sync-common';
+import {
+  INoteChangeEvent,
+  noteBlocksTable,
+} from '../../BlocksExtension/repositories/NoteBlocksRepostitory';
 
 @injectable()
 export class NotesChangesTrackerService {
@@ -29,7 +29,7 @@ export class NotesChangesTrackerService {
         map(
           (chs) =>
             chs.filter(
-              (ch) => ch.collectionName === notesTable,
+              (ch) => ch.collectionName === noteBlocksTable,
             ) as INoteChangeEvent[],
         ),
         filter((chs) => chs.length !== 0),

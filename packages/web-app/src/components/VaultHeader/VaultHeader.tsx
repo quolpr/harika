@@ -1,5 +1,5 @@
 import React, { useCallback, useRef, useState } from 'react';
-import { useHistory, useLocation } from 'react-router-dom';
+import { useHistory } from 'react-router-dom';
 import { CalendarIcon } from '@heroicons/react/solid';
 import './styles.css';
 import dayjs from 'dayjs';
@@ -11,8 +11,8 @@ import { CommandPaletteModal } from '../CommandPaletteModal/CommandPaleteModal';
 import { cn } from '../../utils';
 import { usePrimaryNote } from '../../hooks/usePrimaryNote';
 import { SyncState } from '../SyncState/SyncState';
-import { useCurrentVaultApp, useVaultService } from '../../hooks/vaultAppHooks';
 import { useNotePath } from '../../contexts/StackedNotesContext';
+import { useNoteBlocksService } from '../../hooks/vaultAppHooks';
 
 const vaultHeaderClass = cn('header');
 
@@ -28,7 +28,7 @@ export const VaultHeader = observer(
     isTogglerToggled: boolean;
     togglerRef: React.Ref<HTMLElement>;
   }) => {
-    const noteService = useVaultService();
+    const noteService = useNoteBlocksService();
     const history = useHistory();
 
     const primaryNote = usePrimaryNote();
