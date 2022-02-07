@@ -1,13 +1,37 @@
 import { inject, injectable } from 'inversify';
 import { ISyncCtx } from '../../../../extensions/SyncExtension/syncCtx';
 import {
+  BlocksScopesRepository,
+  blocksScopesTable,
+} from '../repositories/BlockScopesRepository';
+import {
   NoteBlockDoc,
   NoteBlocksRepository,
+  noteBlocksTable,
 } from '../repositories/NoteBlocksRepostitory';
 import {
   TextBlockDoc,
   TextBlocksRepository,
+  textBlocksTable,
 } from '../repositories/TextBlocksRepository';
+
+interface OldVersionDump {
+  version: undefined;
+  data: {
+    data: {
+      tableName: string;
+      rows: any[];
+    }[];
+  };
+}
+
+interface V1Dump {
+  version: 1;
+  data: {
+    tableName: string;
+    rows: any[];
+  }[];
+}
 
 @injectable()
 export class ImportExportService {
@@ -16,12 +40,38 @@ export class ImportExportService {
     private noteBlocksRepository: NoteBlocksRepository,
     @inject(TextBlocksRepository)
     private textBlocksRepository: TextBlocksRepository,
+    @inject(BlocksScopesRepository)
+    private blocksScopesRepository: BlocksScopesRepository,
   ) {}
 
-  async importData(importData: {
-    data: { data: { tableName: string; rows: any[] }[] };
-    version: undefined;
-  }) {
+  async importData(dump: OldVersionDump | V1Dump) {
+    if (dump.version === undefined) {
+      await this.oldVersionImport(dump);
+    } else if (dump.version === 1) {
+      await this.firstVersionImport(dump);
+    }
+  }
+
+  private async firstVersionImport(dump: V1Dump) {
+    const ctx: ISyncCtx = {
+      shouldRecordChange: true,
+      source: 'inDbChanges',
+    };
+
+    await this.noteBlocksRepository.transaction(async (t) => {
+      for (const { tableName, rows } of dump.data) {
+        if (tableName === noteBlocksTable) {
+          await this.noteBlocksRepository.bulkCreate(rows, ctx, t);
+        } else if (tableName === textBlocksTable) {
+          await this.textBlocksRepository.bulkCreate(rows, ctx, t);
+        } else if (tableName === blocksScopesTable) {
+          await this.blocksScopesRepository.bulkCreate(rows, ctx, t);
+        }
+      }
+    });
+  }
+
+  private async oldVersionImport(dump: OldVersionDump) {
     const ctx: ISyncCtx = {
       shouldRecordChange: true,
       source: 'inDbChanges',
@@ -33,8 +83,8 @@ export class ImportExportService {
       { parentId: string; orderPosition: number }
     > = {};
 
-    if (importData.version === undefined) {
-      for (const { rows, tableName } of importData.data.data) {
+    if (dump.version === undefined) {
+      for (const { rows, tableName } of dump.data.data) {
         if (tableName === 'noteBlocks') {
           rows.forEach(
             ({ noteBlockIds, id }: { noteBlockIds: string[]; id: string }) => {
@@ -50,7 +100,7 @@ export class ImportExportService {
 
       const rootBlocksIds: Set<string> = new Set();
 
-      for (const { rows, tableName } of importData.data.data) {
+      for (const { rows, tableName } of dump.data.data) {
         if (tableName === 'blocksTreesDescriptors') {
           // id = noteId
           rows.forEach(
@@ -70,9 +120,7 @@ export class ImportExportService {
         }
       }
 
-      console.log({ relations });
-
-      const textBlocks = importData.data.data.flatMap(({ rows, tableName }) => {
+      const textBlocks = dump.data.data.flatMap(({ rows, tableName }) => {
         if (tableName === 'noteBlocks') {
           return rows.flatMap((row): TextBlockDoc | never[] => {
             if (rootBlocksIds.has(row.id)) return [];
@@ -94,7 +142,7 @@ export class ImportExportService {
         }
       });
 
-      const noteBlocks = importData.data.data.flatMap(({ rows, tableName }) => {
+      const noteBlocks = dump.data.data.flatMap(({ rows, tableName }) => {
         if (tableName === 'notes') {
           return rows.map((row): NoteBlockDoc => {
             return {
@@ -119,93 +167,26 @@ export class ImportExportService {
         await this.textBlocksRepository.bulkCreate(textBlocks, ctx, t);
       });
     }
-    // const rootBlockIds =
-    //   importData.data.data
-    //     .find(({ tableName }) => tableName === noteBlocksTable)
-    //     ?.rows.filter(({ rootBlockId }) => rootBlockId)
-    //     .map((note) => [note.id, note.rootBlockId]) || [];
-    // await this.notesRepo.transaction(async (t) => {
-    //   for (const { rows, tableName } of importData.data.data) {
-    //     if (tableName === noteBlocksTable) {
-    //       await this.notesRepo.bulkCreate(
-    //         rows
-    //           .filter(({ title }) => title !== undefined)
-    //           .map((doc) => {
-    //             const noteDoc: NoteDoc = {
-    //               id: doc.id,
-    //               title: doc.title,
-    //               dailyNoteDate: doc.dailyNoteDate ? doc.dailyNoteDate : null,
-    //               createdAt: doc.createdAt ? doc.createdAt : null,
-    //               updatedAt: doc.updatedAt || new Date().getTime(),
-    //             };
-    //             return noteDoc;
-    //           })
-    //           .filter((v) => !!v) as NoteDoc[],
-    //         ctx,
-    //         t,
-    //       );
-    //     } else if (tableName === noteBlocksTable) {
-    //       await this.notesBlocksRepo.bulkCreate(
-    //         rows
-    //           .filter((doc) => Boolean(doc.noteId))
-    //           .map(
-    //             (doc) =>
-    //               omit(
-    //                 {
-    //                   ...doc,
-    //                   updatedAt: doc.updatedAt || new Date().getTime(),
-    //                   linkedNoteIds: doc.linkedNoteIds.filter(
-    //                     (v: string | null) => Boolean(v),
-    //                   ),
-    //                   linkedBlockIds: doc.linkedBlockIds || [],
-    //                   noteBlockIds: doc.noteBlockIds.filter(
-    //                     (v: string | null) => Boolean(v),
-    //                   ),
-    //                 },
-    //                 ['parentBlockId', 'isRoot'],
-    //               ) as NoteBlockDoc,
-    //           ),
-    //         ctx,
-    //         t,
-    //       );
-    //     } else if (tableName === blocksScopesTable) {
-    //       await this.blocksScopesRepo.bulkCreate(rows, ctx, t);
-    //     } else if (tableName === blocksTreeDescriptorsTable) {
-    //       await this.descriptorRepo.bulkCreate(rows, ctx, t);
-    //     }
-    //   }
-    //   if (rootBlockIds.length > 0) {
-    //     await this.descriptorRepo.bulkCreate(
-    //       rootBlockIds.map(([noteId, rootBlockId]) => ({
-    //         id: noteId,
-    //         rootBlockId: rootBlockId,
-    //       })),
-    //       ctx,
-    //     );
-    //   }
-    // });
   }
 
   async exportData() {
-    // return JSON.stringify({
-    //   data: {
-    //     data: [
-    //       { tableName: noteBlocksTable, rows: await this.notesRepo.getAll() },
-    //       {
-    //         tableName: noteBlocksTable,
-    //         rows: await this.notesBlocksRepo.getAll(),
-    //       },
-    //       {
-    //         tableName: blocksScopesTable,
-    //         rows: await this.blocksScopesRepo.getAll(),
-    //       },
-    //       {
-    //         tableName: blocksTreeDescriptorsTable,
-    //         rows: await this.descriptorRepo.getAll(),
-    //       },
-    //     ],
-    //   },
-    // });
-    return '';
+    const dump: V1Dump = {
+      version: 1,
+      data: [
+        {
+          tableName: noteBlocksTable,
+          rows: await this.noteBlocksRepository.getAll(),
+        },
+        {
+          tableName: textBlocksTable,
+          rows: await this.textBlocksRepository.getAll(),
+        },
+        {
+          tableName: blocksScopesTable,
+          rows: await this.blocksScopesRepository.getAll(),
+        },
+      ],
+    };
+    return JSON.stringify(dump);
   }
 }
