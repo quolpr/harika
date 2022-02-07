@@ -1,5 +1,6 @@
 import { observable, reaction } from 'mobx';
 import {
+  idProp,
   model,
   Model,
   modelAction,
@@ -10,6 +11,7 @@ import { BaseBlock } from './BaseBlock';
 
 @model('harika/BlocksExtension/BlocksRegistry')
 export class BlocksRegistry extends Model({
+  id: idProp,
   blocksMap: prop<Record<string, BaseBlock>>(() => ({})),
 }) {
   @observable

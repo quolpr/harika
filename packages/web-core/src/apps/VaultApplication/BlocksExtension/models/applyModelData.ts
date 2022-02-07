@@ -1,14 +1,15 @@
 import { isArray, isEqual } from 'lodash-es';
 import { BaseModel, getSnapshot, Ref } from 'mobx-keystone';
 
-export const applyModelData = <R extends { [k: string]: any }>(
-  model: BaseModel<R, any, any, any, any>,
-  data: R,
-  customMapper: <T extends keyof R>(
-    key: T,
-    oldVal: R[T],
-    newVal: R[T],
-  ) => R[keyof R] = (_k, _oldVal, newVal) => newVal,
+// Not sure how to make it type safe
+export const applyModelData = (
+  model: BaseModel<any, any, any, any>,
+  data: any,
+  customMapper: (key: any, oldVal: any, newVal: any) => any = (
+    _k,
+    _oldVal,
+    newVal,
+  ) => newVal,
 ) => {
   for (const [key, value] of Object.entries(data)) {
     if (isEqual(getSnapshot(model.$[key]), value)) continue;
@@ -30,11 +31,7 @@ export const applyModelData = <R extends { [k: string]: any }>(
       }
     }
 
-    // @ts-expect-error
-    model[key] = customMapper(
-      key as keyof R,
-      model.$[key] as R[keyof R],
-      value as R[keyof R],
-    );
+    // @ts-ignore
+    model[key] = customMapper(key, model.$[key], value);
   }
 };

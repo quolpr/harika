@@ -9,7 +9,7 @@ import {
 export const noteBlockMapper: IMapper<NoteBlockDoc, NoteBlock> = {
   mapToModelData(doc) {
     return {
-      $modelId: doc.id,
+      id: doc.id,
       $modelType: noteBlockModelType,
 
       parentRef: doc.parentId ? blockRef(doc.parentId) : undefined,
@@ -27,7 +27,7 @@ export const noteBlockMapper: IMapper<NoteBlockDoc, NoteBlock> = {
   },
   mapToDoc(model) {
     return {
-      id: model.$modelId,
+      id: model.id,
       type: 'noteBlock',
 
       orderPosition: model.orderPosition,

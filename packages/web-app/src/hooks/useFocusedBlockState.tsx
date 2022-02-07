@@ -1,7 +1,7 @@
 import { comparer, computed } from 'mobx';
 import { createContext, useCallback, useContext } from 'react';
 import { isEqual } from 'lodash-es';
-import { Model, model, modelAction, prop } from 'mobx-keystone';
+import { idProp, Model, model, modelAction, prop } from 'mobx-keystone';
 
 // TODO: use jsut mobx
 
@@ -13,6 +13,7 @@ export interface EditState {
 
 @model('FocusedBlockState')
 export class FocusedBlockState extends Model({
+  id: idProp,
   scopeId: prop<string>(),
   scopedBlockId: prop<string>(),
   startAt: prop<number | undefined>(),
@@ -39,6 +40,7 @@ export class FocusedBlockState extends Model({
 // and event in event handler stops bubbling. WTF?
 @model('FocusedBlock')
 export class FocusedBlock extends Model({
+  id: idProp,
   state: prop<FocusedBlockState | undefined>(),
 }) {
   getFocusState(scopeId: string, scopeBlockId: string): EditState {

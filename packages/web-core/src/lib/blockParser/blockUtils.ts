@@ -1,8 +1,7 @@
 import { generateId } from '../generateId';
 import { parseStringToTree } from './parseStringToTree';
 import type { TreeToken } from './parseStringToTree';
-import { Optional } from 'utility-types';
-import { ModelCreationData, standaloneAction } from 'mobx-keystone';
+import { standaloneAction } from 'mobx-keystone';
 import {
   CollapsableBlock,
   getCollapsableBlock,
@@ -57,7 +56,7 @@ export const addTokensToNoteBlock = standaloneAction(
 
       const parentBlock = currentPath[currentPath.length - 1];
       const newBlock = new TextBlock({
-        $modelId: token.id ? token.id : generateId(),
+        id: token.id ? token.id : generateId(),
         createdAt: new Date().getTime(),
         updatedAt: new Date().getTime(),
         content: token.content,

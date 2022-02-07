@@ -29,7 +29,7 @@ export const createNote = standaloneAction(
     const updatedAt = createdAt;
 
     const emptyTextBlock = new TextBlock({
-      $modelId: generateId(),
+      id: generateId(),
       createdAt,
       updatedAt,
       content: '',
@@ -39,7 +39,7 @@ export const createNote = standaloneAction(
     });
 
     const noteBlock = new NoteBlock({
-      $modelId: noteId,
+      id: noteId,
       createdAt,
       updatedAt,
       ...(options?.isDaily

@@ -6,13 +6,10 @@ import {
   tProp,
   types,
   rootRef,
-  getRefsResolvingTo,
   modelAction,
   detach,
-  createContext,
-  getSnapshot,
-  getParent,
   findParent,
+  idProp,
 } from 'mobx-keystone';
 import { comparer, computed } from 'mobx';
 import {
@@ -32,6 +29,7 @@ export const blockRef = rootRef<BaseBlock>(
 
 @model('harika/BlocksExtension/BaseBlock')
 export class BaseBlock extends Model({
+  id: idProp,
   parentRef: prop<Ref<BaseBlock> | undefined>(),
   orderPosition: prop<number>(),
   linkedBlockRefs: prop<Ref<BaseBlock>[]>(() => []),

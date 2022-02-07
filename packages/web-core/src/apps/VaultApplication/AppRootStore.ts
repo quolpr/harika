@@ -1,4 +1,4 @@
-import { Model, model, prop } from 'mobx-keystone';
+import { idProp, Model, model, prop } from 'mobx-keystone';
 import { Subject } from 'rxjs';
 import {
   ISyncableModelChange,
@@ -9,6 +9,7 @@ import { BlocksStore } from './BlocksExtension/models/BlocksStore';
 
 @model('harika/VaultAppRootStore')
 export class VaultAppRootStore extends Model({
+  id: idProp,
   blocksStore: prop<BlocksStore>(),
   blocksScopeStore: prop<BlocksScopeStore>(),
 }) {

@@ -1,14 +1,12 @@
 import {
-  applySnapshot,
   arraySet,
-  detach,
-  fromSnapshot,
+  idProp,
   model,
   Model,
   modelAction,
+  ModelCreationData,
   ModelData,
   prop,
-  SnapshotInOf,
 } from 'mobx-keystone';
 import { withoutSyncAction } from '../../../../extensions/SyncExtension/mobx-keystone/syncable';
 import { SyncModelId } from '../../../../extensions/SyncExtension/types';
@@ -26,6 +24,7 @@ export const getScopeKey = (
 
 @model('@harika/BlocksExtension/BlocksScopeStore')
 export class BlocksScopeStore extends Model({
+  id: idProp,
   blocksScopes: prop<Record<string, BlocksScope>>(() => ({})),
 }) {
   isScopePresent(
@@ -53,7 +52,7 @@ export class BlocksScopeStore extends Model({
     );
 
     const scope = new BlocksScope({
-      $modelId: key,
+      id: key,
       rootBlockId,
       scopeId: scopedBy.$modelId,
       scopeType: scopedBy.$modelType,
@@ -92,10 +91,10 @@ export class BlocksScopeStore extends Model({
     });
 
     scopes.forEach((scope) => {
-      if (this.blocksScopes[scope.$modelId!]) {
-        applyModelData(this.blocksScopes[scope.$modelId!], scope);
+      if (this.blocksScopes[scope.id!]) {
+        applyModelData(this.blocksScopes[scope.id!], scope);
       } else {
-        this.blocksScopes[scope.$modelId!] = new BlocksScope(scope);
+        this.blocksScopes[scope.id!] = new BlocksScope(scope);
       }
     });
   }

@@ -1,6 +1,7 @@
 import { computed } from 'mobx';
 import {
   findParent,
+  idProp,
   Model,
   model,
   modelAction,
@@ -20,6 +21,7 @@ export const notesTreeNoteRef = rootRef<NotesTreeNote>(
 
 @model('harika/NotesTreeApp/NotesTreeNote')
 export class NotesTreeNote extends Model({
+  id: idProp,
   title: prop<string>(),
   nodeRefs: prop<Ref<NotesTreeNote>[]>(() => []),
   noteId: prop<string | undefined>(() => undefined),

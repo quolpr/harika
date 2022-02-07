@@ -1,9 +1,13 @@
-import { computed } from 'mobx';
-import { ArraySet, model, Model, modelAction, prop } from 'mobx-keystone';
+import {
+  ArraySet,
+  idProp,
+  model,
+  Model,
+  modelAction,
+  prop,
+} from 'mobx-keystone';
 import { syncable } from '../../../../extensions/SyncExtension/mobx-keystone/syncable';
-import { normalizeBlockTree } from '../../../../lib/blockParser/blockUtils';
 import { withoutUndoAction } from '../../../../lib/utils';
-import { CollapsableBlock } from './CollapsableBlock';
 
 export const blocksScopeType = '@harika/BlocksExtension/BlocksScope';
 
@@ -11,6 +15,7 @@ export const blocksScopeType = '@harika/BlocksExtension/BlocksScope';
 @syncable
 @model(blocksScopeType)
 export class BlocksScope extends Model({
+  id: idProp,
   collapsedBlockIds: prop<ArraySet<string>>(),
   rootBlockId: prop<string>(),
 

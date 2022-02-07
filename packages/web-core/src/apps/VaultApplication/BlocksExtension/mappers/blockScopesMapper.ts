@@ -6,18 +6,10 @@ import {
   blocksScopesTable,
 } from '../repositories/BlockScopesRepository';
 
-export const getScopeKey = (
-  scopeId: string,
-  scopeType: string,
-  rootBlock: string,
-) => {
-  return `${scopeType}-${scopeId}-${rootBlock}`;
-};
-
 export const blocksScopesMapper: IMapper<BlocksScopeDoc, BlocksScope> = {
   mapToModelData(doc) {
     return {
-      $modelId: doc.id,
+      id: doc.id,
       $modelType: blocksScopeType,
       collapsedBlockIds: arraySet(doc.collapsedBlockIds),
       scopeId: doc.scopeId,
@@ -30,7 +22,7 @@ export const blocksScopesMapper: IMapper<BlocksScopeDoc, BlocksScope> = {
   },
   mapToDoc(model) {
     return {
-      id: model.$modelId,
+      id: model.id,
       collapsedBlockIds: Array.from(model.collapsedBlockIds),
       scopeId: model.scopeId,
       scopeType: model.scopeType,

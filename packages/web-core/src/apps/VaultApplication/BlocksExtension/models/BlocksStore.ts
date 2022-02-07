@@ -1,10 +1,9 @@
-import { observable, reaction } from 'mobx';
 import {
+  idProp,
   model,
   Model,
   modelAction,
   ModelData,
-  onChildAttachedTo,
   prop,
 } from 'mobx-keystone';
 import { Class } from 'utility-types';
@@ -17,6 +16,7 @@ import { BlocksRegistry } from './BlocksRegistry';
 
 @model('harika/BlocksExtension/BlocksStore')
 export class BlocksStore extends Model({
+  id: idProp,
   blocksRegistry: prop<BlocksRegistry>(() => new BlocksRegistry({})),
 }) {
   hasBlockWithId(id: string) {
@@ -80,9 +80,9 @@ export class BlocksStore extends Model({
   ) {
     blocksAttrs.forEach(({ klass, datas }) => {
       datas.forEach((block) => {
-        if (this.blocksRegistry.hasBlockWithId(block.$modelId!)) {
+        if (this.blocksRegistry.hasBlockWithId(block.id!)) {
           applyModelData(
-            this.blocksRegistry.getBlockById(block.$modelId!),
+            this.blocksRegistry.getBlockById(block.id!),
             block,
             (key, oldVal, newVal) => {
               if (key === 'areChildrenLoaded') {

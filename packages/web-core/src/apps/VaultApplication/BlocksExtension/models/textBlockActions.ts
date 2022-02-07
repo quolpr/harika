@@ -13,13 +13,13 @@ export const createTextBlock = standaloneAction(
     blocksStore: BlocksStore,
     data: Optional<
       ModelCreationData<TextBlock>,
-      'createdAt' | 'updatedAt' | '$modelId'
+      'createdAt' | 'updatedAt' | 'id'
     >,
   ) => {
     const time = new Date().getTime();
 
     const newTextBlock = new TextBlock({
-      $modelId: generateId(),
+      id: generateId(),
       createdAt: time,
       updatedAt: time,
       areChildrenLoaded: true,

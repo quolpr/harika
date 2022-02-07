@@ -9,7 +9,7 @@ import {
 export const textBlockMapper: IMapper<TextBlockDoc, TextBlock> = {
   mapToModelData(doc) {
     return {
-      $modelId: doc.id,
+      id: doc.id,
       $modelType: textBlockModelType,
 
       parentRef: doc.parentId ? blockRef(doc.parentId) : undefined,
@@ -26,7 +26,7 @@ export const textBlockMapper: IMapper<TextBlockDoc, TextBlock> = {
   },
   mapToDoc(model) {
     return {
-      id: model.$modelId,
+      id: model.id,
       type: 'textBlock',
 
       orderPosition: model.orderPosition,

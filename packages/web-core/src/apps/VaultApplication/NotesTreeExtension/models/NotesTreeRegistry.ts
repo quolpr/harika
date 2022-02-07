@@ -23,7 +23,7 @@ export type INoteTitleChange = INewNote | INoteDelete | INoteRename;
 
 @model(notesTreeRegistryModelType)
 export class NotesTreeRegistry extends Model({
-  $modelId: idProp,
+  id: idProp,
   nodesMap: prop<Record<string, NotesTreeNote>>(() => ({})),
   rootNodeRef: prop<Ref<NotesTreeNote>>(),
   isInitialized: prop<boolean>(() => false),
