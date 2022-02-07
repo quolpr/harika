@@ -1,12 +1,5 @@
 import { observable, reaction } from 'mobx';
-import {
-  idProp,
-  model,
-  Model,
-  modelAction,
-  onChildAttachedTo,
-  prop,
-} from 'mobx-keystone';
+import { idProp, model, Model, onChildAttachedTo, prop } from 'mobx-keystone';
 import { BaseBlock } from './BaseBlock';
 
 @model('harika/BlocksExtension/BlocksRegistry')
@@ -31,12 +24,10 @@ export class BlocksRegistry extends Model({
     return !!this.blocksMap[id];
   }
 
-  @modelAction
   registerBlock(block: BaseBlock) {
     this.blocksMap[block.$modelId] = block;
   }
 
-  @modelAction
   registerBlocks(blocks: BaseBlock[]) {
     blocks.forEach((block) => {
       this.blocksMap[block.$modelId] = block;

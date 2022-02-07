@@ -5,7 +5,7 @@ import { sqltag, join, raw } from '../../../../lib/sql';
 import { SyncConfig } from '../../../../extensions/SyncExtension/serverSynchronizer/SyncConfig';
 import { BLOCK_REPOSITORY } from '../types';
 import { ISyncCtx } from '../../../../extensions/SyncExtension/syncCtx';
-import { mapKeys, pickBy } from 'lodash';
+import { mapKeys, pickBy } from 'lodash-es';
 
 export const blocksChildrenTable = 'blocksChildren' as const;
 

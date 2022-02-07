@@ -1,6 +1,5 @@
 import { inject, injectable } from 'inversify';
-import { uniq } from 'lodash';
-import { firstValueFrom } from 'rxjs';
+import { uniq } from 'lodash-es';
 import { filterAst } from '../../../../lib/blockParser/astHelpers';
 import {
   TextBlockRef,
