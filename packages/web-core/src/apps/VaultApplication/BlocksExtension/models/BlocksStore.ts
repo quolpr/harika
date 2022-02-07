@@ -1,4 +1,12 @@
-import { model, Model, modelAction, ModelData, prop } from 'mobx-keystone';
+import { observable, reaction } from 'mobx';
+import {
+  model,
+  Model,
+  modelAction,
+  ModelData,
+  onChildAttachedTo,
+  prop,
+} from 'mobx-keystone';
 import { Class } from 'utility-types';
 import { withoutSyncAction } from '../../../../extensions/SyncExtension/mobx-keystone/syncable';
 import { SyncModelId } from '../../../../extensions/SyncExtension/types';

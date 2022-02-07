@@ -84,9 +84,6 @@ export class ToDbSynchronizer {
       .pipe(
         buffer(pipe$.pipe(debounceTime(300))),
         map((changes) => changes.flat()),
-        tap((changes) => {
-          console.log(changes);
-        }),
         concatMap((changes) => {
           return defer(() => this.applyChanges(changes)).pipe(
             retryBackoff({

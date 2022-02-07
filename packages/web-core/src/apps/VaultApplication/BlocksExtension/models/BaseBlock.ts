@@ -12,6 +12,7 @@ import {
   createContext,
   getSnapshot,
   getParent,
+  findParent,
 } from 'mobx-keystone';
 import { comparer, computed } from 'mobx';
 import {
@@ -23,6 +24,7 @@ import {
   nearestRightToParentFunc,
   pathFunc,
 } from './treeFuncs';
+import { BlocksRegistry } from './BlocksRegistry';
 
 export const blockRef = rootRef<BaseBlock>(
   'harika/BlocksExtension/BaseBlockRef',
@@ -51,21 +53,16 @@ export class BaseBlock extends Model({
 
   @computed({ equals: comparer.shallow })
   get childrenBlocks(): BaseBlock[] {
-    const backRefs = getRefsResolvingTo(this, blockRef, {
-      updateAllRefsIfNeeded: true,
-    });
+    const registry = findParent<BlocksRegistry>(
+      this,
+      (m) => m instanceof BlocksRegistry,
+    );
 
-    const blocks: BaseBlock[] = [];
-
-    for (const backRef of backRefs.values()) {
-      const parent = getParent<BaseBlock>(backRef);
-
-      if (!parent || !(parent instanceof BaseBlock)) continue;
-
-      blocks.push(parent);
+    if (!registry) {
+      return [];
     }
 
-    return blocks.sort((a, b) => a.orderPosition - b.orderPosition);
+    return registry.getChildrenOfParent(this.$modelId);
   }
 
   get children() {
