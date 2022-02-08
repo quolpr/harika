@@ -46,8 +46,6 @@ export class TextBlocksRepository extends BaseBlockRepository<
     ctx: ISyncCtx,
     e: IQueryExecuter = this.db,
   ) {
-    console.log('bulk update', records);
-
     return e.transaction(async (t) => {
       const res = await super.bulkUpdate(records, ctx, t);
 

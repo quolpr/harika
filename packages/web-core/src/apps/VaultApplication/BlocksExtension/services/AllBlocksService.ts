@@ -67,7 +67,7 @@ export class AllBlocksService {
       [],
     );
 
-    return this.store.getBlocksByIds(blockIds);
+    return this.store.getBlocksByIds(blockIds).filter((b) => b !== undefined);
   }
 
   async getBlockWithTreeByIds(blockIds: string[], forceReload = false) {

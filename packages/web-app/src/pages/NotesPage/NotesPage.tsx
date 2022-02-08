@@ -7,7 +7,6 @@ import { TrashIcon } from '@heroicons/react/solid';
 import { useObservable, useObservableState } from 'observable-hooks';
 import { LoadingDoneSubjectContext } from '../../contexts';
 import {
-  useAllBlocksService,
   useDeleteBlocksService,
   useNoteBlocksService,
 } from '../../hooks/vaultAppHooks';

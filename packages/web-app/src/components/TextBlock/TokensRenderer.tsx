@@ -17,7 +17,6 @@ import { useDeepMemo } from '../../utils';
 import { TextBlockRef } from '@harika/web-core/src/lib/blockParser/types';
 import {
   useAllBlocksService,
-  useNoteBlocksService,
   useUpdateLinkService,
 } from '../../hooks/vaultAppHooks';
 import {

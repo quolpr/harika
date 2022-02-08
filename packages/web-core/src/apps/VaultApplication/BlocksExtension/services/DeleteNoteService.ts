@@ -16,24 +16,26 @@ export class DeleteNoteService {
       source: 'inDbChanges',
     };
     await this.db.transaction(async (t) => {
-      // const linkedBlocks = await this.allRepo.getSingleBlocksByIds(
-      //   (
-      //     await this.allRepo.getBacklinkedBlockIds(noteId, true, t)
-      //   ).linkedBlockIds.map(({ blockId }) => blockId),
-      // );
-      // if (linkedBlocks.length > 0) {
-      //   linkedBlocks.forEach((block) => {
-      //     block.linkedBlockIds = block.linkedBlockIds.filter(
-      //       (id) => id !== noteId,
-      //     );
-      //   });
-      //   await this.allRepo.bulkUpdate(linkedBlocks, ctx, t);
-      // }
-      // await this.allRepo.bulkDelete(
-      //   await this.allRepo.getDescendantIds(noteId, t),
-      //   ctx,
-      //   t,
-      // );
+      const backlinkedBlockIds = (
+        await this.allRepo.getBacklinkedBlockIds(noteId, false, t)
+      ).linkedBlockIds.map(({ blockId }) => blockId);
+
+      if (backlinkedBlockIds.length > 0) {
+        const linkedBlocks = await this.allRepo.getSingleBlocksByIds(
+          backlinkedBlockIds,
+          t,
+        );
+
+        linkedBlocks.forEach((block) => {
+          block.linkedBlockIds = block.linkedBlockIds.filter(
+            (id) => id !== noteId,
+          );
+        });
+
+        await this.allRepo.bulkUpdate(linkedBlocks, ctx, t);
+      }
+
+      await this.allRepo.bulkRecursiveDelete([noteId], ctx, t);
     });
   }
 }

@@ -5,7 +5,8 @@ import { sqltag, join, raw } from '../../../../lib/sql';
 import { SyncConfig } from '../../../../extensions/SyncExtension/serverSynchronizer/SyncConfig';
 import { BLOCK_REPOSITORY } from '../types';
 import { ISyncCtx } from '../../../../extensions/SyncExtension/syncCtx';
-import { mapKeys, pickBy } from 'lodash-es';
+import { groupBy, mapKeys, pickBy } from 'lodash-es';
+import { textBlocksTable } from './TextBlocksRepository';
 
 export const blocksChildrenTable = 'blocksChildren' as const;
 
@@ -50,7 +51,7 @@ export class AllBlocksRepository {
   }
 
   async getSingleBlocksByIds(ids: string[], e: IQueryExecuter = this.db) {
-    const { select, joinTables } = await this.getBlocksQueries('blocks');
+    const { select, joinTables } = await this.getBlocksQueries('blocks', e);
 
     return this.joinedRowsToDocs(
       await e.getRecords(sqltag`
@@ -68,6 +69,7 @@ export class AllBlocksRepository {
   async getDescendantsWithSelf(ids: string[], e: IQueryExecuter = this.db) {
     const { select, joinTables } = await this.getBlocksQueries(
       'childrenBlockIds',
+      e,
     );
 
     return this.joinedRowsToDocs(
@@ -81,11 +83,22 @@ export class AllBlocksRepository {
   }
 
   async bulkUpdate(
-    doc: BaseBlockDoc[],
+    docs: BaseBlockDoc[],
     ctx: ISyncCtx,
     e: IQueryExecuter = this.db,
   ) {
-    console.log();
+    for (const [blockType, blocks] of Object.entries(
+      groupBy(docs, (b) => b.type),
+    )) {
+      const repo = this.blocksRepos.find((r) => r.docType === blockType);
+
+      if (!repo) {
+        console.error(`Failed to find repo for ${blockType}`);
+        continue;
+      }
+
+      await repo.bulkUpdate(blocks, ctx, e);
+    }
   }
 
   async getBacklinkedBlockIds(
@@ -141,11 +154,31 @@ export class AllBlocksRepository {
     };
   }
 
-  async bulkDelete(
-    ids: { id: string; type: string }[],
+  async bulkRecursiveDelete(
+    rootIds: string[],
     ctx: ISyncCtx,
     e: IQueryExecuter = this.db,
-  ) {}
+  ) {
+    // Could be optimized to just take id and type
+    const allBlocks = await this.getDescendantsWithSelf(rootIds, e);
+
+    for (const [blockType, blocks] of Object.entries(
+      groupBy(allBlocks, (b) => b.type),
+    )) {
+      const repo = this.blocksRepos.find((r) => r.docType === blockType);
+
+      if (!repo) {
+        console.error(`Failed to find repo for ${blockType}`);
+        continue;
+      }
+
+      await repo.bulkDelete(
+        blocks.map(({ id }) => id),
+        ctx,
+        e,
+      );
+    }
+  }
 
   // {[id: string] => rootBlockId: string}
   async getRootBlockIds(
@@ -180,7 +213,10 @@ export class AllBlocksRepository {
     );
   }
 
-  private async getBlocksQueries(tableToJoin: string) {
+  private async getBlocksQueries(
+    tableToJoin: string,
+    e: IQueryExecuter = this.db,
+  ) {
     return {
       select: join(
         (
@@ -188,7 +224,7 @@ export class AllBlocksRepository {
             this.blocksRepos.flatMap(async (r) => {
               const tableName = r.getTableName();
 
-              return (await r.getColumnNames()).map((c) =>
+              return (await r.getColumnNames(e)).map((c) =>
                 raw(`${tableName}.${c} AS ${tableName}_${c}`),
               );
             }),
@@ -208,7 +244,9 @@ export class AllBlocksRepository {
   }
 
   private joinedRowsToDocs(rows: Record<string, unknown>[]) {
-    return rows.map((row) => {
+    return rows.flatMap((row) => {
+      if (Object.values(row).every((r) => r === null)) return [];
+
       const actualRepo = this.blocksRepos.find(
         (repo) => !!row[`${repo.getTableName()}_id`],
       );
