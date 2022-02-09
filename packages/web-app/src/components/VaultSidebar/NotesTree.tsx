@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 import type { NotesTreeNote } from '@harika/web-core';
 import { cn } from '../../utils';
-import { Link, useHistory } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import ArrowDown from '../../icons/arrow-down.svgr.svg?component';
 import ArrowRight from '../../icons/arrow-right.svgr.svg?component';
 import { observer } from 'mobx-react-lite';
@@ -33,7 +33,7 @@ const NoteNode = observer(
         ? primaryNoteId === node.noteId
         : node.isInsideNode(primaryNoteId)
       : false;
-    const history = useHistory();
+    const navigate = useNavigate();
     const notePath = useNotePath();
 
     const handleExpandClick = useCallback(
@@ -56,12 +56,12 @@ const NoteNode = observer(
         if (newNote.status === 'ok') {
           node.setNoteId(newNote.data.$modelId);
 
-          history.push(notePath(newNote.data.$modelId));
+          navigate(notePath(newNote.data.$modelId));
         } else {
           alert('Failed to create note');
         }
       },
-      [onNavClick, notesService, node, history, notePath],
+      [navigate, node, notePath, notesService, onNavClick],
     );
 
     const handleClick = useHandleNoteClickOrPress(node.noteId);

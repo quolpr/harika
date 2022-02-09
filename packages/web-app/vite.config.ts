@@ -1,12 +1,12 @@
 import { defineConfig } from 'vite';
 import reactRefresh from '@vitejs/plugin-react-refresh';
-import crossOriginIsolation from 'vite-plugin-cross-origin-isolation';
 import { injectManifest } from 'rollup-plugin-workbox';
 import { visualizer } from 'rollup-plugin-visualizer';
 import Checker from 'vite-plugin-checker';
 
 const { glob } = require('glob');
 const reactSvgPlugin = require('vite-plugin-react-svg');
+
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -16,7 +16,6 @@ export default defineConfig({
   },
   plugins: [
     reactRefresh(),
-    crossOriginIsolation(),
     reactSvgPlugin(),
     injectManifest({
       swSrc: './src/serviceWorker.ts',

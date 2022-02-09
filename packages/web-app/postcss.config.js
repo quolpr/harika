@@ -5,9 +5,9 @@ module.exports = {
   plugins: [
     cssnano(),
     postcssPresetEnv(),
-    require('postcss-nested'),
     require('postcss-import'),
     require('autoprefixer'),
+    require('tailwindcss/nesting'),
     require('tailwindcss'),
     require('postcss-rem'),
   ],

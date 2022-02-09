@@ -1,5 +1,5 @@
 import React, { useCallback, useRef, useState } from 'react';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { CalendarIcon } from '@heroicons/react/solid';
 import './styles.css';
 import dayjs from 'dayjs';
@@ -29,7 +29,7 @@ export const VaultHeader = observer(
     togglerRef: React.Ref<HTMLElement>;
   }) => {
     const noteService = useNoteBlocksService();
-    const history = useHistory();
+    const navigate = useNavigate();
 
     const primaryNote = usePrimaryNote();
 
@@ -65,7 +65,7 @@ export const VaultHeader = observer(
         const result = await noteService.getOrCreateDailyNote(dayjs(date));
 
         if (result.status === 'ok') {
-          history.push(
+          navigate(
             notePath(
               result.data.$modelId,
               (ev.nativeEvent as MouseEvent).shiftKey,
@@ -73,7 +73,7 @@ export const VaultHeader = observer(
           );
         }
       },
-      [noteService, history, notePath],
+      [noteService, navigate, notePath],
     );
 
     return (

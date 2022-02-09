@@ -1,0 +1,13 @@
+diff --git a/node_modules/react-draggable/build/cjs/DraggableCore.js b/node_modules/react-draggable/build/cjs/DraggableCore.js
+index 400c5d0..4630699 100644
+--- a/node_modules/react-draggable/build/cjs/DraggableCore.js
++++ b/node_modules/react-draggable/build/cjs/DraggableCore.js
+@@ -372,7 +372,7 @@ var DraggableCore = /*#__PURE__*/function (_React$Component) {
+     {
+       var _this$props$nodeRef$c, _this$props, _this$props$nodeRef;
+ 
+-      return (_this$props$nodeRef$c = (_this$props = this.props) === null || _this$props === void 0 ? void 0 : (_this$props$nodeRef = _this$props.nodeRef) === null || _this$props$nodeRef === void 0 ? void 0 : _this$props$nodeRef.current) !== null && _this$props$nodeRef$c !== void 0 ? _this$props$nodeRef$c : _reactDom.default.findDOMNode(this);
++      return (_this$props$nodeRef$c = (_this$props = this.props) === null || _this$props === void 0 ? void 0 : (_this$props$nodeRef = _this$props.nodeRef) === null || _this$props$nodeRef === void 0 ? void 0 : _this$props$nodeRef.current) !== null && _this$props$nodeRef$c !== void 0 ? _this$props$nodeRef$c : undefined;
+     }
+   }, {
+     key: "render",

@@ -1,0 +1,20 @@
+diff --git a/node_modules/@svgr/core/lib/plugins.js b/node_modules/@svgr/core/lib/plugins.js
+index 2d31db4..230cec7 100644
+--- a/node_modules/@svgr/core/lib/plugins.js
++++ b/node_modules/@svgr/core/lib/plugins.js
+@@ -46,13 +46,14 @@ function loadPlugin(moduleName) {
+     // eslint-disable-next-line
+     const plugin = require(moduleName);
+ 
+-    if (!plugin.default || !plugin) {
++    if (!plugin.default && !plugin) {
+       throw new Error(`Invalid plugin "${moduleName}"`);
+     }
+ 
+     pluginCache[moduleName] = plugin.default || plugin;
+     return pluginCache[moduleName];
+   } catch (error) {
++    console.error(error);
+     throw new Error(`Module "${moduleName}" missing. Maybe \`npm install ${moduleName}\` could help!`);
+   }
+ }

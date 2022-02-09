@@ -1,16 +1,9 @@
 import { mapTokens } from './astHelpers';
 import { parse as pegParse } from './pegParser';
 import { find } from 'linkifyjs';
-import type { FindResultHash } from 'linkifyjs';
 import type { Token } from './types';
 import { dictionary } from '../generateId';
-
-declare module 'linkifyjs' {
-  interface FindResultHash {
-    end: number;
-    start: number;
-  }
-}
+import { ValuesType } from 'utility-types';
 
 const newIdGenerator = () => {
   let id = 0;
@@ -33,7 +26,8 @@ export const parse = (data: string, idGenerator = newIdGenerator): Token[] => {
       if (links.length > 0) {
         const newTokens: Token[] = [];
 
-        let prevLink: FindResultHash | undefined = undefined;
+        let prevLink: ValuesType<ReturnType<typeof find>> | undefined =
+          undefined;
 
         links.forEach((link, i) => {
           const strTokenPos = {

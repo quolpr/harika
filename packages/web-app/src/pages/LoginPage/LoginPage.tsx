@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useCallback } from 'react';
 import { useForm } from 'react-hook-form';
-import { Link, useHistory } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuthState } from '../../hooks/useAuthState';
 import { paths } from '../../paths';
 import { cn } from '../../utils';
@@ -24,7 +24,7 @@ type IFormData = {
 const auth = getAuth();
 
 export const LoginPage = () => {
-  const history = useHistory();
+  const navigate = useNavigate();
   const [, setAuthInfo] = useAuthState();
   const [offlineAccounts, addOfflineAccount] = useOfflineAccounts();
   const [isLoading, setIsLoading] = useState(false);
@@ -57,7 +57,7 @@ export const LoginPage = () => {
           isOffline: false,
         });
 
-        history.push(paths.vaultIndexPath());
+        navigate(paths.vaultIndexPath());
       } catch {
         setError('email', {
           type: 'server',
@@ -67,13 +67,13 @@ export const LoginPage = () => {
         setIsLoading(false);
       }
     },
-    [history, setAuthInfo, setError],
+    [navigate, setAuthInfo, setError],
   );
 
   const handleWorkOffline = useCallback(() => {
     // const token = 'not-set';
 
-    const { userId } = (() => {
+    const { userId } = ((): { userId: string; dbId: string } => {
       if (offlineAccounts.accounts.length > 0) {
         return {
           userId: offlineAccounts.accounts[0].id,
@@ -91,8 +91,8 @@ export const LoginPage = () => {
 
     setAuthInfo({ userId, isOffline: true });
 
-    history.push(paths.vaultIndexPath());
-  }, [setAuthInfo, history, offlineAccounts.accounts, addOfflineAccount]);
+    navigate(paths.vaultIndexPath());
+  }, [setAuthInfo, navigate, offlineAccounts.accounts, addOfflineAccount]);
 
   const handleGoogleSignIn = useCallback(async () => {
     try {
@@ -106,7 +106,7 @@ export const LoginPage = () => {
         isOffline: false,
       });
 
-      history.push(paths.vaultIndexPath());
+      navigate(paths.vaultIndexPath());
     } catch (e) {
       alert('Failed to log in with Google. Please, try again.');
 
@@ -114,7 +114,7 @@ export const LoginPage = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [history, setAuthInfo]);
+  }, [navigate, setAuthInfo]);
 
   return (
     <div className="max-w-screen-sm mx-auto px-5">

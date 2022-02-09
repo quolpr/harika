@@ -1,13 +1,13 @@
 import { useEffect } from 'react';
 import dayjs from 'dayjs';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { observer } from 'mobx-react-lite';
 import { useNotePath } from '../contexts/StackedNotesContext';
 import { useNoteBlocksService } from '../hooks/vaultAppHooks';
 
 export const DailyNotePage = observer(() => {
   const noteBlocksService = useNoteBlocksService();
-  const history = useHistory();
+  const navigate = useNavigate();
   const notePath = useNotePath();
 
   useEffect(() => {
@@ -17,7 +17,7 @@ export const DailyNotePage = observer(() => {
       console.log({ result });
 
       if (result.status === 'ok') {
-        history.replace(notePath(result.data.$modelId));
+        navigate(notePath(result.data.$modelId), { replace: true });
       }
     };
 

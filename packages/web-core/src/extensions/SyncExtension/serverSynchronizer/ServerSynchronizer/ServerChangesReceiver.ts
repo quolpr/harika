@@ -59,7 +59,7 @@ export class ServerSnapshotsReceiver {
               return of();
             }
 
-            return this.storeReceivedChanges(res);
+            return this.storeReceivedSnapshots(res);
           }),
         );
       }),
@@ -74,7 +74,7 @@ export class ServerSnapshotsReceiver {
       .pipe(map((res) => ({ res, syncStatus })));
   };
 
-  private storeReceivedChanges = async (res: GetSnapshotsResponse) => {
+  private storeReceivedSnapshots = async (res: GetSnapshotsResponse) => {
     if (res.currentRevision !== null && res.currentRevision !== undefined) {
       // if (res.lastTimestamp !== undefined) {
       //   this.syncStatusService.updateClock(res.lastTimestamp);

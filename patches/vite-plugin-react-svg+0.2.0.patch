@@ -1,0 +1,13 @@
+diff --git a/node_modules/vite-plugin-react-svg/index.js b/node_modules/vite-plugin-react-svg/index.js
+index 25404c6..e59e42a 100644
+--- a/node_modules/vite-plugin-react-svg/index.js
++++ b/node_modules/vite-plugin-react-svg/index.js
+@@ -82,7 +82,7 @@ module.exports = (options = {}) => {
+             });
+ 
+             if (isBuild) {
+-              cache.set(path, result);
++              cache.set(idWithoutQuery, result);
+             }
+           }
+ 

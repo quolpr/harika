@@ -6,8 +6,13 @@ import Modal from 'react-modal';
 import { paths, PATHS, VAULT_PREFIX } from './paths';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { useAuthState } from './hooks/useAuthState';
-import { Redirect, Route, Router, Switch } from 'react-router-dom';
-import { createBrowserHistory } from 'history';
+import {
+  BrowserRouter,
+  Navigate,
+  Route,
+  Router,
+  Routes,
+} from 'react-router-dom';
 import { useLocalStorage } from '@rehooks/local-storage';
 import { ShiftPressedContext } from './contexts/ShiftPressedContext';
 import './firebaseApp';
@@ -16,22 +21,15 @@ const SignupPage = React.lazy(() => import('./pages/SignupPage/SignupPage'));
 const LoginPage = React.lazy(() => import('./pages/LoginPage/LoginPage'));
 const VaultAppRoute = React.lazy(() => import('./Routes/VaultAppRoute'));
 
-const history = createBrowserHistory();
-
 const importSentry = async () => {
   if (import.meta.env.MODE === 'production') {
-    const [Sentry, { Integrations }] = await Promise.all([
+    const [Sentry] = await Promise.all([
       import('@sentry/react'),
       import('@sentry/tracing'),
     ]);
 
     Sentry.init({
       dsn: 'https://6ce6cfabdd2b45aa8d6b402a10e261b1@o662294.ingest.sentry.io/5765293',
-      integrations: [
-        new Integrations.BrowserTracing({
-          routingInstrumentation: Sentry.reactRouterV5Instrumentation(history),
-        }),
-      ],
       release: import.meta.env.VITE_PUBLIC_PACKAGE_VERSION as string,
 
       // Set tracesSampleRate to 1.0 to capture 100%
@@ -127,45 +125,61 @@ export const App = () => {
         <ShiftPressedTracker shiftRef={isShiftPressedRef} />
 
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Switch>
-              <Route path={[VAULT_PREFIX, PATHS.VAULT_INDEX_PATH]}>
-                <Suspense fallback={<div></div>}>
-                  <VaultAppRoute />
-                </Suspense>
-              </Route>
+          <BrowserRouter>
+            <Routes>
+              {[VAULT_PREFIX + '/*', PATHS.VAULT_INDEX_PATH + '/*'].map(
+                (path) => (
+                  <Route
+                    path={path}
+                    key={path}
+                    element={
+                      <Suspense fallback={<div></div>}>
+                        <VaultAppRoute />
+                      </Suspense>
+                    }
+                  ></Route>
+                ),
+              )}
 
-              <Route exact path={PATHS.SIGNUP_PATH}>
-                <Suspense fallback={<div></div>}>
-                  <SignupPage />
-                </Suspense>
-              </Route>
+              <Route
+                path={PATHS.SIGNUP_PATH}
+                element={
+                  <Suspense fallback={<div></div>}>
+                    <SignupPage />
+                  </Suspense>
+                }
+              />
 
-              <Route exact path={PATHS.LOGIN_PATH}>
-                <Suspense fallback={<div></div>}>
-                  <LoginPage />
-                </Suspense>
-              </Route>
+              <Route
+                path={PATHS.LOGIN_PATH}
+                element={
+                  <Suspense fallback={<div></div>}>
+                    <LoginPage />
+                  </Suspense>
+                }
+              />
 
-              <Route exact strict path="/">
-                {() => {
+              <Route
+                path="/"
+                element={(() => {
                   if (lastVaultId && authInfo) {
                     return (
-                      <Redirect
+                      <Navigate
                         to={paths.vaultDailyPath({ vaultId: lastVaultId })}
+                        replace
                       />
                     );
                   } else {
                     return authInfo ? (
-                      <Redirect to={PATHS.DEFAULT_PATH} />
+                      <Navigate to={PATHS.DEFAULT_PATH} replace />
                     ) : (
-                      <Redirect to={PATHS.LOGIN_PATH} />
+                      <Navigate to={PATHS.LOGIN_PATH} replace />
                     );
                   }
-                }}
-              </Route>
-            </Switch>
-          </Router>
+                })()}
+              />
+            </Routes>
+          </BrowserRouter>
         </QueryClientProvider>
       </ShiftPressedContext.Provider>
     </React.StrictMode>

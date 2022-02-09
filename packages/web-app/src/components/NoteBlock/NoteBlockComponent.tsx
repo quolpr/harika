@@ -8,7 +8,7 @@ import React, {
 } from 'react';
 import './styles.css';
 import { observer } from 'mobx-react-lite';
-import { useHistory } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { LinkIcon } from '@heroicons/react/solid';
 import { CurrentBlockInputRefContext } from '../../contexts';
 import {
@@ -148,8 +148,12 @@ const noteClass = bem('note');
 const NoteBody = observer(({ note }: { note: NoteBlock }) => {
   const isWide = useMedia('(min-width: 768px)');
   const focusedBlock = useFocusedBlock();
-  const history = useHistory<IFocusBlockState>();
-  const focusOnBlockId = (history.location.state || {}).focusOnBlockId;
+  const navigate = useNavigate();
+
+  const location = useLocation();
+  const locationState = location.state as IFocusBlockState | undefined;
+  const focusOnBlockId = (locationState || {}).focusOnBlockId;
+
   const updateTitleService = useUpdateTitleService();
   const noteBlocksService = useNoteBlocksService();
 
@@ -222,15 +226,16 @@ const NoteBody = observer(({ note }: { note: NoteBlock }) => {
       })();
 
       if (result.status === 'ok') {
-        history.replace(
+        navigate(
           notePath(
             result.data.$modelId,
             Boolean((ev.nativeEvent as MouseEvent).shiftKey && note.$modelId),
           ),
+          { replace: true },
         );
       }
     },
-    [history, note.$modelId, note.dailyNoteDate, noteBlocksService, notePath],
+    [navigate, note.$modelId, note.dailyNoteDate, noteBlocksService, notePath],
   );
 
   return (

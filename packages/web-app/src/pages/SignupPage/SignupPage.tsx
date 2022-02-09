@@ -1,7 +1,7 @@
 import { createUserWithEmailAndPassword, getAuth } from 'firebase/auth';
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuthState } from '../../hooks/useAuthState';
 import { paths } from '../../paths';
 import { cn } from '../../utils';
@@ -18,7 +18,7 @@ const auth = getAuth();
 export const SignupPage = () => {
   const [isLoading, setIsLoading] = useState(false);
 
-  const history = useHistory();
+  const navigate = useNavigate();
   const [, setAuthInfo] = useAuthState();
 
   const {
@@ -41,7 +41,7 @@ export const SignupPage = () => {
 
       setAuthInfo({ userId: res.user.uid, isOffline: false });
 
-      history.push(paths.vaultIndexPath());
+      navigate(paths.vaultIndexPath());
     } catch (e: unknown) {
       setError('email', {
         type: 'manual',

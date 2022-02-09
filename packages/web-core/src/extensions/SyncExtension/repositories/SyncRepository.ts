@@ -17,6 +17,7 @@ import {
 } from '@harika/sync-common';
 import { Overwrite } from 'utility-types';
 import { SyncStatusService } from '../services/SyncStatusService';
+import { raw, sqltag } from '../../../lib/sql';
 
 export const clientChangesTable = 'clientChanges' as const;
 export const serverSnapshotsTable = 'serverSnapshots' as const;
@@ -306,11 +307,25 @@ export class SyncRepository {
   }
 
   async getClientChanges(e: IQueryExecuter = this.db) {
-    return (
-      await e.getRecords<IClientChangeRow>(
-        Q.select().from(clientChangesTable).orderBy('rev'),
-      )
-    ).map((row) => this.clientChangeRowToDoc(row));
+    const limit = 200;
+
+    const count =
+      (
+        await e.getRecords<{ cnt: number }>(
+          sqltag`SELECT COUNT(*) as cnt FROM ${raw(clientChangesTable)}`,
+        )
+      )[0]?.cnt || 0;
+
+    return {
+      areMore: count > limit,
+      changes: (
+        await e.getRecords<IClientChangeRow>(
+          sqltag`SELECT * FROM ${raw(
+            clientChangesTable,
+          )} ORDER BY rev LIMIT ${raw(limit.toString())}`,
+        )
+      ).map((row) => this.clientChangeRowToDoc(row)),
+    };
   }
 
   async bulkDeleteClientChanges(ids: string[], e: IQueryExecuter = this.db) {

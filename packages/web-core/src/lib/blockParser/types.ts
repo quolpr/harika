@@ -1,5 +1,3 @@
-import type { LinkEntityType } from 'linkifyjs';
-
 interface BaseToken {
   offsetStart: number;
   offsetEnd: number;
@@ -91,7 +89,7 @@ interface LinkToken extends BaseToken {
   type: 'link';
   content: string;
   href: string;
-  linkType: LinkEntityType;
+  linkType: string;
 }
 
 export type Token =

@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import './styles.css';
 import { ChevronRightIcon } from '@heroicons/react/solid';
 import Highlighter from 'react-highlight-words';
-import { Link, useHistory, useLocation } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { cn } from '../../utils';
 import { useKey } from 'react-use';
 import { v4 as uuidv4 } from 'uuid';
@@ -145,7 +145,7 @@ export const CommandPaletteModal = ({
 }) => {
   const location = useLocation();
 
-  const history = useHistory();
+  const navigate = useNavigate();
   const vault = useCurrentVaultApp();
   const notesService = useNoteBlocksService();
   const findService = useFindService();
@@ -209,9 +209,9 @@ export const CommandPaletteModal = ({
       switch (action.type) {
         case 'goToPage':
           if (isShift && action.stackHref) {
-            history.push(action.stackHref);
+            navigate(action.stackHref);
           } else {
-            history.push(action.href + location.search);
+            navigate(action.href + location.search);
           }
 
           onClose();
@@ -227,7 +227,7 @@ export const CommandPaletteModal = ({
             return;
           }
 
-          history.push(notePath(result.data.$modelId));
+          navigate(notePath(result.data.$modelId));
 
           onClose();
           break;
@@ -237,7 +237,7 @@ export const CommandPaletteModal = ({
           break;
       }
     },
-    [onClose, history, location.search, notesService, notePath],
+    [onClose, navigate, location.search, notesService, notePath],
   );
 
   useKey(

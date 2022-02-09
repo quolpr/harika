@@ -6,7 +6,7 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { useHistory, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { customAlphabet } from 'nanoid';
 import { useCurrentVaultApp } from '../hooks/vaultAppHooks';
 import { paths } from '../paths';
@@ -141,12 +141,12 @@ export const useStackPath = (
 export const useCloseNote = (stackId: string) => {
   const vaultApp = useCurrentVaultApp();
   const stacks = useStacks();
-  const history = useHistory();
+  const navigate = useNavigate();
 
   return useCallback(() => {
     if (!stacks) return;
 
-    return history.push(
+    return navigate(
       paths.vaultNotePath({
         vaultId: vaultApp.applicationId,
         stackIds: stacksToString(
@@ -154,7 +154,7 @@ export const useCloseNote = (stackId: string) => {
         ),
       }),
     );
-  }, [history, stackId, stacks, vaultApp.applicationId]);
+  }, [navigate, stackId, stacks, vaultApp.applicationId]);
 };
 
 export const useNotePath = () => {
@@ -179,7 +179,7 @@ export const useHandleNoteClickOrPress = (
   nextNoteId?: string,
   forceStackOpen = false,
 ) => {
-  const history = useHistory();
+  const navigate = useNavigate();
   const notePath = useNotePath();
 
   return useCallback(
@@ -197,13 +197,13 @@ export const useHandleNoteClickOrPress = (
 
       e.preventDefault();
 
-      history.push(
+      navigate(
         notePath(
           nextNoteId,
           (!forceStackOpen && e.shiftKey) || (!e.shiftKey && forceStackOpen),
         ),
       );
     },
-    [forceStackOpen, history, nextNoteId, notePath],
+    [forceStackOpen, navigate, nextNoteId, notePath],
   );
 };

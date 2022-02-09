@@ -2,7 +2,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { cn } from '../../utils';
 import './styles.css';
 import { useObservableState } from 'observable-hooks';
-import { Link, useHistory } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { paths } from '../../paths';
 import { PlusIcon } from '@heroicons/react/solid';
 import { CreateVaultModal } from './CreateVaultModal';
@@ -12,11 +12,7 @@ import { generateId, UserVaultsService } from '@harika/web-core';
 import { deleteFromStorage } from '@rehooks/local-storage';
 import SettingsIcon from '@material-ui/icons/Settings';
 import { SettingsModal } from './SettingsModal';
-import {
-  useLoadUserApp,
-  useUserApp,
-  useUserVaults,
-} from '../../hooks/useUserApp';
+import { useLoadUserApp, useUserVaults } from '../../hooks/useUserApp';
 import { of } from 'rxjs';
 
 const vaultsClass = cn('vaults');
@@ -65,7 +61,7 @@ const VaultBlock = ({
 export const VaultsPage = () => {
   useLoadUserApp();
 
-  const history = useHistory();
+  const navigate = useNavigate();
   const userVaults = useUserVaults();
 
   const [isCreateModalOpened, setIsCreateModalOpened] = useState(false);
@@ -88,9 +84,9 @@ export const VaultsPage = () => {
 
       setIsCreateModalOpened(false);
 
-      history.push(paths.vaultDailyPath({ vaultId: vault.id }));
+      navigate(paths.vaultDailyPath({ vaultId: vault.id }));
     },
-    [userVaults, history],
+    [userVaults, navigate],
   );
 
   const handleClose = useCallback(() => {

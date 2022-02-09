@@ -1,5 +1,15 @@
 import type { CommandsExecuter } from '../CommandsExecuter';
-import { filter, from, map, merge, Observable, of, switchMap } from 'rxjs';
+import {
+  filter,
+  from,
+  map,
+  merge,
+  Observable,
+  of,
+  Subject,
+  switchMap,
+  tap,
+} from 'rxjs';
 import { omit } from 'lodash-es';
 import type { SyncRepository } from '../../repositories/SyncRepository';
 import {
@@ -10,6 +20,8 @@ import {
 import { SyncStatusService } from '../../services/SyncStatusService';
 
 export class ChangesSender {
+  private triggerNext$ = new Subject<void>();
+
   constructor(
     private syncRepo: SyncRepository,
     private syncStatusService: SyncStatusService,
@@ -18,7 +30,7 @@ export class ChangesSender {
   ) {}
 
   get$(): Observable<Observable<unknown>> {
-    return merge(this.onNewChange$, of(null)).pipe(
+    return merge(this.onNewChange$, of(null), this.triggerNext$).pipe(
       map(() => {
         return of(null).pipe(switchMap(() => this.sendChanges()));
       }),
@@ -27,16 +39,15 @@ export class ChangesSender {
 
   private sendChanges = () => {
     return from(this.syncRepo.getClientChanges()).pipe(
-      filter((clientChanges) => clientChanges.length > 0),
-      switchMap(async (clientChanges) => {
-        console.log({ clientChanges });
-
+      filter(({ changes }) => changes.length > 0),
+      switchMap(async ({ changes, areMore }) => {
         return {
-          clientChanges,
+          clientChanges: changes,
+          areMore,
           syncStatus: await this.syncStatusService.getSyncStatus(),
         };
       }),
-      switchMap(({ clientChanges, syncStatus }) =>
+      switchMap(({ clientChanges, syncStatus, areMore }) =>
         this.commandExecuter
           .send<ApplyNewChangesFromClientCommand>(
             CommandTypesFromClient.ApplyNewChanges,
@@ -48,14 +59,21 @@ export class ChangesSender {
               })),
             },
           )
-          .pipe(map((res) => ({ res, clientChanges }))),
+          .pipe(map((res) => ({ res, clientChanges, areMore }))),
       ),
-      switchMap(({ res, clientChanges }) => {
-        if (!res) return of(null);
+      switchMap(async ({ res, clientChanges, areMore }) => {
+        if (!res) return { areMore };
 
-        return this.syncRepo.bulkDeleteClientChanges(
+        await this.syncRepo.bulkDeleteClientChanges(
           clientChanges.map(({ id }) => id),
         );
+
+        return { areMore };
+      }),
+      tap(({ areMore }) => {
+        if (areMore) {
+          this.triggerNext$.next();
+        }
       }),
     );
   };

@@ -1,7 +1,7 @@
 import { NoteBlock } from '@harika/web-core';
 import { useContext, useEffect, useState } from 'react';
-import { useHistory } from 'react-router-dom';
-import { firstValueFrom, NEVER, of, race } from 'rxjs';
+import { useNavigate } from 'react-router-dom';
+import { NEVER, of, race } from 'rxjs';
 import { timeout, map } from 'rxjs/operators';
 import { LoadingDoneSubjectContext } from '../../contexts';
 import { useNotePath } from '../../contexts/StackedNotesContext';
@@ -17,7 +17,7 @@ export const useFindNote = (noteId: string) => {
   const vaultId = useCurrentVaultId();
   const notesService = useNoteBlocksService();
 
-  const history = useHistory();
+  const navigate = useNavigate();
 
   const [note, setNote] = useState<NoteBlock | undefined>();
   const loadingDoneSubject = useContext(LoadingDoneSubjectContext);
@@ -72,7 +72,7 @@ export const useFindNote = (noteId: string) => {
       ).subscribe({
         next(res) {
           if (res.status === 'found') {
-            history.replace(notePath(res.id));
+            navigate(notePath(res.id));
           } else {
             setIsLoading(false);
           }
@@ -81,7 +81,7 @@ export const useFindNote = (noteId: string) => {
 
       return () => flow.unsubscribe();
     }
-  }, [history, noteId, notesService, noteTitle, note, vaultId, notePath]);
+  }, [noteId, notesService, noteTitle, note, vaultId, notePath, navigate]);
 
   return { note, isLoading };
 };

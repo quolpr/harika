@@ -7,7 +7,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { useHistory, useLocation, useParams } from 'react-router-dom';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { useClickAway, useMedia, useMountedState } from 'react-use';
 import { VaultHeader } from '../VaultHeader/VaultHeader';
 import {
@@ -50,47 +50,48 @@ const layoutClass = bem('vault-layout');
 
 // Keep scroll position when back/forward borwser button hits
 const useKeepScroll = () => {
-  const history = useHistory();
+  // const navigate = useNavigate();
   const location = useLocation();
-  const loadingDoneSubject = useContext(LoadingDoneSubjectContext);
+  // const loadingDoneSubject = useContext(LoadingDoneSubjectContext);
 
   const mainRef = useRef<HTMLDivElement>(null);
   const scrollHistory = useRef<Record<string, number>>({});
 
   const listenScroll = useRef(true);
 
-  useEffect(() => {
-    const scrollPosHistory$ = new Observable<number>((observer) => {
-      return history.listen((ev, act) => {
-        observer.next(
-          (() => {
-            if (ev.key && scrollHistory.current[ev.key] && act === 'POP') {
-              return scrollHistory.current[ev.key];
-            } else {
-              return 0;
-            }
-          })(),
-        );
-      });
-    });
+  // TODO: after upgrade to react-router-v6 we need to refactor to stop using history.listen
+  // useEffect(() => {
+  //   const scrollPosHistory$ = new Observable<number>((observer) => {
+  //     return history.listen((ev, act) => {
+  //       observer.next(
+  //         (() => {
+  //           if (ev.key && scrollHistory.current[ev.key] && act === 'POP') {
+  //             return scrollHistory.current[ev.key];
+  //           } else {
+  //             return 0;
+  //           }
+  //         })(),
+  //       );
+  //     });
+  //   });
 
-    const pipe = scrollPosHistory$
-      .pipe(
-        tap(() => (listenScroll.current = false)),
-        switchMap((val) => loadingDoneSubject.pipe(take(1), mapTo(val))),
-        tap((val) => {
-          mainRef.current?.scrollTo({
-            top: val,
-            // https://github.com/Microsoft/TypeScript/issues/28755
-            behavior: 'instant' as 'auto',
-          });
-        }),
-        tap(() => (listenScroll.current = true)),
-      )
-      .subscribe();
+  //   const pipe = scrollPosHistory$
+  //     .pipe(
+  //       tap(() => (listenScroll.current = false)),
+  //       switchMap((val) => loadingDoneSubject.pipe(take(1), mapTo(val))),
+  //       tap((val) => {
+  //         mainRef.current?.scrollTo({
+  //           top: val,
+  //           // https://github.com/Microsoft/TypeScript/issues/28755
+  //           behavior: 'instant' as 'auto',
+  //         });
+  //       }),
+  //       tap(() => (listenScroll.current = true)),
+  //     )
+  //     .subscribe();
 
-    return () => pipe.unsubscribe();
-  }, [history, loadingDoneSubject]);
+  //   return () => pipe.unsubscribe();
+  // }, [history, loadingDoneSubject]);
 
   const handleScroll = useCallback(
     (e: React.UIEvent<HTMLDivElement>) => {
@@ -106,7 +107,7 @@ const useKeepScroll = () => {
 };
 
 export const VaultLayout: React.FC = ({ children }) => {
-  const history = useHistory();
+  const navigate = useNavigate();
   const { vaultId } = useParams<{ vaultId: string }>();
   const isWide = useMedia('(min-width: 768px)');
   const [vaultApp, setVaultApp] = useState<VaultApplication | undefined>();
@@ -129,6 +130,8 @@ export const VaultLayout: React.FC = ({ children }) => {
 
   // TODO: race condition may happen here on dispose
   useEffect(() => {
+    if (!vaultId) return;
+
     let closeDevtool = () => {};
     let vaultApp: VaultApplication | undefined = undefined;
 
@@ -142,7 +145,7 @@ export const VaultLayout: React.FC = ({ children }) => {
       if (!vaultApp) {
         writeStorage('lastVaultId', undefined);
 
-        history.replace('/');
+        navigate('/');
 
         return;
       } else {
@@ -184,7 +187,7 @@ export const VaultLayout: React.FC = ({ children }) => {
       setVaultApp(undefined);
       closeDevtool();
     };
-  }, [vaultId, history, loadUserApp, mounted, getSyncToken]);
+  }, [vaultId, loadUserApp, mounted, getSyncToken]);
 
   // TODO: reset focused block on page change
 
