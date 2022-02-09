@@ -1,11 +1,10 @@
 import { createUserWithEmailAndPassword, getAuth } from 'firebase/auth';
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
 
 import { useAuthState } from '../../hooks/useAuthState';
 import { paths } from '../../paths';
-import { cn } from '../../utils';
+import { cn, useNavigateRef } from '../../utils';
 
 const formClass = cn('form');
 
@@ -19,7 +18,7 @@ const auth = getAuth();
 export const SignupPage = () => {
   const [isLoading, setIsLoading] = useState(false);
 
-  const navigate = useNavigate();
+  const navigate = useNavigateRef();
   const [, setAuthInfo] = useAuthState();
 
   const {
@@ -42,7 +41,7 @@ export const SignupPage = () => {
 
       setAuthInfo({ userId: res.user.uid, isOffline: false });
 
-      navigate(paths.vaultIndexPath());
+      navigate.current(paths.vaultIndexPath());
     } catch (e: unknown) {
       setError('email', {
         type: 'manual',

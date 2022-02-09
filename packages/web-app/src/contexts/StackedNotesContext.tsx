@@ -7,10 +7,11 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 
 import { useCurrentVaultApp } from '../hooks/vaultAppHooks';
 import { paths } from '../paths';
+import { useNavigateRef } from '../utils';
 
 export interface IStack {
   stackId: string;
@@ -142,12 +143,12 @@ export const useStackPath = (
 export const useCloseNote = (stackId: string) => {
   const vaultApp = useCurrentVaultApp();
   const stacks = useStacks();
-  const navigate = useNavigate();
+  const navigate = useNavigateRef();
 
   return useCallback(() => {
     if (!stacks) return;
 
-    return navigate(
+    return navigate.current(
       paths.vaultNotePath({
         vaultId: vaultApp.applicationId,
         stackIds: stacksToString(
@@ -180,7 +181,7 @@ export const useHandleNoteClickOrPress = (
   nextNoteId?: string,
   forceStackOpen = false,
 ) => {
-  const navigate = useNavigate();
+  const navigate = useNavigateRef();
   const notePath = useNotePath();
 
   return useCallback(
@@ -198,7 +199,7 @@ export const useHandleNoteClickOrPress = (
 
       e.preventDefault();
 
-      navigate(
+      navigate.current(
         notePath(
           nextNoteId,
           (!forceStackOpen && e.shiftKey) || (!e.shiftKey && forceStackOpen),

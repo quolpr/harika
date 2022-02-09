@@ -6,13 +6,12 @@ import dayjs from 'dayjs';
 import { observer } from 'mobx-react-lite';
 import React, { useCallback, useRef, useState } from 'react';
 import Calendar from 'react-calendar';
-import { useNavigate } from 'react-router-dom';
 import { useClickAway, useKey } from 'react-use';
 
 import { useNotePath } from '../../contexts/StackedNotesContext';
 import { usePrimaryNote } from '../../hooks/usePrimaryNote';
 import { useNoteBlocksService } from '../../hooks/vaultAppHooks';
-import { cn } from '../../utils';
+import { cn, useNavigateRef } from '../../utils';
 import { CommandPaletteModal } from '../CommandPaletteModal/CommandPaleteModal';
 import { SyncState } from '../SyncState/SyncState';
 
@@ -31,7 +30,7 @@ export const VaultHeader = observer(
     togglerRef: React.Ref<HTMLElement>;
   }) => {
     const noteService = useNoteBlocksService();
-    const navigate = useNavigate();
+    const navigate = useNavigateRef();
 
     const primaryNote = usePrimaryNote();
 
@@ -67,7 +66,7 @@ export const VaultHeader = observer(
         const result = await noteService.getOrCreateDailyNote(dayjs(date));
 
         if (result.status === 'ok') {
-          navigate(
+          navigate.current(
             notePath(
               result.data.$modelId,
               (ev.nativeEvent as MouseEvent).shiftKey,

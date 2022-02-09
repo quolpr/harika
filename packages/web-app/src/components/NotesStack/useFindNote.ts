@@ -1,8 +1,7 @@
 import { NoteBlock } from '@harika/web-core';
 import { useContext, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { NEVER, of, race } from 'rxjs';
-import { map,timeout } from 'rxjs/operators';
+import { map, timeout } from 'rxjs/operators';
 
 import { LoadingDoneSubjectContext } from '../../contexts';
 import { useNotePath } from '../../contexts/StackedNotesContext';
@@ -11,6 +10,7 @@ import {
   useCurrentVaultId,
   useNoteBlocksService,
 } from '../../hooks/vaultAppHooks';
+import { useNavigateRef } from '../../utils';
 
 type IPipeResult = { status: 'found'; id: string } | { status: 'not_found' };
 
@@ -18,7 +18,7 @@ export const useFindNote = (noteId: string) => {
   const vaultId = useCurrentVaultId();
   const notesService = useNoteBlocksService();
 
-  const navigate = useNavigate();
+  const navigate = useNavigateRef();
 
   const [note, setNote] = useState<NoteBlock | undefined>();
   const loadingDoneSubject = useContext(LoadingDoneSubjectContext);
@@ -73,7 +73,7 @@ export const useFindNote = (noteId: string) => {
       ).subscribe({
         next(res) {
           if (res.status === 'found') {
-            navigate(notePath(res.id));
+            navigate.current(notePath(res.id));
           } else {
             setIsLoading(false);
           }

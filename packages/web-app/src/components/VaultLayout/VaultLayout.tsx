@@ -10,7 +10,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 import { useClickAway, useMedia, useMountedState } from 'react-use';
 
 import { FooterRefContext } from '../../contexts/FooterRefContext';
@@ -18,7 +18,7 @@ import { FocusedStackIdContext } from '../../contexts/StackedNotesContext';
 import { useGetSyncToken } from '../../hooks/useGetSyncToken';
 import { useLoadUserAppCallback } from '../../hooks/useUserApp';
 import { CurrentVaultAppContext } from '../../hooks/vaultAppHooks';
-import { bem } from '../../utils';
+import { bem, useNavigateRef } from '../../utils';
 import { UndoRedoManagerProvider } from '../UndoRedoManagerProvider';
 import { VaultHeader } from '../VaultHeader/VaultHeader';
 import {
@@ -47,7 +47,7 @@ const layoutClass = bem('vault-layout');
 
 // Keep scroll position when back/forward borwser button hits
 const useKeepScroll = () => {
-  // const navigate = useNavigate();
+  // const navigate = useNavigateRef();
   const location = useLocation();
   // const loadingDoneSubject = useContext(LoadingDoneSubjectContext);
 
@@ -104,7 +104,7 @@ const useKeepScroll = () => {
 };
 
 export const VaultLayout: React.FC = ({ children }) => {
-  const navigate = useNavigate();
+  const navigate = useNavigateRef();
   const { vaultId } = useParams<{ vaultId: string }>();
   const isWide = useMedia('(min-width: 768px)');
   const [vaultApp, setVaultApp] = useState<VaultApplication | undefined>();
@@ -142,7 +142,7 @@ export const VaultLayout: React.FC = ({ children }) => {
       if (!vaultApp) {
         writeStorage('lastVaultId', undefined);
 
-        navigate('/');
+        navigate.current('/');
 
         return;
       } else {

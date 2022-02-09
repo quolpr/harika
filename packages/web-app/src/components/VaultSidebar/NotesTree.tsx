@@ -1,7 +1,7 @@
 import type { NotesTreeNote } from '@harika/web-core';
 import { observer } from 'mobx-react-lite';
 import React, { useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 import {
   useHandleNoteClickOrPress,
@@ -14,7 +14,7 @@ import {
 } from '../../hooks/vaultAppHooks';
 import ArrowDown from '../../icons/arrow-down.svgr.svg?component';
 import ArrowRight from '../../icons/arrow-right.svgr.svg?component';
-import { cn } from '../../utils';
+import { cn, useNavigateRef } from '../../utils';
 
 const treeClass = cn('notes-tree');
 const sidebarItemClass = cn('sidebar-item');
@@ -34,7 +34,7 @@ const NoteNode = observer(
         ? primaryNoteId === node.noteId
         : node.isInsideNode(primaryNoteId)
       : false;
-    const navigate = useNavigate();
+    const navigate = useNavigateRef();
     const notePath = useNotePath();
 
     const handleExpandClick = useCallback(
@@ -57,7 +57,7 @@ const NoteNode = observer(
         if (newNote.status === 'ok') {
           node.setNoteId(newNote.data.$modelId);
 
-          navigate(notePath(newNote.data.$modelId));
+          navigate.current(notePath(newNote.data.$modelId));
         } else {
           alert('Failed to create note');
         }

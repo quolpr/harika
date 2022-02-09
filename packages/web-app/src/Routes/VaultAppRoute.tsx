@@ -30,54 +30,23 @@ function RootRoutes(props: RoutesProps) {
   );
 }
 
-export const VaultLayoutWithUserApp: React.FC = ({ children }) => {
+export const VaultAppRoute = () => {
   return (
     <UserAppProvider>
       <OnlyAuthed>
-        <VaultLayout>{children}</VaultLayout>
+        <VaultLayout>
+          <RootRoutes>
+            <Route path={PATHS.VAULT_DAILY_PATH} element={<DailyNotePage />} />
+            <Route path={PATHS.VAULT_NOTE_PATH} element={<NoteStackPage />} />
+            <Route path={PATHS.VAULT_NOTE_INDEX_PATH} element={<NotesPage />} />
+          </RootRoutes>
+        </VaultLayout>
+
+        <RootRoutes>
+          <Route path={PATHS.VAULT_INDEX_PATH} element={<VaultsPage />} />
+        </RootRoutes>
       </OnlyAuthed>
     </UserAppProvider>
-  );
-};
-
-export const VaultAppRoute = () => {
-  return (
-    <RootRoutes>
-      <Route
-        path={PATHS.VAULT_DAILY_PATH}
-        element={
-          <VaultLayoutWithUserApp>
-            <DailyNotePage />
-          </VaultLayoutWithUserApp>
-        }
-      />
-      <Route
-        path={PATHS.VAULT_NOTE_PATH}
-        element={
-          <VaultLayoutWithUserApp>
-            <NoteStackPage />
-          </VaultLayoutWithUserApp>
-        }
-      />
-      <Route
-        path={PATHS.VAULT_NOTE_INDEX_PATH}
-        element={
-          <VaultLayoutWithUserApp>
-            <NotesPage />
-          </VaultLayoutWithUserApp>
-        }
-      />
-      <Route
-        path={PATHS.VAULT_INDEX_PATH}
-        element={
-          <UserAppProvider>
-            <OnlyAuthed>
-              <VaultsPage />
-            </OnlyAuthed>
-          </UserAppProvider>
-        }
-      />
-    </RootRoutes>
   );
 };
 

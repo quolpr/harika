@@ -1,6 +1,7 @@
 import { withNaming } from '@bem-react/classname';
 import { isEqual } from 'lodash-es';
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
+import { NavigateFunction, useNavigate } from 'react-router-dom';
 
 export const cn = withNaming({ n: '', e: '__', m: '--', v: '_' });
 
@@ -101,4 +102,15 @@ export const bem = (block: string) => {
 
 export const bemCombine = (...classes: string[]) => {
   return classes.join(' ');
+};
+
+export const useNavigateRef = () => {
+  const navigate = useNavigate();
+  const navRef = useRef<NavigateFunction>(navigate);
+
+  useEffect(() => {
+    navRef.current = navigate;
+  }, [navigate]);
+
+  return navRef;
 };

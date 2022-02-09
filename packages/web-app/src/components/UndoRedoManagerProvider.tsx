@@ -1,9 +1,10 @@
 import { UndoManager, undoMiddleware } from 'mobx-keystone';
 import React, { useEffect, useRef } from 'react';
 import { createContext, useMemo } from 'react';
-import { useLocation,useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
 import { useRootStore } from '../hooks/vaultAppHooks';
+import { useNavigateRef } from '../utils';
 
 const UndoRedoContext = createContext<UndoManager>(
   undefined as unknown as UndoManager,
@@ -14,15 +15,13 @@ interface AttachedState {
 }
 
 export const UndoRedoManagerProvider: React.FC = ({ children }) => {
-  let navigate = useNavigate();
+  let navigate = useNavigateRef();
   let location = useLocation();
 
   const rootStore = useRootStore();
-  const historyRef = useRef(navigate);
   const locationRef = useRef(location);
 
   useEffect(() => {
-    historyRef.current = navigate;
     locationRef.current = location;
   }, [navigate, location]);
 
@@ -36,12 +35,12 @@ export const UndoRedoManagerProvider: React.FC = ({ children }) => {
         },
         restore(attachedState: AttachedState) {
           if (attachedState.currentPath !== locationRef.current.pathname) {
-            historyRef.current(attachedState.currentPath, { replace: true });
+            navigate.current(attachedState.currentPath, { replace: true });
           }
         },
       },
     });
-  }, [rootStore]);
+  }, [navigate, rootStore]);
 
   useEffect(() => {
     const listener = function (event: KeyboardEvent) {

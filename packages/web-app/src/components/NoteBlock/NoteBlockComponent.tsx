@@ -19,7 +19,7 @@ import React, {
   useState,
 } from 'react';
 import AutosizeInput from 'react-input-autosize';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { useMedia } from 'react-use';
 import { map, switchMap } from 'rxjs';
 
@@ -37,7 +37,7 @@ import {
 } from '../../hooks/vaultAppHooks';
 import LeftArrow from '../../icons/left-arrow.svg?component';
 import RightArrow from '../../icons/right-arrow.svg?component';
-import { bem } from '../../utils';
+import { bem, useNavigateRef } from '../../utils';
 import { BacklinkedNote } from './BacklinkedNote';
 import { ChildrenBlocks } from './ChildrenBlocks';
 
@@ -149,7 +149,7 @@ const noteClass = bem('note');
 const NoteBody = observer(({ note }: { note: NoteBlock }) => {
   const isWide = useMedia('(min-width: 768px)');
   const focusedBlock = useFocusedBlock();
-  const navigate = useNavigate();
+  const navigate = useNavigateRef();
 
   const location = useLocation();
   const locationState = location.state as IFocusBlockState | undefined;
@@ -227,7 +227,7 @@ const NoteBody = observer(({ note }: { note: NoteBlock }) => {
       })();
 
       if (result.status === 'ok') {
-        navigate(
+        navigate.current(
           notePath(
             result.data.$modelId,
             Boolean((ev.nativeEvent as MouseEvent).shiftKey && note.$modelId),

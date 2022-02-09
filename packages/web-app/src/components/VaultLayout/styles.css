@@ -15,13 +15,13 @@
   height: 100%;
 
   &__sidebar {
-    position: fixed;
+    position: fixed !important;
     @apply transform-gpu;
     width: var(--sidebar-width);
     transition: var(--layout-animation, all 0.15s cubic-bezier(0.4, 0, 0.2, 1));
 
     @media (min-width: 768px) {
-      top: 0;
+      top: 0 !important;
     }
   }
 

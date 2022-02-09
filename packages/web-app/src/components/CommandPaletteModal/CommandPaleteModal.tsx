@@ -5,7 +5,7 @@ import { ChevronRightIcon } from '@heroicons/react/solid';
 import { useObservable, useObservableState } from 'observable-hooks';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Highlighter from 'react-highlight-words';
-import { Link, useLocation,useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useKey } from 'react-use';
 import { debounce, map, Observable, of, switchMap, tap, timer } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
@@ -17,7 +17,7 @@ import {
   useNoteBlocksService,
 } from '../../hooks/vaultAppHooks';
 import { paths } from '../../paths';
-import { cn } from '../../utils';
+import { cn, useNavigateRef } from '../../utils';
 import { Modal, modalClass } from '../Modal/Modal';
 
 // Command executes on each user type and as result gives list of actions
@@ -146,7 +146,7 @@ export const CommandPaletteModal = ({
 }) => {
   const location = useLocation();
 
-  const navigate = useNavigate();
+  const navigate = useNavigateRef();
   const vault = useCurrentVaultApp();
   const notesService = useNoteBlocksService();
   const findService = useFindService();
@@ -210,9 +210,9 @@ export const CommandPaletteModal = ({
       switch (action.type) {
         case 'goToPage':
           if (isShift && action.stackHref) {
-            navigate(action.stackHref);
+            navigate.current(action.stackHref);
           } else {
-            navigate(action.href + location.search);
+            navigate.current(action.href + location.search);
           }
 
           onClose();
@@ -228,7 +228,7 @@ export const CommandPaletteModal = ({
             return;
           }
 
-          navigate(notePath(result.data.$modelId));
+          navigate.current(notePath(result.data.$modelId));
 
           onClose();
           break;

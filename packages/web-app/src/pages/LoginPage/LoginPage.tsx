@@ -8,12 +8,12 @@ import {
 import React, { useState } from 'react';
 import { useCallback } from 'react';
 import { useForm } from 'react-hook-form';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 import { useAuthState } from '../../hooks/useAuthState';
 import { useOfflineAccounts } from '../../hooks/useOfflineAccounts';
 import { paths } from '../../paths';
-import { cn } from '../../utils';
+import { cn, useNavigateRef } from '../../utils';
 
 const formClass = cn('form');
 
@@ -25,7 +25,7 @@ type IFormData = {
 const auth = getAuth();
 
 export const LoginPage = () => {
-  const navigate = useNavigate();
+  const navigate = useNavigateRef();
   const [, setAuthInfo] = useAuthState();
   const [offlineAccounts, addOfflineAccount] = useOfflineAccounts();
   const [isLoading, setIsLoading] = useState(false);
@@ -58,7 +58,7 @@ export const LoginPage = () => {
           isOffline: false,
         });
 
-        navigate(paths.vaultIndexPath());
+        navigate.current(paths.vaultIndexPath());
       } catch {
         setError('email', {
           type: 'server',
@@ -92,7 +92,7 @@ export const LoginPage = () => {
 
     setAuthInfo({ userId, isOffline: true });
 
-    navigate(paths.vaultIndexPath());
+    navigate.current(paths.vaultIndexPath());
   }, [setAuthInfo, navigate, offlineAccounts.accounts, addOfflineAccount]);
 
   const handleGoogleSignIn = useCallback(async () => {
@@ -107,7 +107,7 @@ export const LoginPage = () => {
         isOffline: false,
       });
 
-      navigate(paths.vaultIndexPath());
+      navigate.current(paths.vaultIndexPath());
     } catch (e) {
       alert('Failed to log in with Google. Please, try again.');
 

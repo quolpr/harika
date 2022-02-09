@@ -6,14 +6,14 @@ import SettingsIcon from '@material-ui/icons/Settings';
 import { deleteFromStorage } from '@rehooks/local-storage';
 import { useObservableState } from 'observable-hooks';
 import React, { useCallback, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { of } from 'rxjs';
 
 import { Brand } from '../../components/Brand/Brand';
 import { useAuthState } from '../../hooks/useAuthState';
 import { useLoadUserApp, useUserVaults } from '../../hooks/useUserApp';
 import { paths } from '../../paths';
-import { cn } from '../../utils';
+import { cn, useNavigateRef } from '../../utils';
 import { CreateVaultModal } from './CreateVaultModal';
 import { SettingsModal } from './SettingsModal';
 
@@ -63,7 +63,7 @@ const VaultBlock = ({
 export const VaultsPage = () => {
   useLoadUserApp();
 
-  const navigate = useNavigate();
+  const navigate = useNavigateRef();
   const userVaults = useUserVaults();
 
   const [isCreateModalOpened, setIsCreateModalOpened] = useState(false);
@@ -86,7 +86,7 @@ export const VaultsPage = () => {
 
       setIsCreateModalOpened(false);
 
-      navigate(paths.vaultDailyPath({ vaultId: vault.id }));
+      navigate.current(paths.vaultDailyPath({ vaultId: vault.id }));
     },
     [userVaults, navigate],
   );
