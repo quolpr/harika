@@ -14,6 +14,7 @@ jobs:
         working-directory: ./packages/web-app
     steps:
       - uses: actions/checkout@v2
+      - run: yarn
       - run: yarn build
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
