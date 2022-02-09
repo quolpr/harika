@@ -32,7 +32,7 @@
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "reflect-metadata": "^0.1.13",
-    "rxjs": "^7.5.3",
+    "rxjs": "^7.5.4",
     "snakecase-keys": "^5.1.2",
     "sql-bricks": "^2.0.5",
     "sql-bricks-sqlite": "^0.1.0",

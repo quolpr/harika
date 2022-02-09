@@ -48,7 +48,7 @@
     "react-textarea-autosize": "^8.3.3",
     "react-timeago": "^6.2.1",
     "react-use": "^17.3.2",
-    "rxjs": "^7.5.3",
+    "rxjs": "^7.5.4",
     "scheduler": "^0.20.2",
     "scroll-into-view-if-needed": "^2.2.29",
     "use-context-selector": "^1.3.9",
