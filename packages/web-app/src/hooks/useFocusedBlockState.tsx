@@ -1,7 +1,7 @@
-import { comparer, computed } from 'mobx';
-import { createContext, useCallback, useContext } from 'react';
 import { isEqual } from 'lodash-es';
+import { comparer, computed } from 'mobx';
 import { idProp, Model, model, modelAction, prop } from 'mobx-keystone';
+import { createContext, useCallback, useContext } from 'react';
 
 // TODO: use jsut mobx
 

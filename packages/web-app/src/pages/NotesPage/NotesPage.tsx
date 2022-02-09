@@ -1,16 +1,18 @@
-import { observer } from 'mobx-react-lite';
-import React, { useCallback, useContext, useEffect } from 'react';
 import './styles.css';
+
+import { TrashIcon } from '@heroicons/react/solid';
+import { observer } from 'mobx-react-lite';
+import { useObservable, useObservableState } from 'observable-hooks';
+import React, { useCallback, useContext, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import TimeAgo from 'react-timeago';
-import { TrashIcon } from '@heroicons/react/solid';
-import { useObservable, useObservableState } from 'observable-hooks';
+
 import { LoadingDoneSubjectContext } from '../../contexts';
+import { useNotePath } from '../../contexts/StackedNotesContext';
 import {
   useDeleteBlocksService,
   useNoteBlocksService,
 } from '../../hooks/vaultAppHooks';
-import { useNotePath } from '../../contexts/StackedNotesContext';
 
 type NoteTuple = {
   id: string;

@@ -1,4 +1,5 @@
 import { injectable } from 'inversify';
+
 import { BaseExtension } from '../../../framework/BaseExtension';
 import { NoteBlocksService } from '../BlocksExtension/services/NoteBlocksService';
 import { newTreeModel, NotesTreeRegistry } from './models/NotesTreeRegistry';

@@ -5,11 +5,11 @@ import {
   WithRev,
 } from '@harika/sync-common';
 import {
-  isArray,
-  isPlainObject,
   cloneDeep,
   differenceWith,
+  isArray,
   isEqual,
+  isPlainObject,
   uniqWith,
 } from 'lodash';
 

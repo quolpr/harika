@@ -1,4 +1,5 @@
 import { IDocChange } from '@harika/sync-common';
+
 import { BaseSyncRepository } from '../../../../extensions/SyncExtension/BaseSyncRepository';
 
 export const blocksScopesTable = 'blocksScopes' as const;

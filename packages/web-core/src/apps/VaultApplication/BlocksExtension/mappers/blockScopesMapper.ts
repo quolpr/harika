@@ -1,4 +1,5 @@
 import { arraySet } from 'mobx-keystone';
+
 import { IMapper } from '../../../../extensions/SyncExtension/mappers';
 import { BlocksScope, blocksScopeType } from '../models/BlocksScope';
 import {

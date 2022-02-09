@@ -1,7 +1,8 @@
-import { useEffect } from 'react';
 import dayjs from 'dayjs';
-import { useNavigate } from 'react-router-dom';
 import { observer } from 'mobx-react-lite';
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+
 import { useNotePath } from '../contexts/StackedNotesContext';
 import { useNoteBlocksService } from '../hooks/vaultAppHooks';
 

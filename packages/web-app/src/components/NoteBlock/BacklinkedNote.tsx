@@ -1,20 +1,21 @@
-import clsx from 'clsx';
-import { observer } from 'mobx-react-lite';
-import React, { useState } from 'react';
-import { Arrow } from '../Arrow/Arrow';
-import { Link } from 'react-router-dom';
 import {
   BlocksScope,
   CollapsableBlock,
   getBlocksSelection,
   NoteBlock,
 } from '@harika/web-core';
+import clsx from 'clsx';
+import { observer } from 'mobx-react-lite';
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+
 import {
   useHandleNoteClickOrPress,
   useNotePath,
 } from '../../contexts/StackedNotesContext';
-import { BlocksHandlers } from './BlocksHandlers';
+import { Arrow } from '../Arrow/Arrow';
 import { TextBlockComponent } from '../TextBlock/TextBlock';
+import { BlocksHandlers } from './BlocksHandlers';
 
 const LinkedBlock = observer(
   ({

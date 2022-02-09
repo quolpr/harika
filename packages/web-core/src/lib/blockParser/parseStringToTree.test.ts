@@ -1,4 +1,5 @@
 import { expect } from '@esm-bundle/chai';
+
 import { parseStringToTree } from './parseStringToTree';
 
 describe('parseStringToTree', () => {

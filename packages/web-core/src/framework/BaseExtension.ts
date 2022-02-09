@@ -1,5 +1,6 @@
-import { Container, inject, injectable } from 'inversify';
 import 'reflect-metadata';
+
+import { Container, inject, injectable } from 'inversify';
 
 @injectable()
 export abstract class BaseExtension {

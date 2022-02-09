@@ -1,11 +1,12 @@
-import Q from 'sql-bricks';
 import { IDocChange } from '@harika/sync-common';
+import dayjs from 'dayjs';
 import { injectable } from 'inversify';
+import Q from 'sql-bricks';
+
 import { IQueryExecuter } from '../../../../extensions/DbExtension/DB';
 import { ISyncCtx } from '../../../../extensions/SyncExtension/syncCtx';
-import { BaseBlockRepository } from './BaseBlockRepository';
 import { BaseBlockDoc, BaseBlockRow } from './AllBlocksRepository';
-import dayjs from 'dayjs';
+import { BaseBlockRepository } from './BaseBlockRepository';
 
 export const noteBlocksTable = 'noteBlocks' as const;
 export const noteBlocksFTSTable = 'notesBlocksFts' as const;

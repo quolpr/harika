@@ -1,7 +1,9 @@
+import './styles.css';
+
+import { XIcon } from '@heroicons/react/solid';
 import React from 'react';
 import ReactModal from 'react-modal';
-import './styles.css';
-import { XIcon } from '@heroicons/react/solid';
+
 import { cn } from '../../utils';
 
 export const modalClass = cn('modal');

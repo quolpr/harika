@@ -1,5 +1,6 @@
 import React from 'react';
 import { useForm } from 'react-hook-form';
+
 import { Modal, modalClass } from '../../components/Modal/Modal';
 import { cn } from '../../utils';
 

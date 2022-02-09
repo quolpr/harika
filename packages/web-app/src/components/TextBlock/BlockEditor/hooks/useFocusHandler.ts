@@ -1,4 +1,4 @@
-import { useRef, useCallback, useEffect, RefObject } from 'react';
+import { RefObject,useCallback, useEffect, useRef } from 'react';
 
 // https://stackoverflow.com/a/55652503/3872807
 export const useFakeInput = (el: RefObject<HTMLElement | null>) => {

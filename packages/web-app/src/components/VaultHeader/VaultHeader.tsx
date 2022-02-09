@@ -1,18 +1,20 @@
-import React, { useCallback, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { CalendarIcon } from '@heroicons/react/solid';
 import './styles.css';
-import dayjs from 'dayjs';
-import Calendar from 'react-calendar';
+
+import { CalendarIcon } from '@heroicons/react/solid';
 import clsx from 'clsx';
-import { useClickAway, useKey } from 'react-use';
+import dayjs from 'dayjs';
 import { observer } from 'mobx-react-lite';
-import { CommandPaletteModal } from '../CommandPaletteModal/CommandPaleteModal';
-import { cn } from '../../utils';
-import { usePrimaryNote } from '../../hooks/usePrimaryNote';
-import { SyncState } from '../SyncState/SyncState';
+import React, { useCallback, useRef, useState } from 'react';
+import Calendar from 'react-calendar';
+import { useNavigate } from 'react-router-dom';
+import { useClickAway, useKey } from 'react-use';
+
 import { useNotePath } from '../../contexts/StackedNotesContext';
+import { usePrimaryNote } from '../../hooks/usePrimaryNote';
 import { useNoteBlocksService } from '../../hooks/vaultAppHooks';
+import { cn } from '../../utils';
+import { CommandPaletteModal } from '../CommandPaletteModal/CommandPaleteModal';
+import { SyncState } from '../SyncState/SyncState';
 
 const vaultHeaderClass = cn('header');
 

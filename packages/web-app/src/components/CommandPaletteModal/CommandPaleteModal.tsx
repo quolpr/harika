@@ -1,22 +1,24 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
 import './styles.css';
+
+import { FindNoteOrBlockService } from '@harika/web-core/src/apps/VaultApplication/BlocksExtension/services/FindNoteOrBlockService';
 import { ChevronRightIcon } from '@heroicons/react/solid';
-import Highlighter from 'react-highlight-words';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { cn } from '../../utils';
-import { useKey } from 'react-use';
-import { v4 as uuidv4 } from 'uuid';
-import { paths } from '../../paths';
-import { Modal, modalClass } from '../Modal/Modal';
-import { debounce, map, Observable, of, switchMap, tap, timer } from 'rxjs';
 import { useObservable, useObservableState } from 'observable-hooks';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import Highlighter from 'react-highlight-words';
+import { Link, useLocation,useNavigate } from 'react-router-dom';
+import { useKey } from 'react-use';
+import { debounce, map, Observable, of, switchMap, tap, timer } from 'rxjs';
+import { v4 as uuidv4 } from 'uuid';
+
+import { useNotePath } from '../../contexts/StackedNotesContext';
 import {
   useCurrentVaultApp,
   useFindService,
   useNoteBlocksService,
 } from '../../hooks/vaultAppHooks';
-import { useNotePath } from '../../contexts/StackedNotesContext';
-import { FindNoteOrBlockService } from '@harika/web-core/src/apps/VaultApplication/BlocksExtension/services/FindNoteOrBlockService';
+import { paths } from '../../paths';
+import { cn } from '../../utils';
+import { Modal, modalClass } from '../Modal/Modal';
 
 // Command executes on each user type and as result gives list of actions
 // Commands are start with `!`. If no `!` present - then search happen between all start view actions names

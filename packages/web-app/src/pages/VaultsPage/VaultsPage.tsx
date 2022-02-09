@@ -1,19 +1,21 @@
-import React, { useCallback, useMemo, useState } from 'react';
-import { cn } from '../../utils';
 import './styles.css';
-import { useObservableState } from 'observable-hooks';
-import { Link, useNavigate } from 'react-router-dom';
-import { paths } from '../../paths';
-import { PlusIcon } from '@heroicons/react/solid';
-import { CreateVaultModal } from './CreateVaultModal';
-import { useAuthState } from '../../hooks/useAuthState';
-import { Brand } from '../../components/Brand/Brand';
+
 import { generateId, UserVaultsService } from '@harika/web-core';
-import { deleteFromStorage } from '@rehooks/local-storage';
+import { PlusIcon } from '@heroicons/react/solid';
 import SettingsIcon from '@material-ui/icons/Settings';
-import { SettingsModal } from './SettingsModal';
-import { useLoadUserApp, useUserVaults } from '../../hooks/useUserApp';
+import { deleteFromStorage } from '@rehooks/local-storage';
+import { useObservableState } from 'observable-hooks';
+import React, { useCallback, useMemo, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { of } from 'rxjs';
+
+import { Brand } from '../../components/Brand/Brand';
+import { useAuthState } from '../../hooks/useAuthState';
+import { useLoadUserApp, useUserVaults } from '../../hooks/useUserApp';
+import { paths } from '../../paths';
+import { cn } from '../../utils';
+import { CreateVaultModal } from './CreateVaultModal';
+import { SettingsModal } from './SettingsModal';
 
 const vaultsClass = cn('vaults');
 const vaultsNavbarClass = cn('vaults-navbar');

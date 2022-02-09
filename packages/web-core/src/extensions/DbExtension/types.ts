@@ -1,6 +1,7 @@
 import { QueryExecResult } from '@harika-org/sql.js';
-import { IQueryExecuter } from './DB';
 import Q from 'sql-bricks';
+
+import { IQueryExecuter } from './DB';
 
 export type IMigration = {
   up: (db: IQueryExecuter) => Promise<void>;

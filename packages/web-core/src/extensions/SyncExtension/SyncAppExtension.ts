@@ -1,20 +1,21 @@
 import { injectable } from 'inversify';
 import { BehaviorSubject, takeUntil } from 'rxjs';
+
+import { BaseExtension } from '../../framework/BaseExtension';
 import { STOP_SIGNAL } from '../../framework/types';
+import { DB_MIGRATIONS } from '../DbExtension/types';
+import { initSyncTables } from './migrations/initSyncTables';
+import { SyncRepository } from './repositories/SyncRepository';
 import { ServerSynchronizerFactory } from './serverSynchronizer/ServiceSynchronizerFactory';
 import { SyncConfig } from './serverSynchronizer/SyncConfig';
 import { DbEventsListenService } from './services/DbEventsListenerService';
+import { DbEventsSenderService } from './services/DbEventsSenderService';
+import { SnapshotsApplier } from './services/SnapshotsApplier';
+import { SyncStatusService } from './services/SyncStatusService';
 import { OnDbChangeNotifier } from './synchronizer/OnDbChangeNotifier';
 import { ToDbSynchronizer } from './synchronizer/ToDbSynchronizer';
 import { SyncStateService } from './SyncState';
 import { ROOT_STORE, SYNC_CONNECTION_ALLOWED } from './types';
-import { BaseExtension } from '../../framework/BaseExtension';
-import { SyncRepository } from './repositories/SyncRepository';
-import { DB_MIGRATIONS } from '../DbExtension/types';
-import { initSyncTables } from './migrations/initSyncTables';
-import { DbEventsSenderService } from './services/DbEventsSenderService';
-import { SyncStatusService } from './services/SyncStatusService';
-import { SnapshotsApplier } from './services/SnapshotsApplier';
 
 @injectable()
 export class SyncAppExtension extends BaseExtension {

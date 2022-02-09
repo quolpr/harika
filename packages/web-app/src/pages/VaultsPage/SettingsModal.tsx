@@ -1,9 +1,10 @@
+import { UserVaultsService } from '@harika/web-core';
+import DeleteIcon from '@material-ui/icons/Delete';
 import React, { useCallback } from 'react';
 import { useForm } from 'react-hook-form';
+
 import { Modal, modalClass } from '../../components/Modal/Modal';
 import { cn } from '../../utils';
-import DeleteIcon from '@material-ui/icons/Delete';
-import { UserVaultsService } from '@harika/web-core';
 
 const formModalClass = cn('vault-form-modal');
 const formClass = cn('form');

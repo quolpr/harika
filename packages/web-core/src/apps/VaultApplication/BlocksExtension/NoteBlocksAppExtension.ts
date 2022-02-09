@@ -1,33 +1,34 @@
-import { BlocksScopeStore } from './models/BlocksScopeStore';
-import { BlocksScopesService } from './services/BlocksScopeService';
-import { addBlockScopeTable } from './migrations/addBlockScopeTable';
-import { BlocksScope } from './models/BlocksScope';
 import { injectable } from 'inversify';
+
 import { BaseSyncExtension } from '../../../extensions/SyncExtension/BaseSyncExtension';
 import { SyncConfig } from '../../../extensions/SyncExtension/serverSynchronizer/SyncConfig';
 import { blocksScopesMapper } from './mappers/blockScopesMapper';
-import { BlocksScopesRepository } from './repositories/BlockScopesRepository';
-import { NoteBlocksService } from './services/NoteBlocksService';
-import { NoteBlocksRepository } from './repositories/NoteBlocksRepostitory';
-import { TextBlocksRepository } from './repositories/TextBlocksRepository';
+import { noteBlockMapper } from './mappers/noteBlockMapper';
+import { textBlockMapper } from './mappers/textBlockMappter';
+import { addBlockScopeTable } from './migrations/addBlockScopeTable';
 import { createBlocksChildrenTable } from './migrations/createBlocksChildrenTable';
 import { createBlocksLinksTable } from './migrations/createBlocksLinksTable';
 import { createNoteBlocksTable } from './migrations/createNoteBlocksTable';
 import { createTextBlocksTable } from './migrations/createTextBlocksTable';
+import { BlocksScope } from './models/BlocksScope';
+import { BlocksScopeStore } from './models/BlocksScopeStore';
 import { BlocksStore } from './models/BlocksStore';
-import { noteBlockMapper } from './mappers/noteBlockMapper';
-import { textBlockMapper } from './mappers/textBlockMappter';
-import { TextBlocksService } from './services/TextBlocksService';
-import { BLOCK_REPOSITORY } from './types';
 import { NoteBlock } from './models/NoteBlock';
 import { TextBlock } from './models/TextBlock';
+import { AllBlocksRepository } from './repositories/AllBlocksRepository';
+import { BlocksScopesRepository } from './repositories/BlockScopesRepository';
+import { NoteBlocksRepository } from './repositories/NoteBlocksRepostitory';
+import { TextBlocksRepository } from './repositories/TextBlocksRepository';
 import { AllBlocksService } from './services/AllBlocksService';
+import { BlocksScopesService } from './services/BlocksScopeService';
 import { DeleteNoteService } from './services/DeleteNoteService';
 import { FindNoteOrBlockService } from './services/FindNoteOrBlockService';
 import { ImportExportService } from './services/ImportExportService';
+import { NoteBlocksService } from './services/NoteBlocksService';
+import { TextBlocksService } from './services/TextBlocksService';
 import { UpdateLinksService } from './services/UpdateLinksService';
 import { UpdateNoteTitleService } from './services/UpdateNoteTitleService';
-import { AllBlocksRepository } from './repositories/AllBlocksRepository';
+import { BLOCK_REPOSITORY } from './types';
 
 @injectable()
 export class NoteBlocksAppExtension extends BaseSyncExtension {

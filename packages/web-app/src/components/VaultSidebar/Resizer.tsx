@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef } from 'react';
+
 import { sidebarClass } from './VaultSidebar';
 
 // Based on https://github.com/LeetCode-OpenSource/react-simple-resizer/blob/d8e38ba8489e2f2de414f42eb3666b585a31dac4/src/Bar/index.tsx

@@ -1,31 +1,32 @@
+import {
+  BlocksScope,
+  CollapsableBlock,
+  getCollapsableBlock,
+  NoteBlock,
+  NoteRefToken,
+  TagToken,
+  toggleTodo,
+  Token,
+} from '@harika/web-core';
+import { TextBlock } from '@harika/web-core';
+import { TextBlockRef } from '@harika/web-core/src/lib/blockParser/types';
+import { arraySet } from 'mobx-keystone';
 import { observer } from 'mobx-react-lite';
+import { useObservable, useObservableState } from 'observable-hooks';
 import React, { useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  NoteRefToken,
-  Token,
-  TagToken,
-  NoteBlock,
-  CollapsableBlock,
-  toggleTodo,
-  BlocksScope,
-  getCollapsableBlock,
-} from '@harika/web-core';
-import { useObservable, useObservableState } from 'observable-hooks';
+import { useAsync } from 'react-use';
 import { switchMap } from 'rxjs';
-import { useDeepMemo } from '../../utils';
-import { TextBlockRef } from '@harika/web-core/src/lib/blockParser/types';
-import {
-  useAllBlocksService,
-  useUpdateLinkService,
-} from '../../hooks/vaultAppHooks';
+
 import {
   useHandleNoteClickOrPress,
   useNotePath,
 } from '../../contexts/StackedNotesContext';
-import { TextBlock } from '@harika/web-core';
-import { useAsync } from 'react-use';
-import { arraySet } from 'mobx-keystone';
+import {
+  useAllBlocksService,
+  useUpdateLinkService,
+} from '../../hooks/vaultAppHooks';
+import { useDeepMemo } from '../../utils';
 
 const NoteRefRenderer = observer(
   ({

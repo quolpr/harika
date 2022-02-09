@@ -1,9 +1,9 @@
 import fastify from 'fastify';
-
-import { dbPlugin } from './plugins/db';
-import { syncHandler } from './modules/sync/routes';
 import fastifyCors from 'fastify-cors';
+
 import { healthHandler } from './modules/health/routes';
+import { syncHandler } from './modules/sync/routes';
+import { dbPlugin } from './plugins/db';
 
 function createServer() {
   const server = fastify({ logger: true });

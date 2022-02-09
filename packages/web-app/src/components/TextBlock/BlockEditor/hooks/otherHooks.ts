@@ -1,9 +1,10 @@
+import { CollapsableBlock, TextBlock } from '@harika/web-core';
 import { MutableRefObject, useContext, useEffect } from 'react';
-import { CurrentBlockInputRefContext } from '../../../../contexts';
 import { usePrevious } from 'react-use';
+
+import { CurrentBlockInputRefContext } from '../../../../contexts';
 import { EditState } from '../../../../hooks/useFocusedBlockState';
 import { useUpdateLinkService } from '../../../../hooks/vaultAppHooks';
-import { CollapsableBlock, TextBlock } from '@harika/web-core';
 
 export const useProvideInputToContext = (
   inputRef: MutableRefObject<HTMLTextAreaElement | null>,

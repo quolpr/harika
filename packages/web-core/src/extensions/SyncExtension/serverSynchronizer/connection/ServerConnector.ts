@@ -1,10 +1,15 @@
 import {
-  Observable,
-  of,
-  ReplaySubject,
+  AuthClientRequest,
+  AuthClientResponse,
+  CommandTypesFromClient,
+} from '@harika/sync-common';
+import {
   combineLatest,
   defer,
   from,
+  Observable,
+  of,
+  ReplaySubject,
 } from 'rxjs';
 import {
   distinctUntilChanged,
@@ -15,11 +20,6 @@ import {
   withLatestFrom,
 } from 'rxjs/operators';
 import io, { Socket } from 'socket.io-client';
-import {
-  AuthClientRequest,
-  AuthClientResponse,
-  CommandTypesFromClient,
-} from '@harika/sync-common';
 
 export class ServerConnector {
   isConnected$: Observable<boolean>;

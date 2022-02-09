@@ -1,5 +1,6 @@
 import { inject, injectable } from 'inversify';
 import { map } from 'rxjs';
+
 import { DbEventsListenService } from '../../../../extensions/SyncExtension/services/DbEventsListenerService';
 import {
   VaultsRepository,

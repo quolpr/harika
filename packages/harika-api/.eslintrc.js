@@ -1,4 +1,4 @@
-const rootDir = process.cwd().includes('packages/new-harika-api')
+const rootDir = process.cwd().includes('packages/harika-api')
   ? './'
   : './packages/harika-api';
 
@@ -18,7 +18,7 @@ module.exports = {
     tsconfigRootDir: rootDir,
     project: './tsconfig.json',
   },
-  plugins: ['react', 'jsx-a11y', 'rxjs',  'simple-import-sort'],
+  plugins: ['react', 'jsx-a11y', 'rxjs', 'simple-import-sort'],
   rules: {
     'simple-import-sort/imports': 'warn',
     'simple-import-sort/exports': 'warn',

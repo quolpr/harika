@@ -1,8 +1,9 @@
-import { Knex } from 'knex';
-import { snapshotsTable } from '../dbTypes';
 import { IDocSnapshot } from '@harika/sync-common';
-import { getSnapshotKey, NonConstructor } from '../utils';
+import { Knex } from 'knex';
 import { groupBy } from 'lodash';
+
+import { snapshotsTable } from '../dbTypes';
+import { getSnapshotKey, NonConstructor } from '../utils';
 
 export class DocSnapshotsService {
   async getSnapshot(

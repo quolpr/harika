@@ -1,4 +1,4 @@
-import { merge, Subject, of, Observable, BehaviorSubject } from 'rxjs';
+import { BehaviorSubject,merge, Observable, of, Subject } from 'rxjs';
 import {
   concatMap,
   finalize,
@@ -7,12 +7,13 @@ import {
   takeUntil,
   tap,
 } from 'rxjs/operators';
-import type { CommandsExecuter } from './CommandsExecuter';
-import type { ServerConnector } from './connection/ServerConnector';
-import { ServerSnapshotsReceiver } from './ServerSynchronizer/ServerChangesReceiver';
-import { ChangesSender } from './ServerSynchronizer/ChangesSender';
+
 import type { SyncRepository } from '../repositories/SyncRepository';
 import { SyncStatusService } from '../services/SyncStatusService';
+import type { CommandsExecuter } from './CommandsExecuter';
+import type { ServerConnector } from './connection/ServerConnector';
+import { ChangesSender } from './ServerSynchronizer/ChangesSender';
+import { ServerSnapshotsReceiver } from './ServerSynchronizer/ServerChangesReceiver';
 
 export interface IConsistencyResolver {
   resolve(): Promise<void>;

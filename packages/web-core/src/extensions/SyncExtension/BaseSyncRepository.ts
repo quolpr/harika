@@ -1,12 +1,14 @@
 import 'reflect-metadata';
-import { SyncRepository } from './repositories/SyncRepository';
-import Q from 'sql-bricks';
-import { isEqual, mapValues } from 'lodash-es';
-import { DB, IQueryExecuter, Transaction } from '../DbExtension/DB';
-import type { ISyncCtx } from './syncCtx';
+
 import { inject, injectable } from 'inversify';
+import { isEqual, mapValues } from 'lodash-es';
+import Q from 'sql-bricks';
+
 import { WINDOW_ID } from '../../framework/types';
 import { raw, sqltag } from '../../lib/sql';
+import { DB, IQueryExecuter, Transaction } from '../DbExtension/DB';
+import { SyncRepository } from './repositories/SyncRepository';
+import type { ISyncCtx } from './syncCtx';
 
 @injectable()
 export abstract class BaseSyncRepository<

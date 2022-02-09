@@ -1,7 +1,8 @@
+import { inject, injectable, multiInject } from 'inversify';
+import Q from 'sql-bricks';
+
 import { DB } from './DB';
 import { DB_MIGRATIONS, IMigration, migrationsTable } from './types';
-import Q from 'sql-bricks';
-import { inject, injectable, multiInject } from 'inversify';
 
 @injectable()
 export class MigrationRunner {

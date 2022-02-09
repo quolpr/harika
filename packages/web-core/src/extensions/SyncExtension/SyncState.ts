@@ -1,4 +1,4 @@
-import { injectable, inject } from 'inversify';
+import { inject,injectable } from 'inversify';
 import { isEqual } from 'lodash-es';
 import {
   BehaviorSubject,
@@ -15,6 +15,7 @@ import {
   tap,
   withLatestFrom,
 } from 'rxjs';
+
 import { STOP_SIGNAL } from '../../framework/types';
 import { DB_NAME } from '../DbExtension/types';
 import { SyncRepository } from './repositories/SyncRepository';

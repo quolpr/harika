@@ -1,4 +1,5 @@
 import { Knex } from 'knex';
+
 import { docChangesTable, snapshotsTable, usersDbsTable } from './dbTypes';
 import { DbService } from './services/DbService';
 

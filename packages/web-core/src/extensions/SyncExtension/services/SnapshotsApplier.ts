@@ -1,6 +1,7 @@
 import { inject, injectable, multiInject } from 'inversify';
 import { groupBy } from 'lodash-es';
 import { concatMap, Observable, takeUntil } from 'rxjs';
+
 import { STOP_SIGNAL } from '../../../framework/types';
 import { Transaction } from '../../DbExtension/DB';
 import { BaseSyncRepository } from '../BaseSyncRepository';

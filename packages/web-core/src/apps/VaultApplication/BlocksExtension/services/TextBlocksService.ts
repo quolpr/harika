@@ -1,4 +1,5 @@
 import { inject, injectable } from 'inversify';
+
 import { DbEventsListenService } from '../../../../extensions/SyncExtension/services/DbEventsListenerService';
 import { BlocksStore } from '../models/BlocksStore';
 import { TextBlocksRepository } from '../repositories/TextBlocksRepository';

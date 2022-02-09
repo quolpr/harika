@@ -1,10 +1,12 @@
+import './styles.css';
+
 import { Pos } from 'caret-pos';
 import React from 'react';
 import { MutableRefObject, useEffect, useRef, useState } from 'react';
 import scrollIntoView from 'scroll-into-view-if-needed';
 import useResizeObserver from 'use-resize-observer';
+
 import { bem } from '../../../../utils';
-import './styles.css';
 
 export type IDropdownItem = {
   id: string;

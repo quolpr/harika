@@ -1,9 +1,6 @@
+import dayjs, { Dayjs } from 'dayjs';
 import { inject, injectable } from 'inversify';
 import { ModelCreationData, withoutUndo } from 'mobx-keystone';
-import type { Required } from 'utility-types';
-import { Optional } from 'utility-types';
-import { DbEventsListenService } from '../../../../extensions/SyncExtension/services/DbEventsListenerService';
-import dayjs, { Dayjs } from 'dayjs';
 import {
   distinctUntilChanged,
   from,
@@ -13,17 +10,21 @@ import {
   of,
   switchMap,
 } from 'rxjs';
+import type { Required } from 'utility-types';
+import { Optional } from 'utility-types';
+
+import { DbEventsListenService } from '../../../../extensions/SyncExtension/services/DbEventsListenerService';
 import { ICreationResult } from '../../../../framework/types';
+import { noteBlockMapper } from '../mappers/noteBlockMapper';
+import { BaseBlock } from '../models/BaseBlock';
+import { BlocksStore } from '../models/BlocksStore';
+import { NoteBlock } from '../models/NoteBlock';
+import { createNote } from '../models/noteBlockActions';
 import {
   NoteBlockDoc,
   NoteBlocksRepository,
   noteBlocksTable,
 } from '../repositories/NoteBlocksRepostitory';
-import { BlocksStore } from '../models/BlocksStore';
-import { noteBlockMapper } from '../mappers/noteBlockMapper';
-import { NoteBlock } from '../models/NoteBlock';
-import { createNote } from '../models/noteBlockActions';
-import { BaseBlock } from '../models/BaseBlock';
 import { AllBlocksService } from './AllBlocksService';
 
 @injectable()

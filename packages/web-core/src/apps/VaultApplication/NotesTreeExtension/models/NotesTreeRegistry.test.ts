@@ -1,5 +1,6 @@
 import { expect } from 'chai';
 import { getSnapshot, setGlobalConfig } from 'mobx-keystone';
+
 import { newTreeModel } from './NotesTreeRegistry';
 
 // TODO: add util to string method, and compare just string tree instaed of full state

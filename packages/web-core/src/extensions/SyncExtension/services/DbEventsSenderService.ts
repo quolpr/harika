@@ -1,4 +1,5 @@
-import { injectable, inject } from 'inversify';
+import { BroadcastChannel } from 'broadcast-channel';
+import { inject,injectable } from 'inversify';
 import {
   buffer,
   debounceTime,
@@ -8,14 +9,14 @@ import {
   takeUntil,
   withLatestFrom,
 } from 'rxjs';
+
+import { STOP_SIGNAL } from '../../../framework/types';
+import { getBroadcastCh$ } from '../../../lib/utils';
 import { DB_NAME } from '../../DbExtension/types';
 import {
   ITransmittedChange,
   SyncRepository,
 } from '../repositories/SyncRepository';
-import { STOP_SIGNAL } from '../../../framework/types';
-import { getBroadcastCh$ } from '../../../lib/utils';
-import { BroadcastChannel } from 'broadcast-channel';
 
 @injectable()
 export class DbEventsSenderService {

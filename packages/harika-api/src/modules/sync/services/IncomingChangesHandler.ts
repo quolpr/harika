@@ -1,8 +1,7 @@
 import { IDocChange } from '@harika/sync-common';
 import { Knex } from 'knex';
-import { IChangesService } from './changesService';
 import { groupBy, minBy } from 'lodash';
-import { IDocSnapshotsService } from './DocSnapshotsService';
+
 import {
   getChangesKey,
   NonConstructor,
@@ -10,6 +9,8 @@ import {
   snapshotToCreateChange,
 } from '../utils';
 import { buildSnapshot } from './buildSnapshot';
+import { IChangesService } from './changesService';
+import { IDocSnapshotsService } from './DocSnapshotsService';
 
 export class IncomingChangesHandler {
   constructor(

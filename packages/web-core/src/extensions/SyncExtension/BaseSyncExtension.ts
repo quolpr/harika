@@ -1,8 +1,9 @@
 import { Class } from 'utility-types';
+
 import { BaseExtension } from '../../framework/BaseExtension';
 import { DB_MIGRATIONS, IMigration } from '../DbExtension/types';
-import { REPOS_WITH_SYNC } from './types';
 import { BaseSyncRepository } from './BaseSyncRepository';
+import { REPOS_WITH_SYNC } from './types';
 
 export abstract class BaseSyncExtension extends BaseExtension {
   async register() {

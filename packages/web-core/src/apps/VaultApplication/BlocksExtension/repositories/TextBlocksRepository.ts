@@ -1,4 +1,5 @@
 import Q from 'sql-bricks';
+
 import { IQueryExecuter } from '../../../../extensions/DbExtension/DB';
 import { ISyncCtx } from '../../../../extensions/SyncExtension/syncCtx';
 import { BaseBlockDoc, BaseBlockRow } from './AllBlocksRepository';

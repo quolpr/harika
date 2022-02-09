@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { Workbox } from 'workbox-window';
+
 import { App } from './App';
 
 if (import.meta.env.MODE === 'production') {

@@ -1,15 +1,16 @@
-import { generateId } from '../generateId';
-import { parseStringToTree } from './parseStringToTree';
-import type { TreeToken } from './parseStringToTree';
 import { standaloneAction } from 'mobx-keystone';
+
+import { blockRef } from '../../apps/VaultApplication/BlocksExtension/models/BaseBlock';
+import { BlocksScope } from '../../apps/VaultApplication/BlocksExtension/models/BlocksScope';
+import { BlocksStore } from '../../apps/VaultApplication/BlocksExtension/models/BlocksStore';
 import {
   CollapsableBlock,
   getCollapsableBlock,
 } from '../../apps/VaultApplication/BlocksExtension/models/CollapsableBlock';
 import { TextBlock } from '../../apps/VaultApplication/BlocksExtension/models/TextBlock';
-import { blockRef } from '../../apps/VaultApplication/BlocksExtension/models/BaseBlock';
-import { BlocksScope } from '../../apps/VaultApplication/BlocksExtension/models/BlocksScope';
-import { BlocksStore } from '../../apps/VaultApplication/BlocksExtension/models/BlocksStore';
+import { generateId } from '../generateId';
+import type { TreeToken } from './parseStringToTree';
+import { parseStringToTree } from './parseStringToTree';
 
 export const normalizeBlockTree = (str: string) => {
   const parsed = parseStringToTree(str);

@@ -1,4 +1,5 @@
 import { Knex } from 'knex';
+
 import { db as importedDb } from '../../../db/db';
 import { usersDbsTable } from '../dbTypes';
 

@@ -1,4 +1,9 @@
-import type { CommandsExecuter } from '../CommandsExecuter';
+import {
+  ApplyNewChangesFromClientCommand,
+  CommandTypesFromClient,
+  DocChangeType,
+} from '@harika/sync-common';
+import { omit } from 'lodash-es';
 import {
   filter,
   from,
@@ -10,14 +15,10 @@ import {
   switchMap,
   tap,
 } from 'rxjs';
-import { omit } from 'lodash-es';
+
 import type { SyncRepository } from '../../repositories/SyncRepository';
-import {
-  ApplyNewChangesFromClientCommand,
-  CommandTypesFromClient,
-  DocChangeType,
-} from '@harika/sync-common';
 import { SyncStatusService } from '../../services/SyncStatusService';
+import type { CommandsExecuter } from '../CommandsExecuter';
 
 export class ChangesSender {
   private triggerNext$ = new Subject<void>();

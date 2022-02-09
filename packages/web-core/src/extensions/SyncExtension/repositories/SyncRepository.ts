@@ -1,10 +1,5 @@
 import 'reflect-metadata';
-import { inject, injectable } from 'inversify';
-import Q from 'sql-bricks';
-import { v4 as uuidv4 } from 'uuid';
-import { DB, IQueryExecuter, Transaction } from '../../DbExtension/DB';
-import { getObjectDiff } from '../serverSynchronizer/utils';
-import type { IInternalSyncCtx } from '../syncCtx';
+
 import {
   DocChangeType,
   IAnyDoc,
@@ -15,9 +10,16 @@ import {
   IDocSnapshot,
   IUpdateChange,
 } from '@harika/sync-common';
+import { inject, injectable } from 'inversify';
+import Q from 'sql-bricks';
 import { Overwrite } from 'utility-types';
-import { SyncStatusService } from '../services/SyncStatusService';
+import { v4 as uuidv4 } from 'uuid';
+
 import { raw, sqltag } from '../../../lib/sql';
+import { DB, IQueryExecuter, Transaction } from '../../DbExtension/DB';
+import { getObjectDiff } from '../serverSynchronizer/utils';
+import { SyncStatusService } from '../services/SyncStatusService';
+import type { IInternalSyncCtx } from '../syncCtx';
 
 export const clientChangesTable = 'clientChanges' as const;
 export const serverSnapshotsTable = 'serverSnapshots' as const;

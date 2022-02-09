@@ -7,6 +7,7 @@ import {
   createContext,
   useContextSelector,
 } from 'use-context-selector';
+
 import { useNoteBlocksService } from '../hooks/vaultAppHooks';
 
 const LinkedBlocksOfBlocksContext = createContext<

@@ -1,25 +1,26 @@
-import Q from 'sql-bricks';
-// @ts-ignore
-import sqlWasmUrl from '@harika-org/sql.js/dist/sql-wasm.wasm?url';
 import initSqlJs, {
-  Database,
   BindParams,
+  Database,
   QueryExecResult,
 } from '@harika-org/sql.js';
+// @ts-ignore
+import sqlWasmUrl from '@harika-org/sql.js/dist/sql-wasm.wasm?url';
 import { SQLiteFS } from 'absurd-sql';
 import IndexedDBBackend from 'absurd-sql/dist/indexeddb-backend';
+import { Subject } from 'rxjs';
+import Q from 'sql-bricks';
+
 import {
   ICommand,
-  IResponse,
-  IExecQueriesCommand,
-  IStartTransactionCommand,
   ICommitTransactionCommand,
-  IOutputWorkerMessage,
+  IExecQueriesCommand,
   IInputWorkerMessage,
-  migrationsTable,
+  IOutputWorkerMessage,
+  IResponse,
   IRollbackTransactionCommand,
+  IStartTransactionCommand,
+  migrationsTable,
 } from './types';
-import { Subject } from 'rxjs';
 
 const colors = ['yellow', 'cyan', 'magenta'];
 

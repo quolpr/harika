@@ -1,17 +1,18 @@
+import { DocChangeType } from '@harika/sync-common';
+import { inject, injectable } from 'inversify';
 import { autorun } from 'mobx';
 import { filter, map, Observable, takeUntil } from 'rxjs';
-import {
-  INoteTitleChange,
-  NotesTreeRegistry,
-} from '../models/NotesTreeRegistry';
-import { inject, injectable } from 'inversify';
-import { STOP_SIGNAL } from '../../../../framework/types';
+
 import { DbEventsListenService } from '../../../../extensions/SyncExtension/services/DbEventsListenerService';
-import { DocChangeType } from '@harika/sync-common';
+import { STOP_SIGNAL } from '../../../../framework/types';
 import {
   INoteChangeEvent,
   noteBlocksTable,
 } from '../../BlocksExtension/repositories/NoteBlocksRepostitory';
+import {
+  INoteTitleChange,
+  NotesTreeRegistry,
+} from '../models/NotesTreeRegistry';
 
 @injectable()
 export class NotesChangesTrackerService {

@@ -1,3 +1,15 @@
+import './styles.css';
+
+import {
+  getCollapsableBlock,
+  NoteBlock as NoteBlockModel,
+} from '@harika/web-core';
+import { NoteBlock } from '@harika/web-core';
+import { LinkIcon } from '@heroicons/react/solid';
+import dayjs from 'dayjs';
+import { groupBy } from 'lodash-es';
+import { observer } from 'mobx-react-lite';
+import { useObservable, useObservableState } from 'observable-hooks';
 import React, {
   ChangeEvent,
   useCallback,
@@ -6,38 +18,27 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import './styles.css';
-import { observer } from 'mobx-react-lite';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { LinkIcon } from '@heroicons/react/solid';
-import { CurrentBlockInputRefContext } from '../../contexts';
-import {
-  getCollapsableBlock,
-  NoteBlock as NoteBlockModel,
-} from '@harika/web-core';
-import { groupBy } from 'lodash-es';
-import { useObservable, useObservableState } from 'observable-hooks';
-import { map, of, switchMap } from 'rxjs';
 import AutosizeInput from 'react-input-autosize';
-import dayjs from 'dayjs';
-import { bem } from '../../utils';
-
-import LeftArrow from '../../icons/left-arrow.svg?component';
-import RightArrow from '../../icons/right-arrow.svg?component';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useMedia } from 'react-use';
-import { BacklinkedNote } from './BacklinkedNote';
+import { map, of, switchMap } from 'rxjs';
+
+import { CurrentBlockInputRefContext } from '../../contexts';
+import { useNotePath } from '../../contexts/StackedNotesContext';
+import {
+  FocusedBlockState,
+  useFocusedBlock,
+} from '../../hooks/useFocusedBlockState';
 import {
   useAllBlocksService,
   useBlocksScopesService,
   useNoteBlocksService,
   useUpdateTitleService,
 } from '../../hooks/vaultAppHooks';
-import {
-  FocusedBlockState,
-  useFocusedBlock,
-} from '../../hooks/useFocusedBlockState';
-import { useNotePath } from '../../contexts/StackedNotesContext';
-import { NoteBlock } from '@harika/web-core';
+import LeftArrow from '../../icons/left-arrow.svg?component';
+import RightArrow from '../../icons/right-arrow.svg?component';
+import { bem } from '../../utils';
+import { BacklinkedNote } from './BacklinkedNote';
 import { ChildrenBlocks } from './ChildrenBlocks';
 
 export interface IFocusBlockState {

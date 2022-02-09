@@ -1,14 +1,15 @@
 import React, { useContext, useMemo } from 'react';
+import { RoutesProps, UNSAFE_RouteContext as RouteContext } from 'react-router';
 import { Route, Routes } from 'react-router-dom';
-import { VaultLayout } from '../components/VaultLayout/VaultLayout';
-import { PATHS } from '../paths';
+
 import { OnlyAuthed } from '../components/OnlyAuthed';
+import { VaultLayout } from '../components/VaultLayout/VaultLayout';
+import { UserAppProvider } from '../hooks/useUserApp';
 import { DailyNotePage } from '../pages/DailyNotePage';
 import { NoteStackPage } from '../pages/NotePage';
 import { NotesPage } from '../pages/NotesPage/NotesPage';
 import { VaultsPage } from '../pages/VaultsPage/VaultsPage';
-import { UserAppProvider } from '../hooks/useUserApp';
-import { RoutesProps, UNSAFE_RouteContext as RouteContext } from 'react-router';
+import { PATHS } from '../paths';
 
 // It's taken from https://github.com/remix-run/react-router/issues/8035
 function RootRoutes(props: RoutesProps) {

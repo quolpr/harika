@@ -1,3 +1,7 @@
+import './styles.css';
+
+import { VaultApplication } from '@harika/web-core';
+import { writeStorage } from '@rehooks/local-storage';
 import React, {
   useCallback,
   useContext,
@@ -7,27 +11,24 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { useNavigate, useLocation, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useClickAway, useMedia, useMountedState } from 'react-use';
+import { Observable } from 'rxjs';
+import { mapTo, switchMap, take, tap } from 'rxjs/operators';
+
+import { LoadingDoneSubjectContext } from '../../contexts';
+import { FooterRefContext } from '../../contexts/FooterRefContext';
+import { FocusedStackIdContext } from '../../contexts/StackedNotesContext';
+import { useGetSyncToken } from '../../hooks/useGetSyncToken';
+import { useLoadUserAppCallback } from '../../hooks/useUserApp';
+import { CurrentVaultAppContext } from '../../hooks/vaultAppHooks';
+import { bem } from '../../utils';
+import { UndoRedoManagerProvider } from '../UndoRedoManagerProvider';
 import { VaultHeader } from '../VaultHeader/VaultHeader';
 import {
   getLocalStorageSidebarWidth,
   VaultSidebar,
 } from '../VaultSidebar/VaultSidebar';
-
-import './styles.css';
-import { writeStorage } from '@rehooks/local-storage';
-import { FooterRefContext } from '../../contexts/FooterRefContext';
-import { LoadingDoneSubjectContext } from '../../contexts';
-import { Observable } from 'rxjs';
-import { mapTo, switchMap, take, tap } from 'rxjs/operators';
-import { bem } from '../../utils';
-import { UndoRedoManagerProvider } from '../UndoRedoManagerProvider';
-import { VaultApplication } from '@harika/web-core';
-import { CurrentVaultAppContext } from '../../hooks/vaultAppHooks';
-import { useLoadUserAppCallback } from '../../hooks/useUserApp';
-import { FocusedStackIdContext } from '../../contexts/StackedNotesContext';
-import { useGetSyncToken } from '../../hooks/useGetSyncToken';
 
 const layoutClass = bem('vault-layout');
 

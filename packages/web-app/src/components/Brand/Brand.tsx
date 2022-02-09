@@ -1,8 +1,10 @@
+import './brand.css';
+
 import React from 'react';
 import { Link } from 'react-router-dom';
+
 import { paths } from '../../paths';
 import { cn } from '../../utils';
-import './brand.css';
 
 const brandClass = cn('brand');
 

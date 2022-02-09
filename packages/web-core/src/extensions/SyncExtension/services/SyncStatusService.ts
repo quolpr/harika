@@ -1,8 +1,9 @@
 import { HybridClock, makeClientId } from '@harika/sync-common';
 import { inject, injectable } from 'inversify';
-import { DB, IQueryExecuter } from '../../DbExtension/DB';
-import Q from 'sql-bricks';
 import { times } from 'lodash-es';
+import Q from 'sql-bricks';
+
+import { DB, IQueryExecuter } from '../../DbExtension/DB';
 
 export const syncStatusTable = 'syncStatus' as const;
 export interface ISyncStatus {

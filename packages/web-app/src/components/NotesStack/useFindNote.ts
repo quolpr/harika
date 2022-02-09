@@ -2,7 +2,8 @@ import { NoteBlock } from '@harika/web-core';
 import { useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { NEVER, of, race } from 'rxjs';
-import { timeout, map } from 'rxjs/operators';
+import { map,timeout } from 'rxjs/operators';
+
 import { LoadingDoneSubjectContext } from '../../contexts';
 import { useNotePath } from '../../contexts/StackedNotesContext';
 import {

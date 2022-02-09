@@ -1,5 +1,6 @@
-import { getAuth, User, onAuthStateChanged } from 'firebase/auth';
+import { getAuth, onAuthStateChanged,User } from 'firebase/auth';
 import { useCallback } from 'react';
+
 import { firebaseApp } from '../firebaseApp';
 
 export const useGetSyncToken = () => {

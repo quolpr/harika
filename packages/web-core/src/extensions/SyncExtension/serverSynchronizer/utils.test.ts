@@ -1,4 +1,5 @@
 import { expect } from 'chai';
+
 import { getObjectDiff } from './utils';
 
 describe('getObjectDiff', () => {

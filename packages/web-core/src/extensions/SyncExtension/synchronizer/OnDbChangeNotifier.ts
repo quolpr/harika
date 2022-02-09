@@ -3,6 +3,7 @@ import { inject, injectable } from 'inversify';
 import { groupBy, isEmpty } from 'lodash-es';
 import { AnyModel } from 'mobx-keystone';
 import { buffer, debounceTime, Observable, takeUntil } from 'rxjs';
+
 import { STOP_SIGNAL, WINDOW_ID } from '../../../framework/types';
 import { ITransmittedChange } from '../repositories/SyncRepository';
 import { ISubscription, SyncConfig } from '../serverSynchronizer/SyncConfig';

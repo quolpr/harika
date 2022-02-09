@@ -1,6 +1,3 @@
-import { observer } from 'mobx-react-lite';
-import React, { useCallback, useContext, useEffect, useRef } from 'react';
-import { cn, insertText } from '../../utils';
 import {
   BlocksScope,
   CollapsableBlock,
@@ -9,17 +6,21 @@ import {
 import {
   ArrowDropDown,
   ArrowDropUp,
+  CheckBox,
   FormatIndentDecrease,
   FormatIndentIncrease,
-  CheckBox,
 } from '@material-ui/icons';
-import { FooterRefContext } from '../../contexts/FooterRefContext';
+import { observer } from 'mobx-react-lite';
+import React, { useCallback, useContext, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
-import useResizeObserver from 'use-resize-observer/polyfilled';
 import { useUnmount } from 'react-use';
-import { CurrentBlockInputRefContext } from '../../contexts';
 import scrollIntoView from 'scroll-into-view-if-needed';
+import useResizeObserver from 'use-resize-observer/polyfilled';
+
+import { CurrentBlockInputRefContext } from '../../contexts';
+import { FooterRefContext } from '../../contexts/FooterRefContext';
 import { useFocusedBlock } from '../../hooks/useFocusedBlockState';
+import { cn, insertText } from '../../utils';
 
 const toolbarClass = cn('toolbar');
 

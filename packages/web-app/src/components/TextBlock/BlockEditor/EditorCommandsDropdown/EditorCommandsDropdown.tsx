@@ -5,6 +5,7 @@ import React, {
   useEffect,
   useMemo,
 } from 'react';
+
 import { EditorDropdown } from '../EditorDropdown/EditorDropdown';
 
 const todoCommand = {

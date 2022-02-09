@@ -1,6 +1,7 @@
+import { injectable } from 'inversify';
+
 import { BaseSyncRepository } from '../../../../extensions/SyncExtension/BaseSyncRepository';
 import { BaseBlockDoc, BaseBlockRow } from './AllBlocksRepository';
-import { injectable } from 'inversify';
 
 export const blocksLinksTable = 'blocksLinksTable' as const;
 

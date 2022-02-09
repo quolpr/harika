@@ -1,32 +1,33 @@
-import { BaseApplication } from '../../framework/BaseApplication';
-import { SyncAppExtension } from '../../extensions/SyncExtension/SyncAppExtension';
-import { DbAppExtension } from '../../extensions/DbExtension/DbAppExtension';
-import { NoteBlocksAppExtension } from './BlocksExtension/NoteBlocksAppExtension';
-import { NotesTreeAppExtension } from './NotesTreeExtension/NotesTreeAppExtension';
-import { SpacedRepetitionExtension } from './SpacedRepetitionExtension/SpacedRepetitionExtension';
-import { NotesTreeRegistry } from './NotesTreeExtension/models/NotesTreeRegistry';
-import { DB_NAME } from '../../extensions/DbExtension/types';
-import { VaultAppRootStore } from './AppRootStore';
-import { BlocksScopesService } from './BlocksExtension/services/BlocksScopeService';
 import { registerRootStore } from 'mobx-keystone';
-import { BlocksScopeStore } from './BlocksExtension/models/BlocksScopeStore';
+import { BehaviorSubject } from 'rxjs';
+
+import { DbAppExtension } from '../../extensions/DbExtension/DbAppExtension';
+import { DB_NAME } from '../../extensions/DbExtension/types';
+import { SyncAppExtension } from '../../extensions/SyncExtension/SyncAppExtension';
+import { SyncStateService } from '../../extensions/SyncExtension/SyncState';
 import {
   GET_AUTH_TOKEN,
   ROOT_STORE,
   SYNC_CONNECTION_ALLOWED,
   SYNC_URL,
 } from '../../extensions/SyncExtension/types';
-import { SyncStateService } from '../../extensions/SyncExtension/SyncState';
-import { BehaviorSubject } from 'rxjs';
+import { BaseApplication } from '../../framework/BaseApplication';
+import { VaultAppRootStore } from './AppRootStore';
+import { BlocksScopeStore } from './BlocksExtension/models/BlocksScopeStore';
 import { BlocksStore } from './BlocksExtension/models/BlocksStore';
+import { NoteBlocksAppExtension } from './BlocksExtension/NoteBlocksAppExtension';
+import { AllBlocksService } from './BlocksExtension/services/AllBlocksService';
+import { BlocksScopesService } from './BlocksExtension/services/BlocksScopeService';
+import { DeleteNoteService } from './BlocksExtension/services/DeleteNoteService';
+import { FindNoteOrBlockService } from './BlocksExtension/services/FindNoteOrBlockService';
+import { ImportExportService } from './BlocksExtension/services/ImportExportService';
 import { NoteBlocksService } from './BlocksExtension/services/NoteBlocksService';
 import { TextBlocksService } from './BlocksExtension/services/TextBlocksService';
-import { FindNoteOrBlockService } from './BlocksExtension/services/FindNoteOrBlockService';
-import { DeleteNoteService } from './BlocksExtension/services/DeleteNoteService';
-import { ImportExportService } from './BlocksExtension/services/ImportExportService';
-import { AllBlocksService } from './BlocksExtension/services/AllBlocksService';
 import { UpdateLinksService } from './BlocksExtension/services/UpdateLinksService';
 import { UpdateNoteTitleService } from './BlocksExtension/services/UpdateNoteTitleService';
+import { NotesTreeRegistry } from './NotesTreeExtension/models/NotesTreeRegistry';
+import { NotesTreeAppExtension } from './NotesTreeExtension/NotesTreeAppExtension';
+import { SpacedRepetitionExtension } from './SpacedRepetitionExtension/SpacedRepetitionExtension';
 
 export class VaultApplication extends BaseApplication {
   constructor(

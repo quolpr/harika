@@ -1,18 +1,19 @@
-import React, { useCallback, useRef } from 'react';
-import clsx from 'clsx';
 import { BlocksScope, CollapsableBlock, TextBlock } from '@harika/web-core';
 import { TextareaAutosize } from '@material-ui/core';
-import { NoteTitleAutocomplete } from './NoteTitleAutocomplete/NoteTitleAutocomplete';
+import clsx from 'clsx';
+import { observer } from 'mobx-react-lite';
+import React, { useCallback, useRef } from 'react';
+
 import { useCurrentFocusedBlockState } from '../../../hooks/useFocusedBlockState';
+import { EditorCommandsDropdown } from './EditorCommandsDropdown/EditorCommandsDropdown';
+import { FindBlockDropdown } from './FindBlockDropdown/FindBlockDropdown';
 import {
   useHandleFocus,
   useProvideInputToContext,
   useUpdateBlockValues,
 } from './hooks/otherHooks';
 import { useHandleInput } from './hooks/useHandleInput';
-import { observer } from 'mobx-react-lite';
-import { EditorCommandsDropdown } from './EditorCommandsDropdown/EditorCommandsDropdown';
-import { FindBlockDropdown } from './FindBlockDropdown/FindBlockDropdown';
+import { NoteTitleAutocomplete } from './NoteTitleAutocomplete/NoteTitleAutocomplete';
 
 export const BlockEditor = observer(
   ({

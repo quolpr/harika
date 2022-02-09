@@ -6,19 +6,20 @@ import {
   parseStringToTree,
   TextBlock,
 } from '@harika/web-core';
-import { RefObject, useCallback, useContext, useState } from 'react';
-import { ShiftPressedContext } from '../../../../contexts/ShiftPressedContext';
-import { useCurrentFocusedBlockState } from '../../../../hooks/useFocusedBlockState';
-import { isIOS, insertText } from '../../../../utils';
-import type { SearchedNote } from '../NoteTitleAutocomplete/NoteTitleAutocomplete';
-import { getTokensAtCursor } from '../../utils';
 import { Pos, position } from 'caret-pos';
 import dayjs from 'dayjs';
-import { ICommand } from '../EditorCommandsDropdown/EditorCommandsDropdown';
+import { RefObject, useCallback, useContext, useState } from 'react';
+
+import { ShiftPressedContext } from '../../../../contexts/ShiftPressedContext';
+import { useCurrentFocusedBlockState } from '../../../../hooks/useFocusedBlockState';
 import {
   useBlocksStore,
   useUpdateLinkService,
 } from '../../../../hooks/vaultAppHooks';
+import { insertText,isIOS } from '../../../../utils';
+import { getTokensAtCursor } from '../../utils';
+import { ICommand } from '../EditorCommandsDropdown/EditorCommandsDropdown';
+import type { SearchedNote } from '../NoteTitleAutocomplete/NoteTitleAutocomplete';
 
 const symmetricCommands: { [P in ICommand['id']]?: string } = {
   blockRef: '(())',

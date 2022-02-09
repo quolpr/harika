@@ -1,4 +1,5 @@
 import { action, comparer, computed, makeObservable, observable } from 'mobx';
+
 import { normalizeBlockTree } from '../../../../lib/blockParser/blockUtils';
 import { BlocksScope } from './BlocksScope';
 import { CollapsableBlock } from './CollapsableBlock';

@@ -1,18 +1,19 @@
-import { DB } from '../../../../extensions/DbExtension/DB';
 import { inject, injectable } from 'inversify';
 import { Observable, of } from 'rxjs';
 import Q from 'sql-bricks';
+
+import { DB } from '../../../../extensions/DbExtension/DB';
+import { DbEventsListenService } from '../../../../extensions/SyncExtension/services/DbEventsListenerService';
+import { raw, sqltag } from '../../../../lib/sql';
+import { AllBlocksRepository } from '../repositories/AllBlocksRepository';
 import {
   noteBlocksFTSTable,
   noteBlocksTable,
 } from '../repositories/NoteBlocksRepostitory';
-import { DbEventsListenService } from '../../../../extensions/SyncExtension/services/DbEventsListenerService';
 import {
   textBlocksFTSTable,
   textBlocksTable,
 } from '../repositories/TextBlocksRepository';
-import { AllBlocksRepository } from '../repositories/AllBlocksRepository';
-import { raw, sqltag } from '../../../../lib/sql';
 
 @injectable()
 export class FindNoteOrBlockService {

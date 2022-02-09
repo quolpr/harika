@@ -1,4 +1,5 @@
 import { ExtendedModel, model, modelAction, tProp, types } from 'mobx-keystone';
+
 import { syncable } from '../../../../extensions/SyncExtension/mobx-keystone/syncable';
 import { BaseBlock } from './BaseBlock';
 import { TextBlockContent } from './TextBlockContentModel';

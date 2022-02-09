@@ -1,13 +1,14 @@
 import { Container } from 'inversify';
-import { BaseExtension } from './BaseExtension';
+import { Subject } from 'rxjs';
+
 import { generateId } from '../lib/generateId';
+import { BaseExtension } from './BaseExtension';
 import {
   APPLICATION_ID,
   APPLICATION_NAME,
   STOP_SIGNAL,
   WINDOW_ID,
 } from './types';
-import { Subject } from 'rxjs';
 
 const windowId = generateId();
 

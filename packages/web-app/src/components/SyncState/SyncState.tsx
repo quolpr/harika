@@ -1,15 +1,17 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useObservableEagerState } from 'observable-hooks';
-import { bem } from '../../utils';
 import './styles.css';
 import 'tippy.js/dist/tippy.css';
+
 import Tippy from '@tippyjs/react';
+import { useObservableEagerState } from 'observable-hooks';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useMountedState } from 'react-use';
+import { BehaviorSubject } from 'rxjs';
+
 import {
   useIsConnectionAllowed$,
   useSyncState$,
 } from '../../hooks/vaultAppHooks';
-import { BehaviorSubject } from 'rxjs';
-import { useMountedState } from 'react-use';
+import { bem } from '../../utils';
 
 const syncStateClass = bem('syncState');
 

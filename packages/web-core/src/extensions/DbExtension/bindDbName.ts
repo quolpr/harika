@@ -1,5 +1,6 @@
 import { Container } from 'inversify';
-import { APPLICATION_NAME, APPLICATION_ID } from '../../framework/types';
+
+import { APPLICATION_ID,APPLICATION_NAME } from '../../framework/types';
 import { DB_NAME } from './types';
 
 export const bindDbName = (container: Container) => {

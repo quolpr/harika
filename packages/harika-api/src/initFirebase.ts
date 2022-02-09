@@ -1,4 +1,4 @@
-import { initializeApp, applicationDefault } from 'firebase-admin/app';
+import { applicationDefault,initializeApp } from 'firebase-admin/app';
 
 initializeApp({
   credential: applicationDefault(),

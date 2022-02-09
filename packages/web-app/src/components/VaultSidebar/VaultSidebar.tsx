@@ -1,27 +1,29 @@
-import React, { useEffect, useState } from 'react';
 import './styles.css';
-import { Link } from 'react-router-dom';
-import { paths } from '../../paths';
-import { cn } from '../../utils';
-import { useCallback } from 'react';
-import VaultIcon from './vault.svgr.svg?component';
-import DailyNoteIcon from '../../icons/daily-note.svgr.svg?component';
-import NotesIcon from '../../icons/notes.svgr.svg?component';
-import UploadIcon from '../../icons/upload.svgr.svg?component';
-import DownloadIcon from '../../icons/download.svgr.svg?component';
-import { NotesTree } from './NotesTree';
-import download from 'downloadjs';
+
 import dayjs from 'dayjs';
+import download from 'downloadjs';
 import { useObservable, useObservableState } from 'observable-hooks';
+import React, { useEffect, useState } from 'react';
+import { useCallback } from 'react';
+import { Link } from 'react-router-dom';
+import { useMedia } from 'react-use';
 import { switchMap } from 'rxjs';
+
+import { useHandleNoteClickOrPress } from '../../contexts/StackedNotesContext';
 import {
   useCurrentVaultApp,
   useImportExportService,
   useNoteBlocksService,
 } from '../../hooks/vaultAppHooks';
+import DailyNoteIcon from '../../icons/daily-note.svgr.svg?component';
+import DownloadIcon from '../../icons/download.svgr.svg?component';
+import NotesIcon from '../../icons/notes.svgr.svg?component';
+import UploadIcon from '../../icons/upload.svgr.svg?component';
+import { paths } from '../../paths';
+import { cn } from '../../utils';
+import { NotesTree } from './NotesTree';
 import { ResizeActionType, Resizer } from './Resizer';
-import { useMedia } from 'react-use';
-import { useHandleNoteClickOrPress } from '../../contexts/StackedNotesContext';
+import VaultIcon from './vault.svgr.svg?component';
 
 export const sidebarClass = cn('sidebar');
 

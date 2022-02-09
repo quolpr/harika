@@ -1,10 +1,11 @@
 import { inject, injectable } from 'inversify';
 import { uniq } from 'lodash-es';
+
 import { filterAst } from '../../../../lib/blockParser/astHelpers';
 import {
-  TextBlockRef,
   NoteBlockRefToken,
   TagToken,
+  TextBlockRef,
 } from '../../../../lib/blockParser/types';
 import { TextBlock } from '../models/TextBlock';
 import { AllBlocksService } from './AllBlocksService';

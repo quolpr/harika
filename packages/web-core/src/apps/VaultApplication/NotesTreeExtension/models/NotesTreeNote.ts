@@ -9,6 +9,7 @@ import {
   Ref,
   rootRef,
 } from 'mobx-keystone';
+
 import { withoutUndoAction } from '../../../../lib/utils';
 import {
   NotesTreeRegistry,

@@ -1,5 +1,6 @@
 import { ModelCreationData, standaloneAction } from 'mobx-keystone';
 import { Optional } from 'utility-types';
+
 import { isTodo } from '../../../../lib/blockParser/astHelpers';
 import { generateId } from '../../../../lib/generateId';
 import { BaseBlock, blockRef } from './BaseBlock';

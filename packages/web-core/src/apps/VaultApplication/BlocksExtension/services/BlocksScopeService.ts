@@ -2,6 +2,7 @@ import { inject, injectable } from 'inversify';
 import { isEqual } from 'lodash-es';
 import { withoutUndo } from 'mobx-keystone';
 import { distinctUntilChanged, map, of, switchMap } from 'rxjs';
+
 import { withoutSync } from '../../../../extensions/SyncExtension/mobx-keystone/syncable';
 import { blocksScopesMapper } from '../mappers/blockScopesMapper';
 import { BlocksScope } from '../models/BlocksScope';

@@ -1,6 +1,8 @@
 import './loadConfig';
 import './initFirebase';
+
 import { Knex } from 'knex';
+
 import createServer from './server';
 
 declare module 'fastify' {

@@ -1,7 +1,7 @@
 import {
-  updateChangeFactory,
   createChangeFactory,
   deleteChangeFactory,
+  updateChangeFactory,
 } from '../../../../test/supports/changeBuilders';
 import { buildSnapshot } from './buildSnapshot';
 

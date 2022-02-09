@@ -1,11 +1,12 @@
 import {
   ArraySet,
   idProp,
-  model,
   Model,
+  model,
   modelAction,
   prop,
 } from 'mobx-keystone';
+
 import { syncable } from '../../../../extensions/SyncExtension/mobx-keystone/syncable';
 import { withoutUndoAction } from '../../../../lib/utils';
 

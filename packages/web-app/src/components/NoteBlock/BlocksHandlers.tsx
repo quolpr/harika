@@ -4,6 +4,7 @@ import {
   getBlocksSelection,
   NoteBlock,
 } from '@harika/web-core';
+import { isEqual } from 'lodash-es';
 import { observer } from 'mobx-react-lite';
 import { useEffect } from 'react';
 import type { OperatorFunction } from 'rxjs';
@@ -17,7 +18,7 @@ import {
   takeUntil,
   tap,
 } from 'rxjs/operators';
-import { isEqual } from 'lodash-es';
+
 import {
   FocusedBlockState,
   useFocusedBlock,

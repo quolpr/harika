@@ -1,11 +1,12 @@
-import React, { MutableRefObject, Suspense, useEffect, useRef } from 'react';
 import './App.css';
 import './tailwind.css';
 import './variables.css';
+import './firebaseApp';
+
+import { useLocalStorage } from '@rehooks/local-storage';
+import React, { MutableRefObject, Suspense, useEffect, useRef } from 'react';
 import Modal from 'react-modal';
-import { paths, PATHS, VAULT_PREFIX } from './paths';
 import { QueryClient, QueryClientProvider } from 'react-query';
-import { useAuthState } from './hooks/useAuthState';
 import {
   BrowserRouter,
   Navigate,
@@ -13,9 +14,10 @@ import {
   Router,
   Routes,
 } from 'react-router-dom';
-import { useLocalStorage } from '@rehooks/local-storage';
+
 import { ShiftPressedContext } from './contexts/ShiftPressedContext';
-import './firebaseApp';
+import { useAuthState } from './hooks/useAuthState';
+import { PATHS, paths, VAULT_PREFIX } from './paths';
 
 const SignupPage = React.lazy(() => import('./pages/SignupPage/SignupPage'));
 const LoginPage = React.lazy(() => import('./pages/LoginPage/LoginPage'));

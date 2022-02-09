@@ -1,9 +1,10 @@
+import { find } from 'linkifyjs';
+import { ValuesType } from 'utility-types';
+
+import { dictionary } from '../generateId';
 import { mapTokens } from './astHelpers';
 import { parse as pegParse } from './pegParser';
-import { find } from 'linkifyjs';
 import type { Token } from './types';
-import { dictionary } from '../generateId';
-import { ValuesType } from 'utility-types';
 
 const newIdGenerator = () => {
   let id = 0;

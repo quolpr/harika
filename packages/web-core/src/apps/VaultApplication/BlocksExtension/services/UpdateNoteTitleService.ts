@@ -1,4 +1,5 @@
 import { inject, injectable } from 'inversify';
+
 import { NoteBlocksService } from './NoteBlocksService';
 
 @injectable()

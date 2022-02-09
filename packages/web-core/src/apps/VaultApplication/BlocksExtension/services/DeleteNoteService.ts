@@ -1,4 +1,5 @@
 import { inject, injectable } from 'inversify';
+
 import { DB } from '../../../../extensions/DbExtension/DB';
 import { ISyncCtx } from '../../../../extensions/SyncExtension/syncCtx';
 import { AllBlocksRepository } from '../../BlocksExtension/repositories/AllBlocksRepository';

@@ -1,9 +1,9 @@
-import {
-  serverSnapshotsTable,
-  clientChangesTable,
-} from '../repositories/SyncRepository';
-import { IMigration } from '../../DbExtension/types';
 import { IQueryExecuter } from '../../DbExtension/DB';
+import { IMigration } from '../../DbExtension/types';
+import {
+  clientChangesTable,
+  serverSnapshotsTable,
+} from '../repositories/SyncRepository';
 import { syncStatusTable } from '../services/SyncStatusService';
 
 const up = async (db: IQueryExecuter) => {

@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+
 import { useAuthState } from './useAuthState';
 
 export const useSyncConfig = () => {

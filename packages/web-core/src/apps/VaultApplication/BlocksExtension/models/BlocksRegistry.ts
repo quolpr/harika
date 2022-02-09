@@ -1,5 +1,6 @@
 import { observable, reaction } from 'mobx';
-import { idProp, model, Model, onChildAttachedTo, prop } from 'mobx-keystone';
+import { idProp, Model, model, onChildAttachedTo, prop } from 'mobx-keystone';
+
 import { BaseBlock } from './BaseBlock';
 
 @model('harika/BlocksExtension/BlocksRegistry')

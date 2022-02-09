@@ -1,8 +1,9 @@
 import { Container, inject, injectable } from 'inversify';
 import { AnyModel, ModelData } from 'mobx-keystone';
 import { Class } from 'utility-types';
-import { IMapper } from '../mappers';
+
 import { BaseSyncRepository } from '../BaseSyncRepository';
+import { IMapper } from '../mappers';
 import { CreationDataWithId, SyncModelId } from '../types';
 
 export type IRegistration = {

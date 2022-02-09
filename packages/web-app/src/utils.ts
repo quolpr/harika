@@ -1,6 +1,6 @@
 import { withNaming } from '@bem-react/classname';
-import { useRef } from 'react';
 import { isEqual } from 'lodash-es';
+import { useRef } from 'react';
 
 export const cn = withNaming({ n: '', e: '__', m: '--', v: '_' });
 

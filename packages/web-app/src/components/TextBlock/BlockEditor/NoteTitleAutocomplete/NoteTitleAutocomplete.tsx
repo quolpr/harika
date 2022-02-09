@@ -1,17 +1,18 @@
-import React, { MutableRefObject, useCallback, useEffect } from 'react';
+import { Pos } from 'caret-pos';
 import { isEqual } from 'lodash-es';
+import { useObservable, useObservableState } from 'observable-hooks';
+import React, { MutableRefObject, useCallback, useEffect } from 'react';
 import { useState } from 'react';
 import { timer } from 'rxjs';
 import { debounce, distinctUntilChanged, switchMap, tap } from 'rxjs/operators';
+
+import { useFindService } from '../../../../hooks/vaultAppHooks';
 import { cn } from '../../../../utils';
-import { useObservable, useObservableState } from 'observable-hooks';
-import { Pos } from 'caret-pos';
 import {
   EditorDropdown,
   editorDropdownClass,
   IDropdownItem,
 } from '../EditorDropdown/EditorDropdown';
-import { useFindService } from '../../../../hooks/vaultAppHooks';
 
 export type SearchedNote = { id: string; title: string };
 export const noteAutocompleteClass = cn('note-autocomplete');

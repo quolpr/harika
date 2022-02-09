@@ -1,8 +1,9 @@
 import 'reflect-metadata';
-// @ts-ignore
-import DbWorker from './DbWorker?worker';
+
+import { QueryExecResult } from '@harika-org/sql.js';
 import { initBackend } from 'absurd-sql/dist/indexeddb-main-thread';
-import Q from 'sql-bricks';
+import { inject, injectable } from 'inversify';
+import { chunk } from 'lodash-es';
 import {
   filter,
   first,
@@ -20,18 +21,19 @@ import {
   throwError,
   timeout,
 } from 'rxjs';
-import { inject, injectable } from 'inversify';
-import { STOP_SIGNAL } from '../../framework/types';
+import Q from 'sql-bricks';
 import { v4 as uuidv4 } from 'uuid';
-import { chunk } from 'lodash-es';
+
+import { STOP_SIGNAL } from '../../framework/types';
+import { Sql } from '../../lib/sql';
+// @ts-ignore
+import DbWorker from './DbWorker?worker';
 import {
   DB_NAME,
   ICommand,
   IInputWorkerMessage,
   IOutputWorkerMessage,
 } from './types';
-import { QueryExecResult } from '@harika-org/sql.js';
-import { Sql } from '../../lib/sql';
 
 type DistributiveOmit<T, K extends keyof any> = T extends any
   ? Omit<T, K>

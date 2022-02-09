@@ -1,5 +1,13 @@
+import {
+  ApplyNewChangesFromClientCommand,
+  AuthClientCommand,
+  ClientCommands,
+  CommandTypesFromClient,
+  EventsFromServer,
+  GetSnapshotsClientCommand,
+} from '@harika/sync-common';
 import { FastifyPluginCallback } from 'fastify';
-import { Server, Socket } from 'socket.io';
+import { getAuth } from 'firebase-admin/auth';
 import {
   BehaviorSubject,
   catchError,
@@ -13,20 +21,13 @@ import {
   tap,
   withLatestFrom,
 } from 'rxjs';
+import { Server, Socket } from 'socket.io';
+
+import { db } from '../../db/db';
 import { createIfNotExistsDbSchema } from './createDbSchema';
+import { ChangesService } from './services/changesService';
 import { DocSnapshotsService } from './services/DocSnapshotsService';
 import { IncomingChangesHandler } from './services/IncomingChangesHandler';
-import { ChangesService } from './services/changesService';
-import {
-  ApplyNewChangesFromClientCommand,
-  AuthClientCommand,
-  ClientCommands,
-  CommandTypesFromClient,
-  EventsFromServer,
-  GetSnapshotsClientCommand,
-} from '@harika/sync-common';
-import { getAuth } from 'firebase-admin/auth';
-import { db } from '../../db/db';
 
 function handleMessage<T extends ClientCommands>(
   socket: Socket,

@@ -1,4 +1,5 @@
 import { FastifyPluginCallback } from 'fastify';
+
 import { db } from '../../db/db';
 
 export const healthHandler: FastifyPluginCallback = (server, options, next) => {

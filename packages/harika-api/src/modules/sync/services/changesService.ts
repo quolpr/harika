@@ -1,8 +1,9 @@
-import { Knex } from 'knex';
-import { docChangesTable } from '../dbTypes';
 import { IDocChange, IDocChangeWithRev, WithRev } from '@harika/sync-common';
-import { getChangesKey, getUniqKey, NonConstructor } from '../utils';
+import { Knex } from 'knex';
 import { groupBy } from 'lodash';
+
+import { docChangesTable } from '../dbTypes';
+import { getChangesKey, getUniqKey, NonConstructor } from '../utils';
 
 export class ChangesService {
   async isAnyChangeAfterClock(

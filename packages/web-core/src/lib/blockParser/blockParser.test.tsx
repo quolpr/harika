@@ -1,4 +1,5 @@
 import { expect } from '@esm-bundle/chai';
+
 import { parse } from './blockParser';
 
 describe('Parser', () => {

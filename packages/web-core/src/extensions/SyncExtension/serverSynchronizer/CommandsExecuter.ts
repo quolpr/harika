@@ -1,3 +1,4 @@
+import type { ClientCommands } from '@harika/sync-common';
 import { Observable } from 'rxjs';
 import {
   catchError,
@@ -9,7 +10,6 @@ import {
   takeUntil,
   tap,
 } from 'rxjs/operators';
-import type { ClientCommands } from '@harika/sync-common';
 import { Socket } from 'socket.io-client';
 
 export class CommandsExecuter {

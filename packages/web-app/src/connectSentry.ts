@@ -1,12 +1,12 @@
+import { configureScope } from '@sentry/minimal';
+import type { RootPath, SimpleActionContext } from 'mobx-keystone';
 import {
   ActionContextActionType,
   actionTrackingMiddleware,
   ActionTrackingResult,
-  getSnapshot,
   getRootPath,
+  getSnapshot,
 } from 'mobx-keystone';
-import type { RootPath, SimpleActionContext } from 'mobx-keystone';
-import { configureScope } from '@sentry/minimal';
 
 const ACTION_BREADCRUMB_CATEGORY = 'redux.action';
 const ACTION_BREADCRUMB_TYPE = 'info';

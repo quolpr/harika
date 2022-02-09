@@ -1,7 +1,8 @@
 import { IDocChange, makeClientId } from '@harika/sync-common';
+
 import {
-  updateChangeFactory,
   createChangeFactory,
+  updateChangeFactory,
 } from '../../../../test/supports/changeBuilders';
 import {
   createTestDbSchema,

@@ -1,19 +1,20 @@
-import React, { useCallback } from 'react';
 import type { NotesTreeNote } from '@harika/web-core';
-import { cn } from '../../utils';
-import { Link, useNavigate } from 'react-router-dom';
-import ArrowDown from '../../icons/arrow-down.svgr.svg?component';
-import ArrowRight from '../../icons/arrow-right.svgr.svg?component';
 import { observer } from 'mobx-react-lite';
+import React, { useCallback } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+
+import {
+  useHandleNoteClickOrPress,
+  useNotePath,
+} from '../../contexts/StackedNotesContext';
 import { usePrimaryNoteId } from '../../hooks/usePrimaryNote';
 import {
   useNoteBlocksService,
   useNotesTreeRegistry,
 } from '../../hooks/vaultAppHooks';
-import {
-  useHandleNoteClickOrPress,
-  useNotePath,
-} from '../../contexts/StackedNotesContext';
+import ArrowDown from '../../icons/arrow-down.svgr.svg?component';
+import ArrowRight from '../../icons/arrow-right.svgr.svg?component';
+import { cn } from '../../utils';
 
 const treeClass = cn('notes-tree');
 const sidebarItemClass = cn('sidebar-item');

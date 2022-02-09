@@ -1,5 +1,6 @@
 import { NoteBlock } from '@harika/web-core';
 import { useEffect, useState } from 'react';
+
 import { usePrimaryStack } from '../contexts/StackedNotesContext';
 import { useNoteBlocksService } from './vaultAppHooks';
 

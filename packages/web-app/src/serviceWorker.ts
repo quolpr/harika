@@ -1,8 +1,8 @@
+import { CacheableResponsePlugin } from 'workbox-cacheable-response';
 import { ExpirationPlugin } from 'workbox-expiration';
+import { precacheAndRoute, PrecacheFallbackPlugin } from 'workbox-precaching';
 import { registerRoute } from 'workbox-routing';
 import { CacheFirst, NetworkOnly } from 'workbox-strategies';
-import { precacheAndRoute, PrecacheFallbackPlugin } from 'workbox-precaching';
-import { CacheableResponsePlugin } from 'workbox-cacheable-response';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore

@@ -1,18 +1,19 @@
-import { concatMap, map, merge, Observable, of, switchMap } from 'rxjs';
-import type { CommandsExecuter } from '../CommandsExecuter';
-import { v4 } from 'uuid';
-import type { SyncRepository } from '../../repositories/SyncRepository';
-import { Socket } from 'socket.io-client';
 import {
   CommandTypesFromClient,
   EventsFromServer,
   GetSnapshotsClientCommand,
   GetSnapshotsResponse,
 } from '@harika/sync-common';
+import { concatMap, map, merge, Observable, of, switchMap } from 'rxjs';
+import { Socket } from 'socket.io-client';
+import { v4 } from 'uuid';
+
+import type { SyncRepository } from '../../repositories/SyncRepository';
 import {
   ISyncStatus,
   SyncStatusService,
 } from '../../services/SyncStatusService';
+import type { CommandsExecuter } from '../CommandsExecuter';
 
 export interface IChangePullRow {
   id: string;

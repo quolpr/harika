@@ -1,5 +1,6 @@
 import { expect } from 'chai';
 import { fromSnapshot, setGlobalConfig } from 'mobx-keystone';
+
 import { newTreeModel, NotesTreeRegistry } from './NotesTreeRegistry';
 
 let id = 1;

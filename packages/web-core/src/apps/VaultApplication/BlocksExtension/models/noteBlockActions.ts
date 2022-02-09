@@ -4,12 +4,13 @@ import {
   standaloneAction,
   withoutUndo,
 } from 'mobx-keystone';
+import type { Optional, Required } from 'utility-types';
+
+import { generateId } from '../../../../lib/generateId';
+import { blockRef } from './BaseBlock';
 import { BlocksStore } from './BlocksStore';
 import { NoteBlock } from './NoteBlock';
-import type { Optional, Required } from 'utility-types';
-import { generateId } from '../../../../lib/generateId';
 import { TextBlock } from './TextBlock';
-import { blockRef } from './BaseBlock';
 
 export const createNote = standaloneAction(
   'harika/BlocksExtension/NoteBlock/createNote',

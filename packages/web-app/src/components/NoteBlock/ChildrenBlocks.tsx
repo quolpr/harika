@@ -1,20 +1,21 @@
-import { observer } from 'mobx-react-lite';
-import React from 'react';
-import { useAsync, useMedia } from 'react-use';
-import { Toolbar } from './Toolbar';
-import { useObservable, useObservableState } from 'observable-hooks';
-import { switchMap } from 'rxjs';
-import { LinkedBlocksOfBlocksProvider } from '../LinkedBlocksOfBlocksContext';
-import { bem } from '../../utils';
-import { useBlocksScopesService } from '../../hooks/vaultAppHooks';
 import {
   CollapsableBlock,
   getBlocksSelection,
   getCollapsableBlock,
   NoteBlock,
 } from '@harika/web-core';
-import { BlocksHandlers } from './BlocksHandlers';
+import { observer } from 'mobx-react-lite';
+import { useObservable, useObservableState } from 'observable-hooks';
+import React from 'react';
+import { useAsync, useMedia } from 'react-use';
+import { switchMap } from 'rxjs';
+
+import { useBlocksScopesService } from '../../hooks/vaultAppHooks';
+import { bem } from '../../utils';
+import { LinkedBlocksOfBlocksProvider } from '../LinkedBlocksOfBlocksContext';
 import { BlocksChildren } from '../TextBlock/TextBlock';
+import { BlocksHandlers } from './BlocksHandlers';
+import { Toolbar } from './Toolbar';
 
 const noteClass = bem('note');
 

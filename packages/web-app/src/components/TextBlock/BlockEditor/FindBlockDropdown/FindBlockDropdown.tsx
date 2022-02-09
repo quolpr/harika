@@ -8,18 +8,19 @@ import React, {
   useState,
 } from 'react';
 import {
-  distinctUntilChanged,
-  timer,
-  switchMap,
   debounce,
-  tap,
+  distinctUntilChanged,
   map,
+  switchMap,
+  tap,
+  timer,
 } from 'rxjs';
+
 import { useFindService } from '../../../../hooks/vaultAppHooks';
 import {
-  IDropdownItem,
-  editorDropdownClass,
   EditorDropdown,
+  editorDropdownClass,
+  IDropdownItem,
 } from '../EditorDropdown/EditorDropdown';
 import { SearchedNote } from '../NoteTitleAutocomplete/NoteTitleAutocomplete';
 

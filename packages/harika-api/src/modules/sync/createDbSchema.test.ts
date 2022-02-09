@@ -1,6 +1,7 @@
+import { v4 } from 'uuid';
+
 import { db } from '../../db/db';
 import { createDbSchema, createIfNotExistsDbSchema } from './createDbSchema';
-import { v4 } from 'uuid';
 import { DbService } from './services/DbService';
 
 const userId = v4();

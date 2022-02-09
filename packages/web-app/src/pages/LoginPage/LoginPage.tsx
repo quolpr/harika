@@ -1,11 +1,3 @@
-import React, { useState } from 'react';
-import { useCallback } from 'react';
-import { useForm } from 'react-hook-form';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuthState } from '../../hooks/useAuthState';
-import { paths } from '../../paths';
-import { cn } from '../../utils';
-import { useOfflineAccounts } from '../../hooks/useOfflineAccounts';
 import { generateId } from '@harika/web-core';
 import {
   getAuth,
@@ -13,6 +5,15 @@ import {
   signInWithEmailAndPassword,
   signInWithPopup,
 } from 'firebase/auth';
+import React, { useState } from 'react';
+import { useCallback } from 'react';
+import { useForm } from 'react-hook-form';
+import { Link, useNavigate } from 'react-router-dom';
+
+import { useAuthState } from '../../hooks/useAuthState';
+import { useOfflineAccounts } from '../../hooks/useOfflineAccounts';
+import { paths } from '../../paths';
+import { cn } from '../../utils';
 
 const formClass = cn('form');
 

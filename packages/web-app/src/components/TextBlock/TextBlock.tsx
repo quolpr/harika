@@ -1,7 +1,5 @@
-import React, { useCallback, useRef } from 'react';
 import './styles.css';
-import clsx from 'clsx';
-import { observer } from 'mobx-react-lite';
+
 import {
   BlocksScope,
   BlocksSelection,
@@ -9,14 +7,18 @@ import {
   getBlocksSelection,
   TextBlock,
 } from '@harika/web-core';
-import { Arrow } from '../Arrow/Arrow';
-import { TokensRenderer } from './TokensRenderer';
-import { useFakeInput } from './BlockEditor/hooks/useFocusHandler';
-import { useCurrentFocusedBlockState } from '../../hooks/useFocusedBlockState';
-import { BlockEditor } from './BlockEditor/BlockEditor';
-import { useBacklinkedBlocksCount } from '../LinkedBlocksOfBlocksContext';
+import clsx from 'clsx';
 import { computed } from 'mobx';
 import { getSnapshot } from 'mobx-keystone';
+import { observer } from 'mobx-react-lite';
+import React, { useCallback, useRef } from 'react';
+
+import { useCurrentFocusedBlockState } from '../../hooks/useFocusedBlockState';
+import { Arrow } from '../Arrow/Arrow';
+import { useBacklinkedBlocksCount } from '../LinkedBlocksOfBlocksContext';
+import { BlockEditor } from './BlockEditor/BlockEditor';
+import { useFakeInput } from './BlockEditor/hooks/useFocusHandler';
+import { TokensRenderer } from './TokensRenderer';
 
 // IMPORTANT: don't use any global handlers in <NoteBlocksExtensionStore /> (document.addEventListener) cause it is slow down note blocks tree a lot
 

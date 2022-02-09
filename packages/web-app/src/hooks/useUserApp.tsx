@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from 'react';
 import { UserApplication } from '@harika/web-core';
+import React, { useEffect, useRef } from 'react';
 import {
   createContext,
   useCallback,
@@ -7,8 +7,9 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { useSyncConfig } from './useSyncConfig';
+
 import { useGetSyncToken } from './useGetSyncToken';
+import { useSyncConfig } from './useSyncConfig';
 
 type IState = {
   app: UserApplication | undefined;

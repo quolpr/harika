@@ -1,7 +1,8 @@
 import { computed } from 'mobx';
-import { idProp, model, Model, modelAction, prop, Ref } from 'mobx-keystone';
+import { idProp, Model, model, modelAction, prop, Ref } from 'mobx-keystone';
+
 import { withoutUndoAction } from '../../../../lib/utils';
-import { notesTreeNoteRef, NotesTreeNote } from './NotesTreeNote';
+import { NotesTreeNote,notesTreeNoteRef } from './NotesTreeNote';
 
 export interface PartialNote {
   id: string;

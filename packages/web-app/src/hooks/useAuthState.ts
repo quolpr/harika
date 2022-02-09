@@ -1,7 +1,7 @@
 import {
-  writeStorage,
-  useLocalStorage,
   deleteFromStorage,
+  useLocalStorage,
+  writeStorage,
 } from '@rehooks/local-storage';
 import { useCallback } from 'react';
 

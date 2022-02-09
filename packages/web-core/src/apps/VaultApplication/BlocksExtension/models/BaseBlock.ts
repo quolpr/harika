@@ -1,17 +1,19 @@
+import { comparer, computed } from 'mobx';
 import {
-  Model,
-  model,
-  prop,
-  Ref,
-  tProp,
-  types,
-  rootRef,
-  modelAction,
   detach,
   findParent,
   idProp,
+  Model,
+  model,
+  modelAction,
+  prop,
+  Ref,
+  rootRef,
+  tProp,
+  types,
 } from 'mobx-keystone';
-import { comparer, computed } from 'mobx';
+
+import { BlocksRegistry } from './BlocksRegistry';
 import {
   deepLastRightChildFunc,
   flattenTreeFunc,
@@ -21,7 +23,6 @@ import {
   nearestRightToParentFunc,
   pathFunc,
 } from './treeFuncs';
-import { BlocksRegistry } from './BlocksRegistry';
 
 export const blockRef = rootRef<BaseBlock>(
   'harika/BlocksExtension/BaseBlockRef',

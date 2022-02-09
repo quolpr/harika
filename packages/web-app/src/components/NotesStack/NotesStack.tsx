@@ -1,14 +1,12 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
+import './styles.css';
+
+import { XIcon } from '@heroicons/react/solid';
 import { observer } from 'mobx-react-lite';
 import React, { useCallback, useEffect, useRef } from 'react';
 import { useMedia } from 'react-use';
-import { CurrentNoteContext } from '../../hooks/useCurrentNote';
-import { cn } from '../../utils';
-import { XIcon } from '@heroicons/react/solid';
-import './styles.css';
 
-import { useFindNote } from './useFindNote';
 import { ContainerElRefContext } from '../../contexts/ContainerElRefContext';
 import {
   CurrentStackContext,
@@ -16,7 +14,10 @@ import {
   useCloseNote,
   useFocusedStackIdContext,
 } from '../../contexts/StackedNotesContext';
+import { CurrentNoteContext } from '../../hooks/useCurrentNote';
+import { cn } from '../../utils';
 import { NoteBlockComponent } from '../NoteBlock/NoteBlockComponent';
+import { useFindNote } from './useFindNote';
 
 const notesStackClass = cn('notes-stack');
 
