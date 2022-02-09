@@ -19,3 +19,4 @@ jobs:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_HARIKA_DEV }}'
           projectId: harika-dev
+          entryPoint: './packages/web-app/firebase.json'
