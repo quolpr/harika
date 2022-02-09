@@ -28,6 +28,3 @@ jobs:
     - run: yarn lint:web-core --max-warnings 0
     - run: yarn lint:web-app --max-warnings 0
     - run: yarn lint:api-app --max-warnings 0
-    - run: yarn test:web-core
-    - run: yarn test:web-app
-    - run: yarn test:api-app
