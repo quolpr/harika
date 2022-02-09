@@ -22,4 +22,4 @@ jobs:
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_HARIKA_DEV }}'
           channelId: live
           projectId: harika-dev
-          entryPoint: './packages/web-app/firebase.json'
+          entryPoint: './packages/web-app'
