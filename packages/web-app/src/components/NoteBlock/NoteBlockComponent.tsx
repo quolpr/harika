@@ -21,7 +21,7 @@ import React, {
 import AutosizeInput from 'react-input-autosize';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useMedia } from 'react-use';
-import { map, of, switchMap } from 'rxjs';
+import { map, switchMap } from 'rxjs';
 
 import { CurrentBlockInputRefContext } from '../../contexts';
 import { useNotePath } from '../../contexts/StackedNotesContext';

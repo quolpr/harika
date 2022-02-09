@@ -1,14 +1,10 @@
 import { isEqual } from 'lodash-es';
-import { useObservable, useObservableState } from 'observable-hooks';
 import React, { useCallback, useMemo } from 'react';
-import { switchMap } from 'rxjs';
 import {
   Context,
   createContext,
   useContextSelector,
 } from 'use-context-selector';
-
-import { useNoteBlocksService } from '../hooks/vaultAppHooks';
 
 const LinkedBlocksOfBlocksContext = createContext<
   undefined | Record<string, { noteId: string; blockId: string }[]>
@@ -40,7 +36,7 @@ export const useDeepContextSelector = <T extends any, R extends any>(
 export const LinkedBlocksOfBlocksProvider: React.FC<{
   noteId: string;
 }> = ({ noteId, children }) => {
-  const noteBlocksService = useNoteBlocksService();
+  // const noteBlocksService = useNoteBlocksService();
 
   // const links$ = useObservable(
   //   (inputs$) => {

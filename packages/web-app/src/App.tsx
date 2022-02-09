@@ -7,13 +7,7 @@ import { useLocalStorage } from '@rehooks/local-storage';
 import React, { MutableRefObject, Suspense, useEffect, useRef } from 'react';
 import Modal from 'react-modal';
 import { QueryClient, QueryClientProvider } from 'react-query';
-import {
-  BrowserRouter,
-  Navigate,
-  Route,
-  Router,
-  Routes,
-} from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 
 import { ShiftPressedContext } from './contexts/ShiftPressedContext';
 import { useAuthState } from './hooks/useAuthState';

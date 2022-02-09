@@ -10,7 +10,6 @@ import {
   map,
   Observable,
   takeUntil,
-  tap,
 } from 'rxjs';
 
 import { STOP_SIGNAL } from '../../../framework/types';

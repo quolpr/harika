@@ -6,7 +6,6 @@ import {
 } from '@harika/sync-common';
 import { concatMap, map, merge, Observable, of, switchMap } from 'rxjs';
 import { Socket } from 'socket.io-client';
-import { v4 } from 'uuid';
 
 import type { SyncRepository } from '../../repositories/SyncRepository';
 import {

@@ -4,12 +4,10 @@ import {
   BlocksScope,
   BlocksSelection,
   CollapsableBlock,
-  getBlocksSelection,
   TextBlock,
 } from '@harika/web-core';
 import clsx from 'clsx';
 import { computed } from 'mobx';
-import { getSnapshot } from 'mobx-keystone';
 import { observer } from 'mobx-react-lite';
 import React, { useCallback, useRef } from 'react';
 

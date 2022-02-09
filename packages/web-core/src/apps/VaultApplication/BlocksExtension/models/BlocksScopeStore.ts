@@ -4,7 +4,6 @@ import {
   Model,
   model,
   modelAction,
-  ModelCreationData,
   ModelData,
   prop,
 } from 'mobx-keystone';

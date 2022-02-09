@@ -1,5 +1,4 @@
 import { QueryExecResult } from '@harika-org/sql.js';
-import Q from 'sql-bricks';
 
 import { IQueryExecuter } from './DB';
 

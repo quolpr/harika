@@ -4,10 +4,9 @@ import { groupBy, mapKeys, pickBy } from 'lodash-es';
 import { DB, IQueryExecuter } from '../../../../extensions/DbExtension/DB';
 import { SyncConfig } from '../../../../extensions/SyncExtension/serverSynchronizer/SyncConfig';
 import { ISyncCtx } from '../../../../extensions/SyncExtension/syncCtx';
-import { join, raw,sqltag } from '../../../../lib/sql';
+import { join, raw, sqltag } from '../../../../lib/sql';
 import { BLOCK_REPOSITORY } from '../types';
 import { BaseBlockRepository, blocksLinksTable } from './BaseBlockRepository';
-import { textBlocksTable } from './TextBlocksRepository';
 
 export const blocksChildrenTable = 'blocksChildren' as const;
 

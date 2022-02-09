@@ -4,7 +4,6 @@ import { VaultApplication } from '@harika/web-core';
 import { writeStorage } from '@rehooks/local-storage';
 import React, {
   useCallback,
-  useContext,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -13,10 +12,7 @@ import React, {
 } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useClickAway, useMedia, useMountedState } from 'react-use';
-import { Observable } from 'rxjs';
-import { mapTo, switchMap, take, tap } from 'rxjs/operators';
 
-import { LoadingDoneSubjectContext } from '../../contexts';
 import { FooterRefContext } from '../../contexts/FooterRefContext';
 import { FocusedStackIdContext } from '../../contexts/StackedNotesContext';
 import { useGetSyncToken } from '../../hooks/useGetSyncToken';
@@ -188,7 +184,7 @@ export const VaultLayout: React.FC = ({ children }) => {
       setVaultApp(undefined);
       closeDevtool();
     };
-  }, [vaultId, loadUserApp, mounted, getSyncToken]);
+  }, [vaultId, loadUserApp, mounted, getSyncToken, navigate]);
 
   // TODO: reset focused block on page change
 

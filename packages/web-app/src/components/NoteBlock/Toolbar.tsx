@@ -1,8 +1,4 @@
-import {
-  BlocksScope,
-  CollapsableBlock,
-  getCollapsableBlock,
-} from '@harika/web-core';
+import { BlocksScope, CollapsableBlock } from '@harika/web-core';
 import {
   ArrowDropDown,
   ArrowDropUp,
@@ -19,15 +15,12 @@ import useResizeObserver from 'use-resize-observer/polyfilled';
 
 import { CurrentBlockInputRefContext } from '../../contexts';
 import { FooterRefContext } from '../../contexts/FooterRefContext';
-import { useFocusedBlock } from '../../hooks/useFocusedBlockState';
 import { cn, insertText } from '../../utils';
 
 const toolbarClass = cn('toolbar');
 
 export const Toolbar = observer(({ scope }: { scope: BlocksScope }) => {
   const footerRef = useContext(FooterRefContext);
-
-  const focusedBlock = useFocusedBlock();
 
   const currentBlockInputRef = useContext(CurrentBlockInputRefContext);
 

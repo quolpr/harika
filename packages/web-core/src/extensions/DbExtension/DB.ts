@@ -7,7 +7,6 @@ import { chunk } from 'lodash-es';
 import {
   filter,
   first,
-  interval,
   lastValueFrom,
   map,
   Observable,

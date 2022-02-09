@@ -5,10 +5,8 @@ import {
   NoteBlock,
 } from '@harika/web-core';
 import { observer } from 'mobx-react-lite';
-import { useObservable, useObservableState } from 'observable-hooks';
 import React from 'react';
 import { useAsync, useMedia } from 'react-use';
-import { switchMap } from 'rxjs';
 
 import { useBlocksScopesService } from '../../hooks/vaultAppHooks';
 import { bem } from '../../utils';

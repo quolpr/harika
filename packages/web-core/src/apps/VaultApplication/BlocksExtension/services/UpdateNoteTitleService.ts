@@ -17,7 +17,7 @@ export class UpdateNoteTitleService {
 
     if (!note) return;
 
-    const oldTitle = note.title;
+    // const oldTitle = note.title;
 
     return 'ok';
   }

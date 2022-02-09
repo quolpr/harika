@@ -2,7 +2,6 @@ import {
   BlocksScope,
   CollapsableBlock,
   getBlocksSelection,
-  NoteBlock,
 } from '@harika/web-core';
 import { isEqual } from 'lodash-es';
 import { observer } from 'mobx-react-lite';

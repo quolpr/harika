@@ -1,5 +1,4 @@
 import { inject, injectable, multiInject } from 'inversify';
-import { groupBy } from 'lodash-es';
 import { ModelData } from 'mobx-keystone';
 import { map, Observable, switchMap } from 'rxjs';
 

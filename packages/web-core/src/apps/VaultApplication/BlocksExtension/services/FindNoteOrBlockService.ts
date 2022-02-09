@@ -1,5 +1,5 @@
 import { inject, injectable } from 'inversify';
-import { Observable, of } from 'rxjs';
+import { Observable } from 'rxjs';
 import Q from 'sql-bricks';
 
 import { DB } from '../../../../extensions/DbExtension/DB';

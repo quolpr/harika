@@ -16,7 +16,7 @@ import {
   useBlocksStore,
   useUpdateLinkService,
 } from '../../../../hooks/vaultAppHooks';
-import { insertText,isIOS } from '../../../../utils';
+import { insertText, isIOS } from '../../../../utils';
 import { getTokensAtCursor } from '../../utils';
 import { ICommand } from '../EditorCommandsDropdown/EditorCommandsDropdown';
 import type { SearchedNote } from '../NoteTitleAutocomplete/NoteTitleAutocomplete';
@@ -449,7 +449,7 @@ export const useHandleInput = (
 
       setNoteTitleToSearch(undefined);
     },
-    [inputRef],
+    [block.originalBlock.contentModel.ast, inputRef],
   );
 
   const handleCommandSelect = useCallback(

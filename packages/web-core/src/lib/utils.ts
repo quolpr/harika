@@ -29,7 +29,7 @@ export const getBroadcastCh$ = (name: string) => {
             // the onclose event is just the IndexedDB closing.
             // you should also close the channel before creating
             // a new one.
-            currentChannel?.close();
+            void currentChannel?.close();
             createChannel();
           },
         },
@@ -41,7 +41,7 @@ export const getBroadcastCh$ = (name: string) => {
     createChannel();
 
     return () => {
-      currentChannel?.close();
+      void currentChannel?.close();
     };
   }).pipe(
     share({
