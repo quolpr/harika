@@ -15,7 +15,6 @@ import {
   useFindService,
   useNoteBlocksService,
 } from '../../hooks/vaultAppHooks';
-import { CustomScrollbar } from '../CustomScrollbar';
 import { useNotePath } from '../../contexts/StackedNotesContext';
 import { FindNoteOrBlockService } from '@harika/web-core/src/apps/VaultApplication/BlocksExtension/services/FindNoteOrBlockService';
 
@@ -345,83 +344,81 @@ export const CommandPaletteModal = ({
           />
         </form>
       </header>
-      <CustomScrollbar>
-        <div
-          className={`${commandPaletteModalClass(
-            'actions-list-container',
-          )} ${modalClass('row')} ${modalClass('footer')}`}
-        >
-          <div className={commandPaletteModalClass('actions-list')}>
-            {view.actions.map((action, i) => {
-              const props = {
-                key: action.id,
-                className: commandPaletteModalClass('action', {
-                  focused: action.id === focusedActionId,
-                }),
+      <div
+        className={`${commandPaletteModalClass(
+          'actions-list-container',
+        )} ${modalClass('row')} ${modalClass('footer')}`}
+      >
+        <div className={commandPaletteModalClass('actions-list')}>
+          {view.actions.map((action, i) => {
+            const props = {
+              key: action.id,
+              className: commandPaletteModalClass('action', {
+                focused: action.id === focusedActionId,
+              }),
 
-                onClick: (e: React.MouseEvent<HTMLElement>) => {
-                  e.preventDefault();
+              onClick: (e: React.MouseEvent<HTMLElement>) => {
+                e.preventDefault();
 
-                  performAction(action, e.shiftKey);
-                },
-                onMouseMove: (e: React.MouseEvent<HTMLElement>) => {
-                  if (
-                    prevMousePosRef.current.x === e.screenX &&
-                    prevMousePosRef.current.y === e.screenY
-                  )
-                    return;
+                performAction(action, e.shiftKey);
+              },
+              onMouseMove: (e: React.MouseEvent<HTMLElement>) => {
+                if (
+                  prevMousePosRef.current.x === e.screenX &&
+                  prevMousePosRef.current.y === e.screenY
+                )
+                  return;
 
-                  prevMousePosRef.current = { x: e.screenX, y: e.screenY };
+                prevMousePosRef.current = { x: e.screenX, y: e.screenY };
 
-                  setActionCommandId(action.id);
-                },
-                ref: (el: HTMLElement | null) => {
-                  if (el) {
-                    searchItemRefs.current[action.id] = el;
-                  } else {
-                    delete searchItemRefs.current[action.id];
-                  }
-                },
+                setActionCommandId(action.id);
+              },
+              ref: (el: HTMLElement | null) => {
+                if (el) {
+                  searchItemRefs.current[action.id] = el;
+                } else {
+                  delete searchItemRefs.current[action.id];
+                }
+              },
 
-                children: (
-                  <>
-                    {action.highlight ? (
-                      <Highlighter
-                        searchWords={[action.highlight]}
-                        autoEscape={true}
-                        textToHighlight={action.name}
-                      />
-                    ) : (
-                      action.name
-                    )}
-                    {action.type !== 'dummy' && (
-                      <>
-                        {i < 9 && (
-                          <div
-                            className={commandPaletteModalClass('key', {
-                              focused: action.id === focusedActionId,
-                            })}
-                          >
-                            ⌘{i + 1}
-                          </div>
-                        )}
-                      </>
-                    )}
-                  </>
-                ),
-              };
+              children: (
+                <>
+                  {action.highlight ? (
+                    <Highlighter
+                      searchWords={[action.highlight]}
+                      autoEscape={true}
+                      textToHighlight={action.name}
+                    />
+                  ) : (
+                    action.name
+                  )}
+                  {action.type !== 'dummy' && (
+                    <>
+                      {i < 9 && (
+                        <div
+                          className={commandPaletteModalClass('key', {
+                            focused: action.id === focusedActionId,
+                          })}
+                        >
+                          ⌘{i + 1}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </>
+              ),
+            };
 
-              return action.type === 'goToPage' ? (
-                <Link to={action.href} {...props} />
-              ) : action.type === 'dummy' ? (
-                <div {...props} />
-              ) : (
-                <button {...props} />
-              );
-            })}
-          </div>
+            return action.type === 'goToPage' ? (
+              <Link to={action.href} {...props} />
+            ) : action.type === 'dummy' ? (
+              <div {...props} />
+            ) : (
+              <button {...props} />
+            );
+          })}
         </div>
-      </CustomScrollbar>
+      </div>
     </Modal>
   );
 };

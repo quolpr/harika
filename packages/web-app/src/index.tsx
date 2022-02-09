@@ -39,11 +39,11 @@ const renderApp = async () => {
     whyDidYouRender.default(React as any);
   }
 
-  ReactDOM.render(
+  // @ts-ignore
+  ReactDOM.createRoot(document.getElementById('root')).render(
     <React.StrictMode>
       <App />
     </React.StrictMode>,
-    document.getElementById('root'),
   );
 };
 

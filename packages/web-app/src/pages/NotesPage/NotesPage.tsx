@@ -10,7 +10,6 @@ import {
   useDeleteBlocksService,
   useNoteBlocksService,
 } from '../../hooks/vaultAppHooks';
-import { CustomScrollbar } from '../../components/CustomScrollbar';
 import { useNotePath } from '../../contexts/StackedNotesContext';
 
 type NoteTuple = {
@@ -60,26 +59,24 @@ export const NotesPage = () => {
   }, [loadingDoneSubject, observedNotes]);
 
   return (
-    <CustomScrollbar>
-      <div className="notes-table">
-        <table className="notes-table__table">
-          <thead>
-            <tr>
-              <th className="notes-table__title-head">Title</th>
-              <th className="notes-table__time-head">Created At</th>
-              <th className="notes-table__action-head" />
-            </tr>
-          </thead>
-          <tbody>
-            {(observedNotes || [])
-              .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-              .map((note) => (
-                <NoteRow note={note} key={note.id} />
-              ))}
-          </tbody>
-        </table>
-      </div>
-    </CustomScrollbar>
+    <div className="notes-table">
+      <table className="notes-table__table">
+        <thead>
+          <tr>
+            <th className="notes-table__title-head">Title</th>
+            <th className="notes-table__time-head">Created At</th>
+            <th className="notes-table__action-head" />
+          </tr>
+        </thead>
+        <tbody>
+          {(observedNotes || [])
+            .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+            .map((note) => (
+              <NoteRow note={note} key={note.id} />
+            ))}
+        </tbody>
+      </table>
+    </div>
   );
 };
 
