@@ -120,68 +120,66 @@ export const App = () => {
   const isShiftPressedRef = useRef(false);
 
   return (
-    <React.StrictMode>
-      <ShiftPressedContext.Provider value={isShiftPressedRef}>
-        <ShiftPressedTracker shiftRef={isShiftPressedRef} />
+    <ShiftPressedContext.Provider value={isShiftPressedRef}>
+      <ShiftPressedTracker shiftRef={isShiftPressedRef} />
 
-        <QueryClientProvider client={queryClient}>
-          <BrowserRouter>
-            <Routes>
-              {[VAULT_PREFIX + '/*', PATHS.VAULT_INDEX_PATH + '/*'].map(
-                (path) => (
-                  <Route
-                    path={path}
-                    key={path}
-                    element={
-                      <Suspense fallback={<div></div>}>
-                        <VaultAppRoute />
-                      </Suspense>
-                    }
-                  ></Route>
-                ),
-              )}
-
-              <Route
-                path={PATHS.SIGNUP_PATH}
-                element={
-                  <Suspense fallback={<div></div>}>
-                    <SignupPage />
-                  </Suspense>
-                }
-              />
-
-              <Route
-                path={PATHS.LOGIN_PATH}
-                element={
-                  <Suspense fallback={<div></div>}>
-                    <LoginPage />
-                  </Suspense>
-                }
-              />
-
-              <Route
-                path="/"
-                element={(() => {
-                  if (lastVaultId && authInfo) {
-                    return (
-                      <Navigate
-                        to={paths.vaultDailyPath({ vaultId: lastVaultId })}
-                        replace
-                      />
-                    );
-                  } else {
-                    return authInfo ? (
-                      <Navigate to={PATHS.DEFAULT_PATH} replace />
-                    ) : (
-                      <Navigate to={PATHS.LOGIN_PATH} replace />
-                    );
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <Routes>
+            {[VAULT_PREFIX + '/*', PATHS.VAULT_INDEX_PATH + '/*'].map(
+              (path) => (
+                <Route
+                  path={path}
+                  key={path}
+                  element={
+                    <Suspense fallback={<div></div>}>
+                      <VaultAppRoute />
+                    </Suspense>
                   }
-                })()}
-              />
-            </Routes>
-          </BrowserRouter>
-        </QueryClientProvider>
-      </ShiftPressedContext.Provider>
-    </React.StrictMode>
+                ></Route>
+              ),
+            )}
+
+            <Route
+              path={PATHS.SIGNUP_PATH}
+              element={
+                <Suspense fallback={<div></div>}>
+                  <SignupPage />
+                </Suspense>
+              }
+            />
+
+            <Route
+              path={PATHS.LOGIN_PATH}
+              element={
+                <Suspense fallback={<div></div>}>
+                  <LoginPage />
+                </Suspense>
+              }
+            />
+
+            <Route
+              path="/"
+              element={(() => {
+                if (lastVaultId && authInfo) {
+                  return (
+                    <Navigate
+                      to={paths.vaultDailyPath({ vaultId: lastVaultId })}
+                      replace
+                    />
+                  );
+                } else {
+                  return authInfo ? (
+                    <Navigate to={PATHS.DEFAULT_PATH} replace />
+                  ) : (
+                    <Navigate to={PATHS.LOGIN_PATH} replace />
+                  );
+                }
+              })()}
+            />
+          </Routes>
+        </BrowserRouter>
+      </QueryClientProvider>
+    </ShiftPressedContext.Provider>
   );
 };
