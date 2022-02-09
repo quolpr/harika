@@ -18,6 +18,9 @@ module.exports = {
     tsconfigRootDir: rootDir,
     project: './tsconfig.json',
   },
-  plugins: ['react', 'jsx-a11y', 'rxjs'],
-  rules: {},
+  plugins: ['react', 'jsx-a11y', 'rxjs',  'simple-import-sort'],
+  rules: {
+    'simple-import-sort/imports': 'warn',
+    'simple-import-sort/exports': 'warn',
+  },
 };

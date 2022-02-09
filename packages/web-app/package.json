@@ -95,6 +95,7 @@
     "eslint-plugin-prettier": "^4.0.0",
     "eslint-plugin-react": "^7.28.0",
     "eslint-plugin-react-hooks": "^4.3.0",
+    "eslint-plugin-simple-import-sort": "^7.0.0",
     "postcss": "^8.4.6",
     "postcss-cli": "^9.1.0",
     "postcss-import": "^14.0.2",
