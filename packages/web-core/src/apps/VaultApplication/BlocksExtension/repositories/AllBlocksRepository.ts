@@ -6,7 +6,8 @@ import { SyncConfig } from '../../../../extensions/SyncExtension/serverSynchroni
 import { ISyncCtx } from '../../../../extensions/SyncExtension/syncCtx';
 import { join, raw, sqltag } from '../../../../lib/sql';
 import { BLOCK_REPOSITORY } from '../types';
-import { BaseBlockRepository, blocksLinksTable } from './BaseBlockRepository';
+import { AllBlocksQueries } from './AllBlocksQueries';
+import { BaseBlockRepository } from './BaseBlockRepository';
 
 export const blocksChildrenTable = 'blocksChildren' as const;
 
@@ -15,7 +16,6 @@ export type BaseBlockRow = {
   type: string;
 
   parentId: string | undefined | null;
-  linkedBlockIds: string;
 
   createdAt: number;
   updatedAt: number;
@@ -25,7 +25,6 @@ export type BaseBlockDoc = {
   type: string;
 
   parentId: string | undefined | null;
-  linkedBlockIds: string[];
   orderPosition: number;
 
   createdAt: number;
@@ -40,6 +39,7 @@ export class AllBlocksRepository {
     @inject(DB) private db: DB,
     @inject(SyncConfig) private syncConfig: SyncConfig,
     @multiInject(BLOCK_REPOSITORY) private blocksRepos: BaseBlockRepository[],
+    @inject(AllBlocksQueries) private allBlocksQueries: AllBlocksQueries,
   ) {
     this.blocksReposMap = Object.fromEntries(
       blocksRepos.map((r) => [r.docType, r]),
@@ -75,7 +75,7 @@ export class AllBlocksRepository {
     return this.joinedRowsToDocs(
       await e.getRecords(sqltag`
       WITH RECURSIVE
-        ${this.withDescendants(ids)}
+        ${this.allBlocksQueries.getDescendantBlockIds(ids)}
       SELECT ${select} FROM childrenBlockIds
         ${join(joinTables, ' ')}
     `),
@@ -99,59 +99,6 @@ export class AllBlocksRepository {
 
       await repo.bulkUpdate(blocks, ctx, e);
     }
-  }
-
-  async getBacklinkedBlockIds(
-    rootBlockId: string,
-    includeDescendant = false,
-    e: IQueryExecuter = this.db,
-  ) {
-    const linkedBlockIdsToDescendants = sqltag`
-      SELECT blockId, linkedToBlockId FROM ${raw(
-        blocksLinksTable,
-      )} WHERE linkedToBlockId IN (${
-      includeDescendant
-        ? sqltag`
-        WITH RECURSIVE
-          ${this.withDescendants([rootBlockId])}
-        SELECT blockId FROM childrenBlockIds
-      )`
-        : rootBlockId
-    })
-    `;
-
-    const res = await e.getRecords<{
-      blockId: string;
-      isRootBlock: 0 | 1;
-      linkedToBlockId: string | null;
-    }>(sqltag`
-      WITH RECURSIVE
-        parentBlockIds(blockId, parentId, linkedToBlockId, isRootBlock) AS (
-          SELECT b_c_t.blockId, b_c_t.parentId, linksTable.linkedToBlockId, 0 FROM ${raw(
-            blocksChildrenTable,
-          )} b_c_t JOIN (
-            ${linkedBlockIdsToDescendants}
-          ) linksTable ON b_c_t.blockId = linksTable.blockId
-          UNION ALL
-          SELECT a.blockId, a.parentId, NULL, 1 FROM ${raw(
-            blocksChildrenTable,
-          )} a JOIN parentBlockIds b ON a.blockId = b.parentId LIMIT 10000000
-        )
-      SELECT parentBlockIds.blockId, parentBlockIds.isRootBlock, parentBlockIds.linkedToBlockId FROM parentBlockIds WHERE parentBlockIds.parentId IS NULL OR parentBlockIds.isRootBlock = 0
-    `);
-
-    // Root blocks is needed to load the full blocks tree
-    return {
-      rootBlockIds: res
-        .filter(({ isRootBlock }) => isRootBlock === 1)
-        .map(({ blockId }) => blockId),
-      linkedBlockIds: res
-        .filter(({ isRootBlock }) => isRootBlock === 0)
-        .map(({ blockId, linkedToBlockId }) => ({
-          blockId,
-          linkedToBlockId: linkedToBlockId as string,
-        })),
-    };
   }
 
   async bulkRecursiveDelete(
@@ -332,20 +279,4 @@ export class AllBlocksRepository {
 
   //   return obj;
   // }
-
-  private withDescendants(ids: string[], tableName = 'childrenBlockIds') {
-    const rawBlocksChildrenTable = raw(blocksChildrenTable);
-
-    return sqltag`
-      ${raw(tableName)}(blockId, parentId) AS (
-        VALUES ${join(
-          ids.map((id) => sqltag`(${id}, NULL)`),
-          ',',
-        )}
-        UNION ALL
-        SELECT a.blockId, a.parentId FROM ${rawBlocksChildrenTable} a 
-          JOIN ${raw(tableName)} b ON a.parentId = b.blockId LIMIT 10000000
-      )
-    `;
-  }
 }

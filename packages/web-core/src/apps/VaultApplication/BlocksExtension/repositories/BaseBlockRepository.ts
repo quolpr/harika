@@ -3,8 +3,6 @@ import { injectable } from 'inversify';
 import { BaseSyncRepository } from '../../../../extensions/SyncExtension/BaseSyncRepository';
 import { BaseBlockDoc, BaseBlockRow } from './AllBlocksRepository';
 
-export const blocksLinksTable = 'blocksLinksTable' as const;
-
 @injectable()
 export abstract class BaseBlockRepository<
   Doc extends BaseBlockDoc & Record<string, unknown> = BaseBlockDoc &

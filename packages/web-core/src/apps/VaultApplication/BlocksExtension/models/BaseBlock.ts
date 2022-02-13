@@ -33,7 +33,6 @@ export class BaseBlock extends Model({
   id: idProp,
   parentRef: prop<Ref<BaseBlock> | undefined>(),
   orderPosition: prop<number>(),
-  linkedBlockRefs: prop<Ref<BaseBlock>[]>(() => []),
   areChildrenLoaded: prop<boolean>(() => true),
   createdAt: tProp(types.dateTimestamp),
   updatedAt: tProp(types.dateTimestamp),
@@ -81,11 +80,6 @@ export class BaseBlock extends Model({
   @computed({ equals: comparer.shallow })
   get hasChildren() {
     return this.childrenBlocks.length !== 0;
-  }
-
-  @computed
-  get areLinksLoaded() {
-    return !this.linkedBlockRefs.some((ref) => ref.maybeCurrent === undefined);
   }
 
   @computed
