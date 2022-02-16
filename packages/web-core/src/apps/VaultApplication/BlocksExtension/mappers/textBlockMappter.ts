@@ -14,7 +14,6 @@ export const textBlockMapper: IMapper<TextBlockDoc, TextBlock> = {
 
       parentRef: doc.parentId ? blockRef(doc.parentId) : undefined,
       orderPosition: doc.orderPosition,
-      linkedBlockRefs: doc.linkedBlockIds.map((id) => blockRef(id)),
 
       content: doc.content,
 
@@ -31,7 +30,6 @@ export const textBlockMapper: IMapper<TextBlockDoc, TextBlock> = {
 
       orderPosition: model.orderPosition,
       parentId: model.parentRef?.id,
-      linkedBlockIds: model.linkedBlockRefs.map(({ id }) => id),
 
       content: model.content,
 

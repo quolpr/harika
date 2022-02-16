@@ -4,7 +4,7 @@ import { map, Observable, switchMap } from 'rxjs';
 import { DbEventsListenService } from '../../../../extensions/SyncExtension/services/DbEventsListenerService';
 import { blockLinkMapper } from '../mappers/blockLinkMapper';
 import { BaseBlock } from '../models/BaseBlock';
-import { BlockLinkStore } from '../models/BlockLinkStore';
+import { BlockLinksStore } from '../models/BlockLinkStore';
 import { AllBlocksRepository } from '../repositories/AllBlocksRepository';
 import { BlockLinksRepository } from '../repositories/BlockLinkRepository';
 import { AllBlocksService } from './AllBlocksService';
@@ -20,8 +20,8 @@ export class BlockLinkService {
     private dbEventsService: DbEventsListenService,
     @inject(BlockLinksRepository)
     private blockLinksRepository: BlockLinksRepository,
-    @inject(BlockLinkStore)
-    private blockLinkStore: BlockLinkStore,
+    @inject(BlockLinksStore)
+    private blockLinkStore: BlockLinksStore,
   ) {}
 
   getBacklinkedBlocks$(

@@ -13,6 +13,7 @@ import {
 } from '../../extensions/SyncExtension/types';
 import { BaseApplication } from '../../framework/BaseApplication';
 import { VaultAppRootStore } from './AppRootStore';
+import { BlockLinksStore } from './BlocksExtension/models/BlockLinkStore';
 import { BlocksScopeStore } from './BlocksExtension/models/BlocksScopeStore';
 import { BlocksStore } from './BlocksExtension/models/BlocksStore';
 import { NoteBlocksAppExtension } from './BlocksExtension/NoteBlocksAppExtension';
@@ -56,10 +57,12 @@ export class VaultApplication extends BaseApplication {
   async initialize() {
     const blocksScopeStore = this.container.get(BlocksScopeStore);
     const blocksStore = this.container.get(BlocksStore);
+    const blockLinkStore = this.container.get(BlockLinksStore);
 
     const rootStore = new VaultAppRootStore({
       blocksStore,
       blocksScopeStore,
+      blockLinkStore,
     });
 
     this.container.bind(VaultAppRootStore).toConstantValue(rootStore);
@@ -116,6 +119,10 @@ export class VaultApplication extends BaseApplication {
 
   getBlockLinkService() {
     return this.container.get(BlockLinkService);
+  }
+
+  getBlockLinkStore() {
+    return this.container.get(BlockLinksStore);
   }
 
   getDbName() {

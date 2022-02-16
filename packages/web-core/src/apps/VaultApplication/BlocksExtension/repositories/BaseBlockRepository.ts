@@ -13,7 +13,6 @@ export abstract class BaseBlockRepository<
   toRow(doc: Doc): Row {
     const res = {
       ...super.toRow(doc),
-      linkedBlockIds: JSON.stringify(doc.linkedBlockIds),
     };
 
     return res;
@@ -22,7 +21,6 @@ export abstract class BaseBlockRepository<
   toDoc(row: Row): Doc {
     const res = {
       ...super.toDoc(row),
-      linkedBlockIds: JSON.parse(row['linkedBlockIds'] as string),
     };
 
     return res;

@@ -1,6 +1,11 @@
+import 'reflect-metadata';
+
+import { injectable } from 'inversify';
+
 import { join, raw, sqltag } from '../../../../lib/sql';
 import { blocksChildrenTable } from './AllBlocksRepository';
 
+@injectable()
 export class AllBlocksQueries {
   getDescendantBlockIds(ids: string[], tableName = 'childrenBlockIds') {
     const rawBlocksChildrenTable = raw(blocksChildrenTable);

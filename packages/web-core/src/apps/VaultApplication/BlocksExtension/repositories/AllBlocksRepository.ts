@@ -34,12 +34,12 @@ export type BaseBlockDoc = {
 @injectable()
 export class AllBlocksRepository {
   private blocksReposMap: Record<string, BaseBlockRepository>;
+  private allBlocksQueries = new AllBlocksQueries();
 
   constructor(
     @inject(DB) private db: DB,
     @inject(SyncConfig) private syncConfig: SyncConfig,
     @multiInject(BLOCK_REPOSITORY) private blocksRepos: BaseBlockRepository[],
-    @inject(AllBlocksQueries) private allBlocksQueries: AllBlocksQueries,
   ) {
     this.blocksReposMap = Object.fromEntries(
       blocksRepos.map((r) => [r.docType, r]),
@@ -150,7 +150,7 @@ export class AllBlocksRepository {
           UNION ALL
           SELECT a.blockId, b.originalBlockId, a.parentId FROM ${raw(
             blocksChildrenTable,
-          )} a JOIN parentBlockIds b ON a.blockId = b.parentId LIMIT 10000000
+          )} a JOIN parentBlockIds b ON a.blockId = b.parentId LIMIT 1000
         )
       SELECT parentBlockIds.blockId AS rootBlockId, parentBlockIds.originalBlockId AS blockId FROM parentBlockIds WHERE parentBlockIds.parentId IS NULL
     `);

@@ -1,4 +1,5 @@
 import {
+  detach,
   idProp,
   Model,
   model,
@@ -11,14 +12,56 @@ import { withoutSyncAction } from '../../../../extensions/SyncExtension/mobx-key
 import { SyncModelId } from '../../../../extensions/SyncExtension/types';
 import { withoutUndoAction } from '../../../../lib/utils';
 import { applyModelData } from './applyModelData';
+import { blockRef } from './BaseBlock';
 import { BlockLink } from './BlockLink';
 import { BlockLinkRegistry } from './BlockLinkRegistry';
 
-@model('@harika/BlocksExtension/BlockLinkStore')
-export class BlockLinkStore extends Model({
+@model('@harika/BlocksExtension/BlockLinksStore')
+export class BlockLinksStore extends Model({
   id: idProp,
   linksRegistry: prop<BlockLinkRegistry>(() => new BlockLinkRegistry({})),
 }) {
+  @modelAction
+  updateLinks(currentBlockId: string, linkedBlockIds: Set<string>) {
+    const links = this.linksRegistry.getLinksOfBlock(currentBlockId);
+    const currentLinkedBlockIds = new Set(
+      links.map((l) => l.linkedToBlockRef.id),
+    );
+
+    links.forEach((l) => {
+      if (!linkedBlockIds.has(l.linkedToBlockRef.id)) {
+        detach(l);
+      }
+    });
+
+    linkedBlockIds.forEach((blockId) => {
+      if (!currentLinkedBlockIds.has(blockId)) {
+        this.linksRegistry.registerLink(
+          new BlockLink({
+            blockRef: blockRef(currentBlockId),
+            linkedToBlockRef: blockRef(blockId),
+            orderPosition: new Date().getUTCSeconds(),
+            createdAt: new Date().getUTCSeconds(),
+            updatedAt: new Date().getUTCSeconds(),
+          }),
+        );
+      }
+    });
+  }
+
+  @modelAction
+  moveLinks(fromBlockId: string, toBlockId: string) {
+    const links = this.linksRegistry.getLinksOfBlock(fromBlockId);
+
+    links.forEach((l) => {
+      l.blockRef = blockRef(toBlockId);
+    });
+  }
+
+  getLinksOfBlock(blockId: string) {
+    return this.linksRegistry.getLinksOfBlock(blockId);
+  }
+
   @withoutUndoAction
   @withoutSyncAction
   @modelAction
@@ -29,11 +72,11 @@ export class BlockLinkStore extends Model({
     const links: BlockLink[] = [];
 
     linksAttrs.forEach((linkAttrs) => {
-      if (this.linksRegistry.hasBlockWithId(linkAttrs.id!)) {
-        links.push(this.linksRegistry.getBlockById(linkAttrs.id!));
+      if (this.linksRegistry.hasLinkWithId(linkAttrs.id!)) {
+        links.push(this.linksRegistry.getLinkById(linkAttrs.id!));
 
         applyModelData(
-          this.linksRegistry.getBlockById(linkAttrs.id!),
+          this.linksRegistry.getLinkById(linkAttrs.id!),
           linkAttrs,
           (key, oldVal, newVal) => {
             if (key === 'areChildrenLoaded') {
@@ -49,8 +92,8 @@ export class BlockLinkStore extends Model({
     });
 
     deletedLinkIds.forEach((id) => {
-      if (this.linksRegistry.hasBlockWithId(id.value)) {
-        this.linksRegistry.deleteBlockById(id.value);
+      if (this.linksRegistry.hasLinkWithId(id.value)) {
+        this.linksRegistry.deleteLinkById(id.value);
       }
     });
 

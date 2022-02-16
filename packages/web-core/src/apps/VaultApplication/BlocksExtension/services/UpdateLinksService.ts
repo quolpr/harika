@@ -1,5 +1,4 @@
 import { inject, injectable } from 'inversify';
-import { uniq } from 'lodash-es';
 
 import { filterAst } from '../../../../lib/blockParser/astHelpers';
 import {
@@ -7,6 +6,7 @@ import {
   TagToken,
   TextBlockRef,
 } from '../../../../lib/blockParser/types';
+import { BlockLinksStore } from '../models/BlockLinkStore';
 import { TextBlock } from '../models/TextBlock';
 import { AllBlocksService } from './AllBlocksService';
 import { NoteBlocksService } from './NoteBlocksService';
@@ -18,12 +18,14 @@ export class UpdateLinksService {
     private allBlocksService: AllBlocksService,
     @inject(NoteBlocksService)
     private notesService: NoteBlocksService,
+    @inject(BlockLinksStore)
+    private linksStore: BlockLinksStore,
   ) {}
 
   async updateBlockLinks(noteBlockIds: string[]) {
     console.debug('Updating block links');
 
-    const blocks = await this.allBlocksService.getBlockWithTreeByIds(
+    const blocks = await this.allBlocksService.getSingleBlockByIds(
       noteBlockIds,
     );
 
@@ -93,8 +95,9 @@ export class UpdateLinksService {
         .map((t: NoteBlockRefToken | TagToken) => t.ref)
         .map((title) => noteTitleIdMap[title]);
 
-      b.updateLinks(
-        uniq([...textBlockIds, ...noteBlockIds].filter((id) => !!id)),
+      this.linksStore.updateLinks(
+        b.$modelId,
+        new Set([...textBlockIds, ...noteBlockIds].filter((id) => !!id)),
       );
     });
   }

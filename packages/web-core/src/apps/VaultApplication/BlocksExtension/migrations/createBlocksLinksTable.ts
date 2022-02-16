@@ -7,7 +7,7 @@ const up = async (db: IQueryExecuter) => {
     CREATE TABLE ${blockLinksTable} (
       id varchar(20) PRIMARY KEY,
       blockId varchar(20) NOT NULL,
-      linkedToBlockId varchar(20) NOT NULL
+      linkedToBlockId varchar(20) NOT NULL,
 
       orderPosition INTEGER NOT NULL,
 

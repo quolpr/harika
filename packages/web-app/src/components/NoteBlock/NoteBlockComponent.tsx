@@ -31,6 +31,7 @@ import {
 } from '../../hooks/useFocusedBlockState';
 import {
   useAllBlocksService,
+  useBlockLinksService,
   useBlocksScopesService,
   useNoteBlocksService,
   useUpdateTitleService,
@@ -46,15 +47,15 @@ export interface IFocusBlockState {
 }
 
 const BacklinkedNotes = observer(({ note }: { note: NoteBlockModel }) => {
-  const allBlocksService = useAllBlocksService();
   const blocksScopesService = useBlocksScopesService();
+  const blockLinksService = useBlockLinksService();
 
   // TODO: data getting looks pretty complex. It will be good to refactor
   const backlinks$ = useObservable(
     ($inputs) => {
       return $inputs.pipe(
         switchMap(([note]) =>
-          allBlocksService
+          blockLinksService
             .getBacklinkedBlocks$(note.$modelId)
             .pipe(map((noteLinks) => ({ noteLinks: noteLinks, note }))),
         ),

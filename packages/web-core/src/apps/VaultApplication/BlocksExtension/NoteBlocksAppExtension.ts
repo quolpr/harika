@@ -12,7 +12,7 @@ import { createBlocksLinksTable } from './migrations/createBlocksLinksTable';
 import { createNoteBlocksTable } from './migrations/createNoteBlocksTable';
 import { createTextBlocksTable } from './migrations/createTextBlocksTable';
 import { BlockLink } from './models/BlockLink';
-import { BlockLinkStore } from './models/BlockLinkStore';
+import { BlockLinksStore } from './models/BlockLinkStore';
 import { BlocksScope } from './models/BlocksScope';
 import { BlocksScopeStore } from './models/BlocksScopeStore';
 import { BlocksStore } from './models/BlocksStore';
@@ -41,6 +41,10 @@ export class NoteBlocksAppExtension extends BaseSyncExtension {
   async register() {
     await super.register();
 
+    this.container
+      .bind(AllBlocksQueries)
+      .toConstantValue(new AllBlocksQueries());
+
     const scopeStore = new BlocksScopeStore({});
 
     this.container.bind(BlocksScopeStore).toConstantValue(scopeStore);
@@ -59,9 +63,8 @@ export class NoteBlocksAppExtension extends BaseSyncExtension {
     this.container.bind(UpdateLinksService).toSelf();
     this.container.bind(UpdateNoteTitleService).toSelf();
 
-    this.container.bind(AllBlocksQueries).toSelf();
-
-    this.container.bind(BlockLinkStore).toSelf();
+    const linksStore = new BlockLinksStore({});
+    this.container.bind(BlockLinksStore).toConstantValue(linksStore);
     this.container.bind(BlockLinkService).toSelf();
     this.container.bind(BlockLinksRepository).toSelf();
 
@@ -74,7 +77,7 @@ export class NoteBlocksAppExtension extends BaseSyncExtension {
   }
 
   async initialize() {
-    const linksStore = this.container.get(BlockLinkStore);
+    const linksStore = this.container.get(BlockLinksStore);
     const scopesStore = this.container.get(BlocksScopeStore);
     const blocksStore = this.container.get(BlocksStore);
     const syncConfig = this.container.get(SyncConfig);

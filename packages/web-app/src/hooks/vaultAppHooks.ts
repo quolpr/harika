@@ -61,6 +61,14 @@ export const useRootStore = () => {
   return useCurrentVaultApp().getRootStore();
 };
 
+export const useBlockLinksStore = () => {
+  return useRootStore().blockLinkStore;
+};
+
+export const useBlockLinksService = () => {
+  return useCurrentVaultApp().getBlockLinkService();
+};
+
 export const useSyncState$ = () => {
   return useCurrentVaultApp().getSyncState$();
 };

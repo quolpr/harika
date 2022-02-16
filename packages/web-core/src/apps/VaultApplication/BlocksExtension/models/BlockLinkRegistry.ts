@@ -7,25 +7,32 @@ export class BlockLinkRegistry extends Model({
   id: idProp,
   blockLinks: prop<Record<string, BlockLink>>(() => ({})),
 }) {
-  deleteBlockById(id: string) {
+  deleteLinkById(id: string) {
     delete this.blockLinks[id];
   }
 
-  getBlockById(id: string) {
+  getLinkById(id: string) {
     return this.blockLinks[id];
   }
 
-  hasBlockWithId(id: string) {
+  hasLinkWithId(id: string) {
     return !!this.blockLinks[id];
   }
 
-  registerBlocks(links: BlockLink[]) {
+  registerLinks(links: BlockLink[]) {
     links.forEach((block) => {
       this.blockLinks[block.$modelId] = block;
     });
   }
 
-  registerBlock(link: BlockLink) {
+  registerLink(link: BlockLink) {
     this.blockLinks[link.$modelId] = link;
+  }
+
+  // TODO: cache
+  getLinksOfBlock(blockId: string) {
+    return Object.values(this.blockLinks).filter(
+      (b) => b.blockRef.id === blockId,
+    );
   }
 }
