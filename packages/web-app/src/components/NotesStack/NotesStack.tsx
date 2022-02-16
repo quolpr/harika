@@ -4,6 +4,7 @@ import './styles.css';
 
 import { XIcon } from '@heroicons/react/solid';
 import { observer } from 'mobx-react-lite';
+import { useObservable } from 'observable-hooks';
 import React, { useCallback, useEffect, useRef } from 'react';
 import { useMedia } from 'react-use';
 
@@ -15,6 +16,7 @@ import {
   useFocusedStackIdContext,
 } from '../../contexts/StackedNotesContext';
 import { CurrentNoteContext } from '../../hooks/useCurrentNote';
+import { useBlockLinksService } from '../../hooks/vaultAppHooks';
 import { cn } from '../../utils';
 import { NoteBlockComponent } from '../NoteBlock/NoteBlockComponent';
 import { useFindNote } from './useFindNote';

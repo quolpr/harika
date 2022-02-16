@@ -1,5 +1,5 @@
 import { inject, injectable } from 'inversify';
-import { map, Observable, switchMap } from 'rxjs';
+import { map, Observable, of, switchMap, tap } from 'rxjs';
 
 import { DbEventsListenService } from '../../../../extensions/SyncExtension/services/DbEventsListenerService';
 import { blockLinkMapper } from '../mappers/blockLinkMapper';
@@ -23,6 +23,22 @@ export class BlockLinkService {
     @inject(BlockLinksStore)
     private blockLinkStore: BlockLinksStore,
   ) {}
+
+  loadLinksOfBlockDescendants$(rootBlockIds: string[]) {
+    return of(undefined).pipe(
+      switchMap(async () =>
+        rootBlockIds.length > 0
+          ? this.blockLinksRepository.getLinksOfDescendants(rootBlockIds)
+          : [],
+      ),
+      tap((links) => {
+        return this.blockLinkStore.handleModelChanges(
+          links.map((doc) => blockLinkMapper.mapToModelData(doc)),
+          [],
+        );
+      }),
+    );
+  }
 
   getBacklinkedBlocks$(
     rootBlockId: string,

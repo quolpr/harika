@@ -87,7 +87,9 @@ export class BlockLinksStore extends Model({
           },
         );
       } else {
-        links.push(new BlockLink(linkAttrs));
+        const newLink = new BlockLink(linkAttrs);
+        this.linksRegistry.registerLink(newLink);
+        links.push(newLink);
       }
     });
 

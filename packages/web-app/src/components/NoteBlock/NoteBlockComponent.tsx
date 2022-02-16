@@ -30,7 +30,6 @@ import {
   useFocusedBlock,
 } from '../../hooks/useFocusedBlockState';
 import {
-  useAllBlocksService,
   useBlockLinksService,
   useBlocksScopesService,
   useNoteBlocksService,
@@ -119,6 +118,16 @@ const BacklinkedNotes = observer(({ note }: { note: NoteBlockModel }) => {
       })),
     [backlinks],
   );
+
+  useEffect(() => {
+    const sub = blockLinksService
+      .loadLinksOfBlockDescendants$(
+        linksBlocksWithScope.map((scope) => scope.note.$modelId),
+      )
+      .subscribe();
+
+    return () => sub.unsubscribe();
+  }, [blockLinksService, linksBlocksWithScope]);
 
   return (
     <>
@@ -239,6 +248,16 @@ const NoteBody = observer(({ note }: { note: NoteBlock }) => {
     },
     [navigate, note.$modelId, note.dailyNoteDate, noteBlocksService, notePath],
   );
+
+  const blockLinksService = useBlockLinksService();
+
+  useEffect(() => {
+    const sub = blockLinksService
+      .loadLinksOfBlockDescendants$([note.$modelId])
+      .subscribe();
+
+    return () => sub.unsubscribe();
+  }, [blockLinksService, note.$modelId]);
 
   return (
     <div className={noteClass()}>
