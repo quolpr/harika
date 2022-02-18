@@ -66,7 +66,6 @@ export class NoteBlocksAppExtension extends BaseSyncExtension {
     const linksStore = new BlockLinksStore({});
     this.container.bind(BlockLinksStore).toConstantValue(linksStore);
     this.container.bind(BlockLinkService).toSelf();
-    this.container.bind(BlockLinksRepository).toSelf();
 
     this.container
       .bind(BLOCK_REPOSITORY)
