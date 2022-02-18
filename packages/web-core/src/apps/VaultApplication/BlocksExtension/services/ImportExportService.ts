@@ -1,6 +1,13 @@
 import { inject, injectable } from 'inversify';
+import { v4 } from 'uuid';
 
 import { ISyncCtx } from '../../../../extensions/SyncExtension/syncCtx';
+import { generateId } from '../../../../lib/generateId';
+import {
+  BlockLinkRow,
+  BlockLinksRepository,
+  blockLinksTable,
+} from '../repositories/BlockLinkRepository';
 import {
   BlocksScopesRepository,
   blocksScopesTable,
@@ -26,8 +33,8 @@ interface OldVersionDump {
   };
 }
 
-interface V1Dump {
-  version: 1;
+interface Dump {
+  version: number;
   data: {
     tableName: string;
     rows: any[];
@@ -43,17 +50,78 @@ export class ImportExportService {
     private textBlocksRepository: TextBlocksRepository,
     @inject(BlocksScopesRepository)
     private blocksScopesRepository: BlocksScopesRepository,
+    @inject(BlockLinksRepository)
+    private blockLinksRepo: BlockLinksRepository,
   ) {}
 
-  async importData(dump: OldVersionDump | V1Dump) {
+  async importData(dump: OldVersionDump | Dump) {
     if (dump.version === undefined) {
       await this.oldVersionImport(dump);
     } else if (dump.version === 1) {
       await this.firstVersionImport(dump);
+    } else if (dump.version === 2) {
+      await this.secondVersionImport(dump);
     }
   }
 
-  private async firstVersionImport(dump: V1Dump) {
+  private async firstVersionImport(dump: Dump) {
+    const ctx: ISyncCtx = {
+      shouldRecordChange: true,
+      source: 'inDbChanges',
+    };
+
+    let i = 0;
+
+    const links: BlockLinkRow[] = [];
+
+    await this.noteBlocksRepository.transaction(async (t) => {
+      for (const { tableName, rows } of dump.data) {
+        if (tableName === noteBlocksTable) {
+          // eslint-disable-next-line no-loop-func
+          rows.forEach((row) => {
+            row.linkedBlockIds.forEach((id: string) => {
+              links.push({
+                id: generateId(),
+                blockId: row.id,
+                linkedToBlockId: id,
+                orderPosition: i++,
+                createdAt: new Date().getTime(),
+                updatedAt: new Date().getTime(),
+              });
+            });
+
+            delete row['linkedBlockIds'];
+          });
+
+          await this.noteBlocksRepository.bulkCreate(rows, ctx, t);
+        } else if (tableName === textBlocksTable) {
+          // eslint-disable-next-line no-loop-func
+          rows.forEach((row) => {
+            row.linkedBlockIds.forEach((id: string) => {
+              links.push({
+                id: generateId(),
+                blockId: row.id,
+                linkedToBlockId: id,
+                orderPosition: i++,
+                createdAt: new Date().getTime(),
+                updatedAt: new Date().getTime(),
+              });
+            });
+
+            delete row['linkedBlockIds'];
+          });
+
+          await this.textBlocksRepository.bulkCreate(rows, ctx, t);
+        } else if (tableName === blocksScopesTable) {
+          await this.blocksScopesRepository.bulkCreate(rows, ctx, t);
+        }
+      }
+
+      await this.blockLinksRepo.bulkCreate(links, ctx, t);
+    });
+  }
+
+  private async secondVersionImport(dump: Dump) {
     const ctx: ISyncCtx = {
       shouldRecordChange: true,
       source: 'inDbChanges',
@@ -67,6 +135,8 @@ export class ImportExportService {
           await this.textBlocksRepository.bulkCreate(rows, ctx, t);
         } else if (tableName === blocksScopesTable) {
           await this.blocksScopesRepository.bulkCreate(rows, ctx, t);
+        } else if (tableName === blockLinksTable) {
+          await this.blockLinksRepo.bulkCreate(rows, ctx, t);
         }
       }
     });
@@ -171,8 +241,8 @@ export class ImportExportService {
   }
 
   async exportData() {
-    const dump: V1Dump = {
-      version: 1,
+    const dump: Dump = {
+      version: 2,
       data: [
         {
           tableName: noteBlocksTable,
@@ -185,6 +255,10 @@ export class ImportExportService {
         {
           tableName: blocksScopesTable,
           rows: await this.blocksScopesRepository.getAll(),
+        },
+        {
+          tableName: blockLinksTable,
+          rows: await this.blockLinksRepo.getAll(),
         },
       ],
     };
