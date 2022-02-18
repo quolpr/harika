@@ -2,6 +2,7 @@ import { injectable } from 'inversify';
 
 import { BaseSyncExtension } from '../../../extensions/SyncExtension/BaseSyncExtension';
 import { SyncConfig } from '../../../extensions/SyncExtension/serverSynchronizer/SyncConfig';
+import { blockLinkMapper } from './mappers/blockLinkMapper';
 import { blocksScopesMapper } from './mappers/blockScopesMapper';
 import { noteBlockMapper } from './mappers/noteBlockMapper';
 import { textBlockMapper } from './mappers/textBlockMappter';
@@ -10,16 +11,21 @@ import { createBlocksChildrenTable } from './migrations/createBlocksChildrenTabl
 import { createBlocksLinksTable } from './migrations/createBlocksLinksTable';
 import { createNoteBlocksTable } from './migrations/createNoteBlocksTable';
 import { createTextBlocksTable } from './migrations/createTextBlocksTable';
+import { BlockLink } from './models/BlockLink';
+import { BlockLinksStore } from './models/BlockLinkStore';
 import { BlocksScope } from './models/BlocksScope';
 import { BlocksScopeStore } from './models/BlocksScopeStore';
 import { BlocksStore } from './models/BlocksStore';
 import { NoteBlock } from './models/NoteBlock';
 import { TextBlock } from './models/TextBlock';
+import { AllBlocksQueries } from './repositories/AllBlocksQueries';
 import { AllBlocksRepository } from './repositories/AllBlocksRepository';
+import { BlockLinksRepository } from './repositories/BlockLinkRepository';
 import { BlocksScopesRepository } from './repositories/BlockScopesRepository';
 import { NoteBlocksRepository } from './repositories/NoteBlocksRepostitory';
 import { TextBlocksRepository } from './repositories/TextBlocksRepository';
 import { AllBlocksService } from './services/AllBlocksService';
+import { BlockLinkService } from './services/BlockLinkService';
 import { BlocksScopesService } from './services/BlocksScopeService';
 import { DeleteNoteService } from './services/DeleteNoteService';
 import { FindNoteOrBlockService } from './services/FindNoteOrBlockService';
@@ -34,6 +40,10 @@ import { BLOCK_REPOSITORY } from './types';
 export class NoteBlocksAppExtension extends BaseSyncExtension {
   async register() {
     await super.register();
+
+    this.container
+      .bind(AllBlocksQueries)
+      .toConstantValue(new AllBlocksQueries());
 
     const scopeStore = new BlocksScopeStore({});
 
@@ -53,6 +63,11 @@ export class NoteBlocksAppExtension extends BaseSyncExtension {
     this.container.bind(UpdateLinksService).toSelf();
     this.container.bind(UpdateNoteTitleService).toSelf();
 
+    const linksStore = new BlockLinksStore({});
+    this.container.bind(BlockLinksStore).toConstantValue(linksStore);
+    this.container.bind(BlockLinkService).toSelf();
+    this.container.bind(BlockLinksRepository).toSelf();
+
     this.container
       .bind(BLOCK_REPOSITORY)
       .toConstantValue(this.container.get(NoteBlocksRepository));
@@ -62,6 +77,7 @@ export class NoteBlocksAppExtension extends BaseSyncExtension {
   }
 
   async initialize() {
+    const linksStore = this.container.get(BlockLinksStore);
     const scopesStore = this.container.get(BlocksScopeStore);
     const blocksStore = this.container.get(BlocksStore);
     const syncConfig = this.container.get(SyncConfig);
@@ -72,6 +88,7 @@ export class NoteBlocksAppExtension extends BaseSyncExtension {
       syncConfig.registerSyncRepo(noteBlockMapper, NoteBlocksRepository),
       syncConfig.registerSyncRepo(textBlockMapper, TextBlocksRepository),
       syncConfig.registerSyncRepo(blocksScopesMapper, BlocksScopesRepository),
+      syncConfig.registerSyncRepo(blockLinkMapper, BlockLinksRepository),
     );
 
     disposes.push(
@@ -94,6 +111,14 @@ export class NoteBlocksAppExtension extends BaseSyncExtension {
         const [scopeAttrs] = attrs;
 
         scopesStore.handleModelChanges(scopeAttrs, deletedIds.flat());
+      }),
+    );
+
+    disposes.push(
+      syncConfig.onModelChange([BlockLink], (attrs, deletedIds) => {
+        const [linksAttrs] = attrs;
+
+        linksStore.handleModelChanges(linksAttrs, deletedIds.flat());
       }),
     );
 

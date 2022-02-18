@@ -33,7 +33,6 @@ export class BaseBlock extends Model({
   id: idProp,
   parentRef: prop<Ref<BaseBlock> | undefined>(),
   orderPosition: prop<number>(),
-  linkedBlockRefs: prop<Ref<BaseBlock>[]>(() => []),
   areChildrenLoaded: prop<boolean>(() => true),
   createdAt: tProp(types.dateTimestamp),
   updatedAt: tProp(types.dateTimestamp),
@@ -81,11 +80,6 @@ export class BaseBlock extends Model({
   @computed({ equals: comparer.shallow })
   get hasChildren() {
     return this.childrenBlocks.length !== 0;
-  }
-
-  @computed
-  get areLinksLoaded() {
-    return !this.linkedBlockRefs.some((ref) => ref.maybeCurrent === undefined);
   }
 
   @computed
@@ -172,8 +166,6 @@ export class BaseBlock extends Model({
 
   @modelAction
   mergeToAndDelete(to: BaseBlock) {
-    to.linkedBlockRefs.push(...this.linkedBlockRefs.map((r) => blockRef(r.id)));
-
     this.childrenBlocks.forEach((ch) => {
       ch.parentRef = blockRef(to);
     });
@@ -190,22 +182,6 @@ export class BaseBlock extends Model({
     }
 
     detach(this);
-  }
-
-  // O(n^2)
-  @modelAction
-  updateLinks(allBlockIds: string[]) {
-    this.linkedBlockRefs.forEach((idRef) => {
-      if (!allBlockIds.includes(idRef.id)) {
-        this.linkedBlockRefs.splice(this.linkedBlockRefs.indexOf(idRef), 1);
-      }
-    });
-
-    allBlockIds.forEach((blockId) => {
-      if (!this.linkedBlockRefs.find((ref) => ref.id === blockId)) {
-        this.linkedBlockRefs.push(blockRef(blockId));
-      }
-    });
   }
 
   getStringTree(includeId: boolean, indent: number): string {

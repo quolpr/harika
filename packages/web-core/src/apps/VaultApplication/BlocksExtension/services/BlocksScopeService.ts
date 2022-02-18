@@ -19,10 +19,12 @@ export class BlocksScopesService {
     scopedBy: { $modelId: string; $modelType: string },
     rootBlockId: string,
   ) {
-    return (await this.getBlocksScopes([{ scopedBy, rootBlockId }]))[0];
+    return (
+      await this.loadOrCreateBlocksScopes([{ scopedBy, rootBlockId }])
+    )[0];
   }
 
-  async getBlocksScopes(
+  async loadOrCreateBlocksScopes(
     args: {
       scopedBy: { $modelId: string; $modelType: string };
       rootBlockId: string;
@@ -71,14 +73,12 @@ export class BlocksScopesService {
       );
     });
 
-    return args
-      .map(
-        (arg) =>
-          this.blocksScopesStore.getScope(
-            arg.scopedBy,
-            arg.rootBlockId,
-          ) as BlocksScope,
-      )
-      .filter((b) => Boolean(b));
+    return args.map(
+      (arg) =>
+        this.blocksScopesStore.getScope(
+          arg.scopedBy,
+          arg.rootBlockId,
+        ) as BlocksScope,
+    );
   }
 }

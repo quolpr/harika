@@ -1,7 +1,6 @@
 import { IQueryExecuter } from '../../../../extensions/DbExtension/DB';
 import { IMigration } from '../../../../extensions/DbExtension/types';
 import { childrenBlocksTrigger } from '../helpers/childrenBlocksTrigger';
-import { linkedBlockTrigger } from '../helpers/linkedBlocksTrigger';
 import {
   noteBlocksFTSTable,
   noteBlocksTable,
@@ -28,7 +27,6 @@ const up = async (db: IQueryExecuter) => {
     CREATE INDEX IF NOT EXISTS idx_note_blocks_date ON ${noteBlocksTable}(dailyNoteDate);
   `);
 
-  await db.sqlExec(linkedBlockTrigger(noteBlocksTable));
   await db.sqlExec(childrenBlocksTrigger(noteBlocksTable));
 
   await db.sqlExec(`

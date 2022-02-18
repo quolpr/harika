@@ -14,7 +14,6 @@ export const noteBlockMapper: IMapper<NoteBlockDoc, NoteBlock> = {
 
       parentRef: doc.parentId ? blockRef(doc.parentId) : undefined,
       orderPosition: doc.orderPosition,
-      linkedBlockRefs: doc.linkedBlockIds.map((id) => blockRef(id)),
 
       title: doc.title,
       dailyNoteDate: doc.dailyNoteDate ? doc.dailyNoteDate : undefined,
@@ -32,7 +31,6 @@ export const noteBlockMapper: IMapper<NoteBlockDoc, NoteBlock> = {
 
       orderPosition: model.orderPosition,
       parentId: model.parentRef?.id,
-      linkedBlockIds: model.linkedBlockRefs.map(({ id }) => id),
 
       title: model.title,
       dailyNoteDate: model.dailyNoteDate ? model.dailyNoteDate : null,

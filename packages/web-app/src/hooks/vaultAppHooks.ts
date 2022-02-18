@@ -21,6 +21,10 @@ export const useBlocksScopesService = () => {
   return useCurrentVaultApp().getBlocksScopesService();
 };
 
+export const useBlocksScopesStore = () => {
+  return useCurrentVaultApp().getBlocksScopesStore();
+};
+
 export const useTextBlocksService = () => {
   return useCurrentVaultApp().getTextBlocksService();
 };
@@ -59,6 +63,14 @@ export const useDeleteBlocksService = () => {
 
 export const useRootStore = () => {
   return useCurrentVaultApp().getRootStore();
+};
+
+export const useBlockLinksStore = () => {
+  return useRootStore().blockLinkStore;
+};
+
+export const useBlockLinksService = () => {
+  return useCurrentVaultApp().getBlockLinkService();
 };
 
 export const useSyncState$ = () => {

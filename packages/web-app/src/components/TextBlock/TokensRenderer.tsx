@@ -10,13 +10,15 @@ import {
 } from '@harika/web-core';
 import { TextBlock } from '@harika/web-core';
 import { TextBlockRef } from '@harika/web-core/src/lib/blockParser/types';
+import { isEqual } from 'lodash-es';
+import { comparer, computed } from 'mobx';
 import { arraySet } from 'mobx-keystone';
 import { observer } from 'mobx-react-lite';
 import { useObservable, useObservableState } from 'observable-hooks';
 import React, { useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useAsync } from 'react-use';
-import { switchMap } from 'rxjs';
+import { distinctUntilChanged, switchMap } from 'rxjs';
 
 import {
   useHandleNoteClickOrPress,
@@ -24,9 +26,9 @@ import {
 } from '../../contexts/StackedNotesContext';
 import {
   useAllBlocksService,
+  useBlockLinksStore,
   useUpdateLinkService,
 } from '../../hooks/vaultAppHooks';
-import { useDeepMemo } from '../../utils';
 
 const NoteRefRenderer = observer(
   ({
@@ -354,18 +356,21 @@ export const TokensRenderer = observer(
     collapsableBlock: CollapsableBlock<TextBlock>;
     tokens: Token[];
   }) => {
+    const linksStore = useBlockLinksStore();
     const allBlocksService = useAllBlocksService();
 
-    const linkedNoteIds = useDeepMemo(
-      () => [
-        ...collapsableBlock.originalBlock.linkedBlockRefs.map((r) => r.id),
-      ],
-      [[...collapsableBlock.originalBlock.linkedBlockRefs.map((r) => r.id)]],
-    );
+    const linkedNoteIds = computed(
+      () =>
+        linksStore
+          .getLinksOfBlock(collapsableBlock.$modelId)
+          .map(({ linkedToBlockRef }) => linkedToBlockRef.id),
+      { equals: comparer.shallow },
+    ).get();
 
     const linkedNotes$ = useObservable(
       ($inputs) => {
         return $inputs.pipe(
+          distinctUntilChanged(isEqual),
           switchMap(([ids]) => allBlocksService.getSingleBlockByIds(ids)),
         );
       },

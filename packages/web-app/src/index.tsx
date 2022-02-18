@@ -40,12 +40,19 @@ const renderApp = async () => {
     whyDidYouRender.default(React as any);
   }
 
-  // @ts-ignore
-  ReactDOM.createRoot(document.getElementById('root')).render(
+  const el = (
     <React.StrictMode>
       <App />
-    </React.StrictMode>,
+    </React.StrictMode>
   );
+  ReactDOM.render(el, document.getElementById('root'));
+
+  // @ts-ignore
+  // ReactDOM.createRoot(document.getElementById('root')).render(
+  //   <React.StrictMode>
+  //     <App />
+  //   </React.StrictMode>,
+  // );
 };
 
 renderApp();

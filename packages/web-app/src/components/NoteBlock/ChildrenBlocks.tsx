@@ -5,10 +5,16 @@ import {
   NoteBlock,
 } from '@harika/web-core';
 import { observer } from 'mobx-react-lite';
+import { useObservable, useObservableState } from 'observable-hooks';
 import React from 'react';
-import { useAsync, useMedia } from 'react-use';
+import { useMedia } from 'react-use';
+import { combineLatest, mapTo, switchMap } from 'rxjs';
 
-import { useBlocksScopesService } from '../../hooks/vaultAppHooks';
+import {
+  useBlockLinksService,
+  useBlocksScopesService,
+  useBlocksScopesStore,
+} from '../../hooks/vaultAppHooks';
 import { bem } from '../../utils';
 import { LinkedBlocksOfBlocksProvider } from '../LinkedBlocksOfBlocksContext';
 import { BlocksChildren } from '../TextBlock/TextBlock';
@@ -18,18 +24,23 @@ import { Toolbar } from './Toolbar';
 const noteClass = bem('note');
 
 export const ChildrenBlocks = observer(({ note }: { note: NoteBlock }) => {
-  const blocksScopeService = useBlocksScopesService();
+  const blocksScopesService = useBlocksScopesService();
+  const blockLinksService = useBlockLinksService();
+  const blocksScopesStore = useBlocksScopesStore();
   const isWide = useMedia('(min-width: 768px)');
 
-  const loadingScope = useAsync(() => {
-    return blocksScopeService.getBlocksScope(note, note.$modelId);
-  }, [note]);
-  const scope = loadingScope.loading
-    ? undefined
-    : loadingScope.value?.scopeId === note.$modelId
-    ? loadingScope.value
-    : undefined;
+  const loader$ = useObservable(
+    switchMap(([note]) => {
+      return combineLatest([
+        blockLinksService.loadLinksOfBlockDescendants$([note.$modelId]),
+        blocksScopesService.getBlocksScope(note, note.$modelId),
+      ]).pipe(mapTo(true));
+    }),
+    [note],
+  );
+  useObservableState(loader$, false);
 
+  const scope = blocksScopesStore.getScope(note, note.$modelId);
   const collapsableNote = (scope && getCollapsableBlock(scope, note)) as
     | CollapsableBlock<NoteBlock>
     | undefined;

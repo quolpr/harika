@@ -184,7 +184,7 @@ export const VaultLayout: React.FC = ({ children }) => {
       setVaultApp(undefined);
       closeDevtool();
     };
-  }, [vaultId, loadUserApp, mounted, getSyncToken, navigate]);
+  }, [getSyncToken, loadUserApp, mounted, navigate, vaultId]);
 
   // TODO: reset focused block on page change
 

@@ -13,6 +13,7 @@ import { RefObject, useCallback, useContext, useState } from 'react';
 import { ShiftPressedContext } from '../../../../contexts/ShiftPressedContext';
 import { useCurrentFocusedBlockState } from '../../../../hooks/useFocusedBlockState';
 import {
+  useBlockLinksStore,
   useBlocksStore,
   useUpdateLinkService,
 } from '../../../../hooks/vaultAppHooks';
@@ -41,6 +42,7 @@ export const useHandleInput = (
   isAnyDropdownShown: () => boolean,
 ) => {
   const blocksStore = useBlocksStore();
+  const linksStore = useBlockLinksStore();
   const updateLinkService = useUpdateLinkService();
 
   const [caretPos, setCaretPos] = useState<Pos | undefined>();
@@ -158,6 +160,10 @@ export const useHandleInput = (
 
           const mergedTo = block.mergeToLeftAndDelete();
 
+          if (mergedTo) {
+            linksStore.moveLinks(block.$modelId, mergedTo.$modelId);
+          }
+
           if (mergedTo && mergedTo.originalBlock instanceof TextBlock) {
             insertFakeInput();
 
@@ -264,7 +270,14 @@ export const useHandleInput = (
         e.currentTarget.blur();
       }
     },
-    [block, setEditState, scope.$modelId, insertFakeInput, isAnyDropdownShown],
+    [
+      block,
+      setEditState,
+      scope.$modelId,
+      linksStore,
+      insertFakeInput,
+      isAnyDropdownShown,
+    ],
   );
 
   const handleCaretChange = useCallback(

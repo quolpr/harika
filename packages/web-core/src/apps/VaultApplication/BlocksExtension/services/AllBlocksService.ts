@@ -1,6 +1,5 @@
 import { inject, injectable, multiInject } from 'inversify';
 import { ModelData } from 'mobx-keystone';
-import { map, Observable, switchMap } from 'rxjs';
 
 import { SyncConfig } from '../../../../extensions/SyncExtension/serverSynchronizer/SyncConfig';
 import { DbEventsListenService } from '../../../../extensions/SyncExtension/services/DbEventsListenerService';
@@ -36,8 +35,15 @@ export class AllBlocksService {
     await this.getBlockWithTreeByIds([blockId]);
   }
 
+  loadBlocksTrees$(blockIds: string[]) {
+    return this.dbEventsService.liveQuery(
+      this.allBlocksRepository.blocksTables,
+      () => this.loadBlocksTrees(blockIds),
+    );
+  }
+
   async loadBlocksTrees(blockIds: string[]) {
-    await this.getBlockWithTreeByIds(blockIds);
+    return await this.getBlockWithTreeByIds(blockIds);
   }
 
   async getBlockWithTreeById(blockId: string, forceReload = false) {
@@ -90,29 +96,6 @@ export class AllBlocksService {
     this.store.handleModelChanges(this.mapDocsToModelData(allBlocks), []);
 
     return this.store.getBlocksByIds(blockIds);
-  }
-
-  getBacklinkedBlocks$(
-    rootBlockId: string,
-  ): Observable<{ rootBlock: BaseBlock; blocks: BaseBlock[] }[]> {
-    return this.dbEventsService
-      .liveQuery(
-        this.allBlocksRepository.blocksTables,
-        () => this.allBlocksRepository.getBacklinkedBlockIds(rootBlockId),
-        false,
-      )
-      .pipe(
-        switchMap(async (res) => {
-          await this.loadBlocksTrees(res.rootBlockIds);
-
-          return res;
-        }),
-        map((res) => {
-          return this.store.getBlocksGroupedByRoot(
-            res.linkedBlockIds.map(({ blockId }) => blockId),
-          );
-        }),
-      );
   }
 
   private mapDocsToModelData(docs: BaseBlockDoc[]) {
