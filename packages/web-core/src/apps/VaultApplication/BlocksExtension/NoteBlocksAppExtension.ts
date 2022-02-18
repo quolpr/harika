@@ -134,6 +134,7 @@ export class NoteBlocksAppExtension extends BaseSyncExtension {
       { repo: BlocksScopesRepository, withSync: true },
       { repo: NoteBlocksRepository, withSync: true },
       { repo: TextBlocksRepository, withSync: true },
+      { repo: BlockLinksRepository, withSync: true },
     ];
   }
 
