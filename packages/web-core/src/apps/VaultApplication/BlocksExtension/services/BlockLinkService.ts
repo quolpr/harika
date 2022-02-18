@@ -6,7 +6,10 @@ import { blockLinkMapper } from '../mappers/blockLinkMapper';
 import { BaseBlock } from '../models/BaseBlock';
 import { BlockLinksStore } from '../models/BlockLinkStore';
 import { AllBlocksRepository } from '../repositories/AllBlocksRepository';
-import { BlockLinksRepository } from '../repositories/BlockLinkRepository';
+import {
+  BlockLinksRepository,
+  blockLinksTable,
+} from '../repositories/BlockLinkRepository';
 import { AllBlocksService } from './AllBlocksService';
 
 @injectable()
@@ -24,63 +27,43 @@ export class BlockLinkService {
     private blockLinkStore: BlockLinksStore,
   ) {}
 
-  loadLinksOfBlockDescendants$(rootBlockIds: string[]) {
-    return of(undefined).pipe(
-      switchMap(async () =>
-        rootBlockIds.length > 0
-          ? this.blockLinksRepository.getLinksOfDescendants(rootBlockIds)
-          : [],
-      ),
-      tap((links) => {
-        return this.blockLinkStore.handleModelChanges(
-          links.map((doc) => blockLinkMapper.mapToModelData(doc)),
-          [],
-        );
-      }),
+  async loadLinksOfBlockDescendants(rootBlockIds: string[]) {
+    if (rootBlockIds.length === 0) return [];
+
+    const links = await this.blockLinksRepository.getLinksOfDescendants(
+      rootBlockIds,
+    );
+
+    return this.blockLinkStore.handleModelChanges(
+      links.map((doc) => blockLinkMapper.mapToModelData(doc)),
+      [],
     );
   }
 
-  getBacklinkedBlocks$(
-    rootBlockId: string,
-  ): Observable<{ rootBlock: BaseBlock; blocks: BaseBlock[] }[]> {
+  loadLinksOfBlockDescendants$(rootBlockIds: string[]) {
+    return this.dbEventsService.liveQuery(
+      [blockLinksTable],
+      () => this.loadLinksOfBlockDescendants(rootBlockIds),
+      false,
+    );
+  }
+
+  loadBacklinkedBlocks$(rootBlockId: string) {
     return this.dbEventsService
       .liveQuery(
-        this.allBlocksRepository.blocksTables,
+        [blockLinksTable],
         () => this.blockLinksRepository.getBacklinksOfDescendants(rootBlockId),
         false,
       )
       .pipe(
-        switchMap(async (res) => {
-          await this.allBlocksService.loadBlocksTrees(
-            res.rootBlockIdsOfLinkedBlocks,
-          );
-
-          return this.blockLinkStore.handleModelChanges(
-            res.links.map((doc) => blockLinkMapper.mapToModelData(doc)),
-            [],
-          );
-        }),
-        map((blocks) => {
-          const groupedBlocks: Map<BaseBlock, BaseBlock[]> = new Map();
-
-          blocks.forEach((b) => {
-            if (groupedBlocks.has(b.blockRef.current.root)) {
-              groupedBlocks
-                .get(b.blockRef.current.root)!
-                .push(b.blockRef.current);
-            } else {
-              groupedBlocks.set(b.blockRef.current.root, [b.blockRef.current]);
-            }
-          });
-
-          const res = Array.from(groupedBlocks.entries()).map(
-            ([rootBlock, blocks]) => ({
-              rootBlock,
-              blocks,
-            }),
-          );
-
-          return res;
+        map((res) => {
+          return {
+            links: this.blockLinkStore.handleModelChanges(
+              res.links.map((doc) => blockLinkMapper.mapToModelData(doc)),
+              [],
+            ),
+            rootsIds: res.rootBlockIdsOfLinkedBlocks,
+          };
         }),
       );
   }

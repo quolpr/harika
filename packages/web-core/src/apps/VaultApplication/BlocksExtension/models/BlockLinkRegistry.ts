@@ -1,4 +1,11 @@
-import { idProp, Model, model, prop } from 'mobx-keystone';
+import {
+  getParent,
+  getSnapshot,
+  idProp,
+  Model,
+  model,
+  prop,
+} from 'mobx-keystone';
 
 import { BlockLink } from './BlockLink';
 
@@ -33,6 +40,13 @@ export class BlockLinkRegistry extends Model({
   getLinksOfBlock(blockId: string) {
     return Object.values(this.blockLinks).filter(
       (b) => b.blockRef.id === blockId,
+    );
+  }
+
+  // TODO: cache
+  getBacklinksOfBlock(blockId: string) {
+    return Object.values(this.blockLinks).filter(
+      (b) => b.linkedToBlockRef.id === blockId,
     );
   }
 }

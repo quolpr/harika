@@ -21,6 +21,10 @@ export const useBlocksScopesService = () => {
   return useCurrentVaultApp().getBlocksScopesService();
 };
 
+export const useBlocksScopesStore = () => {
+  return useCurrentVaultApp().getBlocksScopesStore();
+};
+
 export const useTextBlocksService = () => {
   return useCurrentVaultApp().getTextBlocksService();
 };

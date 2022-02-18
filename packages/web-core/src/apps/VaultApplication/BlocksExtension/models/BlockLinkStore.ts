@@ -1,5 +1,6 @@
 import {
   detach,
+  getSnapshot,
   idProp,
   Model,
   model,
@@ -40,9 +41,9 @@ export class BlockLinksStore extends Model({
           new BlockLink({
             blockRef: blockRef(currentBlockId),
             linkedToBlockRef: blockRef(blockId),
-            orderPosition: new Date().getUTCSeconds(),
-            createdAt: new Date().getUTCSeconds(),
-            updatedAt: new Date().getUTCSeconds(),
+            orderPosition: Number.MAX_SAFE_INTEGER - new Date().getTime(),
+            createdAt: new Date().getTime(),
+            updatedAt: new Date().getTime(),
           }),
         );
       }
@@ -60,6 +61,10 @@ export class BlockLinksStore extends Model({
 
   getLinksOfBlock(blockId: string) {
     return this.linksRegistry.getLinksOfBlock(blockId);
+  }
+
+  getBacklinksOfBlock(blockId: string) {
+    return this.linksRegistry.getBacklinksOfBlock(blockId);
   }
 
   @withoutUndoAction

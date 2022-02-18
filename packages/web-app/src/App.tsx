@@ -4,18 +4,23 @@ import './variables.css';
 import './firebaseApp';
 
 import { useLocalStorage } from '@rehooks/local-storage';
-import React, { MutableRefObject, Suspense, useEffect, useRef } from 'react';
+import React, { MutableRefObject, useEffect, useRef } from 'react';
 import Modal from 'react-modal';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 
 import { ShiftPressedContext } from './contexts/ShiftPressedContext';
 import { useAuthState } from './hooks/useAuthState';
+import LoginPage from './pages/LoginPage/LoginPage';
+import SignupPage from './pages/SignupPage/SignupPage';
 import { PATHS, paths, VAULT_PREFIX } from './paths';
+import VaultAppRoute from './Routes/VaultAppRoute';
 
-const SignupPage = React.lazy(() => import('./pages/SignupPage/SignupPage'));
-const LoginPage = React.lazy(() => import('./pages/LoginPage/LoginPage'));
-const VaultAppRoute = React.lazy(() => import('./Routes/VaultAppRoute'));
+// I wanted to make lazy loading with suspense + React.lazy, but sometime components got
+// rendered twice. I will wait for React 18 become stable
+// const SignupPage = React.lazy(() => import('./pages/SignupPage/SignupPage'));
+// const LoginPage = React.lazy(() => import('./pages/LoginPage/LoginPage'));
+// const VaultAppRoute = React.lazy(() => import('./Routes/VaultAppRoute'));
 
 const importSentry = async () => {
   if (import.meta.env.MODE === 'production') {
@@ -122,37 +127,10 @@ export const App = () => {
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <Routes>
-            {[VAULT_PREFIX + '/*', PATHS.VAULT_INDEX_PATH + '/*'].map(
-              (path) => (
-                <Route
-                  path={path}
-                  key={path}
-                  element={
-                    <Suspense fallback={<div></div>}>
-                      <VaultAppRoute />
-                    </Suspense>
-                  }
-                ></Route>
-              ),
-            )}
-
-            <Route
-              path={PATHS.SIGNUP_PATH}
-              element={
-                <Suspense fallback={<div></div>}>
-                  <SignupPage />
-                </Suspense>
-              }
-            />
-
-            <Route
-              path={PATHS.LOGIN_PATH}
-              element={
-                <Suspense fallback={<div></div>}>
-                  <LoginPage />
-                </Suspense>
-              }
-            />
+            <Route path={VAULT_PREFIX + '/*'} element={<VaultAppRoute />} />
+            <Route path={PATHS.VAULT_INDEX_PATH} element={<VaultAppRoute />} />
+            <Route path={PATHS.SIGNUP_PATH} element={<SignupPage />} />
+            <Route path={PATHS.LOGIN_PATH} element={<LoginPage />} />
 
             <Route
               path="/"

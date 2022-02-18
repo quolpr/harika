@@ -77,6 +77,10 @@ export class VaultApplication extends BaseApplication {
     return this.container.get(BlocksScopesService);
   }
 
+  getBlocksScopesStore() {
+    return this.container.get(BlocksScopeStore);
+  }
+
   getRootStore() {
     return this.container.get(VaultAppRootStore);
   }

@@ -1,4 +1,4 @@
-import React, { useContext, useMemo } from 'react';
+import React, { Suspense, useContext, useEffect, useMemo } from 'react';
 import { RoutesProps, UNSAFE_RouteContext as RouteContext } from 'react-router';
 import { Route, Routes } from 'react-router-dom';
 
@@ -32,21 +32,29 @@ function RootRoutes(props: RoutesProps) {
 
 export const VaultAppRoute = () => {
   return (
-    <UserAppProvider>
-      <OnlyAuthed>
-        <VaultLayout>
-          <RootRoutes>
-            <Route path={PATHS.VAULT_DAILY_PATH} element={<DailyNotePage />} />
-            <Route path={PATHS.VAULT_NOTE_PATH} element={<NoteStackPage />} />
-            <Route path={PATHS.VAULT_NOTE_INDEX_PATH} element={<NotesPage />} />
-          </RootRoutes>
-        </VaultLayout>
+    <Suspense fallback={<div></div>}>
+      <UserAppProvider>
+        <OnlyAuthed>
+          <VaultLayout>
+            <RootRoutes>
+              <Route
+                path={PATHS.VAULT_DAILY_PATH}
+                element={<DailyNotePage />}
+              />
+              <Route path={PATHS.VAULT_NOTE_PATH} element={<NoteStackPage />} />
+              <Route
+                path={PATHS.VAULT_NOTE_INDEX_PATH}
+                element={<NotesPage />}
+              />
+            </RootRoutes>
+          </VaultLayout>
 
-        <RootRoutes>
-          <Route path={PATHS.VAULT_INDEX_PATH} element={<VaultsPage />} />
-        </RootRoutes>
-      </OnlyAuthed>
-    </UserAppProvider>
+          <RootRoutes>
+            <Route path={PATHS.VAULT_INDEX_PATH} element={<VaultsPage />} />
+          </RootRoutes>
+        </OnlyAuthed>
+      </UserAppProvider>
+    </Suspense>
   );
 };
 

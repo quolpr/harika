@@ -35,8 +35,15 @@ export class AllBlocksService {
     await this.getBlockWithTreeByIds([blockId]);
   }
 
+  loadBlocksTrees$(blockIds: string[]) {
+    return this.dbEventsService.liveQuery(
+      this.allBlocksRepository.blocksTables,
+      () => this.loadBlocksTrees(blockIds),
+    );
+  }
+
   async loadBlocksTrees(blockIds: string[]) {
-    await this.getBlockWithTreeByIds(blockIds);
+    return await this.getBlockWithTreeByIds(blockIds);
   }
 
   async getBlockWithTreeById(blockId: string, forceReload = false) {

@@ -1,27 +1,36 @@
 import './styles.css';
 
 import {
-  getCollapsableBlock,
+  getGroupedBacklinks,
   NoteBlock as NoteBlockModel,
 } from '@harika/web-core';
 import { NoteBlock } from '@harika/web-core';
 import { LinkIcon } from '@heroicons/react/solid';
 import dayjs from 'dayjs';
-import { groupBy } from 'lodash-es';
+import { isEqual } from 'lodash-es';
+import { comparer, computed } from 'mobx';
 import { observer } from 'mobx-react-lite';
 import { useObservable, useObservableState } from 'observable-hooks';
 import React, {
   ChangeEvent,
   useCallback,
   useEffect,
-  useMemo,
   useRef,
   useState,
 } from 'react';
 import AutosizeInput from 'react-input-autosize';
 import { useLocation } from 'react-router-dom';
 import { useMedia } from 'react-use';
-import { map, switchMap } from 'rxjs';
+import {
+  combineLatest,
+  defer,
+  distinctUntilChanged,
+  from,
+  map,
+  mapTo,
+  of,
+  switchMap,
+} from 'rxjs';
 
 import { CurrentBlockInputRefContext } from '../../contexts';
 import { useNotePath } from '../../contexts/StackedNotesContext';
@@ -30,8 +39,11 @@ import {
   useFocusedBlock,
 } from '../../hooks/useFocusedBlockState';
 import {
+  useAllBlocksService,
   useBlockLinksService,
+  useBlockLinksStore,
   useBlocksScopesService,
+  useBlocksScopesStore,
   useNoteBlocksService,
   useUpdateTitleService,
 } from '../../hooks/vaultAppHooks';
@@ -47,94 +59,51 @@ export interface IFocusBlockState {
 
 const BacklinkedNotes = observer(({ note }: { note: NoteBlockModel }) => {
   const blocksScopesService = useBlocksScopesService();
+  const blocksScopesStore = useBlocksScopesStore();
   const blockLinksService = useBlockLinksService();
+  const blockLinksStore = useBlockLinksStore();
+  const allBlocksService = useAllBlocksService();
 
-  // TODO: data getting looks pretty complex. It will be good to refactor
-  const backlinks$ = useObservable(
+  const backlinksLoader$ = useObservable(
     ($inputs) => {
       return $inputs.pipe(
         switchMap(([note]) =>
           blockLinksService
-            .getBacklinkedBlocks$(note.$modelId)
-            .pipe(map((noteLinks) => ({ noteLinks: noteLinks, note }))),
+            .loadBacklinkedBlocks$(note.$modelId)
+            .pipe(map((noteLinks) => ({ noteLinks, note }))),
         ),
-        switchMap(async ({ noteLinks, note }) => {
-          if (noteLinks.length > 0) {
-            const scopes = await blocksScopesService.getBlocksScopes(
-              noteLinks.flatMap((linkedNote) =>
-                linkedNote.blocks.map((block) => ({
-                  scopedBy: note,
-                  rootBlockId: block.$modelId,
-                })),
-              ),
-            );
+        distinctUntilChanged((a, b) => isEqual(a, b)),
+        switchMap(({ noteLinks, note }) => {
+          if (noteLinks.rootsIds.length === 0) return of(true);
 
-            return {
-              referencesCount: scopes.length,
-              groupedScopes: groupBy(scopes, (sc) => sc.rootBlockId),
-              noteLinks: noteLinks,
-              note,
-            };
-          } else {
-            return { referencesCount: 0, groupedScopes: {}, noteLinks, note };
-          }
-        }),
-        switchMap(async ({ noteLinks, referencesCount, groupedScopes }) => {
-          return {
-            areLoaded: true,
-            noteLinks: noteLinks,
-            referencesCount,
-            groupedScopes,
-          };
+          return combineLatest([
+            allBlocksService.loadBlocksTrees$(noteLinks.rootsIds),
+            blocksScopesService.loadOrCreateBlocksScopes(
+              noteLinks.links.flatMap((link) => ({
+                scopedBy: note,
+                rootBlockId: link.blockRef.id,
+              })),
+            ),
+            blockLinksService.loadLinksOfBlockDescendants$(noteLinks.rootsIds),
+          ]).pipe(mapTo(true));
         }),
       );
     },
     [note],
   );
+  const areBacklinksLoaded = useObservableState(backlinksLoader$, false);
 
-  const backlinks = useObservableState(backlinks$, {
-    areLoaded: false,
-    noteLinks: [],
-    groupedScopes: {},
-    referencesCount: 0,
-  });
-
-  const linksBlocksWithScope = useMemo(
-    () =>
-      backlinks.noteLinks.map((link) => ({
-        note: link.rootBlock as NoteBlock,
-        scopesWithBlocks: link.blocks.flatMap((rootBlock) => {
-          const scopes = backlinks.groupedScopes[rootBlock.$modelId];
-          const scope = scopes.find(
-            (sc) => sc.rootBlockId === rootBlock.$modelId,
-          );
-          if (!scope) return [];
-
-          return {
-            scope,
-            rootBlock: getCollapsableBlock(scope, rootBlock),
-          };
-        }),
-      })),
-    [backlinks],
-  );
-
-  useEffect(() => {
-    const sub = blockLinksService
-      .loadLinksOfBlockDescendants$(
-        linksBlocksWithScope.map((scope) => scope.note.$modelId),
-      )
-      .subscribe();
-
-    return () => sub.unsubscribe();
-  }, [blockLinksService, linksBlocksWithScope]);
+  const groupedBacklinks = computed(
+    () => getGroupedBacklinks(blockLinksStore, blocksScopesStore, note),
+    { equals: comparer.structural },
+  ).get();
 
   return (
     <>
-      {backlinks.areLoaded ? (
+      {areBacklinksLoaded ? (
         <div className="note__linked-references">
           <LinkIcon className="note__link-icon" style={{ width: 16 }} />
-          {backlinks.referencesCount} Linked References
+          {groupedBacklinks.count} Linked References
         </div>
       ) : (
         <div className="note__linked-references">
@@ -143,10 +112,10 @@ const BacklinkedNotes = observer(({ note }: { note: NoteBlockModel }) => {
         </div>
       )}
 
-      {linksBlocksWithScope.map((link) => (
+      {groupedBacklinks.links.map((link) => (
         <BacklinkedNote
-          key={link.note.$modelId}
-          note={link.note}
+          key={link.rootBlock.$modelId}
+          note={link.rootBlock as NoteBlock}
           scopesWithBlocks={link.scopesWithBlocks}
         />
       ))}
@@ -248,16 +217,6 @@ const NoteBody = observer(({ note }: { note: NoteBlock }) => {
     },
     [navigate, note.$modelId, note.dailyNoteDate, noteBlocksService, notePath],
   );
-
-  const blockLinksService = useBlockLinksService();
-
-  useEffect(() => {
-    const sub = blockLinksService
-      .loadLinksOfBlockDescendants$([note.$modelId])
-      .subscribe();
-
-    return () => sub.unsubscribe();
-  }, [blockLinksService, note.$modelId]);
 
   return (
     <div className={noteClass()}>
