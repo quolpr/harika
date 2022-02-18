@@ -1,24 +1,17 @@
 import { inject, injectable } from 'inversify';
-import { map, Observable, of, switchMap, tap } from 'rxjs';
+import { map } from 'rxjs';
 
 import { DbEventsListenService } from '../../../../extensions/SyncExtension/services/DbEventsListenerService';
 import { blockLinkMapper } from '../mappers/blockLinkMapper';
-import { BaseBlock } from '../models/BaseBlock';
 import { BlockLinksStore } from '../models/BlockLinkStore';
-import { AllBlocksRepository } from '../repositories/AllBlocksRepository';
 import {
   BlockLinksRepository,
   blockLinksTable,
 } from '../repositories/BlockLinkRepository';
-import { AllBlocksService } from './AllBlocksService';
 
 @injectable()
 export class BlockLinkService {
   constructor(
-    @inject(AllBlocksRepository)
-    private allBlocksRepository: AllBlocksRepository,
-    @inject(AllBlocksService)
-    private allBlocksService: AllBlocksService,
     @inject(DbEventsListenService)
     private dbEventsService: DbEventsListenService,
     @inject(BlockLinksRepository)

@@ -1,6 +1,5 @@
 import {
   detach,
-  getSnapshot,
   idProp,
   Model,
   model,

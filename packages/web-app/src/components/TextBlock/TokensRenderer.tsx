@@ -26,7 +26,6 @@ import {
 } from '../../contexts/StackedNotesContext';
 import {
   useAllBlocksService,
-  useBlockLinksService,
   useBlockLinksStore,
   useUpdateLinkService,
 } from '../../hooks/vaultAppHooks';

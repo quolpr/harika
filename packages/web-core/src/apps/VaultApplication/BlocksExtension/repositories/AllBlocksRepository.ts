@@ -150,7 +150,7 @@ export class AllBlocksRepository {
           UNION ALL
           SELECT a.blockId, b.originalBlockId, a.parentId FROM ${raw(
             blocksChildrenTable,
-          )} a JOIN parentBlockIds b ON a.blockId = b.parentId LIMIT 1000
+          )} a JOIN parentBlockIds b ON a.blockId = b.parentId LIMIT 1000000
         )
       SELECT parentBlockIds.blockId AS rootBlockId, parentBlockIds.originalBlockId AS blockId FROM parentBlockIds WHERE parentBlockIds.parentId IS NULL
     `);

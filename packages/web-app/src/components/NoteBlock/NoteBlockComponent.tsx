@@ -23,9 +23,7 @@ import { useLocation } from 'react-router-dom';
 import { useMedia } from 'react-use';
 import {
   combineLatest,
-  defer,
   distinctUntilChanged,
-  from,
   map,
   mapTo,
   of,

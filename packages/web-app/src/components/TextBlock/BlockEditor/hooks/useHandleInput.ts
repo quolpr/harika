@@ -270,7 +270,14 @@ export const useHandleInput = (
         e.currentTarget.blur();
       }
     },
-    [block, setEditState, scope.$modelId, insertFakeInput, isAnyDropdownShown],
+    [
+      block,
+      setEditState,
+      scope.$modelId,
+      linksStore,
+      insertFakeInput,
+      isAnyDropdownShown,
+    ],
   );
 
   const handleCaretChange = useCallback(

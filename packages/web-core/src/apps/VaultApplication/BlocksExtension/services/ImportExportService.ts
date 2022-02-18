@@ -1,5 +1,4 @@
 import { inject, injectable } from 'inversify';
-import { v4 } from 'uuid';
 
 import { ISyncCtx } from '../../../../extensions/SyncExtension/syncCtx';
 import { generateId } from '../../../../lib/generateId';
