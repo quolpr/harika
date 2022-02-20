@@ -29,6 +29,24 @@ export class ChangesService {
     );
   }
 
+  async getDocIdsAfterRevExceptSelf(
+    trx: Knex,
+    schemaName: string,
+    rev: number,
+    exceptClientId: string
+  ) {
+    const res = (
+      await trx
+        .distinct('docId')
+        .withSchema(schemaName)
+        .from(docChangesTable)
+        .where('receivedFromClientId', '<>', exceptClientId)
+        .andWhere('rev', '>', rev)
+    ).map(({ docId }) => docId);
+
+    return res;
+  }
+
   async getGroupedChangesByKeys(
     trx: Knex,
     schemaName: string,

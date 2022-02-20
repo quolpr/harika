@@ -169,10 +169,17 @@ export const syncHandler: FastifyPluginCallback = (server, options, next) => {
         return authInfo$.pipe(
           onlyAuthed(),
           switchMap(async (authInfo) => {
+            // TODO: could be done in one query
             const snapshots = await docSnapshotsService.getSnapshotsFromRev(
               db,
               authInfo.dbName,
-              req.fromRev
+              req.fromRev,
+              await changesService.getDocIdsAfterRevExceptSelf(
+                db,
+                authInfo.dbName,
+                req.fromRev,
+                authInfo.clientId
+              )
             );
 
             // TODO: race condition may happen here

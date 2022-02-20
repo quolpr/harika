@@ -19,7 +19,7 @@ describe('DocSnapshotsService', () => {
 
   describe('getStatus', () => {
     it('works', async () => {
-      console.log(await service.getStatus(db, schemaName));
+      await service.getStatus(db, schemaName);
     });
   });
 });

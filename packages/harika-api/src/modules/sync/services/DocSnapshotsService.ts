@@ -82,12 +82,16 @@ export class DocSnapshotsService {
   async getSnapshotsFromRev(
     trx: Knex,
     schemaName: string,
-    rev: number
+    rev: number,
+    includeIds: string[]
   ): Promise<IDocSnapshot[]> {
+    if (includeIds.length === 0) return [];
+
     return await trx
       .withSchema(schemaName)
       .from(snapshotsTable)
-      .where('rev', '>', rev);
+      .where('rev', '>', rev)
+      .whereIn('docId', includeIds);
   }
 }
 

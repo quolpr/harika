@@ -41,6 +41,7 @@ export type IDocChange<
   | IDeleteChange<CollectionName>;
 
 export type WithRev<T> = T & { rev: number };
+export type WithClientId<T> = T & { receivedFromClientId: string };
 
 export type IDocChangeWithRev<
   CollectionName extends string = string,

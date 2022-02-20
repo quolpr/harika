@@ -1,15 +1,17 @@
 import {
+  DocChangeType,
   HybridClock,
   IAnyDoc,
   ICreateChange,
-  DocChangeType,
-  IUpdateChange,
   IDeleteChange,
-  WithRev,
+  IUpdateChange,
   makeClientId,
+  WithClientId,
+  WithRev,
 } from '@harika/sync-common';
-import { v4 } from 'uuid';
 import { Factory } from 'fishery';
+import { v4 } from 'uuid';
+
 import { db } from '../../src/db/db';
 
 const clientId = makeClientId();
@@ -20,15 +22,13 @@ const defaultTableName = 'testTable';
 
 let currentRev = 0;
 
-console.log(HybridClock.send(clock).toString());
-
 const onCreateHook =
   <T>(schemaName: string | undefined) =>
   async (ch: T) => {
     if (!schemaName) throw new Error('Schema name should be present!');
 
     const [{ rev }] = await db
-      .insert({ ...ch, receivedFromClientId: clientId }, ['rev'])
+      .insert(ch, ['rev'])
       .withSchema(schemaName)
       .into('changes');
 
@@ -36,7 +36,7 @@ const onCreateHook =
   };
 
 export const createChangeFactory = Factory.define<
-  WithRev<ICreateChange<string, IAnyDoc>>,
+  WithClientId<WithRev<ICreateChange<string, IAnyDoc>>>,
   { schemaName: string }
 >(({ params, onCreate, transientParams }) => {
   const finalId = params.docId || params?.doc?.id || defaultObjectId;
@@ -51,13 +51,14 @@ export const createChangeFactory = Factory.define<
     doc: params.doc
       ? ({ ...params.doc, id: finalId } as IAnyDoc)
       : { id: finalId, content: 'test' },
+    receivedFromClientId: params?.receivedFromClientId || clientId,
     timestamp: params.timestamp || HybridClock.send(clock).toString(),
     rev: currentRev++,
   };
 });
 
 export const updateChangeFactory = Factory.define<
-  WithRev<IUpdateChange<string, IAnyDoc>>,
+  WithClientId<WithRev<IUpdateChange<string, IAnyDoc>>>,
   { schemaName: string }
 >(({ params, onCreate, transientParams }) => {
   onCreate(onCreateHook(transientParams.schemaName));
@@ -70,12 +71,13 @@ export const updateChangeFactory = Factory.define<
     from: params.from || { content: 'test' },
     to: params.to || { content: 'changed test' },
     timestamp: params.timestamp || HybridClock.send(clock).toString(),
+    receivedFromClientId: params?.receivedFromClientId || clientId,
     rev: currentRev++,
   };
 });
 
 export const deleteChangeFactory = Factory.define<
-  WithRev<IDeleteChange<string>>,
+  WithClientId<WithRev<IDeleteChange<string>>>,
   { schemaName: string }
 >(({ params, onCreate, transientParams }) => {
   onCreate(onCreateHook(transientParams.schemaName));
@@ -86,6 +88,7 @@ export const deleteChangeFactory = Factory.define<
     collectionName: params.collectionName || defaultTableName,
     docId: params.docId || defaultObjectId,
     timestamp: params.timestamp || HybridClock.send(clock).toString(),
+    receivedFromClientId: params?.receivedFromClientId || clientId,
     rev: currentRev++,
   };
 });

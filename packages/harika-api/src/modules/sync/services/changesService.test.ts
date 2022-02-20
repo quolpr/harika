@@ -22,6 +22,17 @@ describe('ChangesService', () => {
     );
   };
 
+  const insertWithClientAndDocId = (clientId: string, docId: string) => {
+    return createChangeFactory.create(
+      {
+        doc: { id: docId },
+        collectionName: collectionName,
+        receivedFromClientId: clientId,
+      },
+      { transient: { schemaName } }
+    );
+  };
+
   beforeEach(async () => {
     schemaName = await createTestDbSchema();
   });
@@ -74,6 +85,46 @@ describe('ChangesService', () => {
           []
         )
       ).toEqual(false);
+    });
+  });
+
+  describe('getClientIdsAfterRev', () => {
+    it('when no changes from other clients returns empty array', async () => {
+      const changesService = new ChangesService();
+
+      await Promise.all([
+        insertWithClientAndDocId('123', '123'),
+        insertWithClientAndDocId('123', '123'),
+      ]);
+
+      expect(
+        await changesService.getDocIdsAfterRevExceptSelf(
+          db,
+          schemaName,
+          0,
+          '123'
+        )
+      ).toEqual([]);
+    });
+
+    it('when no changes from other clients returns empty array', async () => {
+      const changesService = new ChangesService();
+
+      await Promise.all([
+        insertWithClientAndDocId('123', '111'),
+        insertWithClientAndDocId('345', '222'),
+        insertWithClientAndDocId('567', '333'),
+        insertWithClientAndDocId('789', '333'),
+      ]);
+
+      expect(
+        await changesService.getDocIdsAfterRevExceptSelf(
+          db,
+          schemaName,
+          0,
+          '123'
+        )
+      ).toEqual(['222', '333']);
     });
   });
 });
