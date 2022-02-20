@@ -23,7 +23,7 @@ export class TextBlock extends ExtendedModel(BaseBlock, {
   @modelAction
   mergeToAndDelete(to: BaseBlock) {
     if (to instanceof TextBlock) {
-      to.content = to.content + this.content;
+      to.content = to.content + this.contentModel.currentValue;
     }
 
     return super.mergeToAndDelete(to);

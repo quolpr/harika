@@ -69,12 +69,12 @@ export const injectNewRightBlock = standaloneAction(
     const { injectTo, parentBlock } = (() => {
       if (collapsableBlock.children.length > 0 && content.length === 0) {
         return {
-          injectTo: 0,
+          injectTo: -1,
           parentBlock: collapsableBlock.originalBlock,
         };
       } else if (collapsableBlock.children.length > 0 && content.length !== 0) {
         return {
-          injectTo: 0,
+          injectTo: -1,
           parentBlock: collapsableBlock.originalBlock,
         };
       } else {
@@ -125,7 +125,7 @@ export const handleNewLinePress = standaloneAction(
       );
       originalBlock.setContent(content.slice(caretPosStart, content.length));
 
-      focusOn = this;
+      focusOn = collapsableBlock.originalBlock;
     } else {
       if (caretPosStart !== content.length) {
         newContent = content.slice(caretPosStart, content.length);
