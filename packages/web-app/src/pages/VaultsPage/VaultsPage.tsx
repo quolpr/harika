@@ -63,7 +63,6 @@ const VaultBlock = ({
 export const VaultsPage = () => {
   useLoadUserApp();
 
-  const navigate = useNavigateRef();
   const userVaults = useUserVaults();
 
   const [isCreateModalOpened, setIsCreateModalOpened] = useState(false);
@@ -72,24 +71,6 @@ export const VaultsPage = () => {
     [userVaults],
   );
   const allVaults = useObservableState(allVaultTuples, []);
-
-  const handleSubmit = useCallback(
-    async (data: { name: string }) => {
-      const dbId = generateId();
-
-      const vault = await userVaults?.createVault({ name: data.name, dbId });
-      if (!vault) {
-        console.error('Failed to create vault');
-
-        return;
-      }
-
-      setIsCreateModalOpened(false);
-
-      navigate.current(paths.vaultDailyPath({ vaultId: vault.id }));
-    },
-    [userVaults, navigate],
-  );
 
   const handleClose = useCallback(() => {
     setIsCreateModalOpened(false);
@@ -142,7 +123,6 @@ export const VaultsPage = () => {
           <CreateVaultModal
             isOpened={isCreateModalOpened}
             onClose={handleClose}
-            onSubmit={handleSubmit}
           />
         </div>
       </div>

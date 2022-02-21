@@ -3,6 +3,8 @@
 // To add all colors support
 const colors = require('tailwindcss/colors');
 
+console.log(colors);
+
 module.exports = {
   important: true,
   mode: 'jit',

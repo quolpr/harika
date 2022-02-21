@@ -32,7 +32,7 @@ interface OldVersionDump {
   };
 }
 
-interface Dump {
+export interface Dump {
   version: number;
   data: {
     tableName: string;
