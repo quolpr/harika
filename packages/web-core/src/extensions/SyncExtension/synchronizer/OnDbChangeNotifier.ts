@@ -35,8 +35,6 @@ export class OnDbChangeNotifier {
         windowId !== this.currentWindowId || source === 'inDbChanges',
     );
 
-    console.log('New events need to notify', JSON.stringify(evs));
-
     if (evs.length === 0) return;
 
     const groupedMappedData = this.getGroupedMappedData(evs);
