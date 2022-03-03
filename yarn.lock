@@ -9860,13 +9860,13 @@ mkdirp@^1.0.4:
   resolved "https://registry.yarnpkg.com/mkdirp/-/mkdirp-1.0.4.tgz#3eb5ed62622756d79a5f0e2a221dfebad75c2f7e"
   integrity sha512-vVqVZQyf3WLx2Shd0qJ9xuvqgAyKPLAiqITEtqW0oIUjzo3PePDd6fW9iFz30ef7Ysp/oiWqbhszeGWW2T6Gzw==
 
-mobx-keystone@0.66.0, mobx-keystone@^0.66.0:
-  version "0.66.0"
-  resolved "https://registry.yarnpkg.com/mobx-keystone/-/mobx-keystone-0.66.0.tgz#bf090ac214027af282fd718a44c58983c8011bf1"
-  integrity sha512-cSsBcV83+dD9mYGvUhmDSTfhRJHBaQsLwHylcStIELJPIIX3lzRh+YLos0MV0VlIF/UAWQISxzofgP/3z606OA==
+mobx-keystone@0.67.0, mobx-keystone@^0.67.0:
+  version "0.67.0"
+  resolved "https://registry.yarnpkg.com/mobx-keystone/-/mobx-keystone-0.67.0.tgz#c63f1d22dbbbbafdcd148e5be3341432b58137ef"
+  integrity sha512-c2IMVD5nRf8fdSl1tMzc4FST1/7+3SmuQdYlCDCTOA2e6fT/IsDUR81KGceoCIj71gkwHpaGHH812eCE+N9rhg==
   dependencies:
     fast-deep-equal "^3.1.3"
-    nanoid "^3.2.0"
+    nanoid "^3.3.1"
     ts-toolbelt "^9.6.0"
     tslib "^2.3.1"
 

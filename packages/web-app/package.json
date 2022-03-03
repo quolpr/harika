@@ -31,7 +31,7 @@
     "linkifyjs": "v3.0.5",
     "lodash-es": "^4.17.21",
     "mobx": "^6.4.0",
-    "mobx-keystone": "^0.66.0",
+    "mobx-keystone": "^0.67.0",
     "mobx-react-lite": "^3.3.0",
     "observable-hooks": "^4.2.0",
     "path-to-regexp": "6.2.0",
