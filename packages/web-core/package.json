@@ -53,7 +53,7 @@
     "@types/socket.io-client": "~3.0.0",
     "@types/sql-bricks": "^2.0.2",
     "@types/sql.js": "^1.4.3",
-    "@typescript-eslint/eslint-plugin": "^5.11.0",
+    "@typescript-eslint/eslint-plugin": "^5.14.0",
     "@typescript-eslint/parser": "^5.11.0",
     "eslint-plugin-rxjs": "^5.0.2",
     "eslint-plugin-simple-import-sort": "^7.0.0",
