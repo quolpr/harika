@@ -3,7 +3,7 @@ import { MutableRefObject, useContext, useEffect } from 'react';
 import { usePrevious } from 'react-use';
 
 import { CurrentBlockInputRefContext } from '../../../../contexts';
-import { EditState } from '../../../../hooks/useFocusedBlockState';
+import { BlockFocus } from '../../../../hooks/useBlockFocusState';
 import { useUpdateLinkService } from '../../../../hooks/vaultAppHooks';
 
 export const useProvideInputToContext = (
@@ -25,33 +25,34 @@ export const useProvideInputToContext = (
 
 export const useUpdateBlockValues = (
   block: CollapsableBlock<TextBlock>,
-  editState: EditState,
+  isEditing: boolean,
 ) => {
   const updateLinkService = useUpdateLinkService();
 
-  const wasEditing = usePrevious(editState.isEditing);
+  const wasEditing = usePrevious(isEditing);
 
   useEffect(() => {
-    if (!editState.isEditing && wasEditing) {
+    if (!isEditing && wasEditing) {
       block.originalBlock.contentModel.dumpValue();
       updateLinkService.updateBlockLinks([block.$modelId]);
     }
   }, [
     block.$modelId,
     block.originalBlock,
-    editState.isEditing,
+    isEditing,
     updateLinkService,
     wasEditing,
   ]);
 };
 
 export const useHandleFocus = (
-  editState: EditState,
+  blockFocus: BlockFocus | undefined,
+  isEditing: boolean,
   textBlock: CollapsableBlock<TextBlock>,
   inputRef: MutableRefObject<HTMLTextAreaElement | null>,
   releaseFakeInput: () => void,
 ) => {
-  const { isEditing, startAt } = editState;
+  const startAt = blockFocus?.startAt;
 
   useEffect(() => {
     if (

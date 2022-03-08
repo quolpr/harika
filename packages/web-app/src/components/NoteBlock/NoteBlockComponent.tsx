@@ -32,10 +32,7 @@ import {
 
 import { CurrentBlockInputRefContext } from '../../contexts';
 import { useNotePath } from '../../contexts/StackedNotesContext';
-import {
-  FocusedBlockState,
-  useFocusedBlock,
-} from '../../hooks/useFocusedBlockState';
+import { useBlockFocusState } from '../../hooks/useBlockFocusState';
 import {
   useAllBlocksService,
   useBlockLinksService,
@@ -125,7 +122,7 @@ const noteClass = bem('note');
 
 const NoteBody = observer(({ note }: { note: NoteBlock }) => {
   const isWide = useMedia('(min-width: 768px)');
-  const focusedBlock = useFocusedBlock();
+  const blockFocusState = useBlockFocusState();
   const navigate = useNavigateRef();
 
   const location = useLocation();
@@ -173,11 +170,16 @@ const NoteBody = observer(({ note }: { note: NoteBlock }) => {
 
   useEffect(() => {
     if (focusOnBlockId) {
-      focusedBlock.setState(
-        FocusedBlockState.create(note.$modelId, focusOnBlockId),
-      );
+      setTimeout(() => {
+        blockFocusState.changeFocus(
+          note.$modelId,
+          focusOnBlockId,
+          undefined,
+          true,
+        );
+      }, 0);
     }
-  }, [focusOnBlockId, note.$modelId, focusedBlock]);
+  }, [focusOnBlockId, note.$modelId, blockFocusState]);
 
   const inputId = `note-title-input-${note.$modelId}`;
 

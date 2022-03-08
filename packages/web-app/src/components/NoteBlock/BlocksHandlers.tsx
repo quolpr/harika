@@ -18,10 +18,7 @@ import {
   tap,
 } from 'rxjs/operators';
 
-import {
-  FocusedBlockState,
-  useFocusedBlock,
-} from '../../hooks/useFocusedBlockState';
+import { useBlockFocusState } from '../../hooks/useBlockFocusState';
 import { useBlocksStore } from '../../hooks/vaultAppHooks';
 
 export const BlocksHandlers = observer(
@@ -32,7 +29,7 @@ export const BlocksHandlers = observer(
     scope: BlocksScope;
     rootBlock: CollapsableBlock;
   }) => {
-    const focusedBlock = useFocusedBlock();
+    const blockFocusState = useBlockFocusState();
     const blocksStore = useBlocksStore();
     const blockSelection = getBlocksSelection(scope, rootBlock);
 
@@ -74,7 +71,7 @@ export const BlocksHandlers = observer(
               return EMPTY;
             }
 
-            const focusedBlockState = focusedBlock.state;
+            const currentFocus = blockFocusState.currentFocus;
 
             const resetAnySelection$ = mouseMove$.pipe(
               tap(() => {
@@ -87,17 +84,17 @@ export const BlocksHandlers = observer(
 
             // shift+click handling
             if (
-              focusedBlockState &&
-              focusedBlockState.scopeId === scope.$modelId &&
-              focusedBlockState.isEditing === true &&
+              currentFocus &&
+              currentFocus.scopeId === scope.$modelId &&
+              blockFocusState.isEditing === true &&
               blockSelection.selectionInterval === undefined &&
               shiftKey
             ) {
               blockSelection.setSelectionInterval(
-                focusedBlockState.scopedBlockId,
+                currentFocus.blockId,
                 fromBlockId,
               );
-              focusedBlock.setState(undefined);
+              blockFocusState.resetFocus();
 
               return EMPTY;
             }
@@ -135,7 +132,7 @@ export const BlocksHandlers = observer(
                     }
 
                     blockSelection.setSelectionInterval(fromBlockId, toId);
-                    focusedBlock.setState(undefined);
+                    blockFocusState.resetFocus();
 
                     wasAnyIdSelected = true;
                   }),
@@ -156,7 +153,7 @@ export const BlocksHandlers = observer(
       return () => {
         mouseMoveHandler.unsubscribe();
       };
-    }, [blockSelection, focusedBlock, scope.$modelId]);
+    }, [blockSelection, blockFocusState, scope.$modelId]);
 
     const isSelecting = blockSelection.selectionInterval !== undefined;
 
@@ -205,9 +202,9 @@ export const BlocksHandlers = observer(
     useEffect(() => {
       const handler = (e: MouseEvent) => {
         if (
-          focusedBlock.state &&
-          focusedBlock.state.scopeId === scope.$modelId &&
-          focusedBlock.state?.isEditing &&
+          blockFocusState.currentFocus &&
+          blockFocusState.currentFocus.scopeId === scope.$modelId &&
+          blockFocusState.isEditing &&
           !(
             e.target instanceof Element &&
             (e.target.closest('.toolbar') ||
@@ -216,21 +213,16 @@ export const BlocksHandlers = observer(
           ) &&
           e.target instanceof Element &&
           (e.target.closest('[data-type="text-block"]') as HTMLElement)?.dataset
-            ?.id !== focusedBlock.state.scopedBlockId
+            ?.id !== blockFocusState.currentFocus.blockId
         ) {
-          focusedBlock.setState(
-            new FocusedBlockState({
-              ...focusedBlock.state.$,
-              isEditing: false,
-            }),
-          );
+          blockFocusState.setIsEditing(false);
         }
       };
 
       document.addEventListener('mousedown', handler);
 
       return () => document.removeEventListener('mousedown', handler);
-    }, [focusedBlock, scope.$modelId]);
+    }, [blockFocusState, scope.$modelId]);
 
     return null;
   },

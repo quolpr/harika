@@ -11,7 +11,7 @@ import dayjs from 'dayjs';
 import { RefObject, useCallback, useContext, useState } from 'react';
 
 import { ShiftPressedContext } from '../../../../contexts/ShiftPressedContext';
-import { useCurrentFocusedBlockState } from '../../../../hooks/useFocusedBlockState';
+import { useBlockFocusState } from '../../../../hooks/useBlockFocusState';
 import {
   useBlockLinksStore,
   useBlocksStore,
@@ -47,10 +47,7 @@ export const useHandleInput = (
 
   const [caretPos, setCaretPos] = useState<Pos | undefined>();
 
-  const [, setEditState] = useCurrentFocusedBlockState(
-    scope.$modelId,
-    block.$modelId,
-  );
+  const blockFocusState = useBlockFocusState();
 
   const [noteTitleToSearch, setNoteTitleToSearch] = useState<
     string | undefined
@@ -101,12 +98,12 @@ export const useHandleInput = (
         setTimeout(releaseFakeInput, 0);
 
         if (focusOn) {
-          setEditState({
-            scopeId: scope.$modelId,
-            scopedBlockId: focusOn.$modelId,
-            isEditing: true,
-            startAt: focusStartAt,
-          });
+          blockFocusState.changeFocus(
+            scope.$modelId,
+            focusOn.$modelId,
+            focusStartAt,
+            true,
+          );
         }
       }
     },
@@ -116,7 +113,7 @@ export const useHandleInput = (
       block,
       insertFakeInput,
       releaseFakeInput,
-      setEditState,
+      blockFocusState,
       scope.$modelId,
     ],
   );
@@ -128,11 +125,7 @@ export const useHandleInput = (
       const end = e.currentTarget.selectionEnd;
 
       if (e.key === 'Escape') {
-        setEditState({
-          scopeId: scope.$modelId,
-          scopedBlockId: block.$modelId,
-          isEditing: false,
-        });
+        blockFocusState.setIsEditing(false);
       } else if (e.key === 'Backspace') {
         const isOnStart = start === end && start === 0;
 
@@ -167,37 +160,24 @@ export const useHandleInput = (
           if (mergedTo && mergedTo.originalBlock instanceof TextBlock) {
             insertFakeInput();
 
-            setEditState({
-              scopeId: scope.$modelId,
-              scopedBlockId: mergedTo.$modelId,
-              startAt:
-                mergedTo.originalBlock.contentModel.currentValue.length -
+            blockFocusState.changeFocus(
+              scope.$modelId,
+              mergedTo.$modelId,
+              mergedTo.originalBlock.contentModel.currentValue.length -
                 block.originalBlock.contentModel.currentValue.length,
-              isEditing: true,
-            });
+              true,
+            );
           }
         }
       } else if (e.key === 'Tab' && !e.shiftKey) {
         e.preventDefault();
 
         if (!isAnyDropdownShown()) {
-          setEditState({
-            scopeId: scope.$modelId,
-            scopedBlockId: block.$modelId,
-            startAt: start,
-            isEditing: true,
-          });
           block.tryMoveUp();
         }
       } else if (e.key === 'Tab' && e.shiftKey) {
         e.preventDefault();
 
-        setEditState({
-          scopeId: scope.$modelId,
-          scopedBlockId: block.$modelId,
-          startAt: start,
-          isEditing: true,
-        });
         block.tryMoveDown();
       } else if (e.key === 'ArrowUp' && e.shiftKey) {
         e.preventDefault();
@@ -227,12 +207,12 @@ export const useHandleInput = (
               const [left] = block.leftAndRight;
 
               if (left) {
-                setEditState({
-                  scopeId: scope.$modelId,
-                  scopedBlockId: left.$modelId,
-                  isEditing: true,
-                  startAt: start,
-                });
+                blockFocusState.changeFocus(
+                  scope.$modelId,
+                  left.$modelId,
+                  start,
+                  true,
+                );
               }
             }
           });
@@ -250,16 +230,15 @@ export const useHandleInput = (
               const [, right] = block.leftAndRight;
 
               if (right && right.originalBlock instanceof TextBlock) {
-                setEditState({
-                  scopeId: scope.$modelId,
-                  scopedBlockId: right.$modelId,
-                  isEditing: true,
-                  startAt:
-                    start ===
-                    block.originalBlock.contentModel.currentValue.length
-                      ? right.originalBlock.contentModel.currentValue.length
-                      : start,
-                });
+                blockFocusState.changeFocus(
+                  scope.$modelId,
+                  right.$modelId,
+
+                  start === block.originalBlock.contentModel.currentValue.length
+                    ? right.originalBlock.contentModel.currentValue.length
+                    : start,
+                  true,
+                );
               }
             }
           });
@@ -272,10 +251,10 @@ export const useHandleInput = (
     },
     [
       block,
-      setEditState,
-      scope.$modelId,
+      blockFocusState,
       linksStore,
       insertFakeInput,
+      scope.$modelId,
       isAnyDropdownShown,
     ],
   );
@@ -334,20 +313,21 @@ export const useHandleInput = (
       updateLinkService.updateBlockLinks(ids);
 
       if (injectedBlocks[0]) {
-        setEditState({
-          scopeId: scope.$modelId,
-          scopedBlockId: injectedBlocks[0].$modelId,
-          isEditing: true,
-        });
+        blockFocusState.changeFocus(
+          scope.$modelId,
+          injectedBlocks[0].$modelId,
+          0,
+          true,
+        );
       }
     },
     [
       block,
+      blockFocusState,
       blocksStore,
       handleCaretChange,
       isShiftPressedRef,
       scope,
-      setEditState,
       updateLinkService,
     ],
   );

@@ -4,7 +4,10 @@ import clsx from 'clsx';
 import { observer } from 'mobx-react-lite';
 import React, { useCallback, useRef } from 'react';
 
-import { useCurrentFocusedBlockState } from '../../../hooks/useFocusedBlockState';
+import {
+  useCurrentFocus,
+  useCurrentIsEditing,
+} from '../../../hooks/useBlockFocusState';
 import { EditorCommandsDropdown } from './EditorCommandsDropdown/EditorCommandsDropdown';
 import { FindBlockDropdown } from './FindBlockDropdown/FindBlockDropdown';
 import {
@@ -27,16 +30,9 @@ export const BlockEditor = observer(
     insertFakeInput: () => void;
     releaseFakeInput: () => void;
   }) => {
-    const [editState] = useCurrentFocusedBlockState(
-      scope.$modelId,
-      textBlock.$modelId,
-    );
-
     const wrapperRef = useRef<HTMLDivElement | null>(null);
     const inputRef = useRef<HTMLTextAreaElement | null>(null);
     const inputId = `${scope.$modelId}-${textBlock.$modelId}`;
-
-    const { isEditing } = editState;
 
     const isTitleDropdownShownRef = useRef(false);
     const isCommandsDropdownShownRef = useRef(false);
@@ -48,6 +44,9 @@ export const BlockEditor = observer(
         isBlockDropdownShownRef.current
       );
     }, []);
+
+    const blockFocus = useCurrentFocus(scope.$modelId, textBlock.$modelId);
+    const isEditing = useCurrentIsEditing(scope.$modelId, textBlock.$modelId);
 
     const {
       textareaHandlers,
@@ -66,8 +65,14 @@ export const BlockEditor = observer(
       releaseFakeInput,
       isAnyDropdownShown,
     );
-    useHandleFocus(editState, textBlock, inputRef, releaseFakeInput);
-    useUpdateBlockValues(textBlock, editState);
+    useHandleFocus(
+      blockFocus,
+      isEditing,
+      textBlock,
+      inputRef,
+      releaseFakeInput,
+    );
+    useUpdateBlockValues(textBlock, isEditing);
     useProvideInputToContext(inputRef, isEditing);
 
     return (

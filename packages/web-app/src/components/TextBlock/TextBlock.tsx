@@ -11,7 +11,10 @@ import { computed } from 'mobx';
 import { observer } from 'mobx-react-lite';
 import React, { useCallback, useRef } from 'react';
 
-import { useCurrentFocusedBlockState } from '../../hooks/useFocusedBlockState';
+import {
+  useBlockFocusState,
+  useCurrentIsEditing,
+} from '../../hooks/useBlockFocusState';
 import { Arrow } from '../Arrow/Arrow';
 import { useBacklinkedBlocksCount } from '../LinkedBlocksOfBlocksContext';
 import { BlockEditor } from './BlockEditor/BlockEditor';
@@ -22,12 +25,10 @@ import { TokensRenderer } from './TokensRenderer';
 
 export const BlocksChildren = observer(
   ({
-    parent,
     childBlocks,
     scope,
     blocksSelection,
   }: {
-    parent: CollapsableBlock;
     childBlocks: CollapsableBlock[];
     scope: BlocksScope;
     blocksSelection: BlocksSelection;
@@ -69,11 +70,8 @@ const TextBlockBody = observer(
     const { insertFakeInput, releaseFakeInput } =
       useFakeInput(fakeInputHolderRef);
 
-    const [editState, setEditState] = useCurrentFocusedBlockState(
-      scope.$modelId,
-      block.$modelId,
-    );
-    const { isEditing } = editState;
+    const blockFocusState = useBlockFocusState();
+    const isEditing = useCurrentIsEditing(scope.$modelId, block.$modelId);
 
     const handleToggle = useCallback(() => {
       scope.toggleExpand(block.$modelId);
@@ -131,16 +129,16 @@ const TextBlockBody = observer(
           insertFakeInput();
         }
 
-        setEditState({
-          scopeId: scope.$modelId,
-          scopedBlockId: block.$modelId,
-          isEditing: true,
+        blockFocusState.changeFocus(
+          scope.$modelId,
+          block.$modelId,
           startAt,
-        });
+          true,
+        );
       },
       [
         contentLength,
-        setEditState,
+        blockFocusState,
         scope.$modelId,
         block.$modelId,
         insertFakeInput,
@@ -149,12 +147,7 @@ const TextBlockBody = observer(
 
     const handleContentKeyPress = (e: React.KeyboardEvent<HTMLSpanElement>) => {
       if (e.key === 'Enter' && e.target === e.currentTarget) {
-        setEditState({
-          scopeId: scope.$modelId,
-          scopedBlockId: block.$modelId,
-          isEditing: true,
-          startAt: 0,
-        });
+        blockFocusState.changeFocus(scope.$modelId, block.$modelId, 0, true);
       }
     };
 
@@ -262,7 +255,6 @@ export const TextBlockComponent = observer(
           >
             <BlocksChildren
               blocksSelection={blocksSelection}
-              parent={block}
               childBlocks={block.childrenBlocks}
               scope={scope}
             />

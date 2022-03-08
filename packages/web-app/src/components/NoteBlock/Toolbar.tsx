@@ -1,4 +1,4 @@
-import { BlocksScope, CollapsableBlock } from '@harika/web-core';
+import { getCollapsableBlock } from '@harika/web-core';
 import {
   ArrowDropDown,
   ArrowDropUp,
@@ -15,11 +15,16 @@ import useResizeObserver from 'use-resize-observer/polyfilled';
 
 import { CurrentBlockInputRefContext } from '../../contexts';
 import { FooterRefContext } from '../../contexts/FooterRefContext';
+import { useBlockFocusState } from '../../hooks/useBlockFocusState';
+import {
+  useBlocksScopesStore,
+  useBlocksStore,
+} from '../../hooks/vaultAppHooks';
 import { cn, insertText } from '../../utils';
 
 const toolbarClass = cn('toolbar');
 
-export const Toolbar = observer(({ scope }: { scope: BlocksScope }) => {
+export const Toolbar = observer(() => {
   const footerRef = useContext(FooterRefContext);
 
   const currentBlockInputRef = useContext(CurrentBlockInputRefContext);
@@ -36,12 +41,19 @@ export const Toolbar = observer(({ scope }: { scope: BlocksScope }) => {
     }, 0);
   }, [currentBlockInputRef]);
 
-  // const currentBlock = focusedBlock.state?.scopedBlockId
-  //   ? getCollapsableBlock(scope, focusedBlock.state?.scopedBlockId)
-  //   : undefined;
-  const currentBlock: CollapsableBlock | undefined = undefined as
-    | CollapsableBlock
-    | undefined;
+  const scopeStore = useBlocksScopesStore();
+  const blocksStore = useBlocksStore();
+  const focusState = useBlockFocusState();
+
+  const scope = focusState.currentFocus
+    ? scopeStore.getScopeById(focusState.currentFocus?.scopeId)
+    : undefined;
+  const block = focusState.currentFocus
+    ? blocksStore.getBlockById(focusState.currentFocus.blockId)
+    : undefined;
+
+  const currentBlock =
+    scope && block ? getCollapsableBlock(scope, block) : undefined;
 
   const handleTodoPress = useCallback(
     (e: React.MouseEvent) => {

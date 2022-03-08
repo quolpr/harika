@@ -57,7 +57,6 @@ export const ChildrenBlocks = observer(({ note }: { note: NoteBlock }) => {
       <div className={noteClass('body')}>
         {scope && collapsableNote && blocksSelection && (
           <BlocksChildren
-            parent={collapsableNote}
             scope={scope}
             childBlocks={collapsableNote.childrenBlocks}
             blocksSelection={blocksSelection}
@@ -65,7 +64,7 @@ export const ChildrenBlocks = observer(({ note }: { note: NoteBlock }) => {
         )}
       </div>
 
-      {!isWide && scope && <Toolbar scope={scope} />}
+      {!isWide && <Toolbar />}
     </LinkedBlocksOfBlocksProvider>
   );
 });
