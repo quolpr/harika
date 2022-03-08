@@ -7,7 +7,7 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { useParams } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
 import { useCurrentVaultApp } from '../hooks/vaultAppHooks';
 import { paths } from '../paths';
@@ -60,19 +60,21 @@ const stacksToString = (stacks: IStack[]) => {
 };
 
 export const useStacks = () => {
-  const { stackIds } = useParams<{ stackIds: string }>();
+  const { pathname } = useLocation();
+
+  const stacks = pathname.split('/notes/')[1];
 
   const [currentStacks, setCurrentStacks] = useState<
     { entityId: string; stackId: string }[]
   >([]);
 
   useEffect(() => {
-    if (stackIds === undefined) {
+    if (stacks === undefined) {
       setCurrentStacks([]);
     } else {
-      setCurrentStacks(stringToStacks(stackIds));
+      setCurrentStacks(stringToStacks(stacks));
     }
-  }, [stackIds]);
+  }, [stacks]);
 
   return currentStacks;
 };
@@ -187,6 +189,7 @@ export const useHandleNoteClickOrPress = (
   return useCallback(
     (e: React.MouseEvent | React.KeyboardEvent) => {
       if (!nextNoteId) return;
+
       if (e.target !== e.currentTarget) {
         if (!(e.target instanceof HTMLElement)) return;
         if (e.target instanceof HTMLAnchorElement) return;
