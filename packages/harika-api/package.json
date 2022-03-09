@@ -17,7 +17,7 @@
   "dependencies": {
     "@harika/sync-common": "*",
     "dotenv": "^16.0.0",
-    "fastify": "^3.27.1",
+    "fastify": "^3.27.4",
     "fastify-cors": "^6.0.2",
     "fastify-oas": "^3.0.8",
     "fastify-plugin": "3.0.1",
