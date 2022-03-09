@@ -98,6 +98,10 @@ input[type='search']::-webkit-search-results-decoration {
     &--dangerous {
       @apply bg-red-600 mt-5;
     }
+
+    &--secondary {
+      @apply bg-blue-600;
+    }
   }
 
   &__sign-up-btn {

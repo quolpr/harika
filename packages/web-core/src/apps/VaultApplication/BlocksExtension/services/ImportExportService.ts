@@ -32,7 +32,7 @@ interface OldVersionDump {
   };
 }
 
-interface Dump {
+export interface Dump {
   version: number;
   data: {
     tableName: string;
@@ -73,51 +73,49 @@ export class ImportExportService {
 
     const links: BlockLinkRow[] = [];
 
-    await this.noteBlocksRepository.transaction(async (t) => {
-      for (const { tableName, rows } of dump.data) {
-        if (tableName === noteBlocksTable) {
-          // eslint-disable-next-line no-loop-func
-          rows.forEach((row) => {
-            row.linkedBlockIds.forEach((id: string) => {
-              links.push({
-                id: generateId(),
-                blockId: row.id,
-                linkedToBlockId: id,
-                orderPosition: i++,
-                createdAt: new Date().getTime(),
-                updatedAt: new Date().getTime(),
-              });
+    for (const { tableName, rows } of dump.data) {
+      if (tableName === noteBlocksTable) {
+        // eslint-disable-next-line no-loop-func
+        rows.forEach((row) => {
+          row.linkedBlockIds.forEach((id: string) => {
+            links.push({
+              id: generateId(),
+              blockId: row.id,
+              linkedToBlockId: id,
+              orderPosition: i++,
+              createdAt: new Date().getTime(),
+              updatedAt: new Date().getTime(),
             });
-
-            delete row['linkedBlockIds'];
           });
 
-          await this.noteBlocksRepository.bulkCreate(rows, ctx, t);
-        } else if (tableName === textBlocksTable) {
-          // eslint-disable-next-line no-loop-func
-          rows.forEach((row) => {
-            row.linkedBlockIds.forEach((id: string) => {
-              links.push({
-                id: generateId(),
-                blockId: row.id,
-                linkedToBlockId: id,
-                orderPosition: i++,
-                createdAt: new Date().getTime(),
-                updatedAt: new Date().getTime(),
-              });
-            });
+          delete row['linkedBlockIds'];
+        });
 
-            delete row['linkedBlockIds'];
+        await this.noteBlocksRepository.bulkCreate(rows, ctx);
+      } else if (tableName === textBlocksTable) {
+        // eslint-disable-next-line no-loop-func
+        rows.forEach((row) => {
+          row.linkedBlockIds.forEach((id: string) => {
+            links.push({
+              id: generateId(),
+              blockId: row.id,
+              linkedToBlockId: id,
+              orderPosition: i++,
+              createdAt: new Date().getTime(),
+              updatedAt: new Date().getTime(),
+            });
           });
 
-          await this.textBlocksRepository.bulkCreate(rows, ctx, t);
-        } else if (tableName === blocksScopesTable) {
-          await this.blocksScopesRepository.bulkCreate(rows, ctx, t);
-        }
+          delete row['linkedBlockIds'];
+        });
+
+        await this.textBlocksRepository.bulkCreate(rows, ctx);
+      } else if (tableName === blocksScopesTable) {
+        await this.blocksScopesRepository.bulkCreate(rows, ctx);
       }
+    }
 
-      await this.blockLinksRepo.bulkCreate(links, ctx, t);
-    });
+    await this.blockLinksRepo.bulkCreate(links, ctx);
   }
 
   private async secondVersionImport(dump: Dump) {

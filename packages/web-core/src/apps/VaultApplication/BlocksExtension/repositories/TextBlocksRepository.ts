@@ -22,24 +22,22 @@ export class TextBlocksRepository extends BaseBlockRepository<
   TextBlockDoc,
   TextBlockRow
 > {
-  bulkCreate(
+  async bulkCreate(
     attrsArray: TextBlockDoc[],
     ctx: ISyncCtx,
     e: IQueryExecuter = this.db,
   ) {
-    return e.transaction(async (t) => {
-      const res = await super.bulkCreate(attrsArray, ctx, t);
+    const res = await super.bulkCreate(attrsArray, ctx);
 
-      await t.insertRecords(
-        textBlocksFTSTable,
-        res.map((row) => ({
-          id: row.id,
-          textContent: row.content.toLowerCase(),
-        })),
-      );
+    await e.insertRecords(
+      textBlocksFTSTable,
+      res.map((row) => ({
+        id: row.id,
+        textContent: row.content.toLowerCase(),
+      })),
+    );
 
-      return res;
-    });
+    return res;
   }
 
   bulkUpdate(
