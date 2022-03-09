@@ -1,4 +1,4 @@
-import { getCollapsableBlock } from '@harika/web-core';
+import { getBlockView } from '@harika/web-core';
 import {
   ArrowDropDown,
   ArrowDropUp,
@@ -52,8 +52,7 @@ export const Toolbar = observer(() => {
     ? blocksStore.getBlockById(focusState.currentFocus.blockId)
     : undefined;
 
-  const currentBlock =
-    scope && block ? getCollapsableBlock(scope, block) : undefined;
+  const currentBlock = scope && block ? getBlockView(scope, block) : undefined;
 
   const handleTodoPress = useCallback(
     (e: React.MouseEvent) => {

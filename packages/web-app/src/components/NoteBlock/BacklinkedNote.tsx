@@ -1,6 +1,6 @@
 import {
   BlocksScope,
-  CollapsableBlock,
+  BlockView,
   getBlocksSelection,
   NoteBlock,
 } from '@harika/web-core';
@@ -24,7 +24,7 @@ const LinkedBlock = observer(
     scope,
   }: {
     note: NoteBlock;
-    rootBlock: CollapsableBlock;
+    rootBlock: BlockView;
     scope: BlocksScope;
   }): JSX.Element => {
     const path = rootBlock.path;
@@ -70,7 +70,7 @@ export const BacklinkedNote = observer(
     scopesWithBlocks,
   }: {
     note: NoteBlock;
-    scopesWithBlocks: { scope: BlocksScope; rootBlock: CollapsableBlock }[];
+    scopesWithBlocks: { scope: BlocksScope; rootBlock: BlockView }[];
   }) => {
     const [isExpanded, setIsExpanded] = useState(true);
 

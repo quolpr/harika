@@ -1,4 +1,4 @@
-import { BlocksScope, CollapsableBlock, TextBlock } from '@harika/web-core';
+import { BlocksScope, BlockView, TextBlock } from '@harika/web-core';
 import { TextareaAutosize } from '@material-ui/core';
 import clsx from 'clsx';
 import { observer } from 'mobx-react-lite';
@@ -25,7 +25,7 @@ export const BlockEditor = observer(
     insertFakeInput,
     releaseFakeInput,
   }: {
-    textBlock: CollapsableBlock<TextBlock>;
+    textBlock: BlockView<TextBlock>;
     scope: BlocksScope;
     insertFakeInput: () => void;
     releaseFakeInput: () => void;

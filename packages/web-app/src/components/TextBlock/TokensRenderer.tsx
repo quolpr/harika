@@ -1,14 +1,14 @@
 import {
   BlocksScope,
-  CollapsableBlock,
-  getCollapsableBlock,
+  BlockView,
+  getBlockView,
   NoteBlock,
   NoteRefToken,
   TagToken,
+  TextBlock,
   toggleTodo,
   Token,
 } from '@harika/web-core';
-import { TextBlock } from '@harika/web-core';
 import { TextBlockRef } from '@harika/web-core/src/lib/blockParser/types';
 import { isEqual } from 'lodash-es';
 import { comparer, computed } from 'mobx';
@@ -37,7 +37,7 @@ const NoteRefRenderer = observer(
     collapsableBlock,
   }: {
     token: NoteRefToken;
-    collapsableBlock: CollapsableBlock<TextBlock>;
+    collapsableBlock: BlockView<TextBlock>;
     linkedNotes: NoteBlock[];
   }) => {
     const updateLinksService = useUpdateLinkService();
@@ -143,10 +143,7 @@ const BlockRefRenderer = observer(({ token }: { token: TextBlockRef }) => {
   );
 
   const collapsableBlock = blockState.value
-    ? (getCollapsableBlock(
-        fakeScope,
-        blockState.value,
-      ) as CollapsableBlock<TextBlock>)
+    ? (getBlockView(fakeScope, blockState.value) as BlockView<TextBlock>)
     : undefined;
 
   return (
@@ -204,7 +201,7 @@ const TokenRenderer = observer(
     token,
     linkedNotes,
   }: {
-    collapsableBlock: CollapsableBlock<TextBlock>;
+    collapsableBlock: BlockView<TextBlock>;
     token: Token;
     linkedNotes: NoteBlock[];
   }) => {
@@ -353,7 +350,7 @@ export const TokensRenderer = observer(
     collapsableBlock,
     tokens,
   }: {
-    collapsableBlock: CollapsableBlock<TextBlock>;
+    collapsableBlock: BlockView<TextBlock>;
     tokens: Token[];
   }) => {
     const linksStore = useBlockLinksStore();

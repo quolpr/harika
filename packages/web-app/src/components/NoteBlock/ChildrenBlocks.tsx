@@ -1,7 +1,7 @@
 import {
-  CollapsableBlock,
+  BlockView,
   getBlocksSelection,
-  getCollapsableBlock,
+  getBlockView,
   NoteBlock,
 } from '@harika/web-core';
 import { observer } from 'mobx-react-lite';
@@ -41,8 +41,8 @@ export const ChildrenBlocks = observer(({ note }: { note: NoteBlock }) => {
   useObservableState(loader$, false);
 
   const scope = blocksScopesStore.getScope(note, note.$modelId);
-  const collapsableNote = (scope && getCollapsableBlock(scope, note)) as
-    | CollapsableBlock<NoteBlock>
+  const collapsableNote = (scope && getBlockView(scope, note)) as
+    | BlockView<NoteBlock>
     | undefined;
 
   const blocksSelection =

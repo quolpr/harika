@@ -1,7 +1,7 @@
 import {
   addTokensToNoteBlock,
   BlocksScope,
-  CollapsableBlock,
+  BlockView,
   handleNewLinePress,
   parseStringToTree,
   TextBlock,
@@ -35,7 +35,7 @@ const symmetricCommands: { [P in ICommand['id']]?: string } = {
 
 export const useHandleInput = (
   scope: BlocksScope,
-  block: CollapsableBlock<TextBlock>,
+  block: BlockView<TextBlock>,
   inputRef: RefObject<HTMLTextAreaElement | null>,
   insertFakeInput: () => void,
   releaseFakeInput: () => void,

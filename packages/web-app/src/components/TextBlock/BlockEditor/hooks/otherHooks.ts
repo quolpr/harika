@@ -1,4 +1,4 @@
-import { CollapsableBlock, TextBlock } from '@harika/web-core';
+import { BlockView, TextBlock } from '@harika/web-core';
 import { MutableRefObject, useContext, useEffect } from 'react';
 import { usePrevious } from 'react-use';
 
@@ -24,7 +24,7 @@ export const useProvideInputToContext = (
 };
 
 export const useUpdateBlockValues = (
-  block: CollapsableBlock<TextBlock>,
+  block: BlockView<TextBlock>,
   isEditing: boolean,
 ) => {
   const updateLinkService = useUpdateLinkService();
@@ -48,7 +48,7 @@ export const useUpdateBlockValues = (
 export const useHandleFocus = (
   blockFocus: BlockFocus | undefined,
   isEditing: boolean,
-  textBlock: CollapsableBlock<TextBlock>,
+  textBlock: BlockView<TextBlock>,
   inputRef: MutableRefObject<HTMLTextAreaElement | null>,
   releaseFakeInput: () => void,
 ) => {

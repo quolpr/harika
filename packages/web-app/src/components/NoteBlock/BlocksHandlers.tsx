@@ -1,8 +1,4 @@
-import {
-  BlocksScope,
-  CollapsableBlock,
-  getBlocksSelection,
-} from '@harika/web-core';
+import { BlocksScope, BlockView, getBlocksSelection } from '@harika/web-core';
 import { isEqual } from 'lodash-es';
 import { observer } from 'mobx-react-lite';
 import { useEffect } from 'react';
@@ -22,13 +18,7 @@ import { useBlockFocusState } from '../../hooks/useBlockFocusState';
 import { useBlocksStore } from '../../hooks/vaultAppHooks';
 
 export const BlocksHandlers = observer(
-  ({
-    scope,
-    rootBlock,
-  }: {
-    scope: BlocksScope;
-    rootBlock: CollapsableBlock;
-  }) => {
+  ({ scope, rootBlock }: { scope: BlocksScope; rootBlock: BlockView }) => {
     const blockFocusState = useBlockFocusState();
     const blocksStore = useBlocksStore();
     const blockSelection = getBlocksSelection(scope, rootBlock);

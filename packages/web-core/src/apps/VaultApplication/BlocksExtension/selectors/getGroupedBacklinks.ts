@@ -1,7 +1,7 @@
 import { BaseBlock } from '../models/BaseBlock';
 import { BlockLinksStore } from '../models/BlockLinkStore';
 import { BlocksScopeStore } from '../models/BlocksScopeStore';
-import { getCollapsableBlock } from '../models/CollapsableBlock';
+import { getBlockView } from '../models/BlockView';
 
 export const getGroupedBacklinks = (
   blockLinksStore: BlockLinksStore,
@@ -30,7 +30,7 @@ export const getGroupedBacklinks = (
 
         if (!scope) return [];
 
-        return { scope, rootBlock: getCollapsableBlock(scope, block) };
+        return { scope, rootBlock: getBlockView(scope, block) };
       }),
     })),
     count: blockLinks.length,

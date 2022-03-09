@@ -3,7 +3,7 @@ import './styles.css';
 import {
   BlocksScope,
   BlocksSelection,
-  CollapsableBlock,
+  BlockView,
   TextBlock,
 } from '@harika/web-core';
 import clsx from 'clsx';
@@ -29,7 +29,7 @@ export const BlocksChildren = observer(
     scope,
     blocksSelection,
   }: {
-    childBlocks: CollapsableBlock[];
+    childBlocks: BlockView[];
     scope: BlocksScope;
     blocksSelection: BlocksSelection;
   }) => {
@@ -40,7 +40,7 @@ export const BlocksChildren = observer(
             <TextBlockComponent
               blocksSelection={blocksSelection}
               key={block.$modelId}
-              block={block as CollapsableBlock<TextBlock>}
+              block={block as BlockView<TextBlock>}
               scope={scope}
             />
           ) : (
@@ -60,7 +60,7 @@ const TextBlockBody = observer(
     scope,
     isExpanded,
   }: {
-    block: CollapsableBlock<TextBlock>;
+    block: BlockView<TextBlock>;
     scope: BlocksScope;
     isExpanded: boolean;
   }) => {
@@ -207,7 +207,7 @@ export const TextBlockComponent = observer(
     scope,
     blocksSelection,
   }: {
-    block: CollapsableBlock;
+    block: BlockView;
     scope: BlocksScope;
     blocksSelection: BlocksSelection;
   }) => {
@@ -232,7 +232,7 @@ export const TextBlockComponent = observer(
         >
           {block.originalBlock instanceof TextBlock ? (
             <TextBlockBody
-              block={block as CollapsableBlock<TextBlock>}
+              block={block as BlockView<TextBlock>}
               scope={scope}
               isExpanded={block.isExpanded}
             />

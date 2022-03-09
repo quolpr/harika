@@ -5,7 +5,7 @@ import { isTodo } from '../../../../lib/blockParser/astHelpers';
 import { generateId } from '../../../../lib/generateId';
 import { BaseBlock, blockRef } from './BaseBlock';
 import { BlocksStore } from './BlocksStore';
-import { CollapsableBlock } from './CollapsableBlock';
+import { BlockView } from './BlockView';
 import { TextBlock } from './TextBlock';
 
 export const createTextBlock = standaloneAction(
@@ -35,54 +35,46 @@ export const createTextBlock = standaloneAction(
 
 export const injectNewLeftBlock = standaloneAction(
   'harika/BlocksExtension/BlocksStore/injectNewLeftBlock',
-  (
-    blocksStore: BlocksStore,
-    collapsableBlock: CollapsableBlock,
-    content: string,
-  ) => {
-    if (!collapsableBlock.parent) {
+  (blocksStore: BlocksStore, blockView: BlockView, content: string) => {
+    if (!blockView.parent) {
       throw new Error('Parent must be present!');
     }
-    const newOrderPosition = collapsableBlock.originalBlock.orderPosition;
+    const newOrderPosition = blockView.originalBlock.orderPosition;
 
-    collapsableBlock.originalBlock.increaseSiblingsPosition(newOrderPosition);
+    blockView.originalBlock.increaseSiblingsPosition(newOrderPosition);
 
     return createTextBlock(blocksStore, {
       content,
       orderPosition: newOrderPosition,
-      parentRef: blockRef(collapsableBlock.parent.$modelId),
+      parentRef: blockRef(blockView.parent.$modelId),
     });
   },
 );
 
 export const injectNewRightBlock = standaloneAction(
   'harika/BlocksExtension/BlocksStore/injectNewRightBlock',
-  (
-    blocksStore: BlocksStore,
-    collapsableBlock: CollapsableBlock,
-    content: string,
-  ) => {
+  (blocksStore: BlocksStore, blockView: BlockView, content: string) => {
     const { injectTo, parentBlock } = (() => {
-      if (!collapsableBlock.parent || collapsableBlock.children.length > 0) {
+      if (!blockView.parent || blockView.children.length > 0) {
         return {
           injectTo:
             Math.min(
-              ...collapsableBlock.children.map(
+              ...blockView.children.map(
                 ({ originalBlock }) => originalBlock.orderPosition,
               ),
               0,
             ) - 1,
-          parentBlock: collapsableBlock.originalBlock,
+          parentBlock: blockView.originalBlock,
         };
       } else {
         return {
-          injectTo: collapsableBlock.originalBlock.orderPosition + 1,
-          parentBlock: collapsableBlock.parent.originalBlock,
+          injectTo: blockView.originalBlock.orderPosition + 1,
+          parentBlock: blockView.parent.originalBlock,
         };
       }
     })();
 
-    collapsableBlock.originalBlock.increaseSiblingsPosition(injectTo);
+    blockView.originalBlock.increaseSiblingsPosition(injectTo);
 
     return createTextBlock(blocksStore, {
       content,
@@ -96,10 +88,10 @@ export const handleNewLinePress = standaloneAction(
   'harika/BlocksExtension/BlocksStore/handleNewLinePress',
   (
     blocksStore: BlocksStore,
-    collapsableBlock: CollapsableBlock<TextBlock>,
+    blockView: BlockView<TextBlock>,
     caretPosStart: number,
   ) => {
-    const { originalBlock } = collapsableBlock;
+    const { originalBlock } = blockView;
     const content = originalBlock.contentModel.currentValue;
 
     let newContent = '';
@@ -107,27 +99,23 @@ export const handleNewLinePress = standaloneAction(
     let newBlock: TextBlock | undefined = undefined;
     let focusOn: TextBlock | undefined = undefined;
 
-    if (
-      caretPosStart === 0 &&
-      content.length !== 0 &&
-      collapsableBlock.parent
-    ) {
-      newBlock = injectNewLeftBlock(blocksStore, collapsableBlock, newContent);
+    if (caretPosStart === 0 && content.length !== 0 && blockView.parent) {
+      newBlock = injectNewLeftBlock(blocksStore, blockView, newContent);
       focusOn = newBlock;
     } else if (
       caretPosStart > 0 &&
       caretPosStart !== content.length &&
-      collapsableBlock.children.length > 0 &&
-      collapsableBlock.parent
+      blockView.children.length > 0 &&
+      blockView.parent
     ) {
       newBlock = injectNewLeftBlock(
         blocksStore,
-        collapsableBlock,
+        blockView,
         content.slice(0, caretPosStart),
       );
       originalBlock.setContent(content.slice(caretPosStart, content.length));
 
-      focusOn = collapsableBlock.originalBlock;
+      focusOn = blockView.originalBlock;
     } else {
       if (caretPosStart !== content.length) {
         newContent = content.slice(caretPosStart, content.length);
@@ -136,7 +124,7 @@ export const handleNewLinePress = standaloneAction(
       }
 
       const firstChild: BaseBlock | undefined =
-        collapsableBlock.children[0]?.originalBlock;
+        blockView.children[0]?.originalBlock;
 
       if (
         (originalBlock.contentModel.hasTodo ||
@@ -149,7 +137,7 @@ export const handleNewLinePress = standaloneAction(
         startAt = newContent.length;
       }
 
-      newBlock = injectNewRightBlock(blocksStore, collapsableBlock, newContent);
+      newBlock = injectNewRightBlock(blocksStore, blockView, newContent);
       focusOn = newBlock;
     }
 
@@ -161,16 +149,16 @@ export const toggleTodo = standaloneAction(
   'harika/BlocksExtension/TextBlock/toggleTodo',
   (
     textBlock: TextBlock,
-    collapsableBlock: CollapsableBlock,
+    blockView: BlockView,
     id: string,
-    toggledModels: CollapsableBlock[] = [],
-  ): CollapsableBlock[] => {
+    toggledModels: BlockView[] = [],
+  ): BlockView[] => {
     const token = textBlock.contentModel.getTokenById(id);
 
     if (!token || !isTodo(token)) return [];
 
     if (textBlock.contentModel.firstTodoToken?.id === id) {
-      collapsableBlock.children.forEach((block) => {
+      blockView.children.forEach((block) => {
         if (!(block.originalBlock instanceof TextBlock)) return;
 
         const firstTodo = textBlock.contentModel.firstTodoToken;
@@ -182,7 +170,7 @@ export const toggleTodo = standaloneAction(
 
     textBlock.contentModel.toggleTodo(id);
 
-    toggledModels.push(collapsableBlock);
+    toggledModels.push(blockView);
 
     return toggledModels;
   },

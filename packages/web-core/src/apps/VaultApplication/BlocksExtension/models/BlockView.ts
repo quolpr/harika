@@ -14,22 +14,22 @@ import {
 
 const blocks: WeakMap<
   BlocksScope,
-  WeakMap<BaseBlock, CollapsableBlock>
+  WeakMap<BaseBlock, BlockView>
 > = new WeakMap();
 
-export const getCollapsableBlock = (scope: BlocksScope, block: BaseBlock) => {
+export const getBlockView = (scope: BlocksScope, block: BaseBlock) => {
   if (!blocks.get(scope)) {
-    blocks.set(scope, new WeakMap<BaseBlock, CollapsableBlock>());
+    blocks.set(scope, new WeakMap<BaseBlock, BlockView>());
   }
 
   if (!blocks.get(scope)!.get(block)) {
-    blocks.get(scope)!.set(block, new CollapsableBlock(scope, block));
+    blocks.get(scope)!.set(block, new BlockView(scope, block));
   }
 
   return blocks.get(scope)!.get(block)!;
 };
 
-export class CollapsableBlock<T extends BaseBlock = BaseBlock> {
+export class BlockView<T extends BaseBlock = BaseBlock> {
   constructor(private scope: BlocksScope, public originalBlock: T) {
     makeObservable(this);
   }
@@ -54,12 +54,12 @@ export class CollapsableBlock<T extends BaseBlock = BaseBlock> {
   }
 
   @computed({ equals: comparer.shallow })
-  get childrenBlocks(): CollapsableBlock[] {
+  get childrenBlocks(): BlockView[] {
     if (this.isCollapsed) {
       return [];
     } else {
       return this.originalBlock.childrenBlocks.map((ch) =>
-        getCollapsableBlock(this.scope, ch),
+        getBlockView(this.scope, ch),
       );
     }
   }
@@ -69,16 +69,16 @@ export class CollapsableBlock<T extends BaseBlock = BaseBlock> {
   }
 
   @computed
-  get parent(): CollapsableBlock | undefined {
+  get parent(): BlockView | undefined {
     const originalParent = this.originalBlock.parentRef?.current;
 
     if (this.isRoot || !originalParent) return undefined;
 
-    return getCollapsableBlock(this.scope, originalParent);
+    return getBlockView(this.scope, originalParent);
   }
 
   @computed
-  get path(): CollapsableBlock[] {
+  get path(): BlockView[] {
     return pathFunc(this);
   }
 
@@ -97,32 +97,32 @@ export class CollapsableBlock<T extends BaseBlock = BaseBlock> {
   }
 
   @computed
-  get flattenTree(): CollapsableBlock[] {
-    return flattenTreeFunc<CollapsableBlock>(this);
+  get flattenTree(): BlockView[] {
+    return flattenTreeFunc<BlockView>(this);
   }
 
   @computed
-  get deepLastRightChild(): CollapsableBlock | undefined {
-    return deepLastRightChildFunc<CollapsableBlock>(this);
+  get deepLastRightChild(): BlockView | undefined {
+    return deepLastRightChildFunc<BlockView>(this);
   }
 
   @computed({ equals: comparer.shallow })
   get leftAndRightSibling(): [
-    left: CollapsableBlock | undefined,
-    right: CollapsableBlock | undefined,
+    left: BlockView | undefined,
+    right: BlockView | undefined,
   ] {
     return leftAndRightSiblingFunc(this);
   }
 
   @computed
-  get nearestRightToParent(): CollapsableBlock | undefined {
-    return nearestRightToParentFunc<CollapsableBlock>(this);
+  get nearestRightToParent(): BlockView | undefined {
+    return nearestRightToParentFunc<BlockView>(this);
   }
 
   @computed({ equals: comparer.shallow })
   get leftAndRight(): [
-    left: CollapsableBlock | undefined,
-    right: CollapsableBlock | undefined,
+    left: BlockView | undefined,
+    right: BlockView | undefined,
   ] {
     return leftAndRightFunc(this);
   }

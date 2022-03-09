@@ -2,19 +2,19 @@ import { action, comparer, computed, makeObservable, observable } from 'mobx';
 
 import { normalizeBlockTree } from '../../../../lib/blockParser/blockUtils';
 import { BlocksScope } from './BlocksScope';
-import { CollapsableBlock } from './CollapsableBlock';
+import { BlockView } from './BlockView';
 
 const selections: WeakMap<
   BlocksScope,
-  WeakMap<CollapsableBlock, BlocksSelection>
+  WeakMap<BlockView, BlocksSelection>
 > = new WeakMap();
 
 export const getBlocksSelection = (
   scope: BlocksScope,
-  rootBlock: CollapsableBlock,
+  rootBlock: BlockView,
 ) => {
   if (!selections.get(scope)) {
-    selections.set(scope, new WeakMap<CollapsableBlock, BlocksSelection>());
+    selections.set(scope, new WeakMap<BlockView, BlocksSelection>());
   }
 
   if (!selections.get(scope)!.get(rootBlock)) {
@@ -28,25 +28,8 @@ export class BlocksSelection {
   @observable selectionInterval: [string, string] | undefined;
   @observable addableSelectionId: string | undefined;
 
-  constructor(private rootBlock: CollapsableBlock) {
+  constructor(private rootBlock: BlockView) {
     makeObservable(this);
-  }
-
-  @action
-  setSelectionInterval(fromId: string, toId: string) {
-    this.selectionInterval = [fromId, toId];
-    this.addableSelectionId = undefined;
-  }
-
-  @action
-  resetSelection() {
-    this.selectionInterval = undefined;
-    this.addableSelectionId = undefined;
-  }
-
-  @action
-  expandSelection(id: string) {
-    this.addableSelectionId = id;
   }
 
   @computed({ equals: comparer.shallow })
@@ -107,7 +90,7 @@ export class BlocksSelection {
       }
     }
 
-    const ids = new Set<CollapsableBlock>();
+    const ids = new Set<BlockView>();
 
     flattenTree.slice(sliceFrom, sliceTo + 1).forEach((block) => {
       ids.add(block);
@@ -120,5 +103,22 @@ export class BlocksSelection {
     });
 
     return Array.from(ids);
+  }
+
+  @action
+  setSelectionInterval(fromId: string, toId: string) {
+    this.selectionInterval = [fromId, toId];
+    this.addableSelectionId = undefined;
+  }
+
+  @action
+  resetSelection() {
+    this.selectionInterval = undefined;
+    this.addableSelectionId = undefined;
+  }
+
+  @action
+  expandSelection(id: string) {
+    this.addableSelectionId = id;
   }
 }

@@ -4,9 +4,9 @@ import { blockRef } from '../../apps/VaultApplication/BlocksExtension/models/Bas
 import { BlocksScope } from '../../apps/VaultApplication/BlocksExtension/models/BlocksScope';
 import { BlocksStore } from '../../apps/VaultApplication/BlocksExtension/models/BlocksStore';
 import {
-  CollapsableBlock,
-  getCollapsableBlock,
-} from '../../apps/VaultApplication/BlocksExtension/models/CollapsableBlock';
+  BlockView,
+  getBlockView,
+} from '../../apps/VaultApplication/BlocksExtension/models/BlockView';
 import { TextBlock } from '../../apps/VaultApplication/BlocksExtension/models/TextBlock';
 import { generateId } from '../generateId';
 import type { TreeToken } from './parseStringToTree';
@@ -31,16 +31,16 @@ export const addTokensToNoteBlock = standaloneAction(
   (
     store: BlocksStore,
     scope: BlocksScope,
-    block: CollapsableBlock,
+    block: BlockView,
     tokens: TreeToken[],
-  ): CollapsableBlock[] => {
-    const addedModels: CollapsableBlock[] = [];
+  ): BlockView[] => {
+    const addedModels: BlockView[] = [];
 
     tokens = tokens.map((token) => ({ ...token, indent: token.indent + 1 }));
 
-    let previousBlock: { model: CollapsableBlock; indent: number } | undefined =
+    let previousBlock: { model: BlockView; indent: number } | undefined =
       undefined;
-    let currentPath: { model: CollapsableBlock; indent: number }[] = [
+    let currentPath: { model: BlockView; indent: number }[] = [
       { model: block, indent: 0 },
     ];
 
@@ -65,7 +65,7 @@ export const addTokensToNoteBlock = standaloneAction(
         orderPosition: parentBlock.model.childrenBlocks.length,
       });
       store.registerBlock(newBlock);
-      const collapsableBlock = getCollapsableBlock(scope, newBlock);
+      const collapsableBlock = getBlockView(scope, newBlock);
 
       previousBlock = { model: collapsableBlock, indent: currentPath.length };
       addedModels.push(collapsableBlock);
