@@ -148,14 +148,17 @@ export class BaseBlock extends Model({
       if (pos === 'start') {
         return 0;
       } else if (pos === 'end') {
-        return parent.childrenBlocks.length;
+        return (
+          Math.max(0, ...parent.childrenBlocks.map((ch) => ch.orderPosition)) +
+          1
+        );
       } else {
         return pos;
       }
     })();
 
     parent.childrenBlocks.forEach((block) => {
-      if (block.orderPosition >= pos) {
+      if (block.orderPosition >= newPos) {
         block.orderPosition++;
       }
     });

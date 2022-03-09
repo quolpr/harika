@@ -169,11 +169,15 @@ export class CollapsableBlock<T extends BaseBlock = BaseBlock> {
   }
 
   tryMoveRight() {
-    let [, right] = this.leftAndRightSibling;
+    const { right, isRightSibling } = (() => {
+      const [, right] = this.leftAndRightSibling;
 
-    if (!right) {
-      right = this.nearestRightToParent;
-    }
+      if (right) {
+        return { right, isRightSibling: true };
+      } else {
+        return { right: this.nearestRightToParent, isRightSibling: false };
+      }
+    })();
 
     if (!right) return;
 
@@ -186,7 +190,9 @@ export class CollapsableBlock<T extends BaseBlock = BaseBlock> {
     } else {
       this.originalBlock.move(
         right.parent.originalBlock,
-        right.originalBlock.orderPosition,
+        isRightSibling
+          ? right.originalBlock.orderPosition + 1
+          : right.originalBlock.orderPosition,
       );
     }
   }
@@ -195,7 +201,7 @@ export class CollapsableBlock<T extends BaseBlock = BaseBlock> {
     const [left] = this.leftAndRightSibling;
 
     // Don't handle such case otherwise current block will be hidden
-    if (left?.children.length !== 0 && left?.isCollapsed) return;
+    if (left?.originalBlock?.children.length !== 0 && left?.isCollapsed) return;
 
     if (left) {
       this.originalBlock.move(left.originalBlock, 'end');

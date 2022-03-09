@@ -62,19 +62,16 @@ export const injectNewRightBlock = standaloneAction(
     collapsableBlock: CollapsableBlock,
     content: string,
   ) => {
-    if (!collapsableBlock.parent) {
-      throw new Error("Can't inject from root block");
-    }
-
     const { injectTo, parentBlock } = (() => {
-      if (collapsableBlock.children.length > 0 && content.length === 0) {
+      if (!collapsableBlock.parent || collapsableBlock.children.length > 0) {
         return {
-          injectTo: -1,
-          parentBlock: collapsableBlock.originalBlock,
-        };
-      } else if (collapsableBlock.children.length > 0 && content.length !== 0) {
-        return {
-          injectTo: -1,
+          injectTo:
+            Math.min(
+              ...collapsableBlock.children.map(
+                ({ originalBlock }) => originalBlock.orderPosition,
+              ),
+              0,
+            ) - 1,
           parentBlock: collapsableBlock.originalBlock,
         };
       } else {
@@ -110,13 +107,18 @@ export const handleNewLinePress = standaloneAction(
     let newBlock: TextBlock | undefined = undefined;
     let focusOn: TextBlock | undefined = undefined;
 
-    if (caretPosStart === 0 && content.length !== 0) {
+    if (
+      caretPosStart === 0 &&
+      content.length !== 0 &&
+      collapsableBlock.parent
+    ) {
       newBlock = injectNewLeftBlock(blocksStore, collapsableBlock, newContent);
       focusOn = newBlock;
     } else if (
       caretPosStart > 0 &&
       caretPosStart !== content.length &&
-      collapsableBlock.children.length > 0
+      collapsableBlock.children.length > 0 &&
+      collapsableBlock.parent
     ) {
       newBlock = injectNewLeftBlock(
         blocksStore,

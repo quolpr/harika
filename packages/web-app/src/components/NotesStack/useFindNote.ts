@@ -7,6 +7,7 @@ import { LoadingDoneSubjectContext } from '../../contexts';
 import { useNotePath } from '../../contexts/StackedNotesContext';
 import {
   useAllBlocksService,
+  useBlocksStore,
   useCurrentVaultId,
   useNoteBlocksService,
 } from '../../hooks/vaultAppHooks';
@@ -15,12 +16,15 @@ import { useNavigateRef } from '../../utils';
 type IPipeResult = { status: 'found'; id: string } | { status: 'not_found' };
 
 export const useFindNote = (noteId: string) => {
+  const blocksStore = useBlocksStore();
   const vaultId = useCurrentVaultId();
   const notesService = useNoteBlocksService();
 
   const navigate = useNavigateRef();
 
-  const [note, setNote] = useState<NoteBlock | undefined>();
+  const [note, setNote] = useState<NoteBlock | undefined>(
+    blocksStore.getBlockById(noteId) as NoteBlock,
+  );
   const loadingDoneSubject = useContext(LoadingDoneSubjectContext);
 
   const [isLoading, setIsLoading] = useState<boolean>(true);

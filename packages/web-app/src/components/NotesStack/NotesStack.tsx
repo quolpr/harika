@@ -26,8 +26,7 @@ const SimpleNote = observer(({ stack }: { stack: IStack }) => {
 
   return (
     <>
-      {isLoading && 'Loading...'}
-      {note && !isLoading && (
+      {note && (
         <CurrentStackContext.Provider value={stack}>
           <CurrentNoteContext.Provider value={note}>
             <NoteBlockComponent note={note} />
@@ -89,8 +88,7 @@ const NoteStack = observer(
               </button>
             )}
 
-            {isLoading && 'Loading...'}
-            {note && !isLoading && (
+            {note && (
               <CurrentNoteContext.Provider value={note}>
                 <NoteBlockComponent note={note} />
               </CurrentNoteContext.Provider>
