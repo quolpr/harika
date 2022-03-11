@@ -185,7 +185,7 @@ export class BlockView<T extends BaseBlock = BaseBlock> {
       throw new Error("Right couldn't be root block");
     }
 
-    if (right.children.length) {
+    if (right.children.length && isRightSibling) {
       this.originalBlock.move(right.originalBlock, 'start');
     } else {
       this.originalBlock.move(
