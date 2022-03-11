@@ -44,7 +44,7 @@ export const addTokensToNoteBlock = standaloneAction(
       { model: block, indent: 0 },
     ];
 
-    tokens.forEach((token) => {
+    tokens.forEach((token, i) => {
       if (previousBlock) {
         if (token.indent > previousBlock.indent) {
           currentPath.push(previousBlock);
@@ -56,14 +56,16 @@ export const addTokensToNoteBlock = standaloneAction(
       }
 
       const parentBlock = currentPath[currentPath.length - 1];
+
       const newBlock = new TextBlock({
         id: token.id ? token.id : generateId(),
         createdAt: new Date().getTime(),
         updatedAt: new Date().getTime(),
         content: token.content,
         parentRef: blockRef(parentBlock.model.originalBlock),
-        orderPosition: parentBlock.model.childrenBlocks.length,
+        orderPosition: i,
       });
+
       store.registerBlock(newBlock);
       const collapsableBlock = getBlockView(scope, newBlock);
 
