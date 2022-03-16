@@ -7,7 +7,7 @@ import { buffer, debounceTime, Observable, takeUntil } from 'rxjs';
 import { STOP_SIGNAL, WINDOW_ID } from '../../../framework/types';
 import { ITransmittedChange } from '../repositories/SyncRepository';
 import { ISubscription, SyncConfig } from '../serverSynchronizer/SyncConfig';
-import { DbEventsListenService } from '../services/DbEventsListenerService';
+import { DbEventsListenService } from './DbEventsListenerService';
 import { CreationDataWithId, SyncModelId } from '../types';
 
 @injectable()

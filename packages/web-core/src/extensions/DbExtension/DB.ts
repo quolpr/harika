@@ -135,7 +135,7 @@ export class Transaction implements IQueryExecuter {
   }
 
   async getRecords<T extends Record<string, any>>(
-    query: Q.Statement,
+    query: Q.Statement | Sql,
     suppressLog?: boolean,
   ): Promise<T[]> {
     return this.db.getRecords(

@@ -27,7 +27,7 @@ export class DeleteNoteService {
         await this.blockLinksRepo.bulkDelete(backlinkedBlockIds, ctx, t);
       }
 
-      await this.allRepo.bulkRecursiveDelete([noteId], ctx, t);
+      await this.allRepo.bulkDelete([noteId], true, ctx, t);
     });
   }
 }

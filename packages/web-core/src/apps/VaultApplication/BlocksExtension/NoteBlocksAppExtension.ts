@@ -2,6 +2,7 @@ import { injectable } from 'inversify';
 
 import { BaseSyncExtension } from '../../../extensions/SyncExtension/BaseSyncExtension';
 import { SyncConfig } from '../../../extensions/SyncExtension/serverSynchronizer/SyncConfig';
+import { SYNC_CONFLICT_RESOLVER } from '../../../extensions/SyncExtension/types';
 import { blockLinkMapper } from './mappers/blockLinkMapper';
 import { blocksScopesMapper } from './mappers/blockScopesMapper';
 import { noteBlockMapper } from './mappers/noteBlockMapper';
@@ -28,6 +29,7 @@ import { AllBlocksService } from './services/AllBlocksService';
 import { BlockLinkService } from './services/BlockLinkService';
 import { BlocksScopesService } from './services/BlocksScopeService';
 import { DeleteNoteService } from './services/DeleteNoteService';
+import { DuplicatedNotesConflictResolver } from './services/DuplicatedNotesConflictResolver';
 import { FindNoteOrBlockService } from './services/FindNoteOrBlockService';
 import { ImportExportService } from './services/ImportExportService';
 import { NoteBlocksService } from './services/NoteBlocksService';
@@ -73,6 +75,10 @@ export class NoteBlocksAppExtension extends BaseSyncExtension {
     this.container
       .bind(BLOCK_REPOSITORY)
       .toConstantValue(this.container.get(TextBlocksRepository));
+
+    this.container
+      .bind(SYNC_CONFLICT_RESOLVER)
+      .to(DuplicatedNotesConflictResolver);
   }
 
   async initialize() {

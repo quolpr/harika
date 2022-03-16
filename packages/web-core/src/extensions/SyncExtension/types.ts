@@ -1,6 +1,8 @@
 import { AnyModel, ModelCreationData } from 'mobx-keystone';
 import { Class } from 'utility-types';
 
+import { Transaction } from '../DbExtension/DB';
+
 // Just for better typing
 export type SyncModelId<T extends AnyModel = AnyModel> = {
   value: string;
@@ -17,3 +19,10 @@ export const REPOS_WITH_SYNC = 'reposWithSync';
 export const ROOT_STORE = 'rootStore';
 export const GET_AUTH_TOKEN = 'getAuthToken';
 export const SYNC_URL = 'syncUrl';
+export const SYNC_CONFLICT_RESOLVER = 'syncConflictResolver';
+
+export interface ISyncConflictResolver {
+  resolve(t: Transaction): Promise<void>;
+
+  collectionNamesToResolve: string[] | 'any';
+}
