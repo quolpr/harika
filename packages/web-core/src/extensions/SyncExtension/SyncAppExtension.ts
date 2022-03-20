@@ -10,12 +10,26 @@ import { ServerSynchronizerFactory } from './serverSynchronizer/ServiceSynchroni
 import { SyncConfig } from './serverSynchronizer/SyncConfig';
 import { DbEventsListenService } from './services/DbEventsListenerService';
 import { DbEventsSenderService } from './services/DbEventsSenderService';
+import { OnDbChangeNotifier } from './services/OnDbChangeNotifier';
 import { SnapshotsApplier } from './services/SnapshotsApplier';
 import { SyncStatusService } from './services/SyncStatusService';
-import { OnDbChangeNotifier } from './synchronizer/OnDbChangeNotifier';
-import { ToDbSynchronizer } from './synchronizer/ToDbSynchronizer';
+import { ToDbSynchronizer } from './services/ToDbSynchronizer';
 import { SyncStateService } from './SyncState';
-import { ROOT_STORE, SYNC_CONNECTION_ALLOWED } from './types';
+import {
+  ISyncConflictResolver,
+  ROOT_STORE,
+  SYNC_CONFLICT_RESOLVER,
+  SYNC_CONNECTION_ALLOWED,
+} from './types';
+
+// Otherwise inversify will be throwing "No matching bindings found for serviceIdentifier"
+class DumbSyncConflictResolver implements ISyncConflictResolver {
+  async resolve() {}
+
+  get collectionNamesToResolve() {
+    return 'any' as const;
+  }
+}
 
 @injectable()
 export class SyncAppExtension extends BaseExtension {
@@ -32,6 +46,10 @@ export class SyncAppExtension extends BaseExtension {
     this.container
       .bind(SYNC_CONNECTION_ALLOWED)
       .toConstantValue(new BehaviorSubject(true));
+
+    this.container
+      .bind(SYNC_CONFLICT_RESOLVER)
+      .toConstantValue(new DumbSyncConflictResolver());
   }
 
   async initialize() {

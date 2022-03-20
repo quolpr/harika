@@ -1,4 +1,5 @@
 import { NoteBlock } from '@harika/web-core';
+import { computed } from 'mobx';
 import { useContext, useEffect, useState } from 'react';
 import { NEVER, of, race } from 'rxjs';
 import { map, timeout } from 'rxjs/operators';
@@ -54,10 +55,14 @@ export const useFindNote = (noteId: string) => {
 
   const notePath = useNotePath();
 
+  const isDeleted = computed(() => {
+    return !blocksStore.hasBlockWithId(noteId);
+  }).get();
+
   useEffect(() => {
     if (!noteTitle || !noteId) return;
 
-    if (!note) {
+    if (!note || isDeleted) {
       // In case conflict resolving. We wait for n seconds for new id of note title to appear
       const flow = race(
         notesService.getNoteIdByTitle$(noteTitle).pipe(
@@ -86,7 +91,16 @@ export const useFindNote = (noteId: string) => {
 
       return () => flow.unsubscribe();
     }
-  }, [noteId, notesService, noteTitle, note, vaultId, notePath, navigate]);
+  }, [
+    noteId,
+    notesService,
+    noteTitle,
+    note,
+    vaultId,
+    notePath,
+    navigate,
+    isDeleted,
+  ]);
 
   return { note, isLoading };
 };

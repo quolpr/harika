@@ -60,6 +60,7 @@ export const syncable = (constructor: Function) => {
     const pipe$ = syncChangesCtx.get(model);
 
     if (!pipe$) {
+      console.error(constructor, model);
       throw new Error('Did you forget to set syncChangesCtx?');
     }
 

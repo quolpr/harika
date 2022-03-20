@@ -66,6 +66,27 @@ export class AllBlocksRepository {
     );
   }
 
+  async getChildrenOfParents(parentIds: string[], e: IQueryExecuter = this.db) {
+    const { select, joinTables } = await this.getBlocksQueries('blocks', e);
+
+    return this.joinedRowsToDocs(
+      await e.getRecords(sqltag`
+      SELECT ${select} FROM (
+        ${join(
+          this.blocksTables.map(
+            (table) =>
+              sqltag`SELECT id AS blockId FROM ${raw(
+                table,
+              )} WHERE parentId IN (${join(parentIds, ', ')})`,
+          ),
+          ' UNION ALL ',
+        )}
+      ) as blocks
+        ${join(joinTables, ' ')}
+    `),
+    );
+  }
+
   async getDescendantsWithSelf(ids: string[], e: IQueryExecuter = this.db) {
     const { select, joinTables } = await this.getBlocksQueries(
       'childrenBlockIds',
@@ -101,13 +122,16 @@ export class AllBlocksRepository {
     }
   }
 
-  async bulkRecursiveDelete(
+  async bulkDelete(
     rootIds: string[],
+    recursive: boolean,
     ctx: ISyncCtx,
     e: IQueryExecuter = this.db,
   ) {
     // Could be optimized to just take id and type
-    const allBlocks = await this.getDescendantsWithSelf(rootIds, e);
+    const allBlocks = recursive
+      ? await this.getDescendantsWithSelf(rootIds, e)
+      : await this.getSingleBlocksByIds(rootIds, e);
 
     for (const [blockType, blocks] of Object.entries(
       groupBy(allBlocks, (b) => b.type),

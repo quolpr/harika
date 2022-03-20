@@ -1,4 +1,4 @@
-import { observable, reaction } from 'mobx';
+import { get, has, observable, reaction } from 'mobx';
 import { idProp, Model, model, onChildAttachedTo, prop } from 'mobx-keystone';
 
 import { BaseBlock } from './BaseBlock';
@@ -18,11 +18,11 @@ export class BlocksRegistry extends Model({
   }
 
   getBlockById(id: string) {
-    return this.blocksMap[id];
+    return get(this.blocksMap, id);
   }
 
   hasBlockWithId(id: string) {
-    return !!this.blocksMap[id];
+    return has(this.blocksMap, id);
   }
 
   registerBlock(block: BaseBlock) {

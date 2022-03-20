@@ -160,7 +160,6 @@ const TextBlockBody = observer(
             onToggle={handleToggle}
           />
         )}
-
         <div
           ref={noteBlockBodyElRef}
           className={clsx('text-block__dot', {
@@ -172,14 +171,12 @@ const TextBlockBody = observer(
         {/*     'text-block__outline--show': isFocused, */}
         {/*   })} */}
         {/* > */}
-
         <BlockEditor
           scope={scope}
           textBlock={block}
           insertFakeInput={insertFakeInput}
           releaseFakeInput={releaseFakeInput}
         />
-
         <span
           onMouseDown={handleContentClick}
           className={clsx('text-block__content', {

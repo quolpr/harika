@@ -7,7 +7,11 @@ import { Transaction } from '../../DbExtension/DB';
 import { BaseSyncRepository } from '../BaseSyncRepository';
 import { SyncRepository } from '../repositories/SyncRepository';
 import { ISyncCtx } from '../syncCtx';
-import { REPOS_WITH_SYNC } from '../types';
+import {
+  ISyncConflictResolver,
+  REPOS_WITH_SYNC,
+  SYNC_CONFLICT_RESOLVER,
+} from '../types';
 
 @injectable()
 export class SnapshotsApplier {
@@ -16,6 +20,8 @@ export class SnapshotsApplier {
     private syncRepo: SyncRepository,
     @inject(STOP_SIGNAL) private stop$: Observable<void>,
     @multiInject(REPOS_WITH_SYNC) private reposWithSync: BaseSyncRepository[],
+    @multiInject(SYNC_CONFLICT_RESOLVER)
+    private syncConflictResolvers: ISyncConflictResolver[],
   ) {}
 
   start() {
@@ -79,6 +85,16 @@ export class SnapshotsApplier {
         t,
         snapshots.map((sn) => sn.id),
       );
+
+      for (const resolver of this.syncConflictResolvers) {
+        if (
+          resolver.collectionNamesToResolve !== 'any' &&
+          !resolver.collectionNamesToResolve.includes(collectionName)
+        )
+          continue;
+
+        await resolver.resolve(t);
+      }
     }
   };
 }
