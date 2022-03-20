@@ -7,8 +7,8 @@ import { buffer, debounceTime, Observable, takeUntil } from 'rxjs';
 import { STOP_SIGNAL, WINDOW_ID } from '../../../framework/types';
 import { ITransmittedChange } from '../repositories/SyncRepository';
 import { ISubscription, SyncConfig } from '../serverSynchronizer/SyncConfig';
-import { DbEventsListenService } from './DbEventsListenerService';
 import { CreationDataWithId, SyncModelId } from '../types';
+import { DbEventsListenService } from './DbEventsListenerService';
 
 @injectable()
 export class OnDbChangeNotifier {
@@ -62,10 +62,24 @@ export class OnDbChangeNotifier {
         continue;
       }
 
+      const toDeleteStringIds: Set<string> = new Set();
       const toDeleteIds: SyncModelId[] = [];
       const toCreateOrUpdateData: CreationDataWithId[] = [];
 
       grouped[tableName].forEach((ev) => {
+        if (ev.type === DocChangeType.Delete) {
+          toDeleteStringIds.add(ev.docId);
+
+          toDeleteIds.push({
+            value: ev.docId,
+            model: registration.mapper.model,
+          });
+        }
+      });
+
+      grouped[tableName].forEach((ev) => {
+        if (toDeleteStringIds.has(ev.docId)) return;
+
         if (ev.type === DocChangeType.Create) {
           toCreateOrUpdateData.push(registration.mapper.mapToModelData(ev.doc));
         } else if (ev.type === DocChangeType.Update) {
@@ -76,11 +90,6 @@ export class OnDbChangeNotifier {
             return;
           }
           toCreateOrUpdateData.push(registration.mapper.mapToModelData(ev.doc));
-        } else if (ev.type === DocChangeType.Delete) {
-          toDeleteIds.push({
-            value: ev.docId,
-            model: registration.mapper.model,
-          });
         }
       });
 

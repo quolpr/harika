@@ -1,4 +1,4 @@
-import { inject, injectable, multiInject } from 'inversify';
+import { inject, injectable } from 'inversify';
 import { maxBy, minBy } from 'lodash-es';
 
 import { Transaction } from '../../../../extensions/DbExtension/DB';
@@ -6,9 +6,7 @@ import { ISyncCtx } from '../../../../extensions/SyncExtension/syncCtx';
 import { ISyncConflictResolver } from '../../../../extensions/SyncExtension/types';
 import { raw, sqltag } from '../../../../lib/sql';
 import { AllBlocksRepository } from '../repositories/AllBlocksRepository';
-import { BaseBlockRepository } from '../repositories/BaseBlockRepository';
 import { noteBlocksTable } from '../repositories/NoteBlocksRepostitory';
-import { BLOCK_REPOSITORY } from '../types';
 
 @injectable()
 export class DuplicatedNotesConflictResolver implements ISyncConflictResolver {
