@@ -1,11 +1,11 @@
 import './plugins/initSuperTokens';
 
 import fastify from 'fastify';
-import fastifyCors from 'fastify-cors';
 import cors from 'fastify-cors';
 import formDataPlugin from 'fastify-formbody';
 import supertokens from 'supertokens-node';
 import { plugin } from 'supertokens-node/framework/fastify';
+import { errorHandler } from 'supertokens-node/framework/fastify';
 
 import { healthHandler } from './modules/health/routes';
 import { syncHandler } from './modules/sync/routes';
@@ -41,6 +41,7 @@ async function createServer() {
     credentials: true,
   });
 
+  server.setErrorHandler(errorHandler());
   server.setErrorHandler((error, req, res) => {
     console.error(error);
     req.log.error(error.toString());

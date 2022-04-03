@@ -7,7 +7,6 @@ import {
   GetSnapshotsClientCommand,
 } from '@harika/sync-common';
 import { FastifyPluginCallback } from 'fastify';
-import { getAuth } from 'firebase-admin/auth';
 import {
   BehaviorSubject,
   catchError,
@@ -22,6 +21,12 @@ import {
   withLatestFrom,
 } from 'rxjs';
 import { Server, Socket } from 'socket.io';
+import {
+  FastifyRequest,
+  FastifyResponse,
+} from 'supertokens-node/lib/build/framework/fastify/framework';
+import SessionRecipe from 'supertokens-node/lib/build/recipe/session/recipe';
+import SuperTokens from 'supertokens-node/lib/build/supertokens';
 
 import { db } from '../../db/db';
 import { createIfNotExistsDbSchema } from './createDbSchema';
@@ -80,11 +85,38 @@ export const syncHandler: FastifyPluginCallback = (server, options, next) => {
     cors: {
       origin: ['http://localhost:3000', 'https://app-dev.harika.io'],
       methods: ['GET', 'POST'],
+      credentials: true,
     },
   });
 
-  io.of('/sync-db').on('connection', function (socket) {
+  const namespaced = io.of('/sync-db');
+
+  namespaced.use(async (socket, done) => {
+    let supertokens = SuperTokens.getInstanceOrThrowError();
+    // console.log((socket.request as any).req, (socket.request as any).res);
+
+    let request = new FastifyRequest(socket.request as any);
+    let response = new FastifyResponse((socket.request as any).res);
+
+    try {
+      await supertokens.middleware(request, response);
+    } catch (err) {
+      await supertokens.errorHandler(err, request, response);
+    }
+    done();
+  });
+
+  namespaced.on('connection', async function (socket) {
     const disconnect$ = new Subject();
+
+    let sessionRecipe = SessionRecipe.getInstanceOrThrowError();
+    const session = await sessionRecipe.verifySession(
+      undefined,
+      new FastifyRequest(socket.request as any),
+      new FastifyResponse((socket.request as any).res)
+    );
+
+    const userId = session.getUserId();
 
     const authInfo$ = new BehaviorSubject<
       undefined | { dbName: string; userId: string; clientId: string }
@@ -112,18 +144,15 @@ export const syncHandler: FastifyPluginCallback = (server, options, next) => {
           switchMap(async () => {
             await socket.join(req.dbName);
           }),
-          switchMap(async () => {
-            return await getAuth().verifyIdToken(req.authToken);
-          }),
           switchMap(async (token) => {
-            await createIfNotExistsDbSchema(db, token.uid, req.dbName);
+            await createIfNotExistsDbSchema(db, userId, req.dbName);
 
             return token;
           }),
           tap((decodedToken) => {
             authInfo$.next({
               dbName: req.dbName,
-              userId: decodedToken.uid,
+              userId: userId,
               clientId: req.clientId,
             });
           }),

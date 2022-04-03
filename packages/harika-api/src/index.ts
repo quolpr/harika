@@ -1,5 +1,4 @@
 import './loadConfig';
-import './initFirebase';
 
 import { Knex } from 'knex';
 

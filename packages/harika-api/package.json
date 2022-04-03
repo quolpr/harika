@@ -22,7 +22,6 @@
     "fastify-formbody": "^5.2.0",
     "fastify-oas": "^3.0.8",
     "fastify-plugin": "3.0.1",
-    "firebase-admin": "^10.0.2",
     "knex": "^1.0.3",
     "lodash": "^4.17.21",
     "pg": "^8.7.3",

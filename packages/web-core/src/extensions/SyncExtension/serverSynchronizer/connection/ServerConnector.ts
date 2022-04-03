@@ -85,7 +85,7 @@ export class ServerConnector {
 
   private initSocketIO() {
     return new Observable<Socket | undefined>((obs) => {
-      const socket = io(`${this.syncUrl}/sync-db`);
+      const socket = io(`${this.syncUrl}/sync-db`, { withCredentials: true });
 
       socket.on('connect', () => {
         obs.next(socket);
