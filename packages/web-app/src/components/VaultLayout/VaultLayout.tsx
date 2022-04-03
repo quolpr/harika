@@ -134,7 +134,6 @@ export const VaultLayout: React.FC = ({ children }) => {
       vaultApp = new VaultApplication(
         vaultId,
         import.meta.env.VITE_PUBLIC_WS_URL as string,
-        async () => '123',
       );
 
       if (!vaultApp) {

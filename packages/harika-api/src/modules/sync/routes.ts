@@ -1,10 +1,10 @@
 import {
   ApplyNewChangesFromClientCommand,
-  AuthClientCommand,
   ClientCommands,
   CommandTypesFromClient,
   EventsFromServer,
   GetSnapshotsClientCommand,
+  InitClientCommand,
 } from '@harika/sync-common';
 import { FastifyPluginCallback } from 'fastify';
 import {
@@ -136,7 +136,7 @@ export const syncHandler: FastifyPluginCallback = (server, options, next) => {
       };
     };
 
-    handleMessage<AuthClientCommand>(
+    handleMessage<InitClientCommand>(
       socket,
       CommandTypesFromClient.Auth,
       (req) => {

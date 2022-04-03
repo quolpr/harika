@@ -37,7 +37,6 @@ export const useLoadUserAppCallback = () => {
     const app = new UserApplication(
       userId.replace(/-/g, ''),
       import.meta.env.VITE_PUBLIC_WS_URL as string,
-      async () => '123',
     );
     await app.start();
 

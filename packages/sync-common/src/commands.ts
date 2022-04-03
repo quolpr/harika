@@ -18,20 +18,19 @@ export type NotAuthedResponse = { status: 'error'; errorType: 'notAuted' };
 
 export type ErrorResponse = InternalErrorResponse | NotAuthedResponse;
 
-export type AuthClientCommand = {
+export type InitClientCommand = {
   type: CommandTypesFromClient.Auth;
 
-  request: AuthClientRequest;
-  response: AuthClientResponse;
+  request: InitClientRequest;
+  response: InitClientResponse;
 };
 
-export interface AuthClientRequest {
-  authToken: string;
+export interface InitClientRequest {
   dbName: string;
   clientId: string;
 }
 
-export type AuthClientResponse = {
+export type InitClientResponse = {
   status: 'success' | 'failed';
 };
 
@@ -72,7 +71,7 @@ export interface GetSnapshotsResponse {
 export type ClientCommands =
   | GetSnapshotsClientCommand
   | ApplyNewChangesFromClientCommand
-  | AuthClientCommand;
+  | InitClientCommand;
 
 export type ClientCommandRequests =
   | GetSnapshotsRequest

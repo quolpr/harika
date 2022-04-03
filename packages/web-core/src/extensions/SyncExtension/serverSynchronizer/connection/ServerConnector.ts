@@ -1,23 +1,15 @@
 import {
-  AuthClientRequest,
-  AuthClientResponse,
   CommandTypesFromClient,
+  InitClientRequest,
+  InitClientResponse,
 } from '@harika/sync-common';
-import {
-  combineLatest,
-  defer,
-  from,
-  Observable,
-  of,
-  ReplaySubject,
-} from 'rxjs';
+import { combineLatest, Observable, of, ReplaySubject } from 'rxjs';
 import {
   distinctUntilChanged,
   map,
   share,
   switchMap,
   takeUntil,
-  withLatestFrom,
 } from 'rxjs/operators';
 import io, { Socket } from 'socket.io-client';
 
@@ -29,7 +21,6 @@ export class ServerConnector {
   constructor(
     private dbName: string,
     private clientId: string,
-    getAuthToken: () => Promise<string | undefined>,
     private syncUrl: string,
     isLeader$: Observable<boolean>,
     isServerConnectionAllowed$: Observable<boolean>,
@@ -55,15 +46,10 @@ export class ServerConnector {
 
     const isAuthed$ = socket$.pipe(
       distinctUntilChanged(),
-      withLatestFrom(defer(() => from(getAuthToken()))),
-      switchMap(([socket, authToken]) => {
-        console.log({ authToken });
+      switchMap((socket) => {
+        if (!socket) return of(false);
 
-        if (socket && authToken) {
-          return this.auth(socket, authToken);
-        } else {
-          return of(false);
-        }
+        return this.auth(socket);
       }),
       share({
         connector: () => new ReplaySubject(1),
@@ -104,10 +90,9 @@ export class ServerConnector {
     });
   }
 
-  private auth(socket: Socket, authToken: string) {
+  private auth(socket: Socket) {
     return new Observable<boolean>((obs) => {
-      const req: AuthClientRequest = {
-        authToken: authToken,
+      const req: InitClientRequest = {
         dbName: this.dbName,
         clientId: this.clientId,
       };
@@ -117,7 +102,7 @@ export class ServerConnector {
       socket.emit(
         CommandTypesFromClient.Auth,
         req,
-        (response: AuthClientResponse) => {
+        (response: InitClientResponse) => {
           if (!isRunning) return;
 
           if (response.status === 'success') {
