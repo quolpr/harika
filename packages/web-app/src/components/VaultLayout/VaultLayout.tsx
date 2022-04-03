@@ -15,7 +15,6 @@ import { useClickAway, useMedia, useMountedState } from 'react-use';
 
 import { FooterRefContext } from '../../contexts/FooterRefContext';
 import { FocusedStackIdContext } from '../../contexts/StackedNotesContext';
-import { useGetSyncToken } from '../../hooks/useGetSyncToken';
 import { useLoadUserAppCallback } from '../../hooks/useUserApp';
 import { CurrentVaultAppContext } from '../../hooks/vaultAppHooks';
 import { bem, useNavigateRef } from '../../utils';
@@ -123,7 +122,6 @@ export const VaultLayout: React.FC = ({ children }) => {
   const loadUserApp = useLoadUserAppCallback();
 
   const mounted = useMountedState();
-  const getSyncToken = useGetSyncToken();
 
   // TODO: race condition may happen here on dispose
   useEffect(() => {
@@ -136,7 +134,7 @@ export const VaultLayout: React.FC = ({ children }) => {
       vaultApp = new VaultApplication(
         vaultId,
         import.meta.env.VITE_PUBLIC_WS_URL as string,
-        getSyncToken,
+        async () => '123',
       );
 
       if (!vaultApp) {
@@ -184,7 +182,7 @@ export const VaultLayout: React.FC = ({ children }) => {
       setVaultApp(undefined);
       closeDevtool();
     };
-  }, [getSyncToken, loadUserApp, mounted, navigate, vaultId]);
+  }, [loadUserApp, mounted, navigate, vaultId]);
 
   // TODO: reset focused block on page change
 

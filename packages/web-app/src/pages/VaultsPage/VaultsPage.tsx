@@ -8,6 +8,7 @@ import { useObservableState } from 'observable-hooks';
 import React, { useCallback, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { of } from 'rxjs';
+import { signOut } from 'supertokens-auth-react/recipe/session';
 
 import { Brand } from '../../components/Brand/Brand';
 import { useAuthState } from '../../hooks/useAuthState';
@@ -104,9 +105,12 @@ export const VaultsPage = () => {
 
         <button
           className={vaultsNavbarClass('logout')}
-          onClick={() => {
+          onClick={async () => {
+            await signOut();
             setAuthInfo(undefined);
             deleteFromStorage('lastVaultId');
+
+            window.location.href = '/';
           }}
         >
           Log Out

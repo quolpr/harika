@@ -1,18 +1,18 @@
 import './App.css';
 import './tailwind.css';
 import './variables.css';
-import './firebaseApp';
+import './initSuperTokens';
 
 import { useLocalStorage } from '@rehooks/local-storage';
 import React, { MutableRefObject, useEffect, useRef } from 'react';
 import Modal from 'react-modal';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import * as reactRouterDom from 'react-router-dom';
+import { getSuperTokensRoutesForReactRouterDom } from 'supertokens-auth-react';
 
 import { ShiftPressedContext } from './contexts/ShiftPressedContext';
-import { useAuthState } from './hooks/useAuthState';
-import LoginPage from './pages/LoginPage/LoginPage';
-import SignupPage from './pages/SignupPage/SignupPage';
+import { useAuthState, useCleanAuthState } from './hooks/useAuthState';
 import { PATHS, paths, VAULT_PREFIX } from './paths';
 import VaultAppRoute from './Routes/VaultAppRoute';
 
@@ -75,6 +75,7 @@ const ShiftPressedTracker = ({
 };
 
 export const App = () => {
+  useCleanAuthState();
   const [authInfo] = useAuthState();
 
   const [lastVaultId] = useLocalStorage<string | undefined>('lastVaultId');
@@ -129,8 +130,6 @@ export const App = () => {
           <Routes>
             <Route path={VAULT_PREFIX + '/*'} element={<VaultAppRoute />} />
             <Route path={PATHS.VAULT_INDEX_PATH} element={<VaultAppRoute />} />
-            <Route path={PATHS.SIGNUP_PATH} element={<SignupPage />} />
-            <Route path={PATHS.LOGIN_PATH} element={<LoginPage />} />
 
             <Route
               path="/"
@@ -146,11 +145,13 @@ export const App = () => {
                   return authInfo ? (
                     <Navigate to={PATHS.DEFAULT_PATH} replace />
                   ) : (
-                    <Navigate to={PATHS.LOGIN_PATH} replace />
+                    <Navigate to="/auth" replace />
                   );
                 }
               })()}
             />
+
+            {getSuperTokensRoutesForReactRouterDom(reactRouterDom)}
           </Routes>
         </BrowserRouter>
       </QueryClientProvider>

@@ -8,7 +8,6 @@ import {
   useState,
 } from 'react';
 
-import { useGetSyncToken } from './useGetSyncToken';
 import { useSyncConfig } from './useSyncConfig';
 
 type IState = {
@@ -24,7 +23,6 @@ export const UserAppContext = createContext<{
 export const useLoadUserAppCallback = () => {
   const ctx = useContext(UserAppContext);
   const { userId, isOffline } = useSyncConfig();
-  const getSyncToken = useGetSyncToken();
 
   const cb = useCallback(async () => {
     if (ctx.state.app) return ctx.state.app;
@@ -39,14 +37,14 @@ export const useLoadUserAppCallback = () => {
     const app = new UserApplication(
       userId.replace(/-/g, ''),
       import.meta.env.VITE_PUBLIC_WS_URL as string,
-      getSyncToken,
+      async () => '123',
     );
     await app.start();
 
     ctx.setState({ app: app, isLoading: false });
 
     return app;
-  }, [ctx, getSyncToken, isOffline, userId]);
+  }, [ctx, isOffline, userId]);
 
   const cbRef = useRef(cb);
 

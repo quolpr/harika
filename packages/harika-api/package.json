@@ -19,6 +19,7 @@
     "dotenv": "^16.0.0",
     "fastify": "^3.27.1",
     "fastify-cors": "^6.0.2",
+    "fastify-formbody": "^5.2.0",
     "fastify-oas": "^3.0.8",
     "fastify-plugin": "3.0.1",
     "firebase-admin": "^10.0.2",
@@ -27,7 +28,8 @@
     "pg": "^8.7.3",
     "rxjs": "^7.5.4",
     "socket.io": "^4.4.1",
-    "socket.io-client": "^4.4.1"
+    "socket.io-client": "^4.4.1",
+    "supertokens-node": "^9.1.1"
   },
   "devDependencies": {
     "@types/cors": "^2.8.12",

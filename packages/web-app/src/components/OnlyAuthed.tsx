@@ -1,14 +1,17 @@
 import React from 'react';
-import { Navigate } from 'react-router-dom';
-
-import { useAuthState } from '../hooks/useAuthState';
-import { paths } from '../paths';
+import { useCallback } from 'react';
+import EmailPassword, {
+  redirectToAuth,
+} from 'supertokens-auth-react/recipe/emailpassword';
 
 export const OnlyAuthed: React.FC = ({ children }) => {
-  const [authInfo] = useAuthState();
+  const handleSessionExpired = useCallback(() => {
+    redirectToAuth();
+  }, []);
 
-  // eslint-disable-next-line react/jsx-no-useless-fragment
   return (
-    <>{authInfo ? children : <Navigate to={paths.loginPath()} replace />}</>
+    <EmailPassword.EmailPasswordAuth onSessionExpired={handleSessionExpired}>
+      {children}
+    </EmailPassword.EmailPasswordAuth>
   );
 };
