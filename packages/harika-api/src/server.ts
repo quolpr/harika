@@ -31,12 +31,22 @@ async function createServer() {
   server.register(dbPlugin);
   server.register(syncHandler, { prefix: '/sync' });
   server.register(healthHandler);
-
   server.register(fastifyReplyFrom, {
     base: 'http://localhost:4433/',
   });
+  server.register(cors, {
+    origin: 'http://localhost:3000',
+    credentials: true,
+  });
 
-  server.get('/auth/*', (request, reply) => {
+  server.setErrorHandler((error, req, res) => {
+    console.error(error);
+
+    req.log.error(error.toString());
+    res.send({ error });
+  });
+
+  server.all('/auth/*', (request, reply) => {
     reply.from(`/${request.params['*']}`, {
       rewriteHeaders: (headers) => {
         return Object.fromEntries(
@@ -49,17 +59,6 @@ async function createServer() {
         );
       },
     });
-  });
-
-  server.register(cors, {
-    origin: 'http://localhost:3000',
-    credentials: true,
-  });
-
-  server.setErrorHandler((error, req, res) => {
-    console.error(error);
-    req.log.error(error.toString());
-    res.send({ error });
   });
 
   return server;

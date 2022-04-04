@@ -22,6 +22,7 @@
     "@sentry/react": "^6.17.9",
     "@sentry/tracing": "^6.17.9",
     "@tippyjs/react": "^4.2.6",
+    "axios": "^0.26.1",
     "buffer": "^6.0.3",
     "bufferutil": "^4.0.6",
     "caret-pos": "^2.0.0",

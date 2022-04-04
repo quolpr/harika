@@ -1,5 +1,6 @@
 import { generateId } from '@harika/web-core';
-import { SelfServiceLoginFlow } from '@ory/client';
+import { SelfServiceLoginFlow, UiNodeInputAttributes } from '@ory/client';
+import axios from 'axios';
 import React, { useEffect, useState } from 'react';
 import { useCallback } from 'react';
 import { useForm } from 'react-hook-form';
@@ -40,7 +41,9 @@ export const LoginPage = () => {
 
   useEffect(() => {
     const cb = async () => {
-      console.log(await oryClient.initializeSelfServiceLoginFlowForBrowsers());
+      setFlow(
+        (await oryClient.initializeSelfServiceLoginFlowForBrowsers(true)).data,
+      );
     };
 
     cb();
@@ -49,24 +52,48 @@ export const LoginPage = () => {
   const onSubmit = useCallback(
     async (data: IFormData) => {
       try {
+        if (!flow) return;
+
         setIsLoading(true);
 
-        // setAuthInfo({
-        //   userId: '123',
-        //   isOffline: false,
-        // });
+        const csrfNode = flow.ui.nodes.find(
+          (n) =>
+            n.attributes.node_type === 'input' &&
+            'name' in n.attributes &&
+            n.attributes.name === 'csrf_token',
+        );
+
+        const response = await oryClient.submitSelfServiceLoginFlow(
+          String(flow.id),
+          undefined,
+          {
+            csrf_token: (csrfNode?.attributes as UiNodeInputAttributes)?.value,
+            identifier: data.email,
+            password: data.password,
+            method: 'password',
+          },
+        );
+
+        setAuthInfo({
+          userId: response.data.session.identity.id,
+          isOffline: false,
+        });
 
         navigate.current(paths.vaultIndexPath());
-      } catch {
-        setError('email', {
-          type: 'server',
-          message: 'Email or password is wrong',
-        });
+      } catch (e) {
+        if (axios.isAxiosError(e) && e.response?.data) {
+          setError('email', {
+            type: 'server',
+            message: 'Email or password is wrong',
+          });
+        } else {
+          alert('Error happened. Please, try again.');
+        }
       } finally {
         setIsLoading(false);
       }
     },
-    [navigate, setError],
+    [flow, navigate, setAuthInfo, setError],
   );
 
   const handleWorkOffline = useCallback(() => {
