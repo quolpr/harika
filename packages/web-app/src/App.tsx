@@ -8,8 +8,6 @@ import React, { MutableRefObject, useEffect, useRef } from 'react';
 import Modal from 'react-modal';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
-import * as reactRouterDom from 'react-router-dom';
-import { getSuperTokensRoutesForReactRouterDom } from 'supertokens-auth-react';
 
 import { ShiftPressedContext } from './contexts/ShiftPressedContext';
 import { useAuthState, useCleanAuthState } from './hooks/useAuthState';
@@ -131,6 +129,7 @@ export const App = () => {
           <Routes>
             <Route path={VAULT_PREFIX + '/*'} element={<VaultAppRoute />} />
             <Route path={PATHS.VAULT_INDEX_PATH} element={<VaultAppRoute />} />
+            <Route path={PATHS.LOGIN_PATH} element={<LoginPage />} />
 
             <Route
               path="/"
@@ -146,15 +145,11 @@ export const App = () => {
                   return authInfo ? (
                     <Navigate to={PATHS.DEFAULT_PATH} replace />
                   ) : (
-                    <Navigate to="/auth" replace />
+                    <Navigate to={PATHS.LOGIN_PATH} replace />
                   );
                 }
               })()}
             />
-
-            <Route path={PATHS.LOGIN_PATH} element={<LoginPage />} />
-
-            {getSuperTokensRoutesForReactRouterDom(reactRouterDom)}
           </Routes>
         </BrowserRouter>
       </QueryClientProvider>

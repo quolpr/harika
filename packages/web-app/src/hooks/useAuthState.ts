@@ -3,11 +3,10 @@ import {
   useLocalStorage,
   writeStorage,
 } from '@rehooks/local-storage';
+import axios from 'axios';
 import { useCallback, useEffect } from 'react';
-import {
-  doesSessionExist,
-  getUserId,
-} from 'supertokens-auth-react/recipe/session';
+
+import { oryClient } from '../oryClient';
 
 export interface AuthInfo {
   userId: string;
@@ -43,11 +42,19 @@ export const useCleanAuthState = () => {
   useEffect(() => {
     const cb = async () => {
       if (!authInfo) return;
-      if (!(await doesSessionExist())) return;
-      const userId = await getUserId();
 
-      if (authInfo.userId !== userId) {
-        setAuthInfo(undefined);
+      try {
+        await oryClient.toSession();
+      } catch (e) {
+        if (
+          axios.isAxiosError(e) &&
+          e.response?.status === 401 &&
+          authInfo === undefined
+        ) {
+          setAuthInfo(undefined);
+        } else {
+          throw e;
+        }
       }
     };
 

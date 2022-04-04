@@ -110,6 +110,8 @@ export const syncHandler: FastifyPluginCallback = (server, options, next) => {
     const disconnect$ = new Subject();
 
     let sessionRecipe = SessionRecipe.getInstanceOrThrowError();
+
+    console.log(socket.request);
     const session = await sessionRecipe.verifySession(
       undefined,
       new FastifyRequest(socket.request as any),
