@@ -2,10 +2,7 @@ import './plugins/initSuperTokens';
 
 import fastify from 'fastify';
 import cors from 'fastify-cors';
-import formDataPlugin from 'fastify-formbody';
-import supertokens from 'supertokens-node';
-import { plugin } from 'supertokens-node/framework/fastify';
-import { errorHandler } from 'supertokens-node/framework/fastify';
+import fastifyReplyFrom from 'fastify-reply-from';
 
 import { healthHandler } from './modules/health/routes';
 import { syncHandler } from './modules/sync/routes';
@@ -35,21 +32,35 @@ async function createServer() {
   server.register(syncHandler, { prefix: '/sync' });
   server.register(healthHandler);
 
+  server.register(fastifyReplyFrom, {
+    base: 'http://localhost:4433/',
+  });
+
+  server.get('/auth/*', (request, reply) => {
+    reply.from(`/${request.params['*']}`, {
+      rewriteHeaders: (headers) => {
+        return Object.fromEntries(
+          Object.entries(headers).filter(([key, val]) => {
+            if (key.includes('access-control-')) return false;
+            if (key === 'content-length') return false;
+
+            return true;
+          })
+        );
+      },
+    });
+  });
+
   server.register(cors, {
     origin: 'http://localhost:3000',
-    allowedHeaders: ['Content-Type', ...supertokens.getAllCORSHeaders()],
     credentials: true,
   });
 
-  server.setErrorHandler(errorHandler());
   server.setErrorHandler((error, req, res) => {
     console.error(error);
     req.log.error(error.toString());
     res.send({ error });
   });
-
-  await server.register(formDataPlugin);
-  await server.register(plugin);
 
   return server;
 }

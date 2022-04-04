@@ -13,6 +13,7 @@ import { getSuperTokensRoutesForReactRouterDom } from 'supertokens-auth-react';
 
 import { ShiftPressedContext } from './contexts/ShiftPressedContext';
 import { useAuthState, useCleanAuthState } from './hooks/useAuthState';
+import LoginPage from './pages/LoginPage/LoginPage';
 import { PATHS, paths, VAULT_PREFIX } from './paths';
 import VaultAppRoute from './Routes/VaultAppRoute';
 
@@ -150,6 +151,8 @@ export const App = () => {
                 }
               })()}
             />
+
+            <Route path={PATHS.LOGIN_PATH} element={<LoginPage />} />
 
             {getSuperTokensRoutesForReactRouterDom(reactRouterDom)}
           </Routes>
