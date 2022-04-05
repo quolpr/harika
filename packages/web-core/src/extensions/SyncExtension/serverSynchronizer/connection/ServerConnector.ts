@@ -49,7 +49,7 @@ export class ServerConnector {
       switchMap((socket) => {
         if (!socket) return of(false);
 
-        return this.auth(socket);
+        return this.initClient(socket);
       }),
       share({
         connector: () => new ReplaySubject(1),
@@ -90,7 +90,7 @@ export class ServerConnector {
     });
   }
 
-  private auth(socket: Socket) {
+  private initClient(socket: Socket) {
     return new Observable<boolean>((obs) => {
       const req: InitClientRequest = {
         dbName: this.dbName,
@@ -108,7 +108,7 @@ export class ServerConnector {
           if (response.status === 'success') {
             obs.next(true);
           } else {
-            console.error('Failed to auth!');
+            console.error('Failed to initClient!');
 
             obs.next(false);
           }

@@ -3,8 +3,8 @@ import {
   useLocalStorage,
   writeStorage,
 } from '@rehooks/local-storage';
-import axios from 'axios';
-import { useCallback, useEffect } from 'react';
+import axios, { AxiosError } from 'axios';
+import { useCallback, useEffect, useState } from 'react';
 
 import { oryClient } from '../oryClient';
 
@@ -60,4 +60,34 @@ export const useCleanAuthState = () => {
 
     cb();
   }, [authInfo, setAuthInfo]);
+};
+
+export const useLogout = () => {
+  const [, setAuthInfo] = useAuthState();
+  const [logoutToken, setLogoutToken] = useState<string>('');
+
+  useEffect(() => {
+    oryClient
+      .createSelfServiceLogoutFlowUrlForBrowsers()
+      .then(({ data }) => {
+        setLogoutToken(data.logout_token);
+      })
+      .catch((err: AxiosError) => {
+        switch (err.response?.status) {
+          case 401:
+            // do nothing, the user is not logged in
+            return;
+        }
+
+        // Something else happened!
+        return Promise.reject(err);
+      });
+  }, []);
+
+  return useCallback(async () => {
+    if (logoutToken) {
+      await oryClient.submitSelfServiceLogoutFlow(logoutToken);
+      setAuthInfo(undefined);
+    }
+  }, [logoutToken, setAuthInfo]);
 };

@@ -11,6 +11,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { ShiftPressedContext } from './contexts/ShiftPressedContext';
 import { useAuthState, useCleanAuthState } from './hooks/useAuthState';
 import LoginPage from './pages/LoginPage/LoginPage';
+import SignupPage from './pages/SignupPage/SignupPage';
 import { PATHS, paths, VAULT_PREFIX } from './paths';
 import VaultAppRoute from './Routes/VaultAppRoute';
 
@@ -129,6 +130,7 @@ export const App = () => {
             <Route path={VAULT_PREFIX + '/*'} element={<VaultAppRoute />} />
             <Route path={PATHS.VAULT_INDEX_PATH} element={<VaultAppRoute />} />
             <Route path={PATHS.LOGIN_PATH} element={<LoginPage />} />
+            <Route path={PATHS.SIGNUP_PATH} element={<SignupPage />} />
 
             <Route
               path="/"
