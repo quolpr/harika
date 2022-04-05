@@ -100,7 +100,7 @@ export class ServerConnector {
       let isRunning = true;
 
       socket.emit(
-        CommandTypesFromClient.Auth,
+        CommandTypesFromClient.InitClient,
         req,
         (response: InitClientResponse) => {
           if (!isRunning) return;

@@ -1,7 +1,6 @@
 import './App.css';
 import './tailwind.css';
 import './variables.css';
-import './initSuperTokens';
 
 import { useLocalStorage } from '@rehooks/local-storage';
 import React, { MutableRefObject, useEffect, useRef } from 'react';

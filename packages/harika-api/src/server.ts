@@ -1,5 +1,3 @@
-import './plugins/initSuperTokens';
-
 import fastify from 'fastify';
 import cors from 'fastify-cors';
 import fastifyReplyFrom from 'fastify-reply-from';

@@ -21,14 +21,9 @@ import {
   withLatestFrom,
 } from 'rxjs';
 import { Server, Socket } from 'socket.io';
-import {
-  FastifyRequest,
-  FastifyResponse,
-} from 'supertokens-node/lib/build/framework/fastify/framework';
-import SessionRecipe from 'supertokens-node/lib/build/recipe/session/recipe';
-import SuperTokens from 'supertokens-node/lib/build/supertokens';
 
 import { db } from '../../db/db';
+import { oryClient } from '../../oryClient';
 import { createIfNotExistsDbSchema } from './createDbSchema';
 import { ChangesService } from './services/changesService';
 import { DocSnapshotsService } from './services/DocSnapshotsService';
@@ -90,38 +85,19 @@ export const syncHandler: FastifyPluginCallback = (server, options, next) => {
   });
 
   const namespaced = io.of('/sync-db');
-
-  namespaced.use(async (socket, done) => {
-    let supertokens = SuperTokens.getInstanceOrThrowError();
-    // console.log((socket.request as any).req, (socket.request as any).res);
-
-    let request = new FastifyRequest(socket.request as any);
-    let response = new FastifyResponse((socket.request as any).res);
-
-    try {
-      await supertokens.middleware(request, response);
-    } catch (err) {
-      await supertokens.errorHandler(err, request, response);
-    }
-    done();
-  });
-
   namespaced.on('connection', async function (socket) {
     const disconnect$ = new Subject();
 
-    let sessionRecipe = SessionRecipe.getInstanceOrThrowError();
+    if (!socket.request.headers?.cookie) {
+      console.error('No cookie set');
 
-    console.log(socket.request);
-    const session = await sessionRecipe.verifySession(
-      undefined,
-      new FastifyRequest(socket.request as any),
-      new FastifyResponse((socket.request as any).res)
-    );
+      socket.disconnect();
 
-    const userId = session.getUserId();
+      return;
+    }
 
     const authInfo$ = new BehaviorSubject<
-      undefined | { dbName: string; userId: string; clientId: string }
+      undefined | { dbName: string; clientId: string; userId: string }
     >(undefined);
 
     const onlyAuthed = () => {
@@ -140,22 +116,37 @@ export const syncHandler: FastifyPluginCallback = (server, options, next) => {
 
     handleMessage<InitClientCommand>(
       socket,
-      CommandTypesFromClient.Auth,
+      CommandTypesFromClient.InitClient,
       (req) => {
         return of(null).pipe(
           switchMap(async () => {
-            await socket.join(req.dbName);
+            const response = await oryClient.toSession(
+              undefined,
+              socket.request.headers?.cookie
+            );
+
+            return response.data.identity.id;
           }),
-          switchMap(async (token) => {
+
+          switchMap(async (userId) => {
+            await socket.join(req.dbName);
+
+            return userId;
+          }),
+          switchMap(async (userId) => {
             await createIfNotExistsDbSchema(db, userId, req.dbName);
 
-            return token;
+            return userId;
           }),
-          tap((decodedToken) => {
+          tap((userId) => {
+            console.log(
+              `User ${userId}(clientId = ${req.clientId}) is connected to ${req.dbName} and authed`
+            );
+
             authInfo$.next({
               dbName: req.dbName,
-              userId: userId,
               clientId: req.clientId,
+              userId,
             });
           }),
           mapTo({ status: 'success' })
