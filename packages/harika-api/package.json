@@ -18,7 +18,7 @@
     "@harika/sync-common": "*",
     "@ory/kratos-client": "^0.9.0-alpha.3",
     "dotenv": "^16.0.0",
-    "fastify": "^3.27.1",
+    "fastify": "^3.28.0",
     "fastify-cors": "^6.0.2",
     "fastify-formbody": "^5.2.0",
     "fastify-oas": "^3.0.8",
