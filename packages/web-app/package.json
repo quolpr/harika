@@ -17,7 +17,7 @@
     "@heroicons/react": "^1.0.6",
     "@material-ui/core": "^4.12.4",
     "@material-ui/icons": "^4.11.3",
-    "@ory/client": "^0.0.1-alpha.155",
+    "@ory/client": "^0.0.1-alpha.157",
     "@rehooks/local-storage": "2.4.4",
     "@sentry/react": "^6.19.4",
     "@sentry/tracing": "^6.19.4",
