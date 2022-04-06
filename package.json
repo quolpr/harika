@@ -22,7 +22,7 @@
     "packages/*"
   ],
   "devDependencies": {
-    "@sentry/cli": "^1.72.2"
+    "@sentry/cli": "^1.74.3"
   },
   "resolutions": {
     "react-refresh": "0.10.0"
