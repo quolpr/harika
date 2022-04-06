@@ -23,6 +23,7 @@ import {
 import { Server, Socket } from 'socket.io';
 
 import { db } from '../../db/db';
+import { getSessionFromRequestStrict } from '../../helpers/getSessionFromRequest';
 import { oryClient } from '../../oryClient';
 import { createIfNotExistsDbSchema } from './createDbSchema';
 import { ChangesService } from './services/changesService';
@@ -120,12 +121,8 @@ export const syncHandler: FastifyPluginCallback = (server, options, next) => {
       (req) => {
         return of(null).pipe(
           switchMap(async () => {
-            const response = await oryClient.toSession(
-              undefined,
-              socket.request.headers?.cookie
-            );
-
-            return response.data.identity.id;
+            return (await getSessionFromRequestStrict(socket.request)).identity
+              .id;
           }),
 
           switchMap(async (userId) => {

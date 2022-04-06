@@ -46,11 +46,7 @@ export const useCleanAuthState = () => {
       try {
         await oryClient.toSession();
       } catch (e) {
-        if (
-          axios.isAxiosError(e) &&
-          e.response?.status === 401 &&
-          authInfo === undefined
-        ) {
+        if (axios.isAxiosError(e) && e.response?.status === 401) {
           setAuthInfo(undefined);
         } else {
           throw e;
