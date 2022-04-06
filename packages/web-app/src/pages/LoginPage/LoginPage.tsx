@@ -1,17 +1,14 @@
 import { generateId } from '@harika/web-core';
-import {
-  getAuth,
-  GoogleAuthProvider,
-  signInWithEmailAndPassword,
-  signInWithPopup,
-} from 'firebase/auth';
-import React, { useState } from 'react';
+import { SelfServiceLoginFlow, UiNodeInputAttributes } from '@ory/client';
+import axios from 'axios';
+import React, { useEffect, useState } from 'react';
 import { useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link } from 'react-router-dom';
 
 import { useAuthState } from '../../hooks/useAuthState';
 import { useOfflineAccounts } from '../../hooks/useOfflineAccounts';
+import { oryClient } from '../../oryClient';
 import { paths } from '../../paths';
 import { cn, useNavigateRef } from '../../utils';
 
@@ -22,9 +19,9 @@ type IFormData = {
   password: string;
 };
 
-const auth = getAuth();
-
 export const LoginPage = () => {
+  const [flow, setFlow] = useState<SelfServiceLoginFlow>();
+
   const navigate = useNavigateRef();
   const [, setAuthInfo] = useAuthState();
   const [offlineAccounts, addOfflineAccount] = useOfflineAccounts();
@@ -42,33 +39,61 @@ export const LoginPage = () => {
     setFocus('email');
   }, [setFocus]);
 
+  useEffect(() => {
+    const cb = async () => {
+      setFlow(
+        (await oryClient.initializeSelfServiceLoginFlowForBrowsers(true)).data,
+      );
+    };
+
+    cb();
+  }, []);
+
   const onSubmit = useCallback(
     async (data: IFormData) => {
       try {
+        if (!flow) return;
+
         setIsLoading(true);
 
-        const res = await signInWithEmailAndPassword(
-          auth,
-          data.email,
-          data.password,
+        const csrfNode = flow.ui.nodes.find(
+          (n) =>
+            n.attributes.node_type === 'input' &&
+            'name' in n.attributes &&
+            n.attributes.name === 'csrf_token',
+        );
+
+        const response = await oryClient.submitSelfServiceLoginFlow(
+          String(flow.id),
+          undefined,
+          {
+            csrf_token: (csrfNode?.attributes as UiNodeInputAttributes)?.value,
+            identifier: data.email,
+            password: data.password,
+            method: 'password',
+          },
         );
 
         setAuthInfo({
-          userId: res.user.uid,
+          userId: response.data.session.identity.id,
           isOffline: false,
         });
 
         navigate.current(paths.vaultIndexPath());
-      } catch {
-        setError('email', {
-          type: 'server',
-          message: 'Email or password is wrong',
-        });
+      } catch (e) {
+        if (axios.isAxiosError(e) && e.response?.data) {
+          setError('email', {
+            type: 'server',
+            message: 'Email or password is wrong',
+          });
+        } else {
+          alert('Error happened. Please, try again.');
+        }
       } finally {
         setIsLoading(false);
       }
     },
-    [navigate, setAuthInfo, setError],
+    [flow, navigate, setAuthInfo, setError],
   );
 
   const handleWorkOffline = useCallback(() => {
@@ -99,11 +124,8 @@ export const LoginPage = () => {
     try {
       setIsLoading(true);
 
-      const provider = new GoogleAuthProvider();
-      const res = await signInWithPopup(auth, provider);
-
       setAuthInfo({
-        userId: res.user.uid,
+        userId: '123',
         isOffline: false,
       });
 

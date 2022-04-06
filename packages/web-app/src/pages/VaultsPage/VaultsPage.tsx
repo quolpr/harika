@@ -3,14 +3,13 @@ import './styles.css';
 import { generateId, UserVaultsService } from '@harika/web-core';
 import { PlusIcon } from '@heroicons/react/solid';
 import SettingsIcon from '@material-ui/icons/Settings';
-import { deleteFromStorage } from '@rehooks/local-storage';
 import { useObservableState } from 'observable-hooks';
 import React, { useCallback, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { of } from 'rxjs';
 
 import { Brand } from '../../components/Brand/Brand';
-import { useAuthState } from '../../hooks/useAuthState';
+import { useLogout } from '../../hooks/useAuthState';
 import { useLoadUserApp, useUserVaults } from '../../hooks/useUserApp';
 import { paths } from '../../paths';
 import { cn, useNavigateRef } from '../../utils';
@@ -95,20 +94,14 @@ export const VaultsPage = () => {
     setIsCreateModalOpened(false);
   }, []);
 
-  const [, setAuthInfo] = useAuthState();
+  const logout = useLogout();
 
   return (
     <>
       <div className={vaultsNavbarClass()}>
         <Brand />
 
-        <button
-          className={vaultsNavbarClass('logout')}
-          onClick={() => {
-            setAuthInfo(undefined);
-            deleteFromStorage('lastVaultId');
-          }}
-        >
+        <button className={vaultsNavbarClass('logout')} onClick={logout}>
           Log Out
         </button>
       </div>

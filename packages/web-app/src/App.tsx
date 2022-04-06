@@ -1,7 +1,6 @@
 import './App.css';
 import './tailwind.css';
 import './variables.css';
-import './firebaseApp';
 
 import { useLocalStorage } from '@rehooks/local-storage';
 import React, { MutableRefObject, useEffect, useRef } from 'react';
@@ -10,7 +9,7 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 
 import { ShiftPressedContext } from './contexts/ShiftPressedContext';
-import { useAuthState } from './hooks/useAuthState';
+import { useAuthState, useCleanAuthState } from './hooks/useAuthState';
 import LoginPage from './pages/LoginPage/LoginPage';
 import SignupPage from './pages/SignupPage/SignupPage';
 import { PATHS, paths, VAULT_PREFIX } from './paths';
@@ -75,6 +74,7 @@ const ShiftPressedTracker = ({
 };
 
 export const App = () => {
+  useCleanAuthState();
   const [authInfo] = useAuthState();
 
   const [lastVaultId] = useLocalStorage<string | undefined>('lastVaultId');
@@ -129,8 +129,8 @@ export const App = () => {
           <Routes>
             <Route path={VAULT_PREFIX + '/*'} element={<VaultAppRoute />} />
             <Route path={PATHS.VAULT_INDEX_PATH} element={<VaultAppRoute />} />
-            <Route path={PATHS.SIGNUP_PATH} element={<SignupPage />} />
             <Route path={PATHS.LOGIN_PATH} element={<LoginPage />} />
+            <Route path={PATHS.SIGNUP_PATH} element={<SignupPage />} />
 
             <Route
               path="/"

@@ -1,13 +1,12 @@
 import {
   ApplyNewChangesFromClientCommand,
-  AuthClientCommand,
   ClientCommands,
   CommandTypesFromClient,
   EventsFromServer,
   GetSnapshotsClientCommand,
+  InitClientCommand,
 } from '@harika/sync-common';
 import { FastifyPluginCallback } from 'fastify';
-import { getAuth } from 'firebase-admin/auth';
 import {
   BehaviorSubject,
   catchError,
@@ -24,6 +23,7 @@ import {
 import { Server, Socket } from 'socket.io';
 
 import { db } from '../../db/db';
+import { oryClient } from '../../oryClient';
 import { createIfNotExistsDbSchema } from './createDbSchema';
 import { ChangesService } from './services/changesService';
 import { DocSnapshotsService } from './services/DocSnapshotsService';
@@ -80,14 +80,24 @@ export const syncHandler: FastifyPluginCallback = (server, options, next) => {
     cors: {
       origin: ['http://localhost:3000', 'https://app-dev.harika.io'],
       methods: ['GET', 'POST'],
+      credentials: true,
     },
   });
 
-  io.of('/sync-db').on('connection', function (socket) {
+  const namespaced = io.of('/sync-db');
+  namespaced.on('connection', async function (socket) {
     const disconnect$ = new Subject();
 
+    if (!socket.request.headers?.cookie) {
+      console.error('No cookie set');
+
+      socket.disconnect();
+
+      return;
+    }
+
     const authInfo$ = new BehaviorSubject<
-      undefined | { dbName: string; userId: string; clientId: string }
+      undefined | { dbName: string; clientId: string; userId: string }
     >(undefined);
 
     const onlyAuthed = () => {
@@ -104,27 +114,39 @@ export const syncHandler: FastifyPluginCallback = (server, options, next) => {
       };
     };
 
-    handleMessage<AuthClientCommand>(
+    handleMessage<InitClientCommand>(
       socket,
-      CommandTypesFromClient.Auth,
+      CommandTypesFromClient.InitClient,
       (req) => {
         return of(null).pipe(
           switchMap(async () => {
-            await socket.join(req.dbName);
-          }),
-          switchMap(async () => {
-            return await getAuth().verifyIdToken(req.authToken);
-          }),
-          switchMap(async (token) => {
-            await createIfNotExistsDbSchema(db, token.uid, req.dbName);
+            const response = await oryClient.toSession(
+              undefined,
+              socket.request.headers?.cookie
+            );
 
-            return token;
+            return response.data.identity.id;
           }),
-          tap((decodedToken) => {
+
+          switchMap(async (userId) => {
+            await socket.join(req.dbName);
+
+            return userId;
+          }),
+          switchMap(async (userId) => {
+            await createIfNotExistsDbSchema(db, userId, req.dbName);
+
+            return userId;
+          }),
+          tap((userId) => {
+            console.log(
+              `User ${userId}(clientId = ${req.clientId}) is connected to ${req.dbName} and authed`
+            );
+
             authInfo$.next({
               dbName: req.dbName,
-              userId: decodedToken.uid,
               clientId: req.clientId,
+              userId,
             });
           }),
           mapTo({ status: 'success' })

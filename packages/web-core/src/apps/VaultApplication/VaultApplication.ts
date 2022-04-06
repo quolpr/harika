@@ -6,7 +6,6 @@ import { DB_NAME } from '../../extensions/DbExtension/types';
 import { SyncAppExtension } from '../../extensions/SyncExtension/SyncAppExtension';
 import { SyncStateService } from '../../extensions/SyncExtension/SyncState';
 import {
-  GET_AUTH_TOKEN,
   ROOT_STORE,
   SYNC_CONNECTION_ALLOWED,
   SYNC_URL,
@@ -32,11 +31,7 @@ import { NotesTreeAppExtension } from './NotesTreeExtension/NotesTreeAppExtensio
 import { SpacedRepetitionExtension } from './SpacedRepetitionExtension/SpacedRepetitionExtension';
 
 export class VaultApplication extends BaseApplication {
-  constructor(
-    applicationId: string,
-    private syncUrl: string,
-    private getAuthToken: () => Promise<string | undefined>,
-  ) {
+  constructor(applicationId: string, private syncUrl: string) {
     super(applicationId);
   }
 
@@ -68,7 +63,6 @@ export class VaultApplication extends BaseApplication {
     this.container.bind(VaultAppRootStore).toConstantValue(rootStore);
     this.container.bind(ROOT_STORE).toConstantValue(rootStore);
     this.container.bind(SYNC_URL).toConstantValue(this.syncUrl);
-    this.container.bind(GET_AUTH_TOKEN).toConstantValue(this.getAuthToken);
 
     registerRootStore(rootStore);
   }

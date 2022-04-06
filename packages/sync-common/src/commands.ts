@@ -3,7 +3,7 @@ import { IDocChange, IDocSnapshot } from './dbTypes';
 export enum CommandTypesFromClient {
   ApplyNewChanges = 'applyNewChanges',
   GetSnapshots = 'getSnapshots',
-  Auth = 'auth',
+  InitClient = 'initClient',
 }
 
 export enum EventsFromServer {
@@ -18,20 +18,19 @@ export type NotAuthedResponse = { status: 'error'; errorType: 'notAuted' };
 
 export type ErrorResponse = InternalErrorResponse | NotAuthedResponse;
 
-export type AuthClientCommand = {
-  type: CommandTypesFromClient.Auth;
+export type InitClientCommand = {
+  type: CommandTypesFromClient.InitClient;
 
-  request: AuthClientRequest;
-  response: AuthClientResponse;
+  request: InitClientRequest;
+  response: InitClientResponse;
 };
 
-export interface AuthClientRequest {
-  authToken: string;
+export interface InitClientRequest {
   dbName: string;
   clientId: string;
 }
 
-export type AuthClientResponse = {
+export type InitClientResponse = {
   status: 'success' | 'failed';
 };
 
@@ -72,7 +71,7 @@ export interface GetSnapshotsResponse {
 export type ClientCommands =
   | GetSnapshotsClientCommand
   | ApplyNewChangesFromClientCommand
-  | AuthClientCommand;
+  | InitClientCommand;
 
 export type ClientCommandRequests =
   | GetSnapshotsRequest

@@ -1,8 +1,12 @@
-import { createUserWithEmailAndPassword, getAuth } from 'firebase/auth';
-import React, { useState } from 'react';
+import {
+  SelfServiceRegistrationFlow,
+  UiNodeInputAttributes,
+} from '@ory/client';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { useAuthState } from '../../hooks/useAuthState';
+import { oryClient } from '../../oryClient';
 import { paths } from '../../paths';
 import { cn, useNavigateRef } from '../../utils';
 
@@ -12,8 +16,6 @@ type IFormData = {
   email: string;
   password: string;
 };
-
-const auth = getAuth();
 
 export const SignupPage = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -29,20 +31,51 @@ export const SignupPage = () => {
     setFocus,
   } = useForm<IFormData>();
 
+  const [flow, setFlow] = useState<SelfServiceRegistrationFlow>();
+
+  useEffect(() => {
+    const cb = async () => {
+      setFlow(
+        (await oryClient.initializeSelfServiceRegistrationFlowForBrowsers())
+          .data,
+      );
+    };
+
+    cb();
+  }, []);
+
+  console.log({ flow });
+
   const onSubmit = async (data: IFormData) => {
     try {
+      if (!flow) return;
+
       setIsLoading(true);
 
-      const res = await createUserWithEmailAndPassword(
-        auth,
-        data.email,
-        data.password,
+      const csrfNode = flow.ui.nodes.find(
+        (n) =>
+          n.attributes.node_type === 'input' &&
+          'name' in n.attributes &&
+          n.attributes.name === 'csrf_token',
       );
 
-      setAuthInfo({ userId: res.user.uid, isOffline: false });
+      if (!csrfNode) {
+        throw new Error('No csrf token!');
+      }
+
+      const res = await oryClient.submitSelfServiceRegistrationFlow(flow?.id, {
+        method: 'password',
+        password: data.password,
+        csrf_token: (csrfNode?.attributes as UiNodeInputAttributes)?.value,
+        traits: { email: data.email },
+      });
+
+      setAuthInfo({ userId: res.data.identity.id, isOffline: false });
 
       navigate.current(paths.vaultIndexPath());
     } catch (e: unknown) {
+      console.error(e);
+
       setError('email', {
         type: 'manual',
         message: 'Email or password is incorrect',
