@@ -1,7 +1,9 @@
 import fastify from 'fastify';
 import cors from 'fastify-cors';
+import fastifyMultipart from 'fastify-multipart';
 import fastifyReplyFrom from 'fastify-reply-from';
 
+import { uploadHandler } from './modules/fileUploadRoute';
 import { healthHandler } from './modules/health/routes';
 import { syncHandler } from './modules/sync/routes';
 import { dbPlugin } from './plugins/db';
@@ -26,9 +28,11 @@ async function createServer() {
   //   },
   // });
 
+  server.register(fastifyMultipart);
   server.register(dbPlugin);
   server.register(syncHandler, { prefix: '/sync' });
   server.register(healthHandler);
+  server.register(uploadHandler);
   server.register(fastifyReplyFrom, {
     base: 'http://localhost:4433/',
   });
