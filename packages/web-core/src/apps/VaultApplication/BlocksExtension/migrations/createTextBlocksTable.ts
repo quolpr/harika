@@ -17,8 +17,6 @@ const up = async (db: IQueryExecuter) => {
       content TEXT NOT NULL,
       type varchar(10) NOT NULL,
 
-      linkedBlockIds TEXT NOT NULL DEFAULT '[]',
-
       parentId varchar(20),
       orderPosition INTEGER NOT NULL,
 

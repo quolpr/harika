@@ -37,6 +37,10 @@ export const useFindService = () => {
   return useCurrentVaultApp().getFindService();
 };
 
+export const useUploadService = () => {
+  return useCurrentVaultApp().getUploadService();
+};
+
 export const useBlocksStore = () => {
   return useCurrentVaultApp().getRootStore().blocksStore;
 };

@@ -20,6 +20,7 @@
     "broadcast-channel": "^4.10.0",
     "camelcase-keys": "^7.0.2",
     "dayjs": "^1.11.0",
+    "dexie": "^3.2.1",
     "downloadjs": "^1.4.7",
     "inversify": "^6.0.1",
     "lodash-es": "^4.17.21",

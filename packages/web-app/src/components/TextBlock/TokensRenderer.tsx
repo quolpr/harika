@@ -2,6 +2,7 @@ import {
   BlocksScope,
   BlockView,
   getBlockView,
+  ImageToken,
   NoteBlock,
   NoteRefToken,
   TagToken,
@@ -15,7 +16,8 @@ import { comparer, computed } from 'mobx';
 import { arraySet } from 'mobx-keystone';
 import { observer } from 'mobx-react-lite';
 import { useObservable, useObservableState } from 'observable-hooks';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAsync } from 'react-use';
 import { distinctUntilChanged, switchMap } from 'rxjs';
@@ -28,6 +30,7 @@ import {
   useAllBlocksService,
   useBlockLinksStore,
   useUpdateLinkService,
+  useUploadService,
 } from '../../hooks/vaultAppHooks';
 
 const NoteRefRenderer = observer(
@@ -195,6 +198,46 @@ const TagRenderer = observer(
   },
 );
 
+const ImageRender = ({ token }: { token: ImageToken }) => {
+  const [url, setUrl] = useState<string | undefined>(undefined);
+
+  const uploadService = useUploadService();
+
+  useEffect(() => {
+    const cb = async () => {
+      if (token.url.startsWith('harika-file://')) {
+        const id = token.url.replace('harika-file://', '');
+        const upload = await uploadService.getUpload(id);
+
+        if (upload) {
+          setUrl(URL.createObjectURL(upload.file));
+        }
+      } else {
+        setUrl(token.url);
+      }
+    };
+
+    cb();
+  }, [token.url, uploadService]);
+
+  useEffect(() => {
+    if (url?.startsWith('blob:')) {
+      URL.revokeObjectURL(url);
+    }
+  }, [url]);
+
+  return url ? (
+    <img
+      alt={token.title}
+      src={url}
+      data-offset-start={token.offsetStart}
+      data-offset-end={token.offsetEnd}
+      width={token.width}
+      height={token.height}
+    />
+  ) : null;
+};
+
 const TokenRenderer = observer(
   ({
     collapsableBlock,
@@ -339,6 +382,9 @@ const TokenRenderer = observer(
         );
       case 'textBlockRef':
         return <BlockRefRenderer token={token} />;
+      case 'image':
+        return <ImageRender token={token} />;
+
       default:
         return <span></span>;
     }

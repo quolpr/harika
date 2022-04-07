@@ -92,6 +92,15 @@ interface LinkToken extends BaseToken {
   linkType: string;
 }
 
+export interface ImageToken extends BaseToken {
+  id: string;
+  type: 'image';
+  url: string;
+  title: string;
+  width?: number;
+  height?: number;
+}
+
 export type Token =
   | NoteBlockRefToken
   | TextBlockRef
@@ -104,4 +113,5 @@ export type Token =
   | CodeBlockToken
   | StringToken
   | LinkToken
-  | QuoteToken;
+  | QuoteToken
+  | ImageToken;

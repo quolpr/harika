@@ -39,8 +39,4 @@ export class CardsRepository extends BaseSyncRepository<ICardDoc, ICardRow> {
   getTableName() {
     return cardsTable;
   }
-
-  changesApplier() {
-    return undefined as any;
-  }
 }

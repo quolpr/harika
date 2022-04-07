@@ -45,7 +45,7 @@ Data
   }
   
 Token
-  = EOLOneLineTokens /  SpaceBeforeTag / Bold / Italic / Highlight / CodeBlock / InlineCode /  NoteBlockRef / TextBlockRef
+  = EOLOneLineTokens /  SpaceBeforeTag / Bold / Italic / Highlight / CodeBlock / InlineCode /  NoteBlockRef / TextBlockRef / Image
  
 NoteBlockRef
   = '[[' content:($[^'\]\]']+) ']]' { 
@@ -136,6 +136,8 @@ InlineCode
     return {id: options.generateId(), type: 'inlineCode', content: content, offsetStart: loc.start.offset, offsetEnd: loc.end.offset}
   }
 
+
+
 CodeBlock
   = '```' content:(!'```' .)* ending:(('```' EOL)/'```') { 
     const loc = location();
@@ -143,6 +145,16 @@ CodeBlock
     return {id: options.generateId(), type: 'codeBlock', content: content.map(([, v]) => v).join(''), offsetStart: loc.start.offset, offsetEnd: loc.end.offset, withTrailingEOL: ending.length === 2}
   }
 
+Image
+  = '![' title:$[^\]]* '](' url:$[^\) ]* size:Size? ')' { 
+    const loc = location();
+
+    return {id: options.generateId(), type: 'image', title, url, width: size && size.width || undefined, height: size && size.height || undefined, offsetStart: loc.start.offset, offsetEnd: loc.end.offset} 
+  }
+
+Size = ' =' width:[0-9]* 'x' height:[0-9]* {
+  return {width: parseInt(width.join(''), 10) || undefined, height: parseInt(height.join(''), 10) || undefined}
+}
 EOL "end of line"
   = "\n"
   / "\r\n"

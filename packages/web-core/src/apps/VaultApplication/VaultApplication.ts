@@ -29,6 +29,8 @@ import { UpdateNoteTitleService } from './BlocksExtension/services/UpdateNoteTit
 import { NotesTreeRegistry } from './NotesTreeExtension/models/NotesTreeRegistry';
 import { NotesTreeAppExtension } from './NotesTreeExtension/NotesTreeAppExtension';
 import { SpacedRepetitionExtension } from './SpacedRepetitionExtension/SpacedRepetitionExtension';
+import { UploadFileService } from './StorageExtension/services/UploadFileService';
+import { StorageAppExtension } from './StorageExtension/StorageAppExtension';
 
 export class VaultApplication extends BaseApplication {
   constructor(applicationId: string, private syncUrl: string) {
@@ -46,6 +48,7 @@ export class VaultApplication extends BaseApplication {
       NoteBlocksAppExtension,
       NotesTreeAppExtension,
       SpacedRepetitionExtension,
+      StorageAppExtension,
     ];
   }
 
@@ -101,6 +104,10 @@ export class VaultApplication extends BaseApplication {
 
   getTextBlocksService() {
     return this.container.get(TextBlocksService);
+  }
+
+  getUploadService() {
+    return this.container.get(UploadFileService);
   }
 
   getFindService() {
