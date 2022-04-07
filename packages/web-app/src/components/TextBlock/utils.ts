@@ -10,7 +10,7 @@ export const getTokensAtCursor = (
       tokensAtPos.push(t);
     }
 
-    if (Array.isArray(t.content)) {
+    if ('content' in t && Array.isArray(t.content)) {
       getTokensAtCursor(pos, t.content, tokensAtPos);
     }
   });

@@ -35,6 +35,7 @@
     "mobx-react-lite": "^3.3.0",
     "observable-hooks": "^4.2.0",
     "path-to-regexp": "6.2.0",
+    "re-resizable": "^6.9.5",
     "react": "^18.0.0",
     "react-calendar": "^3.7.0",
     "react-dom": "^18.0.0",

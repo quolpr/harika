@@ -157,3 +157,7 @@ input[type='search']::-webkit-search-results-decoration {
   top: -1000000px;
   left: -1000000px;
 }
+
+.inline-block {
+  display: inline-block;
+}

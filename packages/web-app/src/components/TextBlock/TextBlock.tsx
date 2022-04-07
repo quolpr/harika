@@ -188,7 +188,7 @@ const TextBlockBody = observer(
           onKeyPress={handleContentKeyPress}
         >
           <TokensRenderer
-            collapsableBlock={block}
+            blockView={block}
             tokens={block.originalBlock.contentModel.ast}
           />
         </span>

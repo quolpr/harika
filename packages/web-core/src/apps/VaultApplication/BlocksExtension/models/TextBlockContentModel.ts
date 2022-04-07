@@ -59,6 +59,11 @@ const astToString = (ast: Token[]): string => {
           case 'textBlockRef':
             return `((${t.content}))`;
 
+          case 'image':
+            return `![${t.title}](${t.url}${
+              t.height || t.width ? ` =${t.width || ''}x${t.height || ''}` : ''
+            })`;
+
           default:
             assertUnreachable(t);
         }
@@ -123,6 +128,23 @@ export class TextBlockContent {
           ...token,
           content: ref,
           ref,
+        };
+      }
+      return token;
+    });
+
+    this.update(astToString(newAst));
+    this.dumpValue();
+  }
+
+  @action
+  changeImageWidth(id: string, newWidth: number | undefined) {
+    const newAst = mapTokens(this.ast, (token) => {
+      if (token.id === id && token.type === 'image') {
+        return {
+          ...token,
+          width: newWidth,
+          height: undefined,
         };
       }
       return token;
