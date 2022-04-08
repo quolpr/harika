@@ -206,7 +206,7 @@ const Resize = React.forwardRef((props, ref) => {
       data-not-editable
       ref={ref as any}
       {...props}
-      className="inline-block"
+      className="resize-container"
     />
   );
 });

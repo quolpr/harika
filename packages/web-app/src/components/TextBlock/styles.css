@@ -22,6 +22,8 @@
   &__dot {
     @apply flex items-start justify-end w-9;
 
+    flex-shrink: 0;
+
     &::before {
       @apply bg-gray-500 mr-3 border-2 border-gray-300;
       flex: none;
@@ -164,4 +166,9 @@
   padding: 2px 0;
 
   display: inline;
+}
+
+.resize-container {
+  display: inline-block;
+  max-width: calc(100% - 80px);
 }
