@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { Workbox } from 'workbox-window';
+import { createRoot } from 'react-dom/client';
 
 import { App } from './App';
 
@@ -45,7 +46,14 @@ const renderApp = async () => {
       <App />
     </React.StrictMode>
   );
-  ReactDOM.render(el, document.getElementById('root'));
+
+  const container = document.getElementById('root');
+  if (!container) {
+    throw new Error('Root not found');
+  }
+
+  const root = createRoot(container);
+  root.render(el);
 
   // @ts-ignore
   // ReactDOM.createRoot(document.getElementById('root')).render(
