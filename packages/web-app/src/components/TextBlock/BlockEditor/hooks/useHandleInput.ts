@@ -301,11 +301,13 @@ export const useHandleInput = (
       if (files.length > 0) {
         e.preventDefault();
 
-        const uploads = Array.from(files).map((f) => ({
-          id: uuidv4(),
-          file: f,
-          attachedToBlockId: block.$modelId,
-        }));
+        const uploads = Array.from(files)
+          .map((f) => ({
+            id: uuidv4(),
+            file: f,
+            attachedToBlockId: block.$modelId,
+          }))
+          .filter((u) => u.file.type.startsWith('image/'));
 
         const toInsert = uploads
           .map((u) => `![${u.file.name}](harika-file://${u.id})`)
