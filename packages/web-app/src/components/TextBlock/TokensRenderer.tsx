@@ -230,7 +230,6 @@ const ImageRender = ({
       const subscription = from(liveQuery(() => uploadService.getUpload(id)))
         .pipe(
           tap((upload) => {
-            console.log({ upload });
             if (upload) {
               setUrl(URL.createObjectURL(upload.file));
             }
@@ -270,9 +269,23 @@ const ImageRender = ({
     [width],
   );
 
-  const handleResizeStop = useCallback(() => {
-    blockView.originalBlock.contentModel.changeImageWidth(token.id, width);
-  }, [blockView.originalBlock.contentModel, token.id, width]);
+  const handleResizeStop = useCallback(
+    (
+      _event: MouseEvent | TouchEvent,
+      _direction: Direction,
+      elementRef: HTMLElement,
+      _delta: NumberSize,
+    ) => {
+      setWidth(elementRef.clientWidth);
+
+      blockView.originalBlock.contentModel.changeImageWidth(token.id, width);
+    },
+    [blockView.originalBlock.contentModel, token.id, width],
+  );
+
+  useEffect(() => {
+    setWidth(token.width);
+  }, [token.width]);
 
   return url ? (
     <Resizable
@@ -461,7 +474,7 @@ export const TokensRenderer = observer(
       <>
         {tokens.map((token, i) => (
           <TokenRenderer
-            key={`${token.offsetStart}${token.offsetEnd}`}
+            key={i}
             blockView={blockView}
             token={token}
             linkedNotes={linkedNotes as NoteBlock[]}

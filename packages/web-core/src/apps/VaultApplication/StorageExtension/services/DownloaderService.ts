@@ -1,9 +1,13 @@
 import axios from 'axios';
 import { injectable, inject } from 'inversify';
 import { merge } from 'lodash-es';
-import { interval, exhaustMap, takeUntil, Observable } from 'rxjs';
+import { interval, exhaustMap, takeUntil, Observable, filter, of } from 'rxjs';
+import { DbEventsListenService } from '../../../../extensions/SyncExtension/services/DbEventsListenerService';
 import { STOP_SIGNAL } from '../../../../framework/types';
-import { FileUploadsRepository } from '../repositories/FileUploadRepository';
+import {
+  FileUploadsRepository,
+  fileUploadsTable,
+} from '../repositories/FileUploadRepository';
 import { UploadsDB } from '../UploadsDb';
 
 @injectable()
@@ -12,12 +16,25 @@ export class DownloaderService {
     @inject(UploadsDB) private uploadsDb: UploadsDB,
     @inject(FileUploadsRepository)
     private fileUploadsRepo: FileUploadsRepository,
+    @inject(DbEventsListenService)
+    private dbEventsService: DbEventsListenService,
     @inject(STOP_SIGNAL)
     private stop$: Observable<unknown>,
   ) {}
 
   start() {
-    return merge(interval(1000))
+    return merge(
+      this.dbEventsService
+        .changesChannel$()
+        .pipe(
+          filter(
+            (chs) =>
+              chs.filter((ch) => ch.collectionName === fileUploadsTable)
+                .length > 0,
+          ),
+        ),
+      of(null),
+    )
       .pipe(
         exhaustMap(() => this.performDownloads()),
         takeUntil(this.stop$),

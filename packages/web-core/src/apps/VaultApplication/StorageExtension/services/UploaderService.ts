@@ -3,11 +3,14 @@ import { inject, injectable } from 'inversify';
 import { omit } from 'lodash-es';
 import {
   concatMap,
+  delay,
   exhaustMap,
+  filter,
   flatMap,
   interval,
   merge,
   Observable,
+  of,
   switchMap,
   takeUntil,
   tap,
@@ -41,9 +44,21 @@ export class UploaderService {
   ) {}
 
   start() {
-    return merge(interval(1000))
+    // TODO: add offline check
+    merge(
+      this.dbEventsService
+        .changesChannel$()
+        .pipe(
+          filter(
+            (chs) =>
+              chs.filter((ch) => ch.collectionName === fileUploadsTable)
+                .length > 0,
+          ),
+        ),
+      of(null).pipe(delay(500)),
+    )
       .pipe(
-        exhaustMap(() => this.performUploads()),
+        concatMap(() => this.performUploads()),
         takeUntil(this.stop$),
       )
       .subscribe();
