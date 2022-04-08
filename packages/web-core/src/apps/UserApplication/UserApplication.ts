@@ -10,7 +10,7 @@ export class UserApplication extends BaseApplication {
     super(applicationId);
   }
 
-  async initialize() {
+  async register() {
     this.container.bind(SYNC_URL).toConstantValue(this.syncUrl);
   }
 

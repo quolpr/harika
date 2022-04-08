@@ -52,6 +52,10 @@ export class VaultApplication extends BaseApplication {
     ];
   }
 
+  async register() {
+    this.container.bind(SYNC_URL).toConstantValue(this.syncUrl);
+  }
+
   async initialize() {
     const blocksScopeStore = this.container.get(BlocksScopeStore);
     const blocksStore = this.container.get(BlocksStore);
@@ -65,7 +69,6 @@ export class VaultApplication extends BaseApplication {
 
     this.container.bind(VaultAppRootStore).toConstantValue(rootStore);
     this.container.bind(ROOT_STORE).toConstantValue(rootStore);
-    this.container.bind(SYNC_URL).toConstantValue(this.syncUrl);
 
     registerRootStore(rootStore);
   }

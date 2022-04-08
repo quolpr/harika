@@ -1,4 +1,6 @@
+import { IQueryExecuter } from '../../../../extensions/DbExtension/DB';
 import { BaseSyncRepository } from '../../../../extensions/SyncExtension/BaseSyncRepository';
+import { raw, sqltag } from '../../../../lib/sql';
 
 export type IFileUploadDoc = {
   id: string;
@@ -20,6 +22,12 @@ export class FileUploadsRepository extends BaseSyncRepository<
   IFileUploadDoc,
   IFileUploadRow
 > {
+  async getNotUploadedUploads(e: IQueryExecuter = this.db) {
+    return await e.getRecords<IFileUploadDoc>(
+      sqltag`SELECT * FROM ${raw(fileUploadsTable)} WHERE isUploaded=0`,
+    );
+  }
+
   getTableName() {
     return fileUploadsTable;
   }

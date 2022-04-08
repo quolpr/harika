@@ -16,6 +16,7 @@
     "@harika-org/sql.js": "^1.6.6",
     "@harika/sync-common": "*",
     "absurd-sql": "quolpr/absurd-sql#withDist",
+    "axios": "^0.26.1",
     "backoff-rxjs": "^6.5.7",
     "broadcast-channel": "^4.10.0",
     "camelcase-keys": "^7.0.2",
