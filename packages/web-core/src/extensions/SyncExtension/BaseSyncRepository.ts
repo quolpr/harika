@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 
 import { inject, injectable } from 'inversify';
-import { isEqual, mapValues } from 'lodash-es';
+import { isEqual, mapValues, omit } from 'lodash-es';
 import Q from 'sql-bricks';
 
 import { WINDOW_ID } from '../../framework/types';
@@ -121,7 +121,7 @@ export abstract class BaseSyncRepository<
 
       await this.syncRepository.createCreateChanges(
         this.getTableName(),
-        attrsArray,
+        attrsArray.map((attr) => omit(attr, this.getIgnoreSyncFields()) as any),
         { ...ctx, windowId: this.windowId },
         t,
       );
@@ -152,7 +152,11 @@ export abstract class BaseSyncRepository<
               `Prev record for ${JSON.stringify(record)} not found!`,
             );
 
-          return { from: prevRecordsMap[record.id], to: record };
+          return {
+            from: prevRecordsMap[record.id],
+
+            to: record,
+          };
         })
         .filter((ch) => {
           return !isEqual(ch.to, ch.from);
@@ -166,7 +170,10 @@ export abstract class BaseSyncRepository<
 
       await this.syncRepository.createUpdateChanges(
         this.getTableName(),
-        changes,
+        changes.map(({ from, to }) => ({
+          from: omit(from, this.getIgnoreSyncFields()) as any,
+          to: omit(to, this.getIgnoreSyncFields()) as any,
+        })),
         { ...ctx, windowId: this.windowId },
         t,
       );
@@ -191,7 +198,7 @@ export abstract class BaseSyncRepository<
 
       await this.syncRepository.createDeleteChanges(
         this.getTableName(),
-        records,
+        records.map((r) => omit(r, this.getIgnoreSyncFields()) as any),
         {
           ...ctx,
           windowId: this.windowId,
@@ -244,4 +251,8 @@ export abstract class BaseSyncRepository<
   }
 
   abstract getTableName(): string;
+
+  getIgnoreSyncFields(): (keyof Doc)[] {
+    return [];
+  }
 }

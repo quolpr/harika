@@ -11,7 +11,7 @@ const up = async (db: IQueryExecuter) => {
       fileType varchar(100) NOT NULL,
       url TEXT,
       isUploaded INTEGER NOT NULL,
-      isDownloaded INTEGER NOT NULL DEFAULT 1,
+      isDownloaded INTEGER NOT NULL DEFAULT 0,
 
       createdAt INTEGER NOT NULL
     );

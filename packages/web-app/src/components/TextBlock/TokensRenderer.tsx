@@ -22,7 +22,8 @@ import React, { useCallback, useEffect, useMemo } from 'react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAsync, useUnmount } from 'react-use';
-import { distinctUntilChanged, switchMap } from 'rxjs';
+import { distinctUntilChanged, from, map, switchMap, tap } from 'rxjs';
+import { liveQuery } from 'dexie';
 
 import {
   useHandleNoteClickOrPress,
@@ -224,20 +225,23 @@ const ImageRender = ({
   const uploadService = useUploadService();
 
   useEffect(() => {
-    const cb = async () => {
-      if (token.url.startsWith('harika-file://')) {
-        const id = token.url.replace('harika-file://', '');
-        const upload = await uploadService.getUpload(id);
+    if (token.url.startsWith('harika-file://')) {
+      const id = token.url.replace('harika-file://', '');
+      const subscription = from(liveQuery(() => uploadService.getUpload(id)))
+        .pipe(
+          tap((upload) => {
+            console.log({ upload });
+            if (upload) {
+              setUrl(URL.createObjectURL(upload.file));
+            }
+          }),
+        )
+        .subscribe();
 
-        if (upload) {
-          setUrl(URL.createObjectURL(upload.file));
-        }
-      } else {
-        setUrl(token.url);
-      }
-    };
-
-    cb();
+      return () => subscription.unsubscribe();
+    } else {
+      setUrl(token.url);
+    }
   }, [token.url, uploadService]);
 
   useUnmount(() => {

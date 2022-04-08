@@ -41,7 +41,7 @@ export class UploaderService {
   ) {}
 
   start() {
-    return merge(interval(5000))
+    return merge(interval(1000))
       .pipe(
         exhaustMap(() => this.performUploads()),
         takeUntil(this.stop$),
@@ -61,7 +61,7 @@ export class UploaderService {
       try {
         const url = await this.performUpload(upload);
 
-        this.fileUploadsRepo.update(
+        await this.fileUploadsRepo.update(
           { ...omit(upload, 'file'), url, isUploaded: true },
           syncCtx,
         );

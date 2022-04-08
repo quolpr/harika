@@ -8,6 +8,7 @@ export type IFileUploadDoc = {
   fileName: string;
   fileType: string;
   isUploaded: boolean;
+  isDownloaded: boolean;
   url: string | undefined;
 
   createdAt: number;
@@ -24,11 +25,25 @@ export class FileUploadsRepository extends BaseSyncRepository<
 > {
   async getNotUploadedUploads(e: IQueryExecuter = this.db) {
     return await e.getRecords<IFileUploadDoc>(
-      sqltag`SELECT * FROM ${raw(fileUploadsTable)} WHERE isUploaded=0`,
+      sqltag`SELECT * FROM ${raw(
+        fileUploadsTable,
+      )} WHERE isUploaded=0 LIMIT 10`,
+    );
+  }
+
+  async getNotDownloadedUploads(e: IQueryExecuter = this.db) {
+    return await e.getRecords<IFileUploadDoc>(
+      sqltag`SELECT * FROM ${raw(
+        fileUploadsTable,
+      )} WHERE isDownloaded=0 LIMIT 10`,
     );
   }
 
   getTableName() {
     return fileUploadsTable;
+  }
+
+  getIgnoreSyncFields() {
+    return ['isDownloaded' as const];
   }
 }

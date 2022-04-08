@@ -20,6 +20,7 @@ import { DB, IQueryExecuter, Transaction } from '../../DbExtension/DB';
 import { getObjectDiff } from '../serverSynchronizer/utils';
 import { SyncStatusService } from '../services/SyncStatusService';
 import type { IInternalSyncCtx } from '../syncCtx';
+import { isEmpty } from 'lodash-es';
 
 export const clientChangesTable = 'clientChanges' as const;
 export const serverSnapshotsTable = 'serverSnapshots' as const;
@@ -209,19 +210,21 @@ export class SyncRepository {
       if (ctx.shouldRecordChange) {
         await t.insertRecords(
           clientChangesTable,
-          changeEvents.map((ev): IUpdateClientChangeRow => {
-            return {
-              id: ev.id,
-              type: DocChangeType.Update,
-              collectionName,
-              docId: ev.docId,
-              changeFrom: JSON.stringify(ev.from),
-              changeTo: JSON.stringify(ev.to),
-              doc: null,
-              scopeId: null,
-              timestamp: ev.timestamp,
-            };
-          }),
+          changeEvents
+            .filter((ch) => !(isEmpty(ch.from) && isEmpty(ch.to)))
+            .map((ev): IUpdateClientChangeRow => {
+              return {
+                id: ev.id,
+                type: DocChangeType.Update,
+                collectionName,
+                docId: ev.docId,
+                changeFrom: JSON.stringify(ev.from),
+                changeTo: JSON.stringify(ev.to),
+                doc: null,
+                scopeId: null,
+                timestamp: ev.timestamp,
+              };
+            }),
         );
       }
 
