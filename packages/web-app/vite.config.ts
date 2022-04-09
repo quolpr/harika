@@ -7,12 +7,17 @@ import Checker from 'vite-plugin-checker';
 const { glob } = require('glob');
 const reactSvgPlugin = require('vite-plugin-react-svg');
 
-
 // https://vitejs.dev/config/
 export default defineConfig({
   build: {
     sourcemap: true,
     minify: 'terser',
+  },
+  server: {
+    headers: {
+      'Cross-Origin-Embedder-Policy': 'require-corp',
+      'Cross-Origin-Opener-Policy': 'same-origin',
+    },
   },
   plugins: [
     reactRefresh(),

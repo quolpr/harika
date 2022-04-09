@@ -41,11 +41,7 @@ const renderApp = async () => {
     whyDidYouRender.default(React as any);
   }
 
-  const el = (
-    <React.StrictMode>
-      <App />
-    </React.StrictMode>
-  );
+  const el = <App />;
 
   const container = document.getElementById('root');
   if (!container) {

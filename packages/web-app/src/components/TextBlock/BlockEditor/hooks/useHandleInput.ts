@@ -24,6 +24,46 @@ import { getTokensAtCursor } from '../../utils';
 import { ICommand } from '../EditorCommandsDropdown/EditorCommandsDropdown';
 import type { SearchedNote } from '../NoteTitleAutocomplete/NoteTitleAutocomplete';
 
+const getImageSize = (blob: Blob) => {
+  return new Promise<{ width: number; height: number } | undefined>(
+    (resolve) => {
+      let url: string | undefined;
+
+      const revokeUrl = () => {
+        if (url) {
+          URL.revokeObjectURL(url);
+        }
+      };
+
+      try {
+        let isResolved = false;
+
+        const img = document.createElement('img');
+        const url = URL.createObjectURL(blob);
+        img.src = url;
+
+        img.onload = () => {
+          resolve({ width: img.width, height: img.height });
+          revokeUrl();
+          isResolved = true;
+        };
+
+        setTimeout(() => {
+          if (!isResolved) {
+            resolve(undefined);
+            revokeUrl();
+          }
+        }, 1000);
+      } catch (e) {
+        console.error('Failed to get image size');
+
+        revokeUrl();
+        resolve(undefined);
+      }
+    },
+  );
+};
+
 const symmetricCommands: { [P in ICommand['id']]?: string } = {
   blockRef: '(())',
   noteRef: '[[]]',
@@ -311,22 +351,29 @@ export const useHandleInput = (
           attachedToBlockId: block.$modelId,
         }));
 
-        const toInsert = uploads
-          .map((u) => {
-            if (u.file.type.startsWith('image/')) {
-              return `![${u.file.name}](harika-file://${u.id})`;
-            } else {
-              const attachment = JSON.stringify({
-                url: `harika-file://${u.id}`,
-                name: u.file.name,
-              });
+        const el = e.currentTarget;
+        const toInsert = (
+          await Promise.all(
+            uploads.map(async (u) => {
+              if (u.file.type.startsWith('image/')) {
+                const size = await getImageSize(u.file);
 
-              return `{{attachment: |${attachment}|}}`;
-            }
-          })
-          .join(' ');
+                return `![${u.file.name}](harika-file://${u.id} ${
+                  size ? `=${size.width}x` : ''
+                })`;
+              } else {
+                const attachment = JSON.stringify({
+                  url: `harika-file://${u.id}`,
+                  name: u.file.name,
+                });
 
-        insertText(e.currentTarget, toInsert);
+                return `{{attachment: |${attachment}|}}`;
+              }
+            }),
+          )
+        ).join(' ');
+
+        insertText(el, toInsert);
 
         await uploadService.createUploads(uploads);
       } else {
