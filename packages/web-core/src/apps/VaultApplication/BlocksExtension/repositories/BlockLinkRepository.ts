@@ -1,5 +1,6 @@
 import { IDocChange } from '@harika/sync-common';
 import { inject } from 'inversify';
+import { chunk } from 'lodash-es';
 
 import { DB, IQueryExecuter } from '../../../../extensions/DbExtension/DB';
 import { BaseSyncRepository } from '../../../../extensions/SyncExtension/BaseSyncRepository';
@@ -43,13 +44,20 @@ export class BlockLinksRepository extends BaseSyncRepository<
     rootBlockIds: string[],
     e: IQueryExecuter = this.db,
   ) {
-    return await e.getRecords<BlockLinkRow>(sqltag`
-      SELECT * FROM ${raw(blockLinksTable)} WHERE blockId IN (
-        WITH RECURSIVE
-          ${this.allBlocksQueries.getDescendantBlockIds(rootBlockIds)}
-        SELECT blockId FROM childrenBlockIds
-      )
-    `);
+    const rows: BlockLinkRow[] = [];
+
+    for (const chunkedRootBlockIds of chunk(rootBlockIds, 400)) {
+      const chunkedRows = await e.getRecords<BlockLinkRow>(sqltag`
+        SELECT * FROM ${raw(blockLinksTable)} WHERE blockId IN (
+          WITH RECURSIVE
+            ${this.allBlocksQueries.getDescendantBlockIds(chunkedRootBlockIds)}
+          SELECT blockId FROM childrenBlockIds
+        )`);
+
+      rows.push(...chunkedRows);
+    }
+
+    return rows;
   }
 
   async getBacklinksOfDescendants(
