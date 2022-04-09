@@ -1,4 +1,5 @@
 import { inject, injectable } from 'inversify';
+import { omit } from 'lodash-es';
 
 import { ISyncCtx } from '../../../../extensions/SyncExtension/syncCtx';
 import { generateId } from '../../../../lib/generateId';
@@ -129,9 +130,17 @@ export class ImportExportService {
     await this.noteBlocksRepository.transaction(async (t) => {
       for (const { tableName, rows } of dump.data) {
         if (tableName === noteBlocksTable) {
-          await this.noteBlocksRepository.bulkCreate(rows, ctx, t);
+          await this.noteBlocksRepository.bulkCreate(
+            rows.map((r) => omit(r, 'linkedBlockIds') as any),
+            ctx,
+            t,
+          );
         } else if (tableName === textBlocksTable) {
-          await this.textBlocksRepository.bulkCreate(rows, ctx, t);
+          await this.textBlocksRepository.bulkCreate(
+            rows.map((r) => omit(r, 'linkedBlockIds') as any),
+            ctx,
+            t,
+          );
         } else if (tableName === blocksScopesTable) {
           await this.blocksScopesRepository.bulkCreate(rows, ctx, t);
         } else if (tableName === blockLinksTable) {

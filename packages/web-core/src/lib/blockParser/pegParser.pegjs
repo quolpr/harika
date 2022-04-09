@@ -45,7 +45,7 @@ Data
   }
   
 Token
-  = EOLOneLineTokens /  SpaceBeforeTag / Bold / Italic / Highlight / CodeBlock / InlineCode /  NoteBlockRef / TextBlockRef
+  = EOLOneLineTokens / Template /   SpaceBeforeTag  / Bold / Italic / Highlight / CodeBlock / InlineCode /  NoteBlockRef / TextBlockRef / Image 
  
 NoteBlockRef
   = '[[' content:($[^'\]\]']+) ']]' { 
@@ -136,12 +136,39 @@ InlineCode
     return {id: options.generateId(), type: 'inlineCode', content: content, offsetStart: loc.start.offset, offsetEnd: loc.end.offset}
   }
 
+
+
 CodeBlock
   = '```' content:(!'```' .)* ending:(('```' EOL)/'```') { 
     const loc = location();
 
     return {id: options.generateId(), type: 'codeBlock', content: content.map(([, v]) => v).join(''), offsetStart: loc.start.offset, offsetEnd: loc.end.offset, withTrailingEOL: ending.length === 2}
   }
+
+Image
+  = '![' title:$[^\]]* '](' url:$[^\) ]* size:Size? ')' { 
+    const loc = location();
+
+    return {id: options.generateId(), type: 'image', title, url, width: size && size.width || undefined, height: size && size.height || undefined, offsetStart: loc.start.offset, offsetEnd: loc.end.offset} 
+  }
+
+Size = ' =' width:[0-9]* 'x' height:[0-9]* {
+    return {width: parseInt(width.join(''), 10) || undefined, height: parseInt(height.join(''), 10) || undefined}
+  }
+
+Template = '{{' _ templateType:(!(':') [a-zA-Z])* ":" _ "|" content:(JsonString / (!('|' _ '}}') .))* _ '|' _'}}' {
+    const loc = location();
+  
+    return {type: 'template', templateType: templateType.map(([, v]) => v).join(''), content: content.map((data) => typeof data === "string" ? data : data[1]).join(''), offsetStart: loc.start.offset, offsetEnd: loc.end.offset};
+  }
+
+JsonString
+  = "\"" string:([^"\\] / Escape)* "\"" { return "\"" + string.join("") + "\""  }
+Escape
+  = "\\" character:["\\/bfnrtu] { return "\\" + character; }
+
+_ "whitespace"
+  = [ \t\n\r]*
 
 EOL "end of line"
   = "\n"

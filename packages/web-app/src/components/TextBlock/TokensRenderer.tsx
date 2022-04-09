@@ -1,24 +1,30 @@
 import {
+  AttachmentTemplateToken,
   BlocksScope,
   BlockView,
   getBlockView,
+  ImageToken,
   NoteBlock,
   NoteRefToken,
   TagToken,
   TextBlock,
+  TextBlockRef,
   toggleTodo,
   Token,
 } from '@harika/web-core';
-import { TextBlockRef } from '@harika/web-core/src/lib/blockParser/types';
+import { liveQuery } from 'dexie';
 import { isEqual } from 'lodash-es';
 import { comparer, computed } from 'mobx';
 import { arraySet } from 'mobx-keystone';
 import { observer } from 'mobx-react-lite';
 import { useObservable, useObservableState } from 'observable-hooks';
-import React, { useCallback, useMemo } from 'react';
+import { NumberSize, Resizable } from 're-resizable';
+import { Direction } from 're-resizable/lib/resizer';
+import React, { useCallback, useEffect, useMemo } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useAsync } from 'react-use';
-import { distinctUntilChanged, switchMap } from 'rxjs';
+import { useAsync, useUnmount } from 'react-use';
+import { distinctUntilChanged, from, switchMap, tap } from 'rxjs';
 
 import {
   useHandleNoteClickOrPress,
@@ -28,7 +34,9 @@ import {
   useAllBlocksService,
   useBlockLinksStore,
   useUpdateLinkService,
+  useUploadService,
 } from '../../hooks/vaultAppHooks';
+import DownloadIcon from '../../icons/download.svgr.svg?component';
 
 const NoteRefRenderer = observer(
   ({
@@ -159,7 +167,7 @@ const BlockRefRenderer = observer(({ token }: { token: TextBlockRef }) => {
     >
       {collapsableBlock && (
         <TokensRenderer
-          collapsableBlock={collapsableBlock}
+          blockView={collapsableBlock}
           tokens={collapsableBlock.originalBlock.contentModel.ast}
         />
       )}
@@ -195,13 +203,158 @@ const TagRenderer = observer(
   },
 );
 
+const Resize = React.forwardRef((props, ref) => {
+  return (
+    <div
+      data-not-editable
+      ref={ref as any}
+      {...props}
+      className="resize-container"
+    />
+  );
+});
+
+const useAttachmentUrl = (originalUrl: string) => {
+  const [url, setUrl] = useState<string | undefined>(undefined);
+
+  const uploadService = useUploadService();
+
+  useEffect(() => {
+    if (originalUrl.startsWith('harika-file://')) {
+      const id = originalUrl.replace('harika-file://', '');
+      const subscription = from(liveQuery(() => uploadService.getUpload(id)))
+        .pipe(
+          tap((upload) => {
+            if (upload) {
+              setUrl(URL.createObjectURL(upload.file));
+            }
+          }),
+        )
+        .subscribe();
+
+      return () => subscription.unsubscribe();
+    } else {
+      setUrl(originalUrl);
+    }
+  }, [originalUrl, uploadService]);
+
+  useUnmount(() => {
+    if (url?.startsWith('blob:')) {
+      URL.revokeObjectURL(url);
+    }
+  });
+
+  return url;
+};
+
+const AttachmentRenderer = ({
+  attachment,
+}: {
+  attachment: AttachmentTemplateToken;
+}) => {
+  const url = useAttachmentUrl(attachment.content.url);
+
+  const handleClick = useCallback(() => {
+    if (!url) return;
+
+    const a = document.createElement('a');
+    document.body.appendChild(a);
+    a.href = url;
+    a.download = attachment.content.name;
+    a.click();
+    a.remove();
+  }, [url, attachment]);
+
+  return (
+    <button
+      data-not-editable
+      className="download-attachment-btn"
+      onClick={handleClick}
+    >
+      <DownloadIcon />
+      <span className="download-attachment-btn__name">
+        {attachment.content.name}
+      </span>
+    </button>
+  );
+};
+
+const ImageRender = ({
+  token,
+  blockView,
+}: {
+  token: ImageToken;
+  blockView: BlockView<TextBlock>;
+}) => {
+  const url = useAttachmentUrl(token.url);
+  const [width, setWidth] = useState<number | undefined>(token.width);
+
+  const handleResize = useCallback(
+    (
+      _event: MouseEvent | TouchEvent,
+      _direction: Direction,
+      elementRef: HTMLElement,
+      _delta: NumberSize,
+    ) => {
+      setWidth(elementRef.clientWidth);
+    },
+    [],
+  );
+
+  const memoSize = useMemo(
+    () => ({
+      width: width || '100%',
+      height: '100%',
+    }),
+    [width],
+  );
+
+  const handleResizeStop = useCallback(
+    (
+      _event: MouseEvent | TouchEvent,
+      _direction: Direction,
+      elementRef: HTMLElement,
+      _delta: NumberSize,
+    ) => {
+      setWidth(elementRef.clientWidth);
+
+      blockView.originalBlock.contentModel.changeImageWidth(token.id, width);
+    },
+    [blockView.originalBlock.contentModel, token.id, width],
+  );
+
+  useEffect(() => {
+    setWidth(token.width);
+  }, [token.width]);
+
+  return url ? (
+    <Resizable
+      size={memoSize}
+      onResize={handleResize}
+      onResizeStop={handleResizeStop}
+      as={Resize}
+    >
+      <img
+        alt={token.title}
+        src={url}
+        data-offset-start={token.offsetStart}
+        data-offset-end={token.offsetEnd}
+        data-not-editable
+        width="100%"
+        height="100%"
+        style={{ display: 'inline-block' }}
+      />
+    </Resizable>
+  ) : null;
+};
+
 const TokenRenderer = observer(
   ({
-    collapsableBlock,
+    blockView,
     token,
     linkedNotes,
   }: {
-    collapsableBlock: BlockView<TextBlock>;
+    blockView: BlockView<TextBlock>;
     token: Token;
     linkedNotes: NoteBlock[];
   }) => {
@@ -211,7 +364,7 @@ const TokenRenderer = observer(
       case 'noteBlockRef':
         return (
           <NoteRefRenderer
-            collapsableBlock={collapsableBlock}
+            collapsableBlock={blockView}
             token={token}
             linkedNotes={linkedNotes}
           />
@@ -219,28 +372,19 @@ const TokenRenderer = observer(
       case 'bold':
         return (
           <b>
-            <TokensRenderer
-              collapsableBlock={collapsableBlock}
-              tokens={token.content}
-            />
+            <TokensRenderer blockView={blockView} tokens={token.content} />
           </b>
         );
       case 'italic':
         return (
           <i>
-            <TokensRenderer
-              collapsableBlock={collapsableBlock}
-              tokens={token.content}
-            />
+            <TokensRenderer blockView={blockView} tokens={token.content} />
           </i>
         );
       case 'highlight':
         return (
           <mark>
-            <TokensRenderer
-              collapsableBlock={collapsableBlock}
-              tokens={token.content}
-            />
+            <TokensRenderer blockView={blockView} tokens={token.content} />
           </mark>
         );
       case 'head':
@@ -248,28 +392,19 @@ const TokenRenderer = observer(
           if (token.depth === 3) {
             return (
               <h3 className="text-xl">
-                <TokensRenderer
-                  collapsableBlock={collapsableBlock}
-                  tokens={token.content}
-                />
+                <TokensRenderer blockView={blockView} tokens={token.content} />
               </h3>
             );
           } else if (token.depth === 2) {
             return (
               <h2 className="text-2xl">
-                <TokensRenderer
-                  collapsableBlock={collapsableBlock}
-                  tokens={token.content}
-                />
+                <TokensRenderer blockView={blockView} tokens={token.content} />
               </h2>
             );
           } else {
             return (
               <h1 className="text-3xl">
-                <TokensRenderer
-                  collapsableBlock={collapsableBlock}
-                  tokens={token.content}
-                />
+                <TokensRenderer blockView={blockView} tokens={token.content} />
               </h1>
             );
           }
@@ -331,14 +466,20 @@ const TokenRenderer = observer(
       case 'quote':
         return (
           <blockquote className="quote">
-            <TokensRenderer
-              collapsableBlock={collapsableBlock}
-              tokens={token.content}
-            />
+            <TokensRenderer blockView={blockView} tokens={token.content} />
           </blockquote>
         );
       case 'textBlockRef':
         return <BlockRefRenderer token={token} />;
+      case 'image':
+        return <ImageRender blockView={blockView} token={token} />;
+      case 'template':
+        return token.templateType === 'attachment' ? (
+          <AttachmentRenderer attachment={token} />
+        ) : (
+          <span />
+        );
+
       default:
         return <span></span>;
     }
@@ -347,10 +488,10 @@ const TokenRenderer = observer(
 
 export const TokensRenderer = observer(
   ({
-    collapsableBlock,
+    blockView,
     tokens,
   }: {
-    collapsableBlock: BlockView<TextBlock>;
+    blockView: BlockView<TextBlock>;
     tokens: Token[];
   }) => {
     const linksStore = useBlockLinksStore();
@@ -359,7 +500,7 @@ export const TokensRenderer = observer(
     const linkedNoteIds = computed(
       () =>
         linksStore
-          .getLinksOfBlock(collapsableBlock.$modelId)
+          .getLinksOfBlock(blockView.$modelId)
           .map(({ linkedToBlockRef }) => linkedToBlockRef.id),
       { equals: comparer.shallow },
     ).get();
@@ -379,8 +520,8 @@ export const TokensRenderer = observer(
       <>
         {tokens.map((token, i) => (
           <TokenRenderer
-            key={`${token.offsetStart}${token.offsetEnd}`}
-            collapsableBlock={collapsableBlock}
+            key={i}
+            blockView={blockView}
             token={token}
             linkedNotes={linkedNotes as NoteBlock[]}
           />

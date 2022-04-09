@@ -10,7 +10,7 @@ export const filterAst = (
       result.push(t);
     }
 
-    if (Array.isArray(t.content)) {
+    if ('content' in t && Array.isArray(t.content)) {
       filterAst(t.content, filter, result);
     }
   });
@@ -25,7 +25,7 @@ export const findFirst = (
   for (const token of tokens) {
     if (finder(token)) return token;
 
-    if (Array.isArray(token.content)) {
+    if ('content' in token && Array.isArray(token.content)) {
       const nestedFindResult = findFirst(token.content, finder);
 
       if (nestedFindResult) return nestedFindResult;
@@ -48,7 +48,7 @@ export const mapTokens = (
       return mapTokens(mapped, mapper);
     }
 
-    if (Array.isArray(mapped.content)) {
+    if ('content' in mapped && Array.isArray(mapped.content)) {
       mapped.content = mapTokens(mapped.content, mapper);
 
       return mapped;

@@ -7,7 +7,7 @@ module.exports = {
     browser: true,
     es2021: true,
   },
-  extends: ['react-app', 'prettier', 'plugin:rxjs/recommended'],
+  extends: ['prettier', 'plugin:rxjs/recommended'],
   parser: '@typescript-eslint/parser',
   parserOptions: {
     ecmaFeatures: {
@@ -18,7 +18,7 @@ module.exports = {
     tsconfigRootDir: rootDir,
     project: './tsconfig.json',
   },
-  plugins: ['react', 'jsx-a11y', 'rxjs', 'simple-import-sort'],
+  plugins: ['jsx-a11y', 'rxjs', 'simple-import-sort'],
   rules: {
     'simple-import-sort/imports': 'warn',
     'simple-import-sort/exports': 'warn',

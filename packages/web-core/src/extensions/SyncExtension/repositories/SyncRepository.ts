@@ -11,6 +11,7 @@ import {
   IUpdateChange,
 } from '@harika/sync-common';
 import { inject, injectable } from 'inversify';
+import { isEmpty } from 'lodash-es';
 import Q from 'sql-bricks';
 import { Overwrite } from 'utility-types';
 import { v4 as uuidv4 } from 'uuid';
@@ -209,19 +210,21 @@ export class SyncRepository {
       if (ctx.shouldRecordChange) {
         await t.insertRecords(
           clientChangesTable,
-          changeEvents.map((ev): IUpdateClientChangeRow => {
-            return {
-              id: ev.id,
-              type: DocChangeType.Update,
-              collectionName,
-              docId: ev.docId,
-              changeFrom: JSON.stringify(ev.from),
-              changeTo: JSON.stringify(ev.to),
-              doc: null,
-              scopeId: null,
-              timestamp: ev.timestamp,
-            };
-          }),
+          changeEvents
+            .filter((ch) => !(isEmpty(ch.from) && isEmpty(ch.to)))
+            .map((ev): IUpdateClientChangeRow => {
+              return {
+                id: ev.id,
+                type: DocChangeType.Update,
+                collectionName,
+                docId: ev.docId,
+                changeFrom: JSON.stringify(ev.from),
+                changeTo: JSON.stringify(ev.to),
+                doc: null,
+                scopeId: null,
+                timestamp: ev.timestamp,
+              };
+            }),
         );
       }
 

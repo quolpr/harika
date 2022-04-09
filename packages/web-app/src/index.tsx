@@ -1,5 +1,5 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import { Workbox } from 'workbox-window';
 
 import { App } from './App';
@@ -40,12 +40,15 @@ const renderApp = async () => {
     whyDidYouRender.default(React as any);
   }
 
-  const el = (
-    <React.StrictMode>
-      <App />
-    </React.StrictMode>
-  );
-  ReactDOM.render(el, document.getElementById('root'));
+  const el = <App />;
+
+  const container = document.getElementById('root');
+  if (!container) {
+    throw new Error('Root not found');
+  }
+
+  const root = createRoot(container);
+  root.render(el);
 
   // @ts-ignore
   // ReactDOM.createRoot(document.getElementById('root')).render(

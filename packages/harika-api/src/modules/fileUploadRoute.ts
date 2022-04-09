@@ -1,18 +1,43 @@
 import { FastifyPluginCallback } from 'fastify';
 
+import { getSessionFromRequestStrict } from '../helpers/getSessionFromRequest';
 import { minioClient } from '../minioClient';
 
 export const uploadHandler: FastifyPluginCallback = (server, options, next) => {
   server.post('/upload', async (req, res) => {
-    const parts = req.files();
+    const userId = (await getSessionFromRequestStrict(req)).identity.id;
+    const parts = req.parts();
 
+    let fileId: string | undefined = undefined;
+
+    console.log({ parts });
     for await (const part of parts) {
-      await minioClient.putObject('uploads', part.filename, part.file, {
-        'Content-Type': part.mimetype,
-      });
+      if (part.file) {
+        if (!fileId) {
+          res.status(500).send({
+            error: 'fileId not found. It should be present as a first field.',
+          });
+          return;
+        }
+
+        const filePath = `${userId}/${fileId}/${part.filename}`;
+        await minioClient.putObject('uploads', filePath, part.file, {
+          'Content-Type': part.mimetype,
+        });
+
+        res
+          .status(201)
+          .send({ url: `http://localhost:9000/uploads/${filePath}` });
+
+        return;
+      } else {
+        if (part.fieldname === 'fileId' && 'value' in part) {
+          fileId = (part as any).value;
+        }
+      }
     }
 
-    res.status(201).send();
+    res.status(500).send();
   });
 
   next();

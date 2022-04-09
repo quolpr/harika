@@ -2,7 +2,7 @@ import { BlocksScope, BlockView, getBlocksSelection } from '@harika/web-core';
 import { isEqual } from 'lodash-es';
 import { observer } from 'mobx-react-lite';
 import { useEffect } from 'react';
-import type { OperatorFunction } from 'rxjs';
+import { OperatorFunction } from 'rxjs';
 import { EMPTY, fromEvent, merge } from 'rxjs';
 import {
   distinctUntilChanged,
@@ -28,21 +28,6 @@ export const BlocksHandlers = observer(
       const mouseUp$ = fromEvent<MouseEvent>(document, 'mouseup');
       const mouseDown$ = fromEvent<MouseEvent>(document, 'mousedown');
 
-      const idOnMouseMove$ = mouseMove$.pipe(
-        map((e) => {
-          const el2 = (e.target as HTMLElement).closest<HTMLDivElement>(
-            `[data-type="text-block"][data-scope-id="${scope.$modelId}"]`,
-          );
-
-          return el2?.dataset?.id;
-        }),
-        filter((id) => Boolean(id)) as OperatorFunction<
-          string | undefined,
-          string
-        >,
-        distinctUntilChanged(),
-      );
-
       const mouseMoveHandler = mouseDown$
         .pipe(
           map((e) => {
@@ -50,9 +35,13 @@ export const BlocksHandlers = observer(
               `[data-type="text-block"][data-scope-id="${scope.$modelId}"]`,
             );
 
-            return { fromBlockId: el?.dataset?.id, shiftKey: e.shiftKey };
+            return {
+              fromBlockId: el?.dataset?.id,
+              shiftKey: e.shiftKey,
+              mouseDownEvent: e,
+            };
           }),
-          switchMap(({ fromBlockId, shiftKey }) => {
+          switchMap(({ fromBlockId, shiftKey, mouseDownEvent }) => {
             if (!fromBlockId) {
               if (blockSelection.selectionInterval !== undefined) {
                 blockSelection.resetSelection();
@@ -60,6 +49,28 @@ export const BlocksHandlers = observer(
 
               return EMPTY;
             }
+
+            const idOnMouseMove$ = mouseMove$.pipe(
+              map((e) => {
+                const el2 = (e.target as HTMLElement).closest<HTMLDivElement>(
+                  `[data-type="text-block"][data-scope-id="${scope.$modelId}"]`,
+                );
+
+                // To prevent case when user just made click and mouse dragged a little bit
+                if (
+                  Math.abs(e.clientX - mouseDownEvent.clientX) < 20 &&
+                  Math.abs(e.clientY - mouseDownEvent.clientY) < 20
+                )
+                  return;
+
+                return el2?.dataset?.id;
+              }),
+              filter((id) => Boolean(id)) as OperatorFunction<
+                string | undefined,
+                string
+              >,
+              distinctUntilChanged(),
+            );
 
             const currentFocus = blockFocusState.currentFocus;
 
@@ -106,7 +117,6 @@ export const BlocksHandlers = observer(
 
               return merge(
                 idOnMouseMove$.pipe(
-                  // If just click happened, so selection will happen only if mouse will be moved to the different block
                   filter(
                     (toId) => !(fromBlockId === toId && !wasAnyIdSelected),
                   ),

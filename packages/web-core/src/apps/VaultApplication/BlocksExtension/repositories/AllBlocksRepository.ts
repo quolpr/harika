@@ -1,5 +1,5 @@
 import { inject, injectable, multiInject } from 'inversify';
-import { groupBy, mapKeys, pickBy } from 'lodash-es';
+import { chunk, groupBy, mapKeys, pickBy } from 'lodash-es';
 
 import { DB, IQueryExecuter } from '../../../../extensions/DbExtension/DB';
 import { SyncConfig } from '../../../../extensions/SyncExtension/serverSynchronizer/SyncConfig';
@@ -93,14 +93,22 @@ export class AllBlocksRepository {
       e,
     );
 
-    return this.joinedRowsToDocs(
-      await e.getRecords(sqltag`
-      WITH RECURSIVE
-        ${this.allBlocksQueries.getDescendantBlockIds(ids)}
-      SELECT ${select} FROM childrenBlockIds
-        ${join(joinTables, ' ')}
-    `),
-    );
+    const docs: (BaseBlockDoc & Record<string, unknown>)[] = [];
+
+    for (const chunkedIds of chunk(ids, 400)) {
+      const records = this.joinedRowsToDocs(
+        await e.getRecords(sqltag`
+        WITH RECURSIVE
+          ${this.allBlocksQueries.getDescendantBlockIds(chunkedIds)}
+        SELECT ${select} FROM childrenBlockIds
+          ${join(joinTables, ' ')}
+      `),
+      );
+
+      docs.push(...records);
+    }
+
+    return docs;
   }
 
   async bulkUpdate(

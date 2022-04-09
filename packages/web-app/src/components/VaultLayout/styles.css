@@ -71,7 +71,8 @@
     bottom: var(--vault-footer-height);
 
     -webkit-overflow-scrolling: touch;
-    overflow-y: auto;
+    overflow-y: scroll;
+    overflow-x: hidden;
     scroll-behavior: smooth;
 
     overscroll-behavior: contain;

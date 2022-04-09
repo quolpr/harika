@@ -78,7 +78,7 @@ interface CodeBlockToken extends BaseToken {
   withTrailingEOL: boolean;
 }
 
-interface StringToken extends BaseToken {
+export interface StringToken extends BaseToken {
   id: string;
   type: 'str';
   content: string;
@@ -90,6 +90,32 @@ interface LinkToken extends BaseToken {
   content: string;
   href: string;
   linkType: string;
+}
+
+export interface ImageToken extends BaseToken {
+  id: string;
+  type: 'image';
+  url: string;
+  title: string;
+  width?: number;
+  height?: number;
+}
+
+export interface TemplateToken extends BaseToken {
+  id: string;
+  type: 'template';
+  templateType: string;
+  content: any;
+}
+
+export interface AttachmentTemplateToken extends BaseToken {
+  id: string;
+  type: 'template';
+  templateType: 'attachment';
+  content: {
+    url: string;
+    name: string;
+  };
 }
 
 export type Token =
@@ -104,4 +130,6 @@ export type Token =
   | CodeBlockToken
   | StringToken
   | LinkToken
-  | QuoteToken;
+  | QuoteToken
+  | ImageToken
+  | AttachmentTemplateToken;
