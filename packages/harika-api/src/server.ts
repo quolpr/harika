@@ -37,7 +37,7 @@ async function createServer() {
     base: 'http://localhost:4433/',
   });
   server.register(cors, {
-    origin: 'http://localhost:3000',
+    origin: ['http://localhost:3000', 'http://harika-dev:3000'],
     credentials: true,
   });
 

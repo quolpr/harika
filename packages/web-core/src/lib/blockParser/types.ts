@@ -118,6 +118,16 @@ export interface AttachmentTemplateToken extends BaseToken {
   };
 }
 
+export interface EmbedVideoTemplateToken extends BaseToken {
+  id: string;
+  type: 'template';
+  templateType: 'embed-video';
+  content: {
+    url: string;
+    provider: string;
+  };
+}
+
 export type Token =
   | NoteBlockRefToken
   | TextBlockRef
@@ -132,4 +142,5 @@ export type Token =
   | LinkToken
   | QuoteToken
   | ImageToken
+  | EmbedVideoTemplateToken
   | AttachmentTemplateToken;

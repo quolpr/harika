@@ -8,7 +8,10 @@ import {
 } from '@harika/web-core';
 import { Pos, position } from 'caret-pos';
 import dayjs from 'dayjs';
+import { find } from 'linkifyjs';
+import React from 'react';
 import { RefObject, useCallback, useContext, useState } from 'react';
+import { toast } from 'react-toastify';
 import { v4 as uuidv4 } from 'uuid';
 
 import { ShiftPressedContext } from '../../../../contexts/ShiftPressedContext';
@@ -381,27 +384,62 @@ export const useHandleInput = (
 
         const parsedToTree = parseStringToTree(data);
 
-        if (parsedToTree.length === 0) return;
+        if (parsedToTree.length > 0) {
+          e.preventDefault();
 
-        e.preventDefault();
-
-        const injectedBlocks = addTokensToNoteBlock(
-          blocksStore,
-          scope,
-          block,
-          parsedToTree,
-        );
-
-        const ids = injectedBlocks.map(({ $modelId }) => $modelId);
-        updateLinkService.updateBlockLinks(ids);
-
-        if (injectedBlocks[0]) {
-          blockFocusState.changeFocus(
-            scope.$modelId,
-            injectedBlocks[0].$modelId,
-            0,
-            true,
+          const injectedBlocks = addTokensToNoteBlock(
+            blocksStore,
+            scope,
+            block,
+            parsedToTree,
           );
+
+          const ids = injectedBlocks.map(({ $modelId }) => $modelId);
+          updateLinkService.updateBlockLinks(ids);
+
+          if (injectedBlocks[0]) {
+            blockFocusState.changeFocus(
+              scope.$modelId,
+              injectedBlocks[0].$modelId,
+              0,
+              true,
+            );
+          }
+        } else {
+          const links = find(data);
+
+          links.forEach((link) => {
+            console.log(link);
+            if (
+              link.isLink &&
+              (link.href.includes('youtube.com') ||
+                link.href.includes('youtu.be'))
+            ) {
+              toast(({ closeToast }) => (
+                <div>
+                  Hey! You pasted youtube link
+                  <br />
+                  {link.href}
+                  <br />
+                  Convert it to embed video?
+                  <br />
+                  <button
+                    onClick={() => {
+                      block.originalBlock.contentModel.convertLinkToEmbed(
+                        link.href,
+                        'youtube',
+                      );
+
+                      closeToast?.();
+                    }}
+                  >
+                    Yes
+                  </button>
+                  <button onClick={closeToast}>Nope</button>
+                </div>
+              ));
+            }
+          });
         }
       }
     },

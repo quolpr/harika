@@ -157,6 +157,30 @@ export class TextBlockContent {
     this.dumpValue();
   }
 
+  @action
+  convertLinkToEmbed(url: string, provider: 'youtube') {
+    const newAst = mapTokens(this.ast, (token) => {
+      if (token.type === 'link' && token.href === url) {
+        return {
+          id: token.id,
+          type: 'template',
+          templateType: 'embed-video',
+          offsetStart: 0,
+          offsetEnd: 0,
+          content: {
+            url,
+            provider,
+          },
+        };
+      }
+
+      return token;
+    });
+
+    this.update(astToString(newAst));
+    this.dumpValue();
+  }
+
   @computed
   get hasTodo() {
     return Boolean(

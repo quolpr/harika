@@ -156,7 +156,7 @@ Size = ' =' width:[0-9]* 'x' height:[0-9]* {
     return {width: parseInt(width.join(''), 10) || undefined, height: parseInt(height.join(''), 10) || undefined}
   }
 
-Template = '{{' _ templateType:(!(':') [a-zA-Z])* ":" _ "|" content:(JsonString / (!('|' _ '}}') .))* _ '|' _'}}' {
+Template = '{{' _ templateType:(!(':') [a-zA-Z-])* ":" _ "|" content:(JsonString / (!('|' _ '}}') .))* _ '|' _'}}' {
     const loc = location();
   
     return {type: 'template', templateType: templateType.map(([, v]) => v).join(''), content: content.map((data) => typeof data === "string" ? data : data[1]).join(''), offsetStart: loc.start.offset, offsetEnd: loc.end.offset};
