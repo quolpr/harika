@@ -194,6 +194,10 @@ export const useHandleInput = (
         e.preventDefault();
 
         insertText(e.currentTarget, '[]', 1);
+      } else if (e.key === '{') {
+        e.preventDefault();
+
+        insertText(e.currentTarget, '{}', 1);
       } else if (e.key === '(') {
         e.preventDefault();
 
