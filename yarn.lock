@@ -12186,12 +12186,10 @@ sql-bricks@1.0.0-beta.2:
   dependencies:
     underscore "1.4.x"
 
-sql-bricks@^2.0.5:
-  version "2.0.5"
-  resolved "https://registry.yarnpkg.com/sql-bricks/-/sql-bricks-2.0.5.tgz#96db7c9044cb07811f61218737a9761344156962"
-  integrity sha512-Q9qpODBZPMaPb+bjlmFYKMNk/6zpXSv1VNjJmGd9LvoqXwxd8TmE39s79wzrgAfw2lzohr4eNEpWRhHT5UYAfQ==
-  dependencies:
-    underscore "1.4.x"
+sql-bricks@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/sql-bricks/-/sql-bricks-3.0.0.tgz#4628bfc80579454529957c1ce9b941a42de95b4e"
+  integrity sha512-P9fXYWdPFOcU2uQr7hwzNa0m6qOjMSV6wmo3DPk1Nzxh9rZWyjgbFaRji41EMV1uHps4SCgwa+Cdv0tUJ+mySw==
 
 sql-template-tag@^5.0.1:
   version "5.0.1"
