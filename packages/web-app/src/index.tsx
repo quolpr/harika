@@ -1,7 +1,6 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
-import { Workbox } from 'workbox-window';
 import { createRoot } from 'react-dom/client';
+import { Workbox } from 'workbox-window';
 
 import { App } from './App';
 

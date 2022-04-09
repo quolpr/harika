@@ -23,7 +23,7 @@ module.exports = {
     tsconfigRootDir: rootDir,
     project: './tsconfig.json',
   },
-  plugins: ['@typescript-eslint', 'react', 'jsx-a11y', 'rxjs',  'simple-import-sort'],
+  plugins: ['jsx-a11y', 'rxjs', 'simple-import-sort'],
   rules: {
     '@typescript-eslint/no-floating-promises': ['error'],
     'simple-import-sort/imports': 'warn',

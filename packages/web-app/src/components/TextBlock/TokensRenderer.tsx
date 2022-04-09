@@ -1,4 +1,5 @@
 import {
+  AttachmentTemplateToken,
   BlocksScope,
   BlockView,
   getBlockView,
@@ -7,12 +8,11 @@ import {
   NoteRefToken,
   TagToken,
   TextBlock,
+  TextBlockRef,
   toggleTodo,
   Token,
-  AttachmentTemplateToken,
-  TextBlockRef,
 } from '@harika/web-core';
-import DownloadIcon from '../../icons/download.svgr.svg?component';
+import { liveQuery } from 'dexie';
 import { isEqual } from 'lodash-es';
 import { comparer, computed } from 'mobx';
 import { arraySet } from 'mobx-keystone';
@@ -24,8 +24,7 @@ import React, { useCallback, useEffect, useMemo } from 'react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAsync, useUnmount } from 'react-use';
-import { distinctUntilChanged, from, map, switchMap, tap } from 'rxjs';
-import { liveQuery } from 'dexie';
+import { distinctUntilChanged, from, switchMap, tap } from 'rxjs';
 
 import {
   useHandleNoteClickOrPress,
@@ -37,7 +36,7 @@ import {
   useUpdateLinkService,
   useUploadService,
 } from '../../hooks/vaultAppHooks';
-import download from 'downloadjs';
+import DownloadIcon from '../../icons/download.svgr.svg?component';
 
 const NoteRefRenderer = observer(
   ({

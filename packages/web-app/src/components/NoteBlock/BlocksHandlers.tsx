@@ -2,13 +2,10 @@ import { BlocksScope, BlockView, getBlocksSelection } from '@harika/web-core';
 import { isEqual } from 'lodash-es';
 import { observer } from 'mobx-react-lite';
 import { useEffect } from 'react';
-import { of, OperatorFunction } from 'rxjs';
+import { OperatorFunction } from 'rxjs';
 import { EMPTY, fromEvent, merge } from 'rxjs';
 import {
-  concatMap,
-  delay,
   distinctUntilChanged,
-  exhaustMap,
   filter,
   finalize,
   map,

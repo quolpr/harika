@@ -1,12 +1,12 @@
 import { injectable } from 'inversify';
 
 import { BaseSyncExtension } from '../../../extensions/SyncExtension/BaseSyncExtension';
+import { createAttachmentsTable } from './migrations/createAttachmentsTable';
+import { AttachmentsRepository } from './repositories/AttachmentsRepository';
 import { DownloaderService } from './services/DownloaderService';
 import { UploaderService } from './services/UploaderService';
 import { UploadFileService } from './services/UploadFileService';
 import { UploadsDB } from './UploadsDb';
-import { AttachmentsRepository } from './repositories/AttachmentsRepository';
-import { createAttachmentsTable } from './migrations/createAttachmentsTable';
 
 @injectable()
 export class StorageAppExtension extends BaseSyncExtension {

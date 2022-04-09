@@ -2,6 +2,7 @@ import axios from 'axios';
 import { inject, injectable } from 'inversify';
 import { merge } from 'lodash-es';
 import { exhaustMap, filter, Observable, of, takeUntil } from 'rxjs';
+
 import { DbEventsListenService } from '../../../../extensions/SyncExtension/services/DbEventsListenerService';
 import { STOP_SIGNAL } from '../../../../framework/types';
 import {
@@ -61,7 +62,7 @@ export class DownloaderService {
           file: response.data,
         });
 
-        this.fileUploadsRepo.update(
+        await this.fileUploadsRepo.update(
           { ...upload, isDownloaded: true },
           {
             shouldRecordChange: true,

@@ -12,7 +12,6 @@ module.exports = {
     'plugin:jsx-a11y/recommended',
     'prettier',
     'plugin:rxjs/recommended',
-    'plugin:react-hooks/recommended',
   ],
   parser: '@typescript-eslint/parser',
   parserOptions: {
@@ -24,7 +23,7 @@ module.exports = {
     tsconfigRootDir: rootDir,
     project: './tsconfig.json',
   },
-  plugins: ['react', 'jsx-a11y', 'rxjs', 'simple-import-sort'],
+  plugins: ['jsx-a11y', 'rxjs', 'simple-import-sort'],
   rules: {
     'simple-import-sort/imports': 'warn',
     'simple-import-sort/exports': 'warn',

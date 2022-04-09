@@ -11,6 +11,7 @@ import {
   IUpdateChange,
 } from '@harika/sync-common';
 import { inject, injectable } from 'inversify';
+import { isEmpty } from 'lodash-es';
 import Q from 'sql-bricks';
 import { Overwrite } from 'utility-types';
 import { v4 as uuidv4 } from 'uuid';
@@ -20,7 +21,6 @@ import { DB, IQueryExecuter, Transaction } from '../../DbExtension/DB';
 import { getObjectDiff } from '../serverSynchronizer/utils';
 import { SyncStatusService } from '../services/SyncStatusService';
 import type { IInternalSyncCtx } from '../syncCtx';
-import { isEmpty } from 'lodash-es';
 
 export const clientChangesTable = 'clientChanges' as const;
 export const serverSnapshotsTable = 'serverSnapshots' as const;
