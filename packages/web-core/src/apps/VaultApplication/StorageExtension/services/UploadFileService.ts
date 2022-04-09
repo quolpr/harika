@@ -1,14 +1,14 @@
 import { inject, injectable } from 'inversify';
 
-import { FileUploadsRepository } from '../repositories/FileUploadRepository';
+import { AttachmentsRepository } from '../repositories/AttachmentsRepository';
 import { UploadsDB } from '../UploadsDb';
 
 @injectable()
 export class UploadFileService {
   constructor(
     @inject(UploadsDB) private uploadsDb: UploadsDB,
-    @inject(FileUploadsRepository)
-    private fileUploadsRepo: FileUploadsRepository,
+    @inject(AttachmentsRepository)
+    private fileUploadsRepo: AttachmentsRepository,
   ) {}
 
   async createUploads(

@@ -4,16 +4,11 @@ import { omit } from 'lodash-es';
 import {
   concatMap,
   delay,
-  exhaustMap,
   filter,
-  flatMap,
-  interval,
   merge,
   Observable,
   of,
-  switchMap,
   takeUntil,
-  tap,
 } from 'rxjs';
 
 import { DbEventsListenService } from '../../../../extensions/SyncExtension/services/DbEventsListenerService';
@@ -21,20 +16,20 @@ import { ISyncCtx } from '../../../../extensions/SyncExtension/syncCtx';
 import { SYNC_URL } from '../../../../extensions/SyncExtension/types';
 import { STOP_SIGNAL } from '../../../../framework/types';
 import {
-  FileUploadsRepository,
-  fileUploadsTable,
-  IFileUploadDoc,
-} from '../repositories/FileUploadRepository';
+  AttachmentsRepository,
+  attachmentsTable,
+  IAttachmentDoc,
+} from '../repositories/AttachmentsRepository';
 import { UploadsDB } from '../UploadsDb';
 
-type IUploadWithFile = IFileUploadDoc & { file: Blob };
+type IUploadWithFile = IAttachmentDoc & { file: Blob };
 
 @injectable()
 export class UploaderService {
   constructor(
     @inject(UploadsDB) private uploadsDb: UploadsDB,
-    @inject(FileUploadsRepository)
-    private fileUploadsRepo: FileUploadsRepository,
+    @inject(AttachmentsRepository)
+    private fileUploadsRepo: AttachmentsRepository,
     @inject(DbEventsListenService)
     private dbEventsService: DbEventsListenService,
     @inject(SYNC_URL)
@@ -51,7 +46,7 @@ export class UploaderService {
         .pipe(
           filter(
             (chs) =>
-              chs.filter((ch) => ch.collectionName === fileUploadsTable)
+              chs.filter((ch) => ch.collectionName === attachmentsTable)
                 .length > 0,
           ),
         ),

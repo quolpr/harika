@@ -2,7 +2,7 @@ import { IQueryExecuter } from '../../../../extensions/DbExtension/DB';
 import { BaseSyncRepository } from '../../../../extensions/SyncExtension/BaseSyncRepository';
 import { raw, sqltag } from '../../../../lib/sql';
 
-export type IFileUploadDoc = {
+export type IAttachmentDoc = {
   id: string;
   attachedToBlockId: string;
   fileName: string;
@@ -13,34 +13,32 @@ export type IFileUploadDoc = {
 
   createdAt: number;
 };
-export type IFileUploadRow = IFileUploadDoc;
+export type IAttachmentRow = IAttachmentDoc;
 
-export type IFileUpload = IFileUploadDoc;
+export const attachmentsTable = 'attachmentsTable' as const;
 
-export const fileUploadsTable = 'fileUploads' as const;
-
-export class FileUploadsRepository extends BaseSyncRepository<
-  IFileUploadDoc,
-  IFileUploadRow
+export class AttachmentsRepository extends BaseSyncRepository<
+  IAttachmentDoc,
+  IAttachmentRow
 > {
   async getNotUploadedUploads(e: IQueryExecuter = this.db) {
-    return await e.getRecords<IFileUploadDoc>(
+    return await e.getRecords<IAttachmentDoc>(
       sqltag`SELECT * FROM ${raw(
-        fileUploadsTable,
+        attachmentsTable,
       )} WHERE isUploaded=0 LIMIT 10`,
     );
   }
 
   async getNotDownloadedUploads(e: IQueryExecuter = this.db) {
-    return await e.getRecords<IFileUploadDoc>(
+    return await e.getRecords<IAttachmentDoc>(
       sqltag`SELECT * FROM ${raw(
-        fileUploadsTable,
+        attachmentsTable,
       )} WHERE isDownloaded=0 LIMIT 10`,
     );
   }
 
   getTableName() {
-    return fileUploadsTable;
+    return attachmentsTable;
   }
 
   getIgnoreSyncFields() {

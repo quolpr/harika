@@ -1,21 +1,21 @@
 import axios from 'axios';
-import { injectable, inject } from 'inversify';
+import { inject, injectable } from 'inversify';
 import { merge } from 'lodash-es';
-import { interval, exhaustMap, takeUntil, Observable, filter, of } from 'rxjs';
+import { exhaustMap, filter, Observable, of, takeUntil } from 'rxjs';
 import { DbEventsListenService } from '../../../../extensions/SyncExtension/services/DbEventsListenerService';
 import { STOP_SIGNAL } from '../../../../framework/types';
 import {
-  FileUploadsRepository,
-  fileUploadsTable,
-} from '../repositories/FileUploadRepository';
+  AttachmentsRepository,
+  attachmentsTable,
+} from '../repositories/AttachmentsRepository';
 import { UploadsDB } from '../UploadsDb';
 
 @injectable()
 export class DownloaderService {
   constructor(
     @inject(UploadsDB) private uploadsDb: UploadsDB,
-    @inject(FileUploadsRepository)
-    private fileUploadsRepo: FileUploadsRepository,
+    @inject(AttachmentsRepository)
+    private fileUploadsRepo: AttachmentsRepository,
     @inject(DbEventsListenService)
     private dbEventsService: DbEventsListenService,
     @inject(STOP_SIGNAL)
@@ -29,7 +29,7 @@ export class DownloaderService {
         .pipe(
           filter(
             (chs) =>
-              chs.filter((ch) => ch.collectionName === fileUploadsTable)
+              chs.filter((ch) => ch.collectionName === attachmentsTable)
                 .length > 0,
           ),
         ),

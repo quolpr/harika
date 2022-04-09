@@ -1,17 +1,17 @@
 import { injectable } from 'inversify';
 
 import { BaseSyncExtension } from '../../../extensions/SyncExtension/BaseSyncExtension';
-import { createFileUploadsTable } from './migrations/createFileUploadsTable';
-import { FileUploadsRepository } from './repositories/FileUploadRepository';
 import { DownloaderService } from './services/DownloaderService';
 import { UploaderService } from './services/UploaderService';
 import { UploadFileService } from './services/UploadFileService';
 import { UploadsDB } from './UploadsDb';
+import { AttachmentsRepository } from './repositories/AttachmentsRepository';
+import { createAttachmentsTable } from './migrations/createAttachmentsTable';
 
 @injectable()
 export class StorageAppExtension extends BaseSyncExtension {
   repos() {
-    return [{ repo: FileUploadsRepository, withSync: true }];
+    return [{ repo: AttachmentsRepository, withSync: true }];
   }
 
   async register() {
@@ -31,6 +31,6 @@ export class StorageAppExtension extends BaseSyncExtension {
   }
 
   migrations() {
-    return [createFileUploadsTable];
+    return [createAttachmentsTable];
   }
 }
