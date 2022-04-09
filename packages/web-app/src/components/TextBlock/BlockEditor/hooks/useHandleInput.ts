@@ -305,16 +305,25 @@ export const useHandleInput = (
       if (files.length > 0) {
         e.preventDefault();
 
-        const uploads = Array.from(files)
-          .map((f) => ({
-            id: uuidv4(),
-            file: f,
-            attachedToBlockId: block.$modelId,
-          }))
-          .filter((u) => u.file.type.startsWith('image/'));
+        const uploads = Array.from(files).map((f) => ({
+          id: uuidv4(),
+          file: f,
+          attachedToBlockId: block.$modelId,
+        }));
 
         const toInsert = uploads
-          .map((u) => `![${u.file.name}](harika-file://${u.id})`)
+          .map((u) => {
+            if (u.file.type.startsWith('image/')) {
+              return `![${u.file.name}](harika-file://${u.id})`;
+            } else {
+              const attachment = JSON.stringify({
+                url: `harika-file://${u.id}`,
+                name: u.file.name,
+              });
+
+              return `{{attachment: |${attachment}|}}`;
+            }
+          })
           .join(' ');
 
         insertText(e.currentTarget, toInsert);

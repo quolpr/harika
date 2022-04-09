@@ -64,6 +64,9 @@ const astToString = (ast: Token[]): string => {
               t.height || t.width ? ` =${t.width || ''}x${t.height || ''}` : ''
             })`;
 
+          case 'template':
+            return `{{${t.templateType}: |${JSON.stringify(t.content)}|}}`;
+
           default:
             assertUnreachable(t);
         }

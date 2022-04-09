@@ -9,8 +9,10 @@ import {
   TextBlock,
   toggleTodo,
   Token,
+  AttachmentTemplateToken,
+  TextBlockRef,
 } from '@harika/web-core';
-import { TextBlockRef } from '@harika/web-core/src/lib/blockParser/types';
+import DownloadIcon from '../../icons/download.svgr.svg?component';
 import { isEqual } from 'lodash-es';
 import { comparer, computed } from 'mobx';
 import { arraySet } from 'mobx-keystone';
@@ -35,6 +37,7 @@ import {
   useUpdateLinkService,
   useUploadService,
 } from '../../hooks/vaultAppHooks';
+import download from 'downloadjs';
 
 const NoteRefRenderer = observer(
   ({
@@ -212,21 +215,14 @@ const Resize = React.forwardRef((props, ref) => {
   );
 });
 
-const ImageRender = ({
-  token,
-  blockView,
-}: {
-  token: ImageToken;
-  blockView: BlockView<TextBlock>;
-}) => {
+const useAttachmentUrl = (originalUrl: string) => {
   const [url, setUrl] = useState<string | undefined>(undefined);
-  const [width, setWidth] = useState<number | undefined>(token.width);
 
   const uploadService = useUploadService();
 
   useEffect(() => {
-    if (token.url.startsWith('harika-file://')) {
-      const id = token.url.replace('harika-file://', '');
+    if (originalUrl.startsWith('harika-file://')) {
+      const id = originalUrl.replace('harika-file://', '');
       const subscription = from(liveQuery(() => uploadService.getUpload(id)))
         .pipe(
           tap((upload) => {
@@ -239,15 +235,60 @@ const ImageRender = ({
 
       return () => subscription.unsubscribe();
     } else {
-      setUrl(token.url);
+      setUrl(originalUrl);
     }
-  }, [token.url, uploadService]);
+  }, [originalUrl, uploadService]);
 
   useUnmount(() => {
     if (url?.startsWith('blob:')) {
       URL.revokeObjectURL(url);
     }
   });
+
+  return url;
+};
+
+const AttachmentRenderer = ({
+  attachment,
+}: {
+  attachment: AttachmentTemplateToken;
+}) => {
+  const url = useAttachmentUrl(attachment.content.url);
+
+  const handleClick = useCallback(() => {
+    if (!url) return;
+
+    const a = document.createElement('a');
+    document.body.appendChild(a);
+    a.href = url;
+    a.download = attachment.content.name;
+    a.click();
+    a.remove();
+  }, [url, attachment]);
+
+  return (
+    <button
+      data-not-editable
+      className="download-attachment-btn"
+      onClick={handleClick}
+    >
+      <DownloadIcon />
+      <span className="download-attachment-btn__name">
+        {attachment.content.name}
+      </span>
+    </button>
+  );
+};
+
+const ImageRender = ({
+  token,
+  blockView,
+}: {
+  token: ImageToken;
+  blockView: BlockView<TextBlock>;
+}) => {
+  const url = useAttachmentUrl(token.url);
+  const [width, setWidth] = useState<number | undefined>(token.width);
 
   const handleResize = useCallback(
     (
@@ -433,6 +474,12 @@ const TokenRenderer = observer(
         return <BlockRefRenderer token={token} />;
       case 'image':
         return <ImageRender blockView={blockView} token={token} />;
+      case 'template':
+        return token.templateType === 'attachment' ? (
+          <AttachmentRenderer attachment={token} />
+        ) : (
+          <span />
+        );
 
       default:
         return <span></span>;

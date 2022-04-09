@@ -4,7 +4,7 @@ import { ValuesType } from 'utility-types';
 import { dictionary } from '../generateId';
 import { mapTokens } from './astHelpers';
 import { parse as pegParse } from './pegParser';
-import type { Token } from './types';
+import type { StringToken, Token } from './types';
 
 const newIdGenerator = () => {
   let id = 0;
@@ -97,6 +97,20 @@ export const parse = (data: string, idGenerator = newIdGenerator): Token[] => {
       const [, id] = matchResult || [];
 
       return { ...t, blockId: id };
+    } else if (t.type === 'template' && t.templateType === 'attachment') {
+      try {
+        return { ...t, content: JSON.parse(t.content as any as string) };
+      } catch (e) {
+        const strToken: StringToken = {
+          id: t.id,
+          type: 'str',
+          content: data.slice(t.offsetStart, t.offsetEnd),
+          offsetStart: t.offsetStart,
+          offsetEnd: t.offsetEnd,
+        };
+
+        return strToken;
+      }
     }
 
     return t;

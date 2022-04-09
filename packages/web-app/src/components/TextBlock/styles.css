@@ -172,3 +172,19 @@
   display: inline-block;
   max-width: calc(100% - 80px);
 }
+
+.download-attachment-btn {
+  @apply bg-pink-800 rounded-sm shadow px-2 py-1;
+  @apply text-gray-100 focus:ring-2;
+
+  &__name {
+    @apply text-orange-300;
+  }
+
+  svg {
+    @apply mr-2;
+    @apply text-orange-100;
+
+    display: inline-block;
+  }
+}
