@@ -285,28 +285,18 @@ const YoutubeEmbedRenderer = ({
 }: {
   embedVideo: EmbedVideoTemplateToken;
 }) => {
-  const [youtubeId, setYoutubeId] = useState<string | undefined>();
-
-  useEffect(() => {
-    setYoutubeId(
-      embedVideo.content.url?.match(
-        /(?:youtu\.be\/|youtube\.com(?:\/embed\/|\/v\/|\/watch\?v=|\/user\/\S+|\/ytscreeningroom\?v=))([\w-]{10,12})\b/,
-      )?.[1] || undefined,
-    );
-  }, [embedVideo.content.url]);
-
-  return youtubeId ? (
-    <iframe
-      width="560"
-      height="315"
-      src={`https://www.youtube.com/embed/${youtubeId}`}
-      title="YouTube video player"
-      frameBorder="0"
-      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-      allowFullScreen
-    ></iframe>
-  ) : (
-    <span className="token-error">Failed to parse youtube id</span>
+  return (
+    <Resizable size={{ width: '100%', height: '500px' }} as={Resize}>
+      <iframe
+        width="100%"
+        height="100%"
+        src={`https://www.youtube.com/embed/${embedVideo.content.videoId}`}
+        title="YouTube video player"
+        frameBorder="0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+      ></iframe>
+    </Resizable>
   );
 };
 

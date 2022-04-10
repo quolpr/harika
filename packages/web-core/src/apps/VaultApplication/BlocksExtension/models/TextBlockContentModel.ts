@@ -158,7 +158,10 @@ export class TextBlockContent {
   }
 
   @action
-  convertLinkToEmbed(url: string, provider: 'youtube') {
+  convertLinkToEmbed(
+    url: string,
+    embedVideo: { videoId: string; provider: string },
+  ) {
     const newAst = mapTokens(this.ast, (token) => {
       if (token.type === 'link' && token.href === url) {
         return {
@@ -167,10 +170,7 @@ export class TextBlockContent {
           templateType: 'embed-video',
           offsetStart: 0,
           offsetEnd: 0,
-          content: {
-            url,
-            provider,
-          },
+          content: embedVideo,
         };
       }
 

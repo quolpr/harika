@@ -84,7 +84,7 @@ export interface StringToken extends BaseToken {
   content: string;
 }
 
-interface LinkToken extends BaseToken {
+export interface LinkToken extends BaseToken {
   id: string;
   type: 'link';
   content: string;
@@ -123,7 +123,7 @@ export interface EmbedVideoTemplateToken extends BaseToken {
   type: 'template';
   templateType: 'embed-video';
   content: {
-    url: string;
+    videoId: string;
     provider: string;
   };
 }

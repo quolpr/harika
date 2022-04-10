@@ -161,3 +161,30 @@ input[type='search']::-webkit-search-results-decoration {
 .inline-block {
   display: inline-block;
 }
+
+.notification {
+  &__title {
+    @apply text-green-400 font-semibold mb-2 text-base;
+  }
+
+  &__body {
+    @apply mb-3 text-base;
+  }
+
+  &__btns {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  &__btn {
+    @apply text-sm text-gray-800 font-semibold py-0.5 px-3 border rounded-sm shadow;
+  }
+
+  &__btn--yes {
+    @apply bg-green-400 hover:bg-green-300 border-green-300;
+  }
+
+  &__btn--no {
+    @apply bg-red-400 hover:bg-red-300 border-red-400;
+  }
+}
