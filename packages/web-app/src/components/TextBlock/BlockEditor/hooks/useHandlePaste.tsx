@@ -207,17 +207,14 @@ const useHandleTextPaste = (
           const videoId = getYoutubeVideoId(token.href);
 
           if (videoId) {
-            toast(
-              ({ closeToast }) => (
-                <EmbedVideoNotificationBody
-                  closeToast={closeToast}
-                  contentModel={block.originalBlock.contentModel}
-                  token={token}
-                  embedVideo={{ provider: 'youtube', videoId: videoId }}
-                />
-              ),
-              { autoClose: false },
-            );
+            toast(({ closeToast }) => (
+              <EmbedVideoNotificationBody
+                closeToast={closeToast}
+                contentModel={block.originalBlock.contentModel}
+                token={token}
+                embedVideo={{ provider: 'youtube', videoId: videoId }}
+              />
+            ));
           }
         });
       }

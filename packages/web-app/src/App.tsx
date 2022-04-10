@@ -124,7 +124,7 @@ export const App = () => {
 
   return (
     <>
-      <ToastContainer closeOnClick={false} theme="dark" />
+      <ToastContainer theme="dark" />
       <ShiftPressedContext.Provider value={isShiftPressedRef}>
         <ShiftPressedTracker shiftRef={isShiftPressedRef} />
 
