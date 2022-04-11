@@ -13,6 +13,8 @@ import {
 } from 'rxjs/operators';
 import io, { Socket } from 'socket.io-client';
 
+import { ISyncConfig } from '../../types';
+
 export class ServerConnector {
   isConnected$: Observable<boolean>;
   isConnectedAndReadyToUse$: Observable<boolean>;
@@ -21,7 +23,7 @@ export class ServerConnector {
   constructor(
     private dbName: string,
     private clientId: string,
-    private syncUrl: string,
+    private syncConfig: ISyncConfig,
     isLeader$: Observable<boolean>,
     isServerConnectionAllowed$: Observable<boolean>,
     stop$: Observable<unknown>,
@@ -71,7 +73,10 @@ export class ServerConnector {
 
   private initSocketIO() {
     return new Observable<Socket | undefined>((obs) => {
-      const socket = io(`${this.syncUrl}/sync-db`, { withCredentials: true });
+      const socket = io(`${this.syncConfig.base}/sync-db`, {
+        withCredentials: true,
+        path: this.syncConfig.path,
+      });
 
       socket.on('connect', () => {
         obs.next(socket);

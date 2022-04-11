@@ -16,7 +16,7 @@ import { SyncRepository } from '../repositories/SyncRepository';
 import { DbEventsListenService } from '../services/DbEventsListenerService';
 import { SyncStatusService } from '../services/SyncStatusService';
 import { SyncStateService } from '../SyncState';
-import { SYNC_CONNECTION_ALLOWED, SYNC_URL } from '../types';
+import { ISyncConfig, SYNC_CONFIG, SYNC_CONNECTION_ALLOWED } from '../types';
 import { CommandsExecuter } from './CommandsExecuter';
 import { ServerConnector } from './connection/ServerConnector';
 import { ServerSynchronizer } from './ServerSynchronizer';
@@ -31,8 +31,8 @@ export class ServerSynchronizerFactory {
     private dbEventsListenService: DbEventsListenService,
     @inject(SYNC_CONNECTION_ALLOWED)
     private syncConnectionAllowed$: Subject<boolean>,
-    @inject(SYNC_URL)
-    private syncUrl: string,
+    @inject(SYNC_CONFIG)
+    private syncConfig: ISyncConfig,
     @inject(STOP_SIGNAL)
     private stop$: Observable<unknown>,
     @inject(SyncStateService)
@@ -52,7 +52,7 @@ export class ServerSynchronizerFactory {
     const serverConnector = new ServerConnector(
       this.dbName,
       syncStatus.clientId,
-      this.syncUrl,
+      this.syncConfig,
       isLeader$,
       this.syncConnectionAllowed$,
       this.stop$,

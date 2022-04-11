@@ -2677,6 +2677,13 @@
   dependencies:
     axios "^0.21.4"
 
+"@ory/client@^0.0.1-alpha.159":
+  version "0.0.1-alpha.159"
+  resolved "https://registry.yarnpkg.com/@ory/client/-/client-0.0.1-alpha.159.tgz#42e90e6bb87912747b09efcdf752468f53e8336b"
+  integrity sha512-GGQCOxNsgnclU9wVtdqe9S2ZSlXvV3HHJmr5hZeVD1l0dWrzylUulHOye9yuhLhKxz8zLXmGdHI51+3ZHGzUgg==
+  dependencies:
+    axios "^0.21.4"
+
 "@ory/kratos-client@^0.9.0-alpha.3":
   version "0.9.0-alpha.3"
   resolved "https://registry.yarnpkg.com/@ory/kratos-client/-/kratos-client-0.9.0-alpha.3.tgz#2464139501f25169c5311bc0d5a0b15d0131be01"

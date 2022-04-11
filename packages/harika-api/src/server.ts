@@ -34,7 +34,7 @@ async function createServer() {
   server.register(healthHandler);
   server.register(uploadHandler);
   server.register(fastifyReplyFrom, {
-    base: 'http://localhost:4433/',
+    base: process.env.KRATOS_URL,
   });
   server.register(cors, {
     origin: ['http://localhost:3000', 'http://harika-dev:3000'],
