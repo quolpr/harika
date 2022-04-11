@@ -6,9 +6,10 @@ import { DB_NAME } from '../../extensions/DbExtension/types';
 import { SyncAppExtension } from '../../extensions/SyncExtension/SyncAppExtension';
 import { SyncStateService } from '../../extensions/SyncExtension/SyncState';
 import {
+  ISyncConfig,
   ROOT_STORE,
+  SYNC_CONFIG,
   SYNC_CONNECTION_ALLOWED,
-  SYNC_URL,
 } from '../../extensions/SyncExtension/types';
 import { BaseApplication } from '../../framework/BaseApplication';
 import { VaultAppRootStore } from './AppRootStore';
@@ -33,7 +34,7 @@ import { UploadFileService } from './StorageExtension/services/UploadFileService
 import { StorageAppExtension } from './StorageExtension/StorageAppExtension';
 
 export class VaultApplication extends BaseApplication {
-  constructor(applicationId: string, private syncUrl: string) {
+  constructor(applicationId: string, private syncConfig: ISyncConfig) {
     super(applicationId);
   }
 
@@ -53,7 +54,7 @@ export class VaultApplication extends BaseApplication {
   }
 
   async register() {
-    this.container.bind(SYNC_URL).toConstantValue(this.syncUrl);
+    this.container.bind(SYNC_CONFIG).toConstantValue(this.syncConfig);
   }
 
   async initialize() {

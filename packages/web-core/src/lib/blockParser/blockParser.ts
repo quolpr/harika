@@ -97,9 +97,15 @@ export const parse = (data: string, idGenerator = newIdGenerator): Token[] => {
       const [, id] = matchResult || [];
 
       return { ...t, blockId: id };
-    } else if (t.type === 'template' && t.templateType === 'attachment') {
+    } else if (t.type === 'template') {
       try {
-        return { ...t, content: JSON.parse(t.content as any as string) };
+        const parseResult = JSON.parse(t.content as any as string);
+
+        if (typeof parseResult === 'string') {
+          throw new Error('Parsed result is string');
+        }
+
+        return { ...t, content: parseResult };
       } catch (e) {
         const strToken: StringToken = {
           id: t.id,

@@ -2,6 +2,7 @@ import {
   AttachmentTemplateToken,
   BlocksScope,
   BlockView,
+  EmbedVideoTemplateToken,
   getBlockView,
   ImageToken,
   NoteBlock,
@@ -279,6 +280,26 @@ const AttachmentRenderer = ({
   );
 };
 
+const YoutubeEmbedRenderer = ({
+  embedVideo,
+}: {
+  embedVideo: EmbedVideoTemplateToken;
+}) => {
+  return (
+    <Resizable size={{ width: '100%', height: '500px' }} as={Resize}>
+      <iframe
+        width="100%"
+        height="100%"
+        src={`https://www.youtube.com/embed/${embedVideo.content.videoId}`}
+        title="YouTube video player"
+        frameBorder="0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+      ></iframe>
+    </Resizable>
+  );
+};
+
 const ImageRender = ({
   token,
   blockView,
@@ -476,6 +497,8 @@ const TokenRenderer = observer(
       case 'template':
         return token.templateType === 'attachment' ? (
           <AttachmentRenderer attachment={token} />
+        ) : token.templateType === 'embed-video' ? (
+          <YoutubeEmbedRenderer embedVideo={token} />
         ) : (
           <span />
         );

@@ -34,10 +34,11 @@ export const useLoadUserAppCallback = () => {
 
     ctx.setState({ app: undefined, isLoading: true });
 
-    const app = new UserApplication(
-      userId.replace(/-/g, ''),
-      import.meta.env.VITE_PUBLIC_WS_URL as string,
-    );
+    const app = new UserApplication(userId.replace(/-/g, ''), {
+      base: import.meta.env.VITE_PUBLIC_WS_BASE as string,
+      path: import.meta.env.VITE_PUBLIC_WS_PATH as string,
+      apiUrl: import.meta.env.VITE_PUBLIC_API_URL as string,
+    });
     await app.start();
 
     ctx.setState({ app: app, isLoading: false });

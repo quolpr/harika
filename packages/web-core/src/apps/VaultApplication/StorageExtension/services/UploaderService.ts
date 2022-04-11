@@ -13,7 +13,10 @@ import {
 
 import { DbEventsListenService } from '../../../../extensions/SyncExtension/services/DbEventsListenerService';
 import { ISyncCtx } from '../../../../extensions/SyncExtension/syncCtx';
-import { SYNC_URL } from '../../../../extensions/SyncExtension/types';
+import {
+  ISyncConfig,
+  SYNC_CONFIG,
+} from '../../../../extensions/SyncExtension/types';
 import { STOP_SIGNAL } from '../../../../framework/types';
 import {
   AttachmentsRepository,
@@ -32,8 +35,8 @@ export class UploaderService {
     private fileUploadsRepo: AttachmentsRepository,
     @inject(DbEventsListenService)
     private dbEventsService: DbEventsListenService,
-    @inject(SYNC_URL)
-    private syncUrl: string,
+    @inject(SYNC_CONFIG)
+    private syncConfig: ISyncConfig,
     @inject(STOP_SIGNAL)
     private stop$: Observable<unknown>,
   ) {}
@@ -96,12 +99,16 @@ export class UploaderService {
     formData.append('file', upload.file);
 
     return (
-      await axios.post<{ url: string }>(`${this.syncUrl}/upload`, formData, {
-        withCredentials: true,
-        headers: {
-          'Content-Type': 'multipart/form-data',
+      await axios.post<{ url: string }>(
+        `${this.syncConfig.apiUrl}/upload`,
+        formData,
+        {
+          withCredentials: true,
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
         },
-      })
+      )
     ).data.url;
   }
 }

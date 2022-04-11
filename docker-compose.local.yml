@@ -1,0 +1,111 @@
+version: '3.8'
+services:
+  s3:
+    image: minio/minio
+    volumes:
+      - s3-data2:/data
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: gTrAG8kUcN9RBW
+    command: server /data --console-address ":9001"
+    ports:
+      - "9001:9001"
+    networks:
+      harika-network:
+        aliases:
+          - s3
+  db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: harika-user
+      POSTGRES_PASSWORD: 'oZr3eweYo9vZrZ'
+      POSTGRES_DB: harika-dev
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      harika-network:
+        aliases:
+          - db
+  backend:
+    build:
+      context: .
+      dockerfile: build/backend/Dockerfile
+    environment:
+      DB_USER:  harika-user
+      DB_PASSWORD: 'oZr3eweYo9vZrZ'
+      DB_NAME: harika-dev
+      DB_HOST: db
+      DB_POOL_MIN: 5
+      DB_POOL_MAX: 10
+      KRATOS_URL: http://kratos:4433
+      S3_ACCESS_TOKEN: 'FAOYW3CI7HL4ZXRJ00H4'
+      S3_SECRET_KEY: '0x6h5JBDS4rvE95ewppktmgA9+xLzL95CzhgxnJ4'
+      S3_ENDPOINT: s3
+      S3_PORT: 9000 
+      S3_PUBLIC_URL: 'http://localhost:3000/files'
+    depends_on:
+      - db
+      - s3
+    networks:
+      harika-network:
+        aliases:
+          - backend
+  frontend:
+    build:
+      context: .
+      dockerfile: build/frontend/Dockerfile
+    networks:
+      harika-network:
+        aliases:
+          - frontend
+  proxy-server:
+    build:
+      context: .
+      dockerfile: build/proxy/Dockerfile
+    depends_on:
+      - frontend
+      - backend
+      - s3
+    ports:
+      - '3000:3000'
+    networks:
+      harika-network:
+        aliases:
+          - proxy-server
+  kratos-migrate:
+    depends_on:
+      - db
+    image: oryd/kratos:v0.9.0-alpha.2
+    environment:
+      - DSN=postgres://harika-user:oZr3eweYo9vZrZ@db/harika-dev
+    volumes:
+      - type: bind
+        source: ./build/kratos
+        target: /etc/config/kratos
+    command: -c /etc/config/kratos/kratos.yml migrate sql -e --yes
+    restart: on-failure
+    networks:
+      - harika-network
+  kratos:
+    depends_on:
+      - db
+      - kratos-migrate
+    image: oryd/kratos:v0.9.0-alpha.2
+    restart: unless-stopped
+    environment:
+      - DSN=postgres://harika-user:oZr3eweYo9vZrZ@db/harika-dev
+      - LOG_LEVEL=trace
+    command: serve -c /etc/config/kratos/kratos.yml --watch-courier --dev
+    volumes:
+      - type: bind
+        source: ./build/kratos
+        target: /etc/config/kratos
+    networks:
+      - harika-network
+volumes:
+  pgdata:
+  s3-data2:
+networks:
+  harika-network:
+

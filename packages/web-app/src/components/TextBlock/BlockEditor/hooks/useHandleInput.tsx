@@ -1,68 +1,24 @@
 import {
-  addTokensToNoteBlock,
   BlocksScope,
   BlockView,
   handleNewLinePress,
-  parseStringToTree,
   TextBlock,
 } from '@harika/web-core';
 import { Pos, position } from 'caret-pos';
 import dayjs from 'dayjs';
-import { RefObject, useCallback, useContext, useState } from 'react';
-import { v4 as uuidv4 } from 'uuid';
+import React from 'react';
+import { RefObject, useCallback, useState } from 'react';
 
-import { ShiftPressedContext } from '../../../../contexts/ShiftPressedContext';
 import { useBlockFocusState } from '../../../../hooks/useBlockFocusState';
 import {
   useBlockLinksStore,
   useBlocksStore,
-  useUpdateLinkService,
-  useUploadService,
 } from '../../../../hooks/vaultAppHooks';
 import { insertText, isIOS } from '../../../../utils';
 import { getTokensAtCursor } from '../../utils';
 import { ICommand } from '../EditorCommandsDropdown/EditorCommandsDropdown';
 import type { SearchedNote } from '../NoteTitleAutocomplete/NoteTitleAutocomplete';
-
-const getImageSize = (blob: Blob) => {
-  return new Promise<{ width: number; height: number } | undefined>(
-    (resolve) => {
-      let url: string | undefined;
-
-      const revokeUrl = () => {
-        if (url) {
-          URL.revokeObjectURL(url);
-        }
-      };
-
-      try {
-        let isResolved = false;
-
-        const img = document.createElement('img');
-        const url = URL.createObjectURL(blob);
-        img.src = url;
-
-        img.onload = () => {
-          resolve({ width: img.width, height: img.height });
-          revokeUrl();
-          isResolved = true;
-        };
-
-        setTimeout(() => {
-          if (!isResolved) {
-            resolve(undefined);
-            revokeUrl();
-          }
-        }, 1000);
-      } catch (e) {
-        console.error('Failed to get image size');
-
-        revokeUrl();
-        resolve(undefined);
-      }
-    },
-  );
-};
+import { useHandlePaste } from './useHandlePaste';
 
 const symmetricCommands: { [P in ICommand['id']]?: string } = {
   blockRef: '(())',
@@ -85,8 +41,6 @@ export const useHandleInput = (
 ) => {
   const blocksStore = useBlocksStore();
   const linksStore = useBlockLinksStore();
-  const updateLinkService = useUpdateLinkService();
-  const uploadService = useUploadService();
 
   const [caretPos, setCaretPos] = useState<Pos | undefined>();
 
@@ -329,94 +283,6 @@ export const useHandleInput = (
     [block.originalBlock.contentModel.ast],
   );
 
-  // const [isShiftPressed] = useKeyPress((e) => e.shiftKey);
-
-  const isShiftPressedRef = useContext(ShiftPressedContext);
-
-  const handlePaste = useCallback(
-    async (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
-      handleCaretChange(e);
-
-      if (isShiftPressedRef.current) return;
-
-      const data = e.clipboardData.getData('Text');
-      const files = e.clipboardData.files;
-
-      if (files.length > 0) {
-        e.preventDefault();
-
-        const uploads = Array.from(files).map((f) => ({
-          id: uuidv4(),
-          file: f,
-          attachedToBlockId: block.$modelId,
-        }));
-
-        const el = e.currentTarget;
-        const toInsert = (
-          await Promise.all(
-            uploads.map(async (u) => {
-              if (u.file.type.startsWith('image/')) {
-                const size = await getImageSize(u.file);
-
-                return `![${u.file.name}](harika-file://${u.id} ${
-                  size ? `=${size.width}x` : ''
-                })`;
-              } else {
-                const attachment = JSON.stringify({
-                  url: `harika-file://${u.id}`,
-                  name: u.file.name,
-                });
-
-                return `{{attachment: |${attachment}|}}`;
-              }
-            }),
-          )
-        ).join(' ');
-
-        insertText(el, toInsert);
-
-        await uploadService.createUploads(uploads);
-      } else {
-        if (data.length === 0) return;
-
-        const parsedToTree = parseStringToTree(data);
-
-        if (parsedToTree.length === 0) return;
-
-        e.preventDefault();
-
-        const injectedBlocks = addTokensToNoteBlock(
-          blocksStore,
-          scope,
-          block,
-          parsedToTree,
-        );
-
-        const ids = injectedBlocks.map(({ $modelId }) => $modelId);
-        updateLinkService.updateBlockLinks(ids);
-
-        if (injectedBlocks[0]) {
-          blockFocusState.changeFocus(
-            scope.$modelId,
-            injectedBlocks[0].$modelId,
-            0,
-            true,
-          );
-        }
-      }
-    },
-    [
-      block,
-      blockFocusState,
-      blocksStore,
-      handleCaretChange,
-      isShiftPressedRef,
-      scope,
-      updateLinkService,
-      uploadService,
-    ],
-  );
-
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
       block.originalBlock.contentModel.update(e.target.value);
@@ -565,6 +431,8 @@ export const useHandleInput = (
     },
     [commandToSearch, commandToSearchStartPos, inputRef],
   );
+
+  const handlePaste = useHandlePaste(block, scope, handleCaretChange);
 
   return {
     textareaHandlers: {

@@ -131,10 +131,11 @@ export const VaultLayout: React.FC = ({ children }) => {
     let vaultApp: VaultApplication | undefined = undefined;
 
     const cb = async () => {
-      vaultApp = new VaultApplication(
-        vaultId,
-        import.meta.env.VITE_PUBLIC_WS_URL as string,
-      );
+      vaultApp = new VaultApplication(vaultId, {
+        base: import.meta.env.VITE_PUBLIC_WS_BASE as string,
+        path: import.meta.env.VITE_PUBLIC_WS_PATH as string,
+        apiUrl: import.meta.env.VITE_PUBLIC_API_URL as string,
+      });
 
       if (!vaultApp) {
         writeStorage('lastVaultId', undefined);

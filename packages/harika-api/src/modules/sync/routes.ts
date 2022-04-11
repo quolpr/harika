@@ -79,7 +79,11 @@ export const syncHandler: FastifyPluginCallback = (server, options, next) => {
   const io = new Server(server.server, {
     maxHttpBufferSize: 1e8,
     cors: {
-      origin: ['http://localhost:3000', 'https://app-dev.harika.io'],
+      origin: [
+        'http://localhost:3000',
+        'https://app-dev.harika.io',
+        'http://harika-dev:3000',
+      ],
       methods: ['GET', 'POST'],
       credentials: true,
     },

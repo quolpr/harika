@@ -208,6 +208,7 @@ export const BlocksHandlers = observer(
           !(
             e.target instanceof Element &&
             (e.target.closest('.toolbar') ||
+              e.target.closest('.notification') ||
               e.target.closest('.note-autocomplete')) &&
             !e.target.closest('[data-defocus]')
           ) &&

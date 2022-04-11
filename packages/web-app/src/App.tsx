@@ -1,12 +1,14 @@
 import './App.css';
 import './tailwind.css';
 import './variables.css';
+import 'react-toastify/dist/ReactToastify.css';
 
 import { useLocalStorage } from '@rehooks/local-storage';
 import React, { MutableRefObject, useEffect, useRef } from 'react';
 import Modal from 'react-modal';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { ToastContainer } from 'react-toastify';
 
 import { ShiftPressedContext } from './contexts/ShiftPressedContext';
 import { useAuthState, useCleanAuthState } from './hooks/useAuthState';
@@ -121,39 +123,45 @@ export const App = () => {
   const isShiftPressedRef = useRef(false);
 
   return (
-    <ShiftPressedContext.Provider value={isShiftPressedRef}>
-      <ShiftPressedTracker shiftRef={isShiftPressedRef} />
+    <>
+      <ToastContainer theme="dark" />
+      <ShiftPressedContext.Provider value={isShiftPressedRef}>
+        <ShiftPressedTracker shiftRef={isShiftPressedRef} />
 
-      <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
-          <Routes>
-            <Route path={VAULT_PREFIX + '/*'} element={<VaultAppRoute />} />
-            <Route path={PATHS.VAULT_INDEX_PATH} element={<VaultAppRoute />} />
-            <Route path={PATHS.LOGIN_PATH} element={<LoginPage />} />
-            <Route path={PATHS.SIGNUP_PATH} element={<SignupPage />} />
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <Routes>
+              <Route path={VAULT_PREFIX + '/*'} element={<VaultAppRoute />} />
+              <Route
+                path={PATHS.VAULT_INDEX_PATH}
+                element={<VaultAppRoute />}
+              />
+              <Route path={PATHS.LOGIN_PATH} element={<LoginPage />} />
+              <Route path={PATHS.SIGNUP_PATH} element={<SignupPage />} />
 
-            <Route
-              path="/"
-              element={(() => {
-                if (lastVaultId && authInfo) {
-                  return (
-                    <Navigate
-                      to={paths.vaultDailyPath({ vaultId: lastVaultId })}
-                      replace
-                    />
-                  );
-                } else {
-                  return authInfo ? (
-                    <Navigate to={PATHS.DEFAULT_PATH} replace />
-                  ) : (
-                    <Navigate to={PATHS.LOGIN_PATH} replace />
-                  );
-                }
-              })()}
-            />
-          </Routes>
-        </BrowserRouter>
-      </QueryClientProvider>
-    </ShiftPressedContext.Provider>
+              <Route
+                path="/"
+                element={(() => {
+                  if (lastVaultId && authInfo) {
+                    return (
+                      <Navigate
+                        to={paths.vaultDailyPath({ vaultId: lastVaultId })}
+                        replace
+                      />
+                    );
+                  } else {
+                    return authInfo ? (
+                      <Navigate to={PATHS.DEFAULT_PATH} replace />
+                    ) : (
+                      <Navigate to={PATHS.LOGIN_PATH} replace />
+                    );
+                  }
+                })()}
+              />
+            </Routes>
+          </BrowserRouter>
+        </QueryClientProvider>
+      </ShiftPressedContext.Provider>
+    </>
   );
 };

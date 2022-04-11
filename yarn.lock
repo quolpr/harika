@@ -2677,6 +2677,13 @@
   dependencies:
     axios "^0.21.4"
 
+"@ory/client@^0.0.1-alpha.159":
+  version "0.0.1-alpha.159"
+  resolved "https://registry.yarnpkg.com/@ory/client/-/client-0.0.1-alpha.159.tgz#42e90e6bb87912747b09efcdf752468f53e8336b"
+  integrity sha512-GGQCOxNsgnclU9wVtdqe9S2ZSlXvV3HHJmr5hZeVD1l0dWrzylUulHOye9yuhLhKxz8zLXmGdHI51+3ZHGzUgg==
+  dependencies:
+    axios "^0.21.4"
+
 "@ory/kratos-client@^0.9.0-alpha.3":
   version "0.9.0-alpha.3"
   resolved "https://registry.yarnpkg.com/@ory/kratos-client/-/kratos-client-0.9.0-alpha.3.tgz#2464139501f25169c5311bc0d5a0b15d0131be01"
@@ -11305,6 +11312,13 @@ react-timeago@^6.2.1:
   version "6.2.1"
   resolved "https://registry.yarnpkg.com/react-timeago/-/react-timeago-6.2.1.tgz#f19716811156617ceb9c9f9a44315d85197c7fba"
   integrity sha512-b9EObWO8wy4qwfOzj+g/RQZRrPvtMv1Pz12FCdAWKWCXbDGt0rZLyiyTGEr0Lh1O8w5xa48CtRpl3LI+CtGCyw==
+
+react-toastify@^8.2.0:
+  version "8.2.0"
+  resolved "https://registry.yarnpkg.com/react-toastify/-/react-toastify-8.2.0.tgz#ef7d56bdfdc6272ca6b228368ab564721c3a3244"
+  integrity sha512-Pg2Ju7NngAamarFvLwqrFomJ57u/Ay6i6zfLurt/qPynWkAkOthu6vxfqYpJCyNhHRhR4hu7+bySSeWWJu6PAg==
+  dependencies:
+    clsx "^1.1.1"
 
 react-transition-group@^4.4.0:
   version "4.4.2"

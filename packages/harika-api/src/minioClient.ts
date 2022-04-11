@@ -1,9 +1,9 @@
 import { Client } from 'minio';
 
 export const minioClient = new Client({
-  endPoint: 'localhost',
-  port: 9000,
+  endPoint: process.env.S3_ENDPOINT,
+  port: parseInt(process.env.S3_PORT, 10) || 3000,
   useSSL: false,
-  accessKey: 'FAOYW3CI7HL4ZXRJ00H4',
-  secretKey: '0x6h5JBDS4rvE95ewppktmgA9+xLzL95CzhgxnJ4',
+  accessKey: process.env.S3_ACCESS_TOKEN,
+  secretKey: process.env.S3_SECRET_KEY,
 });
