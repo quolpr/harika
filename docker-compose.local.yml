@@ -9,6 +9,7 @@ services:
       MINIO_ROOT_PASSWORD: gTrAG8kUcN9RBW
     command: server /data --console-address ":9001"
     ports:
+      - "9000:9000"
       - "9001:9001"
     networks:
       harika-network:
@@ -43,7 +44,7 @@ services:
       S3_SECRET_KEY: '0x6h5JBDS4rvE95ewppktmgA9+xLzL95CzhgxnJ4'
       S3_ENDPOINT: s3
       S3_PORT: 9000 
-      S3_PUBLIC_URL: 'http://localhost:3000/files'
+      S3_PUBLIC_URL: 'http://localhost:9000'
     depends_on:
       - db
       - s3
