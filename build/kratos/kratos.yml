@@ -30,7 +30,7 @@ selfservice:
       ui_url: http://127.0.0.1:4455/recovery
 
     verification:
-      enabled: true
+      enabled: false
       ui_url: http://127.0.0.1:4455/verification
       after:
         default_browser_return_url: http://127.0.0.1:4455/
