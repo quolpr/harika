@@ -16,3 +16,7 @@ Harika is an offline-first, performance-focused note taking app for organizing y
 ## How can I try it?
 
 You can create a test account at https://app-dev.harika.io .
+
+## How can I try it locally?
+
+Clone the repo, and run `docker-compose -f docker-compose.local.yml up --build`. Harika will be available at http://localhost:3000

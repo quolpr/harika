@@ -55,6 +55,11 @@ services:
     build:
       context: .
       dockerfile: build/frontend/Dockerfile
+      args:
+        VITE_PUBLIC_WS_BASE: 'http://localhost:3000'
+        VITE_PUBLIC_WS_PATH: '/api/socket.io'
+        VITE_PUBLIC_API_URL: 'http://localhost:3000/api'
+        VITE_PUBLIC_AUTH_URL: 'http://localhost:3000/api/auth'
     networks:
       harika-network:
         aliases:

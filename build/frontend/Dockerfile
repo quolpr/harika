@@ -1,6 +1,5 @@
 FROM node:latest as base
 
-
 WORKDIR /home/app
 
 COPY package.json ./
@@ -19,11 +18,15 @@ COPY packages/sync-common ./packages/sync-common
 COPY packages/web-app ./packages/web-app
 COPY packages/web-core ./packages/web-core
 
-ENV VITE_PUBLIC_WS_BASE "http://localhost:3000"
-ENV VITE_PUBLIC_API_URL "http://localhost:3000/api"
-ENV VITE_PUBLIC_WS_PATH "/api/socket.io"
+ARG VITE_PUBLIC_WS_BASE
+ARG VITE_PUBLIC_API_URL
+ARG VITE_PUBLIC_WS_PATH
+ARG VITE_PUBLIC_AUTH_URL
 
-ENV VITE_PUBLIC_AUTH_URL "http://localhost:3000/api/auth"
+ENV VITE_PUBLIC_WS_BASE=${VITE_PUBLIC_WS_BASE}
+ENV VITE_PUBLIC_WS_PATH=${VITE_PUBLIC_WS_PATH}
+ENV VITE_PUBLIC_API_URL=${VITE_PUBLIC_API_URL}
+ENV VITE_PUBLIC_AUTH_URL=${VITE_PUBLIC_AUTH_URL}
 
 RUN yarn web-app build
 
