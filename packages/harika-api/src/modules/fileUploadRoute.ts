@@ -3,7 +3,7 @@ import { FastifyPluginCallback } from 'fastify';
 import { getSessionFromRequestStrict } from '../helpers/getSessionFromRequest';
 import { minioClient } from '../minioClient';
 
-const uploadsBucket = 'uploads';
+const uploadsBucket = process.env.S3_UPLOADS_BUCKET_NAME;
 
 export const uploadHandler: FastifyPluginCallback = (server, options, next) => {
   server.post('/upload', async (req, res) => {
@@ -27,11 +27,9 @@ export const uploadHandler: FastifyPluginCallback = (server, options, next) => {
           'Content-Type': part.mimetype,
         });
 
-        res
-          .status(201)
-          .send({
-            url: `${process.env.S3_PUBLIC_URL}/${uploadsBucket}/${filePath}`,
-          });
+        res.status(201).send({
+          url: `${process.env.S3_PUBLIC_URL}/${uploadsBucket}/${filePath}`,
+        });
 
         return;
       } else {
