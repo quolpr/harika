@@ -61,6 +61,7 @@ services:
         VITE_PUBLIC_WS_PATH: '/api/socket.io'
         VITE_PUBLIC_API_URL: 'http://localhost:3000/api'
         VITE_PUBLIC_AUTH_URL: 'http://localhost:3000/api/auth'
+        VITE_ENABLE_SW: 'false'
     networks:
       harika-network:
         aliases:
