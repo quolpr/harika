@@ -13,7 +13,9 @@ export type IAttachmentDoc = {
 
   createdAt: number;
 };
-export type IAttachmentRow = IAttachmentDoc;
+export type IAttachmentRow = Omit<IAttachmentDoc, 'url'> & {
+  url: string | null;
+};
 
 export const attachmentsTable = 'attachmentsTable' as const;
 
@@ -35,6 +37,24 @@ export class AttachmentsRepository extends BaseSyncRepository<
         attachmentsTable,
       )} WHERE isDownloaded=0 LIMIT 10`,
     );
+  }
+
+  toRow(doc: IAttachmentDoc): IAttachmentRow {
+    const res = {
+      ...super.toRow(doc),
+      url: doc.url ? doc.url : null,
+    };
+
+    return res;
+  }
+
+  toDoc(row: IAttachmentRow): IAttachmentDoc {
+    const res = {
+      ...super.toDoc(row),
+      url: row.url ? row.url : undefined,
+    };
+
+    return res;
   }
 
   getTableName() {

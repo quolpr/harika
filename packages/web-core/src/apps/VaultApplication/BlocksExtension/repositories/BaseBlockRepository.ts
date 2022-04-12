@@ -13,6 +13,7 @@ export abstract class BaseBlockRepository<
   toRow(doc: Doc): Row {
     const res = {
       ...super.toRow(doc),
+      parentId: doc.parentId ? doc.parentId : null,
     };
 
     return res;
@@ -21,6 +22,7 @@ export abstract class BaseBlockRepository<
   toDoc(row: Row): Doc {
     const res = {
       ...super.toDoc(row),
+      parentId: row.parentId ? row.parentId : undefined,
     };
 
     return res;

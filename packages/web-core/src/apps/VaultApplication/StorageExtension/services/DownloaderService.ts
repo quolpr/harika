@@ -1,7 +1,15 @@
 import axios from 'axios';
 import { inject, injectable } from 'inversify';
 import { merge } from 'lodash-es';
-import { exhaustMap, filter, Observable, of, takeUntil } from 'rxjs';
+import {
+  delay,
+  exhaustMap,
+  filter,
+  interval,
+  Observable,
+  of,
+  takeUntil,
+} from 'rxjs';
 
 import { DbEventsListenService } from '../../../../extensions/SyncExtension/services/DbEventsListenerService';
 import { STOP_SIGNAL } from '../../../../framework/types';
@@ -34,7 +42,7 @@ export class DownloaderService {
                 .length > 0,
           ),
         ),
-      of(null),
+      interval(5000),
     )
       .pipe(
         exhaustMap(() => this.performDownloads()),
@@ -44,13 +52,13 @@ export class DownloaderService {
   }
 
   async performDownloads() {
-    const notDownloadedUploads =
-      await this.fileUploadsRepo.getNotDownloadedUploads();
+    try {
+      const notDownloadedUploads =
+        await this.fileUploadsRepo.getNotDownloadedUploads();
 
-    for (const upload of notDownloadedUploads) {
-      if (!upload.url) continue;
+      for (const upload of notDownloadedUploads) {
+        if (!upload.url) continue;
 
-      try {
         const response = await axios({
           url: upload.url,
           method: 'GET',
@@ -69,9 +77,9 @@ export class DownloaderService {
             source: 'inDbChanges',
           },
         );
-      } catch (e) {
-        console.error('Failed to download upload', e);
       }
+    } catch (e) {
+      console.error('Failed to download upload', e);
     }
   }
 }

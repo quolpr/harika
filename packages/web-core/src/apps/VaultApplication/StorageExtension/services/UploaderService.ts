@@ -3,11 +3,10 @@ import { inject, injectable } from 'inversify';
 import { omit } from 'lodash-es';
 import {
   concatMap,
-  delay,
   filter,
+  interval,
   merge,
   Observable,
-  of,
   takeUntil,
 } from 'rxjs';
 
@@ -53,7 +52,7 @@ export class UploaderService {
                 .length > 0,
           ),
         ),
-      of(null).pipe(delay(500)),
+      interval(5000),
     )
       .pipe(
         concatMap(() => this.performUploads()),
@@ -63,24 +62,24 @@ export class UploaderService {
   }
 
   private async performUploads() {
-    const uploadsWithFile = await this.getUploadsWithFile();
+    try {
+      const uploadsWithFile = await this.getUploadsWithFile();
 
-    const syncCtx: ISyncCtx = {
-      shouldRecordChange: true,
-      source: 'inDbChanges',
-    };
+      const syncCtx: ISyncCtx = {
+        shouldRecordChange: true,
+        source: 'inDbChanges',
+      };
 
-    for (const upload of uploadsWithFile) {
-      try {
+      for (const upload of uploadsWithFile) {
         const url = await this.performUpload(upload);
 
         await this.fileUploadsRepo.update(
           { ...omit(upload, 'file'), url, isUploaded: true },
           syncCtx,
         );
-      } catch (e) {
-        console.error('Failed to upload', e);
       }
+    } catch (e) {
+      console.error('Failed to upload', e);
     }
   }
 
