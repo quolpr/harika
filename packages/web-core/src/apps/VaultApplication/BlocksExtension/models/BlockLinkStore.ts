@@ -22,6 +22,13 @@ export class BlockLinksStore extends Model({
   linksRegistry: prop<BlockLinkRegistry>(() => new BlockLinkRegistry({})),
 }) {
   @modelAction
+  deleteLinks(ids: string[]) {
+    ids.forEach((id) => {
+      this.linksRegistry.deleteLinkById(id);
+    });
+  }
+
+  @modelAction
   updateLinks(currentBlockId: string, linkedBlockIds: Set<string>) {
     const links = this.linksRegistry.getLinksOfBlock(currentBlockId);
     const currentLinkedBlockIds = new Set(

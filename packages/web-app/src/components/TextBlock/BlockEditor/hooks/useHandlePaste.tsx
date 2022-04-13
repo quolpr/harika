@@ -17,7 +17,6 @@ import { ShiftPressedContext } from '../../../../contexts/ShiftPressedContext';
 import { useBlockFocusState } from '../../../../hooks/useBlockFocusState';
 import {
   useBlocksStore,
-  useUpdateLinkService,
   useUploadService,
 } from '../../../../hooks/vaultAppHooks';
 import { insertText } from '../../../../utils';
@@ -168,7 +167,6 @@ const useHandleTextPaste = (
   scope: BlocksScope,
 ) => {
   const blocksStore = useBlocksStore();
-  const updateLinkService = useUpdateLinkService();
   const blockFocusState = useBlockFocusState();
 
   return useCallback(
@@ -187,8 +185,7 @@ const useHandleTextPaste = (
           parsedToTree,
         );
 
-        const ids = injectedBlocks.map(({ $modelId }) => $modelId);
-        updateLinkService.updateBlockLinks(ids);
+        injectedBlocks.map(({ $modelId }) => $modelId);
 
         if (injectedBlocks[0]) {
           blockFocusState.changeFocus(
@@ -219,7 +216,7 @@ const useHandleTextPaste = (
         });
       }
     },
-    [block, blockFocusState, blocksStore, scope, updateLinkService],
+    [block, blockFocusState, blocksStore, scope],
   );
 };
 

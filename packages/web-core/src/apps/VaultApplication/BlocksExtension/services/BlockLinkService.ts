@@ -20,6 +20,17 @@ export class BlockLinkService {
     private blockLinkStore: BlockLinksStore,
   ) {}
 
+  async loadAllLinksOfBlocks(blockIds: string[]) {
+    if (blockIds.length === 0) return [];
+
+    const links = await this.blockLinksRepository.getAllLinksOfBlocks(blockIds);
+
+    return this.blockLinkStore.handleModelChanges(
+      links.map((doc) => blockLinkMapper.mapToModelData(doc)),
+      [],
+    );
+  }
+
   async loadLinksOfBlockDescendants(rootBlockIds: string[]) {
     if (rootBlockIds.length === 0) return [];
 

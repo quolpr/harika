@@ -1,4 +1,4 @@
-import { idProp, Model, model, prop } from 'mobx-keystone';
+import { idProp, Model, model, modelAction, prop } from 'mobx-keystone';
 import { Subject } from 'rxjs';
 
 import {
@@ -16,6 +16,17 @@ export class VaultAppRootStore extends Model({
   blocksScopeStore: prop<BlocksScopeStore>(),
   blockLinkStore: prop<BlockLinksStore>(),
 }) {
+  @modelAction
+  setStores(
+    blocksStore: BlocksStore,
+    blocksScopeStore: BlocksScopeStore,
+    blockLinkStore: BlockLinksStore,
+  ) {
+    this.blocksStore = blocksStore;
+    this.blocksScopeStore = blocksScopeStore;
+    this.blockLinkStore = blockLinkStore;
+  }
+
   onInit() {
     trackChangesPipeCtx.set(this, new Subject<IModelChange>());
   }

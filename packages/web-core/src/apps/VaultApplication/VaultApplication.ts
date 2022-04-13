@@ -25,7 +25,6 @@ import { FindNoteOrBlockService } from './BlocksExtension/services/FindNoteOrBlo
 import { ImportExportService } from './BlocksExtension/services/ImportExportService';
 import { NoteBlocksService } from './BlocksExtension/services/NoteBlocksService';
 import { TextBlocksService } from './BlocksExtension/services/TextBlocksService';
-import { UpdateLinksService } from './BlocksExtension/services/UpdateLinksService';
 import { UpdateNoteTitleService } from './BlocksExtension/services/UpdateNoteTitleService';
 import { NotesTreeRegistry } from './NotesTreeExtension/models/NotesTreeRegistry';
 import { NotesTreeAppExtension } from './NotesTreeExtension/NotesTreeAppExtension';
@@ -54,6 +53,11 @@ export class VaultApplication extends BaseApplication {
   }
 
   async register() {
+    const rootStore = new VaultAppRootStore({} as any);
+    this.container.bind(VaultAppRootStore).toConstantValue(rootStore);
+    registerRootStore(rootStore);
+
+    this.container.bind(ROOT_STORE).toConstantValue(rootStore);
     this.container.bind(SYNC_CONFIG).toConstantValue(this.syncConfig);
   }
 
@@ -62,16 +66,9 @@ export class VaultApplication extends BaseApplication {
     const blocksStore = this.container.get(BlocksStore);
     const blockLinkStore = this.container.get(BlockLinksStore);
 
-    const rootStore = new VaultAppRootStore({
-      blocksStore,
-      blocksScopeStore,
-      blockLinkStore,
-    });
-
-    this.container.bind(VaultAppRootStore).toConstantValue(rootStore);
-    this.container.bind(ROOT_STORE).toConstantValue(rootStore);
-
-    registerRootStore(rootStore);
+    this.container
+      .get(VaultAppRootStore)
+      .setStores(blocksStore, blocksScopeStore, blockLinkStore);
   }
 
   getBlocksScopesService() {
@@ -96,10 +93,6 @@ export class VaultApplication extends BaseApplication {
 
   getAllBlocksService() {
     return this.container.get(AllBlocksService);
-  }
-
-  getUpdateLinksService() {
-    return this.container.get(UpdateLinksService);
   }
 
   getUpdateNoteTitleService() {

@@ -49,10 +49,6 @@ export const useUpdateTitleService = () => {
   return useCurrentVaultApp().getUpdateNoteTitleService();
 };
 
-export const useUpdateLinkService = () => {
-  return useCurrentVaultApp().getUpdateLinksService();
-};
-
 export const useImportExportService = () => {
   return useCurrentVaultApp().getImportExportService();
 };

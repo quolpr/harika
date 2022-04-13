@@ -34,7 +34,6 @@ import {
 import {
   useAllBlocksService,
   useBlockLinksStore,
-  useUpdateLinkService,
   useUploadService,
 } from '../../hooks/vaultAppHooks';
 import DownloadIcon from '../../icons/download.svgr.svg?component';
@@ -49,21 +48,17 @@ const NoteRefRenderer = observer(
     collapsableBlock: BlockView<TextBlock>;
     linkedNotes: NoteBlock[];
   }) => {
-    const updateLinksService = useUpdateLinkService();
-
     const handleTodoToggle = useCallback(
       (e: React.SyntheticEvent) => {
         e.stopPropagation();
 
-        updateLinksService.updateBlockLinks(
-          toggleTodo(
-            collapsableBlock.originalBlock,
-            collapsableBlock,
-            token.id,
-          ).map(({ $modelId }) => $modelId),
-        );
+        toggleTodo(
+          collapsableBlock.originalBlock,
+          collapsableBlock,
+          token.id,
+        ).map(({ $modelId }) => $modelId);
       },
-      [collapsableBlock, token.id, updateLinksService],
+      [collapsableBlock, token.id],
     );
 
     const note = linkedNotes.find((n) => {

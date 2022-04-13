@@ -6,7 +6,7 @@ import { DB, IQueryExecuter } from '../../../../extensions/DbExtension/DB';
 import { BaseSyncRepository } from '../../../../extensions/SyncExtension/BaseSyncRepository';
 import { SyncRepository } from '../../../../extensions/SyncExtension/repositories/SyncRepository';
 import { WINDOW_ID } from '../../../../framework/types';
-import { raw, sqltag } from '../../../../lib/sql';
+import { join, raw, sqltag } from '../../../../lib/sql';
 import { AllBlocksQueries } from './AllBlocksQueries';
 import { blocksChildrenTable } from './AllBlocksRepository';
 
@@ -38,6 +38,16 @@ export class BlockLinksRepository extends BaseSyncRepository<
     @inject(AllBlocksQueries) private allBlocksQueries: AllBlocksQueries,
   ) {
     super(syncRepository, db, windowId);
+  }
+
+  async getAllLinksOfBlocks(blockIds: string[], e: IQueryExecuter = this.db) {
+    return await e.getRecords<BlockLinkRow>(sqltag`
+      SELECT * FROM ${raw(blockLinksTable)} WHERE blockId IN (
+        ${join(blockIds)}
+      ) OR linkedToBlockId IN (
+        ${join(blockIds)}
+      )
+    `);
   }
 
   async getLinksOfDescendants(

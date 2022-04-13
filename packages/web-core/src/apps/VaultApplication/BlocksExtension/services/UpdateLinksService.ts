@@ -1,5 +1,19 @@
 import { inject, injectable } from 'inversify';
+import {
+  buffer,
+  concatMap,
+  debounceTime,
+  filter,
+  Observable,
+  takeUntil,
+} from 'rxjs';
 
+import {
+  IModelChange,
+  ModelChangeType,
+} from '../../../../extensions/SyncExtension/mobx-keystone/trackChanges';
+import { MODELS_CHANGES_PIPE } from '../../../../extensions/SyncExtension/types';
+import { STOP_SIGNAL } from '../../../../framework/types';
 import { filterAst } from '../../../../lib/blockParser/astHelpers';
 import {
   NoteBlockRefToken,
@@ -8,30 +22,59 @@ import {
 } from '../../../../lib/blockParser/types';
 import { BlockLinksStore } from '../models/BlockLinkStore';
 import { TextBlock } from '../models/TextBlock';
-import { AllBlocksService } from './AllBlocksService';
+import { BlockLinkService } from './BlockLinkService';
 import { NoteBlocksService } from './NoteBlocksService';
 
 @injectable()
 export class UpdateLinksService {
   constructor(
-    @inject(AllBlocksService)
-    private allBlocksService: AllBlocksService,
     @inject(NoteBlocksService)
     private notesService: NoteBlocksService,
     @inject(BlockLinksStore)
     private linksStore: BlockLinksStore,
-  ) {}
+    @inject(BlockLinkService)
+    private blockLinkService: BlockLinkService,
+    @inject(MODELS_CHANGES_PIPE)
+    pipe$: Observable<IModelChange>,
+    @inject(STOP_SIGNAL)
+    stop$: Observable<void>,
+  ) {
+    const textBlocksChanges$ = pipe$.pipe(
+      filter((ch) => ch.model instanceof TextBlock),
+    ) as Observable<IModelChange<TextBlock>>;
 
-  async updateBlockLinks(noteBlockIds: string[]) {
-    console.debug('Updating block links');
+    textBlocksChanges$
+      .pipe(
+        buffer(textBlocksChanges$.pipe(debounceTime(100))),
+        concatMap(async (changes) => {
+          console.debug('Updating block links', changes);
 
-    const blocks = await this.allBlocksService.getSingleBlockByIds(
-      noteBlockIds,
+          const createOrUpdatedModels = changes
+            .filter(
+              (ch) =>
+                ch.type === ModelChangeType.Create ||
+                ch.type === ModelChangeType.Update,
+            )
+            .map((ch) => ch.model);
+          const deletedModels = changes
+            .filter((ch) => ch.type === ModelChangeType.Delete)
+            .map((ch) => ch.model);
+
+          await this.updateBlockLinks(createOrUpdatedModels);
+          await this.deleteBlockLinks(deletedModels);
+
+          console.debug('Done updating block links', changes);
+        }),
+        takeUntil(stop$),
+      )
+      .subscribe();
+  }
+
+  async updateBlockLinks(textBlocks: TextBlock[]) {
+    // Make sure that all links are loaded
+    await this.blockLinkService.loadAllLinksOfBlocks(
+      textBlocks.map(({ $modelId }) => $modelId),
     );
-
-    const textBlocks = blocks.filter(
-      (b) => b instanceof TextBlock,
-    ) as TextBlock[];
 
     const allTitles = textBlocks.flatMap((block) => {
       return (
@@ -100,5 +143,15 @@ export class UpdateLinksService {
         new Set([...textBlockIds, ...noteBlockIds].filter((id) => !!id)),
       );
     });
+  }
+
+  async deleteBlockLinks(textBlocks: TextBlock[]) {
+    this.linksStore.deleteLinks(
+      (
+        await this.blockLinkService.loadAllLinksOfBlocks(
+          textBlocks.map((b) => b.$modelId),
+        )
+      ).map((link) => link.$modelId),
+    );
   }
 }

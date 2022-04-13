@@ -87,6 +87,8 @@ export class NoteBlocksAppExtension extends BaseSyncExtension {
     const blocksStore = this.container.get(BlocksStore);
     const syncConfig = this.container.get(SyncConfig);
 
+    this.container.resolve(UpdateLinksService);
+
     const disposes: (() => void)[] = [];
 
     disposes.push(

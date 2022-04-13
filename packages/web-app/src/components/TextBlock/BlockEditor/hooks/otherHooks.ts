@@ -4,7 +4,6 @@ import { usePrevious } from 'react-use';
 
 import { CurrentBlockInputRefContext } from '../../../../contexts';
 import { BlockFocus } from '../../../../hooks/useBlockFocusState';
-import { useUpdateLinkService } from '../../../../hooks/vaultAppHooks';
 
 export const useProvideInputToContext = (
   inputRef: MutableRefObject<HTMLTextAreaElement | null>,
@@ -27,22 +26,13 @@ export const useUpdateBlockValues = (
   block: BlockView<TextBlock>,
   isEditing: boolean,
 ) => {
-  const updateLinkService = useUpdateLinkService();
-
   const wasEditing = usePrevious(isEditing);
 
   useEffect(() => {
     if (!isEditing && wasEditing) {
       block.originalBlock.contentModel.dumpValue();
-      updateLinkService.updateBlockLinks([block.$modelId]);
     }
-  }, [
-    block.$modelId,
-    block.originalBlock,
-    isEditing,
-    updateLinkService,
-    wasEditing,
-  ]);
+  }, [block.$modelId, block.originalBlock, isEditing, wasEditing]);
 };
 
 export const useHandleFocus = (
