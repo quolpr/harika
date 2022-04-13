@@ -1,15 +1,7 @@
 import axios from 'axios';
 import { inject, injectable } from 'inversify';
 import { merge } from 'lodash-es';
-import {
-  delay,
-  exhaustMap,
-  filter,
-  interval,
-  Observable,
-  of,
-  takeUntil,
-} from 'rxjs';
+import { exhaustMap, filter, interval, Observable, takeUntil } from 'rxjs';
 
 import { DbEventsListenService } from '../../../../extensions/SyncExtension/services/DbEventsListenerService';
 import { STOP_SIGNAL } from '../../../../framework/types';
