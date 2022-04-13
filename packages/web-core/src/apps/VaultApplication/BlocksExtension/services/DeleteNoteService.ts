@@ -1,31 +1,16 @@
 import { inject, injectable } from 'inversify';
 
-import { DB } from '../../../../extensions/DbExtension/DB';
-import { ISyncCtx } from '../../../../extensions/SyncExtension/syncCtx';
-import { AllBlocksRepository } from '../../BlocksExtension/repositories/AllBlocksRepository';
-import { BlockLinksRepository } from '../repositories/BlockLinkRepository';
+import { AllBlocksService } from '../services/AllBlocksService';
 
 @injectable()
 export class DeleteNoteService {
   constructor(
-    @inject(DB) private db: DB,
-    @inject(AllBlocksRepository) private allRepo: AllBlocksRepository,
-    @inject(BlockLinksRepository) private blockLinksRepo: BlockLinksRepository,
+    @inject(AllBlocksService) private blocksService: AllBlocksService,
   ) {}
 
   async deleteBlock(noteId: string) {
-    const ctx: ISyncCtx = {
-      shouldRecordChange: true,
-      source: 'inDbChanges',
-    };
-    const backlinkedBlockIds = (
-      await this.blockLinksRepo.getBacklinksOfDescendants(noteId, false)
-    ).links.map(({ id }) => id);
+    const block = await this.blocksService.loadBlocksTree(noteId);
 
-    if (backlinkedBlockIds.length > 0) {
-      await this.blockLinksRepo.bulkDelete(backlinkedBlockIds, ctx);
-    }
-
-    await this.allRepo.bulkDelete([noteId], true, ctx);
+    block.delete(true);
   }
 }

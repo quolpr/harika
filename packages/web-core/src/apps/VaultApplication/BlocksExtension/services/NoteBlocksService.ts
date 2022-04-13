@@ -196,8 +196,10 @@ export class NoteBlocksService {
 
   getAllNotesTuples$() {
     return from(
-      this.dbEventsService.liveQuery([noteBlocksTable], () =>
-        this.noteBlocksRepository.getAll(),
+      this.dbEventsService.liveQuery(
+        [noteBlocksTable],
+        () => this.noteBlocksRepository.getAll(),
+        false,
       ),
     ).pipe(
       map((rows) =>

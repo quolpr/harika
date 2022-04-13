@@ -32,7 +32,7 @@ export class AllBlocksService {
   }
 
   async loadBlocksTree(blockId: string) {
-    await this.getBlockWithTreeByIds([blockId]);
+    return (await this.getBlockWithTreeByIds([blockId]))[0];
   }
 
   loadBlocksTrees$(blockIds: string[]) {
