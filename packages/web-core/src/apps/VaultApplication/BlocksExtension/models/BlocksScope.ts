@@ -7,13 +7,13 @@ import {
   prop,
 } from 'mobx-keystone';
 
-import { syncable } from '../../../../extensions/SyncExtension/mobx-keystone/syncable';
+import { trackChanges } from '../../../../extensions/SyncExtension/mobx-keystone/trackChanges';
 import { withoutUndoAction } from '../../../../lib/utils';
 
 export const blocksScopeType = '@harika/BlocksExtension/BlocksScope';
 
 // TODO: move selection to separate class
-@syncable
+@trackChanges
 @model(blocksScopeType)
 export class BlocksScope extends Model({
   id: idProp,

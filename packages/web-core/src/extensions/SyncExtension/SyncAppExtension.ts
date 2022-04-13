@@ -5,6 +5,7 @@ import { BaseExtension } from '../../framework/BaseExtension';
 import { STOP_SIGNAL } from '../../framework/types';
 import { DB_MIGRATIONS } from '../DbExtension/types';
 import { initSyncTables } from './migrations/initSyncTables';
+import { trackChangesPipeCtx } from './mobx-keystone/trackChanges';
 import { SyncRepository } from './repositories/SyncRepository';
 import { ServerSynchronizerFactory } from './serverSynchronizer/ServiceSynchronizerFactory';
 import { SyncConfig } from './serverSynchronizer/SyncConfig';
@@ -17,6 +18,7 @@ import { ToDbSynchronizer } from './services/ToDbSynchronizer';
 import { SyncStateService } from './SyncState';
 import {
   ISyncConflictResolver,
+  MODELS_CHANGES_PIPE,
   ROOT_STORE,
   SYNC_CONFLICT_RESOLVER,
   SYNC_CONNECTION_ALLOWED,
@@ -24,11 +26,11 @@ import {
 
 // Otherwise inversify will be throwing "No matching bindings found for serviceIdentifier"
 class DumbSyncConflictResolver implements ISyncConflictResolver {
-  async resolve() {}
-
   get collectionNamesToResolve() {
     return 'any' as const;
   }
+
+  async resolve() {}
 }
 
 @injectable()
@@ -50,6 +52,11 @@ export class SyncAppExtension extends BaseExtension {
     this.container
       .bind(SYNC_CONFLICT_RESOLVER)
       .toConstantValue(new DumbSyncConflictResolver());
+    this.container
+      .bind(MODELS_CHANGES_PIPE)
+      .toDynamicValue(() =>
+        trackChangesPipeCtx.get(this.container.get(ROOT_STORE)),
+      );
   }
 
   async initialize() {

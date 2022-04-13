@@ -18,16 +18,14 @@ export class DeleteNoteService {
       shouldRecordChange: true,
       source: 'inDbChanges',
     };
-    await this.db.transaction(async (t) => {
-      const backlinkedBlockIds = (
-        await this.blockLinksRepo.getBacklinksOfDescendants(noteId, false, t)
-      ).links.map(({ id }) => id);
+    const backlinkedBlockIds = (
+      await this.blockLinksRepo.getBacklinksOfDescendants(noteId, false)
+    ).links.map(({ id }) => id);
 
-      if (backlinkedBlockIds.length > 0) {
-        await this.blockLinksRepo.bulkDelete(backlinkedBlockIds, ctx, t);
-      }
+    if (backlinkedBlockIds.length > 0) {
+      await this.blockLinksRepo.bulkDelete(backlinkedBlockIds, ctx);
+    }
 
-      await this.allRepo.bulkDelete([noteId], true, ctx, t);
-    });
+    await this.allRepo.bulkDelete([noteId], true, ctx);
   }
 }

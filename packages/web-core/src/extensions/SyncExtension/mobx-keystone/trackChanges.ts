@@ -3,7 +3,7 @@ import { Subject } from 'rxjs';
 
 let withoutSyncVal = false;
 
-export const withoutSync = <T extends any>(func: () => T): T => {
+export const withoutChangeTracking = <T extends any>(func: () => T): T => {
   const prevValue = withoutSyncVal;
   withoutSyncVal = true;
 
@@ -14,7 +14,7 @@ export const withoutSync = <T extends any>(func: () => T): T => {
   }
 };
 
-export function withoutSyncAction(
+export function withoutChangeTrackingAction(
   _target: any,
   _propertyKey: string,
   descriptor: PropertyDescriptor,
@@ -23,31 +23,31 @@ export function withoutSyncAction(
 
   //wrapping the original method
   descriptor.value = function (...args: any[]) {
-    return withoutSync(() => {
+    return withoutChangeTracking(() => {
       return originalMethod.apply(this, args);
     });
   };
 }
 
-export enum SyncableModelChangeType {
+export enum ModelChangeType {
   Create = 'create',
   Update = 'update',
   Delete = 'delete',
 }
 
-export type ISyncableModel<T> = T & {
+export type ITrackChangeModel<T> = T & {
   $modelId: string;
   $modelType: string;
 };
 
-export type ISyncableModelChange<T extends AnyModel = AnyModel> = {
-  type: SyncableModelChangeType;
-  model: ISyncableModel<T>;
+export type IModelChange<T extends AnyModel = AnyModel> = {
+  type: ModelChangeType;
+  model: ITrackChangeModel<T>;
 };
 
-export const syncChangesCtx = createContext<Subject<ISyncableModelChange>>();
+export const trackChangesPipeCtx = createContext<Subject<IModelChange>>();
 
-export const syncable = (constructor: Function) => {
+export const trackChanges = (constructor: Function) => {
   const originalAttached = constructor.prototype.onAttachedToRootStore;
 
   constructor.prototype.onAttachedToRootStore = function () {
@@ -57,16 +57,16 @@ export const syncable = (constructor: Function) => {
       ? originalAttached.bind(this)?.()
       : undefined;
 
-    const pipe$ = syncChangesCtx.get(model);
+    const pipe$ = trackChangesPipeCtx.get(model);
 
     if (!pipe$) {
       console.error(constructor, model);
-      throw new Error('Did you forget to set syncChangesCtx?');
+      throw new Error('Did you forget to set trackChangesPipeCtx?');
     }
 
     if (!withoutSyncVal) {
       pipe$.next({
-        type: SyncableModelChangeType.Create,
+        type: ModelChangeType.Create,
         model,
       });
     }
@@ -77,7 +77,7 @@ export const syncable = (constructor: Function) => {
       if (withoutSyncVal) return;
 
       pipe$.next({
-        type: SyncableModelChangeType.Update,
+        type: ModelChangeType.Update,
         model,
       });
     });
@@ -89,7 +89,7 @@ export const syncable = (constructor: Function) => {
       if (withoutSyncVal) return;
 
       pipe$.next({
-        type: SyncableModelChangeType.Delete,
+        type: ModelChangeType.Delete,
         model,
       });
     };

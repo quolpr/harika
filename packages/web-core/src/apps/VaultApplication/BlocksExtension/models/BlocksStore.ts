@@ -8,7 +8,7 @@ import {
 } from 'mobx-keystone';
 import { Class } from 'utility-types';
 
-import { withoutSyncAction } from '../../../../extensions/SyncExtension/mobx-keystone/syncable';
+import { withoutChangeTrackingAction } from '../../../../extensions/SyncExtension/mobx-keystone/trackChanges';
 import { SyncModelId } from '../../../../extensions/SyncExtension/types';
 import { withoutUndoAction } from '../../../../lib/utils';
 import { applyModelData } from './applyModelData';
@@ -50,7 +50,7 @@ export class BlocksStore extends Model({
   }
 
   @withoutUndoAction
-  @withoutSyncAction
+  @withoutChangeTrackingAction
   @modelAction
   handleModelChanges(
     blocksAttrs: { klass: Class<BaseBlock>; datas: ModelData<BaseBlock>[] }[],

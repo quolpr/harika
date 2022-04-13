@@ -1,11 +1,11 @@
 import { idProp, Model, model, prop, Ref, tProp, types } from 'mobx-keystone';
 
-import { syncable } from '../../../../extensions/SyncExtension/mobx-keystone/syncable';
+import { trackChanges } from '../../../../extensions/SyncExtension/mobx-keystone/trackChanges';
 import { BaseBlock } from './BaseBlock';
 
 export const blockLinkModelType = 'harika/BlocksExtension/BlockLink';
 
-@syncable
+@trackChanges
 @model(blockLinkModelType)
 export class BlockLink extends Model({
   id: idProp,

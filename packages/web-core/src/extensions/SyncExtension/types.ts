@@ -19,6 +19,7 @@ export const REPOS_WITH_SYNC = 'reposWithSync';
 export const ROOT_STORE = 'rootStore';
 export const SYNC_CONFIG = 'syncConfig';
 export const SYNC_CONFLICT_RESOLVER = 'syncConflictResolver';
+export const MODELS_CHANGES_PIPE = 'modelsChangePipe';
 
 export interface ISyncConflictResolver {
   resolve(t: Transaction): Promise<void>;

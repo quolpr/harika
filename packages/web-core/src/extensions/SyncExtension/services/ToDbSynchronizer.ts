@@ -15,19 +15,16 @@ import {
 import { STOP_SIGNAL } from '../../../framework/types';
 import { BaseSyncRepository } from '../BaseSyncRepository';
 import {
-  ISyncableModel,
-  ISyncableModelChange,
-  SyncableModelChangeType,
-  syncChangesCtx,
-} from '../mobx-keystone/syncable';
+  IModelChange,
+  ITrackChangeModel,
+  ModelChangeType,
+} from '../mobx-keystone/trackChanges';
 import { SyncConfig } from '../serverSynchronizer/SyncConfig';
-import { ROOT_STORE } from '../types';
+import { MODELS_CHANGES_PIPE } from '../types';
 
 type Class<T = any> = new (...args: any[]) => T;
 
-const compressChanges = <T extends AnyModel>(
-  chs: ISyncableModelChange<T>[],
-) => {
+const compressChanges = <T extends AnyModel>(chs: IModelChange<T>[]) => {
   const modelsMap: Record<string, T> = {};
   const toCreateModels = new Set<T>();
   const toUpdateModels = new Set<T>();
@@ -36,7 +33,7 @@ const compressChanges = <T extends AnyModel>(
   chs.forEach((ch) => {
     modelsMap[ch.model.$modelId] = ch.model;
 
-    if (ch.type === SyncableModelChangeType.Create) {
+    if (ch.type === ModelChangeType.Create) {
       if (toUpdateModels.has(ch.model)) {
         toUpdateModels.delete(ch.model);
       }
@@ -45,7 +42,7 @@ const compressChanges = <T extends AnyModel>(
       }
 
       toCreateModels.add(ch.model);
-    } else if (ch.type === SyncableModelChangeType.Update) {
+    } else if (ch.type === ModelChangeType.Update) {
       if (toCreateModels.has(ch.model)) return;
       if (toDeleteModels.has(ch.model)) return;
 
@@ -74,10 +71,8 @@ export class ToDbSynchronizer {
   constructor(
     @inject(SyncConfig) private syncConfig: SyncConfig,
     @inject(STOP_SIGNAL) stop$: Observable<void>,
-    @inject(ROOT_STORE) rootStore: object,
+    @inject(MODELS_CHANGES_PIPE) pipe$: Observable<IModelChange>,
   ) {
-    const pipe$ = syncChangesCtx.get(rootStore);
-
     if (!pipe$) throw new Error('Root store changes subject not found');
 
     pipe$
@@ -104,7 +99,7 @@ export class ToDbSynchronizer {
       });
   }
 
-  private applyChanges = async (changes: ISyncableModelChange[]) => {
+  private applyChanges = async (changes: IModelChange[]) => {
     if (changes.length === 0) return;
 
     for (const chs of Object.values(
@@ -130,9 +125,9 @@ export class ToDbSynchronizer {
 
   private apply = <T>(
     result: {
-      toCreateModels: ISyncableModel<T>[];
-      toUpdateModels: ISyncableModel<T>[];
-      toDeleteModels: ISyncableModel<T>[];
+      toCreateModels: ITrackChangeModel<T>[];
+      toUpdateModels: ITrackChangeModel<T>[];
+      toDeleteModels: ITrackChangeModel<T>[];
     },
     repo: BaseSyncRepository<any, any>,
     mapper: (model: T) => unknown,

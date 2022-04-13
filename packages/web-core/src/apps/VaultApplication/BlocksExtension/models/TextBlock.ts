@@ -1,12 +1,12 @@
 import { ExtendedModel, model, modelAction, tProp, types } from 'mobx-keystone';
 
-import { syncable } from '../../../../extensions/SyncExtension/mobx-keystone/syncable';
+import { trackChanges } from '../../../../extensions/SyncExtension/mobx-keystone/trackChanges';
 import { BaseBlock } from './BaseBlock';
 import { TextBlockContent } from './TextBlockContentModel';
 
 export const textBlockModelType = 'harika/BlocksExtension/TextBlock';
 
-@syncable
+@trackChanges
 @model(textBlockModelType)
 export class TextBlock extends ExtendedModel(BaseBlock, {
   // It's a private field
