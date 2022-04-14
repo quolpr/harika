@@ -124,7 +124,14 @@ class DbBackend {
 
       return res;
     } catch (e) {
-      console.error(`[${this.dbName}] Failed execute`, e, sql, params);
+      console.error(
+        `[${this.dbName}] Failed execute`,
+        e,
+        sql,
+        params,
+        logOpts,
+        this.currentTransactionId,
+      );
       throw e;
     }
   }
@@ -224,7 +231,16 @@ class CommandsExecutor {
   private commitOrRollbackTransaction(
     command: IRollbackTransactionCommand | ICommitTransactionCommand,
   ) {
-    if (this.pastTransactionIds.includes(command.transactionId)) return;
+    // TODO: could be bug here — rollbacked transaction will return is comitted
+    if (this.pastTransactionIds.includes(command.transactionId)) {
+      this.response$.next({
+        status: 'success',
+        commandId: command.commandId,
+        transactionId: command.transactionId,
+        result: [],
+      });
+      return;
+    }
 
     if (
       this.currentTransactionId &&
@@ -306,6 +322,20 @@ class CommandsExecutor {
         });
       }
 
+      // if (
+      //   !shouldSpawnTransaction &&
+      //   queries.find((q) => !q.text.includes('COMMIT')) &&
+      //   Math.random() > 0.95
+      // ) {
+      //   console.error(
+      //     'thowing hey!',
+      //     commandId,
+      //     queries,
+      //     shouldSpawnTransaction,
+      //   );
+      //   throw new Error('hey!');
+      // }
+
       return {
         commandId,
         status: 'success',
@@ -319,6 +349,10 @@ class CommandsExecutor {
             : `inline${this.inlineTransactionCounter}`,
           suppressLog: suppressLog,
         });
+
+        if (this.currentTransactionId) {
+          this.pastTransactionIds.push(this.currentTransactionId);
+        }
 
         this.currentTransactionId = undefined;
       }

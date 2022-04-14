@@ -46,7 +46,7 @@ export class DownloaderService {
   async performDownloads() {
     try {
       const notDownloadedUploads =
-        await this.fileUploadsRepo.getNotDownloadedUploads();
+        await this.fileUploadsRepo.getNotDownloadedAttachments();
 
       for (const upload of notDownloadedUploads) {
         if (!upload.url) continue;

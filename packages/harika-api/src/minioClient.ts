@@ -5,4 +5,5 @@ export const minioClient = new Client({
   port: parseInt(process.env.S3_PORT, 10) || 443,
   accessKey: process.env.S3_ACCESS_TOKEN,
   secretKey: process.env.S3_SECRET_KEY,
+  useSSL: process.env.S3_USE_SSL === 'true' ? true : false,
 });

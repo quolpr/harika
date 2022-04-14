@@ -24,14 +24,14 @@ import {
 } from '../repositories/AttachmentsRepository';
 import { UploadsDB } from '../UploadsDb';
 
-type IUploadWithFile = IAttachmentDoc & { file: Blob };
+type IAttachmentWithFile = IAttachmentDoc & { file: Blob };
 
 @injectable()
 export class UploaderService {
   constructor(
     @inject(UploadsDB) private uploadsDb: UploadsDB,
     @inject(AttachmentsRepository)
-    private fileUploadsRepo: AttachmentsRepository,
+    private attachmentsRepo: AttachmentsRepository,
     @inject(DbEventsListenService)
     private dbEventsService: DbEventsListenService,
     @inject(SYNC_CONFIG)
@@ -63,18 +63,18 @@ export class UploaderService {
 
   private async performUploads() {
     try {
-      const uploadsWithFile = await this.getUploadsWithFile();
+      const attachmentsWithFile = await this.getAttachmentsWithFile();
 
       const syncCtx: ISyncCtx = {
         shouldRecordChange: true,
         source: 'inDbChanges',
       };
 
-      for (const upload of uploadsWithFile) {
-        const url = await this.performUpload(upload);
+      for (const attachments of attachmentsWithFile) {
+        const url = await this.performUpload(attachments);
 
-        await this.fileUploadsRepo.update(
-          { ...omit(upload, 'file'), url, isUploaded: true },
+        await this.attachmentsRepo.update(
+          { ...omit(attachments, 'file'), url, isUploaded: true },
           syncCtx,
         );
       }
@@ -83,8 +83,8 @@ export class UploaderService {
     }
   }
 
-  private async getUploadsWithFile(): Promise<IUploadWithFile[]> {
-    const uploadDocs = await this.fileUploadsRepo.getNotUploadedUploads();
+  private async getAttachmentsWithFile(): Promise<IAttachmentWithFile[]> {
+    const uploadDocs = await this.attachmentsRepo.getNotUploadedAttachments();
     const uploadDocsKeys = Object.fromEntries(uploadDocs.map((u) => [u.id, u]));
 
     return (await this.uploadsDb.uploads.bulkGet(uploadDocs.map((u) => u.id)))
@@ -92,7 +92,7 @@ export class UploaderService {
       .map((u) => ({ ...u, ...uploadDocsKeys[u.id] }));
   }
 
-  private async performUpload(upload: IUploadWithFile) {
+  private async performUpload(upload: IAttachmentWithFile) {
     const formData = new FormData();
     formData.append('fileId', upload.id);
     formData.append('file', upload.file);

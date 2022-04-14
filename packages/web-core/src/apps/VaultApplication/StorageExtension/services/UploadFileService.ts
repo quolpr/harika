@@ -30,6 +30,7 @@ export class UploadFileService {
         createdAt,
         url: undefined,
         isDownloaded: true,
+        shouldBeDeleted: false,
       })),
       {
         shouldRecordChange: true,

@@ -42,5 +42,9 @@ export const uploadHandler: FastifyPluginCallback = (server, options, next) => {
     res.status(500).send();
   });
 
+  server.delete('/upload', async (req, res) => {
+    res.status(200).send();
+  });
+
   next();
 };

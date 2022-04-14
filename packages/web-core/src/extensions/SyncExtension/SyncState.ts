@@ -1,12 +1,15 @@
-import { inject,injectable } from 'inversify';
+import { inject, injectable } from 'inversify';
 import { isEqual } from 'lodash-es';
 import {
   BehaviorSubject,
+  catchError,
   distinctUntilChanged,
+  EMPTY,
   interval,
   map,
   merge,
   Observable,
+  of,
   ReplaySubject,
   share,
   startWith,
@@ -85,39 +88,49 @@ export class SyncStateService {
       interval(10_000),
     ).pipe(
       startWith(null),
-      switchMap(async (res) => {
-        const [serverSnapshotsCount, clientChangesCount] =
-          await this.syncRepo.getServerSnapshotsAndClientChangesCount();
+      switchMap((res) => {
+        return of(res).pipe(
+          switchMap(async (res) => {
+            const [serverSnapshotsCount, clientChangesCount] =
+              await this.syncRepo.getServerSnapshotsAndClientChangesCount();
 
-        const syncStatus = await this.syncStatusService.getSyncStatus();
+            const syncStatus = await this.syncStatusService.getSyncStatus();
 
-        return {
-          isSyncing: syncer.isSyncing$.value,
-          pendingClientChangesCount: clientChangesCount,
-          pendingServerSnapshotsCount: serverSnapshotsCount,
-          lastAppliedRemoteRevision: syncStatus.lastAppliedRemoteRevision,
-          lastReceivedRemoteRevision: syncStatus.lastReceivedRemoteRevision,
-          currentClock: syncStatus.currentClock,
-        };
+            return {
+              isSyncing: syncer.isSyncing$.value,
+              pendingClientChangesCount: clientChangesCount,
+              pendingServerSnapshotsCount: serverSnapshotsCount,
+              lastAppliedRemoteRevision: syncStatus.lastAppliedRemoteRevision,
+              lastReceivedRemoteRevision: syncStatus.lastReceivedRemoteRevision,
+              currentClock: syncStatus.currentClock,
+            };
+          }),
+          withLatestFrom(
+            serverConnector.isConnected$,
+            (partialState, isConnected) => ({ ...partialState, isConnected }),
+          ),
+          withLatestFrom(
+            serverConnector.isConnectedAndReadyToUse$,
+            (partialState, isConnectedAndReadyToUse) => ({
+              ...partialState,
+              isConnectedAndReadyToUse,
+            }),
+          ),
+          distinctUntilChanged((a, b) => isEqual(a, b)),
+          tap((state) => {
+            localStorage.setItem(storageKey, JSON.stringify(state));
+          }),
+          share({
+            connector: () => new ReplaySubject(1),
+          }),
+          catchError((err: unknown, o) => {
+            console.error('Error happened', err);
+
+            return EMPTY;
+          }),
+        );
       }),
-      withLatestFrom(
-        serverConnector.isConnected$,
-        (partialState, isConnected) => ({ ...partialState, isConnected }),
-      ),
-      withLatestFrom(
-        serverConnector.isConnectedAndReadyToUse$,
-        (partialState, isConnectedAndReadyToUse) => ({
-          ...partialState,
-          isConnectedAndReadyToUse,
-        }),
-      ),
-      distinctUntilChanged((a, b) => isEqual(a, b)),
-      tap((state) => {
-        localStorage.setItem(storageKey, JSON.stringify(state));
-      }),
-      share({
-        connector: () => new ReplaySubject(1),
-      }),
+      takeUntil(this.stop$),
     );
 
     const stateGetter = new Observable<string | null>((obs) => {

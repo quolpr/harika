@@ -45,6 +45,8 @@ services:
       S3_ENDPOINT: s3
       S3_PORT: 9000 
       S3_PUBLIC_URL: 'http://localhost:9000'
+      S3_UPLOADS_BUCKET_NAME: uploads
+      S3_USE_SSL: false
     depends_on:
       - db
       - s3

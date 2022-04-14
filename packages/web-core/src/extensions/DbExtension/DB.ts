@@ -148,7 +148,7 @@ export class Transaction implements IQueryExecuter {
   async insertRecords(
     table: string,
     objs: Record<string, any>[],
-    replace: boolean = false,
+    replace: boolean = true,
     suppressLog: boolean = false,
   ): Promise<void> {
     return this.db.insertRecords(
@@ -348,7 +348,7 @@ export class DB implements IQueryExecuter {
   async insertRecords(
     table: string,
     objs: Record<string, any>[],
-    replace: boolean = false,
+    replace: boolean = true,
     suppressLog: boolean = false,
     e: IQueryExecuter = this,
   ) {

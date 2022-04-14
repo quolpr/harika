@@ -58,7 +58,6 @@ export class OnDbChangeNotifier {
         this.syncConfig.getRegistrationByCollectionName(tableName);
 
       if (!registration) {
-        console.error('Failed to find sync registration for ' + tableName);
         continue;
       }
 
@@ -113,8 +112,6 @@ export class OnDbChangeNotifier {
       const registration = this.syncConfig.getRegistrationByModelClass(klass);
 
       if (!registration) {
-        console.info('Failed to find sync registration for ' + klass);
-
         toCreateOrUpdateDatas.push([]);
         toDeleteIds.push([]);
         return;

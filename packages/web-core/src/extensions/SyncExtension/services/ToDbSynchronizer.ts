@@ -80,10 +80,12 @@ export class ToDbSynchronizer {
         buffer(pipe$.pipe(debounceTime(300))),
         map((changes) => changes.flat()),
         concatMap((changes) => {
+          // TODO: better retry. Some model types could actually be successfully created.
+          // They should be excluded in next retry
           return defer(() => this.applyChanges(changes)).pipe(
             retryBackoff({
               initialInterval: 500,
-              maxRetries: 5,
+              maxRetries: 10,
               resetOnSuccess: true,
             }),
           );
@@ -92,7 +94,7 @@ export class ToDbSynchronizer {
       )
       .subscribe({
         error: (e: unknown) => {
-          console.error('Failed to save changes to db!');
+          alert('Failed to save changes to DB! ToDbSynchronizer stops working');
 
           throw e;
         },
