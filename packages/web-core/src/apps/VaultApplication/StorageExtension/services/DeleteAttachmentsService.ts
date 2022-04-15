@@ -108,6 +108,7 @@ export class DeleteAttachmentsService {
     };
     await axios.delete(`${this.syncConfig.apiUrl}/upload`, {
       data: { ids },
+      withCredentials: true,
     });
 
     await this.attachmentsRepo.bulkDelete(ids, ctx);

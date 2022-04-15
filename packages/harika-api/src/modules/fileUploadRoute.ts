@@ -13,7 +13,6 @@ export const uploadHandler: FastifyPluginCallback = (server, options, next) => {
     let fileId: string | undefined = undefined;
     let fileSize: number | undefined = undefined;
 
-    console.log({ parts });
     for await (const part of parts) {
       if (part.file) {
         if (!fileId) {
@@ -57,6 +56,32 @@ export const uploadHandler: FastifyPluginCallback = (server, options, next) => {
   });
 
   server.delete('/upload', async (req, res) => {
+    const userId = (await getSessionFromRequestStrict(req)).identity.id;
+    const { ids } = req.body as { ids: string[] };
+
+    const files = (
+      await Promise.all(
+        ids.map(
+          async (id) =>
+            (
+              await S3Client.listObjectsV2({
+                Bucket: uploadsBucket,
+                Prefix: `${userId}/${id}`,
+              })
+            ).Contents || []
+        )
+      )
+    ).flat();
+
+    if (files.length > 0) {
+      await S3Client.deleteObjects({
+        Bucket: uploadsBucket,
+        Delete: {
+          Objects: files.flatMap(({ Key }) => (Key ? { Key } : [])),
+        },
+      });
+    }
+
     res.status(200).send();
   });
 
