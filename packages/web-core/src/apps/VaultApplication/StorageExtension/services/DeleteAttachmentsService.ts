@@ -67,22 +67,22 @@ export class DeleteAttachmentsService {
       )
       .subscribe();
 
-    interval(10_000)
-      .pipe(
-        exhaustMap(async () =>
-          this.removeAttachments(
-            (await this.attachmentsRepo.getAttachmentsToDelete()).map(
-              ({ id }) => id,
-            ),
-          ),
-        ),
-        catchError((err: unknown, o) => {
-          console.error('Error happened', err);
-          return o;
-        }),
-        takeUntil(stop$),
-      )
-      .subscribe();
+    // interval(10_000)
+    //   .pipe(
+    //     exhaustMap(async () =>
+    //       this.removeAttachments(
+    //         (await this.attachmentsRepo.getAttachmentsToDelete()).map(
+    //           ({ id }) => id,
+    //         ),
+    //       ),
+    //     ),
+    //     catchError((err: unknown, o) => {
+    //       console.error('Error happened', err);
+    //       return o;
+    //     }),
+    //     takeUntil(stop$),
+    //   )
+    //   .subscribe();
   }
 
   private async markAsShouldBeDeleted(blockIds: string[]) {
@@ -99,19 +99,19 @@ export class DeleteAttachmentsService {
     );
   }
 
-  private async removeAttachments(ids: string[]) {
-    if (ids.length === 0) return;
+  // private async removeAttachments(ids: string[]) {
+  //   if (ids.length === 0) return;
 
-    const ctx = {
-      shouldRecordChange: true,
-      source: 'inDbChanges' as const,
-    };
-    await axios.delete(`${this.syncConfig.apiUrl}/upload`, {
-      data: { ids },
-      withCredentials: true,
-    });
+  //   const ctx = {
+  //     shouldRecordChange: true,
+  //     source: 'inDbChanges' as const,
+  //   };
+  //   await axios.delete(`${this.syncConfig.apiUrl}/upload`, {
+  //     data: { ids },
+  //     withCredentials: true,
+  //   });
 
-    await this.attachmentsRepo.bulkDelete(ids, ctx);
-    await this.uploadsDb.uploads.bulkDelete(ids);
-  }
+  //   await this.attachmentsRepo.bulkDelete(ids, ctx);
+  //   await this.uploadsDb.uploads.bulkDelete(ids);
+  // }
 }
