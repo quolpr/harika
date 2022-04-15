@@ -158,7 +158,7 @@
   }
 }
 
-.blockRef {
+.block-ref {
   border-bottom: 0.1px solid;
   @apply border-blue-500;
 
@@ -187,4 +187,8 @@
 
     display: inline-block;
   }
+}
+
+.token-error {
+  @apply text-red-600;
 }

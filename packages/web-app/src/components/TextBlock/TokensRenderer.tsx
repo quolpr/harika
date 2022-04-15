@@ -152,7 +152,7 @@ const BlockRefRenderer = observer(({ token }: { token: TextBlockRef }) => {
 
   return (
     <span
-      className="blockRef"
+      className="block-ref"
       onClick={handleClick}
       role="link"
       tabIndex={0}
@@ -212,6 +212,9 @@ const Resize = React.forwardRef((props, ref) => {
 
 const useAttachmentUrl = (originalUrl: string) => {
   const [url, setUrl] = useState<string | undefined>(undefined);
+  const [loadingState, setLoadingState] = useState<'loading' | 'loaded'>(
+    'loading',
+  );
 
   const uploadService = useUploadService();
 
@@ -223,13 +226,18 @@ const useAttachmentUrl = (originalUrl: string) => {
           tap((upload) => {
             if (upload) {
               setUrl(URL.createObjectURL(upload.file));
+            } else {
+              setUrl(undefined);
             }
+
+            setLoadingState('loaded');
           }),
         )
         .subscribe();
 
       return () => subscription.unsubscribe();
     } else {
+      setLoadingState('loaded');
       setUrl(originalUrl);
     }
   }, [originalUrl, uploadService]);
@@ -240,7 +248,7 @@ const useAttachmentUrl = (originalUrl: string) => {
     }
   });
 
-  return url;
+  return { url, loadingState };
 };
 
 const AttachmentRenderer = ({
@@ -248,7 +256,7 @@ const AttachmentRenderer = ({
 }: {
   attachment: AttachmentTemplateToken;
 }) => {
-  const url = useAttachmentUrl(attachment.content.url);
+  const { url, loadingState } = useAttachmentUrl(attachment.content.url);
 
   const handleClick = useCallback(() => {
     if (!url) return;
@@ -271,6 +279,8 @@ const AttachmentRenderer = ({
       <span className="download-attachment-btn__name">
         {attachment.content.name}
       </span>
+
+      {!url && loadingState === 'loaded' && ' [[NOT FOUND]]'}
     </button>
   );
 };
@@ -302,7 +312,7 @@ const ImageRender = ({
   token: ImageToken;
   blockView: BlockView<TextBlock>;
 }) => {
-  const url = useAttachmentUrl(token.url);
+  const { url, loadingState } = useAttachmentUrl(token.url);
   const [width, setWidth] = useState<number | undefined>(token.width);
 
   const handleResize = useCallback(
@@ -343,25 +353,31 @@ const ImageRender = ({
     setWidth(token.width);
   }, [token.width]);
 
-  return url ? (
-    <Resizable
-      size={memoSize}
-      onResize={handleResize}
-      onResizeStop={handleResizeStop}
-      as={Resize}
-    >
-      <img
-        alt={token.title}
-        src={url}
-        data-offset-start={token.offsetStart}
-        data-offset-end={token.offsetEnd}
-        data-not-editable
-        width="100%"
-        height="100%"
-        style={{ display: 'inline-block' }}
-      />
-    </Resizable>
-  ) : null;
+  return (
+    <>
+      {url ? (
+        <Resizable
+          size={memoSize}
+          onResize={handleResize}
+          onResizeStop={handleResizeStop}
+          as={Resize}
+        >
+          <img
+            alt={token.title}
+            src={url}
+            data-offset-start={token.offsetStart}
+            data-offset-end={token.offsetEnd}
+            data-not-editable
+            width="100%"
+            height="100%"
+            style={{ display: 'inline-block' }}
+          />
+        </Resizable>
+      ) : loadingState === 'loaded' ? (
+        <div className="token-error">Error: Image not found</div>
+      ) : null}
+    </>
+  );
 };
 
 const TokenRenderer = observer(

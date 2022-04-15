@@ -94,6 +94,7 @@ export class UploaderService {
 
   private async performUpload(upload: IAttachmentWithFile) {
     const formData = new FormData();
+    formData.append('fileSize', upload.file.size.toString());
     formData.append('fileId', upload.id);
     formData.append('file', upload.file);
 
