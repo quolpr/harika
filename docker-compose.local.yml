@@ -42,11 +42,9 @@ services:
       KRATOS_URL: http://kratos:4433
       S3_ACCESS_TOKEN: 'FAOYW3CI7HL4ZXRJ00H4'
       S3_SECRET_KEY: '0x6h5JBDS4rvE95ewppktmgA9+xLzL95CzhgxnJ4'
-      S3_ENDPOINT: s3
-      S3_PORT: 9000 
+      S3_ENDPOINT: http://s3
       S3_PUBLIC_URL: 'http://localhost:9000'
       S3_UPLOADS_BUCKET_NAME: uploads
-      S3_USE_SSL: false
     depends_on:
       - db
       - s3

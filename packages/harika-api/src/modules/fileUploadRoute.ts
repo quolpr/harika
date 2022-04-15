@@ -1,7 +1,7 @@
 import { FastifyPluginCallback } from 'fastify';
 
 import { getSessionFromRequestStrict } from '../helpers/getSessionFromRequest';
-import { minioClient } from '../minioClient';
+import { S3Client } from '../S3Client';
 
 const uploadsBucket = process.env.S3_UPLOADS_BUCKET_NAME;
 
@@ -23,13 +23,20 @@ export const uploadHandler: FastifyPluginCallback = (server, options, next) => {
         }
 
         const filePath = `${userId}/${fileId}/${part.filename}`;
-        await minioClient.putObject(uploadsBucket, filePath, part.file, {
-          'Content-Type': part.mimetype,
-        });
 
-        res.status(201).send({
-          url: `${process.env.S3_PUBLIC_URL}/${uploadsBucket}/${filePath}`,
-        });
+        S3Client.putObject(
+          {
+            Body: part.file,
+            Bucket: uploadsBucket,
+            Key: filePath,
+            ContentType: part.mimetype,
+          },
+          () => {
+            res.status(201).send({
+              url: `${process.env.S3_PUBLIC_URL}/${uploadsBucket}/${filePath}`,
+            });
+          }
+        );
 
         return;
       } else {

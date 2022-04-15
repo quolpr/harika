@@ -15,6 +15,7 @@
   "keywords": [],
   "author": "",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.67.0",
     "@harika/sync-common": "*",
     "@ory/client": "^0.0.1-alpha.159",
     "@ory/kratos-client": "^0.9.0-alpha.3",
@@ -28,7 +29,6 @@
     "fastify-reply-from": "^6.6.0",
     "knex": "^1.0.5",
     "lodash": "^4.17.21",
-    "minio": "^7.0.26",
     "pg": "^8.7.3",
     "rxjs": "^7.5.5",
     "socket.io": "^4.4.1",
