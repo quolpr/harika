@@ -11,19 +11,17 @@ export class UploadFileService {
     private fileUploadsRepo: AttachmentsRepository,
   ) {}
 
-  async createUploads(
-    uploads: { id: string; file: File; attachedToBlockId: string }[],
-  ) {
+  async createUploads(uploads: { id: string; file: File }[]) {
     const createdAt = new Date().getTime();
 
     await this.uploadsDb.uploads.bulkPut(
       uploads.map((u) => ({ id: u.id, file: u.file })),
     );
 
+    // Attachment relation will be created in UpdateRelationsService
     await this.fileUploadsRepo.bulkCreate(
       uploads.map((u) => ({
         id: u.id,
-        attachedToBlockId: u.attachedToBlockId,
         fileName: u.file.name,
         fileType: u.file.type,
         isUploaded: false,

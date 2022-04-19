@@ -99,6 +99,7 @@ export interface ImageToken extends BaseToken {
   title: string;
   width?: number;
   height?: number;
+  attachmentId?: string;
 }
 
 export interface TemplateToken extends BaseToken {
@@ -113,6 +114,7 @@ export interface AttachmentTemplateToken extends BaseToken {
   type: 'template';
   templateType: 'attachment';
   content: {
+    attachmentId?: string;
     url: string;
     name: string;
   };

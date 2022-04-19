@@ -2,12 +2,17 @@ import { debounce } from 'lodash-es';
 import { action, computed, makeObservable, observable, reaction } from 'mobx';
 
 import {
+  filterAst,
   findFirst,
   isTodo,
   mapTokens,
 } from '../../../../lib/blockParser/astHelpers';
 import { parse } from '../../../../lib/blockParser/blockParser';
-import type { Token } from '../../../../lib/blockParser/types';
+import type {
+  AttachmentTemplateToken,
+  ImageToken,
+  Token,
+} from '../../../../lib/blockParser/types';
 import { TextBlock } from './TextBlock';
 
 function assertUnreachable(x: never): never {
@@ -108,6 +113,27 @@ export class TextBlockContent {
 
   getTokenById(tokenId: string) {
     return findFirst(this.ast, ({ id }) => tokenId === id);
+  }
+
+  get attachmentIds() {
+    const templateAttachmentIds = (
+      filterAst(
+        this.ast,
+        (t) =>
+          t.type === 'template' &&
+          t.templateType === 'attachment' &&
+          t.content.attachmentId !== undefined,
+      ) as AttachmentTemplateToken[]
+    ).map((t) => t.content.attachmentId as string);
+
+    const imageAttachmentIds = (
+      filterAst(
+        this.ast,
+        (t) => t.type === 'image' && t.attachmentId !== undefined,
+      ) as ImageToken[]
+    ).map((t) => t.attachmentId as string);
+
+    return templateAttachmentIds.concat(imageAttachmentIds);
   }
 
   @action

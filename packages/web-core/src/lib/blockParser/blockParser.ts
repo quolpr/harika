@@ -4,7 +4,7 @@ import { ValuesType } from 'utility-types';
 import { dictionary } from '../generateId';
 import { mapTokens } from './astHelpers';
 import { parse as pegParse } from './pegParser';
-import type { StringToken, Token } from './types';
+import type { AttachmentTemplateToken, StringToken, Token } from './types';
 
 const newIdGenerator = () => {
   let id = 0;
@@ -99,10 +99,21 @@ export const parse = (data: string, idGenerator = newIdGenerator): Token[] => {
       return { ...t, blockId: id };
     } else if (t.type === 'template') {
       try {
-        const parseResult = JSON.parse(t.content as any as string);
+        let parseResult = JSON.parse(t.content as any as string);
 
         if (typeof parseResult === 'string') {
           throw new Error('Parsed result is string');
+        }
+
+        if (t.templateType === 'attachment') {
+          const url = (parseResult as AttachmentTemplateToken['content']).url;
+
+          parseResult = {
+            ...parseResult,
+            attachmentId: url.startsWith('harika-file://')
+              ? url.replace('harika-file://', '')
+              : undefined,
+          };
         }
 
         return { ...t, content: parseResult };
@@ -117,6 +128,13 @@ export const parse = (data: string, idGenerator = newIdGenerator): Token[] => {
 
         return strToken;
       }
+    } else if (t.type === 'image') {
+      return {
+        ...t,
+        attachmentId: t.url.startsWith('harika-file://')
+          ? t.url.replace('harika-file://', '')
+          : undefined,
+      };
     }
 
     return t;

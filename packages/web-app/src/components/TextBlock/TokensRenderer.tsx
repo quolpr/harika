@@ -210,7 +210,10 @@ const Resize = React.forwardRef((props, ref) => {
   );
 });
 
-const useAttachmentUrl = (originalUrl: string) => {
+const useAttachmentUrl = (
+  originalUrl: string,
+  attachmentId: string | undefined,
+) => {
   const [url, setUrl] = useState<string | undefined>(undefined);
   const [loadingState, setLoadingState] = useState<'loading' | 'loaded'>(
     'loading',
@@ -219,9 +222,10 @@ const useAttachmentUrl = (originalUrl: string) => {
   const uploadService = useUploadService();
 
   useEffect(() => {
-    if (originalUrl.startsWith('harika-file://')) {
-      const id = originalUrl.replace('harika-file://', '');
-      const subscription = from(liveQuery(() => uploadService.getUpload(id)))
+    if (attachmentId) {
+      const subscription = from(
+        liveQuery(() => uploadService.getUpload(attachmentId)),
+      )
         .pipe(
           tap((upload) => {
             if (upload) {
@@ -240,7 +244,7 @@ const useAttachmentUrl = (originalUrl: string) => {
       setLoadingState('loaded');
       setUrl(originalUrl);
     }
-  }, [originalUrl, uploadService]);
+  }, [attachmentId, originalUrl, uploadService]);
 
   useUnmount(() => {
     if (url?.startsWith('blob:')) {
@@ -256,7 +260,10 @@ const AttachmentRenderer = ({
 }: {
   attachment: AttachmentTemplateToken;
 }) => {
-  const { url, loadingState } = useAttachmentUrl(attachment.content.url);
+  const { url, loadingState } = useAttachmentUrl(
+    attachment.content.url,
+    attachment.content.attachmentId,
+  );
 
   const handleClick = useCallback(() => {
     if (!url) return;
@@ -312,7 +319,7 @@ const ImageRender = ({
   token: ImageToken;
   blockView: BlockView<TextBlock>;
 }) => {
-  const { url, loadingState } = useAttachmentUrl(token.url);
+  const { url, loadingState } = useAttachmentUrl(token.url, token.attachmentId);
   const [width, setWidth] = useState<number | undefined>(token.width);
 
   const handleResize = useCallback(

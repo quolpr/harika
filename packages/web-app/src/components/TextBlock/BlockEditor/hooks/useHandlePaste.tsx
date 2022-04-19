@@ -136,6 +136,7 @@ const useHandleFilePaste = (block: BlockView<TextBlock>) => {
               })`;
             } else {
               const attachment = JSON.stringify({
+                id: u.id,
                 url: `harika-file://${u.id}`,
                 name: u.file.name,
               });

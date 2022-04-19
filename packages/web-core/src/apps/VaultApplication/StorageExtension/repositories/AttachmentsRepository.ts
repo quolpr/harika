@@ -1,10 +1,11 @@
+import { omit } from 'lodash-es';
+
 import { IQueryExecuter } from '../../../../extensions/DbExtension/DB';
 import { BaseSyncRepository } from '../../../../extensions/SyncExtension/BaseSyncRepository';
-import { join, raw, sqltag } from '../../../../lib/sql';
+import { raw, sqltag } from '../../../../lib/sql';
 
 export type IAttachmentDoc = {
   id: string;
-  attachedToBlockId: string;
   fileName: string;
   fileType: string;
   isUploaded: boolean;
@@ -24,23 +25,6 @@ export class AttachmentsRepository extends BaseSyncRepository<
   IAttachmentDoc,
   IAttachmentRow
 > {
-  async getAttachmentsOfBlocks(
-    blockIds: string[],
-    e: IQueryExecuter = this.db,
-  ) {
-    return await e.getRecords<IAttachmentDoc>(
-      sqltag`SELECT * FROM ${raw(
-        attachmentsTable,
-      )} WHERE attachedToBlockId IN (${join(blockIds)})`,
-    );
-  }
-
-  async getAttachmentsToDelete(e: IQueryExecuter = this.db) {
-    return await e.getRecords<IAttachmentDoc>(
-      sqltag`SELECT * FROM ${raw(attachmentsTable)} WHERE shouldBeDeleted=1`,
-    );
-  }
-
   async getNotUploadedAttachments(e: IQueryExecuter = this.db) {
     return await e.getRecords<IAttachmentDoc>(
       sqltag`SELECT * FROM ${raw(
@@ -63,7 +47,7 @@ export class AttachmentsRepository extends BaseSyncRepository<
       url: doc.url ? doc.url : null,
     };
 
-    return res;
+    return omit(res, 'attachedToBlockId');
   }
 
   toDoc(row: IAttachmentRow): IAttachmentDoc {
@@ -72,7 +56,7 @@ export class AttachmentsRepository extends BaseSyncRepository<
       url: row.url ? row.url : undefined,
     };
 
-    return res;
+    return omit(res, 'attachedToBlockId');
   }
 
   getTableName() {
