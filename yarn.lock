@@ -3546,17 +3546,10 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
-"@ory/client@^0.0.1-alpha.155":
-  version "0.0.1-alpha.155"
-  resolved "https://registry.yarnpkg.com/@ory/client/-/client-0.0.1-alpha.155.tgz#1a4a89e8845794d1c197d2ef8b26bad36f4ea236"
-  integrity sha512-v8v2Bss0OKb9ZCe/BioLRI7H7RRCNeKgBXMvM+w77tedB1NXEeP51trV2xm83Kz2F3mdawHR1P9UzuiFI1f4FQ==
-  dependencies:
-    axios "^0.21.4"
-
-"@ory/client@^0.0.1-alpha.159":
-  version "0.0.1-alpha.159"
-  resolved "https://registry.yarnpkg.com/@ory/client/-/client-0.0.1-alpha.159.tgz#42e90e6bb87912747b09efcdf752468f53e8336b"
-  integrity sha512-GGQCOxNsgnclU9wVtdqe9S2ZSlXvV3HHJmr5hZeVD1l0dWrzylUulHOye9yuhLhKxz8zLXmGdHI51+3ZHGzUgg==
+"@ory/client@^0.0.1-alpha.169":
+  version "0.0.1-alpha.169"
+  resolved "https://registry.yarnpkg.com/@ory/client/-/client-0.0.1-alpha.169.tgz#fcde8f8699a7025773fd54bfd4d9747623e27652"
+  integrity sha512-BUBx6rwHcK5GKjf5wIFP7dDDs8f8pZdcbQcUwC3D9FPOaV1vSJOLHWZ1wa1axXsAmNm/wBGKjiZszcuYNu9Xlg==
   dependencies:
     axios "^0.21.4"
 
