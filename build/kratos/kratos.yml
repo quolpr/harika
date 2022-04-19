@@ -9,7 +9,7 @@ serve:
     base_url: http://kratos:4434/
 
 session:
-  lifespan: 72h0m0s
+  lifespan: 720h0m0s
 
 selfservice:
   default_browser_return_url: http://127.0.0.1:4455/
