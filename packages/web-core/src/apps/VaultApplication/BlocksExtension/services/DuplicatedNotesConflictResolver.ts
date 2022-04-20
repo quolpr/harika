@@ -1,10 +1,10 @@
 import { inject, injectable } from 'inversify';
 import { maxBy, minBy } from 'lodash-es';
+import sql, { raw } from 'sql-template-tag';
 
 import { Transaction } from '../../../../extensions/DbExtension/DB';
 import { ISyncCtx } from '../../../../extensions/SyncExtension/syncCtx';
 import { ISyncConflictResolver } from '../../../../extensions/SyncExtension/types';
-import { raw, sqltag } from '../../../../lib/sql';
 import { AllBlocksRepository } from '../repositories/AllBlocksRepository';
 import { noteBlocksTable } from '../repositories/NoteBlocksRepostitory';
 
@@ -16,7 +16,7 @@ export class DuplicatedNotesConflictResolver implements ISyncConflictResolver {
 
   async resolve(t: Transaction) {
     const res = await t.getRecords<{ title: string }>(
-      sqltag`SELECT title FROM ${raw(
+      sql`SELECT title FROM ${raw(
         noteBlocksTable,
       )} t GROUP BY t.title HAVING COUNT(t.title) > 1`,
     );
@@ -28,7 +28,7 @@ export class DuplicatedNotesConflictResolver implements ISyncConflictResolver {
 
     for (const { title } of res) {
       const records = await t.getRecords<{ id: string; createdAt: string }>(
-        sqltag`SELECT id, createdAt FROM ${raw(
+        sql`SELECT id, createdAt FROM ${raw(
           noteBlocksTable,
         )} WHERE title = ${title}`,
       );

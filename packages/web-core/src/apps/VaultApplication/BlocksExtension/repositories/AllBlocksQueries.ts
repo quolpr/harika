@@ -1,8 +1,8 @@
 import 'reflect-metadata';
 
 import { injectable } from 'inversify';
+import sql, { join, raw } from 'sql-template-tag';
 
-import { join, raw, sqltag } from '../../../../lib/sql';
 import { blocksChildrenTable } from './AllBlocksRepository';
 
 @injectable()
@@ -10,10 +10,10 @@ export class AllBlocksQueries {
   getDescendantBlockIds(ids: string[], tableName = 'childrenBlockIds') {
     const rawBlocksChildrenTable = raw(blocksChildrenTable);
 
-    return sqltag`
+    return sql`
       ${raw(tableName)}(blockId, parentId) AS (
         VALUES ${join(
-          ids.map((id) => sqltag`(${id}, NULL)`),
+          ids.map((id) => sql`(${id}, NULL)`),
           ',',
         )}
         UNION ALL

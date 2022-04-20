@@ -1,10 +1,10 @@
 import { inject, injectable, multiInject } from 'inversify';
 import { chunk, groupBy, mapKeys, pickBy } from 'lodash-es';
+import sql, { join, raw } from 'sql-template-tag';
 
 import { DB, IQueryExecuter } from '../../../../extensions/DbExtension/DB';
 import { SyncConfig } from '../../../../extensions/SyncExtension/serverSynchronizer/SyncConfig';
 import { ISyncCtx } from '../../../../extensions/SyncExtension/syncCtx';
-import { join, raw, sqltag } from '../../../../lib/sql';
 import { BLOCK_REPOSITORY } from '../types';
 import { AllBlocksQueries } from './AllBlocksQueries';
 import { BaseBlockRepository } from './BaseBlockRepository';
@@ -54,10 +54,10 @@ export class AllBlocksRepository {
     const { select, joinTables } = await this.getBlocksQueries('blocks', e);
 
     return this.joinedRowsToDocs(
-      await e.getRecords(sqltag`
+      await e.getRecords(sql`
       SELECT ${select} FROM (
         ${join(
-          ids.map((id) => sqltag`SELECT ${id} as blockId`),
+          ids.map((id) => sql`SELECT ${id} as blockId`),
           ' UNION ALL ',
         )}
       ) as blocks
@@ -70,12 +70,12 @@ export class AllBlocksRepository {
     const { select, joinTables } = await this.getBlocksQueries('blocks', e);
 
     return this.joinedRowsToDocs(
-      await e.getRecords(sqltag`
+      await e.getRecords(sql`
       SELECT ${select} FROM (
         ${join(
           this.blocksTables.map(
             (table) =>
-              sqltag`SELECT id AS blockId FROM ${raw(
+              sql`SELECT id AS blockId FROM ${raw(
                 table,
               )} WHERE parentId IN (${join(parentIds, ', ')})`,
           ),
@@ -97,7 +97,7 @@ export class AllBlocksRepository {
 
     for (const chunkedIds of chunk(ids, 400)) {
       const records = this.joinedRowsToDocs(
-        await e.getRecords(sqltag`
+        await e.getRecords(sql`
         WITH RECURSIVE
           ${this.allBlocksQueries.getDescendantBlockIds(chunkedIds)}
         SELECT ${select} FROM childrenBlockIds
@@ -167,13 +167,13 @@ export class AllBlocksRepository {
     const res = await e.getRecords<{
       blockId: string;
       rootBlockId: string;
-    }>(sqltag`
+    }>(sql`
       WITH RECURSIVE
         parentBlockIds(blockId, originalBlockId, parentId) AS (
           VALUES ${join(
             ids.map(
               (id) =>
-                sqltag`(${id}, ${id}, (SELECT parentId FROM ${raw(
+                sql`(${id}, ${id}, (SELECT parentId FROM ${raw(
                   blocksChildrenTable,
                 )} WHERE blockId=${id}))`,
             ),
@@ -215,7 +215,7 @@ export class AllBlocksRepository {
         .map((r) => r.getTableName())
         .map(
           (tableName) =>
-            sqltag`LEFT JOIN ${raw(tableName)} ON ${raw(tableName)}.id = ${raw(
+            sql`LEFT JOIN ${raw(tableName)} ON ${raw(tableName)}.id = ${raw(
               tableToJoin,
             )}.blockId`,
         ),

@@ -13,10 +13,10 @@ import {
 import { inject, injectable } from 'inversify';
 import { isEmpty } from 'lodash-es';
 import Q from 'sql-bricks';
+import sql, { raw } from 'sql-template-tag';
 import { Overwrite } from 'utility-types';
 import { v4 as uuidv4 } from 'uuid';
 
-import { raw, sqltag } from '../../../lib/sql';
 import { DB, IQueryExecuter, Transaction } from '../../DbExtension/DB';
 import { getObjectDiff } from '../serverSynchronizer/utils';
 import { SyncStatusService } from '../services/SyncStatusService';
@@ -317,7 +317,7 @@ export class SyncRepository {
     const count =
       (
         await e.getRecords<{ cnt: number }>(
-          sqltag`SELECT COUNT(*) as cnt FROM ${raw(clientChangesTable)}`,
+          sql`SELECT COUNT(*) as cnt FROM ${raw(clientChangesTable)}`,
         )
       )[0]?.cnt || 0;
 
@@ -325,9 +325,9 @@ export class SyncRepository {
       areMore: count > limit,
       changes: (
         await e.getRecords<IClientChangeRow>(
-          sqltag`SELECT * FROM ${raw(
-            clientChangesTable,
-          )} ORDER BY rev LIMIT ${raw(limit.toString())}`,
+          sql`SELECT * FROM ${raw(clientChangesTable)} ORDER BY rev LIMIT ${raw(
+            limit.toString(),
+          )}`,
         )
       ).map((row) => this.clientChangeRowToDoc(row)),
     };

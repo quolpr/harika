@@ -3,9 +3,9 @@ import 'reflect-metadata';
 import { inject, injectable } from 'inversify';
 import { isEqual, mapValues, omit } from 'lodash-es';
 import Q from 'sql-bricks';
+import sql, { raw } from 'sql-template-tag';
 
 import { WINDOW_ID } from '../../framework/types';
-import { raw, sqltag } from '../../lib/sql';
 import { DB, IQueryExecuter, Transaction } from '../DbExtension/DB';
 import { SyncRepository } from './repositories/SyncRepository';
 import type { ISyncCtx } from './syncCtx';
@@ -242,7 +242,7 @@ export abstract class BaseSyncRepository<
     if (this.cachedColumnNames) return this.cachedColumnNames;
 
     const res = await e.getRecords<{ name: string }>(
-      sqltag`SELECT name FROM PRAGMA_TABLE_INFO('${raw(this.getTableName())}')`,
+      sql`SELECT name FROM PRAGMA_TABLE_INFO('${raw(this.getTableName())}')`,
     );
 
     this.cachedColumnNames = res.map(({ name }) => name);

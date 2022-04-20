@@ -1,10 +1,10 @@
 import { inject, injectable } from 'inversify';
 import { Observable } from 'rxjs';
 import Q from 'sql-bricks';
+import sql, { raw } from 'sql-template-tag';
 
 import { DB } from '../../../../extensions/DbExtension/DB';
 import { DbEventsListenService } from '../../../../extensions/SyncExtension/services/DbEventsListenerService';
-import { raw, sqltag } from '../../../../lib/sql';
 import { AllBlocksRepository } from '../repositories/AllBlocksRepository';
 import {
   noteBlocksFTSTable,
@@ -43,7 +43,7 @@ export class FindNoteOrBlockService {
       blockId: string;
       blockType: string;
       data: string;
-    }>(sqltag`
+    }>(sql`
       SELECT * FROM (
         SELECT
           id blockId,

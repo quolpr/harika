@@ -21,10 +21,10 @@ import {
   timeout,
 } from 'rxjs';
 import Q from 'sql-bricks';
+import { Sql } from 'sql-template-tag';
 import { v4 as uuidv4 } from 'uuid';
 
 import { STOP_SIGNAL } from '../../framework/types';
-import { Sql } from '../../lib/sql';
 // @ts-ignore
 import DbWorker from './DbWorker?worker';
 import {

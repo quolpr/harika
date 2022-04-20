@@ -1,8 +1,8 @@
 import { omit } from 'lodash-es';
+import sql, { raw } from 'sql-template-tag';
 
 import { IQueryExecuter } from '../../../../extensions/DbExtension/DB';
 import { BaseSyncRepository } from '../../../../extensions/SyncExtension/BaseSyncRepository';
-import { raw, sqltag } from '../../../../lib/sql';
 
 export type IAttachmentDoc = {
   id: string;
@@ -27,17 +27,13 @@ export class AttachmentsRepository extends BaseSyncRepository<
 > {
   async getNotUploadedAttachments(e: IQueryExecuter = this.db) {
     return await e.getRecords<IAttachmentDoc>(
-      sqltag`SELECT * FROM ${raw(
-        attachmentsTable,
-      )} WHERE isUploaded=0 LIMIT 10`,
+      sql`SELECT * FROM ${raw(attachmentsTable)} WHERE isUploaded=0 LIMIT 10`,
     );
   }
 
   async getNotDownloadedAttachments(e: IQueryExecuter = this.db) {
     return await e.getRecords<IAttachmentDoc>(
-      sqltag`SELECT * FROM ${raw(
-        attachmentsTable,
-      )} WHERE isDownloaded=0 LIMIT 10`,
+      sql`SELECT * FROM ${raw(attachmentsTable)} WHERE isDownloaded=0 LIMIT 10`,
     );
   }
 

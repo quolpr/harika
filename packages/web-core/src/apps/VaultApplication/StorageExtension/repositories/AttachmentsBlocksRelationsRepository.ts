@@ -1,6 +1,7 @@
+import sql, { join, raw } from 'sql-template-tag';
+
 import { IQueryExecuter } from '../../../../extensions/DbExtension/DB';
 import { BaseSyncRepository } from '../../../../extensions/SyncExtension/BaseSyncRepository';
-import { join, raw, sqltag } from '../../../../lib/sql';
 
 export type IAttachmentRelationDoc = {
   id: string;
@@ -18,7 +19,7 @@ export class AttachmentsBlocksRelationsRepository extends BaseSyncRepository<
 > {
   getAttachedTo(blockIds: string[], e: IQueryExecuter = this.db) {
     return e.getRecords<IAttachmentRelationDoc>(
-      sqltag`SELECT * FROM ${raw(
+      sql`SELECT * FROM ${raw(
         attachmentsRelationsTable,
       )} t WHERE t.blockId IN (${join(blockIds)})  LIMIT 10`,
     );

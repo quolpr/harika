@@ -1,12 +1,12 @@
 import { IDocChange } from '@harika/sync-common';
 import { inject } from 'inversify';
 import { chunk } from 'lodash-es';
+import sql, { join, raw } from 'sql-template-tag';
 
 import { DB, IQueryExecuter } from '../../../../extensions/DbExtension/DB';
 import { BaseSyncRepository } from '../../../../extensions/SyncExtension/BaseSyncRepository';
 import { SyncRepository } from '../../../../extensions/SyncExtension/repositories/SyncRepository';
 import { WINDOW_ID } from '../../../../framework/types';
-import { join, raw, sqltag } from '../../../../lib/sql';
 import { AllBlocksQueries } from './AllBlocksQueries';
 import { blocksChildrenTable } from './AllBlocksRepository';
 
@@ -41,7 +41,7 @@ export class BlockLinksRepository extends BaseSyncRepository<
   }
 
   async getAllLinksOfBlocks(blockIds: string[], e: IQueryExecuter = this.db) {
-    return await e.getRecords<BlockLinkRow>(sqltag`
+    return await e.getRecords<BlockLinkRow>(sql`
       SELECT * FROM ${raw(blockLinksTable)} WHERE blockId IN (
         ${join(blockIds)}
       ) OR linkedToBlockId IN (
@@ -57,7 +57,7 @@ export class BlockLinksRepository extends BaseSyncRepository<
     const rows: BlockLinkRow[] = [];
 
     for (const chunkedRootBlockIds of chunk(rootBlockIds, 400)) {
-      const chunkedRows = await e.getRecords<BlockLinkRow>(sqltag`
+      const chunkedRows = await e.getRecords<BlockLinkRow>(sql`
         SELECT * FROM ${raw(blockLinksTable)} WHERE blockId IN (
           WITH RECURSIVE
             ${this.allBlocksQueries.getDescendantBlockIds(chunkedRootBlockIds)}
@@ -75,10 +75,10 @@ export class BlockLinksRepository extends BaseSyncRepository<
     includeDescendant = false,
     e: IQueryExecuter = this.db,
   ) {
-    const linkedBlockIdsToDescendants = sqltag`
+    const linkedBlockIdsToDescendants = sql`
       SELECT * FROM ${raw(blockLinksTable)} WHERE linkedToBlockId IN (${
       includeDescendant
-        ? sqltag`
+        ? sql`
         WITH RECURSIVE
           ${this.allBlocksQueries.getDescendantBlockIds([rootBlockId])}
         SELECT blockId FROM childrenBlockIds
@@ -95,7 +95,7 @@ export class BlockLinksRepository extends BaseSyncRepository<
       | (BlockLinkRow & {
           isRootBlock: 0;
         })
-    >(sqltag`
+    >(sql`
       WITH RECURSIVE
         parentBlockIds(id, blockId, parentId, linkedToBlockId, isRootBlock, orderPosition, createdAt, updatedAt) AS (
           SELECT linksTable.id, b_c_t.blockId, b_c_t.parentId, linksTable.linkedToBlockId, 0, linksTable.orderPosition, linksTable.createdAt, linksTable.updatedAt FROM ${raw(
