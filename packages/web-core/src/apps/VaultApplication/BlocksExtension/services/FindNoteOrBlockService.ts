@@ -1,6 +1,5 @@
 import { inject, injectable } from 'inversify';
 import { Observable } from 'rxjs';
-import Q from 'sql-bricks';
 import sql, { raw } from 'sql-template-tag';
 
 import { DB } from '../../../../extensions/DbExtension/DB';
@@ -99,16 +98,11 @@ export class FindNoteOrBlockService {
       id: string;
       title: string;
     }>(
-      Q.select(
-        'id',
-        Q.select('title')
-          .as('title')
-          .from(noteBlocksTable)
-          .where(Q(`id = ${noteBlocksFTSTable}.id`)),
-      )
-        .from(noteBlocksFTSTable)
-        .where(Q.like('title', `%${text}%`))
-        .orderBy('rank'),
+      sql`SELECT id, (SELECT title FROM ${raw(
+        noteBlocksTable,
+      )} WHERE id = ${raw(noteBlocksFTSTable)}.id) AS title FROM ${raw(
+        noteBlocksFTSTable,
+      )} WHERE title LIKE ${'%' + text + '%'} ORDER BY rank`,
     );
 
     return res;
@@ -129,16 +123,11 @@ export class FindNoteOrBlockService {
       id: string;
       content: string;
     }>(
-      Q.select(
-        'id',
-        Q.select('content')
-          .as('content')
-          .from(textBlocksTable)
-          .where(Q(`id = ${textBlocksFTSTable}.id`)),
-      )
-        .from(textBlocksFTSTable)
-        .where(Q.like('textContent', `%${text}%`))
-        .orderBy('rank'),
+      sql`SELECT id, (SELECT content FROM ${raw(
+        textBlocksTable,
+      )} WHERE id = ${raw(textBlocksFTSTable)}.id) AS content FROM ${raw(
+        textBlocksFTSTable,
+      )} WHERE textContent LIKE ${'%' + text + '%'} ORDER BY rank`,
     );
 
     return res;

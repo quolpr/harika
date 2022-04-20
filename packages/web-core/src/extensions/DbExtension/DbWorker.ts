@@ -342,6 +342,7 @@ class CommandsExecutor {
         result,
       };
     } catch (e) {
+      console.log({ e });
       if (this.currentTransactionId || shouldSpawnTransaction) {
         this.db.sqlExec('ROLLBACK;', undefined, {
           transactionId: this.currentTransactionId

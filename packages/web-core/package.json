@@ -36,8 +36,6 @@
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.5.5",
     "snakecase-keys": "^5.4.0",
-    "sql-bricks": "^2.0.5",
-    "sql-bricks-sqlite": "^0.1.0",
     "sql-template-tag": "^5.0.1",
     "utility-types": "^3.10.0"
   },

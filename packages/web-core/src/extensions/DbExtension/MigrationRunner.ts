@@ -1,7 +1,8 @@
 import { inject, injectable, multiInject } from 'inversify';
-import Q from 'sql-bricks';
+import sql, { raw } from 'sql-template-tag';
 
 import { DB } from './DB';
+import { generateInsert } from './sqlHelpers';
 import { DB_MIGRATIONS, IMigration, migrationsTable } from './types';
 
 @injectable()
@@ -15,7 +16,7 @@ export class MigrationRunner {
     const migratedMigrations = await this.db.getRecords<{
       id: number;
       name: string;
-    }>(Q.select('*').from(migrationsTable));
+    }>(sql`SELECT * FROM ${raw(migrationsTable)}`);
 
     await this.db.transaction(async (t) => {
       for (const migration of this.migrations.sort((a, b) => a.id - b.id)) {
@@ -24,11 +25,13 @@ export class MigrationRunner {
         await migration.up(t);
 
         await t.execQuery(
-          Q.insertInto(migrationsTable).values({
-            id: migration.id,
-            name: migration.name,
-            migratedAt: new Date().getTime(),
-          }),
+          generateInsert(migrationsTable, [
+            {
+              id: migration.id,
+              name: migration.name,
+              migratedAt: new Date().getTime(),
+            },
+          ]),
         );
       }
     });

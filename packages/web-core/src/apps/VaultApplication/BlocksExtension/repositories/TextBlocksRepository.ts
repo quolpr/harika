@@ -1,4 +1,4 @@
-import Q from 'sql-bricks';
+import sql, { join, raw } from 'sql-template-tag';
 
 import { IQueryExecuter } from '../../../../extensions/DbExtension/DB';
 import { ISyncCtx } from '../../../../extensions/SyncExtension/syncCtx';
@@ -22,11 +22,13 @@ export class TextBlocksRepository extends BaseBlockRepository<
   TextBlockDoc,
   TextBlockRow
 > {
-  bulkCreate(
+  async bulkCreate(
     attrsArray: TextBlockDoc[],
     ctx: ISyncCtx,
     e: IQueryExecuter = this.db,
   ) {
+    if (attrsArray.length === 0) return [];
+
     return e.transaction(async (t) => {
       const res = await super.bulkCreate(attrsArray, ctx, t);
 
@@ -42,22 +44,20 @@ export class TextBlocksRepository extends BaseBlockRepository<
     });
   }
 
-  bulkUpdate(
+  async bulkUpdate(
     records: TextBlockDoc[],
     ctx: ISyncCtx,
     e: IQueryExecuter = this.db,
   ) {
+    if (records.length === 0) return { records: [], touchedRecords: [] };
     return e.transaction(async (t) => {
       const res = await super.bulkUpdate(records, ctx, t);
 
       if (res.touchedRecords.length > 0) {
         await t.execQuery(
-          Q.deleteFrom(textBlocksFTSTable).where(
-            Q.in(
-              'id',
-              res.touchedRecords.map(({ id }) => id),
-            ),
-          ),
+          sql`DELETE FROM ${raw(textBlocksFTSTable)} WHERE id IN (${join(
+            res.touchedRecords.map(({ id }) => id),
+          )})`,
         );
 
         await t.insertRecords(
@@ -73,12 +73,14 @@ export class TextBlocksRepository extends BaseBlockRepository<
     });
   }
 
-  bulkDelete(ids: string[], ctx: ISyncCtx, e: IQueryExecuter = this.db) {
+  async bulkDelete(ids: string[], ctx: ISyncCtx, e: IQueryExecuter = this.db) {
+    if (ids.length === 0) return;
+
     return e.transaction(async (t) => {
       const res = await super.bulkDelete(ids, ctx, t);
 
       await t.execQuery(
-        Q.deleteFrom(textBlocksFTSTable).where(Q.in('id', ids)),
+        sql`DELETE FROM ${raw(textBlocksFTSTable)} WHERE id IN (${join(ids)})`,
       );
 
       return res;

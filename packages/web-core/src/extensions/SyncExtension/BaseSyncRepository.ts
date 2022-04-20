@@ -2,8 +2,7 @@ import 'reflect-metadata';
 
 import { inject, injectable } from 'inversify';
 import { isEqual, mapValues, omit } from 'lodash-es';
-import Q from 'sql-bricks';
-import sql, { raw } from 'sql-template-tag';
+import sql, { join, raw } from 'sql-template-tag';
 
 import { WINDOW_ID } from '../../framework/types';
 import { DB, IQueryExecuter, Transaction } from '../DbExtension/DB';
@@ -37,17 +36,27 @@ export abstract class BaseSyncRepository<
     obj: Partial<Doc>,
     e: IQueryExecuter = this.db,
   ): Promise<Doc | undefined> {
+    const keyValue = join(
+      Object.entries(obj).map(([k, v]) => sql`${raw(k)}=${v}`),
+    );
+
     const row = (
-      await e.getRecords<Row>(Q.select().from(this.getTableName()).where(obj))
+      await e.getRecords<Row>(
+        sql`SELECT * FROM ${raw(this.getTableName())} WHERE ${keyValue}`,
+      )
     )[0];
 
     return row ? this.toDoc(row) : undefined;
   }
 
   async getByIds(ids: string[], e: IQueryExecuter = this.db): Promise<Doc[]> {
+    if (ids.length === 0) return [];
+
     return (
       await e.getRecords<Row>(
-        Q.select().from(this.getTableName()).where(Q.in('id', ids)),
+        sql`SELECT * FROM ${raw(this.getTableName())} WHERE id IN (${join(
+          ids,
+        )})`,
       )
     ).map((row) => this.toDoc(row));
   }
@@ -64,8 +73,11 @@ export abstract class BaseSyncRepository<
   }
 
   async getExistingIds(ids: string[], e: IQueryExecuter): Promise<string[]> {
+    if (ids.length === 0) return [];
     const [result] = await e.execQuery(
-      Q.select('id').from(this.getTableName()).where(Q.in('id', ids)),
+      sql`SELECT id FROM ${raw(this.getTableName())} WHERE id IN (${join(
+        ids,
+      )})`,
     );
 
     return (result?.values?.flat() || []) as string[];
@@ -75,7 +87,13 @@ export abstract class BaseSyncRepository<
     return (await this.bulkCreate([attrs], ctx, e))[0];
   }
 
-  bulkCreateOrUpdate(attrsArray: Doc[], ctx: ISyncCtx, e: IQueryExecuter) {
+  async bulkCreateOrUpdate(
+    attrsArray: Doc[],
+    ctx: ISyncCtx,
+    e: IQueryExecuter,
+  ) {
+    if (attrsArray.length === 0) return;
+
     const internalCtx = { ...ctx, windowId: this.windowId };
 
     return e.transaction(async (t) => {
@@ -113,6 +131,8 @@ export abstract class BaseSyncRepository<
     ctx: ISyncCtx,
     e: IQueryExecuter = this.db,
   ) {
+    if (attrsArray.length === 0) return [];
+
     return e.transaction(async (t) => {
       await t.insertRecords(
         this.getTableName(),
@@ -134,7 +154,9 @@ export abstract class BaseSyncRepository<
     return (await this.bulkUpdate([changeTo], ctx, e)).records[0];
   }
 
-  bulkUpdate(records: Doc[], ctx: ISyncCtx, e: IQueryExecuter = this.db) {
+  async bulkUpdate(records: Doc[], ctx: ISyncCtx, e: IQueryExecuter = this.db) {
+    if (records.length === 0) return { records: [], touchedRecords: [] };
+
     return e.transaction(async (t) => {
       const prevRecordsMap = Object.fromEntries(
         (
@@ -188,12 +210,14 @@ export abstract class BaseSyncRepository<
     return this.bulkDelete([id], ctx, e);
   }
 
-  bulkDelete(ids: string[], ctx: ISyncCtx, e: IQueryExecuter = this.db) {
+  async bulkDelete(ids: string[], ctx: ISyncCtx, e: IQueryExecuter = this.db) {
+    if (ids.length === 0) return;
+
     return e.transaction(async (t) => {
       const records = await this.getByIds(ids, t);
 
       await t.execQuery(
-        Q.deleteFrom(this.getTableName()).where(Q.in('id', ids)),
+        sql`DELETE FROM ${raw(this.getTableName())} WHERE id IN (${join(ids)})`,
       );
 
       await this.syncRepository.createDeleteChanges(
@@ -223,9 +247,9 @@ export abstract class BaseSyncRepository<
   }
 
   async getAll(e: IQueryExecuter = this.db) {
-    return (await e.getRecords<Row>(Q.select().from(this.getTableName()))).map(
-      (row) => this.toDoc(row),
-    );
+    return (
+      await e.getRecords<Row>(sql`SELECT * FROM ${raw(this.getTableName())}`)
+    ).map((row) => this.toDoc(row));
   }
 
   // TODO: don't call as super. Make nullify() method instead
@@ -237,6 +261,7 @@ export abstract class BaseSyncRepository<
     return row as Doc;
   }
 
+  // TODO: add lock support
   private cachedColumnNames: string[] | undefined;
   async getColumnNames(e: IQueryExecuter = this.db) {
     if (this.cachedColumnNames) return this.cachedColumnNames;

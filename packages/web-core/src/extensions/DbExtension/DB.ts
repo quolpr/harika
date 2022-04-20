@@ -20,13 +20,13 @@ import {
   throwError,
   timeout,
 } from 'rxjs';
-import Q from 'sql-bricks';
 import { Sql } from 'sql-template-tag';
 import { v4 as uuidv4 } from 'uuid';
 
 import { STOP_SIGNAL } from '../../framework/types';
 // @ts-ignore
 import DbWorker from './DbWorker?worker';
+import { generateInsert } from './sqlHelpers';
 import {
   DB_NAME,
   ICommand,
@@ -38,42 +38,10 @@ type DistributiveOmit<T, K extends keyof any> = T extends any
   ? Omit<T, K>
   : never;
 
-// @ts-ignore
-Q.update.defineClause('or', '{{#if _or}}OR {{_or}}{{/if}}', {
-  after: 'update',
-});
-// @ts-ignore
-Q.insert.defineClause('or', '{{#if _or}}OR {{_or}}{{/if}}', {
-  after: 'insert',
-});
-
-const or_methods = {
-  orReplace: 'REPLACE',
-  orRollback: 'ROLLBACK',
-  orAbort: 'ABORT',
-  orFail: 'FAIL',
-};
-Object.keys(or_methods).forEach(function (method) {
-  Q.insert.prototype[method] = Q.update.prototype[method] = function () {
-    // @ts-ignore
-    this._or = or_methods[method];
-    return this;
-  };
-});
-
-// @ts-ignore
-Q['match'] = function (name: string, col: number, val: string) {
-  // @ts-ignore
-  return new Q.Binary('MATCH', col, val);
-}.bind(null, 'match');
-
 export interface IQueryExecuter {
-  execQuery(
-    query: Q.Statement | Sql,
-    suppressLog?: boolean,
-  ): Promise<QueryExecResult[]>;
+  execQuery(query: Sql, suppressLog?: boolean): Promise<QueryExecResult[]>;
   execQueries(
-    queries: (Q.Statement | Sql)[],
+    queries: Sql[],
     suppressLog?: boolean,
   ): Promise<QueryExecResult[][]>;
   insertRecords(
@@ -83,7 +51,7 @@ export interface IQueryExecuter {
     suppressLog?: boolean,
   ): Promise<void>;
   getRecords<T extends Record<string, any>>(
-    query: Q.Statement | Sql,
+    query: Sql,
     suppressLog?: boolean,
   ): Promise<T[]>;
   transaction<T extends any>(
@@ -110,7 +78,7 @@ export class Transaction implements IQueryExecuter {
     );
   }
 
-  async execQuery(query: Q.Statement, suppressLog?: boolean) {
+  async execQuery(query: Sql, suppressLog?: boolean) {
     return this.db.execQuery(
       query,
       suppressLog !== undefined ? suppressLog : this.suppressLog,
@@ -118,7 +86,7 @@ export class Transaction implements IQueryExecuter {
     );
   }
 
-  async execQueries(queries: Q.Statement[], suppressLog?: boolean) {
+  async execQueries(queries: Sql[], suppressLog?: boolean) {
     return this.db.execQueries(
       queries,
       suppressLog !== undefined ? suppressLog : this.suppressLog,
@@ -135,7 +103,7 @@ export class Transaction implements IQueryExecuter {
   }
 
   async getRecords<T extends Record<string, any>>(
-    query: Q.Statement | Sql,
+    query: Sql,
     suppressLog?: boolean,
   ): Promise<T[]> {
     return this.db.getRecords(
@@ -239,33 +207,23 @@ export class DB implements IQueryExecuter {
   }
 
   async execQueries(
-    queries: (Q.Statement | Sql)[],
+    queries: Sql[],
     suppressLog?: boolean,
     transactionId?: string,
   ) {
     return this.execCommand({
       type: 'execQueries',
-      queries: queries.map((q) =>
-        'toParams' in q ? q.toParams() : { values: q.values, text: q.text },
-      ),
+      queries: queries.map((q) => ({ values: q.values, text: q.text })),
       transactionId,
       spawnTransaction: queries.length > 1,
       suppressLog,
     });
   }
 
-  async execQuery(
-    query: Q.Statement | Sql,
-    suppressLog?: boolean,
-    transactionId?: string,
-  ) {
+  async execQuery(query: Sql, suppressLog?: boolean, transactionId?: string) {
     const res = await this.execCommand({
       type: 'execQueries',
-      queries: [
-        'toParams' in query
-          ? query.toParams()
-          : { values: query.values, text: query.text },
-      ],
+      queries: [{ values: query.values, text: query.text }],
       transactionId,
       suppressLog,
     });
@@ -286,6 +244,8 @@ export class DB implements IQueryExecuter {
 
       return res;
     } catch (e) {
+      console.error('Rollback transaction', e);
+
       await trans.rollback();
 
       throw e;
@@ -356,20 +316,17 @@ export class DB implements IQueryExecuter {
       // sqlite max vars = 32766
       // Let's take table columns count to 20, so 20 * 1000 will fit the restriction
       for (const chunkObjs of chunk(objs, 1000)) {
-        let query = Q.insertInto(table).values(chunkObjs);
-
-        if (replace) {
-          query = query.orReplace();
-        }
-
-        await t.execQuery(query, suppressLog);
+        await t.execQuery(
+          generateInsert(table, chunkObjs, replace),
+          suppressLog,
+        );
       }
     });
   }
 
   // TODO: add mapper to arg for better performance
   async getRecords<T extends Record<string, any>>(
-    query: Q.Statement | Sql,
+    query: Sql,
     suppressLog?: boolean,
     transactionId?: string,
   ): Promise<T[]> {
@@ -419,6 +376,8 @@ export class DB implements IQueryExecuter {
     transactionId: string,
     suppressLog: boolean,
   ) => {
+    console.log('rollback!!!');
+
     await this.execCommand({
       type: 'rollbackTransaction',
       transactionId,

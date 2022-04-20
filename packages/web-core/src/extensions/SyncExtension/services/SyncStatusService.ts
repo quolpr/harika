@@ -1,9 +1,10 @@
 import { HybridClock, makeClientId } from '@harika/sync-common';
 import { inject, injectable } from 'inversify';
 import { times } from 'lodash-es';
-import Q from 'sql-bricks';
+import sql, { raw } from 'sql-template-tag';
 
 import { DB, IQueryExecuter } from '../../DbExtension/DB';
+import { generateUpdate } from '../../DbExtension/sqlHelpers';
 
 export const syncStatusTable = 'syncStatus' as const;
 export interface ISyncStatus {
@@ -21,7 +22,7 @@ export class SyncStatusService {
   async getSyncStatus(e: IQueryExecuter = this.db): Promise<ISyncStatus> {
     let status = (
       await e.getRecords<ISyncStatus>(
-        Q.select().from(syncStatusTable).where({ id: 1 }),
+        sql`SELECT * FROM ${raw(syncStatusTable)} WHERE id = 1`,
       )
     )[0];
 
@@ -43,7 +44,9 @@ export class SyncStatusService {
   }
 
   updateSyncStatus(status: Partial<ISyncStatus>, e: IQueryExecuter) {
-    return e.execQuery(Q.update(syncStatusTable).set(status).where({ id: 1 }));
+    return e.execQuery(
+      sql`${generateUpdate(syncStatusTable, status)} WHERE id = 1`,
+    );
   }
 
   async getCurrentClock(e: IQueryExecuter = this.db) {

@@ -1,7 +1,7 @@
 import { IDocChange } from '@harika/sync-common';
 import dayjs from 'dayjs';
 import { injectable } from 'inversify';
-import Q from 'sql-bricks';
+import sql, { join, raw } from 'sql-template-tag';
 
 import { IQueryExecuter } from '../../../../extensions/DbExtension/DB';
 import { ISyncCtx } from '../../../../extensions/SyncExtension/syncCtx';
@@ -29,11 +29,13 @@ export class NoteBlocksRepository extends BaseBlockRepository<
   NoteBlockDoc,
   NoteBlockRow
 > {
-  bulkCreate(
+  async bulkCreate(
     attrsArray: NoteBlockDoc[],
     ctx: ISyncCtx,
     e: IQueryExecuter = this.db,
   ) {
+    if (attrsArray.length === 0) return [];
+
     return e.transaction(async (t) => {
       const res = await super.bulkCreate(attrsArray, ctx, t);
 
@@ -49,22 +51,21 @@ export class NoteBlocksRepository extends BaseBlockRepository<
     });
   }
 
-  bulkUpdate(
+  async bulkUpdate(
     records: NoteBlockDoc[],
     ctx: ISyncCtx,
     e: IQueryExecuter = this.db,
   ) {
+    if (records.length === 0) return { records: [], touchedRecords: [] };
+
     return e.transaction(async (t) => {
       const res = await super.bulkUpdate(records, ctx, t);
 
       if (res.touchedRecords.length > 0) {
         await t.execQuery(
-          Q.deleteFrom(noteBlocksFTSTable).where(
-            Q.in(
-              'id',
-              res.touchedRecords.map(({ id }) => id),
-            ),
-          ),
+          sql`DELETE FROM ${raw(noteBlocksFTSTable)} WHERE id IN (${join(
+            res.touchedRecords.map(({ id }) => id),
+          )})`,
         );
 
         await t.insertRecords(
@@ -80,12 +81,14 @@ export class NoteBlocksRepository extends BaseBlockRepository<
     });
   }
 
-  bulkDelete(ids: string[], ctx: ISyncCtx, e: IQueryExecuter = this.db) {
+  async bulkDelete(ids: string[], ctx: ISyncCtx, e: IQueryExecuter = this.db) {
+    if (ids.length === 0) return;
+
     return e.transaction(async () => {
       const res = await super.bulkDelete(ids, ctx, e);
 
       await e.execQuery(
-        Q.deleteFrom(noteBlocksFTSTable).where(Q.in('id', ids)),
+        sql`DELETE FROM ${raw(noteBlocksFTSTable)} WHERE id IN (${join(ids)})`,
       );
 
       return res;
@@ -97,9 +100,13 @@ export class NoteBlocksRepository extends BaseBlockRepository<
     titles: string[],
     e: IQueryExecuter = this.db,
   ): Promise<NoteBlockDoc[]> {
+    if (titles.length === 0) return [];
+
     return (
       await e.getRecords<NoteBlockRow>(
-        Q.select().from(this.getTableName()).where(Q.in('title', titles)),
+        sql`SELECT * FROM ${raw(this.getTableName())} WHERE title IN (${join(
+          titles,
+        )})`,
       )
     ).map((row) => this.toDoc(row));
   }
@@ -107,18 +114,18 @@ export class NoteBlocksRepository extends BaseBlockRepository<
   async findInTitle(title: string, e: IQueryExecuter): Promise<NoteBlockDoc[]> {
     return (
       await e.getRecords<NoteBlockRow>(
-        Q.select()
-          .from(this.getTableName())
-          .where(Q.like('title', `%${title}%`)),
+        sql`SELECT * FROM ${raw(this.getTableName())} WHERE title LIKE '${
+          '%' + title + '%'
+        }'`,
       )
     ).map((row) => this.toDoc(row));
   }
 
   getTuplesWithoutDailyNotes(e: IQueryExecuter = this.db) {
     return e.getRecords<{ id: string; title: string }>(
-      Q.select('id, title')
-        .from(this.getTableName())
-        .where(Q.eq('dailyNoteDate', null)),
+      sql`SELECT id, title FROM ${raw(
+        this.getTableName(),
+      )} t WHERE t.dailyNoteDate IS NULL`,
     );
   }
 
@@ -127,17 +134,6 @@ export class NoteBlocksRepository extends BaseBlockRepository<
     e: IQueryExecuter = this.db,
   ): Promise<boolean> {
     return (await this.findBy({ title }, e)) !== undefined;
-  }
-
-  async getNoteIdByBlockId(blockId: string, e: IQueryExecuter = this.db) {
-    return undefined;
-  }
-
-  async getLinkedBlocks(noteId: string): Promise<
-    // Key is noteId, values are block ids
-    Record<string, string[]>
-  > {
-    return {};
   }
 
   getDailyNote(date: number, e: IQueryExecuter = this.db) {

@@ -12,8 +12,7 @@ import {
 } from '@harika/sync-common';
 import { inject, injectable } from 'inversify';
 import { isEmpty } from 'lodash-es';
-import Q from 'sql-bricks';
-import sql, { raw } from 'sql-template-tag';
+import sql, { join, raw } from 'sql-template-tag';
 import { Overwrite } from 'utility-types';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -289,8 +288,8 @@ export class SyncRepository {
   async getServerSnapshotsAndClientChangesCount(e: IQueryExecuter = this.db) {
     const [[serverResult], [clientResult]] = await e.execQueries(
       [
-        Q.select('COUNT(*)').from(serverSnapshotsTable),
-        Q.select('COUNT(*)').from(clientChangesTable),
+        sql`SELECT COUNT(*) FROM ${raw(serverSnapshotsTable)}`,
+        sql`SELECT COUNT(*) FROM ${raw(clientChangesTable)}`,
       ],
       true,
     );
@@ -306,7 +305,7 @@ export class SyncRepository {
   ): Promise<(IDocSnapshot & { id: string })[]> {
     return (
       await e.getRecords<IDocSnapshotRow>(
-        Q.select().from(serverSnapshotsTable).orderBy('rev'),
+        sql`SELECT * FROM ${raw(serverSnapshotsTable)} ORDER BY rev`,
       )
     ).map((row) => this.snapshotRowToDoc(row));
   }
@@ -334,14 +333,17 @@ export class SyncRepository {
   }
 
   async bulkDeleteClientChanges(ids: string[], e: IQueryExecuter = this.db) {
+    if (ids.length === 0) return;
     await e.execQuery(
-      Q.deleteFrom().from(clientChangesTable).where(Q.in('id', ids)),
+      sql`DELETE FROM ${raw(clientChangesTable)} WHERE id IN (${join(ids)})`,
     );
   }
 
   async deleteSnapshots(e: IQueryExecuter, ids: string[]) {
+    if (ids.length === 0) return;
+
     await e.execQuery(
-      Q.deleteFrom().from(serverSnapshotsTable).where(Q.in('id', ids)),
+      sql`DELETE FROM ${raw(serverSnapshotsTable)} WHERE id IN (${join(ids)})`,
     );
   }
 
