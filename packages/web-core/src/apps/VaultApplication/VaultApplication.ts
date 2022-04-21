@@ -16,11 +16,11 @@ import { VaultAppRootStore } from './AppRootStore';
 import { BlockLinksAppExtension } from './BlockLinksExtension/BlockLinksAppExtension';
 import { BlockLinksStore } from './BlockLinksExtension/models/BlockLinkStore';
 import { BlockLinkService } from './BlockLinksExtension/services/BlockLinkService';
-import { BlocksScopeStore } from './BlocksExtension/models/BlocksScopeStore';
+import { BlocksScopeStore } from './BlockScopesExtension/models/BlocksScopeStore';
 import { BlocksStore } from './BlocksExtension/models/BlocksStore';
 import { NoteBlocksAppExtension } from './BlocksExtension/NoteBlocksAppExtension';
 import { AllBlocksService } from './BlocksExtension/services/AllBlocksService';
-import { BlocksScopesService } from './BlocksExtension/services/BlocksScopeService';
+import { BlocksScopesService } from './BlockScopesExtension/services/BlocksScopeService';
 import { DeleteNoteService } from './BlocksExtension/services/DeleteNoteService';
 import { FindNoteOrBlockService } from './BlocksExtension/services/FindNoteOrBlockService';
 import { ImportExportService } from './ImportExportExtension/services/ImportExportService';
@@ -33,6 +33,7 @@ import { SpacedRepetitionExtension } from './SpacedRepetitionExtension/SpacedRep
 import { UploadFileService } from './StorageExtension/services/UploadFileService';
 import { StorageAppExtension } from './StorageExtension/StorageAppExtension';
 import { ImportExportAppExtension } from './ImportExportExtension/ImportExportAppExtension';
+import { BlockScopesAppExtension } from './BlockScopesExtension/BlockScopesAppExtension';
 
 export class VaultApplication extends BaseApplication {
   constructor(applicationId: string, private syncConfig: ISyncConfig) {
@@ -51,6 +52,7 @@ export class VaultApplication extends BaseApplication {
       NoteBlocksAppExtension,
       NotesTreeAppExtension,
       SpacedRepetitionExtension,
+      BlockScopesAppExtension,
       StorageAppExtension,
       ImportExportAppExtension,
     ];

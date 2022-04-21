@@ -1,7 +1,7 @@
 import { standaloneAction } from 'mobx-keystone';
 
 import { blockRef } from '../../apps/VaultApplication/BlocksExtension/models/BaseBlock';
-import { BlocksScope } from '../../apps/VaultApplication/BlocksExtension/models/BlocksScope';
+import { BlocksScope } from '../../apps/VaultApplication/BlockScopesExtension/models/BlocksScope';
 import { BlocksStore } from '../../apps/VaultApplication/BlocksExtension/models/BlocksStore';
 import {
   BlockView,

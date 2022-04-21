@@ -11,7 +11,7 @@ import {
 import {
   BlocksScopesRepository,
   blocksScopesTable,
-} from '../../BlocksExtension/repositories/BlockScopesRepository';
+} from '../../BlockScopesExtension/repositories/BlockScopesRepository';
 import {
   NoteBlockDoc,
   NoteBlocksRepository,

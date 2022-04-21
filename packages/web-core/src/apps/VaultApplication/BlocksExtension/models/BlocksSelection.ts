@@ -1,7 +1,7 @@
 import { action, comparer, computed, makeObservable, observable } from 'mobx';
 
 import { normalizeBlockTree } from '../../../../lib/blockParser/blockUtils';
-import { BlocksScope } from './BlocksScope';
+import { BlocksScope } from '../../BlockScopesExtension/models/BlocksScope';
 import { BlockView } from './BlockView';
 
 const selections: WeakMap<

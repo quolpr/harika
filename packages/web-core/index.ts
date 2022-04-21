@@ -6,7 +6,7 @@ export type {
   NoteBlockRefToken as NoteRefToken,
   TagToken,
 } from './src/lib/blockParser/types';
-export { BlocksScope } from './src/apps/VaultApplication/BlocksExtension/models/BlocksScope';
+export { BlocksScope } from './src/apps/VaultApplication/BlockScopesExtension/models/BlocksScope';
 export * from './src/lib/blockParser/parseStringToTree';
 export * from './src/lib/generateId';
 export * from './src/apps/VaultApplication/NotesTreeExtension/models/NotesTreeRegistry';

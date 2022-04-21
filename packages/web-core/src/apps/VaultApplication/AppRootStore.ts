@@ -6,7 +6,7 @@ import {
   trackChangesPipeCtx,
 } from '../../extensions/SyncExtension/mobx-keystone/trackChanges';
 import { BlockLinksStore } from './BlockLinksExtension/models/BlockLinkStore';
-import { BlocksScopeStore } from './BlocksExtension/models/BlocksScopeStore';
+import { BlocksScopeStore } from './BlockScopesExtension/models/BlocksScopeStore';
 import { BlocksStore } from './BlocksExtension/models/BlocksStore';
 
 @model('harika/VaultAppRootStore')

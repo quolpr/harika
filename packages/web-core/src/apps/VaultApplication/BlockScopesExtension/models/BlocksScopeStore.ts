@@ -11,7 +11,7 @@ import {
 import { withoutChangeTrackingAction } from '../../../../extensions/SyncExtension/mobx-keystone/trackChanges';
 import { SyncModelId } from '../../../../extensions/SyncExtension/types';
 import { withoutUndoAction } from '../../../../lib/utils';
-import { applyModelData } from './applyModelData';
+import { applyModelData } from '../../BlocksExtension/models/applyModelData';
 import { BlocksScope } from './BlocksScope';
 
 export const getScopeKey = (
