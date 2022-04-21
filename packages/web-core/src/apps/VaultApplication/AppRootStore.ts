@@ -5,7 +5,7 @@ import {
   IModelChange,
   trackChangesPipeCtx,
 } from '../../extensions/SyncExtension/mobx-keystone/trackChanges';
-import { BlockLinksStore } from './BlocksExtension/models/BlockLinkStore';
+import { BlockLinksStore } from './BlockLinksExtension/models/BlockLinkStore';
 import { BlocksScopeStore } from './BlocksExtension/models/BlocksScopeStore';
 import { BlocksStore } from './BlocksExtension/models/BlocksStore';
 

@@ -1,7 +1,7 @@
-import { BaseBlock } from '../models/BaseBlock';
+import { BaseBlock } from '../../BlocksExtension/models/BaseBlock';
 import { BlockLinksStore } from '../models/BlockLinkStore';
-import { BlocksScopeStore } from '../models/BlocksScopeStore';
-import { getBlockView } from '../models/BlockView';
+import { BlocksScopeStore } from '../../BlocksExtension/models/BlocksScopeStore';
+import { getBlockView } from '../../BlocksExtension/models/BlockView';
 
 export const getGroupedBacklinks = (
   blockLinksStore: BlockLinksStore,

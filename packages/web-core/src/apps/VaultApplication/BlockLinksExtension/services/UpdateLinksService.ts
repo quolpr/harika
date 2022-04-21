@@ -21,9 +21,9 @@ import {
   TextBlockRef,
 } from '../../../../lib/blockParser/types';
 import { BlockLinksStore } from '../models/BlockLinkStore';
-import { TextBlock } from '../models/TextBlock';
+import { TextBlock } from '../../BlocksExtension/models/TextBlock';
 import { BlockLinkService } from './BlockLinkService';
-import { NoteBlocksService } from './NoteBlocksService';
+import { NoteBlocksService } from '../../BlocksExtension/services/NoteBlocksService';
 
 @injectable()
 export class UpdateLinksService {

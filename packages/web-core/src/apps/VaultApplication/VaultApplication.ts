@@ -13,12 +13,13 @@ import {
 } from '../../extensions/SyncExtension/types';
 import { BaseApplication } from '../../framework/BaseApplication';
 import { VaultAppRootStore } from './AppRootStore';
-import { BlockLinksStore } from './BlocksExtension/models/BlockLinkStore';
+import { BlockLinksAppExtension } from './BlockLinksExtension/BlockLinksAppExtension';
+import { BlockLinksStore } from './BlockLinksExtension/models/BlockLinkStore';
+import { BlockLinkService } from './BlockLinksExtension/services/BlockLinkService';
 import { BlocksScopeStore } from './BlocksExtension/models/BlocksScopeStore';
 import { BlocksStore } from './BlocksExtension/models/BlocksStore';
 import { NoteBlocksAppExtension } from './BlocksExtension/NoteBlocksAppExtension';
 import { AllBlocksService } from './BlocksExtension/services/AllBlocksService';
-import { BlockLinkService } from './BlocksExtension/services/BlockLinkService';
 import { BlocksScopesService } from './BlocksExtension/services/BlocksScopeService';
 import { DeleteNoteService } from './BlocksExtension/services/DeleteNoteService';
 import { FindNoteOrBlockService } from './BlocksExtension/services/FindNoteOrBlockService';
@@ -45,6 +46,7 @@ export class VaultApplication extends BaseApplication {
     return [
       DbAppExtension,
       SyncAppExtension,
+      BlockLinksAppExtension,
       NoteBlocksAppExtension,
       NotesTreeAppExtension,
       SpacedRepetitionExtension,

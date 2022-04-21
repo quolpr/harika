@@ -7,7 +7,7 @@ import {
   BlockLinkRow,
   BlockLinksRepository,
   blockLinksTable,
-} from '../repositories/BlockLinkRepository';
+} from '../../BlockLinksExtension/repositories/BlockLinkRepository';
 import {
   BlocksScopesRepository,
   blocksScopesTable,
@@ -62,6 +62,31 @@ export class ImportExportService {
     } else if (dump.version === 2) {
       await this.secondVersionImport(dump);
     }
+  }
+
+  async exportData() {
+    const dump: Dump = {
+      version: 2,
+      data: [
+        {
+          tableName: noteBlocksTable,
+          rows: await this.noteBlocksRepository.getAll(),
+        },
+        {
+          tableName: textBlocksTable,
+          rows: await this.textBlocksRepository.getAll(),
+        },
+        {
+          tableName: blocksScopesTable,
+          rows: await this.blocksScopesRepository.getAll(),
+        },
+        {
+          tableName: blockLinksTable,
+          rows: await this.blockLinksRepo.getAll(),
+        },
+      ],
+    };
+    return JSON.stringify(dump);
   }
 
   private async firstVersionImport(dump: Dump) {
@@ -246,30 +271,5 @@ export class ImportExportService {
         await this.textBlocksRepository.bulkCreate(textBlocks, ctx, t);
       });
     }
-  }
-
-  async exportData() {
-    const dump: Dump = {
-      version: 2,
-      data: [
-        {
-          tableName: noteBlocksTable,
-          rows: await this.noteBlocksRepository.getAll(),
-        },
-        {
-          tableName: textBlocksTable,
-          rows: await this.textBlocksRepository.getAll(),
-        },
-        {
-          tableName: blocksScopesTable,
-          rows: await this.blocksScopesRepository.getAll(),
-        },
-        {
-          tableName: blockLinksTable,
-          rows: await this.blockLinksRepo.getAll(),
-        },
-      ],
-    };
-    return JSON.stringify(dump);
   }
 }

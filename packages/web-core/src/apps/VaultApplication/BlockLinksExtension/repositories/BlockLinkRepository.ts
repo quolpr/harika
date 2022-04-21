@@ -1,5 +1,5 @@
 import { IDocChange } from '@harika/sync-common';
-import { inject } from 'inversify';
+import { inject, injectable } from 'inversify';
 import { chunk } from 'lodash-es';
 import sql, { join, raw } from 'sql-template-tag';
 
@@ -7,8 +7,8 @@ import { DB, IQueryExecuter } from '../../../../extensions/DbExtension/DB';
 import { BaseSyncRepository } from '../../../../extensions/SyncExtension/BaseSyncRepository';
 import { SyncRepository } from '../../../../extensions/SyncExtension/repositories/SyncRepository';
 import { WINDOW_ID } from '../../../../framework/types';
-import { AllBlocksQueries } from './AllBlocksQueries';
-import { blocksChildrenTable } from './AllBlocksRepository';
+import { AllBlocksQueries } from '../../BlocksExtension/repositories/AllBlocksQueries';
+import { blocksChildrenTable } from '../../BlocksExtension/repositories/AllBlocksRepository';
 
 export const blockLinksTable = 'blockLinks' as const;
 
@@ -27,6 +27,7 @@ export type IBlocksScopesChangeEvent = IDocChange<
   BlockLinkDoc
 >;
 
+@injectable()
 export class BlockLinksRepository extends BaseSyncRepository<
   BlockLinkDoc,
   BlockLinkRow

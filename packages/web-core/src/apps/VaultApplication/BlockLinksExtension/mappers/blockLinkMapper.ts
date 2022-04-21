@@ -1,5 +1,5 @@
 import { IMapper } from '../../../../extensions/SyncExtension/mappers';
-import { blockRef } from '../models/BaseBlock';
+import { blockRef } from '../../BlocksExtension/models/BaseBlock';
 import { BlockLink, blockLinkModelType } from '../models/BlockLink';
 import {
   BlockLinkDoc,
