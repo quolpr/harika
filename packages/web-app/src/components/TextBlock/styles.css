@@ -5,7 +5,7 @@
     @apply flex relative py-1 pl-2;
 
     &--selected {
-      @apply bg-coolGray-800;
+      @apply bg-gray-800;
     }
   }
 
@@ -63,7 +63,7 @@
     @apply relative box-border pl-7;
 
     &--selected {
-      @apply bg-coolGray-800;
+      @apply bg-gray-800;
     }
 
     &::before {
@@ -89,7 +89,7 @@
   }
 
   &__content {
-    @apply focus:outline-none rounded-sm text-warmGray-300;
+    @apply focus:outline-none rounded-sm text-stone-300;
 
     display: inline;
 
@@ -128,7 +128,7 @@
 }
 
 .quote {
-  @apply border-l-4 border-coolGray-600 text-coolGray-500 pl-4;
+  @apply border-l-4 border-gray-600 text-gray-500 pl-4;
 }
 
 .content {

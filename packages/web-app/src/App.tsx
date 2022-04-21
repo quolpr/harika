@@ -1,5 +1,5 @@
-import './App.css';
 import './tailwind.css';
+import './App.css';
 import './variables.css';
 import 'react-toastify/dist/ReactToastify.css';
 

@@ -183,17 +183,6 @@ export const LoginPage = () => {
           value="Log In"
         />
 
-        <button
-          type="button"
-          onClick={handleGoogleSignIn}
-          className={formClass('sign-up-btn', {
-            first: true,
-            withGoogle: true,
-          })}
-        >
-          Log In with Google
-        </button>
-
         <Link
           to={paths.signupPath()}
           className={formClass('sign-up-btn', {
