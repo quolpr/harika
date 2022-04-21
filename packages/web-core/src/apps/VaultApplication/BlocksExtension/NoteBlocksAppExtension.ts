@@ -25,7 +25,6 @@ import { BlocksScopesService } from './services/BlocksScopeService';
 import { DeleteNoteService } from './services/DeleteNoteService';
 import { DuplicatedNotesConflictResolver } from './services/DuplicatedNotesConflictResolver';
 import { FindNoteOrBlockService } from './services/FindNoteOrBlockService';
-import { ImportExportService } from './services/ImportExportService';
 import { NoteBlocksService } from './services/NoteBlocksService';
 import { TextBlocksService } from './services/TextBlocksService';
 import { UpdateNoteTitleService } from './services/UpdateNoteTitleService';
@@ -54,7 +53,6 @@ export class NoteBlocksAppExtension extends BaseSyncExtension {
     this.container.bind(AllBlocksService).toSelf();
     this.container.bind(DeleteNoteService).toSelf();
     this.container.bind(FindNoteOrBlockService).toSelf();
-    this.container.bind(ImportExportService).toSelf();
     this.container.bind(UpdateNoteTitleService).toSelf();
 
     this.container

@@ -11,17 +11,17 @@ import {
 import {
   BlocksScopesRepository,
   blocksScopesTable,
-} from '../repositories/BlockScopesRepository';
+} from '../../BlocksExtension/repositories/BlockScopesRepository';
 import {
   NoteBlockDoc,
   NoteBlocksRepository,
   noteBlocksTable,
-} from '../repositories/NoteBlocksRepostitory';
+} from '../../BlocksExtension/repositories/NoteBlocksRepostitory';
 import {
   TextBlockDoc,
   TextBlocksRepository,
   textBlocksTable,
-} from '../repositories/TextBlocksRepository';
+} from '../../BlocksExtension/repositories/TextBlocksRepository';
 
 interface OldVersionDump {
   version: undefined;

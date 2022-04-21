@@ -23,7 +23,7 @@ import { AllBlocksService } from './BlocksExtension/services/AllBlocksService';
 import { BlocksScopesService } from './BlocksExtension/services/BlocksScopeService';
 import { DeleteNoteService } from './BlocksExtension/services/DeleteNoteService';
 import { FindNoteOrBlockService } from './BlocksExtension/services/FindNoteOrBlockService';
-import { ImportExportService } from './BlocksExtension/services/ImportExportService';
+import { ImportExportService } from './ImportExportExtension/services/ImportExportService';
 import { NoteBlocksService } from './BlocksExtension/services/NoteBlocksService';
 import { TextBlocksService } from './BlocksExtension/services/TextBlocksService';
 import { UpdateNoteTitleService } from './BlocksExtension/services/UpdateNoteTitleService';
@@ -32,6 +32,7 @@ import { NotesTreeAppExtension } from './NotesTreeExtension/NotesTreeAppExtensio
 import { SpacedRepetitionExtension } from './SpacedRepetitionExtension/SpacedRepetitionExtension';
 import { UploadFileService } from './StorageExtension/services/UploadFileService';
 import { StorageAppExtension } from './StorageExtension/StorageAppExtension';
+import { ImportExportAppExtension } from './ImportExportExtension/ImportExportAppExtension';
 
 export class VaultApplication extends BaseApplication {
   constructor(applicationId: string, private syncConfig: ISyncConfig) {
@@ -51,6 +52,7 @@ export class VaultApplication extends BaseApplication {
       NotesTreeAppExtension,
       SpacedRepetitionExtension,
       StorageAppExtension,
+      ImportExportAppExtension,
     ];
   }
 
