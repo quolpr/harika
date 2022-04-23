@@ -5,7 +5,7 @@ import { isTodo } from '../../../../lib/blockParser/astHelpers';
 import { generateId } from '../../../../lib/generateId';
 import { BaseBlock, blockRef } from './BaseBlock';
 import { BlocksStore } from './BlocksStore';
-import { BlockView } from './BlockView';
+import { BlockView } from '../../BlockViewsExtension/models/BlockView';
 import { TextBlock } from './TextBlock';
 
 export const createTextBlock = standaloneAction(

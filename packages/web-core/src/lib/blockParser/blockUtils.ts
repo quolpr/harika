@@ -6,7 +6,7 @@ import { BlocksStore } from '../../apps/VaultApplication/BlocksExtension/models/
 import {
   BlockView,
   getBlockView,
-} from '../../apps/VaultApplication/BlocksExtension/models/BlockView';
+} from '../../apps/VaultApplication/BlockViewsExtension/models/BlockView';
 import { TextBlock } from '../../apps/VaultApplication/BlocksExtension/models/TextBlock';
 import { generateId } from '../generateId';
 import type { TreeToken } from './parseStringToTree';

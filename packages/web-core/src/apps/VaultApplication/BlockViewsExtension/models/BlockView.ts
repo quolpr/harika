@@ -1,6 +1,6 @@
 import { comparer, computed, makeObservable } from 'mobx';
 
-import { BaseBlock } from './BaseBlock';
+import { BaseBlock } from '../../BlocksExtension/models/BaseBlock';
 import { BlocksScope } from '../../BlockScopesExtension/models/BlocksScope';
 import {
   deepLastRightChildFunc,
@@ -10,7 +10,7 @@ import {
   leftAndRightSiblingFunc,
   nearestRightToParentFunc,
   pathFunc,
-} from './treeFuncs';
+} from '../../BlocksExtension/models/treeFuncs';
 
 const blocks: WeakMap<
   BlocksScope,
