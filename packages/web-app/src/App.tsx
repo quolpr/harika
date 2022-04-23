@@ -1,4 +1,3 @@
-import './tailwind.css';
 import './App.css';
 import './variables.css';
 import 'react-toastify/dist/ReactToastify.css';
@@ -9,6 +8,7 @@ import Modal from 'react-modal';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
+import { GlobalStyles } from 'twin.macro';
 
 import { ShiftPressedContext } from './contexts/ShiftPressedContext';
 import { useAuthState, useCleanAuthState } from './hooks/useAuthState';
@@ -124,6 +124,7 @@ export const App = () => {
 
   return (
     <>
+      <GlobalStyles />
       <ToastContainer theme="dark" />
       <ShiftPressedContext.Provider value={isShiftPressedRef}>
         <ShiftPressedTracker shiftRef={isShiftPressedRef} />

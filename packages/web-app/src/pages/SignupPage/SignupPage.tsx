@@ -1,3 +1,5 @@
+import 'twin.macro';
+
 import {
   SelfServiceRegistrationFlow,
   UiNodeInputAttributes,
@@ -90,7 +92,7 @@ export const SignupPage = () => {
   }, [setFocus]);
 
   return (
-    <div className="max-w-screen-sm mx-auto">
+    <div tw="max-w-screen-sm mx-auto">
       <form onSubmit={handleSubmit(onSubmit)} className={`${formClass()}`}>
         <div className={formClass('field')}>
           <label htmlFor="email" className={formClass('label')}>

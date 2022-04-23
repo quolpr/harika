@@ -3,6 +3,7 @@ import reactRefresh from '@vitejs/plugin-react-refresh';
 import { injectManifest } from 'rollup-plugin-workbox';
 import { visualizer } from 'rollup-plugin-visualizer';
 import Checker from 'vite-plugin-checker';
+import react from '@vitejs/plugin-react';
 
 const { glob } = require('glob');
 const reactSvgPlugin = require('vite-plugin-react-svg');
@@ -20,7 +21,21 @@ export default defineConfig({
     },
   },
   plugins: [
-    reactRefresh(),
+    react({
+      babel: {
+        plugins: [
+          'babel-plugin-macros',
+          'babel-plugin-styled-components',
+          [
+            '@babel/plugin-proposal-decorators',
+            {
+              legacy: true,
+            },
+          ],
+          ['@babel/plugin-proposal-class-properties', { loose: false }],
+        ],
+      },
+    }),
     reactSvgPlugin(),
     injectManifest({
       swSrc: './src/serviceWorker.ts',

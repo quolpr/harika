@@ -1,3 +1,5 @@
+import 'twin.macro';
+
 import { generateId } from '@harika/web-core';
 import { SelfServiceLoginFlow, UiNodeInputAttributes } from '@ory/client';
 import axios from 'axios';
@@ -140,7 +142,7 @@ export const LoginPage = () => {
   }, [navigate, setAuthInfo]);
 
   return (
-    <div className="max-w-screen-sm mx-auto px-5">
+    <div tw="max-w-screen-sm mx-auto px-5">
       <form onSubmit={handleSubmit(onSubmit)} className={`${formClass()}`}>
         <div className={formClass('field')}>
           <label htmlFor="email" className={formClass('label')}>
@@ -192,7 +194,7 @@ export const LoginPage = () => {
           Sign Up with Email
         </Link>
 
-        <div className="mx-auto mt-3 text-gray-600 text-sm">
+        <div tw="mx-auto mt-3 text-gray-600 text-sm">
           Or{' '}
           <button
             className="underline cursor-pointer"
