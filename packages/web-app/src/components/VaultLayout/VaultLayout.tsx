@@ -111,6 +111,11 @@ const VaultLayoutStyled = styled.div`
   height: 100%;
 `;
 
+const HeaderWrapper = styled.div`
+  position: relative;
+  width: 100%;
+`;
+
 export const VaultLayout: React.FC = ({ children }) => {
   const navigate = useNavigateRef();
   const { vaultId } = useParams<{ vaultId: string }>();
@@ -247,14 +252,13 @@ export const VaultLayout: React.FC = ({ children }) => {
                   'with-padding': isSidebarOpened,
                 })}
               >
-                <div className={layoutClass('header-wrapper')}>
+                <HeaderWrapper className={layoutClass('header-wrapper')}>
                   <VaultHeader
-                    className={layoutClass('header')}
                     onTogglerClick={handleTogglerClick}
                     isTogglerToggled={isSidebarOpened}
                     togglerRef={togglerRef}
                   />
-                </div>
+                </HeaderWrapper>
 
                 <div
                   className={layoutClass('main-wrapper')}
