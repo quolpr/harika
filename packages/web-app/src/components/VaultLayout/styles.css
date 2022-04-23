@@ -8,27 +8,6 @@
 }
 
 .vault-layout {
-  display: flex;
-  position: relative;
-
-  width: 100%;
-  height: 100%;
-
-  &__sidebar {
-    position: fixed !important;
-    @apply transform-gpu;
-    width: var(--sidebar-width);
-    transition: var(--layout-animation, all 0.15s cubic-bezier(0.4, 0, 0.2, 1));
-
-    @media (min-width: 768px) {
-      top: 0 !important;
-    }
-  }
-
-  &__sidebar--closed {
-    transform: translate3d(calc(var(--sidebar-width) * -1), 0, 0);
-  }
-
   &__header-wrapper {
     position: relative;
 

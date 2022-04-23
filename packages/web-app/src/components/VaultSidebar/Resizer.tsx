@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef } from 'react';
+import { styled } from 'twin.macro';
 
 import { sidebarClass } from './VaultSidebar';
 
@@ -9,6 +10,18 @@ export enum ResizeActionType {
   MOVE = 'move',
   DEACTIVATE = 'deactivate',
 }
+
+const ResizeStyled = styled.div`
+  position: absolute;
+  top: 0;
+  right: 0px;
+  width: 3px;
+  margin-right: -3px;
+  height: 100%;
+  background-color: #222;
+  cursor: col-resize;
+  user-select: none;
+`;
 
 export const Resizer = ({
   onResize,
@@ -145,5 +158,5 @@ export const Resizer = ({
     };
   }, [handleMouse, handleTouch]);
 
-  return <div className={sidebarClass('resizer')} ref={resizerRef} />;
+  return <ResizeStyled className={sidebarClass('resizer')} ref={resizerRef} />;
 };

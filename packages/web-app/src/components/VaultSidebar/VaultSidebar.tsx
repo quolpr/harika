@@ -1,5 +1,3 @@
-import './styles.css';
-
 import dayjs from 'dayjs';
 import download from 'downloadjs';
 import { useObservable, useObservableState } from 'observable-hooks';
@@ -8,6 +6,7 @@ import { useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useMedia } from 'react-use';
 import { switchMap } from 'rxjs';
+import { css, styled } from 'twin.macro';
 
 import { useHandleNoteClickOrPress } from '../../contexts/StackedNotesContext';
 import {
@@ -23,6 +22,7 @@ import { paths } from '../../paths';
 import { cn } from '../../utils';
 import { NotesTree } from './NotesTree';
 import { ResizeActionType, Resizer } from './Resizer';
+import { SidebarItem, SidebarItemBtn, SidebarItemLabel } from './styles';
 import VaultIcon from './vault.svgr.svg?component';
 
 export const sidebarClass = cn('sidebar');
@@ -37,6 +37,83 @@ type IProps = {
 export const getLocalStorageSidebarWidth = () => {
   return parseInt(localStorage.getItem('sidebarWidth') || '260', 10);
 };
+
+const VaultSidebarStyled = styled.div<{ closed: boolean }>`
+  display: flex;
+  flex-direction: column;
+
+  position: fixed;
+  width: var(--sidebar-width);
+  transition: var(--layout-animation, all 0.15s cubic-bezier(0.4, 0, 0.2, 1));
+
+  height: calc(var(--app-height) - var(--vault-header-full-height));
+  top: var(--vault-header-full-height);
+  bottom: 0;
+  z-index: 1000;
+
+  background-color: #2c2d2f;
+
+  @media (min-width: 768px) {
+    height: 100%;
+    top: 0 !important;
+  }
+
+  ${({ closed }) =>
+    closed &&
+    css`
+      transform: translate3d(calc(var(--sidebar-width) * -1), 0, 0);
+    `}
+`;
+
+const Header = styled.div`
+  display: flex;
+  padding: 18px 24px;
+  background-color: #353739;
+`;
+
+const HeaderVaultName = styled.div`
+  margin-left: 14px;
+
+  font-weight: bold;
+  color: #e9e9e9;
+  font-size: 20px;
+`;
+
+const MenuContainer = styled.div`
+  overflow: scroll;
+`;
+
+const Menu = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  font-family: Roboto;
+  font-style: normal;
+  font-weight: normal;
+
+  margin: 16px 26px;
+  margin-bottom: 12px;
+`;
+
+const MenuLinkTitle = styled.div`
+  margin-left: 12px;
+`;
+
+const NotesTreeContainer = styled.div`
+  margin: 0 0 0 12px;
+`;
+
+const TreeTitle = styled.div`
+  font-family: Roboto;
+  font-style: normal;
+  font-weight: bold;
+  font-size: 13px;
+  color: #7e7e88;
+
+  margin-bottom: 8px;
+  margin-left: 16px;
+`;
 
 export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
   ({ className, isOpened, onNavClick, vaultName }: IProps, ref) => {
@@ -138,23 +215,24 @@ export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
     }, [sidebarWidth]);
 
     return (
-      <div
+      <VaultSidebarStyled
         ref={ref}
-        className={`${className} ${sidebarClass({ isOpened: isOpened })}`}
+        closed={!isOpened}
+        className={sidebarClass({ isOpened: isOpened })}
       >
-        <div className={sidebarClass('header')}>
+        <Header className={sidebarClass('header')}>
           <div className={sidebarClass('header-vault-icon')}>
             <Link to={paths.vaultIndexPath()}>
               <VaultIcon />
             </Link>
           </div>
-          <div className={sidebarClass('header-vault-name')}>
+          <HeaderVaultName className={sidebarClass('header-vault-name')}>
             {vaultName || 'Loading...'}
-          </div>
-        </div>
-        <div className={sidebarClass('menu-container')}>
-          <div className={sidebarClass('menu')}>
-            <Link
+          </HeaderVaultName>
+        </Header>
+        <MenuContainer className={sidebarClass('menu-container')}>
+          <Menu className={sidebarClass('menu')}>
+            <SidebarItem
               className={sidebarClass('menu-link sidebar-item')}
               to={paths.vaultDailyPath({ vaultId: vaultApp.applicationId })}
               onClick={onDailyNoteClick}
@@ -163,10 +241,12 @@ export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
                 <DailyNoteIcon />
               </div>
 
-              <div className={sidebarClass('menu-link-title')}>Daily Note</div>
-            </Link>
+              <MenuLinkTitle className={sidebarClass('menu-link-title')}>
+                Daily Note
+              </MenuLinkTitle>
+            </SidebarItem>
 
-            <Link
+            <SidebarItem
               className={sidebarClass('menu-link sidebar-item')}
               to={paths.vaultNoteIndexPath({
                 vaultId: vaultApp.applicationId,
@@ -177,10 +257,12 @@ export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
                 <NotesIcon />
               </div>
 
-              <div className={sidebarClass('menu-link-title')}>All Notes</div>
-            </Link>
+              <MenuLinkTitle className={sidebarClass('menu-link-title')}>
+                All Notes
+              </MenuLinkTitle>
+            </SidebarItem>
 
-            <button
+            <SidebarItemBtn
               className={sidebarClass('menu-link sidebar-item')}
               onClick={handleDownloadClick}
             >
@@ -188,10 +270,14 @@ export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
                 <DownloadIcon />
               </div>
 
-              <div className={sidebarClass('menu-link-title')}>Download db</div>
-            </button>
+              <MenuLinkTitle className={sidebarClass('menu-link-title')}>
+                Download db
+              </MenuLinkTitle>
+            </SidebarItemBtn>
 
-            <label className={sidebarClass('menu-link sidebar-item')}>
+            <SidebarItemLabel
+              className={sidebarClass('menu-link sidebar-item')}
+            >
               <input
                 id="upload"
                 type="file"
@@ -202,18 +288,20 @@ export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
                 <UploadIcon />
               </div>
 
-              <div className={sidebarClass('menu-link-title')}>Import DB</div>
-            </label>
-          </div>
+              <MenuLinkTitle className={sidebarClass('menu-link-title')}>
+                Import DB
+              </MenuLinkTitle>
+            </SidebarItemLabel>
+          </Menu>
 
-          <div className={sidebarClass('notes-tree-title')}>Notes Tree</div>
+          <TreeTitle className={sidebarClass('notes-tree-title')}>
+            Notes Tree
+          </TreeTitle>
 
-          <div className={sidebarClass('notes-tree')}>
+          <NotesTreeContainer className={sidebarClass('notes-tree')}>
             <NotesTree onNavClick={onNavClick} />
-          </div>
-
-          {/* <Brand className={sidebarClass('brand')} onClick={onNavClick} /> */}
-        </div>
+          </NotesTreeContainer>
+        </MenuContainer>
 
         {isWide && (
           <Resizer
@@ -222,7 +310,7 @@ export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
             onResize={handleResize}
           />
         )}
-      </div>
+      </VaultSidebarStyled>
     );
   },
 );

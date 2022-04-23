@@ -12,6 +12,7 @@ import React, {
 } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import { useClickAway, useMedia, useMountedState } from 'react-use';
+import { styled } from 'twin.macro';
 
 import { FooterRefContext } from '../../contexts/FooterRefContext';
 import { FocusedStackIdContext } from '../../contexts/StackedNotesContext';
@@ -101,6 +102,14 @@ const useKeepScroll = () => {
 
   return { mainRef, handleScroll };
 };
+
+const VaultLayoutStyled = styled.div`
+  display: flex;
+  position: relative;
+
+  width: 100%;
+  height: 100%;
+`;
 
 export const VaultLayout: React.FC = ({ children }) => {
   const navigate = useNavigateRef();
@@ -225,13 +234,10 @@ export const VaultLayout: React.FC = ({ children }) => {
       <CurrentVaultAppContext.Provider value={vaultApp}>
         <FooterRefContext.Provider value={footerRef}>
           <UndoRedoManagerProvider>
-            <div className={layoutClass()}>
+            <VaultLayoutStyled className={layoutClass()}>
               <VaultSidebar
                 vaultName={vaultName}
                 ref={sidebarRef}
-                className={layoutClass('sidebar', {
-                  closed: !isSidebarOpened,
-                })}
                 isOpened={isSidebarOpened}
                 onNavClick={closeSidebar}
               />
@@ -269,7 +275,7 @@ export const VaultLayout: React.FC = ({ children }) => {
                   ref={footerRef}
                 ></div>
               </div>
-            </div>
+            </VaultLayoutStyled>
           </UndoRedoManagerProvider>
         </FooterRefContext.Provider>
       </CurrentVaultAppContext.Provider>

@@ -38,13 +38,6 @@ if (
 }
 
 const renderApp = async () => {
-  if (import.meta.env.MODE !== 'production') {
-    const whyDidYouRender = await import(
-      '@welldone-software/why-did-you-render'
-    );
-    whyDidYouRender.default(React as any);
-  }
-
   const el = <App />;
 
   const container = document.getElementById('root');
