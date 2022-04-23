@@ -1,5 +1,3 @@
-import './styles.css';
-
 import { VaultApplication } from '@harika/web-core';
 import { writeStorage } from '@rehooks/local-storage';
 import React, {
@@ -12,7 +10,9 @@ import React, {
 } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import { useClickAway, useMedia, useMountedState } from 'react-use';
-import { styled } from 'twin.macro';
+import { createGlobalStyle } from 'styled-components';
+import { css, styled } from 'twin.macro';
+import tw from 'twin.macro';
 
 import { FooterRefContext } from '../../contexts/FooterRefContext';
 import { FocusedStackIdContext } from '../../contexts/StackedNotesContext';
@@ -25,6 +25,33 @@ import {
   getLocalStorageSidebarWidth,
   VaultSidebar,
 } from '../VaultSidebar/VaultSidebar';
+
+const GlobalStyle = createGlobalStyle`
+  .react-calendar {
+    margin: 0 auto;
+    ${tw`mt-8`}
+  }
+
+  :root {
+    --sidebar-width: 260px;
+  }
+`;
+
+const VaultContainer = styled.div<{ withPadding: boolean }>`
+  width: 100%;
+  margin-left: 0px;
+  position: relative;
+
+  transition: var(--layout-animation, all 0.15s cubic-bezier(0.4, 0, 0.2, 1));
+
+  ${({ withPadding }) =>
+    withPadding &&
+    css`
+      @media (min-width: 768px) {
+        margin-left: var(--sidebar-width);
+      }
+    `}
+`;
 
 const layoutClass = bem('vault-layout');
 
@@ -114,6 +141,41 @@ const VaultLayoutStyled = styled.div`
 const HeaderWrapper = styled.div`
   position: relative;
   width: 100%;
+`;
+
+const MainWrapper = styled.div`
+  position: absolute;
+
+  top: var(--vault-header-full-height);
+  bottom: var(--vault-footer-height);
+
+  -webkit-overflow-scrolling: touch;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+
+  overscroll-behavior: contain;
+
+  width: 100%;
+  display: flex;
+  justify-content: center;
+`;
+
+const Main = styled.section`
+  ${tw`transition-all px-8`}
+
+  width: 100%;
+
+  @media (min-width: 768px) {
+    ${tw`px-10`}
+  }
+`;
+
+const FooterWrapper = styled.div`
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
 `;
 
 export const VaultLayout: React.FC = ({ children }) => {
@@ -235,55 +297,59 @@ export const VaultLayout: React.FC = ({ children }) => {
   if (!vaultApp) return null;
 
   return (
-    <FocusedStackIdContext.Provider value={focusedStackContextValue}>
-      <CurrentVaultAppContext.Provider value={vaultApp}>
-        <FooterRefContext.Provider value={footerRef}>
-          <UndoRedoManagerProvider>
-            <VaultLayoutStyled className={layoutClass()}>
-              <VaultSidebar
-                vaultName={vaultName}
-                ref={sidebarRef}
-                isOpened={isSidebarOpened}
-                onNavClick={closeSidebar}
-              />
+    <>
+      <GlobalStyle />
+      <FocusedStackIdContext.Provider value={focusedStackContextValue}>
+        <CurrentVaultAppContext.Provider value={vaultApp}>
+          <FooterRefContext.Provider value={footerRef}>
+            <UndoRedoManagerProvider>
+              <VaultLayoutStyled className={layoutClass()}>
+                <VaultSidebar
+                  vaultName={vaultName}
+                  ref={sidebarRef}
+                  isOpened={isSidebarOpened}
+                  onNavClick={closeSidebar}
+                />
 
-              <div
-                className={layoutClass('container', {
-                  'with-padding': isSidebarOpened,
-                })}
-              >
-                <HeaderWrapper className={layoutClass('header-wrapper')}>
-                  <VaultHeader
-                    onTogglerClick={handleTogglerClick}
-                    isTogglerToggled={isSidebarOpened}
-                    togglerRef={togglerRef}
-                  />
-                </HeaderWrapper>
-
-                <div
-                  className={layoutClass('main-wrapper')}
-                  onScroll={handleScroll}
-                  ref={mainRef}
+                <VaultContainer
+                  className={layoutClass('container', {
+                    'with-padding': isSidebarOpened,
+                  })}
+                  withPadding={isSidebarOpened}
                 >
-                  <section
-                    className={layoutClass('main', {
-                      'sidebar-opened': isSidebarOpened,
-                    })}
-                  >
-                    {children}
-                  </section>
-                </div>
+                  <HeaderWrapper className={layoutClass('header-wrapper')}>
+                    <VaultHeader
+                      onTogglerClick={handleTogglerClick}
+                      isTogglerToggled={isSidebarOpened}
+                      togglerRef={togglerRef}
+                    />
+                  </HeaderWrapper>
 
-                <div
-                  className={layoutClass('footer-wrapper')}
-                  ref={footerRef}
-                ></div>
-              </div>
-            </VaultLayoutStyled>
-          </UndoRedoManagerProvider>
-        </FooterRefContext.Provider>
-      </CurrentVaultAppContext.Provider>
-    </FocusedStackIdContext.Provider>
+                  <MainWrapper
+                    className={layoutClass('main-wrapper')}
+                    onScroll={handleScroll}
+                    ref={mainRef}
+                  >
+                    <Main
+                      className={layoutClass('main', {
+                        'sidebar-opened': isSidebarOpened,
+                      })}
+                    >
+                      {children}
+                    </Main>
+                  </MainWrapper>
+
+                  <FooterWrapper
+                    className={layoutClass('footer-wrapper')}
+                    ref={footerRef}
+                  ></FooterWrapper>
+                </VaultContainer>
+              </VaultLayoutStyled>
+            </UndoRedoManagerProvider>
+          </FooterRefContext.Provider>
+        </CurrentVaultAppContext.Provider>
+      </FocusedStackIdContext.Provider>
+    </>
   );
 };
 
