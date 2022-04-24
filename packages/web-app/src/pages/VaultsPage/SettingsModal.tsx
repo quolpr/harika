@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 
 import { Modal, modalClass } from '../../components/Modal/Modal';
 import { cn } from '../../utils';
+import { VaultModelHeader } from './styles';
 
 const formModalClass = cn('vault-form-modal');
 const formClass = cn('form');
@@ -55,9 +56,11 @@ export const SettingsModal = ({
 
   return (
     <Modal isOpened={isOpened} onClose={handleClose}>
-      <h1 className={`${formModalClass('header')} ${modalClass('header')} `}>
+      <VaultModelHeader
+        className={`${formModalClass('header')} ${modalClass('header')} `}
+      >
         Edit Vault
-      </h1>
+      </VaultModelHeader>
 
       <form
         onSubmit={handleFormSubmit(handleSubmit)}
