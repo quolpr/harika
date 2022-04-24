@@ -2,8 +2,10 @@ import { UserVaultsService } from '@harika/web-core';
 import DeleteIcon from '@material-ui/icons/Delete';
 import React, { useCallback } from 'react';
 import { useForm } from 'react-hook-form';
+import { styled } from 'twin.macro';
 
 import { Modal, modalClass } from '../../components/Modal/Modal';
+import { modalFooterCss, modalRowCss } from '../../components/Modal/styles';
 import { cn } from '../../utils';
 import { VaultModelHeader } from './styles';
 
@@ -13,6 +15,11 @@ const formClass = cn('form');
 type IFormData = {
   name: string;
 };
+
+const ModalRowForm = styled.form`
+  ${modalRowCss}
+  ${modalFooterCss}
+`;
 
 export const SettingsModal = ({
   vault,
@@ -62,7 +69,7 @@ export const SettingsModal = ({
         Edit Vault
       </VaultModelHeader>
 
-      <form
+      <ModalRowForm
         onSubmit={handleFormSubmit(handleSubmit)}
         className={`${modalClass('row')} ${modalClass(
           'footer',
@@ -89,7 +96,7 @@ export const SettingsModal = ({
         )}
 
         <input type="submit" className={formClass('submit-btn')} />
-      </form>
+      </ModalRowForm>
 
       <button
         onClick={handleDelete}

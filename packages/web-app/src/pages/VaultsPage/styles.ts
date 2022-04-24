@@ -1,5 +1,7 @@
 import tw, { styled } from 'twin.macro';
 
-export const VaultModelHeader = styled.h1`
+import { ModalHeader } from '../../components/Modal/styles';
+
+export const VaultModelHeader = styled(ModalHeader)`
   ${tw`text-gray-100 text-3xl font-bold pt-2`}
 `;

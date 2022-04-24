@@ -18,6 +18,7 @@ import {
 import { paths } from '../../paths';
 import { cn, useNavigateRef } from '../../utils';
 import { Modal, modalClass } from '../Modal/Modal';
+import { modalFooterCss, ModalHeader, ModalRow } from '../Modal/styles';
 
 // Command executes on each user type and as result gives list of actions
 // Commands are start with `!`. If no `!` present - then search happen between all start view actions names
@@ -82,8 +83,11 @@ const Key = styled.div<{ focused: boolean }>`
     `}
 `;
 
-const ListContainer = styled.div`
+const ListContainer = styled(ModalRow)`
   ${tw`mt-6`}
+
+  ${modalFooterCss}
+
   flex: auto;
   overflow: auto;
 `;
@@ -376,7 +380,7 @@ export const CommandPaletteModal = ({
 
   return (
     <Modal isOpened={isOpened} onClose={onClose} fullHeight>
-      <header
+      <ModalHeader
         className={`${commandPaletteModalClass('header')} ${modalClass(
           'header',
         )}`}
@@ -406,7 +410,7 @@ export const CommandPaletteModal = ({
             }}
           />
         </Form>
-      </header>
+      </ModalHeader>
       <ListContainer
         className={`${commandPaletteModalClass(
           'actions-list-container',

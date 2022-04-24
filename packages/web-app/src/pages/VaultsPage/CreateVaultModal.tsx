@@ -1,7 +1,9 @@
 import React from 'react';
 import { useForm } from 'react-hook-form';
+import { styled } from 'twin.macro';
 
 import { Modal, modalClass } from '../../components/Modal/Modal';
+import { modalFooterCss, modalRowCss } from '../../components/Modal/styles';
 import { cn } from '../../utils';
 import { VaultModelHeader } from './styles';
 
@@ -11,6 +13,11 @@ const formClass = cn('form');
 type IFormData = {
   name: string;
 };
+
+const ModalRowForm = styled.form`
+  ${modalRowCss}
+  ${modalFooterCss}
+`;
 
 export const CreateVaultModal = ({
   isOpened,
@@ -38,7 +45,7 @@ export const CreateVaultModal = ({
         New Vault
       </VaultModelHeader>
 
-      <form
+      <ModalRowForm
         onSubmit={handleSubmit(onSubmit)}
         className={`${modalClass('row')} ${modalClass(
           'footer',
@@ -64,7 +71,7 @@ export const CreateVaultModal = ({
         )}
 
         <input type="submit" className={formClass('submit-btn')} />
-      </form>
+      </ModalRowForm>
     </Modal>
   );
 };
