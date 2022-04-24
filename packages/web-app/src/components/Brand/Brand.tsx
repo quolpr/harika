@@ -1,12 +1,29 @@
-import './brand.css';
-
 import React from 'react';
 import { Link } from 'react-router-dom';
+import tw, { css, styled } from 'twin.macro';
 
 import { paths } from '../../paths';
-import { cn } from '../../utils';
+import { bem } from '../../utils';
 
-const brandClass = cn('brand');
+const brandClass = bem('brand');
+
+const BrandStyled = styled.div<{ sm?: boolean }>`
+  ${tw`text-gray-100 text-3xl font-bold`}
+
+  display: flex;
+
+  margin-top: auto;
+
+  ${({ sm }) =>
+    sm &&
+    css`
+      ${tw`text-2xl`}
+    `}
+`;
+
+const Dot = styled.div`
+  ${tw`inline text-pink-600 ml-0.5`}
+`;
 
 export const Brand = ({
   onClick,
@@ -18,10 +35,10 @@ export const Brand = ({
   sm?: boolean;
 }) => {
   return (
-    <div className={`${brandClass({ sm })} ${className || ''}`}>
+    <BrandStyled sm={sm} className={`${brandClass({ sm })} ${className || ''}`}>
       <Link to={paths.defaultPath()} onClick={onClick}>
-        Harika<div className={brandClass('dot', { sm })}>.</div>
+        Harika<Dot className={brandClass('dot', { sm })}>.</Dot>
       </Link>
-    </div>
+    </BrandStyled>
   );
 };

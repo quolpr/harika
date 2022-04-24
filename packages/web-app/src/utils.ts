@@ -60,7 +60,7 @@ export function useDeepMemo<TKey, TValue>(
 
 const modificationsToString = (
   toModify: string,
-  modifications: Record<string, boolean>,
+  modifications: Record<string, boolean | undefined>,
 ) => {
   let tmp = '';
 
@@ -76,8 +76,8 @@ const modificationsToString = (
 
 export const bem = (block: string) => {
   return (
-    elementOrModifications?: string | Record<string, boolean>,
-    modifications?: Record<string, boolean>,
+    elementOrModifications?: string | Record<string, boolean | undefined>,
+    modifications?: Record<string, boolean | undefined>,
   ) => {
     let result = block;
 
