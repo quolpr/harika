@@ -1,16 +1,6 @@
-import './styles.css';
-
-import {
-  getGroupedBacklinks,
-  NoteBlock as NoteBlockModel,
-} from '@harika/web-core';
 import { NoteBlock } from '@harika/web-core';
-import { LinkIcon } from '@heroicons/react/solid';
 import dayjs from 'dayjs';
-import { isEqual } from 'lodash-es';
-import { comparer, computed } from 'mobx';
 import { observer } from 'mobx-react-lite';
-import { useObservable, useObservableState } from 'observable-hooks';
 import React, {
   ChangeEvent,
   useCallback,
@@ -21,102 +11,79 @@ import React, {
 import AutosizeInput from 'react-input-autosize';
 import { useLocation } from 'react-router-dom';
 import { useMedia } from 'react-use';
-import {
-  combineLatest,
-  distinctUntilChanged,
-  map,
-  mapTo,
-  of,
-  switchMap,
-} from 'rxjs';
+import tw, { styled } from 'twin.macro';
 
 import { CurrentBlockInputRefContext } from '../../contexts';
 import { useNotePath } from '../../contexts/StackedNotesContext';
 import { useBlockFocusState } from '../../hooks/useBlockFocusState';
 import {
-  useAllBlocksService,
-  useBlockLinksService,
-  useBlockLinksStore,
-  useBlocksScopesService,
-  useBlocksScopesStore,
   useNoteBlocksService,
   useUpdateTitleService,
 } from '../../hooks/vaultAppHooks';
 import LeftArrow from '../../icons/left-arrow.svg?component';
 import RightArrow from '../../icons/right-arrow.svg?component';
 import { bem, useNavigateRef } from '../../utils';
-import { BacklinkedNote } from './BacklinkedNote';
+import { BacklinkedNotes } from './BacklinkedNotes';
 import { ChildrenBlocks } from './ChildrenBlocks';
+
+const NoteStyled = styled.div`
+  ${tw`pb-5 pt-5`}
+  display: flex;
+  flex-direction: column;
+  clear: both;
+`;
+
+const NoteHeader = styled.h2`
+  ${tw`text-gray-100 pb-4 font-bold`}
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 1.875rem;
+
+  @media (min-width: 768px) {
+    font-size: 2rem;
+  }
+`;
+
+const LeftBtn = styled.button`
+  padding: 0.75rem;
+  margin-right: 0.5rem;
+  transform: scale(0.7);
+
+  @media (min-width: 768px) {
+    transform: scale(1);
+    padding: 1rem;
+    margin-right: 3rem;
+  }
+`;
+
+const RightBtn = styled.button`
+  padding: 0.75rem;
+  margin-left: 0.5rem;
+  transform: scale(0.7);
+
+  @media (min-width: 768px) {
+    transform: scale(1);
+    padding: 1rem;
+    margin-left: 3rem;
+  }
+`;
+
+const InputBox = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 12rem;
+  @media (min-width: 768px) {
+    min-width: 21rem;
+  }
+`;
 
 export interface IFocusBlockState {
   focusOnBlockId: string;
 }
-
-const BacklinkedNotes = observer(({ note }: { note: NoteBlockModel }) => {
-  const blocksScopesService = useBlocksScopesService();
-  const blocksScopesStore = useBlocksScopesStore();
-  const blockLinksService = useBlockLinksService();
-  const blockLinksStore = useBlockLinksStore();
-  const allBlocksService = useAllBlocksService();
-
-  const backlinksLoader$ = useObservable(
-    ($inputs) => {
-      return $inputs.pipe(
-        switchMap(([note]) =>
-          blockLinksService
-            .loadBacklinkedBlocks$(note.$modelId)
-            .pipe(map((noteLinks) => ({ noteLinks, note }))),
-        ),
-        distinctUntilChanged((a, b) => isEqual(a, b)),
-        switchMap(({ noteLinks, note }) => {
-          if (noteLinks.rootsIds.length === 0) return of(true);
-
-          return combineLatest([
-            allBlocksService.loadBlocksTrees$(noteLinks.rootsIds),
-            blocksScopesService.loadOrCreateBlocksScopes(
-              noteLinks.links.flatMap((link) => ({
-                scopedBy: note,
-                rootBlockId: link.blockRef.id,
-              })),
-            ),
-            blockLinksService.loadLinksOfBlockDescendants$(noteLinks.rootsIds),
-          ]).pipe(mapTo(true));
-        }),
-      );
-    },
-    [note],
-  );
-  const areBacklinksLoaded = useObservableState(backlinksLoader$, false);
-
-  const groupedBacklinks = computed(
-    () => getGroupedBacklinks(blockLinksStore, blocksScopesStore, note),
-    { equals: comparer.structural },
-  ).get();
-
-  return (
-    <>
-      {areBacklinksLoaded ? (
-        <div className="note__linked-references">
-          <LinkIcon className="note__link-icon" style={{ width: 16 }} />
-          {groupedBacklinks.count} Linked References
-        </div>
-      ) : (
-        <div className="note__linked-references">
-          <LinkIcon className="note__link-icon" style={{ width: 16 }} />
-          References are loading...
-        </div>
-      )}
-
-      {groupedBacklinks.links.map((link) => (
-        <BacklinkedNote
-          key={link.rootBlock.$modelId}
-          note={link.rootBlock as NoteBlock}
-          scopesWithBlocks={link.scopesWithBlocks}
-        />
-      ))}
-    </>
-  );
-});
 
 const noteClass = bem('note');
 
@@ -219,20 +186,20 @@ const NoteBody = observer(({ note }: { note: NoteBlock }) => {
   );
 
   return (
-    <div className={noteClass()}>
-      <h2 className={noteClass('header')}>
+    <NoteStyled className={noteClass()}>
+      <NoteHeader className={noteClass('header')}>
         <label htmlFor={inputId} className="hidden-label">
           Note title
         </label>
         {isDailyNote && note.dailyNoteDate && (
-          <button
+          <LeftBtn
             className={noteClass('leftArrow')}
             onClick={(e) => handleArrowClick(e, 'prev')}
           >
             <LeftArrow />
-          </button>
+          </LeftBtn>
         )}
-        <div className={noteClass('inputBox')}>
+        <InputBox className={noteClass('inputBox')}>
           <AutosizeInput
             disabled={isDailyNote}
             id={inputId}
@@ -249,21 +216,21 @@ const NoteBody = observer(({ note }: { note: NoteBlock }) => {
               boxShadow: 'none',
             }}
           />
-        </div>
+        </InputBox>
         {isDailyNote && (
-          <button
+          <RightBtn
             className={noteClass('rightArrow')}
             onClick={(e) => handleArrowClick(e, 'next')}
           >
             <RightArrow />
-          </button>
+          </RightBtn>
         )}
-      </h2>
+      </NoteHeader>
 
       <ChildrenBlocks note={note} />
 
       <BacklinkedNotes note={note} />
-    </div>
+    </NoteStyled>
   );
 });
 

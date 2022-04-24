@@ -8,6 +8,7 @@ import clsx from 'clsx';
 import { observer } from 'mobx-react-lite';
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import tw, { css, styled } from 'twin.macro';
 
 import {
   useHandleNoteClickOrPress,
@@ -16,6 +17,43 @@ import {
 import { Arrow } from '../Arrow/Arrow';
 import { TextBlockComponent } from '../TextBlock/TextBlock';
 import { BlocksHandlers } from './BlocksHandlers';
+
+const LinkedBlockStyled = styled.div`
+  ${tw`bg-gray-800 mt-3 px-4 py-2 rounded-md shadow-sm`}
+
+  &:first-child {
+    ${tw`mt-0`}
+  }
+
+  .text-block__child-blocks::before {
+    ${tw`bg-gray-700`}
+  }
+`;
+
+const Path = styled.div`
+  ${tw`mb-2`}
+`;
+
+const PathStep = styled.div<{ last: boolean }>`
+  display: inline;
+  word-break: break-all;
+
+  &:after {
+    ${tw`mx-1.5`}
+
+    content: '->';
+
+    white-space: nowrap;
+  }
+
+  ${({ last }) =>
+    last &&
+    css`
+      &:after {
+        content: '';
+      }
+    `}
+`;
 
 const LinkedBlock = observer(
   ({
@@ -33,23 +71,24 @@ const LinkedBlock = observer(
       scope && rootBlock && getBlocksSelection(scope, rootBlock);
 
     return (
-      <div className="backlinked-note__noteblock-root">
+      <LinkedBlockStyled className="backlinked-note__noteblock-root">
         {path.length > 1 && (
-          <div className="backlinked-note__noteblock-path">
+          <Path className="backlinked-note__noteblock-path">
             {path.slice(1).map((n, i) => (
-              <div
+              <PathStep
                 className={clsx('backlinked-note__noteblock-path-step', {
                   'backlinked-note__noteblock-path-step--last':
                     i === path.length - 1,
                 })}
+                last={i === path.length - 1}
                 key={n.$modelId}
               >
                 {n.originalBlock.toString().trim().length === 0
                   ? '[blank]'
                   : n.originalBlock.toString()}
-              </div>
+              </PathStep>
             ))}
-          </div>
+          </Path>
         )}
 
         <BlocksHandlers rootBlock={rootBlock} scope={scope} />
@@ -59,10 +98,39 @@ const LinkedBlock = observer(
           scope={scope}
           blocksSelection={blocksSelection}
         />
-      </div>
+      </LinkedBlockStyled>
     );
   },
 );
+
+const BacklinkedNoteStyled = styled.div`
+  ${tw`mt-5`}
+  position: relative;
+`;
+
+const Title = styled.div`
+  display: flex;
+`;
+
+const ArrowStyled = styled(Arrow)`
+  ${tw`mr-2.5`}
+  transform: translateY(-0.23rem);
+
+  &.arrow--expanded {
+    transform: translateY(-0.3rem);
+  }
+`;
+
+const NoteBlocks = styled.div<{ expanded: boolean }>`
+  ${tw`ml-4 mt-3`}
+  display: none;
+
+  ${({ expanded }) =>
+    expanded &&
+    css`
+      display: block;
+    `}
+`;
 
 export const BacklinkedNote = observer(
   ({
@@ -78,13 +146,13 @@ export const BacklinkedNote = observer(
     const handleClick = useHandleNoteClickOrPress(note?.$modelId);
 
     return (
-      <div className="backlinked-note">
-        <div
+      <BacklinkedNoteStyled className="backlinked-note">
+        <Title
           className={clsx('backlinked-note__title', {
             'backlinked-note__title--expanded': isExpanded,
           })}
         >
-          <Arrow
+          <ArrowStyled
             className="backlinked-note__arrow"
             isExpanded={isExpanded}
             onToggle={() => {
@@ -94,12 +162,13 @@ export const BacklinkedNote = observer(
           <Link to={note ? notePath(note.$modelId) : ''} onClick={handleClick}>
             {note.title}
           </Link>
-        </div>
+        </Title>
 
-        <div
+        <NoteBlocks
           className={clsx('backlinked-note__noteblocks', {
             'backlinked-note__noteblocks--expanded': isExpanded,
           })}
+          expanded={isExpanded}
         >
           {scopesWithBlocks.map(({ scope, rootBlock }) => (
             <LinkedBlock
@@ -109,8 +178,8 @@ export const BacklinkedNote = observer(
               rootBlock={rootBlock}
             />
           ))}
-        </div>
-      </div>
+        </NoteBlocks>
+      </BacklinkedNoteStyled>
     );
   },
 );

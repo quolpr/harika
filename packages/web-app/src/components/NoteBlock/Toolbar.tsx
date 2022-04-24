@@ -11,6 +11,7 @@ import React, { useCallback, useContext, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import { useUnmount } from 'react-use';
 import scrollIntoView from 'scroll-into-view-if-needed';
+import tw, { styled } from 'twin.macro';
 import useResizeObserver from 'use-resize-observer/polyfilled';
 
 import { CurrentBlockInputRefContext } from '../../contexts';
@@ -23,6 +24,26 @@ import {
 import { cn, insertText } from '../../utils';
 
 const toolbarClass = cn('toolbar');
+
+const ToolbarStyled = styled.div`
+  ${tw`bg-gray-900 bg-opacity-90`}
+  display: flex;
+  position: relative;
+
+  backdrop-filter: blur(5px);
+`;
+const ToolbarContent = styled.div`
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+
+  width: 100%;
+`;
+const ToolbarBtn = styled.button`
+  height: 4rem;
+
+  flex: 1;
+`;
 
 export const Toolbar = observer(() => {
   const footerRef = useContext(FooterRefContext);
@@ -189,57 +210,57 @@ export const Toolbar = observer(() => {
   return (
     (footerRef?.current &&
       ReactDOM.createPortal(
-        <div className={toolbarClass()} ref={elRef}>
-          <div className={toolbarClass('content')}>
-            <button
+        <ToolbarStyled className={toolbarClass()} ref={elRef}>
+          <ToolbarContent className={toolbarClass('content')}>
+            <ToolbarBtn
               className={toolbarClass('button')}
               onMouseDown={handleCommandPress}
               aria-label="Show editor command"
             >
               /
-            </button>
-            <button
+            </ToolbarBtn>
+            <ToolbarBtn
               className={toolbarClass('button')}
               onMouseDown={handleTodoPress}
               aria-label="Add TODO"
             >
               <CheckBox />
-            </button>
-            <button
+            </ToolbarBtn>
+            <ToolbarBtn
               className={toolbarClass('button')}
               onMouseDown={handleBracketPress}
               aria-label="Add note ref"
             >
               [[
-            </button>
-            <button
+            </ToolbarBtn>
+            <ToolbarBtn
               onMouseDown={handleMoveDownPress}
               className={toolbarClass('button')}
               aria-label="Increase indent"
             >
               <FormatIndentDecrease />
-            </button>
-            <button
+            </ToolbarBtn>
+            <ToolbarBtn
               onMouseDown={handleMoveUpPress}
               className={toolbarClass('button')}
               aria-label="Decrease indent"
             >
               <FormatIndentIncrease />
-            </button>
-            <button
+            </ToolbarBtn>
+            <ToolbarBtn
               onMouseDown={handleMoveRight}
               className={toolbarClass('button')}
               aria-label="Move down"
             >
               <ArrowDropDown />
-            </button>
-            <button
+            </ToolbarBtn>
+            <ToolbarBtn
               onMouseDown={handleMoveLeft}
               className={toolbarClass('button')}
               aria-label="Move up"
             >
               <ArrowDropUp />
-            </button>
+            </ToolbarBtn>
 
             {/* <button */}
             {/*   className={toolbarClass('button')} */}
@@ -248,8 +269,8 @@ export const Toolbar = observer(() => {
             {/* > */}
             {/*   <KeyboardHide /> */}
             {/* </button> */}
-          </div>
-        </div>,
+          </ToolbarContent>
+        </ToolbarStyled>,
         footerRef.current,
       )) ||
     null
