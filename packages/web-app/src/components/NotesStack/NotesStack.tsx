@@ -1,11 +1,10 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
-import './styles.css';
-
 import { XIcon } from '@heroicons/react/solid';
 import { observer } from 'mobx-react-lite';
 import React, { useCallback, useEffect, useRef } from 'react';
 import { useMedia } from 'react-use';
+import tw, { styled } from 'twin.macro';
 
 import { ContainerElRefContext } from '../../contexts/ContainerElRefContext';
 import {
@@ -20,6 +19,38 @@ import { NoteBlockComponent } from '../NoteBlock/NoteBlockComponent';
 import { useFindNote } from './useFindNote';
 
 const notesStackClass = cn('notes-stack');
+
+const NotesStackStyled = styled.div`
+  display: flex;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+
+  height: 100%;
+  width: 100%;
+`;
+
+const Row = styled.div`
+  ${tw`px-5 max-w-screen-lg`}
+
+  width: 100%;
+  height: 100%;
+  margin: 0 auto;
+  position: relative;
+
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-width: calc(max(100% / 4, 350px));
+`;
+
+const CloseBtn = styled.button`
+  position: absolute;
+
+  right: 10px;
+  top: 5px;
+`;
 
 const SimpleNote = observer(({ stack }: { stack: IStack }) => {
   const { note, isLoading } = useFindNote(stack.entityId);
@@ -73,19 +104,19 @@ const NoteStack = observer(
 
     return (
       <CurrentStackContext.Provider value={stack}>
-        <div
+        <Row
           className={notesStackClass('row')}
           ref={rowRef}
           onClick={handleFocus}
         >
           <ContainerElRefContext.Provider value={rowRef}>
             {!isSingle && (
-              <button
+              <CloseBtn
                 className={notesStackClass('close-btn')}
                 onClick={handleClose}
               >
                 <XIcon style={{ width: 20 }} />
-              </button>
+              </CloseBtn>
             )}
 
             {note && (
@@ -95,7 +126,7 @@ const NoteStack = observer(
             )}
             {!note && !isLoading && 'NoteModel not found :('}
           </ContainerElRefContext.Provider>
-        </div>
+        </Row>
       </CurrentStackContext.Provider>
     );
   },
@@ -116,7 +147,7 @@ export const NotesStack = ({ stacks }: { stacks: IStack[] }) => {
   }, [isWide, lastStackId, setStackId]);
 
   return isWide ? (
-    <div className={notesStackClass()} ref={parentRef}>
+    <NotesStackStyled className={notesStackClass()} ref={parentRef}>
       {stacks.map((stack, i) => (
         <NoteStack
           key={stack.stackId + stack.entityId}
@@ -127,7 +158,7 @@ export const NotesStack = ({ stacks }: { stacks: IStack[] }) => {
           parentRef={parentRef}
         />
       ))}
-    </div>
+    </NotesStackStyled>
   ) : lastStack ? (
     <SimpleNote stack={lastStack} key={lastStack.entityId} />
   ) : null;
