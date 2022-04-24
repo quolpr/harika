@@ -1,5 +1,3 @@
-import './styles.css';
-
 import { FindNoteOrBlockService } from '@harika/web-core/src/apps/VaultApplication/BlocksExtension/services/FindNoteOrBlockService';
 import { ChevronRightIcon } from '@heroicons/react/solid';
 import { useObservable, useObservableState } from 'observable-hooks';
@@ -8,6 +6,7 @@ import Highlighter from 'react-highlight-words';
 import { Link, useLocation } from 'react-router-dom';
 import { useKey } from 'react-use';
 import { debounce, map, Observable, of, switchMap, tap, timer } from 'rxjs';
+import tw, { css, styled } from 'twin.macro';
 import { v4 as uuidv4 } from 'uuid';
 
 import { useNotePath } from '../../contexts/StackedNotesContext';
@@ -24,6 +23,70 @@ import { Modal, modalClass } from '../Modal/Modal';
 // Commands are start with `!`. If no `!` present - then search happen between all start view actions names
 
 const commandPaletteModalClass = cn('command-palette-modal');
+
+const Form = styled.form`
+  ${tw`h-16 border-b border-gray-800`}
+  display: flex;
+
+  align-items: center;
+`;
+
+const CommandIcon = styled(ChevronRightIcon)`
+  ${tw`text-gray-600 w-5`}
+  display: block-inline;
+`;
+
+const CommandInput = styled.input`
+  ${tw`border-gray-800 bg-gray-900 text-gray-300 px-2 py-1 rounded w-40`}
+  ${tw`focus:outline-none focus:border-gray-700`}
+  ${tw`ml-2`}
+  ${tw`bg-opacity-0`}
+
+  width: 100%;
+  height: 100%;
+`;
+
+const Action = styled.div<{ focused?: boolean }>`
+  ${tw`px-5 py-3 mb-3`}
+  ${tw`bg-gray-800 rounded-xl shadow`}
+
+  display: flex;
+  align-items: center;
+
+  width: 100%;
+  text-align: left;
+
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  word-break: break-word;
+  ${({ focused }) =>
+    focused &&
+    css`
+      ${tw`bg-pink-800`}
+    `}
+`;
+
+const ActionBtn = Action.withComponent('button');
+const ActionLink = Action.withComponent(Link);
+
+const Key = styled.div<{ focused: boolean }>`
+  ${tw`text-gray-500`}
+  margin-left: auto;
+  flex-shrink: 0;
+  padding-left: 0.2rem;
+
+  ${({ focused }) =>
+    focused &&
+    css`
+      ${tw`text-gray-300`}
+    `}
+`;
+
+const ListContainer = styled.div`
+  ${tw`mt-6`}
+  flex: auto;
+  overflow: auto;
+`;
 
 type IAction = (
   | {
@@ -318,16 +381,14 @@ export const CommandPaletteModal = ({
           'header',
         )}`}
       >
-        <form
+        <Form
           action=""
           role="search"
           className={commandPaletteModalClass('form')}
           onSubmit={(e) => e.preventDefault()}
         >
-          <ChevronRightIcon
-            className={commandPaletteModalClass('command-icon')}
-          />
-          <input
+          <CommandIcon className={commandPaletteModalClass('command-icon')} />
+          <CommandInput
             className={commandPaletteModalClass('command-input')}
             type="search"
             aria-autocomplete="list"
@@ -344,9 +405,9 @@ export const CommandPaletteModal = ({
               }
             }}
           />
-        </form>
+        </Form>
       </header>
-      <div
+      <ListContainer
         className={`${commandPaletteModalClass(
           'actions-list-container',
         )} ${modalClass('row')} ${modalClass('footer')}`}
@@ -358,6 +419,7 @@ export const CommandPaletteModal = ({
               className: commandPaletteModalClass('action', {
                 focused: action.id === focusedActionId,
               }),
+              focused: action.id === focusedActionId,
 
               onClick: (e: React.MouseEvent<HTMLElement>) => {
                 e.preventDefault();
@@ -397,13 +459,14 @@ export const CommandPaletteModal = ({
                   {action.type !== 'dummy' && (
                     <>
                       {i < 9 && (
-                        <div
+                        <Key
                           className={commandPaletteModalClass('key', {
                             focused: action.id === focusedActionId,
                           })}
+                          focused={action.id === focusedActionId}
                         >
                           ⌘{i + 1}
-                        </div>
+                        </Key>
                       )}
                     </>
                   )}
@@ -412,15 +475,15 @@ export const CommandPaletteModal = ({
             };
 
             return action.type === 'goToPage' ? (
-              <Link to={action.href} {...props} />
+              <ActionLink to={action.href} {...props} />
             ) : action.type === 'dummy' ? (
-              <div {...props} />
+              <Action {...props} />
             ) : (
-              <button {...props} />
+              <ActionBtn {...props} />
             );
           })}
         </div>
-      </div>
+      </ListContainer>
     </Modal>
   );
 };
