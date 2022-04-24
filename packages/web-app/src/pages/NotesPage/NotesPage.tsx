@@ -1,11 +1,10 @@
-import './styles.css';
-
 import { TrashIcon } from '@heroicons/react/solid';
 import { observer } from 'mobx-react-lite';
 import { useObservable, useObservableState } from 'observable-hooks';
 import React, { useCallback, useContext, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import TimeAgo from 'react-timeago';
+import tw, { styled } from 'twin.macro';
 
 import { LoadingDoneSubjectContext } from '../../contexts';
 import { useNotePath } from '../../contexts/StackedNotesContext';
@@ -13,12 +12,60 @@ import {
   useDeleteBlocksService,
   useNoteBlocksService,
 } from '../../hooks/vaultAppHooks';
+import { bem } from '../../utils';
 
 type NoteTuple = {
   id: string;
   title: string;
   createdAt: Date;
 };
+
+const notesTableClass = bem('notes-table');
+
+const NotesTableWrapper = styled.div`
+  ${tw`pt-5 pb-5`}
+  width: 100%;
+`;
+
+const NotesTable = styled.table`
+  table-layout: fixed;
+  width: 100%;
+
+  tbody {
+    ${tw`pt-2`}
+  }
+
+  tr {
+    ${tw`border-b border-gray-700`}
+  }
+
+  td {
+    ${tw`py-3`}
+
+    svg {
+      ${tw`text-pink-600`}
+
+      margin: 0 auto;
+      cursor: pointer;
+    }
+  }
+`;
+
+const TitleHead = styled.th`
+  ${tw`w-1/2 pb-2 text-left`}
+`;
+
+const TimeHead = styled.th`
+  ${tw`w-1/4 pb-2`}
+`;
+
+const ActionHead = styled.th`
+  ${tw`w-12`}
+`;
+
+const CenterText = styled.td`
+  text-align: center;
+`;
 
 const NoteRow = observer(({ note }: { note: NoteTuple }) => {
   const deleteBlocksService = useDeleteBlocksService();
@@ -34,14 +81,14 @@ const NoteRow = observer(({ note }: { note: NoteTuple }) => {
       <td className="pl-1">
         <Link to={notePath(note.id)}>{note.title}</Link>
       </td>
-      <td className="notes-table__time">
+      <CenterText className={notesTableClass('time')}>
         <TimeAgo date={note.createdAt} />
-      </td>
-      <td className="notes-table__action">
+      </CenterText>
+      <CenterText className={notesTableClass('action')}>
         <button onClick={handleDelete} style={{ verticalAlign: 'middle' }}>
           <TrashIcon style={{ width: '1.5rem' }} />
         </button>
-      </td>
+      </CenterText>
     </tr>
   );
 });
@@ -61,13 +108,17 @@ export const NotesPage = () => {
   }, [loadingDoneSubject, observedNotes]);
 
   return (
-    <div className="notes-table">
-      <table className="notes-table__table">
+    <NotesTableWrapper className={notesTableClass()}>
+      <NotesTable className={notesTableClass('table')}>
         <thead>
           <tr>
-            <th className="notes-table__title-head">Title</th>
-            <th className="notes-table__time-head">Created At</th>
-            <th className="notes-table__action-head" />
+            <TitleHead className={notesTableClass('title-head')}>
+              Title
+            </TitleHead>
+            <TimeHead className={notesTableClass('time-head')}>
+              Created At
+            </TimeHead>
+            <ActionHead className={notesTableClass('actions-head')} />
           </tr>
         </thead>
         <tbody>
@@ -77,8 +128,8 @@ export const NotesPage = () => {
               <NoteRow note={note} key={note.id} />
             ))}
         </tbody>
-      </table>
-    </div>
+      </NotesTable>
+    </NotesTableWrapper>
   );
 };
 

@@ -122,25 +122,6 @@ export const LoginPage = () => {
     navigate.current(paths.vaultIndexPath());
   }, [setAuthInfo, navigate, offlineAccounts.accounts, addOfflineAccount]);
 
-  const handleGoogleSignIn = useCallback(async () => {
-    try {
-      setIsLoading(true);
-
-      setAuthInfo({
-        userId: '123',
-        isOffline: false,
-      });
-
-      navigate.current(paths.vaultIndexPath());
-    } catch (e) {
-      alert('Failed to log in with Google. Please, try again.');
-
-      console.error(e);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [navigate, setAuthInfo]);
-
   return (
     <div tw="max-w-screen-sm mx-auto px-5">
       <form onSubmit={handleSubmit(onSubmit)} className={`${formClass()}`}>
