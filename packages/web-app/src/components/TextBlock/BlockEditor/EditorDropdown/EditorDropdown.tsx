@@ -1,9 +1,8 @@
-import './styles.css';
-
 import { Pos } from 'caret-pos';
 import React from 'react';
 import { MutableRefObject, useEffect, useRef, useState } from 'react';
 import scrollIntoView from 'scroll-into-view-if-needed';
+import tw, { styled } from 'twin.macro';
 import useResizeObserver from 'use-resize-observer';
 
 import { bem } from '../../../../utils';
@@ -14,6 +13,53 @@ export type IDropdownItem = {
 };
 
 export const editorDropdownClass = bem('editorDropdown');
+
+const EditorDropdownStyled = styled.div`
+  position: absolute;
+`;
+
+const Container = styled.div`
+  ${tw`bg-gray-800 rounded-md bg-opacity-80 py-2`}
+
+  position: absolute;
+
+  z-index: 1000;
+`;
+
+const Content = styled.ul`
+  max-height: calc(1.75rem * 8);
+  width: 15rem;
+
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  -webkit-overflow-scrolling: auto;
+`;
+
+const Item = styled.li<{ focused: boolean }>`
+  ${tw`px-2 h-7`}
+
+  display: flex;
+  align-items: center;
+
+  cursor: pointer;
+
+  &:first-child {
+    ${tw`pt-0`}
+  }
+
+  &:last-child {
+    ${tw`pb-0`}
+  }
+
+  ${({ focused }) => focused && tw`bg-gray-700`}
+`;
+
+const ItemContent = styled.div`
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
 
 export const EditorDropdown = <T extends IDropdownItem>({
   items,
@@ -126,8 +172,8 @@ export const EditorDropdown = <T extends IDropdownItem>({
   }, [focusedIdx, items]);
 
   return (
-    <div className={editorDropdownClass()} ref={mainElRef}>
-      <div
+    <EditorDropdownStyled className={editorDropdownClass()} ref={mainElRef}>
+      <Container
         className={editorDropdownClass('container')}
         style={{
           visibility: containerLeftPos === undefined ? 'hidden' : 'visible',
@@ -137,14 +183,15 @@ export const EditorDropdown = <T extends IDropdownItem>({
         }}
         ref={containerElRef}
       >
-        <ul className={editorDropdownClass('content')} role="menu">
+        <Content className={editorDropdownClass('content')} role="menu">
           {items.length === 0 && onEmpty}
           {items.map((res, i) => (
             // Already handling
             // eslint-disable-next-line jsx-a11y/click-events-have-key-events
-            <li
+            <Item
               role="menuitem"
               key={res.id}
+              focused={focusedIdx === i}
               className={editorDropdownClass('item', {
                 focused: focusedIdx === i,
               })}
@@ -159,13 +206,13 @@ export const EditorDropdown = <T extends IDropdownItem>({
               onMouseDown={(e) => e.preventDefault()}
               ref={(el) => (itemsRef.current[i] = el)}
             >
-              <div className={editorDropdownClass('itemContent')}>
+              <ItemContent className={editorDropdownClass('itemContent')}>
                 {res.title}
-              </div>
-            </li>
+              </ItemContent>
+            </Item>
           ))}
-        </ul>
-      </div>
-    </div>
+        </Content>
+      </Container>
+    </EditorDropdownStyled>
   );
 };
