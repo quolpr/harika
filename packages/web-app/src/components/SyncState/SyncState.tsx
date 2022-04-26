@@ -1,4 +1,3 @@
-import './styles.css';
 import 'tippy.js/dist/tippy.css';
 
 import Tippy from '@tippyjs/react';
@@ -6,6 +5,8 @@ import { useObservableEagerState } from 'observable-hooks';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useMountedState } from 'react-use';
 import { BehaviorSubject } from 'rxjs';
+import { keyframes } from 'styled-components';
+import { css, styled } from 'twin.macro';
 
 import {
   useIsConnectionAllowed$,
@@ -14,6 +15,62 @@ import {
 import { bem } from '../../utils';
 
 const syncStateClass = bem('syncState');
+
+const SyncStateStyled = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 30px;
+  height: 30px;
+`;
+
+const Info = styled.div`
+  font-size: 1rem;
+  padding: 5px;
+  min-width: 300px;
+`;
+
+const pulseYellow = keyframes`
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(255, 177, 66, 0.7);
+  }
+
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 10px rgba(255, 177, 66, 0);
+  }
+
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(255, 177, 66, 0);
+  }
+
+`;
+
+const Dot = styled.div<{ isSyncing: boolean; isSynced: boolean }>`
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 82, 82, 1);
+
+  margin-top: 1px;
+
+  ${({ isSyncing }) =>
+    isSyncing &&
+    css`
+      background: rgba(255, 177, 66, 1);
+      box-shadow: 0 0 0 0 rgba(255, 177, 66, 1);
+      animation: ${pulseYellow} 0.8s infinite;
+    `}
+
+  ${({ isSynced }) =>
+    isSynced &&
+    css`
+      background: green;
+    `}
+`;
 
 export const SyncState = () => {
   const isMounted = useMountedState();
@@ -53,7 +110,7 @@ export const SyncState = () => {
         interactive
         delay={[0, 200]}
         content={
-          <div className={syncStateClass('info')}>
+          <Info className={syncStateClass('info')}>
             {isSynced
               ? 'Harika is synced!'
               : isSyncing
@@ -117,17 +174,19 @@ export const SyncState = () => {
                 Sync server connection allowed
               </span>
             </label>
-          </div>
+          </Info>
         }
       >
-        <div className={syncStateClass()}>
-          <div
+        <SyncStateStyled className={syncStateClass()}>
+          <Dot
             className={syncStateClass('dot', {
               isSyncing: isSyncing,
               isSynced: syncState.isConnectedAndReadyToUse && !isSyncing,
             })}
-          ></div>
-        </div>
+            isSyncing={isSyncing}
+            isSynced={syncState.isConnectedAndReadyToUse && !isSyncing}
+          ></Dot>
+        </SyncStateStyled>
       </Tippy>
     </div>
   );
