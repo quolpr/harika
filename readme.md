@@ -4,6 +4,20 @@ Harika is an offline-first, performance-focused note taking app for organizing y
 
 ![image](https://user-images.githubusercontent.com/7958527/138558070-0c811e3f-071a-439a-be91-dee114daf3aa.png)
 
+Right now the project development is paused, but Harika somehow is still ready to use product. This features are ready to use:
+
+1. Synchronization with server
+2. Offline mode, with sync when back only
+3. Attachment uploading (just paste file into block)
+4. Referencing, back-referencing
+5. Full text search
+6. Mobile support
+7. Markdown like styling
+8. Daily notes
+9. Notes tree and the left bar
+
+It's a good project to discover how to make offline-first synchronization mechanism. You can run Harika locally, and discover in DevTools logs what SQL queries it makes to store data and changes to send to the server.
+
 ## Status of the project
 
 As for the 14.08.22, I managed to pause my work on Harika.
