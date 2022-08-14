@@ -6,7 +6,7 @@ Harika is an offline-first, performance-focused note taking app for organizing y
 
 Right now the project development is paused, but Harika somehow is still ready to use product. This features are ready to use:
 
-1. Synchronization with server
+1. Synchronization with server. It's done with LWW CRDT per field on top of SQLite
 1. Offline mode, with sync when back only
 1. Attachment uploading (just paste file into block)
 1. Referencing, back-referencing
@@ -46,3 +46,5 @@ You can create a test account at https://app-dev.harika.io .
 ## How can I try it locally?
 
 Clone the repo, and run `docker-compose -f docker-compose.local.yml up --build`. Harika will be available at http://localhost:3000
+
+You will need to specify strong password and existent email, otherwise Kratos will not accept registration.
