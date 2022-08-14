@@ -2,7 +2,7 @@
 
 Harika is an offline-first, performance-focused note taking app for organizing your knowledge database.
 
-![image](https://user-images.githubusercontent.com/7958527/138558070-0c811e3f-071a-439a-be91-dee114daf3aa.png)
+https://user-images.githubusercontent.com/7958527/184545287-eeae801d-9509-45fd-a02a-adcb7315f5b8.mp4
 
 Right now the project development is paused, but Harika somehow is still ready to use product. This features are ready to use:
 
