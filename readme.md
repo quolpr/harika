@@ -6,7 +6,7 @@ Harika is an offline-first, performance-focused note taking app for organizing y
 
 Right now the project development is paused, but Harika somehow is still ready to use product. This features are ready to use:
 
-1. Synchronization with server. It's done with LWW CRDT per field on top of SQLite
+1. Synchronization with server. It's done with LWW CRDT per field on top of SQLite. It also stores all changes locally and sends them to server. Server also store all the changes and recalculate snapshots on new received changes and send those snapshots back to the client. Due to we store all the changes at server, it is also planned to add time travel, when CRDT is not what user expect at some cases.
 1. Offline mode, with sync when back only
 1. Attachment uploading (just paste file into block)
 1. Referencing, back-referencing
