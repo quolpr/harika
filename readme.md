@@ -41,7 +41,7 @@ But, one day I want to resume work on Harika when I will have enough money to ta
 
 ## Demo?
 
-You can create a test account at https://app-dev.harika.io .
+You can create a test account at https://app-dev.harika.io . You will need to specify strong password and a good email(like that end with @gmail.com), otherwise Kratos will not accept registration.
 
 ## How can I try it locally?
 
