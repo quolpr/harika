@@ -1,13 +1,13 @@
 import { standaloneAction } from 'mobx-keystone';
 
-import { blockRef } from '../../apps/VaultApplication/BlocksExtension/models/BaseBlock';
 import { BlocksScope } from '../../apps/VaultApplication/BlockScopesExtension/models/BlocksScope';
+import { blockRef } from '../../apps/VaultApplication/BlocksExtension/models/BaseBlock';
 import { BlocksStore } from '../../apps/VaultApplication/BlocksExtension/models/BlocksStore';
+import { TextBlock } from '../../apps/VaultApplication/BlocksExtension/models/TextBlock';
 import {
   BlockView,
   getBlockView,
 } from '../../apps/VaultApplication/BlockViewsExtension/models/BlockView';
-import { TextBlock } from '../../apps/VaultApplication/BlocksExtension/models/TextBlock';
 import { generateId } from '../generateId';
 import type { TreeToken } from './parseStringToTree';
 import { parseStringToTree } from './parseStringToTree';

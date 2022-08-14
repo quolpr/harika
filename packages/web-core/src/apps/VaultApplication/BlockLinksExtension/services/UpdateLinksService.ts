@@ -20,10 +20,10 @@ import {
   TagToken,
   TextBlockRef,
 } from '../../../../lib/blockParser/types';
-import { BlockLinksStore } from '../models/BlockLinkStore';
 import { TextBlock } from '../../BlocksExtension/models/TextBlock';
-import { BlockLinkService } from './BlockLinkService';
 import { NoteBlocksService } from '../../BlocksExtension/services/NoteBlocksService';
+import { BlockLinksStore } from '../models/BlockLinkStore';
+import { BlockLinkService } from './BlockLinkService';
 
 @injectable()
 export class UpdateLinksService {

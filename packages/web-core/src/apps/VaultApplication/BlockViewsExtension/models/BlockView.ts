@@ -1,7 +1,7 @@
 import { comparer, computed, makeObservable } from 'mobx';
 
-import { BaseBlock } from '../../BlocksExtension/models/BaseBlock';
 import { BlocksScope } from '../../BlockScopesExtension/models/BlocksScope';
+import { BaseBlock } from '../../BlocksExtension/models/BaseBlock';
 import {
   deepLastRightChildFunc,
   flattenTreeFunc,
