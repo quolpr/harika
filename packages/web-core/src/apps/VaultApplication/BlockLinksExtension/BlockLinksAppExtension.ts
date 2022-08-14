@@ -13,12 +13,13 @@ import { UpdateLinksService } from './services/UpdateLinksService';
 @injectable()
 export class BlockLinksAppExtension extends BaseSyncExtension {
   async register() {
+    await super.register();
+
     this.container.bind(UpdateLinksService).toSelf();
     this.container
       .bind(BlockLinksStore)
       .toConstantValue(new BlockLinksStore({}));
     this.container.bind(BlockLinkService).toSelf();
-    this.container.bind(BlockLinksRepository).toSelf();
   }
 
   async initialize() {

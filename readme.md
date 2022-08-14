@@ -7,16 +7,16 @@ Harika is an offline-first, performance-focused note taking app for organizing y
 Right now the project development is paused, but Harika somehow is still ready to use product. This features are ready to use:
 
 1. Synchronization with server
-2. Offline mode, with sync when back only
-3. Attachment uploading (just paste file into block)
-4. Referencing, back-referencing
-5. Full text search
-6. Mobile support
-7. Markdown like styling
-8. Daily notes
-9. Notes tree and the left bar
+1. Offline mode, with sync when back only
+1. Attachment uploading (just paste file into block)
+1. Referencing, back-referencing
+1. Full text search
+1. Mobile support
+1. Markdown like styling
+1. Daily notes
+1. Notes tree and the left bar
 
-It's a good project to discover how to make offline-first synchronization mechanism. You can run Harika locally, and discover in DevTools logs what SQL queries it makes to store data and changes to send to the server.
+It's a good project to discover how to make offline-first synchronization mechanism. You can run Harika locally(just run `docker-compose -f docker-compose.local.yml up --build`), and discover in DevTools logs what SQL queries it makes to store data and changes to send to the server.
 
 ## Status of the project
 
@@ -39,7 +39,7 @@ But, one day I want to resume work on Harika when I will have enough money to ta
 
 - Time travel for notes. Right now, I store all the changes at backend, and backend has logic that can return the snapshot state for the certain time by recalculating all the changes by the certain time.
 
-## How can I try it?
+## Demo?
 
 You can create a test account at https://app-dev.harika.io .
 
