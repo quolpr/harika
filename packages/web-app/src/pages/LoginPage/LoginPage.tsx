@@ -48,7 +48,7 @@ export const LoginPage = () => {
       );
     };
 
-    cb();
+    void cb();
   }, []);
 
   const onSubmit = useCallback(
@@ -69,7 +69,8 @@ export const LoginPage = () => {
           String(flow.id),
           undefined,
           {
-            csrf_token: (csrfNode?.attributes as UiNodeInputAttributes)?.value,
+            csrf_token: (csrfNode?.attributes as UiNodeInputAttributes)
+              ?.value as string,
             identifier: data.email,
             password: data.password,
             method: 'password',
@@ -124,7 +125,10 @@ export const LoginPage = () => {
 
   return (
     <div tw="max-w-screen-sm mx-auto px-5">
-      <form onSubmit={handleSubmit(onSubmit)} className={`${formClass()}`}>
+      <form
+        onSubmit={(e) => void handleSubmit(onSubmit)(e)}
+        className={`${formClass()}`}
+      >
         <div className={formClass('field')}>
           <label htmlFor="email" className={formClass('label')}>
             Email

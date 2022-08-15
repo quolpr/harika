@@ -17,7 +17,7 @@ export class BlockFocus {
 
 export class BlocksFocusState {
   @observable currentFocus: BlockFocus | undefined;
-  @observable isEditing: boolean = false;
+  @observable isEditing = false;
 
   constructor() {
     makeObservable(this);

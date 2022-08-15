@@ -15,8 +15,8 @@ interface AttachedState {
 }
 
 export const UndoRedoManagerProvider: React.FC = ({ children }) => {
-  let navigate = useNavigateRef();
-  let location = useLocation();
+  const navigate = useNavigateRef();
+  const location = useLocation();
 
   const rootStore = useRootStore();
   const locationRef = useRef(location);

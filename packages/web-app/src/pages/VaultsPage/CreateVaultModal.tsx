@@ -26,7 +26,7 @@ export const CreateVaultModal = ({
 }: {
   isOpened: boolean;
   onClose: () => void;
-  onSubmit: (data: IFormData) => void;
+  onSubmit: (data: IFormData) => Promise<void>;
 }) => {
   const {
     register,
@@ -46,7 +46,7 @@ export const CreateVaultModal = ({
       </VaultModelHeader>
 
       <ModalRowForm
-        onSubmit={handleSubmit(onSubmit)}
+        onSubmit={(...args) => void handleSubmit(onSubmit)(...args)}
         className={`${modalClass('row')} ${modalClass(
           'footer',
         )} ${formClass()}`}

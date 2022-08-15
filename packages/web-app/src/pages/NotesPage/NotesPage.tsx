@@ -70,8 +70,8 @@ const CenterText = styled.td`
 const NoteRow = observer(({ note }: { note: NoteTuple }) => {
   const deleteBlocksService = useDeleteBlocksService();
 
-  const handleDelete = useCallback(async () => {
-    deleteBlocksService.deleteBlock(note.id);
+  const handleDelete = useCallback(() => {
+    void deleteBlocksService.deleteBlock(note.id);
   }, [deleteBlocksService, note.id]);
 
   const notePath = useNotePath();

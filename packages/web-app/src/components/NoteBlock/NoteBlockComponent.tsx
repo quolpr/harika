@@ -105,21 +105,23 @@ const NoteBody = observer(({ note }: { note: NoteBlock }) => {
     setNoteTitle(note.title);
   }, [note.title]);
 
-  const changeTitle = useCallback(async () => {
+  const changeTitle = useCallback(() => {
     if (note.title === noteTitle) return;
 
-    const result = await updateTitleService.updateNoteTitle(
-      note.$modelId,
-      noteTitle,
-    );
-
-    if (result === 'exists') {
-      alert(
-        `Can't change note title to ${noteTitle} - such note already exists`,
+    void (async () => {
+      const result = await updateTitleService.updateNoteTitle(
+        note.$modelId,
+        noteTitle,
       );
 
-      setNoteTitle(note.title);
-    }
+      if (result === 'exists') {
+        alert(
+          `Can't change note title to ${noteTitle} - such note already exists`,
+        );
+
+        setNoteTitle(note.title);
+      }
+    })();
   }, [note.$modelId, note.title, noteTitle, updateTitleService]);
 
   const handleKeyDown = useCallback(
@@ -176,7 +178,7 @@ const NoteBody = observer(({ note }: { note: NoteBlock }) => {
         navigate.current(
           notePath(
             result.data.$modelId,
-            Boolean((ev.nativeEvent as MouseEvent).shiftKey && note.$modelId),
+            Boolean(ev.nativeEvent.shiftKey && note.$modelId),
           ),
           { replace: true },
         );
@@ -194,7 +196,7 @@ const NoteBody = observer(({ note }: { note: NoteBlock }) => {
         {isDailyNote && note.dailyNoteDate && (
           <LeftBtn
             className={noteClass('leftArrow')}
-            onClick={(e) => handleArrowClick(e, 'prev')}
+            onClick={(e) => void handleArrowClick(e, 'prev')}
           >
             <LeftArrow />
           </LeftBtn>
@@ -220,7 +222,7 @@ const NoteBody = observer(({ note }: { note: NoteBlock }) => {
         {isDailyNote && (
           <RightBtn
             className={noteClass('rightArrow')}
-            onClick={(e) => handleArrowClick(e, 'next')}
+            onClick={(e) => void handleArrowClick(e, 'next')}
           >
             <RightArrow />
           </RightBtn>

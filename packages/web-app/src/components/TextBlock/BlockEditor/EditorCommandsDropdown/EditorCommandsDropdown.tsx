@@ -103,9 +103,10 @@ export const EditorCommandsDropdown = ({
   );
 
   const handleTabOrEnterPress = useCallback(
-    (e, item) => {
+    (e: Event, item: ICommand | undefined) => {
       if (value !== undefined) {
         e.preventDefault();
+
         if (item) {
           onSelect(item);
         }

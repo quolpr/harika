@@ -43,7 +43,7 @@ export const SignupPage = () => {
       );
     };
 
-    cb();
+    void cb();
   }, []);
 
   console.log({ flow });
@@ -68,7 +68,8 @@ export const SignupPage = () => {
       const res = await oryClient.submitSelfServiceRegistrationFlow(flow?.id, {
         method: 'password',
         password: data.password,
-        csrf_token: (csrfNode?.attributes as UiNodeInputAttributes)?.value,
+        csrf_token: (csrfNode?.attributes as UiNodeInputAttributes)
+          ?.value as string,
         traits: { email: data.email },
       });
 
@@ -93,7 +94,10 @@ export const SignupPage = () => {
 
   return (
     <div tw="max-w-screen-sm mx-auto">
-      <form onSubmit={handleSubmit(onSubmit)} className={`${formClass()}`}>
+      <form
+        onSubmit={(...args) => void handleSubmit(onSubmit)(...args)}
+        className={`${formClass()}`}
+      >
         <div className={formClass('field')}>
           <label htmlFor="email" className={formClass('label')}>
             Email

@@ -22,7 +22,7 @@ export const DailyNotePage = observer(() => {
       }
     };
 
-    toExecute();
+    void toExecute();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

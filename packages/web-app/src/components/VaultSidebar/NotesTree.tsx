@@ -192,7 +192,7 @@ const NoteNode = observer(
           ) : (
             <NodeTitleBtn
               className={treeClass('node-title')}
-              onClick={createNoteAndGo}
+              onClick={(e) => void createNoteAndGo(e)}
             >
               {node.title}
             </NodeTitleBtn>

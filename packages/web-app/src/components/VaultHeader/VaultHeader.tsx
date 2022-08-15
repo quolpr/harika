@@ -125,19 +125,21 @@ export const VaultHeader = observer(
     const notePath = useNotePath();
 
     const handleCalendarChange = useCallback(
-      async (date: Date | Date[], ev: React.ChangeEvent<HTMLInputElement>) => {
-        if (Array.isArray(date)) return;
+      (date: Date | Date[], ev: React.ChangeEvent<HTMLInputElement>) => {
+        void (async () => {
+          if (Array.isArray(date)) return;
 
-        const result = await noteService.getOrCreateDailyNote(dayjs(date));
+          const result = await noteService.getOrCreateDailyNote(dayjs(date));
 
-        if (result.status === 'ok') {
-          navigate.current(
-            notePath(
-              result.data.$modelId,
-              (ev.nativeEvent as MouseEvent).shiftKey,
-            ),
-          );
-        }
+          if (result.status === 'ok') {
+            navigate.current(
+              notePath(
+                result.data.$modelId,
+                (ev.nativeEvent as MouseEvent).shiftKey,
+              ),
+            );
+          }
+        })();
       },
       [noteService, navigate, notePath],
     );

@@ -54,7 +54,7 @@ export const useCleanAuthState = () => {
       }
     };
 
-    cb();
+    void cb();
   }, [authInfo, setAuthInfo]);
 };
 
@@ -67,6 +67,8 @@ export const useLogout = () => {
       .createSelfServiceLogoutFlowUrlForBrowsers()
       .then(({ data }) => {
         setLogoutToken(data.logout_token);
+
+        return undefined;
       })
       .catch((err: AxiosError) => {
         switch (err.response?.status) {
@@ -76,7 +78,7 @@ export const useLogout = () => {
         }
 
         // Something else happened!
-        return Promise.reject(err);
+        throw err;
       });
   }, []);
 

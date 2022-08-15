@@ -33,11 +33,11 @@ if (
       }
     });
 
-    wb.register();
+    void wb.register();
   }
 }
 
-const renderApp = async () => {
+const renderApp = () => {
   const el = <App />;
 
   const container = document.getElementById('root');

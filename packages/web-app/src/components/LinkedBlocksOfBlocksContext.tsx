@@ -10,7 +10,7 @@ const LinkedBlocksOfBlocksContext = createContext<
   undefined | Record<string, { noteId: string; blockId: string }[]>
 >(undefined);
 
-export const useDeepContextSelector = <T extends any, R extends any>(
+export const useDeepContextSelector = <T, R>(
   ctx: Context<T>,
   selector: (val: T) => R,
 ) => {
@@ -35,7 +35,7 @@ export const useDeepContextSelector = <T extends any, R extends any>(
 
 export const LinkedBlocksOfBlocksProvider: React.FC<{
   noteId: string;
-}> = ({ noteId, children }) => {
+}> = ({ children }) => {
   // const noteBlocksService = useNoteBlocksService();
 
   // const links$ = useObservable(

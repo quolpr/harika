@@ -13,7 +13,7 @@ const ACTION_BREADCRUMB_TYPE = 'info';
 const STATE_CONTEXT_KEY = 'redux.state';
 
 export function connectSentry(target: object) {
-  let handlingMonitorAction = 0;
+  const handlingMonitorAction = 0;
 
   const initialState = getSnapshot(target);
 
@@ -76,7 +76,9 @@ export function connectSentry(target: object) {
       }
 
       if (typeof state !== 'undefined' && state !== null) {
-        scope.setContext(STATE_CONTEXT_KEY, state as any);
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        //@ts-expect-error
+        scope.setContext(STATE_CONTEXT_KEY, state);
       } else {
         scope.setContext(STATE_CONTEXT_KEY, null);
       }
@@ -85,6 +87,7 @@ export function connectSentry(target: object) {
 
   function getActionContextNameAndTypePath(
     ctx: SimpleActionContext,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     rootPath: RootPath<any>,
     result: ActionTrackingResult | undefined,
   ) {
@@ -107,7 +110,7 @@ export function connectSentry(target: object) {
 
     name += `(${args})`;
 
-    const actionId = ctx.data[actionIdSymbol];
+    const actionId = ctx.data[actionIdSymbol] as string | undefined;
 
     name += ` (id ${actionId !== undefined ? actionId : '?'}`;
     if (ctx.type === ActionContextActionType.Async) {

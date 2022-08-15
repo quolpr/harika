@@ -57,7 +57,7 @@ export const SettingsModal = ({
 
   const handleDelete = useCallback(() => {
     if (window.confirm('Are you sure?')) {
-      vaults.dropVault(vault.id);
+      void vaults.dropVault(vault.id);
     }
   }, [vault.id, vaults]);
 
@@ -70,7 +70,7 @@ export const SettingsModal = ({
       </VaultModelHeader>
 
       <ModalRowForm
-        onSubmit={handleFormSubmit(handleSubmit)}
+        onSubmit={(...args) => void handleFormSubmit(handleSubmit)(...args)}
         className={`${modalClass('row')} ${modalClass(
           'footer',
         )} ${formClass()}`}

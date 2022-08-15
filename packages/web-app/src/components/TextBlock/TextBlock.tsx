@@ -87,26 +87,32 @@ const TextBlockBody = observer(
 
         let startAt = contentLength;
 
-        let { offset, node }: { offset: number; node: HTMLElement } = (() => {
+        // eslint-disable-next-line prefer-const
+        let { offset, node }: { offset: number; node: Node } = (() => {
           if ('caretRangeFromPoint' in document) {
             const range = document.caretRangeFromPoint(e.clientX, e.clientY);
 
             return {
               offset: range?.startOffset || 0,
-              node: range?.startContainer || e.target,
+              node: range?.startContainer || (e.target as Node),
             };
           } else if ('caretPositionFromPoint' in document) {
-            // @ts-ignore
-            const range = document.caretPositionFromPoint(e.clientX, e.clientY);
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-expect-error
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+            const range = document.caretPositionFromPoint(
+              e.clientX,
+              e.clientY,
+            ) as { offset?: number; offsetNode: HTMLElement } | undefined;
 
             return {
               offset: range?.offset || 0,
-              node: range?.offsetNode || e.target,
+              node: range?.offsetNode || (e.target as Node),
             };
           } else {
             return {
               offset: 0,
-              node: e.target,
+              node: e.target as Node,
             };
           }
         })();
@@ -120,6 +126,8 @@ const TextBlockBody = observer(
           e.target.closest('[data-not-editable]')
         )
           return;
+
+        if (!(node instanceof HTMLElement)) return;
 
         if (node.dataset.offsetStart) {
           startAt = parseInt(node.dataset.offsetStart, 10) + offset;

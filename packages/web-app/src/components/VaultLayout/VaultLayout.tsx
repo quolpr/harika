@@ -203,6 +203,7 @@ export const VaultLayout: React.FC = ({ children }) => {
   useEffect(() => {
     if (!vaultId) return;
 
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
     let closeDevtool = () => {};
     let vaultApp: VaultApplication | undefined = undefined;
 
@@ -224,8 +225,9 @@ export const VaultLayout: React.FC = ({ children }) => {
 
         mounted() && setVaultApp(vaultApp);
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
         if ((window as any).__REDUX_DEVTOOLS_EXTENSION__) {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           closeDevtool = await (
             await import('../../connectReduxDevtool')
           ).connect(
@@ -251,7 +253,7 @@ export const VaultLayout: React.FC = ({ children }) => {
       }, 500);
     };
 
-    cb();
+    void cb();
 
     return () => {
       vaultApp?.stop();
@@ -281,7 +283,7 @@ export const VaultLayout: React.FC = ({ children }) => {
 
   useLayoutEffect(() => {
     // To avoid flickering on sidebar appear
-    let root = document.documentElement;
+    const root = document.documentElement;
     root.style.setProperty(
       '--sidebar-width',
       `${getLocalStorageSidebarWidth()}px`,

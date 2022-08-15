@@ -116,7 +116,7 @@ export const useHandleInput = (
   );
 
   const handleKeyDown = useCallback(
-    async (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
       const content = block.originalBlock.contentModel.currentValue;
       const start = e.currentTarget.selectionStart;
       const end = e.currentTarget.selectionEnd;

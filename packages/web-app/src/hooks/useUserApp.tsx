@@ -59,7 +59,7 @@ export const useLoadUserApp = () => {
   const cb = useLoadUserAppCallback();
 
   useEffect(() => {
-    cb.current();
+    void cb.current();
   }, [cb]);
 };
 

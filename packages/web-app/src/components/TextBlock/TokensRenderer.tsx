@@ -19,7 +19,7 @@ import { comparer, computed } from 'mobx';
 import { arraySet } from 'mobx-keystone';
 import { observer } from 'mobx-react-lite';
 import { useObservable, useObservableState } from 'observable-hooks';
-import { NumberSize, Resizable } from 're-resizable';
+import { Resizable } from 're-resizable';
 import { Direction } from 're-resizable/lib/resizer';
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { useState } from 'react';
@@ -203,6 +203,7 @@ const Resize = React.forwardRef((props, ref) => {
   return (
     <div
       data-not-editable
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
       ref={ref as any}
       {...props}
       className="resize-container"
@@ -327,7 +328,6 @@ const ImageRender = ({
       _event: MouseEvent | TouchEvent,
       _direction: Direction,
       elementRef: HTMLElement,
-      _delta: NumberSize,
     ) => {
       setWidth(elementRef.clientWidth);
     },
@@ -347,7 +347,6 @@ const ImageRender = ({
       _event: MouseEvent | TouchEvent,
       _direction: Direction,
       elementRef: HTMLElement,
-      _delta: NumberSize,
     ) => {
       setWidth(elementRef.clientWidth);
 
@@ -550,7 +549,9 @@ export const TokensRenderer = observer(
       ($inputs) => {
         return $inputs.pipe(
           distinctUntilChanged(isEqual),
-          switchMap(([ids]) => allBlocksService.getSingleBlockByIds(ids)),
+          switchMap(([ids]) =>
+            allBlocksService.getSingleBlockByIds(ids as string[]),
+          ),
         );
       },
       [linkedNoteIds],

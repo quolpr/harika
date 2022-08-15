@@ -125,7 +125,7 @@ type IView = {
 
 const spawnView = ([
   inputCommandValue,
-  vaultModelId,
+  ,
   findNoteOrBlockService,
   startView,
   notePath,
@@ -348,7 +348,7 @@ export const CommandPaletteModal = ({
       if (switchTo < view.actions.length) {
         const action = view.actions[switchTo];
 
-        if (action) performAction(action, e.shiftKey);
+        if (action) void performAction(action, e.shiftKey);
       }
     },
     undefined,
@@ -363,7 +363,7 @@ export const CommandPaletteModal = ({
       if (focusedActionId) {
         const action = view.actions[focusedIndex];
 
-        if (action) performAction(action, e.shiftKey);
+        if (action) void performAction(action, e.shiftKey);
       }
     },
     undefined,
@@ -428,7 +428,7 @@ export const CommandPaletteModal = ({
               onClick: (e: React.MouseEvent<HTMLElement>) => {
                 e.preventDefault();
 
-                performAction(action, e.shiftKey);
+                void performAction(action, e.shiftKey);
               },
               onMouseMove: (e: React.MouseEvent<HTMLElement>) => {
                 if (

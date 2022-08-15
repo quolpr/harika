@@ -62,7 +62,7 @@ export const NoteTitleAutocomplete = React.memo(
     );
 
     const handleTabOrEnterPress = useCallback(
-      (e, item) => {
+      (e: Event, item: { id: string; title: string } | undefined) => {
         if (value !== undefined) {
           e.preventDefault();
 

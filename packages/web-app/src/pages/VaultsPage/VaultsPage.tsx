@@ -192,12 +192,19 @@ export const VaultsPage = () => {
 
   const logout = useLogout();
 
+  const handleLogout = useCallback(() => {
+    void logout();
+  }, [logout]);
+
   return (
     <>
       <VaultsNavbar className={vaultsNavbarClass()}>
         <Brand />
 
-        <NavbarLogout className={vaultsNavbarClass('logout')} onClick={logout}>
+        <NavbarLogout
+          className={vaultsNavbarClass('logout')}
+          onClick={handleLogout}
+        >
           Log Out
         </NavbarLogout>
       </VaultsNavbar>

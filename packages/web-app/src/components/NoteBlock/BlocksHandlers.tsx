@@ -161,7 +161,7 @@ export const BlocksHandlers = observer(
       if (!isSelecting) return;
 
       const handler = () => {
-        navigator.clipboard.writeText(blockSelection.stringTreeToCopy);
+        void navigator.clipboard.writeText(blockSelection.stringTreeToCopy);
       };
 
       document.addEventListener('copy', handler);
@@ -174,7 +174,7 @@ export const BlocksHandlers = observer(
       const handler = () => {
         const selectedIds = blockSelection.selectedBlockIds;
 
-        navigator.clipboard.writeText(blockSelection.stringTreeToCopy);
+        void navigator.clipboard.writeText(blockSelection.stringTreeToCopy);
 
         blocksStore.deletedBlockByIds(selectedIds);
       };

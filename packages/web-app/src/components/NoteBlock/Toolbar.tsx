@@ -115,7 +115,7 @@ export const Toolbar = observer(() => {
   );
 
   const handleMoveUpPress = useCallback(
-    async (e: React.MouseEvent) => {
+    (e: React.MouseEvent) => {
       e.preventDefault();
 
       if (!currentBlock) return;
@@ -126,7 +126,7 @@ export const Toolbar = observer(() => {
   );
 
   const handleMoveDownPress = useCallback(
-    async (e: React.MouseEvent) => {
+    (e: React.MouseEvent) => {
       e.preventDefault();
 
       if (!currentBlock) return;
@@ -137,7 +137,7 @@ export const Toolbar = observer(() => {
   );
 
   const handleMoveLeft = useCallback(
-    async (e: React.MouseEvent) => {
+    (e: React.MouseEvent) => {
       e.preventDefault();
 
       if (!currentBlock) return;
@@ -150,7 +150,7 @@ export const Toolbar = observer(() => {
   );
 
   const handleMoveRight = useCallback(
-    async (e: React.MouseEvent) => {
+    (e: React.MouseEvent) => {
       e.preventDefault();
 
       if (!currentBlock) return;
@@ -165,7 +165,7 @@ export const Toolbar = observer(() => {
   useEffect(() => {
     if (!window.visualViewport) return;
 
-    const viewportHandler = (e: Event) => {
+    const viewportHandler = () => {
       if (elRef.current) {
         const bottomPos = window.innerHeight - window.visualViewport.height;
 

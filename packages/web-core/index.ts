@@ -27,3 +27,4 @@ export * from './src/lib/blockParser/blockUtils';
 export * from './src/apps/VaultApplication/BlockLinksExtension/selectors/getGroupedBacklinks';
 export * from './src/lib/blockParser/types';
 export { UploadFileService } from './src/apps/VaultApplication/StorageExtension/services/UploadFileService';
+export * from './src/apps/VaultApplication/ImportExportExtension/services/ImportExportService';

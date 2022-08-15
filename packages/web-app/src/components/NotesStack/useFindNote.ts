@@ -48,7 +48,7 @@ export const useFindNote = (noteId: string) => {
       }
     };
 
-    callback();
+    void callback();
   }, [allBlocksService, loadingDoneSubject, noteId, notesService]);
 
   const noteTitle = note?.title;

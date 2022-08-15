@@ -57,11 +57,9 @@ const PathStep = styled.div<{ last: boolean }>`
 
 const LinkedBlock = observer(
   ({
-    note,
     rootBlock,
     scope,
   }: {
-    note: NoteBlock;
     rootBlock: BlockView;
     scope: BlocksScope;
   }): JSX.Element => {
@@ -173,7 +171,6 @@ export const BacklinkedNote = observer(
           {scopesWithBlocks.map(({ scope, rootBlock }) => (
             <LinkedBlock
               key={rootBlock.$modelId}
-              note={note}
               scope={scope}
               rootBlock={rootBlock}
             />

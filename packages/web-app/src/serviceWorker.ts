@@ -1,12 +1,14 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 import { CacheableResponsePlugin } from 'workbox-cacheable-response';
 import { ExpirationPlugin } from 'workbox-expiration';
 import { precacheAndRoute, PrecacheFallbackPlugin } from 'workbox-precaching';
 import { registerRoute } from 'workbox-routing';
 import { CacheFirst, NetworkOnly } from 'workbox-strategies';
 
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-// eslint-disable-next-line no-restricted-globals
+//@ts-expect-error
 precacheAndRoute(self.__WB_MANIFEST);
 
 // Not sure why but it doesn't work
@@ -47,12 +49,9 @@ registerRoute(
   }),
 );
 
-// @ts-ignore
-// eslint-disable-next-line no-restricted-globals
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
-    // @ts-ignore
-    // eslint-disable-next-line no-restricted-globals
+    //@ts-expect-error
     self.skipWaiting();
   }
 });

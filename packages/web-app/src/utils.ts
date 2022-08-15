@@ -18,6 +18,7 @@ export const insertText = (
   insertPos?: { start: number; end: number },
 ) => {
   // https://stackoverflow.com/questions/23892547/what-is-the-best-way-to-trigger-onchange-event-in-react-js
+  // eslint-disable-next-line @typescript-eslint/unbound-method
   const nativeInputValueSetter = Object?.getOwnPropertyDescriptor(
     window?.HTMLTextAreaElement?.prototype,
     'value',

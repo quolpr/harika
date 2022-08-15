@@ -20,7 +20,7 @@ export const usePrimaryNote = () => {
       setPrimaryNote(await notesService.getNote(primaryNoteId));
     };
 
-    callback();
+    void callback();
   }, [primaryNoteId, notesService]);
 
   return primaryNote;

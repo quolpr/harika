@@ -43,7 +43,7 @@ const importSentry = async () => {
   }
 };
 
-importSentry();
+void importSentry();
 
 Modal.setAppElement('body');
 

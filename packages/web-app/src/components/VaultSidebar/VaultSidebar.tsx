@@ -1,3 +1,4 @@
+import { Dump } from '@harika/web-core';
 import dayjs from 'dayjs';
 import download from 'downloadjs';
 import { useObservable, useObservableState } from 'observable-hooks';
@@ -116,7 +117,7 @@ const TreeTitle = styled.div`
 `;
 
 export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
-  ({ className, isOpened, onNavClick, vaultName }: IProps, ref) => {
+  ({ isOpened, onNavClick, vaultName }: IProps, ref) => {
     const vaultApp = useCurrentVaultApp();
     const importExportService = useImportExportService();
     const notesService = useNoteBlocksService();
@@ -148,8 +149,8 @@ export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
           if (!eReader?.target?.result) return;
 
           try {
-            const result = JSON.parse(eReader.target.result.toString());
-            importExportService.importData(result);
+            const result = JSON.parse(eReader.target.result.toString()) as Dump;
+            void importExportService.importData(result);
           } catch (e) {
             alert('Failed to import db');
           }
@@ -184,8 +185,12 @@ export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
     });
 
     const handleResize = useCallback(
-      (newWidth, _newHeight, currentActionType) => {
-        let root = document.documentElement;
+      (
+        newWidth: number,
+        _newHeight: number,
+        currentActionType: ResizeActionType,
+      ) => {
+        const root = document.documentElement;
         if (currentActionType === ResizeActionType.ACTIVATE) {
           root.style.setProperty('--layout-animation', 'none');
         }
@@ -210,7 +215,7 @@ export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
     }, [isWide]);
 
     useEffect(() => {
-      let root = document.documentElement;
+      const root = document.documentElement;
       root.style.setProperty('--sidebar-width', `${sidebarWidth}px`);
     }, [sidebarWidth]);
 
@@ -264,7 +269,7 @@ export const VaultSidebar = React.forwardRef<HTMLDivElement, IProps>(
 
             <SidebarItemBtn
               className={sidebarClass('menu-link sidebar-item')}
-              onClick={handleDownloadClick}
+              onClick={() => void handleDownloadClick()}
             >
               <div className={sidebarClass('menu-link-icon')}>
                 <DownloadIcon />

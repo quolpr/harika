@@ -23,7 +23,7 @@ import {
   textBlocksTable,
 } from '../../BlocksExtension/repositories/TextBlocksRepository';
 
-interface OldVersionDump {
+export interface OldVersionDump {
   version: undefined;
   data: {
     data: {
@@ -33,7 +33,7 @@ interface OldVersionDump {
   };
 }
 
-interface Dump {
+export interface Dump {
   version: number;
   data: {
     tableName: string;
