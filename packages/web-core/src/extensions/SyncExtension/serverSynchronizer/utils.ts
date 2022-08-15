@@ -1,11 +1,11 @@
 import { isEqual } from 'lodash-es';
 
 export const getObjectDiff = (
-  obj1: Record<string, any>,
-  obj2: Record<string, any>,
+  obj1: Record<string, string | number | undefined | null>,
+  obj2: Record<string, string | number | undefined | null>,
 ) => {
-  const from: Record<string, any> = {};
-  const to: Record<string, any> = {};
+  const from: Record<string, string | number | undefined | null> = {};
+  const to: Record<string, string | number | undefined | null> = {};
 
   Object.entries(obj2).forEach(([k, v]) => {
     if (k in obj1) {

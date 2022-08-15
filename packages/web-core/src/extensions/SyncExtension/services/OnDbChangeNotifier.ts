@@ -80,6 +80,7 @@ export class OnDbChangeNotifier {
         if (toDeleteStringIds.has(ev.docId)) return;
 
         if (ev.type === DocChangeType.Create) {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
           toCreateOrUpdateData.push(registration.mapper.mapToModelData(ev.doc));
         } else if (ev.type === DocChangeType.Update) {
           if (!ev.doc) {
@@ -88,6 +89,7 @@ export class OnDbChangeNotifier {
             );
             return;
           }
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
           toCreateOrUpdateData.push(registration.mapper.mapToModelData(ev.doc));
         }
       });

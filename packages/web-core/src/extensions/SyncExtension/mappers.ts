@@ -1,6 +1,13 @@
 import { AnyModel, ModelData } from 'mobx-keystone';
-type Class<T = any> = new (...args: any[]) => T;
-export type IMapper<Doc = any, Model extends AnyModel = any> = {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Class<T> = new (...args: any[]) => T;
+export type IMapper<
+  Doc extends Record<string, string | number | null | undefined> = Record<
+    string,
+    string | number | null | undefined
+  >,
+  Model extends AnyModel = AnyModel,
+> = {
   mapToModelData: (
     arg: Doc,
   ) => ModelData<Model> & { id: string; $modelType: string };

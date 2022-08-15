@@ -4,7 +4,12 @@ import { ValuesType } from 'utility-types';
 import { dictionary } from '../generateId';
 import { mapTokens } from './astHelpers';
 import { parse as pegParse } from './pegParser';
-import type { AttachmentTemplateToken, StringToken, Token } from './types';
+import type {
+  AttachmentTemplateToken,
+  EmbedVideoTemplateToken,
+  StringToken,
+  Token,
+} from './types';
 
 const newIdGenerator = () => {
   let id = 0;
@@ -52,7 +57,7 @@ export const parse = (data: string, idGenerator = newIdGenerator): Token[] => {
             id: generateId(),
             type: 'link',
             linkType: link.type,
-            content: link.value,
+            content: link.value as string,
             href: link.href,
             offsetStart: link.start,
             offsetEnd: link.end,
@@ -99,7 +104,10 @@ export const parse = (data: string, idGenerator = newIdGenerator): Token[] => {
       return { ...t, blockId: id };
     } else if (t.type === 'template') {
       try {
-        let parseResult = JSON.parse(t.content as any as string);
+        let parseResult = JSON.parse(t.content as unknown as string) as (
+          | AttachmentTemplateToken
+          | EmbedVideoTemplateToken
+        )['content'];
 
         if (typeof parseResult === 'string') {
           throw new Error('Parsed result is string');
@@ -116,7 +124,9 @@ export const parse = (data: string, idGenerator = newIdGenerator): Token[] => {
           };
         }
 
-        return { ...t, content: parseResult };
+        return { ...t, content: parseResult } as
+          | AttachmentTemplateToken
+          | EmbedVideoTemplateToken;
       } catch (e) {
         const strToken: StringToken = {
           id: t.id,

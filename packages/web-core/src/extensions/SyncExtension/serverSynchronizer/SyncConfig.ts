@@ -42,14 +42,17 @@ export class SyncConfig {
     return this.registeredSubscribers;
   }
 
-  registerSyncRepo<Doc = any, Model extends AnyModel = AnyModel>(
-    mapper: IMapper<Doc, Model>,
-    repo: Class<BaseSyncRepository>,
-  ) {
+  registerSyncRepo<
+    Doc extends Record<string, string | number | null | undefined> = Record<
+      string,
+      string | number | null | undefined
+    >,
+    Model extends AnyModel = AnyModel,
+  >(mapper: IMapper<Doc, Model>, repo: Class<BaseSyncRepository>) {
     const repoConfig = {
       mapper,
       repo: this.container.get<BaseSyncRepository>(repo),
-    };
+    } as unknown as IRegistration;
 
     this.registeredRepos.push(repoConfig);
 

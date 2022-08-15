@@ -90,7 +90,7 @@ export class SyncStateService {
       startWith(null),
       switchMap((res) => {
         return of(res).pipe(
-          switchMap(async (res) => {
+          switchMap(async () => {
             const [serverSnapshotsCount, clientChangesCount] =
               await this.syncRepo.getServerSnapshotsAndClientChangesCount();
 
@@ -123,7 +123,7 @@ export class SyncStateService {
           share({
             connector: () => new ReplaySubject(1),
           }),
-          catchError((err: unknown, o) => {
+          catchError((err: unknown) => {
             console.error('Error happened', err);
 
             return EMPTY;
@@ -146,7 +146,10 @@ export class SyncStateService {
       };
     }).pipe(
       distinctUntilChanged(),
-      map((val): ISyncState => (val ? JSON.parse(val) : defaultSyncState)),
+      map(
+        (val): ISyncState =>
+          val ? (JSON.parse(val) as ISyncState) : defaultSyncState,
+      ),
     );
 
     isLeader$

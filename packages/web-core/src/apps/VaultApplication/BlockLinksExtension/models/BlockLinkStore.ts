@@ -83,11 +83,11 @@ export class BlockLinksStore extends Model({
     const links: BlockLink[] = [];
 
     linksAttrs.forEach((linkAttrs) => {
-      if (this.linksRegistry.hasLinkWithId(linkAttrs.id!)) {
-        links.push(this.linksRegistry.getLinkById(linkAttrs.id!));
+      if (this.linksRegistry.hasLinkWithId(linkAttrs.id)) {
+        links.push(this.linksRegistry.getLinkById(linkAttrs.id));
 
         applyModelData(
-          this.linksRegistry.getLinkById(linkAttrs.id!),
+          this.linksRegistry.getLinkById(linkAttrs.id),
           linkAttrs,
           (key, oldVal, newVal) => {
             if (key === 'areChildrenLoaded') {

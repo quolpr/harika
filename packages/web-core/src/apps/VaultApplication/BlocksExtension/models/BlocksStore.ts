@@ -58,9 +58,9 @@ export class BlocksStore extends Model({
   ) {
     blocksAttrs.forEach(({ klass, datas }) => {
       datas.forEach((block) => {
-        if (this.blocksRegistry.hasBlockWithId(block.id!)) {
+        if (this.blocksRegistry.hasBlockWithId(block.id)) {
           applyModelData(
-            this.blocksRegistry.getBlockById(block.id!),
+            this.blocksRegistry.getBlockById(block.id),
             block,
             (key, oldVal, newVal) => {
               if (key === 'areChildrenLoaded') {

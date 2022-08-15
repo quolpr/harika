@@ -106,7 +106,7 @@ export interface TemplateToken extends BaseToken {
   id: string;
   type: 'template';
   templateType: string;
-  content: any;
+  content: unknown;
 }
 
 export interface AttachmentTemplateToken extends BaseToken {

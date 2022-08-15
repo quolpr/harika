@@ -30,11 +30,11 @@ class DbBackend {
   constructor(private dbName: string) {}
 
   async init() {
-    let SQL = await initSqlJs({
+    const SQL = await initSqlJs({
       locateFile: () => sqlWasmUrl,
     });
 
-    let sqlFS = new SQLiteFS(SQL.FS, new IndexedDBBackend());
+    const sqlFS = new SQLiteFS(SQL.FS, new IndexedDBBackend());
 
     SQL.register_for_idb(sqlFS);
     SQL.FS.mkdir('/blocked');
@@ -43,7 +43,7 @@ class DbBackend {
     const path = `/blocked/${this.dbName}.sqlite`;
     if (typeof SharedArrayBuffer === 'undefined') {
       console.log('No SharedArrayBuffer');
-      let stream = SQL.FS.open(path, 'a+');
+      const stream = SQL.FS.open(path, 'a+');
       await stream.node.contents.readIfFallback();
       SQL.FS.close(stream);
     }
@@ -143,7 +143,7 @@ class DbBackend {
 class CommandsExecutor {
   private queue: ICommand[] = [];
   private currentTransactionId?: string;
-  private transactionStartedAt: number = 0;
+  private transactionStartedAt = 0;
 
   private inlineTransactionCounter = 0;
 

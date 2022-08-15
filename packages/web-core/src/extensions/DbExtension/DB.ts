@@ -54,7 +54,7 @@ export interface IQueryExecuter {
     query: Sql,
     suppressLog?: boolean,
   ): Promise<T[]>;
-  transaction<T extends any>(
+  transaction<T>(
     func: (t: Transaction) => Promise<T>,
     suppressLog?: boolean,
   ): Promise<T>;
@@ -116,8 +116,8 @@ export class Transaction implements IQueryExecuter {
   async insertRecords(
     table: string,
     objs: Record<string, any>[],
-    replace: boolean = true,
-    suppressLog: boolean = false,
+    replace = true,
+    suppressLog = false,
   ): Promise<void> {
     return this.db.insertRecords(
       table,
@@ -128,7 +128,7 @@ export class Transaction implements IQueryExecuter {
     );
   }
 
-  transaction<T extends any>(func: (t: Transaction) => Promise<T>): Promise<T> {
+  transaction<T>(func: (t: Transaction) => Promise<T>): Promise<T> {
     // We already in transaction
     return func(this);
   }
@@ -231,7 +231,7 @@ export class DB implements IQueryExecuter {
     return res[0];
   }
 
-  async transaction<T extends any>(
+  async transaction<T>(
     func: (t: Transaction) => Promise<T>,
     suppressLog?: boolean,
   ): Promise<T> {
@@ -308,8 +308,8 @@ export class DB implements IQueryExecuter {
   async insertRecords(
     table: string,
     objs: Record<string, any>[],
-    replace: boolean = true,
-    suppressLog: boolean = false,
+    replace = true,
+    suppressLog = false,
     e: IQueryExecuter = this,
   ) {
     return e.transaction(async (t) => {
@@ -333,7 +333,7 @@ export class DB implements IQueryExecuter {
     const [result] = await this.execQuery(query, suppressLog, transactionId);
 
     return (result?.values?.map((res) => {
-      let obj: Record<string, any> = {};
+      const obj: Record<string, any> = {};
 
       result.columns.forEach((col, i) => {
         obj[col] = res[i];

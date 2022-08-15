@@ -91,10 +91,10 @@ export class BlocksScopeStore extends Model({
     });
 
     scopes.forEach((scope) => {
-      if (this.blocksScopes[scope.id!]) {
-        applyModelData(this.blocksScopes[scope.id!], scope);
+      if (this.blocksScopes[scope.id]) {
+        applyModelData(this.blocksScopes[scope.id], scope);
       } else {
-        this.blocksScopes[scope.id!] = new BlocksScope(scope);
+        this.blocksScopes[scope.id] = new BlocksScope(scope);
       }
     });
   }

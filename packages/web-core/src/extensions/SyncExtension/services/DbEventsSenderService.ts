@@ -1,5 +1,5 @@
 import { BroadcastChannel } from 'broadcast-channel';
-import { inject,injectable } from 'inversify';
+import { inject, injectable } from 'inversify';
 import {
   buffer,
   debounceTime,
@@ -49,6 +49,6 @@ export class DbEventsSenderService {
 
     this.onNewSyncPull
       .pipe(withLatestFrom(this.newSyncPullsChannel$), takeUntil(this.stop$))
-      .subscribe(([, ch]) => ch.postMessage(''));
+      .subscribe(([, ch]) => void ch.postMessage(''));
   }
 }

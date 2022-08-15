@@ -1,3 +1,8 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { BroadcastChannel } from 'broadcast-channel';
 import { withoutUndo as withoutUndoFunc } from 'mobx-keystone';
 import { Observable, ReplaySubject, share } from 'rxjs';
@@ -7,7 +12,7 @@ export function withoutUndoAction(
   _propertyKey: string,
   descriptor: PropertyDescriptor,
 ) {
-  let originalMethod = descriptor.value;
+  const originalMethod = descriptor.value;
 
   //wrapping the original method
   descriptor.value = function (...args: any[]) {

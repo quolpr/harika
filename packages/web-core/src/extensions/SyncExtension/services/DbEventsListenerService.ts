@@ -61,7 +61,7 @@ export class DbEventsListenService {
     );
   }
 
-  liveQuery<T extends any>(
+  liveQuery<T>(
     tables: string[],
     query: () => ObservableInput<T>,
     onlyInDb = true,

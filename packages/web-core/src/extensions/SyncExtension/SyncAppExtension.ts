@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/require-await */
 import { injectable } from 'inversify';
 import { BehaviorSubject, takeUntil } from 'rxjs';
 

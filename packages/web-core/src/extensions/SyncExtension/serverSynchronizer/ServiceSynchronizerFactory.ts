@@ -42,7 +42,7 @@ export class ServerSynchronizerFactory {
   ) {}
 
   async initialize() {
-    const log = (msg: string) => {
+    const log = () => {
       // console.debug(`[${dbName}] ${msg}`);
     };
 
@@ -102,9 +102,11 @@ export class ServerSynchronizerFactory {
           elector
             .awaitLeadership()
             .then(() => {
-              if (!isLeaderTracking) return;
+              if (!isLeaderTracking) return undefined;
 
               observer.next(true);
+
+              return undefined;
             })
             .catch(() => observer.error('Leadership error'));
 

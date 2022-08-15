@@ -1,4 +1,4 @@
-export type IAnyDoc = Record<string, any> & {
+export type IAnyDoc = Record<string, string | number | null | undefined> & {
   id: string;
 };
 

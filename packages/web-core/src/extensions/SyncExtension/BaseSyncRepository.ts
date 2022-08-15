@@ -11,14 +11,12 @@ import type { ISyncCtx } from './syncCtx';
 
 @injectable()
 export abstract class BaseSyncRepository<
-  Doc extends Record<string, unknown> & { id: string } = Record<
-    string,
-    unknown
-  > & { id: string },
-  Row extends Record<string, unknown> & { id: string } = Record<
-    string,
-    unknown
-  > & { id: string },
+  Doc extends Record<string, string | number | null | undefined> & {
+    id: string;
+  } = Record<string, string | number | null | undefined> & { id: string },
+  Row extends Record<string, string | number | null | undefined> & {
+    id: string;
+  } = Record<string, string | number | null | undefined> & { id: string },
 > {
   constructor(
     @inject(SyncRepository) protected syncRepository: SyncRepository,
@@ -26,9 +24,7 @@ export abstract class BaseSyncRepository<
     @inject(WINDOW_ID) protected windowId: string,
   ) {}
 
-  async transaction<T extends any>(
-    func: (t: Transaction) => Promise<T>,
-  ): Promise<T> {
+  async transaction<T>(func: (t: Transaction) => Promise<T>): Promise<T> {
     return this.db.transaction(func);
   }
 
@@ -141,7 +137,7 @@ export abstract class BaseSyncRepository<
 
       await this.syncRepository.createCreateChanges(
         this.getTableName(),
-        attrsArray.map((attr) => omit(attr, this.getIgnoreSyncFields()) as any),
+        attrsArray.map((attr) => omit(attr, this.getIgnoreSyncFields())),
         { ...ctx, windowId: this.windowId },
         t,
       );

@@ -114,15 +114,15 @@ export class SyncRepository {
     };
   }
 
-  async transaction<T extends any>(
-    func: (t: Transaction) => Promise<T>,
-  ): Promise<T> {
+  async transaction<T>(func: (t: Transaction) => Promise<T>): Promise<T> {
     return this.db.transaction(func);
   }
 
   async createCreateChanges(
     collectionName: string,
-    records: (Record<string, unknown> & { id: string })[],
+    records: (Record<string, string | number | null | undefined> & {
+      id: string;
+    })[],
     ctx: IInternalSyncCtx,
     e: IQueryExecuter,
   ) {
@@ -139,7 +139,7 @@ export class SyncRepository {
           id,
           type: DocChangeType.Create,
           collectionName: collectionName,
-          docId: data.id as string,
+          docId: data.id,
           doc: data,
           windowId: ctx.windowId,
           source: ctx.source,
@@ -175,8 +175,8 @@ export class SyncRepository {
   async createUpdateChanges(
     collectionName: string,
     changes: {
-      from: Record<string, unknown> & { id: string };
-      to: Record<string, unknown> & { id: string };
+      from: Record<string, string | number | null | undefined> & { id: string };
+      to: Record<string, string | number | null | undefined> & { id: string };
     }[],
     ctx: IInternalSyncCtx,
     e: IQueryExecuter,
@@ -197,7 +197,7 @@ export class SyncRepository {
           type: DocChangeType.Update,
           collectionName,
           doc: ch.to,
-          docId: ch.from.id as string,
+          docId: ch.from.id,
           from: diff.from,
           to: diff.to,
           windowId: ctx.windowId,
@@ -235,7 +235,9 @@ export class SyncRepository {
 
   async createDeleteChanges(
     collectionName: string,
-    objs: (Record<string, unknown> & { id: string })[],
+    objs: (Record<string, string | number | null | undefined> & {
+      id: string;
+    })[],
     ctx: IInternalSyncCtx,
     e: IQueryExecuter,
   ) {
@@ -253,7 +255,7 @@ export class SyncRepository {
           type: DocChangeType.Delete,
           collectionName,
           doc,
-          docId: doc.id as string,
+          docId: doc.id,
           windowId: ctx.windowId,
           source: ctx.source,
           timestamp: clocks[i],
@@ -392,13 +394,16 @@ export class SyncRepository {
       return {
         ...base,
         type: DocChangeType.Create,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         doc: JSON.parse(snap.doc),
       };
     } else if (snap.type === DocChangeType.Update) {
       return {
         ...base,
         type: DocChangeType.Update,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         from: JSON.parse(snap.changeFrom),
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         to: JSON.parse(snap.changeTo),
       };
     } else {
@@ -414,6 +419,7 @@ export class SyncRepository {
   ): IDocSnapshot & { id: string } {
     return {
       ...snap,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       doc: JSON.parse(snap.doc),
       isDeleted: Boolean(snap.isDeleted),
     };

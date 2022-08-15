@@ -1,9 +1,15 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { AnyModel, createContext, onPatches } from 'mobx-keystone';
 import { Subject } from 'rxjs';
 
 let withoutSyncVal = false;
 
-export const withoutChangeTracking = <T extends any>(func: () => T): T => {
+export const withoutChangeTracking = <T>(func: () => T): T => {
   const prevValue = withoutSyncVal;
   withoutSyncVal = true;
 
@@ -19,7 +25,7 @@ export function withoutChangeTrackingAction(
   _propertyKey: string,
   descriptor: PropertyDescriptor,
 ) {
-  let originalMethod = descriptor.value;
+  const originalMethod = descriptor.value;
 
   //wrapping the original method
   descriptor.value = function (...args: any[]) {
@@ -47,10 +53,12 @@ export type IModelChange<T extends AnyModel = AnyModel> = {
 
 export const trackChangesPipeCtx = createContext<Subject<IModelChange>>();
 
+// eslint-disable-next-line @typescript-eslint/ban-types
 export const trackChanges = (constructor: Function) => {
   const originalAttached = constructor.prototype.onAttachedToRootStore;
 
   constructor.prototype.onAttachedToRootStore = function () {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const model = this;
 
     const disposer = originalAttached

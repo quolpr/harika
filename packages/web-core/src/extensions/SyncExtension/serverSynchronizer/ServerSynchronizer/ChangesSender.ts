@@ -48,7 +48,7 @@ export class ChangesSender {
           syncStatus: await this.syncStatusService.getSyncStatus(),
         };
       }),
-      switchMap(({ clientChanges, syncStatus, areMore }) =>
+      switchMap(({ clientChanges, areMore }) =>
         this.commandExecuter
           .send<ApplyNewChangesFromClientCommand>(
             CommandTypesFromClient.ApplyNewChanges,

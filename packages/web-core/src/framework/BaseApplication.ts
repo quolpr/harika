@@ -56,6 +56,7 @@ export abstract class BaseApplication {
 
   abstract get applicationName(): string;
   abstract get extensions(): {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     new (...args: any): BaseExtension;
   }[];
 

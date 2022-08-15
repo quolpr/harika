@@ -11,7 +11,7 @@ export type SyncModelId<T extends AnyModel = AnyModel> = {
 
 export type CreationDataWithId<T extends AnyModel = AnyModel> =
   ModelCreationData<T> & {
-    $modelId: string;
+    id: string;
   };
 
 export const SYNC_CONNECTION_ALLOWED = 'syncConnectionAllowed';

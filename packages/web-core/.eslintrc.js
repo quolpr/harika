@@ -34,6 +34,8 @@ module.exports = {
   ],
   root: true,
   rules: {
+    'no-empty-function': 'off',
+    '@typescript-eslint/no-empty-function': 'off',
     'simple-import-sort/imports': 'warn',
     'simple-import-sort/exports': 'warn',
     '@typescript-eslint/no-floating-promises': ['warn'],

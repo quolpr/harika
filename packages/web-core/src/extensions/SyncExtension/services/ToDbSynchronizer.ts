@@ -22,7 +22,7 @@ import {
 import { SyncConfig } from '../serverSynchronizer/SyncConfig';
 import { MODELS_CHANGES_PIPE } from '../types';
 
-type Class<T = any> = new (...args: any[]) => T;
+type Class<T = unknown> = new (...args: unknown[]) => T;
 
 const compressChanges = <T extends AnyModel>(chs: IModelChange<T>[]) => {
   const modelsMap: Record<string, T> = {};
@@ -131,6 +131,7 @@ export class ToDbSynchronizer {
       toUpdateModels: ITrackChangeModel<T>[];
       toDeleteModels: ITrackChangeModel<T>[];
     },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     repo: BaseSyncRepository<any, any>,
     mapper: (model: T) => unknown,
   ) => {

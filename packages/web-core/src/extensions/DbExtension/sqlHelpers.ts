@@ -3,7 +3,7 @@ import sql, { empty, join, raw } from 'sql-template-tag';
 export const generateInsert = (
   tableName: string,
   objs: Record<string, unknown>[],
-  replace: boolean = false,
+  replace = false,
 ) => {
   if (objs.length === 0) throw new Error("Can't insert empty objects");
 

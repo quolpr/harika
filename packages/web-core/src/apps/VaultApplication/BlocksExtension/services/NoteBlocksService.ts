@@ -215,7 +215,7 @@ export class NoteBlocksService {
     return from(
       this.dbEventsService.liveQuery([noteBlocksTable], () =>
         this.noteBlocksRepository.getByTitles([title]),
-      ) as Observable<NoteBlockDoc[]>,
+      ) ,
     ).pipe(
       map((docs) => docs[0]?.id),
       distinctUntilChanged(),
