@@ -20,7 +20,7 @@
     "@ory/client": "^0.0.1-alpha.155",
     "@rehooks/local-storage": "2.4.4",
     "@sentry/react": "^6.19.4",
-    "@sentry/tracing": "^6.19.4",
+    "@sentry/tracing": "^7.22.0",
     "@tippyjs/react": "^4.2.6",
     "axios": "^0.26.1",
     "buffer": "^6.0.3",
