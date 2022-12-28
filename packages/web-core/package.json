@@ -18,7 +18,7 @@
     "absurd-sql": "quolpr/absurd-sql#withDist",
     "axios": "^0.26.1",
     "backoff-rxjs": "^6.5.7",
-    "broadcast-channel": "^4.10.0",
+    "broadcast-channel": "^4.19.1",
     "camelcase-keys": "^7.0.2",
     "dayjs": "^1.11.0",
     "dexie": "^3.2.1",
